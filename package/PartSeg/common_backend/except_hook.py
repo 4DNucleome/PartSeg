@@ -39,7 +39,6 @@ def show_error(error=None):
     """This class create error dialog and show it"""
     if error is None:
         return
-    from PartSeg.common_gui.error_report import ErrorDialog
 
     if isinstance(error, TiffFileException):
         mess = QMessageBox()
@@ -55,9 +54,9 @@ def show_error(error=None):
         mess.setWindowTitle("Segmentation limitations")
         mess.exec()
         return
+    from PartSeg.common_gui.error_report import ErrorDialog
+
     dial = ErrorDialog(error, "Exception during program run")
-    # TODO check
-    # dial.moveToThread(QApplication.instance().thread())
     dial.exec()
 
 
