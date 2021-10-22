@@ -10,6 +10,8 @@ from PartSegCore import state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegImage import TiffFileException
 
+IS_MACOS = sys.platform == "darwin"
+
 
 def test_show_error(monkeypatch):
     exec_list = []
@@ -17,8 +19,8 @@ def test_show_error(monkeypatch):
     def exec_mock(self):
         exec_list.append(self)
 
-    monkeypatch.setattr(except_hook.QMessageBox, "exec", exec_mock)
-    monkeypatch.setattr(ErrorDialog, "exec", exec_mock)
+    monkeypatch.setattr(except_hook.QMessageBox, "exec_", exec_mock)
+    monkeypatch.setattr(ErrorDialog, "exec_", exec_mock)
 
     except_hook.show_error()
     assert exec_list == []
@@ -27,7 +29,7 @@ def test_show_error(monkeypatch):
     message = exec_list[0]
     assert isinstance(message, QMessageBox)
     assert message.icon() == QMessageBox.Critical
-    assert message.windowTitle() == "Tiff error"
+    assert message.windowTitle() == "Tiff error" or IS_MACOS
     assert message.text().startswith("During read file there is an error")
 
     exec_list = []
@@ -36,7 +38,7 @@ def test_show_error(monkeypatch):
     message = exec_list[0]
     assert isinstance(message, QMessageBox)
     assert message.icon() == QMessageBox.Critical
-    assert message.windowTitle() == "Segmentation limitations"
+    assert message.windowTitle() == "Segmentation limitations" or IS_MACOS
     assert message.text().startswith("During segmentation process algorithm meet limitations")
 
     exec_list = []
@@ -57,7 +59,7 @@ def test_show_warning(monkeypatch, header, text):
     def exec_mock(self):
         exec_list.append(self)
 
-    monkeypatch.setattr(except_hook.QMessageBox, "exec", exec_mock)
+    monkeypatch.setattr(except_hook.QMessageBox, "exec_", exec_mock)
     except_hook.show_warning(header, text)
     assert len(exec_list) == 1
 

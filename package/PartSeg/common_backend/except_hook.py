@@ -45,23 +45,23 @@ def show_error(error=None):
         mess.setIcon(QMessageBox.Critical)
         mess.setText("During read file there is an error: " + error.args[0])
         mess.setWindowTitle("Tiff error")
-        mess.exec()
+        mess.exec_()
         return
     if isinstance(error, SegmentationLimitException):
         mess = QMessageBox()
         mess.setIcon(QMessageBox.Critical)
         mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(error.args))
         mess.setWindowTitle("Segmentation limitations")
-        mess.exec()
+        mess.exec_()
         return
     from PartSeg.common_gui.error_report import ErrorDialog
 
     dial = ErrorDialog(error, "Exception during program run")
-    dial.exec()
+    dial.exec_()
 
 
 @ensure_main_thread
 def show_warning(header=None, text=None):
     """show warning :py:class:`PyQt5.QtWidgets.QMessageBox`"""
     message = QMessageBox(QMessageBox.Warning, header, text, QMessageBox.Ok)
-    message.exec()
+    message.exec_()
