@@ -2,6 +2,7 @@ import sys
 
 import pytest
 import sentry_sdk
+from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
 
 from PartSeg.common_backend import except_hook
@@ -86,7 +87,7 @@ def test_my_excepthook(monkeypatch, capsys):
     monkeypatch.setattr(sys, "exit", exit_catch)
     monkeypatch.setattr(sentry_sdk, "capture_exception", capture_exception_catch)
     monkeypatch.setattr(except_hook, "show_error", show_error_catch)
-    monkeypatch.setattr(except_hook, "parsed_version", ParsedVersionMockFalse)
+    monkeypatch.setattr(except_hook, "parsed_version", parse("0.13.12"))
 
     monkeypatch.setattr(state_store, "show_error_dialog", False)
     except_hook.my_excepthook(KeyboardInterrupt, KeyboardInterrupt(), [])
@@ -109,15 +110,7 @@ def test_my_excepthook(monkeypatch, capsys):
     assert len(sentry_catch_list) == 0
 
     monkeypatch.setattr(state_store, "report_errors", True)
-    monkeypatch.setattr(except_hook, "parsed_version", ParsedVersionMockTrue)
+    monkeypatch.setattr(except_hook, "parsed_version", parse("0.13.12dev1"))
     except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
     assert len(sentry_catch_list) == 1
     assert isinstance(sentry_catch_list[0], RuntimeError)
-
-
-class ParsedVersionMockTrue:
-    is_devrelease = True
-
-
-class ParsedVersionMockFalse:
-    is_devrelease = False
