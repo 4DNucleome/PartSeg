@@ -83,6 +83,9 @@ def test_my_excepthook(monkeypatch, capsys):
     def show_error_catch(value):
         error_list.append(value)
 
+    def import_raise(_value):
+        raise ImportError()
+
     monkeypatch.setattr(sys, "__excepthook__", excepthook_catch)
     monkeypatch.setattr(sys, "exit", exit_catch)
     monkeypatch.setattr(sentry_sdk, "capture_exception", capture_exception_catch)
@@ -97,6 +100,7 @@ def test_my_excepthook(monkeypatch, capsys):
     except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
     assert len(catch_list) == 1
     assert catch_list[0][0] is RuntimeError
+    catch_list = []
 
     monkeypatch.setattr(state_store, "show_error_dialog", True)
 
@@ -109,8 +113,12 @@ def test_my_excepthook(monkeypatch, capsys):
     assert isinstance(error_list[0], RuntimeError)
     assert len(sentry_catch_list) == 0
 
+    monkeypatch.setattr(except_hook, "show_error", import_raise)
+
     monkeypatch.setattr(state_store, "report_errors", True)
     monkeypatch.setattr(except_hook, "parsed_version", parse("0.13.12dev1"))
     except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
     assert len(sentry_catch_list) == 1
     assert isinstance(sentry_catch_list[0], RuntimeError)
+    assert len(catch_list) == 1
+    assert catch_list[0][0] is RuntimeError
