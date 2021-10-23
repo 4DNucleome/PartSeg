@@ -26,8 +26,7 @@ class TestLabelColorDict:
         dkt = LabelColorDict({})
         labels = [[1, 2, 3], [120, 230, 100]]
         with pytest.raises(ValueError):
-            dkt["test"] = labels
-        assert "test" not in dkt
+            dkt["default"] = labels
         dkt["custom_test"] = labels
         assert "custom_test" in dkt
         assert dkt["custom_test"][1] is True

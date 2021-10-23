@@ -9,7 +9,13 @@ import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
 
-from PartSeg.common_backend import base_argparser, except_hook, progress_thread, segmentation_thread
+from PartSeg.common_backend import (
+    base_argparser,
+    except_hook,
+    partially_const_dict,
+    progress_thread,
+    segmentation_thread,
+)
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
@@ -245,6 +251,7 @@ class TestSegmentationThread:
         algorithm.set_image(image)
         with qtbot.assertNotEmitted(thr.execution_done):
             with qtbot.waitSignal(thr.exception_occurred):
+
                 thr.run()
 
     def test_running_set_parameters(self, qtbot, monkeypatch):
@@ -313,3 +320,37 @@ class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         return [AlgorithmProperty("a", "A", 0)]
+
+
+class TestPartiallyConstDict:
+    def test_add_remove(self, qtbot):
+        class TestDict(partially_const_dict.PartiallyConstDict):
+            const_item_dict = {"custom_a": 1, "b": 2}
+
+        data = {"c": 3, "d": 4}
+        dkt = TestDict(data)
+        assert set(dkt) == {"custom_a", "b", "c", "d"}
+        assert len(dkt) == 4
+        with pytest.raises(ValueError):
+            dkt["b"] = 1
+        with pytest.raises(ValueError):
+            dkt["custom_a"] = 1
+        with qtbot.waitSignal(dkt.item_added):
+            dkt["e"] = 7
+        assert len(dkt) == 5
+        assert dkt["b"] == (2, False)
+        assert dkt["e"] == (7, True)
+        with pytest.raises(KeyError):
+            dkt["k"]
+
+        with pytest.raises(ValueError):
+            del dkt["b"]
+        with qtbot.waitSignal(dkt.item_removed):
+            del dkt["e"]
+        assert len(dkt) == 4
+        assert dkt.get_position("b") == 1
+        with pytest.raises(KeyError):
+            dkt.get_position("k")
+
+        TestDict.const_item_dict["l"] = 1
+        assert dkt.get_position("l") == 5

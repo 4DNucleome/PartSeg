@@ -31,7 +31,7 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
         self._counter = len(self._order_dict)
 
     def __setitem__(self, key: str, value: Union[T, RemovableInfo]) -> None:
-        if not key.startswith("custom_"):
+        if key in self.const_item_dict:
             raise ValueError("Cannot write base item")
         self.editable_items[key] = value[0] if isinstance(value, tuple) else value
         self._order_dict[key] = self._counter
@@ -46,17 +46,18 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
 
     def __getitem__(self, key: str) -> RemovableInfo:
         try:
-            if not key.startswith("custom_"):
+            if key in self.const_item_dict:
                 return self.const_item_dict[key], False
             return self.editable_items[key], True
         except KeyError:
             raise KeyError(f"Element {key} not found")
 
     def __delitem__(self, key: str):
-        if not key.startswith("custom_"):
+        if key in self.const_item_dict:
             raise ValueError(f"cannot delete base item {key}")
         item = self.editable_items[key]
         del self.editable_items[key]
+        del self._order_dict[key]
         self.item_removed.emit(item)
 
     def get_position(self, key: str) -> int:
