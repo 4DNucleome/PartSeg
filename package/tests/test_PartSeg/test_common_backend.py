@@ -12,6 +12,7 @@ from qtpy.QtWidgets import QMessageBox
 
 from PartSeg.common_backend import (
     base_argparser,
+    base_settings,
     except_hook,
     load_backup,
     partially_const_dict,
@@ -21,6 +22,7 @@ from PartSeg.common_backend import (
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation import ROIExtractionResult
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, SegmentationLimitException
 from PartSegImage import Image, TiffFileException
@@ -411,3 +413,99 @@ class NapariSettingsMock:
     @staticmethod
     def load():
         return 1
+
+
+@pytest.fixture
+def image(tmp_path):
+    data = np.random.random((10, 10, 2))
+    return Image(data=data, image_spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
+
+
+@pytest.fixture
+def roi():
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[2:-2, 2:5] = 1
+    data[2:-2, 5:-2] = 2
+    return data
+
+
+class TestBaseSettings:
+    def test_image_settings(self, tmp_path, image, roi, qtbot):
+        widget = base_settings.QWidget()
+        qtbot.addWidget(widget)
+        settings = base_settings.ImageSettings()
+        settings.set_parent(widget)
+        assert settings.image_spacing == ()
+        assert settings.image_shape == ()
+        assert settings.image_path == ""
+        assert settings.channels == 0
+        settings.image = image
+        assert settings.image_spacing == image.spacing
+        assert settings.image_path == str(tmp_path / "test.tiff")
+        assert settings.image_shape == (1, 1, 10, 10, 2)
+        with qtbot.waitSignal(settings.image_spacing_changed):
+            settings.image_spacing = (7, 7)
+        assert image.spacing == (7, 7)
+        with qtbot.waitSignal(settings.image_spacing_changed):
+            settings.image_spacing = (1, 8, 8)
+        assert image.spacing == (8, 8)
+        with pytest.raises(ValueError):
+            settings.image_spacing = (6,)
+
+        assert settings.is_image_2d()
+        assert settings.has_channels
+        with qtbot.waitSignal(settings.image_changed[str]):
+            settings.image_path = str(tmp_path / "test2.tiff")
+        assert image.file_path == str(tmp_path / "test2.tiff")
+
+        with pytest.raises(ValueError, match="roi do not fit to image"):
+            settings.roi = roi[:-2]
+        with qtbot.waitSignal(settings.roi_changed):
+            settings.roi = roi
+        assert all(settings.sizes == [64, 18, 18])
+        assert all(settings.components_mask() == [0, 1, 1])
+
+        assert tuple(settings.roi_info.bound_info.keys()) == (1, 2)
+
+        with qtbot.waitSignal(settings.roi_clean):
+            settings.roi = None
+
+        settings.roi = ROIInfo(roi)
+
+        settings.image = None
+        assert settings.image is not None
+
+    def test_view_settings(self, tmp_path, image, roi, qtbot):
+        settings = base_settings.ViewSettings()
+        assert settings.theme_name == "light"
+        assert hasattr(settings.theme, "text")
+        assert isinstance(settings.style_sheet, str)
+        with pytest.raises(ValueError):
+            settings.theme_name = "aaaa"
+        with qtbot.assertNotEmitted(settings.theme_changed):
+            settings.theme_name = "light"
+        with qtbot.waitSignal(settings.theme_changed):
+            settings.theme_name = "dark"
+        assert settings.theme_name == "dark"
+        assert isinstance(settings.theme_list(), (tuple, list))
+
+        assert settings.chosen_colormap == base_settings.starting_colors
+        with qtbot.waitSignal(settings.colormap_changes):
+            settings.chosen_colormap = ["A", "B"]
+        assert settings.chosen_colormap == base_settings.starting_colors
+        assert settings.current_labels == "default"
+        with pytest.raises(ValueError):
+            settings.current_labels = "a"
+
+    def test_colormap_dict(self):
+        colormap_dict = base_settings.ColormapDict({})
+        assert colormap_dict.colormap_removed == colormap_dict.item_removed
+        assert colormap_dict.colormap_added == colormap_dict.item_added
+
+    def test_label_color_dict(self):
+        label_dict = base_settings.LabelColorDict({})
+        assert isinstance(label_dict.get_array("default"), np.ndarray)
+
+    def test_base_settings(self, tmp_path):
+        settings = base_settings.BaseSettings(tmp_path / "data.json")
+        assert settings.theme_name == "light"

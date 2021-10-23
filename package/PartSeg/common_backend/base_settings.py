@@ -121,7 +121,7 @@ class ImageSettings(QObject):
 
     @image_spacing.setter
     def image_spacing(self, value):
-        if len(value) not in [2, 3]:  # pragma: no cover
+        if len(value) not in [2, 3]:
             raise ValueError(f"value parameter should have length 2 or 3. Current length is {len(value)}.")
         if len(value) == 2:
             self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
@@ -161,7 +161,7 @@ class ImageSettings(QObject):
                 self._roi_info = ROIInfo(self.image.fit_array_to_image(val))
             else:
                 self._roi_info = val.fit_to_image(self.image)
-        except ValueError:  # pragma: no cover
+        except ValueError:
             raise ValueError(ROI_NOT_FIT)
         self._additional_layers = {}
         self.roi_changed.emit(self._roi_info)
@@ -209,8 +209,8 @@ class ImageSettings(QObject):
 
     @image_path.setter
     def image_path(self, value):
-        self._image_path = value
-        self.image_changed[str].emmit(self._image_path)
+        self._image.file_path = value
+        self.image_changed[str].emit(self._image_path)
 
     @property
     def channels(self):
@@ -227,7 +227,7 @@ class ColormapDict(PartiallyConstDict[Colormap]):
     Dict for mixing custom colormap with predefined ones
     """
 
-    if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:
+    if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:  # pragma: no cover
         const_item_dict = {}
     else:
         const_item_dict = default_colormap_dict
@@ -282,13 +282,15 @@ class ViewSettings(ImageSettings):
 
     @property
     def theme_name(self) -> str:
+        """Name of current theme."""
         return self.get_from_profile("theme", "light")
 
     @property
     def theme(self):
+        """Theme as structure."""
         try:
             return get_theme(self.theme_name, as_dict=False)
-        except TypeError:
+        except TypeError:  # pragma: no cover
             theme = get_theme(self.theme_name)
             return Namespace(
                 **{k: Color(v) if isinstance(v, str) and v.startswith("rgb") else v for k, v in theme.items()}
@@ -296,6 +298,7 @@ class ViewSettings(ImageSettings):
 
     @property
     def style_sheet(self):
+        """QSS style sheet for current theme."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)
             theme = get_theme(self.theme_name)
@@ -304,6 +307,7 @@ class ViewSettings(ImageSettings):
 
     @theme_name.setter
     def theme_name(self, value: str):
+        """Name of current theme."""
         if value not in napari.utils.theme.available_themes():
             raise ValueError(f"Unsupported theme {value}. Supported one: {self.theme_list()}")
         if value == self.theme_name:
@@ -313,13 +317,15 @@ class ViewSettings(ImageSettings):
 
     @staticmethod
     def theme_list():
+        """Sequence of available themes"""
         try:
             return napari.utils.theme.available_themes()
-        except:  # noqa: E722  # pylint: disable=W0702
-            return ["light"]
+        except:  # noqa: E722  # pylint: disable=W0702  # pragma: no cover
+            return ("light",)
 
     @property
     def chosen_colormap(self):
+        """Sequence of selected colormap to be available in dropdown"""
         data = self.get_from_profile("colormaps", starting_colors[:])
         res = [x for x in data if x in self.colormap_dict]
         if len(res) != data:
@@ -335,6 +341,7 @@ class ViewSettings(ImageSettings):
 
     @property
     def current_labels(self):
+        """Current labels scheme for marking ROI"""
         return self.get_from_profile("labels_used", "default")
 
     @current_labels.setter
@@ -413,9 +420,6 @@ class ViewSettings(ImageSettings):
         """
         return self.view_settings_dict.get(f"{self.current_profile_dict}.{key_path}", default)
 
-    def dump_view_profiles(self):
-        return self.view_settings_dict
-
 
 class SaveSettingsDescription(NamedTuple):
     file_name: str
@@ -478,7 +482,7 @@ class BaseSettings(ViewSettings):
                 self.napari_settings.appearance.theme = theme
                 self.set_in_profile("first_start", False)
             return theme
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             return "light"
 
     @theme_name.setter
