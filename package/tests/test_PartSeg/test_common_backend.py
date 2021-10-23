@@ -1,6 +1,7 @@
 import argparse
 import sys
 import typing
+from pathlib import Path
 from typing import Callable, Optional
 
 import numpy as np
@@ -12,6 +13,7 @@ from qtpy.QtWidgets import QMessageBox
 from PartSeg.common_backend import (
     base_argparser,
     except_hook,
+    load_backup,
     partially_const_dict,
     progress_thread,
     segmentation_thread,
@@ -354,3 +356,58 @@ class TestPartiallyConstDict:
 
         TestDict.const_item_dict["l"] = 1
         assert dkt.get_position("l") == 5
+
+
+class TestLoadBackup:
+    @staticmethod
+    def block_exec(self, *args, **kwargs):
+        raise RuntimeError("aa")
+
+    def test_no_backup(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path)
+        monkeypatch.setattr(load_backup.QMessageBox, "exec_", self.block_exec)
+        monkeypatch.setattr(load_backup.QMessageBox, "question", self.block_exec)
+        monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
+        load_backup.import_config()
+
+        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
+        load_backup.import_config()
+
+    def test_no_backup_old(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
+        monkeypatch.setattr(load_backup.QMessageBox, "exec_", self.block_exec)
+        monkeypatch.setattr(load_backup.QMessageBox, "question", self.block_exec)
+        monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
+        (tmp_path / "0.13.14").mkdir()
+        (tmp_path / "0.13.15").mkdir()
+
+        load_backup.import_config()
+
+    @pytest.mark.parametrize("response", [load_backup.QMessageBox.Yes, load_backup.QMessageBox.No])
+    def test_older_exist(self, monkeypatch, tmp_path, response):
+        def create_file(file_path: Path):
+            file_path.parent.mkdir()
+            with open(file_path, "w") as f:
+                print(1, file=f)
+
+        def question(*args, **kwargs):
+            return response
+
+        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
+        monkeypatch.setattr(load_backup.QMessageBox, "exec_", self.block_exec)
+        monkeypatch.setattr(load_backup.QMessageBox, "question", question)
+        monkeypatch.setattr(load_backup, "napari_get_settings", lambda x: NapariSettingsMock)
+        create_file(tmp_path / "0.13.14" / "14.txt")
+        create_file(tmp_path / "0.13.12" / "12.txt")
+        create_file(tmp_path / "0.13.10" / "10.txt")
+        load_backup.import_config()
+        if response == QMessageBox.Yes:
+            assert (tmp_path / "0.13.13" / "12.txt").exists()
+        else:
+            assert not (tmp_path / "0.13.13").exists()
+
+
+class NapariSettingsMock:
+    @staticmethod
+    def load():
+        return 1
