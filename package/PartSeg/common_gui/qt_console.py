@@ -15,7 +15,7 @@ from qtconsole.inprocess import QtInProcessKernelManager
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtpy.QtGui import QColor
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from PartSeg.common_gui.main_window import BaseMainWindow
 
 

@@ -48,7 +48,7 @@ try:
 except ImportError:  # pragma: no cover
     from napari.resources import get_stylesheet
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
 
 

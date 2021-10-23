@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import napari
 import packaging.version
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
 
 try:
