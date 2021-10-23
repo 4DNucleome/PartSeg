@@ -1,5 +1,7 @@
 import argparse
 import sys
+import typing
+from typing import Callable, Optional
 
 import numpy as np
 import pytest
@@ -7,11 +9,13 @@ import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
 
-from PartSeg.common_backend import base_argparser, except_hook, progress_thread
+from PartSeg.common_backend import base_argparser, except_hook, progress_thread, segmentation_thread
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore import state_store
-from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
-from PartSegImage import TiffFileException
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.segmentation import ROIExtractionResult
+from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, SegmentationLimitException
+from PartSegImage import Image, TiffFileException
 
 IS_MACOS = sys.platform == "darwin"
 
@@ -208,3 +212,104 @@ class TestProgressThread:
         thr = progress_thread.ExecuteFunctionThread(callback_fun2, [1], {"b": 4})
         with qtbot.waitSignal(thr.error_signal, check_params_cb=lambda x: x.args[0] == 5):
             thr.run()
+
+
+class TestSegmentationThread:
+    def test_empty_image(self, capsys):
+        thr = segmentation_thread.SegmentationThread(ROIExtractionAlgorithmForTest())
+        assert thr.get_info_text() == "text"
+        thr.set_parameters(a=1)
+        thr.run()
+        assert capsys.readouterr().err.startswith("No image in")
+
+    def test_run(self, qtbot):
+        algorithm = ROIExtractionAlgorithmForTest()
+        thr = segmentation_thread.SegmentationThread(algorithm)
+        image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
+        algorithm.set_image(image)
+        with qtbot.waitSignals([thr.execution_done, thr.progress_signal]):
+            thr.run()
+
+    def test_run_return_none(self, qtbot):
+        algorithm = ROIExtractionAlgorithmForTest(return_none=True)
+        thr = segmentation_thread.SegmentationThread(algorithm)
+        image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
+        algorithm.set_image(image)
+        with qtbot.assertNotEmitted(thr.execution_done):
+            thr.run()
+
+    def test_run_exception(self, qtbot):
+        algorithm = ROIExtractionAlgorithmForTest(raise_=True)
+        thr = segmentation_thread.SegmentationThread(algorithm)
+        image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
+        algorithm.set_image(image)
+        with qtbot.assertNotEmitted(thr.execution_done):
+            with qtbot.waitSignal(thr.exception_occurred):
+                thr.run()
+
+    def test_running_set_parameters(self, qtbot, monkeypatch):
+        thr = segmentation_thread.SegmentationThread(ROIExtractionAlgorithmForTest())
+        thr.set_parameters(a=1)
+        monkeypatch.setattr(thr, "isRunning", lambda: True)
+        thr.set_parameters(a=2)
+        assert thr.algorithm.new_parameters["a"] == 1
+        thr.finished_task()
+        assert thr.algorithm.new_parameters["a"] == 2
+
+    def test_running_clean(self, qtbot, monkeypatch):
+        clean_list = []
+        thr = segmentation_thread.SegmentationThread(ROIExtractionAlgorithmForTest())
+        monkeypatch.setattr(thr.algorithm, "clean", lambda: clean_list.append(1))
+        thr.clean()
+        assert clean_list == [1]
+        monkeypatch.setattr(thr, "isRunning", lambda: True)
+        thr.clean()
+        assert clean_list == [1]
+        thr.finished_task()
+        assert clean_list == [1, 1]
+
+    def test_running_start(self, qtbot, monkeypatch):
+        start_list = []
+        monkeypatch.setattr(segmentation_thread.QThread, "start", lambda x, y: start_list.append(1))
+        thr = segmentation_thread.SegmentationThread(ROIExtractionAlgorithmForTest())
+        thr.start()
+        assert start_list == [1]
+        monkeypatch.setattr(thr, "isRunning", lambda: True)
+        thr.start()
+        assert start_list == [1]
+        thr.finished_task()
+        assert start_list == [1, 1]
+
+
+class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
+    def __init__(self, raise_=False, return_none=False):
+        super().__init__()
+        self.raise_ = raise_
+        self.return_none = return_none
+
+    @classmethod
+    def support_time(cls):
+        return False
+
+    @classmethod
+    def support_z(cls):
+        return True
+
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> Optional[ROIExtractionResult]:
+        if self.raise_:
+            raise RuntimeError("ee")
+        if self.return_none:
+            return
+        report_fun("text", 1)
+        return ROIExtractionResult(np.zeros((10, 10), dtype=np.uint8), ROIExtractionProfile("a", "a", {}))
+
+    def get_info_text(self):
+        return "text"
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "test"
+
+    @classmethod
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        return [AlgorithmProperty("a", "A", 0)]
