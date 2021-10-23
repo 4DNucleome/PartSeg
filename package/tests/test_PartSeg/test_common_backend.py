@@ -7,7 +7,7 @@ import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
 
-from PartSeg.common_backend import base_argparser, except_hook
+from PartSeg.common_backend import base_argparser, except_hook, progress_thread
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore import state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
@@ -17,10 +17,11 @@ IS_MACOS = sys.platform == "darwin"
 
 
 class TestExceptHook:
-    def test_show_error(self, monkeypatch):
+    def test_show_error(self, monkeypatch, qtbot):
         exec_list = []
 
         def exec_mock(self):
+            qtbot.add_widget(self)
             exec_list.append(self)
 
         monkeypatch.setattr(except_hook.QMessageBox, "exec_", exec_mock)
@@ -56,10 +57,11 @@ class TestExceptHook:
 
     @pytest.mark.parametrize("header", [None, "Text"])
     @pytest.mark.parametrize("text", [None, "Long text"])
-    def test_show_warning(self, monkeypatch, header, text):
+    def test_show_warning(self, monkeypatch, header, text, qtbot):
         exec_list = []
 
         def exec_mock(self):
+            qtbot.add_widget(self)
             exec_list.append(self)
 
         monkeypatch.setattr(except_hook.QMessageBox, "exec_", exec_mock)
@@ -158,3 +160,51 @@ class TestBaseArgparse:
     def test_safe_repr(self):
         assert base_argparser.safe_repr(1) == "1"
         assert base_argparser.safe_repr(np.arange(3)) == "array([0, 1, 2])"
+
+
+class TestProgressThread:
+    def test_progress_thread(self, qtbot):
+        thr = progress_thread.ProgressTread()
+        with qtbot.waitSignal(thr.range_changed, check_params_cb=lambda x, y: x == 0 and y == 15):
+            thr.info_function("max", 15)
+        with qtbot.waitSignal(thr.step_changed, check_params_cb=lambda x: x == 10):
+            thr.info_function("step", 10)
+
+    def test_execute_function_thread_no_callback(self, qtbot):
+        def no_callback_fun(a, b):
+            return a + b
+
+        thr = progress_thread.ExecuteFunctionThread(no_callback_fun, [1], {"b": 4})
+        thr.run()
+        assert thr.result == 5
+
+    def test_execute_function_thread_callback_fun(self, qtbot):
+        def callback_fun(a, b, callback_function):
+            callback_function("max", 15)
+            return a + b
+
+        thr = progress_thread.ExecuteFunctionThread(callback_fun, [1], {"b": 4})
+        with qtbot.waitSignal(thr.range_changed, check_params_cb=lambda x, y: x == 0 and y == 15):
+            thr.run()
+        assert thr.result == 5
+
+    def test_execute_function_thread_separate_callback(self, qtbot):
+        def callback_fun2(a, b, range_changed, step_changed):
+            range_changed(1, 15)
+            step_changed(10)
+            return a + b
+
+        thr = progress_thread.ExecuteFunctionThread(callback_fun2, [1], {"b": 4})
+        with qtbot.waitSignals(
+            [thr.range_changed, thr.step_changed], check_params_cbs=[lambda x, y: x == 1 and y == 15, lambda x: x == 10]
+        ):
+            thr.run()
+        assert thr.result == 5
+
+    def test_execute_function_thread_exception(self, qtbot):
+        def callback_fun2(a, b):
+            raise RuntimeError(a + b)
+
+        thr = progress_thread.ExecuteFunctionThread(callback_fun2, [1], {"b": 4})
+        with qtbot.waitSignal(thr.error_signal, check_params_cb=lambda x: x.args[0] == 5):
+            thr.run()
