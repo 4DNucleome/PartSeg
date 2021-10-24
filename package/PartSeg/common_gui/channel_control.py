@@ -507,7 +507,7 @@ class ColorComboBoxGroup(QWidget):
         self.change_channel.emit(self.name, index)
 
     def change_selected_color(self, index, color):
-        self.settings.set_channel_info(self.name, index, str(color))
+        self.settings.set_channel_colormap_name(self.name, index, str(color))
         self.coloring_update.emit()
         self.change_channel.emit(self.name, index)
 
@@ -520,10 +520,10 @@ class ColorComboBoxGroup(QWidget):
         if num >= self.layout().count():
             for i in range(self.layout().count(), num):
                 el = ColorComboBox(
-                    i,
-                    self.settings.chosen_colormap,
-                    self.settings.colormap_dict,
-                    self.settings.get_channel_info(self.name, i),
+                    id_num=i,
+                    colors=self.settings.chosen_colormap,
+                    color_dict=self.settings.colormap_dict,
+                    colormap=self.settings.get_channel_colormap_name(self.name, i),
                     base_height=self.height,
                     lock=self.settings.get_from_profile(f"{self.name}.lock_{i}", False),
                     blur=self.settings.get_from_profile(f"{self.name}.use_filter_{i}", NoiseFilterType.No),

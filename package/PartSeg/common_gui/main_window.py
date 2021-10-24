@@ -200,7 +200,7 @@ class BaseMainWindow(QMainWindow):
         channel_num = self.settings.image.channels
         if not self.channel_info:
             return [None for _ in range(channel_num)]
-        colormaps_name = [self.settings.get_channel_info(self.channel_info, i) for i in range(channel_num)]
+        colormaps_name = [self.settings.get_channel_colormap_name(self.channel_info, i) for i in range(channel_num)]
         return [self.settings.colormap_dict[name][0] for name in colormaps_name]
 
     def napari_viewer_show(self):

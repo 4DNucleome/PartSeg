@@ -475,7 +475,7 @@ class TestBaseSettings:
         settings.image = None
         assert settings.image is not None
 
-    def test_view_settings(self, tmp_path, image, roi, qtbot):
+    def test_view_settings_theme(self, tmp_path, image, roi, qtbot):
         settings = base_settings.ViewSettings()
         assert settings.theme_name == "light"
         assert hasattr(settings.theme, "text")
@@ -489,13 +489,36 @@ class TestBaseSettings:
         assert settings.theme_name == "dark"
         assert isinstance(settings.theme_list(), (tuple, list))
 
+    def test_view_settings_colormaps(self, tmp_path, image, roi, qtbot):
+        settings = base_settings.ViewSettings()
         assert settings.chosen_colormap == base_settings.starting_colors
         with qtbot.waitSignal(settings.colormap_changes):
             settings.chosen_colormap = ["A", "B"]
         assert settings.chosen_colormap == base_settings.starting_colors
+        assert "red" in settings.chosen_colormap
+        settings.chosen_colormap_change("red", False)
+        settings.chosen_colormap_change("red", False)
+        assert "red" not in settings.chosen_colormap
+        settings.chosen_colormap_change("red", True)
+        assert "red" in settings.chosen_colormap
+        assert "red" in settings.available_colormaps
+        assert settings.get_channel_colormap_name("aaa", 1) == base_settings.starting_colors[1]
+        assert base_settings.starting_colors[1] != base_settings.starting_colors[2]
+        settings.set_channel_colormap_name("aaa", 1, base_settings.starting_colors[2])
+        assert settings.get_channel_colormap_name("aaa", 1) == base_settings.starting_colors[2]
+
+    def test_view_settings_labels(self, tmp_path, image, roi, qtbot):
+        settings = base_settings.ViewSettings()
         assert settings.current_labels == "default"
         with pytest.raises(ValueError):
             settings.current_labels = "a"
+        settings.label_color_dict["aaaa"] = [(1, 1, 1)]
+        with qtbot.waitSignal(settings.labels_changed):
+            settings.current_labels = "aaaa"
+        settings.set_in_profile("labels_used", "eeee")
+        with qtbot.waitSignal(settings.labels_changed):
+            assert isinstance(settings.label_colors, np.ndarray)
+        assert settings.current_labels == "default"
 
     def test_colormap_dict(self):
         colormap_dict = base_settings.ColormapDict({})

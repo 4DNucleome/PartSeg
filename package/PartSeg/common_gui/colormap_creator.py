@@ -556,7 +556,7 @@ class PColormapList(ColormapList):
         for el in self.color_names:
             num = self.settings.get_from_profile(f"{el}.channels_count", 0)
             for i in range(num):
-                blocked.add(self.settings.get_channel_info(el, i))
+                blocked.add(self.settings.get_channel_colormap_name(el, i))
         return blocked
 
     def _change_colormap_visibility(self, name, visible):

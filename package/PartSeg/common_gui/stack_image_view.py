@@ -57,7 +57,7 @@ class ColorBar(QLabel):
             self.range = self._settings.get_from_profile(f"{name}.range_{channel_id}")
         else:
             self.range = self._settings.border_val[channel_id]
-        cmap = self._settings.colormap_dict[self._settings.get_channel_info(name, channel_id)][0]
+        cmap = self._settings.colormap_dict[self._settings.get_channel_colormap_name(name, channel_id)][0]
 
         round_factor = self.round_base(self.range[1])
         self.round_range = (

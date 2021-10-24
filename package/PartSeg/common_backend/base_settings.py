@@ -356,6 +356,7 @@ class ViewSettings(ImageSettings):
         key = self.current_labels
         if key not in self.label_color_dict:
             key = "default"
+            self.current_labels = key
 
         if not (self.cached_labels and key == self.cached_labels[0]):
             self.cached_labels = key, self.label_color_dict.get_array(key)
@@ -374,7 +375,15 @@ class ViewSettings(ImageSettings):
         # TODO update sorting rule
         self.chosen_colormap = list(sorted(colormaps, key=self.colormap_dict.get_position))
 
-    def get_channel_info(self, view: str, num: int, default: Optional[str] = None) -> str:
+    def get_channel_info(self, view: str, num: int, default: Optional[str] = None) -> str:  # pragma: no cover
+        warnings.warn(
+            "get_channel_info is deprecated, use get_channel_colormap_name instead",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_channel_colormap_name(view, num, default)
+
+    def get_channel_colormap_name(self, view: str, num: int, default: Optional[str] = None) -> str:
         cm = self.chosen_colormap
         if default is None:
             default = cm[num % len(cm)]
@@ -384,7 +393,15 @@ class ViewSettings(ImageSettings):
             self.set_in_profile(f"{view}.cmap{num}", resp)
         return resp
 
-    def set_channel_info(self, view: str, num, value: str):
+    def set_channel_info(self, view: str, num, value: str):  # pragma: no cover
+        warnings.warn(
+            "set_channel_info is deprecated, use set_channel_colormap_name instead",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        self.set_channel_colormap_name(view, num, value)
+
+    def set_channel_colormap_name(self, view: str, num, value: str):
         self.set_in_profile(f"{view}.cmap{num}", value)
 
     @property

@@ -49,7 +49,9 @@ class SynchronizeWidget(QWidget):
         channel_num = self.settings.image.channels
         if not self.partseg_viewer_name:
             return [None for _ in range(channel_num)]
-        colormaps_name = [self.settings.get_channel_info(self.partseg_viewer_name, i) for i in range(channel_num)]
+        colormaps_name = [
+            self.settings.get_channel_colormap_name(self.partseg_viewer_name, i) for i in range(channel_num)
+        ]
         return [self.settings.colormap_dict[name][0] for name in colormaps_name]
 
     def _clean_layers(self, layers_list):
