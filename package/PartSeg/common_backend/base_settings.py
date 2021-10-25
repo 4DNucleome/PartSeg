@@ -351,6 +351,9 @@ class ViewSettings(ImageSettings):
         self.set_in_profile("labels_used", val)
         self.labels_changed.emit()
 
+    def current_labels_changed_add_callback(self, callback):
+        self.connect_to_profile("labels_used", callback)
+
     @property
     def label_colors(self):
         key = self.current_labels
@@ -436,6 +439,10 @@ class ViewSettings(ImageSettings):
         :param default: default value if key is missed
         """
         return self.view_settings_dict.get(f"{self.current_profile_dict}.{key_path}", default)
+
+    def connect_to_profile(self, key_path, callback):
+        # TODO  fixme fix when introduce switch profiles
+        self.view_settings_dict.connect(f"{self.current_profile_dict}.{key_path}", callback)
 
 
 class SaveSettingsDescription(NamedTuple):

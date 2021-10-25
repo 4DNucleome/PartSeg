@@ -71,6 +71,21 @@ class TestProfileDict:
 
         assert dkt.my_dict == dkt2.my_dict
 
+    def test_callback(self):
+        call_list = []
+
+        def fun():
+            call_list.append(1)
+
+        dkt = ProfileDict()
+        dkt.connect("test", fun)
+        dkt.connect("test.b", fun)
+
+        dkt.set("test.a", 1)
+        # assert call_list == [1]
+        dkt.set("test.b", 1)
+        assert call_list == [1, 1, 1]
+
 
 def test_profile_hook_colormap_load(bundle_test_dir):
     with open(bundle_test_dir / "view_settings_v0.12.6.json") as f_p:

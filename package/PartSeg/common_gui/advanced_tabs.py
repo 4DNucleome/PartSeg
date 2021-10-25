@@ -7,6 +7,8 @@ import sys
 from functools import partial
 from typing import List
 
+import napari
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
@@ -28,6 +30,13 @@ from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelEditor
 from PartSegCore import plugins as core_plugins
 from PartSegCore import register, state_store
+
+if parse_version(napari.__version__) < parse_version("0.4.11"):
+    RENDERING_LIST = ["translucent"]
+else:
+    RENDERING_LIST = ["iso_categorical", "translucent"]
+
+RENDERING_MODE_NAME = "rendering_mode"
 
 
 class DevelopTab(QWidget):
@@ -132,15 +141,25 @@ class Apperance(QWidget):
         self.layout_list.setCurrentText(self.settings.theme_name)
 
         self.layout_list.currentIndexChanged.connect(self.change_theme)
+        self.labels_render_cmb = QComboBox()
+        self.labels_render_cmb.addItems(RENDERING_LIST)
+        self.labels_render_cmb.setCurrentText(self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0]))
+        self.labels_render_cmb.currentTextChanged.connect(self.change_render_mode)
 
         layout = QGridLayout()
-        layout.addWidget(self.layout_list, 0, 0)
-        layout.setColumnStretch(1, 1)
-        layout.setRowStretch(1, 1)
+        layout.addWidget(QLabel("Theme:"), 0, 0)
+        layout.addWidget(self.layout_list, 0, 1)
+        layout.addWidget(QLabel("ROI render mode:"), 1, 0)
+        layout.addWidget(self.labels_render_cmb, 1, 1)
+        layout.setColumnStretch(2, 1)
+        layout.setRowStretch(2, 1)
         self.setLayout(layout)
 
     def change_theme(self):
         self.settings.theme_name = self.layout_list.currentText()
+
+    def change_render_mode(self, text):
+        self.settings.set_in_profile(RENDERING_MODE_NAME, text)
 
 
 class ColorControl(QTabWidget):

@@ -5,15 +5,8 @@ from enum import Enum
 from functools import partial
 from typing import Dict, List, Optional, Tuple, Union
 
+import napari
 import numpy as np
-
-from PartSegCore.class_generator import enum_register
-
-try:
-    from napari._qt.qt_viewer_buttons import QtViewerPushButton
-except ImportError:
-    from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
-
 import qtawesome as qta
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
@@ -21,19 +14,28 @@ from napari.layers.image import Image as NapariImage
 from napari.layers.labels import Labels
 from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QObject, QPoint, Qt, Signal
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QToolTip, QVBoxLayout, QWidget
+from superqt import ensure_main_thread
 from vispy.color import Color, Colormap
 from vispy.scene import BaseCamera
 
+from PartSegCore.class_generator import enum_register
 from PartSegCore.color_image import calculate_borders
 from PartSegCore.image_operations import NoiseFilterType, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings, ViewSettings
+from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME
 from .channel_control import ChannelProperty, ColorComboBoxGroup
+
+try:
+    from napari._qt.qt_viewer_buttons import QtViewerPushButton
+except ImportError:
+    from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 
 
 class QtNDisplayButton(QtStateButton):
@@ -52,6 +54,8 @@ ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
 NEXT_ORDER = {"xy": "zy", "zy": "zx", "zx": "xy"}
 
 ColorInfo = Dict[int, Union[str, List[float]]]
+
+napari_rendering = parse_version(napari.__version__) >= parse_version("0.4.11")
 
 
 @dataclass
@@ -227,6 +231,8 @@ class ImageView(QWidget):
         settings.image_changed.connect(self.set_image)
         settings.image_spacing_changed.connect(self.update_spacing_info)
         settings.points_changed.connect(self.update_points)
+        settings.connect_to_profile(RENDERING_MODE_NAME, self.update_rendering)
+        settings.current_labels_changed_add_callback(self.update_roi_coloring)
         # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
@@ -467,10 +473,30 @@ class ImageView(QWidget):
 
         self.viewer.layers.remove_selected()
 
+    @ensure_main_thread
+    def update_rendering(self):
+        rendering = self.settings.get_from_profile(RENDERING_MODE_NAME)
+        for image_info in self.image_info.values():
+            if image_info.roi is not None:
+                image_info.roi.rendering = rendering
+
+    @ensure_main_thread
+    def update_roi_labeling(self):
+        for image_info in self.image_info.values():
+            if image_info.roi is not None:
+                image_info.roi.color = self.get_roi_view_parameters(image_info)
+
     def add_roi_layer(self, image_info: ImageInfo):
         if image_info.roi_info.roi is None:
             return
         roi = image_info.roi_info.alternative.get(self.image_state.roi_presented, image_info.roi_info.roi)
+        kwargs = {
+            "scale": image_info.image.normalized_scaling(),
+            "name": "ROI",
+            "blending": "translucent",
+        }
+        if napari_rendering:
+            kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
         if self.image_state.only_borders:
 
             data = calculate_borders(
@@ -478,19 +504,9 @@ class ImageView(QWidget):
                 self.image_state.borders_thick // 2,
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
-            image_info.roi = self.viewer.add_labels(
-                data,
-                scale=image_info.image.normalized_scaling(),
-                name="ROI",
-                blending="translucent",
-            )
+            image_info.roi = self.viewer.add_labels(data, **kwargs)
         else:
-            image_info.roi = self.viewer.add_labels(
-                roi,
-                scale=image_info.image.normalized_scaling(),
-                name="ROI",
-                blending="translucent",
-            )
+            image_info.roi = self.viewer.add_labels(roi, **kwargs)
 
     def update_roi_representation(self):
         self.remove_all_roi()
@@ -733,7 +749,10 @@ class ImageView(QWidget):
         for el in self.components:
             data = image_info.roi_info.annotations.get(el, {})
             if data:
-                text_list.append(_print_dict(data))
+                try:
+                    text_list.append(_print_dict(data))
+                except ValueError:  # pragma: no cover
+                    logging.warning("Wrong value provided as layer annotation.")
         return " ".join(text_list)
 
     def event(self, event: QEvent):
