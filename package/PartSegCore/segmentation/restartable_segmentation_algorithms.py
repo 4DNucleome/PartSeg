@@ -546,6 +546,7 @@ class OtsuSegment(RestartableAlgorithm):
         res = SimpleITK.GetArrayFromImage(res)
         self._sizes_array = np.bincount(res.flat)[1:]
         self.threshold_info = []
+        annotations = {}
         for i in range(1, self.new_parameters["components"] + 1):
             val = cleaned_image[res == i]
             if val.size:
@@ -554,10 +555,14 @@ class OtsuSegment(RestartableAlgorithm):
                 self.threshold_info.append(self.threshold_info[-1])
             else:
                 self.threshold_info.append(0)
+            annotations[i] = {"lower threshold": self.threshold_info[-1]}
+            if len(self.threshold_info) > 1:
+                annotations[i]["upper threshold"] = self.threshold_info[-2]
         return ROIExtractionResult(
             roi=res,
             parameters=self.get_segmentation_profile(),
             additional_layers={"denoised_image": AdditionalLayerDescription(data=cleaned_image, layer_type="image")},
+            roi_annotation=annotations,
         )
 
     def get_info_text(self):
