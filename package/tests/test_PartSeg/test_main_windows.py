@@ -1,7 +1,6 @@
 import platform
 import sys
 
-import napari
 import pytest
 import qtpy
 from qtpy.QtCore import QCoreApplication
@@ -11,8 +10,6 @@ from PartSeg._roi_analysis import main_window as analysis_main_window
 from PartSeg._roi_mask import main_window as mask_main_window
 
 from .utils import CI_BUILD, GITHUB_ACTIONS, TRAVIS
-
-napari_warnings = napari.__version__ == "0.3.4" and platform.system() == "Linux" and sys.version_info.minor == 8
 
 
 def empty(*_):
@@ -28,7 +25,6 @@ class TestAnalysisMainWindow:
         (platform.system() == "Windows") and GITHUB_ACTIONS and sys.version_info.minor == 7, reason="need to debug"
     )
     @pyside_skip
-    @pytest.mark.skipif(napari_warnings, reason="warnings fail test")
     def test_opening(self, qtbot, tmpdir):
         main_window = analysis_main_window.MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
@@ -41,7 +37,6 @@ class TestAnalysisMainWindow:
 class TestMaskMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pyside_skip
-    @pytest.mark.skipif(napari_warnings, reason="warnings fail test")
     def test_opening(self, qtbot, tmpdir):
         main_window = mask_main_window.MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)

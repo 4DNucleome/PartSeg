@@ -6,6 +6,7 @@ from typing import Callable, Optional
 
 import numpy as np
 import pytest
+import qtpy
 import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
@@ -28,6 +29,7 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, Segm
 from PartSegImage import Image, TiffFileException
 
 IS_MACOS = sys.platform == "darwin"
+pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
 
 
 class TestExceptHook:
@@ -520,6 +522,7 @@ class TestBaseSettings:
             assert isinstance(settings.label_colors, np.ndarray)
         assert settings.current_labels == "default"
 
+    @pyside_skip
     def test_colormap_dict(self):
         colormap_dict = base_settings.ColormapDict({})
         assert colormap_dict.colormap_removed == colormap_dict.item_removed
