@@ -18,6 +18,7 @@ from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QObject, QPoint, Qt, Signal
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QToolTip, QVBoxLayout, QWidget
+from superqt import ensure_main_thread
 from vispy.color import Color, Colormap
 from vispy.scene import BaseCamera
 
@@ -28,7 +29,7 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings, ViewSettings
-from .advanced_tabs import rendering_list
+from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME
 from .channel_control import ChannelProperty, ColorComboBoxGroup
 
 try:
@@ -230,6 +231,8 @@ class ImageView(QWidget):
         settings.image_changed.connect(self.set_image)
         settings.image_spacing_changed.connect(self.update_spacing_info)
         settings.points_changed.connect(self.update_points)
+        settings.connect_to_profile(RENDERING_MODE_NAME, self.update_rendering)
+        settings.current_labels_changed_add_callback(self.update_roi_coloring)
         # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
@@ -470,6 +473,19 @@ class ImageView(QWidget):
 
         self.viewer.layers.remove_selected()
 
+    @ensure_main_thread
+    def update_rendering(self):
+        rendering = self.settings.get_from_profile(RENDERING_MODE_NAME)
+        for image_info in self.image_info.values():
+            if image_info.roi is not None:
+                image_info.roi.rendering = rendering
+
+    @ensure_main_thread
+    def update_roi_labeling(self):
+        for image_info in self.image_info.values():
+            if image_info.roi is not None:
+                image_info.roi.color = self.get_roi_view_parameters(image_info)
+
     def add_roi_layer(self, image_info: ImageInfo):
         if image_info.roi_info.roi is None:
             return
@@ -480,7 +496,7 @@ class ImageView(QWidget):
             "blending": "translucent",
         }
         if napari_rendering:
-            kwargs["rendering"] = self.settings.get_from_profile("rendering_mode", rendering_list[0])
+            kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
         if self.image_state.only_borders:
 
             data = calculate_borders(
