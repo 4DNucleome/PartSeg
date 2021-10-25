@@ -232,7 +232,7 @@ class ImageView(QWidget):
         settings.image_spacing_changed.connect(self.update_spacing_info)
         settings.points_changed.connect(self.update_points)
         settings.connect_to_profile(RENDERING_MODE_NAME, self.update_rendering)
-        settings.current_labels_changed_add_callback(self.update_roi_coloring)
+        settings.labels_changed.connect(self.update_roi_coloring)
         # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 

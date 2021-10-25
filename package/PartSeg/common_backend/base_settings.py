@@ -351,9 +351,6 @@ class ViewSettings(ImageSettings):
         self.set_in_profile("labels_used", val)
         self.labels_changed.emit()
 
-    def current_labels_changed_add_callback(self, callback):
-        self.connect_to_profile("labels_used", callback)
-
     @property
     def label_colors(self):
         key = self.current_labels
@@ -417,8 +414,15 @@ class ViewSettings(ImageSettings):
 
     def change_profile(self, name):
         self.current_profile_dict = name
-        if self.current_profile_dict not in self.view_settings_dict:
-            self.view_settings_dict = {self.current_profile_dict: ProfileDict()}
+
+        callback_list = []
+        for path, callback in list(self.view_settings_dict._callback_dict.items()):
+            callback_list.extend(callback)
+            if "." not in path:  # pragma: no cover
+                continue
+            self.view_settings_dict._callback_dict[f'{name}.{path.split(".", 1)[1]}'] = callback
+        for callback in callback_list:
+            callback()
 
     def set_in_profile(self, key_path, value):
         """
@@ -740,11 +744,11 @@ class BaseSettings(ViewSettings):
 
     def get_project_info(self) -> ProjectInfoBase:
         """Get all information needed to save project"""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def set_project_info(self, data: ProjectInfoBase):
         """Set project info"""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @staticmethod
     def verify_image(image: Image, silent=True) -> Union[Image, bool]:

@@ -522,6 +522,24 @@ class TestBaseSettings:
             assert isinstance(settings.label_colors, np.ndarray)
         assert settings.current_labels == "default"
 
+    def test_view_settings_profile_access(self):
+        callback_list = []
+
+        def callback():
+            callback_list.append(1)
+
+        settings = base_settings.ViewSettings()
+        settings.connect_to_profile("aaa", callback)
+        settings.set_in_profile("aaa", 10)
+        assert settings.get_from_profile("aaa", 11) == 10
+        assert callback_list == [1]
+        settings.change_profile("default2")
+        assert settings.get_from_profile("aaa", 11) == 11
+        settings.set_in_profile("aaa", 15)
+        assert settings.get_from_profile("aaa", 11) == 15
+        settings.change_profile("default")
+        assert settings.get_from_profile("aaa", 11) == 10
+
     @pyside_skip
     def test_colormap_dict(self):
         colormap_dict = base_settings.ColormapDict({})

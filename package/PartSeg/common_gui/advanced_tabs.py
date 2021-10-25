@@ -143,8 +143,9 @@ class Apperance(QWidget):
         self.layout_list.currentIndexChanged.connect(self.change_theme)
         self.labels_render_cmb = QComboBox()
         self.labels_render_cmb.addItems(RENDERING_LIST)
-        self.labels_render_cmb.setCurrentText(self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0]))
+        self._update_render_mode()
         self.labels_render_cmb.currentTextChanged.connect(self.change_render_mode)
+        settings.connect_to_profile(RENDERING_MODE_NAME, self._update_render_mode)
 
         layout = QGridLayout()
         layout.addWidget(QLabel("Theme:"), 0, 0)
@@ -160,6 +161,9 @@ class Apperance(QWidget):
 
     def change_render_mode(self, text):
         self.settings.set_in_profile(RENDERING_MODE_NAME, text)
+
+    def _update_render_mode(self):
+        self.labels_render_cmb.setCurrentText(self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0]))
 
 
 class ColorControl(QTabWidget):
