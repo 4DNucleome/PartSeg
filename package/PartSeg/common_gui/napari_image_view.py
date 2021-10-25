@@ -735,7 +735,7 @@ class ImageView(QWidget):
             if data:
                 try:
                     text_list.append(_print_dict(data))
-                except ValueError:
+                except ValueError:  # pragma: no cover
                     logging.warning("Wrong value provided as layer annotation.")
         return " ".join(text_list)
 
