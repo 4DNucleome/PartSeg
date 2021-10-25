@@ -9,6 +9,8 @@ import numpy as np
 
 from PartSegCore.class_generator import enum_register
 
+from .advanced_tabs import rendering_list
+
 try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton
 except ImportError:
@@ -483,6 +485,7 @@ class ImageView(QWidget):
                 scale=image_info.image.normalized_scaling(),
                 name="ROI",
                 blending="translucent",
+                rendering=self.settings.get_from_profile("rendering_mode", rendering_list[0]),
             )
         else:
             image_info.roi = self.viewer.add_labels(
@@ -490,6 +493,7 @@ class ImageView(QWidget):
                 scale=image_info.image.normalized_scaling(),
                 name="ROI",
                 blending="translucent",
+                rendering=self.settings.get_from_profile("rendering_mode", rendering_list[0]),
             )
 
     def update_roi_representation(self):
