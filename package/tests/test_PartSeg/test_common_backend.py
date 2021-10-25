@@ -1,6 +1,7 @@
 import argparse
 import sys
 import typing
+from io import BytesIO
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -23,6 +24,8 @@ from PartSeg.common_backend import (
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.mask_create import MaskProperty
+from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation import ROIExtractionResult
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, SegmentationLimitException
@@ -550,6 +553,50 @@ class TestBaseSettings:
         label_dict = base_settings.LabelColorDict({})
         assert isinstance(label_dict.get_array("default"), np.ndarray)
 
-    def test_base_settings(self, tmp_path):
+    def test_base_settings(self, tmp_path, image, qtbot):
         settings = base_settings.BaseSettings(tmp_path / "data.json")
         assert settings.theme_name == "light"
+        with qtbot.waitSignal(settings.points_changed):
+            settings.points = (10, 10)
+        assert settings.points == ((10, 10))
+        settings.image = image
+        assert settings.points is None
+        settings.theme_name = "dark"
+        assert settings.theme_name == "dark"
+
+    def test_base_settings_history(self, tmp_path, qtbot, monkeypatch):
+        settings = base_settings.BaseSettings(tmp_path / "data.json")
+        assert settings.history_size() == 0
+        assert settings.history_redo_size() == 0
+        hist_elem = HistoryElement({"a": 1}, None, MaskProperty.simple_mask(), BytesIO())
+        hist_elem2 = HistoryElement({"a": 2}, None, MaskProperty.simple_mask(), BytesIO())
+        hist_elem3 = HistoryElement({"a": 3}, None, MaskProperty.simple_mask(), BytesIO())
+        settings.add_history_element(hist_elem)
+        assert settings.history_size() == 1
+        assert settings.history_redo_size() == 0
+        settings.add_history_element(hist_elem2)
+        assert settings.history_size() == 2
+        assert settings.history_redo_size() == 0
+        assert settings.history_pop().roi_extraction_parameters["a"] == 2
+        assert settings.history_current_element().roi_extraction_parameters["a"] == 1
+        assert settings.history_next_element().roi_extraction_parameters["a"] == 2
+        assert settings.history_redo_size() == 1
+        assert settings.history_size() == 1
+        assert len(settings.get_history()) == 1
+        assert settings.get_history()[-1].roi_extraction_parameters["a"] == 1
+        settings.add_history_element(hist_elem3)
+        settings.history_pop()
+        settings.history_redo_clean()
+        assert settings.history_redo_size() == 0
+        settings.history_pop()
+        assert settings.history_pop() is None
+        assert settings.history_size() == 0
+        assert settings.history_redo_size() == 1
+
+        settings.set_history([hist_elem, hist_elem2])
+        assert settings.get_history()[-1].roi_extraction_parameters["a"] == 2
+        assert settings.history_size() == 2
+        assert settings.history_redo_size() == 0
+        settings.history_pop()
+        monkeypatch.setattr(settings, "cmp_history_element", lambda x, y: True)
+        settings.add_history_element(hist_elem3)

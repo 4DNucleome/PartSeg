@@ -545,9 +545,6 @@ class BaseSettings(ViewSettings):
     def _load_files_call(self, files_list: List[str]):
         self.request_load_files.emit(files_list)
 
-    def mask_representation_changed_emit(self):
-        self.mask_representation_changed.emit()
-
     def add_history_element(self, elem: HistoryElement) -> None:
         self.history_index += 1
         if self.history_index < len(self.history) and self.cmp_history_element(elem, self.history[self.history_index]):
