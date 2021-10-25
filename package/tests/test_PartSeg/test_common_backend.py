@@ -1,13 +1,13 @@
 import argparse
 import sys
 import typing
+from functools import partial
 from io import BytesIO
 from pathlib import Path
 from typing import Callable, Optional
 
 import numpy as np
 import pytest
-import qtpy
 import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
@@ -32,7 +32,6 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, Segm
 from PartSegImage import Image, TiffFileException
 
 IS_MACOS = sys.platform == "darwin"
-pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
 
 
 class TestExceptHook:
@@ -543,11 +542,21 @@ class TestBaseSettings:
         settings.change_profile("default")
         assert settings.get_from_profile("aaa", 11) == 10
 
-    @pyside_skip
     def test_colormap_dict(self):
+        call_list = []
+
+        def test_fun(val1, value):
+            call_list.append((val1, value))
+
         colormap_dict = base_settings.ColormapDict({})
+        colormap_dict.colormap_removed.connect(partial(test_fun, "removed"))
+        colormap_dict.colormap_added.connect(partial(test_fun, "added"))
         assert colormap_dict.colormap_removed == colormap_dict.item_removed
         assert colormap_dict.colormap_added == colormap_dict.item_added
+        colormap_dict.item_added.emit("aaaa")
+        assert call_list == [("added", "aaaa")]
+        colormap_dict.item_removed.emit("bbbb")
+        assert call_list == [("added", "aaaa"), ("removed", "bbbb")]
 
     def test_label_color_dict(self):
         label_dict = base_settings.LabelColorDict({})
