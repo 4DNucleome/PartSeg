@@ -733,7 +733,10 @@ class ImageView(QWidget):
         for el in self.components:
             data = image_info.roi_info.annotations.get(el, {})
             if data:
-                text_list.append(_print_dict(data))
+                try:
+                    text_list.append(_print_dict(data))
+                except ValueError:  # pragma: no cover
+                    logging.warning("Wrong value provided as layer annotation.")
         return " ".join(text_list)
 
     def event(self, event: QEvent):
