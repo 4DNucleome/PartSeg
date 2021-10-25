@@ -556,8 +556,9 @@ class OtsuSegment(RestartableAlgorithm):
             else:
                 self.threshold_info.append(0)
             annotations[i] = {"lower threshold": self.threshold_info[-1]}
-            if len(self.threshold_info) > 1:
-                annotations[i]["upper threshold"] = self.threshold_info[-2]
+            if i > 1:
+                annotations[i - 1]["upper threshold"] = self.threshold_info[-1]
+        annotations[self.new_parameters["components"]]["upper threshold"] = np.max(cleaned_image)
         return ROIExtractionResult(
             roi=res,
             parameters=self.get_segmentation_profile(),
