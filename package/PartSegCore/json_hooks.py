@@ -1,5 +1,6 @@
 import copy
 import typing
+from collections import defaultdict
 
 import numpy as np
 from napari.utils import Colormap
@@ -8,6 +9,7 @@ from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 
 from .class_generator import SerializeClassEncoder, serialize_hook
 from .image_operations import RadiusType
+from .utils import CallbackBase, get_callback
 
 
 def recursive_update_dict(main_dict: dict, other_dict: dict):
@@ -46,6 +48,7 @@ class ProfileDict:
 
     def __init__(self):
         self.my_dict = {}
+        self._callback_dict: typing.Dict[str, typing.List[CallbackBase]] = defaultdict(list)
 
     def update(self, ob: typing.Union["ProfileDict", dict, None] = None, **kwargs):
         """
@@ -63,7 +66,13 @@ class ProfileDict:
         elif ob is None:
             recursive_update_dict(self.my_dict, kwargs)
 
-    def set(self, key_path: typing.Union[list, str], value):
+    def connect(self, key_path: typing.Union[typing.Sequence[str], str], callback):
+        if not isinstance(key_path, str):
+            key_path = ".".join(key_path)
+
+        self._callback_dict[key_path].append(get_callback(callback))
+
+    def set(self, key_path: typing.Union[typing.Sequence[str], str], value):
         """
         Set value from dict
 
@@ -84,6 +93,21 @@ class ProfileDict:
                     curr_dict = curr_dict[key2]
                     break
         curr_dict[key_path[-1]] = value
+
+        callback_path = key_path[0]
+        callback_list = []
+        if callback_path in self._callback_dict:
+            callback_list = self._callback_dict[callback_path]
+
+        for key in key_path[1:]:
+            callback_path = callback_path + "." + key
+            if callback_path in self._callback_dict:
+                li = self._callback_dict[callback_path]
+                li = [x for x in li if x.is_alive()]
+                self._callback_dict[callback_path] = li
+                callback_list.extend(li)
+        for callback in callback_list:
+            callback()
 
     def get(self, key_path: typing.Union[list, str], default=None):
         """

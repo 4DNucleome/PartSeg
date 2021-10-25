@@ -32,9 +32,11 @@ from PartSegCore import plugins as core_plugins
 from PartSegCore import register, state_store
 
 if parse_version(napari.__version__) < parse_version("0.4.11"):
-    rendering_list = ["translucent"]
+    RENDERING_LIST = ["translucent"]
 else:
-    rendering_list = ["iso_categorical", "translucent"]
+    RENDERING_LIST = ["iso_categorical", "translucent"]
+
+RENDERING_MODE_NAME = "rendering_mode"
 
 
 class DevelopTab(QWidget):
@@ -140,8 +142,8 @@ class Apperance(QWidget):
 
         self.layout_list.currentIndexChanged.connect(self.change_theme)
         self.labels_render_cmb = QComboBox()
-        self.labels_render_cmb.addItems(rendering_list)
-        self.labels_render_cmb.setCurrentText(self.settings.get_from_profile("rendering_mode", rendering_list[0]))
+        self.labels_render_cmb.addItems(RENDERING_LIST)
+        self.labels_render_cmb.setCurrentText(self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0]))
         self.labels_render_cmb.currentTextChanged.connect(self.change_render_mode)
 
         layout = QGridLayout()
@@ -157,7 +159,7 @@ class Apperance(QWidget):
         self.settings.theme_name = self.layout_list.currentText()
 
     def change_render_mode(self, text):
-        self.settings.set_in_profile("rendering_mode", text)
+        self.settings.set_in_profile(RENDERING_MODE_NAME, text)
 
 
 class ColorControl(QTabWidget):
