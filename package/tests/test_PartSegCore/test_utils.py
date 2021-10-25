@@ -18,7 +18,7 @@ def test_callback_method():
     call_list = []
 
     class A:
-        def fun(self):
+        def fun(self):  # pylint: disable=R0201
             call_list.append(1)
 
     a = A()
@@ -27,7 +27,7 @@ def test_callback_method():
     callback()
     assert call_list == [1]
     assert callback.is_alive()
-    del a
+    del a  # skipcq: PTC-W0043
     assert not callback.is_alive()
     callback()
     assert call_list == [1]
@@ -38,7 +38,7 @@ def test_get_callback():
         return 1
 
     class A:
-        def fun(self):
+        def fun(self):  # pylint: disable=R0201
             return 1
 
     a = A()

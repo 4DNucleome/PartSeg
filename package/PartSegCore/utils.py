@@ -57,7 +57,6 @@ class CallbackMethod(CallbackBase):
 
     @staticmethod
     def _get_proper_name(callback):
-        assert inspect.ismethod(callback)
         obj = callback.__self__
         if not hasattr(obj, callback.__name__) or getattr(obj, callback.__name__) != callback:
             # some decorators will alter method.__name__, so that obj.method
@@ -79,8 +78,8 @@ class CallbackMethod(CallbackBase):
             getattr(obj, self.name)(*args, **kwarg)
 
 
-def get_callback(callable: Callable) -> CallbackBase:
-    if inspect.ismethod(callable):
-        return CallbackMethod(callable)
+def get_callback(calback: Callable) -> CallbackBase:
+    if inspect.ismethod(calback):
+        return CallbackMethod(calback)
 
-    return CallbackFun(callable)
+    return CallbackFun(calback)
