@@ -422,7 +422,7 @@ class ViewSettings(ImageSettings):
             callback_list.extend(callback)
             if "." not in path:  # pragma: no cover
                 continue
-            self.view_settings_dict._callback_dict[
+            self.view_settings_dict._callback_dict[  # pylint: disable=W0212
                 f'{name}.{path.split(".", 1)[1]}'
             ] = callback  # pylint: disable=W0212
         for callback in callback_list:
