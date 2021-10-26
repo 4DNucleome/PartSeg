@@ -1,3 +1,4 @@
+# pylint: disable=R0201
 import argparse
 import sys
 import typing
