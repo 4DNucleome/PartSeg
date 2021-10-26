@@ -258,10 +258,8 @@ class TestSegmentationThread:
         thr = segmentation_thread.SegmentationThread(algorithm)
         image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
         algorithm.set_image(image)
-        with qtbot.assertNotEmitted(thr.execution_done):
-            with qtbot.waitSignal(thr.exception_occurred):
-
-                thr.run()
+        with qtbot.assertNotEmitted(thr.execution_done), qtbot.waitSignal(thr.exception_occurred):
+            thr.run()
 
     def test_running_set_parameters(self, qtbot, monkeypatch):
         thr = segmentation_thread.SegmentationThread(ROIExtractionAlgorithmForTest())
@@ -350,7 +348,8 @@ class TestPartiallyConstDict:
         assert dkt["b"] == (2, False)
         assert dkt["e"] == (7, True)
         with pytest.raises(KeyError):
-            dkt["k"]
+            dkt["w"] = dkt["k"]
+        assert "w" not in dkt
 
         with pytest.raises(ValueError):
             del dkt["b"]
@@ -367,7 +366,7 @@ class TestPartiallyConstDict:
 
 class TestLoadBackup:
     @staticmethod
-    def block_exec(self, *args, **kwargs):
+    def block_exec(*args, **kwargs):
         raise RuntimeError("aa")
 
     def test_no_backup(self, monkeypatch, tmp_path):
@@ -615,9 +614,8 @@ class TestBaseSettings:
         mask = np.ones((10, 10), dtype=np.uint8)
         assert image.mask is None
         assert settings.mask is None
-        with qtbot.assertNotEmitted(settings.mask_changed):
-            with pytest.raises(ValueError):
-                settings.mask = mask[:2]
+        with qtbot.assertNotEmitted(settings.mask_changed), pytest.raises(ValueError):
+            settings.mask = mask[:2]
         with qtbot.waitSignal(settings.mask_changed):
             settings.mask = mask
         assert image.mask is not None
