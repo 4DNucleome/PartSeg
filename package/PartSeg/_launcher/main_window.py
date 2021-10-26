@@ -129,7 +129,7 @@ class MainWindow(QMainWindow):
             text = "\n".join("File: " + x[0] + "\n" + str(x[1]) for x in self.prepare.errors)
 
             errors_message.setDetailedText(text)
-            errors_message.exec()
+            errors_message.exec_()
         wind = self.prepare.result(title=self.final_title, signal_fun=self.window_shown)
         wind.show()
         self.wind = wind

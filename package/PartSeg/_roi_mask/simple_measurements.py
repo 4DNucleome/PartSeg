@@ -95,7 +95,7 @@ class SimpleMeasurements(QWidget):
                 "result_units": self.units_select.currentEnum(),
             },
         )
-        dial.exec()
+        dial.exec_()
         result: MeasurementResult = dial.get_result()
         values = result.get_separated()
         labels = result.get_labels()

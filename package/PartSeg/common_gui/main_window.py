@@ -134,7 +134,7 @@ class BaseMainWindow(QMainWindow):
                 errors_message.setStandardButtons(QMessageBox.Ok)
                 text = "\n".join("File: " + x[0] + "\n" + str(x[1]) for x in errors)
                 errors_message.setDetailedText(text)
-                errors_message.exec()
+                errors_message.exec_()
 
         super().__init__()
         if signal_fun is not None:
@@ -186,7 +186,7 @@ class BaseMainWindow(QMainWindow):
         try:
             method: LoadBase = self._load_dict[data[1]]
             dial = ExecuteFunctionDialog(method.load, [data[0]], exception_hook=load_data_exception_hook)
-            if dial.exec():
+            if dial.exec_():
                 result = dial.get_result()
                 self.main_menu.set_data(result)
                 self.settings.add_load_files_history(data[0], method.get_name())
@@ -260,7 +260,7 @@ class BaseMainWindow(QMainWindow):
                 continue
             if ext_set.issubset(load_class.get_extensions()):
                 dial = ExecuteFunctionDialog(load_class.load, [paths], exception_hook=exception_hook)
-                if dial.exec():
+                if dial.exec_():
                     result = dial.get_result()
                     self.main_menu.set_data(result)
                     self.settings.add_load_files_history(paths, load_class.get_name())
@@ -284,7 +284,7 @@ class BaseMainWindow(QMainWindow):
     def show_settings_directory(self):
         DirectoryDialog(
             self.settings.json_folder_path, "Path to place where PartSeg store the data between runs"
-        ).exec()
+        ).exec_()
 
     @staticmethod
     def show_about_dialog():
@@ -297,12 +297,12 @@ class BaseMainWindow(QMainWindow):
 
     def image_adjust_exec(self):
         dial = ImageAdjustmentDialog(self.settings.image)
-        if dial.exec():
+        if dial.exec_():
             algorithm = dial.result_val.algorithm
             dial2 = ExecuteFunctionDialog(
                 algorithm.transform, [], {"image": self.settings.image, "arguments": dial.result_val.values}
             )
-            if dial2.exec():
+            if dial2.exec_():
                 result: Image = dial2.get_result()
                 self.settings.set_project_info(self.get_project_info(result.file_path, result))
 

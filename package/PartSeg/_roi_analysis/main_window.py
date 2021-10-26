@@ -203,7 +203,7 @@ class Options(QWidget):
         process_thread = CalculatePipelineThread(self._settings.image, self._settings.mask, pipeline)
         dial = WaitingDialog(process_thread)
 
-        if dial.exec() and process_thread.result:
+        if dial.exec_() and process_thread.result:
             pipeline_result = process_thread.result
             self._settings.mask = pipeline_result.mask
             self._settings.roi = pipeline_result.roi_info.roi
@@ -401,7 +401,7 @@ class MainMenu(BaseMainMenu):
             self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home())))
         )
         dial.selectNameFilter(self.settings.get("io.save_filter", ""))
-        if dial.exec():
+        if dial.exec_():
             save_location, selected_filter, save_class, values = dial.get_result()
             project_info = self.settings.get_project_info()
             self.settings.set("io.save_filter", selected_filter)
@@ -419,7 +419,7 @@ class MainMenu(BaseMainMenu):
             dial2 = ExecuteFunctionDialog(
                 save_class.save, [save_location, project_info, values], exception_hook=exception_hook
             )
-            dial2.exec()
+            dial2.exec_()
 
     def mask_manager(self):
         if self.settings.roi is None:
@@ -458,7 +458,7 @@ class MainMenu(BaseMainMenu):
                     {"metadata": {"default_spacing": self.settings.image_spacing}},
                     exception_hook=exception_hook,
                 )
-                if dial2.exec():
+                if dial2.exec_():
                     result = dial2.get_result()
                     self.set_data(result)
 

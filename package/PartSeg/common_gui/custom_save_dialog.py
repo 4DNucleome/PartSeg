@@ -131,7 +131,7 @@ class CustomSaveDialog(QFileDialog):
         dial = FormDialog(fields)
         if self.selectedNameFilter() in self.base_values:
             dial.set_values(self.base_values[self.selectedNameFilter()])
-        if dial.exec():
+        if dial.exec_():
             self.values = dial.get_values()
             super().accept()
         else:

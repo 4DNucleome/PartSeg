@@ -227,7 +227,7 @@ class FileMask(QWidget):
         dial.setFileMode(QFileDialog.ExistingFile)
         dial.setAcceptMode(QFileDialog.AcceptOpen)
 
-        if dial.exec():
+        if dial.exec_():
             self.first_text.setText(dial.selectedFiles()[0])
 
     def is_valid(self):
@@ -561,18 +561,19 @@ class CreatePlan(QWidget):
             [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
             + save_class.get_fields()
         )
-        if dial.exec():
-            values = dial.get_values()
-            suffix = values["suffix"]
-            directory = values["directory"]
-            del values["suffix"]
-            del values["directory"]
-            save_elem = Save(suffix, directory, save_class.get_name(), save_class.get_short_name(), values)
-            if self.update_element_chk.isChecked():
-                self.calculation_plan.replace_step(save_elem)
-            else:
-                self.calculation_plan.add_step(save_elem)
-            self.plan.update_view()
+        if not dial.exec_():
+            return
+        values = dial.get_values()
+        suffix = values["suffix"]
+        directory = values["directory"]
+        del values["suffix"]
+        del values["directory"]
+        save_elem = Save(suffix, directory, save_class.get_name(), save_class.get_short_name(), values)
+        if self.update_element_chk.isChecked():
+            self.calculation_plan.replace_step(save_elem)
+        else:
+            self.calculation_plan.add_step(save_elem)
+        self.plan.update_view()
 
     def create_mask(self):
         text = str(self.mask_name.text()).strip()
@@ -591,7 +592,7 @@ class CreatePlan(QWidget):
             else:
                 MaskConstruct = MaskSum
             dial = mask_dialog(self.mask_set)
-            if not dial.exec():
+            if not dial.exec_():
                 return
             names = dial.get_result()
 

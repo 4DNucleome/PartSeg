@@ -46,6 +46,9 @@ class WaitingDialog(QDialog):
             self.accept()
 
     def exec(self):
+        self.exec_()
+
+    def exec_(self):
         self.thread_to_wait.start()
         return super().exec_()
 
