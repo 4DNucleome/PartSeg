@@ -9,7 +9,7 @@ try:
     # to ignore problem with test in docker container
 
     import napari
-    from qtpy.QtWidgets import QApplication
+    from qtpy.QtWidgets import QApplication, QDialog, QMessageBox
 
     from PartSeg._roi_analysis.partseg_settings import PartSettings
     from PartSeg._roi_mask.main_window import ChosenComponents
@@ -155,6 +155,19 @@ try:
             settings._SETTINGS = None
 
         yield
+
+    @pytest.fixture(autouse=True)
+    def block_message_box(monkeypatch, request):
+        def raise_on_call(*_, **__):
+            raise RuntimeError("exec_ call")
+
+        monkeypatch.setattr(QMessageBox, "exec_", raise_on_call)
+        monkeypatch.setattr(QMessageBox, "critical", raise_on_call)
+        monkeypatch.setattr(QMessageBox, "information", raise_on_call)
+        monkeypatch.setattr(QMessageBox, "question", raise_on_call)
+        monkeypatch.setattr(QMessageBox, "warning", raise_on_call)
+        if "enabledialog" not in request.keywords:
+            monkeypatch.setattr(QDialog, "exec_", raise_on_call)
 
 
 except (RuntimeError, ImportError):

@@ -541,7 +541,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
             mess.setIcon(QMessageBox.Critical)
             mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(exc.args))
             mess.setWindowTitle("Segmentation limitations")
-            mess.exec()
+            mess.exec_()
             return
         if isinstance(exc, RuntimeError) and exc.args[0].startswith(
             "Exception thrown in SimpleITK KittlerIllingworthThreshold"
@@ -550,10 +550,10 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
             mess.setIcon(QMessageBox.Critical)
             mess.setText("Fail to apply Kittler Illingworth to current data\n" + exc.args[0].split("\n")[1])
             mess.setWindowTitle("Segmentation limitations")
-            mess.exec()
+            mess.exec_()
             return
         dial = ErrorDialog(exc, "Error during segmentation", f"{QApplication.instance().applicationName()}")
-        dial.exec()
+        dial.exec_()
 
     def show_info(self, text):
         self.info_label.setText(text)

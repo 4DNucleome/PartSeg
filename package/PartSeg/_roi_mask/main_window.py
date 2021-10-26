@@ -195,7 +195,7 @@ class MainMenu(BaseMainMenu):
             text="Load data",
             exception_hook=load_data_exception_hook,
         )
-        if execute_dialog.exec():
+        if execute_dialog.exec_():
             result = execute_dialog.get_result()
             if result is None:
                 return
@@ -263,33 +263,34 @@ class MainMenu(BaseMainMenu):
             text="Load segmentation",
             exception_hook=exception_hook,
         )
-        if dial.exec():
-            result = dial.get_result()
-            if result is None:
-                QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
+        if not dial.exec_():
+            return
+        result = dial.get_result()
+        if result is None:
+            QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
+            return
+        if result.roi is not None:
+            try:
+                self.settings.set_project_info(dial.get_result())
                 return
-            if result.roi is not None:
-                try:
-                    self.settings.set_project_info(dial.get_result())
-                    return
-                except ValueError as e:
-                    if e.args != (ROI_NOT_FIT,):
-                        raise
-                    self.segmentation_dialog.set_additional_text(
-                        "Segmentation do not fit to image, maybe you would lie to load parameters only."
-                    )
-                except HistoryProblem:
-                    QMessageBox().warning(
-                        self,
-                        "Load Problem",
-                        "You set to save selected components when loading "
-                        "another segmentation but history is incomatybile",
-                    )
+            except ValueError as e:
+                if e.args != (ROI_NOT_FIT,):
+                    raise
+                self.segmentation_dialog.set_additional_text(
+                    "Segmentation do not fit to image, maybe you would lie to load parameters only."
+                )
+            except HistoryProblem:
+                QMessageBox().warning(
+                    self,
+                    "Load Problem",
+                    "You set to save selected components when loading "
+                    "another segmentation but history is incomatybile",
+                )
 
-            else:
-                self.segmentation_dialog.set_additional_text("")
-            self.segmentation_dialog.set_parameters_dict(result.roi_extraction_parameters)
-            self.segmentation_dialog.show()
+        else:
+            self.segmentation_dialog.set_additional_text("")
+        self.segmentation_dialog.set_parameters_dict(result.roi_extraction_parameters)
+        self.segmentation_dialog.show()
 
     def save_segmentation(self):
         if self.settings.roi is None:
@@ -315,7 +316,7 @@ class MainMenu(BaseMainMenu):
             text="Save segmentation",
             exception_hook=exception_hook,
         )
-        dial.exec()
+        dial.exec_()
 
     def save_result(self):
         if self.settings.image_path is not None and QMessageBox.Yes == QMessageBox.question(
@@ -368,7 +369,7 @@ class MainMenu(BaseMainMenu):
             text="Save components",
             exception_hook=exception_hook,
         )
-        dial.exec()
+        dial.exec_()
 
 
 class ComponentCheckBox(QCheckBox):

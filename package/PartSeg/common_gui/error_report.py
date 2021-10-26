@@ -101,6 +101,9 @@ class ErrorDialog(QDialog):
             self.exception_tuple = event_from_exception(exec_info)
 
     def exec(self):
+        self.exec_()
+
+    def exec_(self):
         """
         Check if dialog should be shown  base on :py:data:`state_store.show_error_dialog`.
         If yes then show dialog. Otherwise print exception traceback on stderr.
@@ -204,4 +207,4 @@ class ExceptionList(QListWidget):
         """
         if isinstance(el, ExceptionListItem) and not isinstance(el.exception, SegmentationLimitException):
             dial = ErrorDialog(el.exception, "Error during batch processing", additional_info=el.additional_info)
-            dial.exec()
+            dial.exec_()

@@ -402,7 +402,7 @@ class TestLoadBackup:
         monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
         monkeypatch.setattr(load_backup.QMessageBox, "exec_", self.block_exec)
         monkeypatch.setattr(load_backup.QMessageBox, "question", question)
-        # monkeypatch.setattr(load_backup, "napari_get_settings", lambda x: NapariSettingsMock)
+        monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         create_file(tmp_path / "0.13.14" / "14.txt")
         create_file(tmp_path / "0.13.12" / "12.txt")
         create_file(tmp_path / "0.13.10" / "10.txt")

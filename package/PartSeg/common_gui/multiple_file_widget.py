@@ -133,7 +133,7 @@ class MultipleFileWidget(QWidget):
         dial.setDirectory(self.settings.get("io.multiple_open_directory", str(Path.home())))
         dial.selectNameFilter(self.settings.get("io.multiple_open_filter", next(iter(self.load_register.keys()))))
         self.error_list = []
-        if dial.exec():
+        if dial.exec_():
             result = dial.get_result()
             load_dir = os.path.dirname(result.load_location[0])
             self.settings.set("io.multiple_open_directory", load_dir)
@@ -141,7 +141,7 @@ class MultipleFileWidget(QWidget):
             self.settings.set("io.multiple_open_filter", result.selected_filter)
 
             dial_fun = ExecuteFunctionDialog(self.execute_load_files, [result], exception_hook=load_data_exception_hook)
-            dial_fun.exec()
+            dial_fun.exec_()
             if self.error_list:
                 errors_message = QMessageBox()
                 errors_message.setText("There are errors during load files")
@@ -149,7 +149,7 @@ class MultipleFileWidget(QWidget):
                 errors_message.setStandardButtons(QMessageBox.Ok)
                 text = "\n".join("File: " + x[0] + "\n" + str(x[1]) for x in self.error_list)
                 errors_message.setDetailedText(text)
-                errors_message.exec()
+                errors_message.exec_()
 
     def load_state(self, item, _column=1):
         if item.parent() is None:

@@ -337,7 +337,7 @@ class MeasurementWidget(QWidget):
             [self.settings.image, self.channels_chose.currentIndex(), self.settings.roi_info, units],
             text="Measurement calculation",
         )  # , exception_hook=exception_hook)
-        dial.exec()
+        dial.exec_()
         stat: MeasurementResult = dial.get_result()
         if stat is None:
             return
