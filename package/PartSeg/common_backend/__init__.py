@@ -12,7 +12,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 try:
     from napari.settings import get_settings as _napari_get_settings
-except ImportError:
+except ImportError:  # pragma: no cover
     try:
         from napari.utils.settings import get_settings as _napari_get_settings
     except ImportError:
