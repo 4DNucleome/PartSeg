@@ -418,11 +418,13 @@ class ViewSettings(ImageSettings):
         self.current_profile_dict = name
 
         callback_list = []
-        for path, callback in list(self.view_settings_dict._callback_dict.items()):
+        for path, callback in list(self.view_settings_dict._callback_dict.items()):  # pylint: disable=W0212
             callback_list.extend(callback)
             if "." not in path:  # pragma: no cover
                 continue
-            self.view_settings_dict._callback_dict[f'{name}.{path.split(".", 1)[1]}'] = callback
+            self.view_settings_dict._callback_dict[
+                f'{name}.{path.split(".", 1)[1]}'
+            ] = callback  # pylint: disable=W0212
         for callback in callback_list:
             callback()
 
