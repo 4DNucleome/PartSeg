@@ -561,7 +561,7 @@ class TestBaseSettings:
         assert isinstance(label_dict.get_array("default"), np.ndarray)
 
     def test_base_settings(self, tmp_path, image, qtbot):
-        settings = base_settings.BaseSettings(tmp_path / "data.json")
+        settings = base_settings.BaseSettings(tmp_path)
         assert settings.theme_name == "light"
         with qtbot.waitSignal(settings.points_changed):
             settings.points = (10, 10)
@@ -572,7 +572,7 @@ class TestBaseSettings:
         assert settings.theme_name == "dark"
 
     def test_base_settings_history(self, tmp_path, qtbot, monkeypatch):
-        settings = base_settings.BaseSettings(tmp_path / "data.json")
+        settings = base_settings.BaseSettings(tmp_path)
         assert settings.history_size() == 0
         assert settings.history_redo_size() == 0
         hist_elem = HistoryElement({"a": 1}, None, MaskProperty.simple_mask(), BytesIO())
@@ -607,3 +607,73 @@ class TestBaseSettings:
         settings.history_pop()
         monkeypatch.setattr(settings, "cmp_history_element", lambda x, y: True)
         settings.add_history_element(hist_elem3)
+
+    def test_base_settings_image(self, tmp_path, qtbot, image):
+        settings = base_settings.BaseSettings(tmp_path)
+        settings.image = image
+        mask = np.ones((10, 10), dtype=np.uint8)
+        assert image.mask is None
+        assert settings.mask is None
+        with qtbot.assertNotEmitted(settings.mask_changed):
+            with pytest.raises(ValueError):
+                settings.mask = mask[:2]
+        with qtbot.waitSignal(settings.mask_changed):
+            settings.mask = mask
+        assert image.mask is not None
+        assert settings.mask is not None
+        assert settings.verify_image(image)
+
+    def test_base_settings_load_dump(self, tmp_path):
+        settings = base_settings.BaseSettings(tmp_path)
+        settings.set("aaa", 10)
+        settings.set_in_profile("bbbb", 10)
+        settings.dump()
+        settings.dump(tmp_path / "subfolder")
+
+        settings2 = base_settings.BaseSettings(tmp_path)
+        settings2.load()
+        assert settings2.get("aaa", 15) == 10
+        assert settings2.get_from_profile("bbbb", 15) == 10
+
+        settings3 = base_settings.BaseSettings(tmp_path / "aaa")
+        settings3.load(tmp_path / "subfolder")
+        assert settings3.get("aaa", 15) == 10
+        assert settings3.get_from_profile("bbbb", 15) == 10
+
+        settings4 = base_settings.BaseSettings(tmp_path / "bbb")
+        settings4.load(tmp_path / "subfolder22")
+        assert settings4.get("aaa", 15) == 15
+        assert settings4.get_from_profile("bbbb", 15) == 15
+
+    def test_base_settings_partial_load_dump(self, tmp_path):
+        settings = base_settings.BaseSettings(tmp_path)
+        settings.set("aaa.bb.bb", 10)
+        settings.set("aaa.bb.cc", 11)
+        settings.set("aaa.bb.dd", 12)
+        settings.set("aaa.bb.ee.ff", 14)
+        settings.set("aaa.bb.ee.gg", 15)
+        settings.dump_part(tmp_path / "data.json", "aaa.bb")
+        settings.dump_part(tmp_path / "data2.json", "aaa.bb", names=["cc", "dd"])
+
+        res = base_settings.BaseSettings.load_part(tmp_path / "data.json")
+        assert res[0] == {"bb": 10, "cc": 11, "dd": 12, "ee": {"ff": 14, "gg": 15}}
+        res = base_settings.BaseSettings.load_part(tmp_path / "data2.json")
+        assert res[0] == {"cc": 11, "dd": 12}
+
+    def test_base_settings_verify_image(self):
+        assert base_settings.BaseSettings.verify_image(Image(np.zeros((10, 10)), (10, 10), axes_order="YX"))
+        assert base_settings.BaseSettings.verify_image(Image(np.zeros((10, 10, 10)), (10, 10, 10), axes_order="ZYX"))
+        with pytest.raises(base_settings.SwapTimeStackException):
+            base_settings.BaseSettings.verify_image(
+                Image(np.zeros((10, 10, 10)), (10, 10, 10), axes_order="TYX"), silent=False
+            )
+
+        new_image = base_settings.BaseSettings.verify_image(
+            Image(np.zeros((10, 10, 10)), (10, 10, 10), axes_order="TYX"), silent=True
+        )
+        assert new_image.is_stack
+        assert not new_image.is_time
+        with pytest.raises(base_settings.TimeAndStackException):
+            base_settings.BaseSettings.verify_image(
+                Image(np.zeros((2, 10, 10, 10)), (10, 10, 10), axes_order="TZYX"), silent=True
+            )

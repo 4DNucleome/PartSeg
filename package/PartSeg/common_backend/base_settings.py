@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import os.path
 import re
@@ -51,6 +52,7 @@ except ImportError:  # pragma: no cover
 if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
 
+logger = logging.getLogger(__name__)
 
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
@@ -662,11 +664,13 @@ class BaseSettings(ViewSettings):
         data = self.get(path_in_dict)
         if names is not None:
             data = {name: data[name] for name in names}
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "w") as ff:
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 
-    def load_part(self, file_path):
-        data = self.load_metadata(file_path)
+    @classmethod
+    def load_part(cls, file_path):
+        data = cls.load_metadata(file_path)
         bad_key = []
         if isinstance(data, dict) and not check_loaded_dict(data):
             for k, v in data.items():
@@ -678,7 +682,7 @@ class BaseSettings(ViewSettings):
             bad_key = data.filter_data()
         return data, bad_key
 
-    def dump(self, folder_path: Optional[str] = None):
+    def dump(self, folder_path: Union[Path, str, None] = None):
         """
         Save current application settings to disc.
 
@@ -702,10 +706,10 @@ class BaseSettings(ViewSettings):
             except Exception as e:  # pylint: disable=W0703
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
-            print(errors_list, file=sys.stderr)
+            logger.error(errors_list)
         return errors_list
 
-    def load(self, folder_path: Optional[str] = None):
+    def load(self, folder_path: Union[Path, str, None] = None):
         """
         Load settings state from given directory
 
@@ -736,7 +740,7 @@ class BaseSettings(ViewSettings):
                     os.rename(file_path, base_path + "_" + timestamp + ext)
 
         if errors_list:
-            print(errors_list, file=sys.stderr)
+            logger.error(errors_list)
         return errors_list
 
     def get_project_info(self) -> ProjectInfoBase:
