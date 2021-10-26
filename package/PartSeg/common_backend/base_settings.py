@@ -631,11 +631,12 @@ class BaseSettings(ViewSettings):
             data_list = data_list[:9]
         return [value] + data_list
 
-    def add_path_history(self, dir_path: str):
+    def add_path_history(self, dir_path: Union[str, Path]):
         """Save path in history of visited directories. Store only 10 last"""
+        dir_path = str(dir_path)
         self.set(DIR_HISTORY, self._add_elem_to_list(self.get(DIR_HISTORY, []), dir_path))
 
-    def add_load_files_history(self, file_path: List[str], load_method: str):
+    def add_load_files_history(self, file_path: List[Union[str, Path]], load_method: str):
         self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [file_path, load_method]))
         self.add_path_history(os.path.dirname(file_path[0]))
 

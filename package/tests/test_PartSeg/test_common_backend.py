@@ -623,7 +623,7 @@ class TestBaseSettings:
         assert settings.mask is not None
         assert settings.verify_image(image)
 
-    def test_base_settings_load_dump(self, tmp_path):
+    def test_base_settings_load_dump(self, tmp_path, qtbot):
         settings = base_settings.BaseSettings(tmp_path)
         settings.set("aaa", 10)
         settings.set_in_profile("bbbb", 10)
@@ -645,7 +645,7 @@ class TestBaseSettings:
         assert settings4.get("aaa", 15) == 15
         assert settings4.get_from_profile("bbbb", 15) == 15
 
-    def test_base_settings_partial_load_dump(self, tmp_path):
+    def test_base_settings_partial_load_dump(self, tmp_path, qtbot):
         settings = base_settings.BaseSettings(tmp_path)
         settings.set("aaa.bb.bb", 10)
         settings.set("aaa.bb.cc", 11)
@@ -677,3 +677,14 @@ class TestBaseSettings:
             base_settings.BaseSettings.verify_image(
                 Image(np.zeros((2, 10, 10, 10)), (10, 10, 10), axes_order="TZYX"), silent=True
             )
+
+    def test_base_settings_path_history(self, tmp_path, qtbot, monkeypatch):
+        settings = base_settings.BaseSettings(tmp_path)
+        monkeypatch.setattr(settings, "save_locations_keys", ["test1", "test2"])
+        for i in range(50):
+            settings.add_path_history(str(i))
+        assert len(settings.get_path_history()) == 11
+        assert len(settings.get_last_files()) == 0
+        for i in range(50):
+            settings.add_load_files_history([tmp_path / (str(i) + ".txt")], "aaa")
+        assert len(settings.get_last_files()) == 10
