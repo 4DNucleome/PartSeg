@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING
 import napari
 import packaging.version
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
 
 try:
     from napari.settings import get_settings as _napari_get_settings
-except ImportError:
+except ImportError:  # pragma: no cover
     try:
         from napari.utils.settings import get_settings as _napari_get_settings
     except ImportError:

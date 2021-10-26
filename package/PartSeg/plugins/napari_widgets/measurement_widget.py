@@ -51,8 +51,10 @@ class SimpleMeasurement(Container):
         self.insert(1, bottom_layout)
 
         self.image_choice.native.currentIndexChanged.connect(self._refresh_measurements)
-        self.labels_choice.changed.connect(self._refresh_measurements)
-        self.calculate_btn.changed.connect(self._calculate)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            self.labels_choice.changed.connect(self._refresh_measurements)
+            self.calculate_btn.changed.connect(self._calculate)
 
     def _calculate(self, event=None):
         to_calculate = []

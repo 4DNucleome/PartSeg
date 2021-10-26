@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import os.path
 import re
@@ -48,9 +49,10 @@ try:
 except ImportError:  # pragma: no cover
     from napari.resources import get_stylesheet
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
 
+logger = logging.getLogger(__name__)
 
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
@@ -121,7 +123,7 @@ class ImageSettings(QObject):
 
     @image_spacing.setter
     def image_spacing(self, value):
-        if len(value) not in [2, 3]:  # pragma: no cover
+        if len(value) not in [2, 3]:
             raise ValueError(f"value parameter should have length 2 or 3. Current length is {len(value)}.")
         if len(value) == 2:
             self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
@@ -161,7 +163,7 @@ class ImageSettings(QObject):
                 self._roi_info = ROIInfo(self.image.fit_array_to_image(val))
             else:
                 self._roi_info = val.fit_to_image(self.image)
-        except ValueError:  # pragma: no cover
+        except ValueError:
             raise ValueError(ROI_NOT_FIT)
         self._additional_layers = {}
         self.roi_changed.emit(self._roi_info)
@@ -209,8 +211,8 @@ class ImageSettings(QObject):
 
     @image_path.setter
     def image_path(self, value):
-        self._image_path = value
-        self.image_changed[str].emmit(self._image_path)
+        self._image.file_path = value
+        self.image_changed[str].emit(self._image_path)
 
     @property
     def channels(self):
@@ -227,7 +229,7 @@ class ColormapDict(PartiallyConstDict[Colormap]):
     Dict for mixing custom colormap with predefined ones
     """
 
-    if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:
+    if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:  # pragma: no cover
         const_item_dict = {}
     else:
         const_item_dict = default_colormap_dict
@@ -282,13 +284,15 @@ class ViewSettings(ImageSettings):
 
     @property
     def theme_name(self) -> str:
+        """Name of current theme."""
         return self.get_from_profile("theme", "light")
 
     @property
     def theme(self):
+        """Theme as structure."""
         try:
             return get_theme(self.theme_name, as_dict=False)
-        except TypeError:
+        except TypeError:  # pragma: no cover
             theme = get_theme(self.theme_name)
             return Namespace(
                 **{k: Color(v) if isinstance(v, str) and v.startswith("rgb") else v for k, v in theme.items()}
@@ -296,6 +300,7 @@ class ViewSettings(ImageSettings):
 
     @property
     def style_sheet(self):
+        """QSS style sheet for current theme."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)
             theme = get_theme(self.theme_name)
@@ -304,6 +309,7 @@ class ViewSettings(ImageSettings):
 
     @theme_name.setter
     def theme_name(self, value: str):
+        """Name of current theme."""
         if value not in napari.utils.theme.available_themes():
             raise ValueError(f"Unsupported theme {value}. Supported one: {self.theme_list()}")
         if value == self.theme_name:
@@ -313,13 +319,15 @@ class ViewSettings(ImageSettings):
 
     @staticmethod
     def theme_list():
+        """Sequence of available themes"""
         try:
             return napari.utils.theme.available_themes()
-        except:  # noqa: E722  # pylint: disable=W0702
-            return ["light"]
+        except:  # noqa: E722  # pylint: disable=W0702  # pragma: no cover
+            return ("light",)
 
     @property
     def chosen_colormap(self):
+        """Sequence of selected colormap to be available in dropdown"""
         data = self.get_from_profile("colormaps", starting_colors[:])
         res = [x for x in data if x in self.colormap_dict]
         if len(res) != data:
@@ -335,6 +343,7 @@ class ViewSettings(ImageSettings):
 
     @property
     def current_labels(self):
+        """Current labels scheme for marking ROI"""
         return self.get_from_profile("labels_used", "default")
 
     @current_labels.setter
@@ -344,14 +353,12 @@ class ViewSettings(ImageSettings):
         self.set_in_profile("labels_used", val)
         self.labels_changed.emit()
 
-    def current_labels_changed_add_callback(self, callback):
-        self.connect_to_profile("labels_used", callback)
-
     @property
     def label_colors(self):
         key = self.current_labels
         if key not in self.label_color_dict:
             key = "default"
+            self.current_labels = key
 
         if not (self.cached_labels and key == self.cached_labels[0]):
             self.cached_labels = key, self.label_color_dict.get_array(key)
@@ -370,7 +377,15 @@ class ViewSettings(ImageSettings):
         # TODO update sorting rule
         self.chosen_colormap = list(sorted(colormaps, key=self.colormap_dict.get_position))
 
-    def get_channel_info(self, view: str, num: int, default: Optional[str] = None) -> str:
+    def get_channel_info(self, view: str, num: int, default: Optional[str] = None) -> str:  # pragma: no cover
+        warnings.warn(
+            "get_channel_info is deprecated, use get_channel_colormap_name instead",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_channel_colormap_name(view, num, default)
+
+    def get_channel_colormap_name(self, view: str, num: int, default: Optional[str] = None) -> str:
         cm = self.chosen_colormap
         if default is None:
             default = cm[num % len(cm)]
@@ -380,7 +395,15 @@ class ViewSettings(ImageSettings):
             self.set_in_profile(f"{view}.cmap{num}", resp)
         return resp
 
-    def set_channel_info(self, view: str, num, value: str):
+    def set_channel_info(self, view: str, num, value: str):  # pragma: no cover
+        warnings.warn(
+            "set_channel_info is deprecated, use set_channel_colormap_name instead",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        self.set_channel_colormap_name(view, num, value)
+
+    def set_channel_colormap_name(self, view: str, num, value: str):
         self.set_in_profile(f"{view}.cmap{num}", value)
 
     @property
@@ -393,8 +416,17 @@ class ViewSettings(ImageSettings):
 
     def change_profile(self, name):
         self.current_profile_dict = name
-        if self.current_profile_dict not in self.view_settings_dict:
-            self.view_settings_dict = {self.current_profile_dict: ProfileDict()}
+
+        callback_list = []
+        for path, callback in list(self.view_settings_dict._callback_dict.items()):  # pylint: disable=W0212
+            callback_list.extend(callback)
+            if "." not in path:  # pragma: no cover
+                continue
+            self.view_settings_dict._callback_dict[  # pylint: disable=W0212
+                f'{name}.{path.split(".", 1)[1]}'
+            ] = callback  # pylint: disable=W0212
+        for callback in callback_list:
+            callback()
 
     def set_in_profile(self, key_path, value):
         """
@@ -419,9 +451,6 @@ class ViewSettings(ImageSettings):
     def connect_to_profile(self, key_path, callback):
         # TODO  fixme fix when introduce switch profiles
         self.view_settings_dict.connect(f"{self.current_profile_dict}.{key_path}", callback)
-
-    def dump_view_profiles(self):
-        return self.view_settings_dict
 
 
 class SaveSettingsDescription(NamedTuple):
@@ -485,7 +514,7 @@ class BaseSettings(ViewSettings):
                 self.napari_settings.appearance.theme = theme
                 self.set_in_profile("first_start", False)
             return theme
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             return "light"
 
     @theme_name.setter
@@ -519,9 +548,6 @@ class BaseSettings(ViewSettings):
 
     def _load_files_call(self, files_list: List[str]):
         self.request_load_files.emit(files_list)
-
-    def mask_representation_changed_emit(self):
-        self.mask_representation_changed.emit()
 
     def add_history_element(self, elem: HistoryElement) -> None:
         self.history_index += 1
@@ -607,11 +633,12 @@ class BaseSettings(ViewSettings):
             data_list = data_list[:9]
         return [value] + data_list
 
-    def add_path_history(self, dir_path: str):
+    def add_path_history(self, dir_path: Union[str, Path]):
         """Save path in history of visited directories. Store only 10 last"""
+        dir_path = str(dir_path)
         self.set(DIR_HISTORY, self._add_elem_to_list(self.get(DIR_HISTORY, []), dir_path))
 
-    def add_load_files_history(self, file_path: List[str], load_method: str):
+    def add_load_files_history(self, file_path: List[Union[str, Path]], load_method: str):
         self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [file_path, load_method]))
         self.add_path_history(os.path.dirname(file_path[0]))
 
@@ -640,11 +667,13 @@ class BaseSettings(ViewSettings):
         data = self.get(path_in_dict)
         if names is not None:
             data = {name: data[name] for name in names}
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "w") as ff:
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 
-    def load_part(self, file_path):
-        data = self.load_metadata(file_path)
+    @classmethod
+    def load_part(cls, file_path):
+        data = cls.load_metadata(file_path)
         bad_key = []
         if isinstance(data, dict) and not check_loaded_dict(data):
             for k, v in data.items():
@@ -656,7 +685,7 @@ class BaseSettings(ViewSettings):
             bad_key = data.filter_data()
         return data, bad_key
 
-    def dump(self, folder_path: Optional[str] = None):
+    def dump(self, folder_path: Union[Path, str, None] = None):
         """
         Save current application settings to disc.
 
@@ -680,10 +709,10 @@ class BaseSettings(ViewSettings):
             except Exception as e:  # pylint: disable=W0703
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
-            print(errors_list, file=sys.stderr)
+            logger.error(errors_list)
         return errors_list
 
-    def load(self, folder_path: Optional[str] = None):
+    def load(self, folder_path: Union[Path, str, None] = None):
         """
         Load settings state from given directory
 
@@ -714,16 +743,16 @@ class BaseSettings(ViewSettings):
                     os.rename(file_path, base_path + "_" + timestamp + ext)
 
         if errors_list:
-            print(errors_list, file=sys.stderr)
+            logger.error(errors_list)
         return errors_list
 
     def get_project_info(self) -> ProjectInfoBase:
         """Get all information needed to save project"""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def set_project_info(self, data: ProjectInfoBase):
         """Set project info"""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @staticmethod
     def verify_image(image: Image, silent=True) -> Union[Image, bool]:

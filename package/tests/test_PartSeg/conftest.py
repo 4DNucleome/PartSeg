@@ -101,7 +101,10 @@ try:
     @pytest.fixture(autouse=True)
     def clean_settings():
         try:
-            from napari.utils.settings import SETTINGS
+            try:
+                from napari.settings import SETTINGS
+            except ImportError:
+                from napari.utils.settings import SETTINGS
 
             SETTINGS.reset()
             yield

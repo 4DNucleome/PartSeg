@@ -7,14 +7,14 @@ from qtpy.QtWidgets import QMessageBox, QWidget
 
 from PartSegCore import state_store
 
-from .. import __version__
+from .. import parsed_version
 from . import napari_get_settings
 
 
 def import_config():
     if os.path.exists(state_store.save_folder):
         return
-    version = packaging.version.parse(packaging.version.parse(__version__).base_version)
+    version = packaging.version.parse(parsed_version.base_version)
     base_folder = os.path.dirname(state_store.save_folder)
     possible_folders = glob(os.path.join(base_folder, "*"))
     versions = list(
@@ -48,5 +48,5 @@ def import_config():
             napari_settings = napari_get_settings(state_store.save_folder)
             if hasattr(napari_settings, "load") and napari_settings.load is not None:
                 napari_settings.load()
-            else:
+            elif hasattr(napari_settings, "_load") and napari_settings._load is not None:  # pylint: disable=W0212
                 napari_settings._load()  # pylint: disable=W0212

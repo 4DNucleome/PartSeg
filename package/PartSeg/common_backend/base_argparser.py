@@ -114,7 +114,7 @@ class CustomParser(argparse.ArgumentParser):
         return args
 
 
-def _setup_sentry():
+def _setup_sentry():  # pragma: no cover
     sentry_sdk.utils.MAX_STRING_LENGTH = 10 ** 4
     sentry_sdk.serializer.safe_repr = safe_repr
     sentry_sdk.serializer.MAX_DATABAG_BREADTH = 100

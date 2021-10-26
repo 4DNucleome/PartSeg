@@ -5,7 +5,9 @@ from contextlib import suppress
 from copy import deepcopy
 from enum import Enum
 
+import magicgui
 from magicgui.widgets import Widget, create_widget
+from packaging.version import parse as parse_version
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -293,9 +295,16 @@ class ListInput(QWidget):
             f.set_value(val)
 
 
-def any_arguments(fun):
-    def _any(*_):
-        fun()
+def _any_arguments(fun):
+    if parse_version(magicgui.__version__) >= parse_version("0.3.0"):
+
+        def _any():
+            fun()
+
+    else:
+
+        def _any(*_):
+            fun()
 
     return _any
 
@@ -332,13 +341,13 @@ class FormWidget(QWidget):
         if ap.help_text:
             label.setToolTip(ap.help_text)
         self.widgets_dict[ap.name] = ap
-        ap.change_fun.connect(any_arguments(self.value_changed.emit))
+        ap.change_fun.connect(_any_arguments(self.value_changed.emit))
         if isinstance(ap.get_field(), SubAlgorithmWidget):
             layout.addRow(label, ap.get_field().choose)
             layout.addRow(ap.get_field())
             if ap.name in start_values:
                 ap.get_field().set_starting(start_values[ap.name])
-            ap.change_fun.connect(any_arguments(self.value_changed.emit))
+            ap.change_fun.connect(_any_arguments(self.value_changed.emit))
             return
         if isinstance(ap.get_field(), Widget):
             layout.addRow(label, ap.get_field().native)
