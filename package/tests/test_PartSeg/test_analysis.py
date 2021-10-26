@@ -29,6 +29,7 @@ class TestMeasurementWidget:
         assert not widget.recalculate_button.isEnabled()
 
     @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     def test_base(self, qtbot, analysis_segmentation, part_settings):
         widget = MeasurementWidget(part_settings)
         qtbot.addWidget(widget)
@@ -46,6 +47,7 @@ class TestMeasurementWidget:
         assert widget.info_field.rowCount() == 2
 
     @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     def test_base2(self, qtbot, analysis_segmentation2, part_settings):
         widget = MeasurementWidget(part_settings)
         qtbot.addWidget(widget)
@@ -65,6 +67,7 @@ class TestMeasurementWidget:
 
 class TestSimpleMeasurementsWidget:
     @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     def test_base(self, stack_settings, stack_segmentation1, qtbot):
         widget = SimpleMeasurements(stack_settings)
         qtbot.addWidget(widget)
