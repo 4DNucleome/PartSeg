@@ -551,8 +551,6 @@ class TestBaseSettings:
         colormap_dict = base_settings.ColormapDict({})
         colormap_dict.colormap_removed.connect(partial(test_fun, "removed"))
         colormap_dict.colormap_added.connect(partial(test_fun, "added"))
-        assert colormap_dict.colormap_removed == colormap_dict.item_removed
-        assert colormap_dict.colormap_added == colormap_dict.item_added
         colormap_dict.item_added.emit("aaaa")
         assert call_list == [("added", "aaaa")]
         colormap_dict.item_removed.emit("bbbb")
