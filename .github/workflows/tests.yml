@@ -164,8 +164,8 @@ jobs:
           file: ./coverage.xml
           fail_ci_if_error: true
 
-  test_shalow_clone:
-    name: Test PartSeg coverage
+  test_shallow_clone:
+    name: Test PartSeg depth 1 clone
     runs-on: ubuntu-20.04
     needs: download_data
     steps:
