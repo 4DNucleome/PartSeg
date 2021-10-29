@@ -7,14 +7,14 @@ import qtpy
 from qtpy.QtWidgets import QFileDialog, QWidget
 
 from PartSeg.common_gui import select_multiple_files
-from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
+from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.calculation_plan import MaskSuffix
-from PartSegCore.analysis.load_functions import LoadProject, load_dict
+from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
@@ -293,7 +293,7 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert part_settings.get_path_history() == ["/home/czaki"]
 
     monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3", filter_path="io.filter_save")
+    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
     qtbot.addWidget(dialog)
     assert SaveAsTiff.get_name() in dialog.nameFilters()
     dialog.show()
@@ -312,3 +312,35 @@ def test_form_dialog(qtbot):
     assert form.get_values() == {"aaa": 2.0, "bbb": False}
     form.set_values({"aaa": 5.0, "bbb": True})
     assert form.get_values() == {"aaa": 5.0, "bbb": True}
+
+
+def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
+    dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test")
+    qtbot.addWidget(dialog)
+    assert dialog.directory().path() == str(Path.home())
+    assert part_settings.get("io.load_test") == str(Path.home())
+    dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test2", default_directory=str(tmp_path))
+    qtbot.addWidget(dialog)
+    assert dialog.directory().path() == str(tmp_path)
+    assert part_settings.get("io.load_test2") == str(tmp_path)
+    part_settings.set("io.load_test3", str(tmp_path))
+    dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test3")
+    qtbot.addWidget(dialog)
+    assert dialog.directory().path() == str(tmp_path)
+    assert part_settings.get("io.load_test3") == str(tmp_path)
+
+    part_settings.set("io.filter_load", LoadStackImage.get_name())
+    assert part_settings.get_path_history() == ["/home/czaki"]
+    dialog.show()
+    dialog.accept()
+    assert part_settings.get_path_history() == ["/home/czaki"]
+
+    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
+    dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test4", filter_path="io.filter_load")
+    qtbot.addWidget(dialog)
+    assert LoadStackImage.get_name() in dialog.nameFilters()
+    dialog.show()
+    dialog.selectFile(str(tmp_path / "test.tif"))
+    dialog.accept()
+    assert dialog.selectedNameFilter() == LoadStackImage.get_name()
+    assert part_settings.get_path_history() == [str(tmp_path), "/home/czaki"]
