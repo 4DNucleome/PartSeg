@@ -271,7 +271,7 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
 
     monkeypatch.setattr(QFileDialog, "selectedFiles", selected_files)
 
-    assert part_settings.get_path_history() == ["/home/czaki"]
+    assert part_settings.get_path_history() == [str(Path.home())]
 
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test")
     qtbot.addWidget(dialog)
@@ -287,10 +287,10 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert dialog.directory().path() == str(tmp_path)
     assert part_settings.get("io.test3") == str(tmp_path)
     part_settings.set("io.filter_save", SaveAsTiff.get_name())
-    assert part_settings.get_path_history() == ["/home/czaki"]
+    assert part_settings.get_path_history() == [str(Path.home())]
     dialog.show()
     dialog.accept()
-    assert part_settings.get_path_history() == ["/home/czaki"]
+    assert part_settings.get_path_history() == [str(Path.home())]
 
     monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
@@ -300,7 +300,7 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.selectFile(str(tmp_path / "test.tif"))
     dialog.accept()
     assert dialog.selectedNameFilter() == SaveAsTiff.get_name()
-    assert part_settings.get_path_history() == [str(tmp_path), "/home/czaki"]
+    assert part_settings.get_path_history() == [str(tmp_path), str(Path.home())]
 
 
 def test_form_dialog(qtbot):
@@ -330,10 +330,10 @@ def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert part_settings.get("io.load_test3") == str(tmp_path)
 
     part_settings.set("io.filter_load", LoadStackImage.get_name())
-    assert part_settings.get_path_history() == ["/home/czaki"]
+    assert part_settings.get_path_history() == [str(Path.home())]
     dialog.show()
     dialog.accept()
-    assert part_settings.get_path_history() == ["/home/czaki"]
+    assert part_settings.get_path_history() == [str(Path.home())]
 
     monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
     dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test4", filter_path="io.filter_load")
@@ -343,4 +343,4 @@ def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.selectFile(str(tmp_path / "test.tif"))
     dialog.accept()
     assert dialog.selectedNameFilter() == LoadStackImage.get_name()
-    assert part_settings.get_path_history() == [str(tmp_path), "/home/czaki"]
+    assert part_settings.get_path_history() == [str(tmp_path), str(Path.home())]
