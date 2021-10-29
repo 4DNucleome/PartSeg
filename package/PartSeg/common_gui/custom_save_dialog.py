@@ -157,7 +157,7 @@ class PSaveDialog(CustomSaveDialog):
         self,
         save_register: typing.Union[typing.Dict[str, type(SaveBase)], type(SaveBase)],
         *,
-        settings: BaseSettings,
+        settings: "BaseSettings",
         path: str,
         default_directory=str(Path.home()),
         filter_path="",
