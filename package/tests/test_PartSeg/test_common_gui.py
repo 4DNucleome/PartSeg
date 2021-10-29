@@ -8,10 +8,11 @@ from qtpy.QtWidgets import QFileDialog, QWidget
 
 from PartSeg.common_gui import select_multiple_files
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
-from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, PSaveDialog
+from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
+from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
@@ -300,3 +301,14 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.accept()
     assert dialog.selectedNameFilter() == SaveAsTiff.get_name()
     assert part_settings.get_path_history() == [str(tmp_path), "/home/czaki"]
+
+
+def test_form_dialog(qtbot):
+    fields = [
+        AlgorithmProperty("aaa", "Aaa", 1.0),
+        AlgorithmProperty("bbb", "Bbb", False),
+    ]
+    form = FormDialog(fields, values={"aaa": 2.0})
+    assert form.get_values() == {"aaa": 2.0, "bbb": False}
+    form.set_values({"aaa": 5.0, "bbb": True})
+    assert form.get_values() == {"aaa": 5.0, "bbb": True}
