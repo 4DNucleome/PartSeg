@@ -275,17 +275,19 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
 
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test")
     qtbot.addWidget(dialog)
-    assert dialog.directory().path() == str(Path.home())
-    assert part_settings.get("io.test") == str(Path.home())
+    assert Path(dialog.directory().path()) == Path.home()
+    assert Path(part_settings.get("io.test")) == Path.home()
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test2", default_directory=str(tmp_path))
     qtbot.addWidget(dialog)
-    assert dialog.directory().path() == str(tmp_path)
-    assert part_settings.get("io.test2") == str(tmp_path)
+    assert Path(dialog.directory().path()) == tmp_path
+    assert Path(part_settings.get("io.test2")) == tmp_path
     part_settings.set("io.test3", str(tmp_path))
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
     qtbot.addWidget(dialog)
-    assert dialog.directory().path() == str(tmp_path)
-    assert part_settings.get("io.test3") == str(tmp_path)
+    assert Path(dialog.directory().path()) == tmp_path
+    assert Path(part_settings.get("io.test3")) == tmp_path
+
+    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
     part_settings.set("io.filter_save", SaveAsTiff.get_name())
     assert part_settings.get_path_history() == [str(Path.home())]
     dialog.show()
@@ -317,18 +319,19 @@ def test_form_dialog(qtbot):
 def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test")
     qtbot.addWidget(dialog)
-    assert dialog.directory().path() == str(Path.home())
-    assert part_settings.get("io.load_test") == str(Path.home())
+    assert Path(dialog.directory().path()) == Path.home()
+    assert Path(part_settings.get("io.load_test")) == Path.home()
     dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test2", default_directory=str(tmp_path))
     qtbot.addWidget(dialog)
-    assert dialog.directory().path() == str(tmp_path)
-    assert part_settings.get("io.load_test2") == str(tmp_path)
+    assert Path(dialog.directory().path()) == tmp_path
+    assert Path(part_settings.get("io.load_test2")) == tmp_path
     part_settings.set("io.load_test3", str(tmp_path))
     dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test3")
     qtbot.addWidget(dialog)
-    assert dialog.directory().path() == str(tmp_path)
-    assert part_settings.get("io.load_test3") == str(tmp_path)
+    assert Path(dialog.directory().path()) == tmp_path
+    assert Path(part_settings.get("io.load_test3")) == tmp_path
 
+    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
     part_settings.set("io.filter_load", LoadStackImage.get_name())
     assert part_settings.get_path_history() == [str(Path.home())]
     dialog.show()
