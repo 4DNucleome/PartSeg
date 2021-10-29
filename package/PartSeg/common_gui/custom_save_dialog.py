@@ -1,10 +1,15 @@
+import os
 import typing
+from pathlib import Path
 
 from qtpy.QtWidgets import QDialog, QFileDialog, QGridLayout, QPushButton, QStackedWidget
 
 from PartSegCore.io_utils import SaveBase
 
 from .algorithms_description import FormWidget
+
+if typing.TYPE_CHECKING:  # pragma: no cover
+    from PartSeg.common_backend.base_settings import BaseSettings
 
 
 class SaveProperty(typing.NamedTuple):
@@ -145,6 +150,38 @@ class CustomSaveDialog(QFileDialog):
             self.save_register[self.selectedNameFilter()],
             self.values,
         )
+
+
+class PSaveDialog(CustomSaveDialog):
+    def __init__(
+        self,
+        save_register: typing.Union[typing.Dict[str, type(SaveBase)], type(SaveBase)],
+        settings: BaseSettings,
+        path: str,
+        default_directory=str(Path.home()),
+        system_widget=True,
+        base_values: typing.Optional[dict] = None,
+        parent=None,
+        file_mode=QFileDialog.AnyFile,
+    ):
+        super().__init__(
+            save_register=save_register,
+            system_widget=system_widget,
+            base_values=base_values,
+            parent=parent,
+            history=settings.get_path_history(),
+            file_mode=file_mode,
+        )
+        self.settings = settings
+        self.path_in_dict = path
+        self.setDirectory(self.settings.get(path, default_directory))
+
+    def accept(self):
+        super().accept()
+        if self.result() == QDialog.Accepted:
+            directory = os.path.dirname(self.selectedFiles()[0])
+            self.settings.add_path_history(directory)
+            self.settings.set(self.path_in_dict, directory)
 
 
 SaveDialog = CustomSaveDialog
