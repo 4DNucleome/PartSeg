@@ -31,7 +31,7 @@ cloudpickle==2.0.0
     # via dask
 czifile==2019.7.2
     # via -r requirements_pyinstaller.in
-dask[array]==2021.9.1
+dask[array]==2021.10.0
     # via
     #   -r requirements_pyinstaller.in
     #   napari
@@ -63,7 +63,7 @@ idna==3.3
     # via requests
 imagecodecs==2021.8.26
     # via -r requirements_pyinstaller.in
-imageio==2.9.0
+imageio==2.10.1
     # via
     #   napari
     #   napari-svg
@@ -93,7 +93,7 @@ jupyter-client==7.0.6
     # via
     #   ipykernel
     #   qtconsole
-jupyter-core==4.8.1
+jupyter-core==4.9.1
     # via
     #   jupyter-client
     #   qtconsole
@@ -103,7 +103,7 @@ locket==0.2.1
     # via partd
 lxml==4.6.3
     # via -r requirements_pyinstaller.in
-magicgui==0.3.0
+magicgui==0.3.2
     # via napari
 mahotas==1.4.12
     # via -r requirements_pyinstaller.in
@@ -151,7 +151,7 @@ oiffile==2021.6.6
     # via -r requirements_pyinstaller.in
 openpyxl==3.0.9
     # via -r requirements_pyinstaller.in
-packaging==21.0
+packaging==21.2
     # via
     #   -r requirements_pyinstaller.in
     #   dask
@@ -175,7 +175,7 @@ pillow==8.4.0
     # via
     #   imageio
     #   napari
-pint==0.17
+pint==0.18
     # via napari
 prompt-toolkit==3.0.21
     # via ipython
@@ -194,7 +194,7 @@ pygments==2.10.0
     #   ipython
     #   qtconsole
     #   sphinx
-pyinstaller==4.5.1
+pyinstaller==4.6
     # via -r requirements_pyinstaller.in
 pyinstaller-hooks-contrib==2021.3
     # via pyinstaller
@@ -204,7 +204,7 @@ pyopengl-accelerate==3.1.5
     # via -r requirements_pyinstaller.in
 pyparsing==2.4.7
     # via packaging
-pyqt5==5.15.5
+pyqt5==5.15.6
     # via -r requirements_pyinstaller.in
 pyqt5-qt5==5.15.2
     # via pyqt5
@@ -297,7 +297,7 @@ tornado==6.1
     #   jupyter-client
 tqdm==4.62.3
     # via napari
-traitlets==5.1.0
+traitlets==5.1.1
     # via
     #   ipykernel
     #   ipython
@@ -315,7 +315,7 @@ urllib3==1.26.7
     # via
     #   requests
     #   sentry-sdk
-vispy==0.9.2
+vispy==0.9.3
     # via
     #   -r requirements_pyinstaller.in
     #   napari
