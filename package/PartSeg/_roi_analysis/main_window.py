@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from typing import Type
 
 import numpy as np
@@ -20,7 +19,7 @@ from qtpy.QtWidgets import (
 
 import PartSegData
 from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
-from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
 from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
 from PartSegCore import state_store
@@ -437,17 +436,14 @@ class MainMenu(BaseMainMenu):
                 load_data_exception_hook(exception)
 
         try:
-            dial = CustomLoadDialog(load_functions.load_dict, history=self.settings.get_path_history())
-            dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
+            dial = PLoadDialog(
+                load_functions.load_dict, settings=self.settings, path="io.open_directory", filter_path="io.open_filter"
+            )
             file_path = self.settings.get("io.open_file", "")
             if os.path.isfile(file_path):
                 dial.selectFile(file_path)
-            dial.selectNameFilter(self.settings.get("io.open_filter", next(iter(load_functions.load_dict.keys()))))
             if dial.exec_():
                 result = dial.get_result()
-                self.settings.set("io.open_filter", result.selected_filter)
-                load_dir = os.path.dirname(result.load_location[0])
-                self.settings.set("io.open_directory", load_dir)
                 self.settings.set("io.open_file", result.load_location[0])
                 self.settings.add_load_files_history(result.load_location, result.load_class.get_name())
                 dial2 = ExecuteFunctionDialog(
@@ -461,7 +457,7 @@ class MainMenu(BaseMainMenu):
                     self.set_data(result)
 
         except ValueError as e:
-            QMessageBox.warning(self, "Open error", f"{e}")
+            show_warning("Open error", f"{e}")
 
     def batch_window(self):
         if self.main_window.batch_window is None:

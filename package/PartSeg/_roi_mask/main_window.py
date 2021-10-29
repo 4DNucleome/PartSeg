@@ -1,6 +1,5 @@
 import os
 from functools import partial
-from pathlib import Path
 from typing import Type
 
 import numpy as np
@@ -43,7 +42,7 @@ from ..common_backend.base_settings import IO_SAVE_DIRECTORY, ROI_NOT_FIT
 from ..common_gui.advanced_tabs import AdvancedWindow
 from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_load_dialog import CustomLoadDialog
+from ..common_gui.custom_load_dialog import PLoadDialog
 from ..common_gui.custom_save_dialog import PSaveDialog
 from ..common_gui.exception_hooks import load_data_exception_hook
 from ..common_gui.flow_layout import FlowLayout
@@ -173,19 +172,19 @@ class MainMenu(BaseMainMenu):
 
     def load_image(self):
         # TODO move segmentation with image load to load_segmentaion
-        dial = CustomLoadDialog(io_functions.load_dict)
-        dial.setDirectory(self.settings.get("io.load_image_directory", str(Path.home())))
+        dial = PLoadDialog(
+            io_functions.load_dict,
+            settings=self.settings,
+            path="io.load_image_directory",
+            filter_path="io.load_data_filter",
+        )
         default_file_path = self.settings.get("io.load_image_file", "")
         if os.path.isfile(default_file_path):
             dial.selectFile(default_file_path)
-        dial.selectNameFilter(self.settings.get("io.load_data_filter", io_functions.load_dict.get_default()))
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         load_property = dial.get_result()
-        self.settings.set("io.load_image_directory", os.path.dirname(load_property.load_location[0]))
         self.settings.set("io.load_image_file", load_property.load_location[0])
-        self.settings.set("io.load_data_filter", load_property.selected_filter)
         self.settings.add_load_files_history(load_property.load_location, load_property.load_class.get_name())
 
         execute_dialog = ExecuteFunctionDialog(
@@ -225,20 +224,18 @@ class MainMenu(BaseMainMenu):
         return True
 
     def load_segmentation(self):
-        dial = CustomLoadDialog(
+        dial = PLoadDialog(
             {
                 LoadROI.get_name(): LoadROI,
                 LoadROIParameters.get_name(): LoadROIParameters,
                 LoadROIFromTIFF.get_name(): LoadROIFromTIFF,
-            }
+            },
+            settings=self.settings,
+            path="io.open_segmentation_directory",
         )
-        dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         load_property = dial.get_result()
-        self.settings.set("io.open_segmentation_directory", os.path.dirname(load_property.load_location[0]))
-        self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
 
         def exception_hook(exception):
             mess = QMessageBox(self)

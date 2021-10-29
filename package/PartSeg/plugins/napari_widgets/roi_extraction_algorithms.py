@@ -1,8 +1,6 @@
 import inspect
 import itertools
-import os
 import typing
-from pathlib import Path
 
 import numpy as np
 from magicgui.widgets import Widget, create_widget
@@ -38,13 +36,14 @@ from PartSegImage import Image
 
 from ..._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
 from ...common_backend.base_settings import IO_SAVE_DIRECTORY, BaseSettings
+from ...common_backend.except_hook import show_warning
 from ...common_gui.algorithms_description import (
     AlgorithmChooseBase,
     FormWidget,
     InteractiveAlgorithmSettingsWidget,
     QtAlgorithmProperty,
 )
-from ...common_gui.custom_load_dialog import CustomLoadDialog
+from ...common_gui.custom_load_dialog import PLoadDialog
 from ...common_gui.custom_save_dialog import PSaveDialog
 from ...common_gui.searchable_combo_box import SearchComboBox
 from ...common_gui.searchable_list_widget import SearchableListWidget
@@ -413,19 +412,13 @@ class ProfilePreviewDialog(QDialog):
             save_class.save(save_location, data, values)
 
     def import_action(self):
-        dial = CustomLoadDialog(LoadProfileFromJSON, history=self.settings.get_path_history(), parent=self)
-        dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
+        dial = PLoadDialog(LoadProfileFromJSON, settings=self.settings, parent=self, path=IO_SAVE_DIRECTORY)
         if not dial.exec_():
             return  # pragma: no cover
         file_list, _, load_class = dial.get_result()
-        save_dir = os.path.dirname(file_list[0])
-        self.settings.set(IO_SAVE_DIRECTORY, save_dir)
-        self.settings.add_path_history(save_dir)
         profs, err = load_class.load(file_list)
         if err:
-            QMessageBox.warning(
-                self, "Import error", "error during importing, part of data were filtered."
-            )  # pragma: no cover
+            show_warning("Import error", "error during importing, part of data were filtered.")  # pragma: no cover
         imp = ImportDialog(profs, self.profile_dict, ProfileDictViewer, parent=self)
         if not imp.exec_():
             return  # pragma: no cover
