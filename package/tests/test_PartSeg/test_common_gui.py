@@ -302,7 +302,7 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.selectFile(str(tmp_path / "test.tif"))
     dialog.accept()
     assert dialog.selectedNameFilter() == SaveAsTiff.get_name()
-    assert part_settings.get_path_history() == [str(tmp_path), str(Path.home())]
+    assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
 
 
 def test_form_dialog(qtbot):
@@ -346,4 +346,4 @@ def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.selectFile(str(tmp_path / "test.tif"))
     dialog.accept()
     assert dialog.selectedNameFilter() == LoadStackImage.get_name()
-    assert part_settings.get_path_history() == [str(tmp_path), str(Path.home())]
+    assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
