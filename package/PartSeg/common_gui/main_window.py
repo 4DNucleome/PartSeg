@@ -1,6 +1,5 @@
 import dataclasses
 import os
-from pathlib import Path
 from typing import List, Optional, Type
 
 from qtpy.QtCore import Qt, Signal
@@ -16,7 +15,7 @@ from PartSegImage import Image
 from ..common_backend.base_settings import FILE_HISTORY, BaseSettings, SwapTimeStackException, TimeAndStackException
 from ..common_backend.load_backup import import_config
 from .about_dialog import AboutDialog
-from .custom_save_dialog import CustomSaveDialog
+from .custom_save_dialog import PSaveDialog
 from .exception_hooks import load_data_exception_hook
 from .image_adjustment import ImageAdjustmentDialog
 from .napari_image_view import ImageView
@@ -317,19 +316,17 @@ class BaseMainWindow(QMainWindow):
     def screenshot(self, viewer: ImageView):
         def _screenshot():
             data = viewer.viewer_widget.screenshot()
-            dial = CustomSaveDialog(
-                {SaveScreenshot.get_name(): SaveScreenshot},
-                history=self.settings.get_path_history(),
+            dial = PSaveDialog(
+                SaveScreenshot,
+                settings=self.settings,
                 system_widget=False,
+                path="io.save_screenshot",
+                file_mode=QFileDialog.AnyFile,
             )
-            dial.setFileMode(QFileDialog.AnyFile)
-            dial.setDirectory(self.settings.get("io.save_screenshot", str(Path.home())))
+
             if not dial.exec_():
                 return
             res = dial.get_result()
-            save_dir = os.path.dirname(str(res.save_destination))
-            self.settings.add_path_history(save_dir)
-            self.settings.set("io.save_screenshot", str(save_dir))
             res.save_class.save(res.save_destination, data, res.parameters)
 
         return _screenshot

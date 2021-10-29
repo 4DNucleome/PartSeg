@@ -156,9 +156,11 @@ class PSaveDialog(CustomSaveDialog):
     def __init__(
         self,
         save_register: typing.Union[typing.Dict[str, type(SaveBase)], type(SaveBase)],
+        *,
         settings: BaseSettings,
         path: str,
         default_directory=str(Path.home()),
+        filter_path="",
         system_widget=True,
         base_values: typing.Optional[dict] = None,
         parent=None,
@@ -174,14 +176,20 @@ class PSaveDialog(CustomSaveDialog):
         )
         self.settings = settings
         self.path_in_dict = path
+        self.filter_path = filter_path
         self.setDirectory(self.settings.get(path, default_directory))
+        if self.filter_path:
+            self.selectNameFilter(self.settings.get(self.filter_path, ""))
 
     def accept(self):
         super().accept()
-        if self.result() == QDialog.Accepted:
-            directory = os.path.dirname(self.selectedFiles()[0])
-            self.settings.add_path_history(directory)
-            self.settings.set(self.path_in_dict, directory)
+        if self.result() != QDialog.Accepted:
+            return
+        directory = os.path.dirname(self.selectedFiles()[0])
+        self.settings.add_path_history(directory)
+        self.settings.set(self.path_in_dict, directory)
+        if self.filter_path:
+            self.settings.set(self.filter_path, self.selectedNameFilter())
 
 
 SaveDialog = CustomSaveDialog

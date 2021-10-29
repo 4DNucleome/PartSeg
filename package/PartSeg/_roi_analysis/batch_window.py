@@ -40,7 +40,8 @@ from PartSegCore.universal_const import Units
 from PartSegData import icons_dir
 
 from .. import parsed_version
-from ..common_gui.custom_save_dialog import CustomSaveDialog
+from ..common_backend.base_settings import IO_SAVE_DIRECTORY
+from ..common_gui.custom_save_dialog import PSaveDialog
 from ..common_gui.error_report import ExceptionList, ExceptionListItem
 from ..common_gui.searchable_combo_box import SearchComboBox
 from ..common_gui.select_multiple_files import AddFiles
@@ -298,13 +299,9 @@ class FileChoose(QWidget):
             self.files_widget.mask_list = []
 
     def chose_result_file(self):
-        dial = CustomSaveDialog(SaveExcel, system_widget=False, history=self.settings.get_path_history())
-        dial.setDirectory(
-            self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home())))
-        )
+        dial = PSaveDialog(SaveExcel, system_widget=False, settings=self.settings, path=IO_SAVE_DIRECTORY)
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            self.settings.add_path_history(os.path.dirname(file_path))
             if os.path.splitext(file_path)[1] == "":
                 file_path += ".xlsx"
             self.result_file.setText(file_path)

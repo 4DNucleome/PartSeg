@@ -37,7 +37,7 @@ from PartSegCore.segmentation import ROIExtractionResult
 from PartSegImage import Image
 
 from ..._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
-from ...common_backend.base_settings import BaseSettings
+from ...common_backend.base_settings import IO_SAVE_DIRECTORY, BaseSettings
 from ...common_gui.algorithms_description import (
     AlgorithmChooseBase,
     FormWidget,
@@ -45,7 +45,7 @@ from ...common_gui.algorithms_description import (
     QtAlgorithmProperty,
 )
 from ...common_gui.custom_load_dialog import CustomLoadDialog
-from ...common_gui.custom_save_dialog import CustomSaveDialog
+from ...common_gui.custom_save_dialog import PSaveDialog
 from ...common_gui.searchable_combo_box import SearchComboBox
 from ...common_gui.searchable_list_widget import SearchableListWidget
 from ...common_gui.universal_gui_part import TextShow
@@ -56,7 +56,6 @@ if typing.TYPE_CHECKING:
 
 
 SELECT_TEXT = "<select>"
-IO_SAVE_DIRECTORY = "io.save_directory"
 
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
@@ -407,13 +406,9 @@ class ProfilePreviewDialog(QDialog):
         exp = ExportDialog(self.profile_dict, ProfileDictViewer, parent=self)
         if not exp.exec_():
             return  # pragma: no cover
-        dial = CustomSaveDialog(SaveProfilesToJSON, history=self.settings.get_path_history(), parent=self)
-        dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
+        dial = PSaveDialog(SaveProfilesToJSON, settings=self.settings, parent=self, path=IO_SAVE_DIRECTORY)
         if dial.exec_():
             save_location, _selected_filter, save_class, values = dial.get_result()
-            save_dir = os.path.dirname(save_location)
-            self.settings.set(IO_SAVE_DIRECTORY, save_dir)
-            self.settings.add_path_history(save_dir)
             data = {x: self.profile_dict[x] for x in exp.get_export_list()}
             save_class.save(save_location, data, values)
 
@@ -424,7 +419,7 @@ class ProfilePreviewDialog(QDialog):
             return  # pragma: no cover
         file_list, _, load_class = dial.get_result()
         save_dir = os.path.dirname(file_list[0])
-        self.settings.set("io.save_directory", save_dir)
+        self.settings.set(IO_SAVE_DIRECTORY, save_dir)
         self.settings.add_path_history(save_dir)
         profs, err = load_class.load(file_list)
         if err:
