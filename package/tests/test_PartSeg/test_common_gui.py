@@ -297,6 +297,8 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
     qtbot.addWidget(dialog)
+    with (tmp_path / "test.tif").open("w") as f:
+        f.write("eeeeeee")
     assert SaveAsTiff.get_name() in dialog.nameFilters()
     dialog.show()
     dialog.selectFile(str(tmp_path / "test.tif"))
