@@ -1,4 +1,5 @@
 import platform
+import sys
 from enum import Enum
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, loa
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+IS_MACOS = sys.platform == "darwin"
 
 
 class Enum1(Enum):
@@ -347,6 +349,8 @@ def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert LoadStackImage.get_name() in dialog.nameFilters()
     dialog.show()
     dialog.selectFile(str(tmp_path / "test.tif"))
+    if IS_MACOS:
+        monkeypatch.setattr(dialog, "selectedFiles", lambda: [str(tmp_path / "test.tif")])
     dialog.accept()
     assert dialog.selectedNameFilter() == LoadStackImage.get_name()
     assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
