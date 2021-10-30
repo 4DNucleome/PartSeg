@@ -1,9 +1,13 @@
 import typing
-from os.path import basename, isdir, isfile
+from os.path import basename, dirname, isdir, isfile
+from pathlib import Path
 
 from qtpy.QtWidgets import QFileDialog
 
 from PartSegCore.io_utils import LoadBase
+
+if typing.TYPE_CHECKING:  # pragma: no cover
+    from PartSeg.common_backend.base_settings import BaseSettings
 
 
 class LoadProperty(typing.NamedTuple):
@@ -54,3 +58,37 @@ class CustomLoadDialog(QFileDialog):
     def get_result(self):
         chosen_class: LoadBase = self.load_register[self.selectedNameFilter()]
         return LoadProperty(self.files_list, self.selectedNameFilter(), chosen_class)
+
+
+class PLoadDialog(CustomLoadDialog):
+    def __init__(
+        self,
+        load_register: typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase)],
+        *,
+        settings: "BaseSettings",
+        path: str,
+        default_directory=str(Path.home()),
+        filter_path="",
+        parent=None,
+    ):
+        super().__init__(
+            load_register=load_register,
+            parent=parent,
+            history=settings.get_path_history(),
+        )
+        self.settings = settings
+        self.path_in_dict = path
+        self.filter_path = filter_path
+        self.setDirectory(self.settings.get(path, default_directory))
+        if self.filter_path:
+            self.selectNameFilter(self.settings.get(self.filter_path, ""))
+
+    def accept(self):
+        super().accept()
+        if self.result() != QFileDialog.Accepted:
+            return
+        directory = dirname(self.selectedFiles()[0])
+        self.settings.add_path_history(directory)
+        self.settings.set(self.path_in_dict, directory)
+        if self.filter_path:
+            self.settings.set(self.filter_path, self.selectedNameFilter())

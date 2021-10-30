@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
 ROI_NOT_FIT = "roi do not fit to image"
+IO_SAVE_DIRECTORY = "io.save_directory"
 
 
 class ImageSettings(QObject):

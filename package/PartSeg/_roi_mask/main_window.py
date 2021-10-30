@@ -1,6 +1,5 @@
 import os
 from functools import partial
-from pathlib import Path
 from typing import Type
 
 import numpy as np
@@ -39,12 +38,12 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image, TiffImageReader
 
 from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
-from ..common_backend.base_settings import ROI_NOT_FIT
+from ..common_backend.base_settings import IO_SAVE_DIRECTORY, ROI_NOT_FIT
 from ..common_gui.advanced_tabs import AdvancedWindow
 from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_load_dialog import CustomLoadDialog
-from ..common_gui.custom_save_dialog import CustomSaveDialog
+from ..common_gui.custom_load_dialog import PLoadDialog
+from ..common_gui.custom_save_dialog import PSaveDialog
 from ..common_gui.exception_hooks import load_data_exception_hook
 from ..common_gui.flow_layout import FlowLayout
 from ..common_gui.main_window import BaseMainMenu, BaseMainWindow
@@ -173,19 +172,19 @@ class MainMenu(BaseMainMenu):
 
     def load_image(self):
         # TODO move segmentation with image load to load_segmentaion
-        dial = CustomLoadDialog(io_functions.load_dict)
-        dial.setDirectory(self.settings.get("io.load_image_directory", str(Path.home())))
+        dial = PLoadDialog(
+            io_functions.load_dict,
+            settings=self.settings,
+            path="io.load_image_directory",
+            filter_path="io.load_data_filter",
+        )
         default_file_path = self.settings.get("io.load_image_file", "")
         if os.path.isfile(default_file_path):
             dial.selectFile(default_file_path)
-        dial.selectNameFilter(self.settings.get("io.load_data_filter", io_functions.load_dict.get_default()))
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         load_property = dial.get_result()
-        self.settings.set("io.load_image_directory", os.path.dirname(load_property.load_location[0]))
         self.settings.set("io.load_image_file", load_property.load_location[0])
-        self.settings.set("io.load_data_filter", load_property.selected_filter)
         self.settings.add_load_files_history(load_property.load_location, load_property.load_class.get_name())
 
         execute_dialog = ExecuteFunctionDialog(
@@ -225,20 +224,18 @@ class MainMenu(BaseMainMenu):
         return True
 
     def load_segmentation(self):
-        dial = CustomLoadDialog(
+        dial = PLoadDialog(
             {
                 LoadROI.get_name(): LoadROI,
                 LoadROIParameters.get_name(): LoadROIParameters,
                 LoadROIFromTIFF.get_name(): LoadROIFromTIFF,
-            }
+            },
+            settings=self.settings,
+            path="io.open_segmentation_directory",
         )
-        dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         load_property = dial.get_result()
-        self.settings.set("io.open_segmentation_directory", os.path.dirname(load_property.load_location[0]))
-        self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
 
         def exception_hook(exception):
             mess = QMessageBox(self)
@@ -296,15 +293,17 @@ class MainMenu(BaseMainMenu):
         if self.settings.roi is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
-        dial = CustomSaveDialog(io_functions.save_segmentation_dict, False, history=self.settings.get_path_history())
-        dial.setDirectory(self.settings.get("io.save_segmentation_directory", str(Path.home())))
+        dial = PSaveDialog(
+            io_functions.save_segmentation_dict,
+            system_widget=False,
+            settings=self.settings,
+            path="io.save_segmentation_directory",
+        )
+
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
         if not dial.exec_():
             return
         save_location, _selected_filter, save_class, values = dial.get_result()
-        self.settings.set("io.save_segmentation_directory", os.path.dirname(str(save_location)))
-        self.settings.add_path_history(os.path.dirname(str(save_location)))
-        # self.settings.save_directory = os.path.dirname(str(file_path))
 
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
@@ -328,13 +327,13 @@ class MainMenu(BaseMainMenu):
         if self.settings.roi is None or len(self.settings.sizes) == 1:
             QMessageBox.warning(self, "No components", "No components to save")
             return
-        dial = CustomSaveDialog(
+        dial = PSaveDialog(
             io_functions.save_components_dict,
-            False,
-            history=self.settings.get_path_history(),
+            system_widget=False,
+            settings=self.settings,
             file_mode=QFileDialog.Directory,
+            path="io.save_components_directory",
         )
-        dial.setDirectory(self.settings.get("io.save_components_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
         if not dial.exec_():
             return
@@ -355,10 +354,6 @@ class MainMenu(BaseMainMenu):
                 QMessageBox.No,
             ):
                 self.save_result()
-                return
-
-        self.settings.set("io.save_components_directory", os.path.dirname(str(res.save_destination)))
-        self.settings.add_path_history(os.path.dirname(str(res.save_destination)))
 
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
@@ -606,11 +601,12 @@ class AlgorithmOptions(QWidget):
         self.settings.set_keep_chosen_components(val)
 
     def save_parameters(self):
-        dial = CustomSaveDialog(io_functions.save_parameters_dict, False, history=self.settings.get_path_history())
+        dial = PSaveDialog(
+            io_functions.save_parameters_dict, system_widget=False, settings=self.settings, path=IO_SAVE_DIRECTORY
+        )
         if not dial.exec_():
             return
         res = dial.get_result()
-        self.settings.add_path_history(os.path.dirname(str(res.save_destination)))
         res.save_class.save(res.save_destination, self.algorithm_choose_widget.current_parameters())
 
     def border_value_check(self, value):
@@ -660,17 +656,16 @@ class AlgorithmOptions(QWidget):
         self._execute_in_background_init()
 
     def execute_all_action(self):
-        dial = CustomSaveDialog(
-            {SaveROI.get_name(): SaveROI},
-            history=self.settings.get_path_history(),
+        dial = PSaveDialog(
+            SaveROI,
+            settings=self.settings,
             system_widget=False,
+            path="io.save_batch",
+            file_mode=QFileDialog.Directory,
         )
-        dial.setFileMode(QFileDialog.Directory)
-        dial.setDirectory(self.settings.get("io.save_batch", self.settings.get("io.save_segmentation_directory", "")))
         if not dial.exec_():
             return
         folder_path = str(dial.selectedFiles()[0])
-        self.settings.set("io.save_batch", folder_path)
 
         widget = self.algorithm_choose_widget.current_widget()
 

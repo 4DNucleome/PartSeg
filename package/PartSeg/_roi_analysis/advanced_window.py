@@ -38,6 +38,7 @@ from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, Measu
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
 
+from ..common_backend.base_settings import IO_SAVE_DIRECTORY
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
 from ..common_gui.searchable_list_widget import SearchableListWidget
@@ -236,14 +237,14 @@ class Properties(QWidget):
         dial = QFileDialog(self, "Export profile segment")
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDirectory(self._settings.get("io.save_directory", str(Path.home())))
+        dial.setDirectory(self._settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
         dial.setNameFilter("Segment profile (*.json)")
         dial.setDefaultSuffix("json")
         dial.selectFile("segment_profile.json")
         dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self._settings.set("io.save_directory", os.path.dirname(file_path))
+            self._settings.set(IO_SAVE_DIRECTORY, os.path.dirname(file_path))
             self._settings.add_path_history(os.path.dirname(file_path))
             data = {x: self._settings.roi_profiles[x] for x in exp.get_export_list()}
             with open(file_path, "w") as ff:

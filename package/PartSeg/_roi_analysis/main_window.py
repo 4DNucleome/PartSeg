@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from typing import Type
 
 import numpy as np
@@ -20,7 +19,7 @@ from qtpy.QtWidgets import (
 
 import PartSegData
 from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
-from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
 from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
 from PartSegCore import state_store
@@ -35,10 +34,11 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import TiffImageReader
 
+from ..common_backend.base_settings import IO_SAVE_DIRECTORY
 from ..common_backend.except_hook import show_warning
 from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_save_dialog import CustomSaveDialog
+from ..common_gui.custom_save_dialog import PSaveDialog
 from ..common_gui.equal_column_layout import EqualColumnLayout
 from ..common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
 from ..common_gui.mask_widget import MaskDialogBase
@@ -393,21 +393,18 @@ class MainMenu(BaseMainMenu):
 
     def save_file(self):
         base_values = self.settings.get("save_parameters", {})
-        dial = CustomSaveDialog(
-            save_dict, system_widget=False, base_values=base_values, history=self.settings.get_path_history()
+        dial = PSaveDialog(
+            save_dict,
+            system_widget=False,
+            base_values=base_values,
+            settings=self.settings,
+            path=IO_SAVE_DIRECTORY,
+            filter_path="io.save_filter",
         )
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
-        dial.setDirectory(
-            self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home())))
-        )
-        dial.selectNameFilter(self.settings.get("io.save_filter", ""))
         if dial.exec_():
             save_location, selected_filter, save_class, values = dial.get_result()
             project_info = self.settings.get_project_info()
-            self.settings.set("io.save_filter", selected_filter)
-            save_dir = os.path.dirname(save_location)
-            self.settings.set("io.save_directory", save_dir)
-            self.settings.add_path_history(save_dir)
             base_values[selected_filter] = values
 
             def exception_hook(exception):
@@ -439,17 +436,14 @@ class MainMenu(BaseMainMenu):
                 load_data_exception_hook(exception)
 
         try:
-            dial = CustomLoadDialog(load_functions.load_dict, history=self.settings.get_path_history())
-            dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
+            dial = PLoadDialog(
+                load_functions.load_dict, settings=self.settings, path="io.open_directory", filter_path="io.open_filter"
+            )
             file_path = self.settings.get("io.open_file", "")
             if os.path.isfile(file_path):
                 dial.selectFile(file_path)
-            dial.selectNameFilter(self.settings.get("io.open_filter", next(iter(load_functions.load_dict.keys()))))
             if dial.exec_():
                 result = dial.get_result()
-                self.settings.set("io.open_filter", result.selected_filter)
-                load_dir = os.path.dirname(result.load_location[0])
-                self.settings.set("io.open_directory", load_dir)
                 self.settings.set("io.open_file", result.load_location[0])
                 self.settings.add_load_files_history(result.load_location, result.load_class.get_name())
                 dial2 = ExecuteFunctionDialog(
@@ -463,7 +457,7 @@ class MainMenu(BaseMainMenu):
                     self.set_data(result)
 
         except ValueError as e:
-            QMessageBox.warning(self, "Open error", f"{e}")
+            show_warning("Open error", f"{e}")
 
     def batch_window(self):
         if self.main_window.batch_window is None:

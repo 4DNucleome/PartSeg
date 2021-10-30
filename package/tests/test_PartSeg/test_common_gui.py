@@ -1,21 +1,25 @@
 import platform
+import sys
 from enum import Enum
+from pathlib import Path
 
 import pytest
 import qtpy
-from qtpy.QtWidgets import QWidget
+from qtpy.QtWidgets import QFileDialog, QWidget
 
 from PartSeg.common_gui import select_multiple_files
-from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
-from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
+from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
+from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.calculation_plan import MaskSuffix
-from PartSegCore.analysis.load_functions import LoadProject, load_dict
-from PartSegCore.analysis.save_functions import SaveProject, save_dict
+from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
+from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+IS_MACOS = sys.platform == "darwin"
 
 
 class Enum1(Enum):
@@ -258,4 +262,95 @@ def test_create_save_dialog(qtbot):
     dialog = CustomSaveDialog(save_dict, history=["/aaa/"])
     assert dialog.acceptMode() == CustomSaveDialog.AcceptSave
     dialog = CustomSaveDialog(SaveProject, history=["/aaa/"])
-    assert dialog.acceptMode() == CustomSaveDialog.AcceptSave
+    assert not hasattr(dialog, "stack_widget")
+    dialog = CustomSaveDialog(save_dict, system_widget=False)
+    assert hasattr(dialog, "stack_widget")
+
+
+def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
+    def selected_files(self):
+        return [str(tmp_path / "test.tif")]
+
+    monkeypatch.setattr(QFileDialog, "selectedFiles", selected_files)
+
+    assert part_settings.get_path_history() == [str(Path.home())]
+
+    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test")
+    qtbot.addWidget(dialog)
+    assert Path(dialog.directory().path()) == Path.home()
+    assert Path(part_settings.get("io.test")) == Path.home()
+    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test2", default_directory=str(tmp_path))
+    qtbot.addWidget(dialog)
+    assert Path(dialog.directory().path()) == tmp_path
+    assert Path(part_settings.get("io.test2")) == tmp_path
+    part_settings.set("io.test3", str(tmp_path))
+    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
+    qtbot.addWidget(dialog)
+    assert Path(dialog.directory().path()) == tmp_path
+    assert Path(part_settings.get("io.test3")) == tmp_path
+
+    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
+    part_settings.set("io.filter_save", SaveAsTiff.get_name())
+    assert part_settings.get_path_history() == [str(Path.home())]
+    dialog.show()
+    dialog.accept()
+    assert part_settings.get_path_history() == [str(Path.home())]
+
+    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
+    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
+    qtbot.addWidget(dialog)
+    assert SaveAsTiff.get_name() in dialog.nameFilters()
+    dialog.show()
+    dialog.selectFile(str(tmp_path / "test.tif"))
+    dialog.accept()
+    assert dialog.selectedNameFilter() == SaveAsTiff.get_name()
+    assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
+
+
+def test_form_dialog(qtbot):
+    fields = [
+        AlgorithmProperty("aaa", "Aaa", 1.0),
+        AlgorithmProperty("bbb", "Bbb", False),
+    ]
+    form = FormDialog(fields, values={"aaa": 2.0})
+    assert form.get_values() == {"aaa": 2.0, "bbb": False}
+    form.set_values({"aaa": 5.0, "bbb": True})
+    assert form.get_values() == {"aaa": 5.0, "bbb": True}
+
+
+def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
+    dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test")
+    qtbot.addWidget(dialog)
+    assert Path(dialog.directory().path()) == Path.home()
+    assert Path(part_settings.get("io.load_test")) == Path.home()
+    dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test2", default_directory=str(tmp_path))
+    qtbot.addWidget(dialog)
+    assert Path(dialog.directory().path()) == tmp_path
+    assert Path(part_settings.get("io.load_test2")) == tmp_path
+    part_settings.set("io.load_test3", str(tmp_path))
+    dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test3")
+    qtbot.addWidget(dialog)
+    assert Path(dialog.directory().path()) == tmp_path
+    assert Path(part_settings.get("io.load_test3")) == tmp_path
+
+    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
+    part_settings.set("io.filter_load", LoadStackImage.get_name())
+    assert part_settings.get_path_history() == [str(Path.home())]
+    dialog.show()
+    dialog.accept()
+    assert part_settings.get_path_history() == [str(Path.home())]
+
+    with (tmp_path / "test.tif").open("w") as f:
+        f.write("eeeeeee")
+
+    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
+    dialog = PLoadDialog(load_dict, settings=part_settings, path="io.load_test4", filter_path="io.filter_load")
+    qtbot.addWidget(dialog)
+    assert LoadStackImage.get_name() in dialog.nameFilters()
+    dialog.show()
+    dialog.selectFile(str(tmp_path / "test.tif"))
+    if IS_MACOS:
+        monkeypatch.setattr(dialog, "selectedFiles", lambda: [str(tmp_path / "test.tif")])
+    dialog.accept()
+    assert dialog.selectedNameFilter() == LoadStackImage.get_name()
+    assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
