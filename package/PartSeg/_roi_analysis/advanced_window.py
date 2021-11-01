@@ -1,7 +1,6 @@
 import json
 import os
 from copy import deepcopy
-from pathlib import Path
 from typing import Optional, Tuple, Union
 
 from qtpy.QtCore import QEvent, Qt, Slot
@@ -12,7 +11,6 @@ from qtpy.QtWidgets import (
     QCheckBox,
     QDialog,
     QDoubleSpinBox,
-    QFileDialog,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -39,7 +37,8 @@ from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
 
 from ..common_backend.base_settings import IO_SAVE_DIRECTORY
-from ..common_gui.custom_save_dialog import FormDialog
+from ..common_gui.custom_load_dialog import PLoadDialog
+from ..common_gui.custom_save_dialog import FormDialog, PSaveDialog
 from ..common_gui.lock_checkbox import LockCheckBox
 from ..common_gui.searchable_list_widget import SearchableListWidget
 from .measurement_widget import MeasurementWidget
@@ -234,34 +233,28 @@ class Properties(QWidget):
         exp = ExportDialog(self._settings.roi_profiles, ProfileDictViewer)
         if not exp.exec_():
             return
-        dial = QFileDialog(self, "Export profile segment")
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDirectory(self._settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
-        dial.setNameFilter("Segment profile (*.json)")
-        dial.setDefaultSuffix("json")
+        dial = PSaveDialog(
+            "Segment profile (*.json)",
+            settings=self._settings,
+            path=IO_SAVE_DIRECTORY,
+            caption="Export profile segment",
+        )
         dial.selectFile("segment_profile.json")
-        dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self._settings.set(IO_SAVE_DIRECTORY, os.path.dirname(file_path))
-            self._settings.add_path_history(os.path.dirname(file_path))
             data = {x: self._settings.roi_profiles[x] for x in exp.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
 
     def import_profiles(self):
-        dial = QFileDialog(self, "Import profile segment")
-        dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setAcceptMode(QFileDialog.AcceptOpen)
-        dial.setDirectory(self._settings.get("io.save_directory", str(Path.home())))
-        dial.setNameFilter("Segment profile (*.json)")
-        dial.setHistory(dial.history() + self._settings.get_path_history())
+        dial = PLoadDialog(
+            "Segment profile (*.json)",
+            settings=self._settings,
+            path=IO_SAVE_DIRECTORY,
+            caption="Import profile segment",
+        )
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            save_dir = os.path.dirname(file_path)
-            self._settings.set("io.save_directory", save_dir)
-            self._settings.add_path_history(save_dir)
             profs, err = self._settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
@@ -278,33 +271,28 @@ class Properties(QWidget):
         exp = ExportDialog(self._settings.roi_pipelines, ProfileDictViewer)
         if not exp.exec_():
             return
-        dial = QFileDialog(self, "Export pipeline segment")
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDirectory(self._settings.get("io.save_directory", ""))
-        dial.setNameFilter("Segment pipeline (*.json)")
-        dial.setDefaultSuffix("json")
+        dial = PSaveDialog(
+            "Segment pipeline (*.json)",
+            settings=self._settings,
+            path=IO_SAVE_DIRECTORY,
+            caption="Export pipeline segment",
+        )
         dial.selectFile("segment_pipeline.json")
-        dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             data = {x: self._settings.roi_pipelines[x] for x in exp.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
-            self._settings.set("io.save_directory", os.path.dirname(file_path))
-            self._settings.add_path_history(os.path.dirname(file_path))
 
     def import_pipeline(self):
-        dial = QFileDialog(self, "Import pipeline segment")
-        dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setAcceptMode(QFileDialog.AcceptOpen)
-        dial.setDirectory(self._settings.get("io.save_directory", ""))
-        dial.setNameFilter("Segment pipeline (*.json)")
-        dial.setHistory(dial.history() + self._settings.get_path_history())
+        dial = PLoadDialog(
+            "Segment pipeline (*.json)",
+            settings=self._settings,
+            path=IO_SAVE_DIRECTORY,
+            caption="Import pipeline segment",
+        )
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self._settings.set("io.save_directory", os.path.dirname(file_path))
-            self._settings.add_path_history(os.path.dirname(file_path))
             profs, err = self._settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
@@ -759,30 +747,29 @@ class MeasurementSettings(QWidget):
         exp = ExportDialog(self.settings.measurement_profiles, StringViewer)
         if not exp.exec_():
             return
-        dial = QFileDialog(self, "Export settings profiles")
-        dial.setDirectory(self.settings.get("io.export_directory", ""))
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setNameFilter("measurement profile (*.json)")
-        dial.setDefaultSuffix("json")
+        dial = PSaveDialog(
+            "measurement profile (*.json)",
+            settings=self.settings,
+            path="io.export_directory",
+            caption="Export settings profiles",
+        )
         dial.selectFile("measurements_profile.json")
 
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            self.settings.set("io.export_directory", file_path)
             data = {x: self.settings.measurement_profiles[x] for x in exp.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
-            self.settings.set("io.save_directory", os.path.dirname(file_path))
 
     def import_measurement_profiles(self):
-        dial = QFileDialog(self, "Import settings profiles")
-        dial.setDirectory(self.settings.get("io.export_directory", ""))
-        dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setNameFilter("measurement profile (*.json)")
+        dial = PLoadDialog(
+            "measurement profile (*.json)",
+            settings=self.settings,
+            path="io.export_directory",
+            caption="Import settings profiles",
+        )
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            self.settings.set("io.export_directory", file_path)
             stat, err = self.settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
