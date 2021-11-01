@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/psf/black
-    rev: 21.9b0
+    rev: 21.10b0
     hooks:
     - id: black
       pass_filenames: true
@@ -28,7 +28,7 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.18.0
+    rev: v1.19.0
     hooks:
     - id: setup-cfg-fmt
       args: ["--max-py-version=3.9"]
