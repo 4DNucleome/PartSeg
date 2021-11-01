@@ -33,6 +33,10 @@ class IOMethodMock:
     def get_fields():
         return []
 
+    @staticmethod
+    def number_of_files():
+        return 1
+
 
 class LoadRegisterFileDialog(QFileDialog):
     def __init__(
