@@ -354,3 +354,31 @@ def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.accept()
     assert dialog.selectedNameFilter() == LoadStackImage.get_name()
     assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
+
+
+def test_str_filter(part_settings, tmp_path, qtbot, monkeypatch):
+    tiff_text = "Test (*.tiff)"
+    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
+    monkeypatch.setattr(QFileDialog, "selectedFiles", lambda x: [str(tmp_path / "test.tif")])
+    dialog = PSaveDialog(tiff_text, settings=part_settings, path="io.save_test")
+    qtbot.addWidget(dialog)
+    assert tiff_text in dialog.nameFilters()
+    dialog.show()
+    dialog.selectFile(str(tmp_path / "test.tif"))
+    dialog.accept()
+    assert dialog.selectedNameFilter() == tiff_text
+    assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
+
+    with (tmp_path / "test2.tif").open("w") as f:
+        f.write("eeeeeee")
+
+    dialog = PLoadDialog(tiff_text, settings=part_settings, path="io.load_test2")
+    qtbot.addWidget(dialog)
+    assert tiff_text in dialog.nameFilters()
+    dialog.show()
+    dialog.selectFile(str(tmp_path / "test2.tif"))
+    if IS_MACOS:
+        monkeypatch.setattr(dialog, "selectedFiles", lambda: [str(tmp_path / "test2.tif")])
+    dialog.accept()
+    assert dialog.selectedNameFilter() == tiff_text
+    assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
