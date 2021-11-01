@@ -29,7 +29,8 @@ class IOMethodMock:
     def get_name_with_suffix(self):
         return self.get_name()
 
-    def get_fields(self):
+    @staticmethod
+    def get_fields():
         return []
 
 
