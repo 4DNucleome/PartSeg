@@ -4,7 +4,6 @@ import os
 import typing
 from copy import copy, deepcopy
 from enum import Enum
-from pathlib import Path
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
@@ -56,7 +55,8 @@ from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.universal_const import Units
 
-from ..common_gui.custom_save_dialog import FormDialog
+from ..common_gui.custom_load_dialog import PLoadDialog
+from ..common_gui.custom_save_dialog import FormDialog, PSaveDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.searchable_list_widget import SearchableListWidget
 from ..common_gui.universal_gui_part import right_label
@@ -1078,35 +1078,29 @@ class CalculateInfo(QWidget):
         choose = ExportDialog(self.settings.batch_plans, PlanPreview)
         if not choose.exec_():
             return
-        dial = QFileDialog(self, "Export calculation plans")
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDirectory(dial.setDirectory(self.settings.get("io.batch_plan_directory", str(Path.home()))))
-        dial.setNameFilter("Calculation plans (*.json)")
-        dial.setDefaultSuffix("json")
+        dial = PSaveDialog(
+            "Calculation plans (*.json)",
+            caption="Export calculation plans",
+            settings=self.settings,
+            path="io.batch_plan_directory",
+        )
         dial.selectFile("calculation_plans.json")
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            self.settings.set("io.batch_plan_directory", os.path.dirname(file_path))
-            self.settings.add_path_history(os.path.dirname(file_path))
             data = {x: self.settings.batch_plans[x] for x in choose.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
 
     def import_plans(self):
-        dial = QFileDialog(self, "Import calculation plans")
-        dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setAcceptMode(QFileDialog.AcceptOpen)
-        dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
-        dial.setNameFilter("Calculation plans (*.json)")
-        dial.setDefaultSuffix("json")
-        dial.setHistory(dial.history() + self.settings.get_path_history())
+        dial = PLoadDialog(
+            "Calculation plans (*.json)",
+            settings=self.settings,
+            path="io.batch_plan_directory",
+            caption="Import calculation plans",
+        )
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             plans, err = self.settings.load_part(file_path)
-            self.settings.set("io.batch_plan_directory", os.path.dirname(file_path))
-            self.settings.add_path_history(os.path.dirname(file_path))
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview)
