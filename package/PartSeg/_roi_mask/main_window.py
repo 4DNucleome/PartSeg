@@ -9,7 +9,6 @@ from qtpy.QtWidgets import (
     QAbstractSpinBox,
     QCheckBox,
     QDoubleSpinBox,
-    QFileDialog,
     QFormLayout,
     QGridLayout,
     QHBoxLayout,
@@ -331,7 +330,7 @@ class MainMenu(BaseMainMenu):
             io_functions.save_components_dict,
             system_widget=False,
             settings=self.settings,
-            file_mode=QFileDialog.Directory,
+            file_mode=PSaveDialog.Directory,
             path="io.save_components_directory",
         )
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
@@ -661,7 +660,7 @@ class AlgorithmOptions(QWidget):
             settings=self.settings,
             system_widget=False,
             path="io.save_batch",
-            file_mode=QFileDialog.Directory,
+            file_mode=PSaveDialog.Directory,
         )
         if not dial.exec_():
             return

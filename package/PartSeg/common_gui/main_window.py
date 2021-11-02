@@ -4,7 +4,7 @@ from typing import List, Optional, Type
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
-from qtpy.QtWidgets import QAction, QApplication, QDockWidget, QFileDialog, QMainWindow, QMenu, QMessageBox, QWidget
+from qtpy.QtWidgets import QAction, QApplication, QDockWidget, QMainWindow, QMenu, QMessageBox, QWidget
 from vispy.color import colormap
 
 from PartSegCore.algorithm_describe_base import Register
@@ -321,7 +321,7 @@ class BaseMainWindow(QMainWindow):
                 settings=self.settings,
                 system_widget=False,
                 path="io.save_screenshot",
-                file_mode=QFileDialog.AnyFile,
+                file_mode=PSaveDialog.AnyFile,
             )
 
             if not dial.exec_():
