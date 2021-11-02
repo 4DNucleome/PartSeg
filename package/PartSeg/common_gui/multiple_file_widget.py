@@ -4,6 +4,7 @@ from functools import partial
 from pathlib import Path
 from typing import Dict, List
 
+from PyQt5.QtWidgets import QAbstractItemView, QDialog, QListWidget, QListWidgetItem
 from qtpy.QtCore import Qt, QTimer, Signal, Slot
 from qtpy.QtGui import QFontMetrics, QMouseEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -66,6 +67,28 @@ class CustomTreeWidget(QTreeWidget):
         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
 
+class LoadRecentFiles(QDialog):
+    def __init__(self, settings: BaseSettings, parent=None):
+        super().__init__(parent)
+        self.settings = settings
+        self.file_list = QListWidget()
+        self.file_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.cancel_btn = QPushButton("Cancel")
+        self.load_btn = QPushButton("Load")
+
+        for name_list, method in settings.get_last_files_multiple():
+            entry = f"{name_list[0]} {method}"
+            item = QListWidgetItem(entry, self.file_list)
+            item.setData(Qt.UserRole, (name_list, method))
+
+        layout = QGridLayout()
+        layout.addWidget(self.file_list, 0, 0, 1, 2)
+        layout.addWidget(self.cancel_btn, 1, 0)
+        layout.addWidget(self.load_btn, 1, 1)
+
+        self.setLayout(layout)
+
+
 class MultipleFileWidget(QWidget):
     _add_state = Signal(object, bool)
 
@@ -81,11 +104,13 @@ class MultipleFileWidget(QWidget):
         self.save_state_btn = QPushButton("Save state")
         self.save_state_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.load_files_btn = QPushButton("Load Files")
+        self.load_recent_files_btn = QPushButton("Load recent Files")
         self.forget_btn = QPushButton("Forget")
 
         self.save_state_btn.clicked.connect(self.save_state)
         self.forget_btn.clicked.connect(self.forget)
         self.load_files_btn.clicked.connect(self.load_files)
+        self.load_recent_files_btn.clicked.connect(self.load_recent)
         self.file_view.itemDoubleClicked.connect(self.load_state)
         self.file_view.context_load.connect(self.load_state)
         self.last_point = None
@@ -94,9 +119,10 @@ class MultipleFileWidget(QWidget):
 
         layout = QGridLayout()
         layout.addWidget(self.file_view, 0, 0, 1, 2)
-        layout.addWidget(self.save_state_btn, 1, 0, 1, 2)
+        layout.addWidget(self.save_state_btn, 1, 0)
+        layout.addWidget(self.forget_btn, 1, 1)
         layout.addWidget(self.load_files_btn, 2, 0)
-        layout.addWidget(self.forget_btn, 2, 1)
+        layout.addWidget(self.load_recent_files_btn, 2, 1)
         layout.addWidget(self.custom_names_chk, 3, 0, 1, 2)
 
         self.setLayout(layout)
@@ -109,6 +135,10 @@ class MultipleFileWidget(QWidget):
 
         self._add_state.connect(self.save_state_action)
         self.settings.data_changed.connect(self.view_changed)
+
+    def load_recent(self):
+        dial = LoadRecentFiles(self.settings, self)
+        dial.exec_()
 
     def view_changed(self, path, value):
         if path == "multiple_files_widget":
@@ -125,6 +155,7 @@ class MultipleFileWidget(QWidget):
                     step_changed(i)
                     continue
             state: ProjectInfoBase = load_data.load_class.load(load_list)
+            self.settings.add_last_files_multiple(load_list, load_data.load_class.get_name())
             self._add_state.emit(state, False)
             step_changed(i)
 

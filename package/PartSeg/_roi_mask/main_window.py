@@ -184,7 +184,7 @@ class MainMenu(BaseMainMenu):
             return
         load_property = dial.get_result()
         self.settings.set("io.load_image_file", load_property.load_location[0])
-        self.settings.add_load_files_history(load_property.load_location, load_property.load_class.get_name())
+        self.settings.add_last_files(load_property.load_location, load_property.load_class.get_name())
 
         execute_dialog = ExecuteFunctionDialog(
             load_property.load_class.load,
