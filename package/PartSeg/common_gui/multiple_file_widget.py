@@ -182,6 +182,8 @@ class MultipleFileWidget(QWidget):
     def save_state_action(self, state: ProjectInfoBase, custom_name):
         # TODO left elipsis
         # state: ProjectInfoBase = self.get_state()
+        if not isinstance(state, ProjectInfoBase):
+            return
         normed_file_path = os.path.normpath(state.file_path)
         sub_dict = self.state_dict[normed_file_path]
         name = f"state {self.state_dict_count[normed_file_path]+1}"
@@ -289,7 +291,8 @@ class MultipleFileWidget(QWidget):
     def add_states(self, states: List[ProjectInfoBase]):
         """add multiple states to widget"""
         for el in states:
-            self.save_state_action(el, False)
+            if isinstance(el, ProjectInfoBase):
+                self.save_state_action(el, False)
 
 
 class MultipleLoadDialog(CustomLoadDialog):
