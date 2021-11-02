@@ -748,7 +748,7 @@ class MeasurementSettings(QWidget):
         if not exp.exec_():
             return
         dial = PSaveDialog(
-            "measurement profile (*.json)",
+            "Measurement profile (*.json)",
             settings=self.settings,
             path="io.export_directory",
             caption="Export settings profiles",
@@ -763,7 +763,7 @@ class MeasurementSettings(QWidget):
 
     def import_measurement_profiles(self):
         dial = PLoadDialog(
-            "measurement profile (*.json)",
+            "Measurement profile (*.json)",
             settings=self.settings,
             path="io.export_directory",
             caption="Import settings profiles",
