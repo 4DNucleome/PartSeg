@@ -175,7 +175,7 @@ class Image:
         for name in image.channel_names:
             match = reg.match(name)
             new_name = name
-            if match:
+            if match and name in self.channel_names:
                 name = "channel"
                 new_name = f"channel {len(channel_names) + 1}"
             i = 1
