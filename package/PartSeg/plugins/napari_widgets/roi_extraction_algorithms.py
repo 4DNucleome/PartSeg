@@ -3,6 +3,7 @@ import itertools
 import typing
 
 import numpy as np
+import pandas as pd
 from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
@@ -289,11 +290,14 @@ class ROIExtractionAlgorithms(QWidget):
         self.settings.set(f"{self.prefix()}.target_layer_name", layer_name)
         if layer_name in self.viewer.layers:
             self.viewer.layers[layer_name].data = result.roi
+            self.viewer.layers[layer_name].metadata = {"parameters": result.parameters}
         else:
             self.viewer.add_labels(
                 result.roi,
                 scale=np.array(self._scale)[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value],
                 name=layer_name,
+                metadata={"parameters": result.parameters},
+                properties=pd.DataFrame.from_dict(result.roi_annotation, orient="index"),
             )
 
     def refresh_profiles(self):
