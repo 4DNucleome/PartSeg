@@ -1,3 +1,4 @@
+# pylint: disable=R0201
 import platform
 import sys
 from enum import Enum
