@@ -635,7 +635,7 @@ class BaseSettings(ViewSettings):
     def get_last_files(self) -> list:
         return self.get(FILE_HISTORY, [])
 
-    def add_load_files_history(self, file_path: List[Union[str, Path]], load_method: str):
+    def add_load_files_history(self, file_path: List[Union[str, Path]], load_method: str):  # pragma: no cover
         warnings.warn("`add_load_files_history` is deprecated", FutureWarning, stacklevel=2)
         return self.add_last_files(file_path, load_method)
 

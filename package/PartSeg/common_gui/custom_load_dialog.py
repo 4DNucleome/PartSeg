@@ -11,9 +11,9 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 
 class LoadProperty(typing.NamedTuple):
-    load_location: typing.List[str]
+    load_location: typing.List[typing.Union[str, Path]]
     selected_filter: str
-    load_class: LoadBase
+    load_class: typing.Type[LoadBase]
 
 
 IORegister = typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase), str]

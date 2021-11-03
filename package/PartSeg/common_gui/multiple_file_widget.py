@@ -178,6 +178,7 @@ class MultipleFileWidget(QWidget):
 
     def execute_load_files(self, load_data: LoadProperty, range_changed, step_changed):
         range_changed(0, len(load_data.load_location))
+        loaded_list = []
         for i, el in enumerate(load_data.load_location, 1):
             load_list = [el]
             while load_data.load_class.number_of_files() > len(load_list):
@@ -187,9 +188,12 @@ class MultipleFileWidget(QWidget):
                     step_changed(i)
                     continue
             state: ProjectInfoBase = load_data.load_class.load(load_list)
-            self.settings.add_last_files_multiple(load_list, load_data.load_class.get_name())
+            loaded_list.append((load_list, load_data.load_class.get_name()))
             self._add_state.emit(state, False)
             step_changed(i)
+
+        for el in reversed(loaded_list):
+            self.settings.add_last_files_multiple(*el)
 
     def load_files(self):
         dial = MultipleLoadDialog(self.load_register, self.settings.get_path_history())
