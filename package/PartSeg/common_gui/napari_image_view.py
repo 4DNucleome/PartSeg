@@ -432,11 +432,12 @@ class ImageView(QWidget):
             self.viewer.layers.remove_selected()
             image_info.roi = None
 
+        image_info.roi_info = roi_info
+        image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
+
         if roi_info.roi is None:
             return
 
-        image_info.roi_info = roi_info
-        image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
         self.add_roi_layer(image_info)
         image_info.roi.color = self.get_roi_view_parameters(image_info)
         image_info.roi.opacity = self.image_state.opacity
