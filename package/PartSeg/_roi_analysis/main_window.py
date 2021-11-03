@@ -601,7 +601,7 @@ class MainWindow(BaseMainWindow):
 
         layout.setSpacing(0)
         layout.addWidget(self.main_menu, 0, 0, 1, 3)
-        layout.addLayout(info_layout, 1, 1, 1, 2)
+        layout.addLayout(info_layout, 3, 1, 1, 2)
         layout.addWidget(self.multiple_files, 2, 0)
         layout.addWidget(self.color_bar, 2, 1)
         layout.addLayout(image_layout, 2, 2, 1, 1)

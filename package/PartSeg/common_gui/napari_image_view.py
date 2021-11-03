@@ -432,11 +432,12 @@ class ImageView(QWidget):
             self.viewer.layers.remove_selected()
             image_info.roi = None
 
+        image_info.roi_info = roi_info
+        image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
+
         if roi_info.roi is None:
             return
 
-        image_info.roi_info = roi_info
-        image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
         self.add_roi_layer(image_info)
         image_info.roi.color = self.get_roi_view_parameters(image_info)
         image_info.roi.opacity = self.image_state.opacity
@@ -764,6 +765,10 @@ class ImageView(QWidget):
 
 
 class NapariQtViewer(QtViewer):
+    def __init__(self, viewer):
+        super().__init__(viewer, show_welcome_screen=False)
+        self.widget(0).layout().setContentsMargins(0, 5, 0, 2)
+
     def dragEnterEvent(self, event):  # pylint: disable=R0201
         """
         ignore napari reading mechanism
