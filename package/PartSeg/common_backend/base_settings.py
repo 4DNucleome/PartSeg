@@ -8,7 +8,7 @@ import warnings
 from argparse import Namespace
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
@@ -632,24 +632,26 @@ class BaseSettings(ViewSettings):
             data_list = data_list[: keep_len - 1]
         return [value] + data_list
 
-    def get_last_files(self) -> list:
+    def get_last_files(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
         return self.get(FILE_HISTORY, [])
 
-    def add_load_files_history(self, file_path: List[Union[str, Path]], load_method: str):  # pragma: no cover
+    def add_load_files_history(self, file_path: Sequence[Union[str, Path]], load_method: str):  # pragma: no cover
         warnings.warn("`add_load_files_history` is deprecated", FutureWarning, stacklevel=2)
         return self.add_last_files(file_path, load_method)
 
-    def add_last_files(self, file_path: List[Union[str, Path]], load_method: str):
-        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [file_path, load_method]))
+    def add_last_files(self, file_path: Sequence[Union[str, Path]], load_method: str):
+        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [tuple(file_path), load_method]))
         self.add_path_history(os.path.dirname(file_path[0]))
 
-    def get_last_files_multiple(self) -> list:
+    def get_last_files_multiple(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
         return self.get(MULTIPLE_FILES_OPEN_HISTORY, [])
 
     def add_last_files_multiple(self, file_paths: List[Union[str, Path]], load_method: str):
         self.set(
             MULTIPLE_FILES_OPEN_HISTORY,
-            self._add_elem_to_list(self.get(MULTIPLE_FILES_OPEN_HISTORY, []), [file_paths, load_method], keep_len=30),
+            self._add_elem_to_list(
+                self.get(MULTIPLE_FILES_OPEN_HISTORY, []), [tuple(file_paths), load_method], keep_len=30
+            ),
         )
         self.add_path_history(os.path.dirname(file_paths[0]))
 
