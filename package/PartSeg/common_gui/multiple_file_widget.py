@@ -67,8 +67,9 @@ class CustomTreeWidget(QTreeWidget):
     def set_show_compare(self, compare: bool):
         self.compare = compare
 
-    def mouseMoveEvent(self, _):  # pylint: disable=R0201
+    def mouseMoveEvent(self, event):  # pylint: disable=R0201
         QApplication.setOverrideCursor(Qt.ArrowCursor)
+        super().mouseMoveEvent(event)
 
 
 class LoadRecentFiles(QDialog):

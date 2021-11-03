@@ -5,12 +5,14 @@ from pathlib import Path
 
 import pytest
 import qtpy
+from qtpy.QtCore import QSize
 from qtpy.QtWidgets import QFileDialog, QWidget
 
 from PartSeg.common_gui import select_multiple_files
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
+from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
@@ -382,3 +384,28 @@ def test_str_filter(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.accept()
     assert dialog.selectedNameFilter() == tiff_text
     assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
+
+
+def test_recent_files(part_settings, qtbot):
+    dial = LoadRecentFiles(part_settings)
+    qtbot.add_widget(dial)
+    assert dial.file_list.count() == 0
+    size = dial.size()
+    new_size = size.width() + 50, size.width() + 50
+    dial.resize(*new_size)
+    dial.accept()
+    assert part_settings.get_from_profile("multiple_files_dialog_size") == new_size
+    part_settings.add_last_files_multiple(["aaa.txt"], "method")
+    part_settings.add_last_files_multiple(["bbb.txt"], "method")
+    dial = LoadRecentFiles(part_settings)
+    qtbot.add_widget(dial)
+    assert dial.file_list.count() == 2
+    assert dial.size() == QSize(*new_size)
+    dial.file_list.selectAll()
+    assert dial.get_files() == [(["bbb.txt"], "method"), (["aaa.txt"], "method")]
+
+
+class TestMultipleFileWidget:
+    def test_create(self, part_settings, qtbot):
+        widget = MultipleFileWidget(part_settings, {})
+        qtbot.add_widget(widget)
