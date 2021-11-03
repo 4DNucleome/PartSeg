@@ -60,7 +60,9 @@ def test_extraction_widget(make_napari_viewer, widget_class, monkeypatch, qtbot)
     widget.select_profile("prof3")
     widget.update_image()
 
-    res = ROIExtractionResult(np.ones((10, 10), dtype=np.uint8), widget.profile_dict["prof3"])
+    res = ROIExtractionResult(
+        np.ones((10, 10), dtype=np.uint8), widget.profile_dict["prof3"], roi_annotation={1: {"foo": 1, "baz": 2}}
+    )
     res.roi[0, 0] = 2
     res.roi[1, 1] = 0
 
