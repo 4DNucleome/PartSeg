@@ -1,4 +1,5 @@
 # pylint: disable=R0201
+import os
 import platform
 import sys
 from enum import Enum
@@ -413,6 +414,10 @@ class TestMultipleFileWidget:
         widget = MultipleFileWidget(part_settings, {})
         qtbot.add_widget(widget)
 
+    @staticmethod
+    def check_load_files(parameter, custom_name):
+        return not custom_name and os.path.basename(parameter.file_path) == "img_4.tif"
+
     @pytest.mark.enablethread
     @pytest.mark.enabledialog
     def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path):
@@ -423,8 +428,8 @@ class TestMultipleFileWidget:
                 Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
             )
         file_list = [[[tmp_path / f"img_{i}.tif"], LoadStackImage.get_name()] for i in range(5)]
-        # monkeypatch.setattr(ExecuteFunctionDialog, "exec_", ExecuteFunctionDialog.run)
-        widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
+        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
+            widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
         assert part_settings.get_last_files_multiple() == file_list
         assert widget.file_view.topLevelItemCount() == 5
         widget.file_view.clear()
@@ -432,7 +437,8 @@ class TestMultipleFileWidget:
         widget.file_list.clear()
         monkeypatch.setattr(LoadRecentFiles, "exec_", lambda x: True)
         monkeypatch.setattr(LoadRecentFiles, "get_files", lambda x: file_list)
-        widget.load_recent()
+        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
+            widget.load_recent()
         assert part_settings.get_last_files_multiple() == file_list
         assert widget.file_view.topLevelItemCount() == 5
 
@@ -449,7 +455,8 @@ class TestMultipleFileWidget:
         load_property = LoadProperty(
             [tmp_path / f"img_{i}.tif" for i in range(5)], LoadStackImage.get_name(), LoadStackImage
         )
-        widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
+            widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
         assert widget.file_view.topLevelItemCount() == 5
         assert part_settings.get_last_files_multiple() == file_list
         widget.file_view.clear()
@@ -457,6 +464,7 @@ class TestMultipleFileWidget:
         widget.file_list.clear()
         monkeypatch.setattr(MultipleLoadDialog, "exec_", lambda x: True)
         monkeypatch.setattr(MultipleLoadDialog, "get_result", lambda x: load_property)
-        widget.load_files()
+        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
+            widget.load_files()
         assert widget.file_view.topLevelItemCount() == 5
         assert part_settings.get_last_files_multiple() == file_list
