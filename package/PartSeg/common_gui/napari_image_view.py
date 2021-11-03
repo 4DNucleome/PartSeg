@@ -764,6 +764,10 @@ class ImageView(QWidget):
 
 
 class NapariQtViewer(QtViewer):
+    def __init__(self, viewer):
+        super().__init__(viewer, show_welcome_screen=False)
+        self.widget(0).layout().setContentsMargins(0, 5, 0, 2)
+
     def dragEnterEvent(self, event):  # pylint: disable=R0201
         """
         ignore napari reading mechanism
