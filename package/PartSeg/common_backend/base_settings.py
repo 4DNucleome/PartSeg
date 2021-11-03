@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
 
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
+MULTIPLE_FILES_OPEN_HISTORY = "io.multiple_files_open_history"
 ROI_NOT_FIT = "roi do not fit to image"
 IO_SAVE_DIRECTORY = "io.save_directory"
 
@@ -623,25 +624,39 @@ class BaseSettings(ViewSettings):
                 res = res + [val]
         return res
 
-    def get_last_files(self) -> list:
-        return self.get(FILE_HISTORY, [])
-
     @staticmethod
-    def _add_elem_to_list(data_list: list, value: Any) -> list:
+    def _add_elem_to_list(data_list: list, value: Any, keep_len=10) -> list:
         try:
             data_list.remove(value)
         except ValueError:
-            data_list = data_list[:9]
+            data_list = data_list[: keep_len - 1]
         return [value] + data_list
+
+    def get_last_files(self) -> list:
+        return self.get(FILE_HISTORY, [])
+
+    def add_load_files_history(self, file_path: List[Union[str, Path]], load_method: str):  # pragma: no cover
+        warnings.warn("`add_load_files_history` is deprecated", FutureWarning, stacklevel=2)
+        return self.add_last_files(file_path, load_method)
+
+    def add_last_files(self, file_path: List[Union[str, Path]], load_method: str):
+        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [file_path, load_method]))
+        self.add_path_history(os.path.dirname(file_path[0]))
+
+    def get_last_files_multiple(self) -> list:
+        return self.get(MULTIPLE_FILES_OPEN_HISTORY, [])
+
+    def add_last_files_multiple(self, file_paths: List[Union[str, Path]], load_method: str):
+        self.set(
+            MULTIPLE_FILES_OPEN_HISTORY,
+            self._add_elem_to_list(self.get(MULTIPLE_FILES_OPEN_HISTORY, []), [file_paths, load_method], keep_len=30),
+        )
+        self.add_path_history(os.path.dirname(file_paths[0]))
 
     def add_path_history(self, dir_path: Union[str, Path]):
         """Save path in history of visited directories. Store only 10 last"""
         dir_path = str(dir_path)
         self.set(DIR_HISTORY, self._add_elem_to_list(self.get(DIR_HISTORY, []), dir_path))
-
-    def add_load_files_history(self, file_path: List[Union[str, Path]], load_method: str):
-        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [file_path, load_method]))
-        self.add_path_history(os.path.dirname(file_path[0]))
 
     def set(self, key_path: str, value):
         """

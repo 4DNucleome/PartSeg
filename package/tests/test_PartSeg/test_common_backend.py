@@ -685,5 +685,5 @@ class TestBaseSettings:
         assert len(settings.get_path_history()) == 11
         assert len(settings.get_last_files()) == 0
         for i in range(50):
-            settings.add_load_files_history([tmp_path / (str(i) + ".txt")], "aaa")
+            settings.add_last_files([tmp_path / (str(i) + ".txt")], "aaa")
         assert len(settings.get_last_files()) == 10

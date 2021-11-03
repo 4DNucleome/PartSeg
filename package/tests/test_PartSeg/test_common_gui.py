@@ -1,22 +1,28 @@
+# pylint: disable=R0201
+import os
 import platform
 import sys
 from enum import Enum
 from pathlib import Path
 
+import numpy as np
 import pytest
 import qtpy
+from qtpy.QtCore import QSize
 from qtpy.QtWidgets import QFileDialog, QWidget
 
 from PartSeg.common_gui import select_multiple_files
-from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, PLoadDialog
+from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, LoadProperty, PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
+from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
+from PartSegImage import Image, ImageWriter
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
 IS_MACOS = sys.platform == "darwin"
@@ -382,3 +388,83 @@ def test_str_filter(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.accept()
     assert dialog.selectedNameFilter() == tiff_text
     assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
+
+
+def test_recent_files(part_settings, qtbot):
+    dial = LoadRecentFiles(part_settings)
+    qtbot.add_widget(dial)
+    assert dial.file_list.count() == 0
+    size = dial.size()
+    new_size = size.width() + 50, size.width() + 50
+    dial.resize(*new_size)
+    dial.accept()
+    assert part_settings.get_from_profile("multiple_files_dialog_size") == new_size
+    part_settings.add_last_files_multiple(["aaa.txt"], "method")
+    part_settings.add_last_files_multiple(["bbb.txt"], "method")
+    dial = LoadRecentFiles(part_settings)
+    qtbot.add_widget(dial)
+    assert dial.file_list.count() == 2
+    assert dial.size() == QSize(*new_size)
+    dial.file_list.selectAll()
+    assert dial.get_files() == [(["bbb.txt"], "method"), (["aaa.txt"], "method")]
+
+
+class TestMultipleFileWidget:
+    def test_create(self, part_settings, qtbot):
+        widget = MultipleFileWidget(part_settings, {})
+        qtbot.add_widget(widget)
+
+    @staticmethod
+    def check_load_files(parameter, custom_name):
+        return not custom_name and os.path.basename(parameter.file_path) == "img_4.tif"
+
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
+    def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path):
+        widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
+        qtbot.add_widget(widget)
+        for i in range(5):
+            ImageWriter.save(
+                Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
+            )
+        file_list = [[[tmp_path / f"img_{i}.tif"], LoadStackImage.get_name()] for i in range(5)]
+        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
+            widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
+        assert part_settings.get_last_files_multiple() == file_list
+        assert widget.file_view.topLevelItemCount() == 5
+        widget.file_view.clear()
+        widget.state_dict.clear()
+        widget.file_list.clear()
+        monkeypatch.setattr(LoadRecentFiles, "exec_", lambda x: True)
+        monkeypatch.setattr(LoadRecentFiles, "get_files", lambda x: file_list)
+        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
+            widget.load_recent()
+        assert part_settings.get_last_files_multiple() == file_list
+        assert widget.file_view.topLevelItemCount() == 5
+
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
+    def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path):
+        widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
+        qtbot.add_widget(widget)
+        for i in range(5):
+            ImageWriter.save(
+                Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
+            )
+        file_list = [[[tmp_path / f"img_{i}.tif"], LoadStackImage.get_name()] for i in range(5)]
+        load_property = LoadProperty(
+            [tmp_path / f"img_{i}.tif" for i in range(5)], LoadStackImage.get_name(), LoadStackImage
+        )
+        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
+            widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert widget.file_view.topLevelItemCount() == 5
+        assert part_settings.get_last_files_multiple() == file_list
+        widget.file_view.clear()
+        widget.state_dict.clear()
+        widget.file_list.clear()
+        monkeypatch.setattr(MultipleLoadDialog, "exec_", lambda x: True)
+        monkeypatch.setattr(MultipleLoadDialog, "get_result", lambda x: load_property)
+        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
+            widget.load_files()
+        assert widget.file_view.topLevelItemCount() == 5
+        assert part_settings.get_last_files_multiple() == file_list

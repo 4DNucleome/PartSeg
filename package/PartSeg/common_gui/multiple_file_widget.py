@@ -2,17 +2,22 @@ import os
 from collections import Counter, defaultdict
 from functools import partial
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from qtpy.QtCore import Qt, QTimer, Signal, Slot
 from qtpy.QtGui import QFontMetrics, QMouseEvent, QResizeEvent
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QAction,
     QApplication,
     QCheckBox,
+    QDialog,
     QFileDialog,
     QGridLayout,
     QInputDialog,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
     QMenu,
     QMessageBox,
     QPushButton,
@@ -62,8 +67,42 @@ class CustomTreeWidget(QTreeWidget):
     def set_show_compare(self, compare: bool):
         self.compare = compare
 
-    def mouseMoveEvent(self, _):  # pylint: disable=R0201
+    def mouseMoveEvent(self, event):  # pylint: disable=R0201
         QApplication.setOverrideCursor(Qt.ArrowCursor)
+        super().mouseMoveEvent(event)
+
+
+class LoadRecentFiles(QDialog):
+    def __init__(self, settings: BaseSettings, parent=None):
+        super().__init__(parent)
+        self.settings = settings
+        self.file_list = QListWidget()
+        self.file_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.cancel_btn = QPushButton("Cancel", clicked=self.reject)
+        self.load_btn = QPushButton("Load", clicked=self.accept)
+
+        for name_list, method in settings.get_last_files_multiple():
+            entry = f"{name_list[0]} {method}"
+            item = QListWidgetItem(entry, self.file_list)
+            item.setData(Qt.UserRole, (name_list, method))
+
+        layout = QGridLayout()
+        layout.addWidget(QLabel("Select files"))
+        layout.addWidget(self.file_list, 1, 0, 1, 2)
+        layout.addWidget(self.cancel_btn, 2, 0)
+        layout.addWidget(self.load_btn, 2, 1)
+
+        self.setLayout(layout)
+        self.resize(
+            *self.settings.get_from_profile("multiple_files_dialog_size", (self.size().width(), self.size().height()))
+        )
+
+    def get_files(self) -> List[Tuple[List[str], str]]:
+        return [item.data(Qt.UserRole) for item in self.file_list.selectedItems()]
+
+    def accept(self) -> None:
+        self.settings.set_in_profile("multiple_files_dialog_size", (self.size().width(), self.size().height()))
+        super().accept()
 
 
 class MultipleFileWidget(QWidget):
@@ -81,11 +120,13 @@ class MultipleFileWidget(QWidget):
         self.save_state_btn = QPushButton("Save state")
         self.save_state_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.load_files_btn = QPushButton("Load Files")
+        self.load_recent_files_btn = QPushButton("Load recent Files")
         self.forget_btn = QPushButton("Forget")
 
         self.save_state_btn.clicked.connect(self.save_state)
         self.forget_btn.clicked.connect(self.forget)
         self.load_files_btn.clicked.connect(self.load_files)
+        self.load_recent_files_btn.clicked.connect(self.load_recent)
         self.file_view.itemDoubleClicked.connect(self.load_state)
         self.file_view.context_load.connect(self.load_state)
         self.last_point = None
@@ -94,9 +135,10 @@ class MultipleFileWidget(QWidget):
 
         layout = QGridLayout()
         layout.addWidget(self.file_view, 0, 0, 1, 2)
-        layout.addWidget(self.save_state_btn, 1, 0, 1, 2)
+        layout.addWidget(self.save_state_btn, 1, 0)
+        layout.addWidget(self.forget_btn, 1, 1)
         layout.addWidget(self.load_files_btn, 2, 0)
-        layout.addWidget(self.forget_btn, 2, 1)
+        layout.addWidget(self.load_recent_files_btn, 2, 1)
         layout.addWidget(self.custom_names_chk, 3, 0, 1, 2)
 
         self.setLayout(layout)
@@ -110,12 +152,33 @@ class MultipleFileWidget(QWidget):
         self._add_state.connect(self.save_state_action)
         self.settings.data_changed.connect(self.view_changed)
 
+    def load_recent(self):
+        dial = LoadRecentFiles(self.settings, self)
+        if not dial.exec_():
+            return
+
+        dial_fun = ExecuteFunctionDialog(
+            self.load_recent_fun, [dial.get_files()], exception_hook=load_data_exception_hook
+        )
+        dial_fun.exec_()
+
+    def load_recent_fun(self, load_list, range_changed, step_changed):
+        range_changed(0, len(load_list))
+        for i, (file_list, method) in enumerate(load_list):
+            load_class = self.load_register[method]
+            state: ProjectInfoBase = load_class.load(file_list)
+            self._add_state.emit(state, False)
+            step_changed(i)
+        for file_list, method in reversed(load_list):
+            self.settings.add_last_files_multiple(file_list, method)
+
     def view_changed(self, path, value):
         if path == "multiple_files_widget":
             self.setVisible(value)
 
     def execute_load_files(self, load_data: LoadProperty, range_changed, step_changed):
         range_changed(0, len(load_data.load_location))
+        loaded_list = []
         for i, el in enumerate(load_data.load_location, 1):
             load_list = [el]
             while load_data.load_class.number_of_files() > len(load_list):
@@ -125,8 +188,12 @@ class MultipleFileWidget(QWidget):
                     step_changed(i)
                     continue
             state: ProjectInfoBase = load_data.load_class.load(load_list)
+            loaded_list.append((load_list, load_data.load_class.get_name()))
             self._add_state.emit(state, False)
             step_changed(i)
+
+        for el in reversed(loaded_list):
+            self.settings.add_last_files_multiple(*el)
 
     def load_files(self):
         dial = MultipleLoadDialog(self.load_register, self.settings.get_path_history())
