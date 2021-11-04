@@ -401,12 +401,14 @@ def test_recent_files(part_settings, qtbot):
     assert part_settings.get_from_profile("multiple_files_dialog_size") == new_size
     part_settings.add_last_files_multiple(["aaa.txt"], "method")
     part_settings.add_last_files_multiple(["bbb.txt"], "method")
+    part_settings.add_last_files(["bbb.txt"], "method")
+    part_settings.add_last_files(["ccc.txt"], "method")
     dial = LoadRecentFiles(part_settings)
     qtbot.add_widget(dial)
-    assert dial.file_list.count() == 2
+    assert dial.file_list.count() == 3
     assert dial.size() == QSize(*new_size)
     dial.file_list.selectAll()
-    assert dial.get_files() == [(("bbb.txt",), "method"), (("aaa.txt",), "method")]
+    assert dial.get_files() == [(("bbb.txt",), "method"), (("aaa.txt",), "method"), (("ccc.txt",), "method")]
 
 
 class TestMultipleFileWidget:
