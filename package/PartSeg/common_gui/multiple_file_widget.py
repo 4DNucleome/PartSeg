@@ -87,6 +87,14 @@ class LoadRecentFiles(QDialog):
             item = QListWidgetItem(entry, self.file_list)
             item.setData(Qt.UserRole, (name_list, method))
 
+        last_set = {(tuple(x), y) for x, y in settings.get_last_files_multiple()}
+        for name_list, method in settings.get_last_files():
+            if (tuple(name_list), method) in last_set:
+                continue
+            entry = f"{name_list[0]} {method}"
+            item = QListWidgetItem(entry, self.file_list)
+            item.setData(Qt.UserRole, (name_list, method))
+
         layout = QGridLayout()
         layout.addWidget(QLabel("Select files"))
         layout.addWidget(self.file_list, 1, 0, 1, 2)
