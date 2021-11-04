@@ -406,7 +406,7 @@ def test_recent_files(part_settings, qtbot):
     assert dial.file_list.count() == 2
     assert dial.size() == QSize(*new_size)
     dial.file_list.selectAll()
-    assert dial.get_files() == [(["bbb.txt"], "method"), (["aaa.txt"], "method")]
+    assert dial.get_files() == [(("bbb.txt",), "method"), (("aaa.txt",), "method")]
 
 
 class TestMultipleFileWidget:
@@ -427,7 +427,7 @@ class TestMultipleFileWidget:
             ImageWriter.save(
                 Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
             )
-        file_list = [[[tmp_path / f"img_{i}.tif"], LoadStackImage.get_name()] for i in range(5)]
+        file_list = [[(tmp_path / f"img_{i}.tif",), LoadStackImage.get_name()] for i in range(5)]
         with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
             widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
         assert part_settings.get_last_files_multiple() == file_list
@@ -451,7 +451,7 @@ class TestMultipleFileWidget:
             ImageWriter.save(
                 Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
             )
-        file_list = [[[tmp_path / f"img_{i}.tif"], LoadStackImage.get_name()] for i in range(5)]
+        file_list = [[(tmp_path / f"img_{i}.tif",), LoadStackImage.get_name()] for i in range(5)]
         load_property = LoadProperty(
             [tmp_path / f"img_{i}.tif" for i in range(5)], LoadStackImage.get_name(), LoadStackImage
         )
