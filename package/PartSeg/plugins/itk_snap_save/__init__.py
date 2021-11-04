@@ -30,7 +30,7 @@ class SaveITKSnap(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        mask = SimpleITK.GetImageFromArray(project_info.roi)
+        mask = SimpleITK.GetImageFromArray(project_info.roi_info.roi)
         SimpleITK.WriteImage(save_location, mask)
 
 

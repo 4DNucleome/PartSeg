@@ -33,7 +33,7 @@ class ProjectTuple(ProjectInfoBase):
         return ProjectTuple(self.file_path, self.image.substitute(mask=None))
 
     def is_raw(self):
-        return self.roi is None
+        return self.roi_info.roi is None
 
     def replace_(self, **kwargs):
         return replace(self, **kwargs)
