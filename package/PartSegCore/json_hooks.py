@@ -1,6 +1,9 @@
 import copy
+import dataclasses
+import enum
 import importlib
 import itertools
+import json
 import typing
 from collections import defaultdict
 from collections.abc import MutableMapping
@@ -390,3 +393,45 @@ def check_loaded_dict(dkt) -> bool:
     if "__error__" in dkt:
         return False
     return all(check_loaded_dict(val) for val in dkt.values())
+
+
+class PartSegEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, enum.Enum):
+            return {
+                "__class__": obj.__module__ + "." + obj.__class__,
+                "value": obj.value,
+            }
+        if dataclasses.is_dataclass(obj):
+            fields = dataclasses.fields(obj)
+            dkt = {x.name: getattr(obj, x.name) for x in fields}
+            dkt["__class__"] = obj.__module__ + "." + obj.__class__
+            return super().default(dkt)
+
+        if hasattr(obj, "as_dict"):
+            dkt = obj.as_dict()
+            dkt["__class__"] = obj.__module__ + "." + obj.__class__
+            return super().default(dkt)
+
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, dict) and "__error__" in obj:
+            del obj["__error__"]  # diffrent napari environments without same plugins installed
+        return super().default(obj)
+
+
+def partseg_object_hook(dkt):
+    if "__class__" in dkt:
+        module_name, class_name = dkt["__class__"].rsplit(".")
+        # the migration code should be called here
+        try:
+            del dkt["__class__"]
+            module = importlib.import_module(module_name)
+            obj = getattr(module, class_name)(**dkt)
+            return obj
+        except Exception as e:
+            dkt["__class__"] = module_name + "." + class_name
+            dkt["__error__"] = e
+    return dkt
