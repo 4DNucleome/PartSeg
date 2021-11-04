@@ -445,7 +445,7 @@ class MainMenu(BaseMainMenu):
             if dial.exec_():
                 result = dial.get_result()
                 self.settings.set("io.open_file", result.load_location[0])
-                self.settings.add_load_files_history(result.load_location, result.load_class.get_name())
+                self.settings.add_last_files(result.load_location, result.load_class.get_name())
                 dial2 = ExecuteFunctionDialog(
                     result.load_class.load,
                     [result.load_location],

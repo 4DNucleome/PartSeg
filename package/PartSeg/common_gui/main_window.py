@@ -188,7 +188,7 @@ class BaseMainWindow(QMainWindow):
             if dial.exec_():
                 result = dial.get_result()
                 self.main_menu.set_data(result)
-                self.settings.add_load_files_history(data[0], method.get_name())
+                self.settings.add_last_files(data[0], method.get_name())
         except KeyError:
             self.read_drop(data[0])
 
@@ -262,7 +262,7 @@ class BaseMainWindow(QMainWindow):
                 if dial.exec_():
                     result = dial.get_result()
                     self.main_menu.set_data(result)
-                    self.settings.add_load_files_history(paths, load_class.get_name())
+                    self.settings.add_last_files(paths, load_class.get_name())
                 return
         QMessageBox.information(self, "No method", "No methods for load files: " + ",".join(paths))
 

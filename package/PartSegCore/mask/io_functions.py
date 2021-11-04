@@ -87,6 +87,15 @@ class MaskProjectTuple(ProjectInfoBase):
     def get_raw_mask_copy(self):
         return MaskProjectTuple(file_path=self.file_path, image=self.image.substitute(), mask=self.mask)
 
+    if sys.version_info[:3] == (3, 9, 7):
+
+        @property
+        def roi(self):
+            import warnings
+
+            warnings.warn("roi is deprecated", DeprecationWarning, 2)
+            return self.roi_info.roi
+
 
 def save_stack_segmentation(
     file_data: typing.Union[tarfile.TarFile, str, Path, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
