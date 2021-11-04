@@ -1,5 +1,6 @@
 import sys
 import typing
+import warnings
 from dataclasses import dataclass, field, replace
 
 import numpy as np
@@ -52,14 +53,10 @@ class ProjectTuple(ProjectInfoBase):
             f"history={repr(self.history)},\nalgorithm_parameters={self.algorithm_parameters},\nerrors={self.errors})"
         )
 
-    if sys.version_info[:3] == (3, 9, 7):
-
-        @property
-        def roi(self):
-            import warnings
-
-            warnings.warn("roi is deprecated", DeprecationWarning, 2)
-            return self.roi_info.roi
+    @property
+    def roi(self):
+        warnings.warn("roi is deprecated", DeprecationWarning, 2)
+        return self.roi_info.roi
 
 
 class MaskInfo(typing.NamedTuple):

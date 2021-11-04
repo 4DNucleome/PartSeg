@@ -1,5 +1,4 @@
 import sys
-import warnings
 from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -103,11 +102,6 @@ class ProjectInfoBase(Protocol):
     history: List[HistoryElement] = []
     errors: str = ""
     points: Optional[np.ndarray] = None
-
-    @property
-    def roi(self):
-        warnings.warn("roi is deprecated", DeprecationWarning, 2)
-        return self.roi_info.roi
 
     def get_raw_copy(self):
         """
