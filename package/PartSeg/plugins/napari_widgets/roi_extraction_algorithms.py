@@ -3,6 +3,7 @@ import itertools
 import typing
 
 import numpy as np
+import pandas as pd
 from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
@@ -156,7 +157,7 @@ class ROIExtractionAlgorithms(QWidget):
         layout.addLayout(target_layer_layout)
         layout.addWidget(self.profile_combo_box)
         layout.addWidget(self.calculate_btn)
-        layout.addWidget(self.algorithm_chose)
+        layout.addWidget(self.algorithm_chose, 1)
         layout.addWidget(self.info_text)
 
         self.setLayout(layout)
@@ -232,11 +233,11 @@ class ROIExtractionAlgorithms(QWidget):
         self.settings.last_executed_algorithm = widget.name
         layers = widget.get_order_mapping()
         axis_order = Image.axis_order.replace("C", "")
-        channel_names = []
+        channel_list = []
         for image_layer in layers:
-            if image_layer.name not in channel_names:
-                channel_names.append(image_layer.name)
-        if self.channel_names == channel_names:
+            if image_layer.name not in channel_list:
+                channel_list.append(image_layer)
+        if self.channel_names == channel_list:
             return
 
         image_list = []
@@ -287,13 +288,26 @@ class ROIExtractionAlgorithms(QWidget):
             self.info_text.setPlainText(self.sender().get_info_text())
         layer_name = self.target_layer_name.text()
         self.settings.set(f"{self.prefix()}.target_layer_name", layer_name)
+        column_list = []
+        column_set = set()
+        for value in result.roi_annotation.values():
+            for column_name in value.items():
+                if column_name not in column_set:
+                    column_list.append(column_name)
+                    column_set.add(column_name)
+        properties = pd.DataFrame.from_dict(result.roi_annotation, orient="index")
+        properties["index"] = list(result.roi_annotation.keys())
         if layer_name in self.viewer.layers:
             self.viewer.layers[layer_name].data = result.roi
+            self.viewer.layers[layer_name].metadata = {"parameters": result.parameters}
+            self.viewer.layers[layer_name].properties = properties
         else:
             self.viewer.add_labels(
                 result.roi,
                 scale=np.array(self._scale)[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value],
                 name=layer_name,
+                metadata={"parameters": result.parameters},
+                properties=properties,
             )
 
     def refresh_profiles(self):

@@ -1,3 +1,4 @@
+# pylint: disable=R0201
 import os
 
 import numpy as np
@@ -421,6 +422,30 @@ class TestMergeImage:
         image2 = Image(data=np.zeros((3, 10, 10), dtype=np.uint8), axes_order="ZXY", image_spacing=(1, 1, 1))
         with pytest.raises(ValueError):
             image1.merge(image2, "C")
+
+    def test_merge_channel_name(self):
+        image1 = Image(
+            data=np.zeros((4, 10, 10), dtype=np.uint8),
+            axes_order="ZXY",
+            image_spacing=(1, 1, 1),
+            channel_names=["channel 1"],
+        )
+        image2 = Image(
+            data=np.zeros((4, 10, 10), dtype=np.uint8),
+            axes_order="ZXY",
+            image_spacing=(1, 1, 1),
+            channel_names=["channel 1"],
+        )
+        image3 = Image(
+            data=np.zeros((4, 10, 10), dtype=np.uint8),
+            axes_order="ZXY",
+            image_spacing=(1, 1, 1),
+            channel_names=["channel 5"],
+        )
+        res_image = image1.merge(image2, "C")
+        assert res_image.channel_names == ["channel 1", "channel 2"]
+        res_image = image1.merge(image3, "C")
+        assert res_image.channel_names == ["channel 1", "channel 5"]
 
     def test_different_axes_order(self):
         image1 = Image(data=np.zeros((3, 10, 10), dtype=np.uint8), axes_order="ZXY", image_spacing=(1, 1, 1))

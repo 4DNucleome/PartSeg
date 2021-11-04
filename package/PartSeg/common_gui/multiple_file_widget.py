@@ -1,4 +1,5 @@
 import os
+import warnings
 from collections import Counter, defaultdict
 from functools import partial
 from pathlib import Path
@@ -249,8 +250,10 @@ class MultipleFileWidget(QWidget):
     def save_state_action(self, state: ProjectInfoBase, custom_name):
         # TODO left elipsis
         # state: ProjectInfoBase = self.get_state()
-        if not isinstance(state, ProjectInfoBase):  # workaround for PointsInfo load
-            return
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            if not isinstance(state, ProjectInfoBase):  # workaround for PointsInfo load
+                return
         normed_file_path = os.path.normpath(state.file_path)
         sub_dict = self.state_dict[normed_file_path]
         name = f"state {self.state_dict_count[normed_file_path]+1}"
