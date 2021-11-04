@@ -105,7 +105,7 @@ class CustomParser(argparse.ArgumentParser):
         state_store.develop = args.develop
         state_store.save_suffix = args.save_suffix[0]
         state_store.save_folder = os.path.abspath(
-            args.save_directory[0] + ("_" + state_store.save_suffix if state_store.save_suffix else "")
+            args.save_directory[0] + ("_" + state_store.save_suffix if state_store.save_suffix else "") + "_new_serialize"
         )
         if args.no_report and args.no_dialog:
             _setup_sentry()
