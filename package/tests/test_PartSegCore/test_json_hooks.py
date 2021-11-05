@@ -7,7 +7,7 @@ import pytest
 from napari.utils import Colormap
 
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, profile_hook, recursive_update_dict
+from PartSegCore.json_hooks import EventedDict, ProfileDict, ProfileEncoder, profile_hook, recursive_update_dict
 
 
 def test_recursive_update_dict_basic():
@@ -24,6 +24,73 @@ def test_recursive_update_dict():
     dict2 = {"a": {"m": 3, "l": 4}, "b": 3, "c": 4}
     recursive_update_dict(dict1, dict2)
     assert dict1 == {"a": {"k": 1, "l": 4, "m": 3}, "b": 3, "c": 4}
+
+
+class TestEventedDict:
+    def test_simple_add(self):
+        callback_list = []
+
+        def callback_add():
+            callback_list.append(1)
+
+        dkt = EventedDict()
+        dkt.setted.connect(callback_add)
+        dkt["a"] = 1
+        assert dkt["a"] == 1
+        assert callback_list == [1]
+        dkt["a"] = 2
+        assert dkt["a"] == 2
+        assert callback_list == [1, 1]
+        assert len(dkt) == 1
+        del dkt["a"]
+        assert callback_list == [1, 1]
+        assert len(dkt) == 0
+
+    def test_simple_add_remove(self):
+        callback_list = []
+
+        def callback_add():
+            callback_list.append(1)
+
+        def callback_delete():
+            callback_list.append(2)
+
+        dkt = EventedDict()
+        dkt.setted.connect(callback_add)
+        dkt.deleted.connect(callback_delete)
+
+        dkt[1] = 1
+        dkt[2] = 1
+        assert len(dkt) == 2
+        assert callback_list == [1, 1]
+        del dkt[1]
+        assert len(dkt) == 1
+        assert callback_list == [1, 1, 2]
+
+    def test_nested_evented(self):
+        dkt = EventedDict(bar={"foo": {"baz": 1}})
+        assert isinstance(dkt["bar"], EventedDict)
+        assert isinstance(dkt["bar"]["foo"], EventedDict)
+        assert dkt["bar"]["foo"]["baz"] == 1
+
+        dkt["baz"] = {"bar": {"foo": 1}}
+        assert isinstance(dkt["baz"], EventedDict)
+        assert isinstance(dkt["baz"]["bar"], EventedDict)
+        assert dkt["baz"]["bar"]["foo"] == 1
+
+    def test_serialize(self, tmp_path):
+        dkt = EventedDict(
+            **{"a": {"b": {"c": 1, "d": 2, "e": 3}, "f": 1}, "g": {"h": {"i": 1, "j": 2}, "k": [6, 7, 8]}}
+        )
+        with (tmp_path / "test_dict.json").open("w") as f_p:
+            json.dump(dkt, f_p, cls=ProfileEncoder)
+
+        with (tmp_path / "test_dict.json").open("r") as f_p:
+            dkt2 = json.load(f_p, object_hook=profile_hook)
+
+        assert isinstance(dkt2, EventedDict)
+        assert isinstance(dkt2["a"], EventedDict)
+        assert dkt["g"]["k"] == [6, 7, 8]
 
 
 class TestProfileDict:

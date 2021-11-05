@@ -5,6 +5,7 @@ from collections import defaultdict
 
 import numpy as np
 from napari.utils import Colormap
+from psygnal import Signal
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 
@@ -31,6 +32,47 @@ def recursive_update_dict(main_dict: dict, other_dict: dict):
             recursive_update_dict(main_dict[key], val)
         else:
             main_dict[key] = val
+
+
+class EventedDict(typing.MutableMapping):
+    setted = Signal()
+    deleted = Signal()
+
+    def __hash__(self):
+        # Fixme when updated psygnal
+        return hash(id(self))
+
+    def __init__(self, d=None, **kwargs):
+        # TODO add positional only argument when drop python 3.7
+        self._dict = {k: EventedDict(**v) if isinstance(v, dict) else v for k, v in kwargs.items()}
+
+    def __setitem__(self, k, v) -> None:
+        if isinstance(v, dict):
+            v = EventedDict(**v)
+        self._dict[k] = v
+        self.setted.emit()
+
+    def __delitem__(self, v) -> None:
+        del self._dict[v]
+        self.deleted.emit()
+
+    def __getitem__(self, k):
+        return self._dict[k]
+
+    def __len__(self) -> int:
+        return len(self._dict)
+
+    def __iter__(self) -> typing.Iterator:
+        return iter(self._dict)
+
+    def as_dict(self):
+        return copy.copy(self._dict)
+
+    def __str__(self):
+        return f"EventedDict({self._dict})"
+
+    def __repr__(self):
+        return f"EventedDict({repr(self._dict)})"
 
 
 class ProfileDict:
