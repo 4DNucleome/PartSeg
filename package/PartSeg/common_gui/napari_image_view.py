@@ -136,7 +136,7 @@ class ImageView(QWidget):
             self.viewer, "new_points", "Show points", self.toggle_points_visibility
         )
         self.search_roi_btn = SearchROIButton(self)
-        self.search_roi_btn.setHidden(True)
+        self.search_roi_btn.setDisabled(True)
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
         self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
@@ -372,7 +372,9 @@ class ImageView(QWidget):
         image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
 
         if roi_info.roi is None:
+            self.search_roi_btn.setDisabled(True)
             return
+        self.search_roi_btn.setDisabled(False)
 
         self.add_roi_layer(image_info)
         image_info.roi.color = self.get_roi_view_parameters(image_info)
