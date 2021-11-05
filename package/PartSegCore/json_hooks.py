@@ -1,4 +1,5 @@
 import copy
+import itertools
 import typing
 from collections import defaultdict
 
@@ -66,11 +67,26 @@ class ProfileDict:
         elif ob is None:
             recursive_update_dict(self.my_dict, kwargs)
 
-    def connect(self, key_path: typing.Union[typing.Sequence[str], str], callback):
+    def profile_change(self):
+        for callback in itertools.chain(*self._callback_dict.values()):
+            callback()
+
+    def connect(
+        self, key_path: typing.Union[typing.Sequence[str], str], callback: typing.Callable[[], typing.Any]
+    ) -> typing.Callable:
+        """
+        Connect function to receive information when object on path was changed using :py:meth:`.set`
+
+        :param key_path: path for which signal should be emitted
+        :param callback: parameterless function which should be called
+
+        :return: callback function itself.
+        """
         if not isinstance(key_path, str):
             key_path = ".".join(key_path)
 
         self._callback_dict[key_path].append(get_callback(callback))
+        return callback
 
     def set(self, key_path: typing.Union[typing.Sequence[str], str], value):
         """
@@ -94,13 +110,12 @@ class ProfileDict:
                     break
         curr_dict[key_path[-1]] = value
 
-        callback_path = key_path[0]
+        callback_path = ""
         callback_list = []
         if callback_path in self._callback_dict:
             callback_list = self._callback_dict[callback_path]
 
-        for key in key_path[1:]:
-            callback_path = callback_path + "." + key
+        for callback_path in itertools.accumulate(key_path[1:], lambda x, y: f"{x}.{y}"):
             if callback_path in self._callback_dict:
                 li = self._callback_dict[callback_path]
                 li = [x for x in li if x.is_alive()]

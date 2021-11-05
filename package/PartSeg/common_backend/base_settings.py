@@ -418,17 +418,7 @@ class ViewSettings(ImageSettings):
 
     def change_profile(self, name):
         self.current_profile_dict = name
-
-        callback_list = []
-        for path, callback in list(self.view_settings_dict._callback_dict.items()):  # pylint: disable=W0212
-            callback_list.extend(callback)
-            if "." not in path:  # pragma: no cover
-                continue
-            self.view_settings_dict._callback_dict[  # pylint: disable=W0212
-                f'{name}.{path.split(".", 1)[1]}'
-            ] = callback  # pylint: disable=W0212
-        for callback in callback_list:
-            callback()
+        self.view_settings_dict.profile_change()
 
     def set_in_profile(self, key_path, value):
         """
@@ -452,7 +442,7 @@ class ViewSettings(ImageSettings):
 
     def connect_to_profile(self, key_path, callback):
         # TODO  fixme fix when introduce switch profiles
-        self.view_settings_dict.connect(f"{self.current_profile_dict}.{key_path}", callback)
+        self.view_settings_dict.connect(key_path, callback)
 
 
 class SaveSettingsDescription(NamedTuple):
@@ -684,6 +674,10 @@ class BaseSettings(ViewSettings):
         :param default: default value if key is missed
         """
         return self._roi_dict.get(f"{self._current_roi_dict}.{key_path}", default)
+
+    def connect(self, key_path, callback):
+        # TODO  fixme fix when introduce switch profiles
+        self._roi_dict.connect(key_path, callback)
 
     def dump_part(self, file_path, path_in_dict, names=None):
         data = self.get(path_in_dict)

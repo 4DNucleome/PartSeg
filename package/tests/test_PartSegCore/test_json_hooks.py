@@ -78,13 +78,15 @@ class TestProfileDict:
             call_list.append(1)
 
         dkt = ProfileDict()
-        dkt.connect("test", fun)
-        dkt.connect("test.b", fun)
+        dkt.connect("", fun)
+        dkt.connect("b", fun)
 
         dkt.set("test.a", 1)
-        # assert call_list == [1]
+        assert call_list == [1]
+        dkt.set("test2.a", 1)
+        assert call_list == [1, 1]
         dkt.set("test.b", 1)
-        assert call_list == [1, 1, 1]
+        assert call_list == [1, 1, 1, 1]
 
 
 def test_profile_hook_colormap_load(bundle_test_dir):
