@@ -12,7 +12,7 @@ from PartSegCore.analysis.load_functions import load_metadata
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_hooks import PartEncoder
 from PartSegCore.io_utils import PointsInfo
-from PartSegCore.json_hooks import ProfileDict
+from PartSegCore.json_hooks import EventedDict, ProfileDict
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 
@@ -25,6 +25,10 @@ class PartSettings(BaseSettings):
     """
 
     compare_segmentation_change = Signal(ROIInfo)
+    roi_profiles_changed = Signal()
+    roi_pipelines_changed = Signal()
+    measurement_profiles_changed = Signal()
+    batch_plans_changed = Signal()
     json_encoder_class = PartEncoder
     load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
@@ -44,6 +48,10 @@ class PartSettings(BaseSettings):
         self.segmentation_profiles_dict = ProfileDict()
         self.batch_plans_dict = ProfileDict()
         self.measurement_profiles_dict = ProfileDict()
+        self.segmentation_profiles_dict.connect("", self.roi_pipelines_changed.emit)
+        self.segmentation_pipelines_dict.connect("", self.roi_pipelines_changed.emit)
+        self.measurement_profiles_dict.connect("", self.measurement_profiles_changed.emit)
+        self.batch_plans_dict.connect("", self.batch_plans_changed.emit)
 
     def fix_history(self, algorithm_name, algorithm_values):
         """
@@ -132,7 +140,7 @@ class PartSettings(BaseSettings):
 
     @property
     def roi_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
-        return self.segmentation_pipelines_dict.get(self._current_roi_dict, {})
+        return self.segmentation_pipelines_dict.get(self._current_roi_dict, EventedDict())
 
     @property
     def segmentation_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
@@ -141,12 +149,12 @@ class PartSettings(BaseSettings):
 
     @property
     def roi_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
-        return self.segmentation_profiles_dict.get(self._current_roi_dict, {})
+        return self.segmentation_profiles_dict.get(self._current_roi_dict, EventedDict())
 
     @property
     def batch_plans(self) -> typing.Dict[str, CalculationPlan]:
-        return self.batch_plans_dict.get(self._current_roi_dict, {})
+        return self.batch_plans_dict.get(self._current_roi_dict, EventedDict())
 
     @property
     def measurement_profiles(self) -> typing.Dict[str, MeasurementProfile]:
-        return self.measurement_profiles_dict.get(self._current_roi_dict, {})
+        return self.measurement_profiles_dict.get(self._current_roi_dict, EventedDict())

@@ -1,7 +1,9 @@
 import copy
+import importlib
 import itertools
 import typing
 from collections import defaultdict
+from functools import partial
 
 import numpy as np
 from napari.utils import Colormap
@@ -89,9 +91,14 @@ class ProfileDict:
         {'c1': 7, 'c2': 8}
     """
 
-    def __init__(self):
-        self.my_dict = {}
+    def __init__(self, **kwargs):
+        self.my_dict = {k: EventedDict(**v) if isinstance(v, dict) else v for k, v in kwargs.items()}
         self._callback_dict: typing.Dict[str, typing.List[CallbackBase]] = defaultdict(list)
+        for value in self.my_dict.values():
+            self._connect_evented_dict("", value)
+
+    def as_dict(self):
+        return copy.copy(self.my_dict)
 
     def update(self, ob: typing.Union["ProfileDict", dict, None] = None, **kwargs):
         """
@@ -150,8 +157,22 @@ class ProfileDict:
                     curr_dict[key2] = {}
                     curr_dict = curr_dict[key2]
                     break
+        if isinstance(value, dict):
+            value = EventedDict(**value)
         curr_dict[key_path[-1]] = value
+        if isinstance(value, EventedDict):
+            callback_path = ".".join(key_path[1:])
+            self._connect_evented_dict(callback_path, value)
 
+        self._call_callback(key_path)
+
+    def _connect_evented_dict(self, initial_path: str, evented_dict: EventedDict):
+        evented_dict.setted.connect(partial(self._call_callback, initial_path))
+        evented_dict.deleted.connect(partial(self._call_callback, initial_path))
+
+    def _call_callback(self, key_path: typing.Union[typing.Sequence[str], str]):
+        if isinstance(key_path, str):
+            key_path = key_path.split(".")
         callback_path = ""
         callback_list = []
         if callback_path in self._callback_dict:
@@ -200,7 +221,7 @@ class ProfileDict:
     def filter_data(self):
         error_list = []
         for group, up_dkt in list(self.my_dict.items()):
-            if not isinstance(up_dkt, dict):
+            if not isinstance(up_dkt, (dict, EventedDict)):
                 continue
             for key, dkt in list(up_dkt.items()):
                 if not check_loaded_dict(dkt):
@@ -224,8 +245,6 @@ class ProfileEncoder(SerializeClassEncoder):
     # pylint: disable=E0202
     def default(self, o):
         """encoder implementation"""
-        if isinstance(o, ProfileDict):
-            return {"__ProfileDict__": True, **o.my_dict}
         if isinstance(o, RadiusType):
             return {"__RadiusType__": True, "value": o.value}
         if isinstance(o, ROIExtractionProfile):
@@ -238,6 +257,10 @@ class ProfileEncoder(SerializeClassEncoder):
                 "interpolation": o.interpolation,
                 "controls": o.controls.tolist(),
             }
+        if hasattr(o, "as_dict"):
+            dkt = o.as_dict()
+            dkt["__class__"] = o.__module__ + "." + o.__class__.__name__
+            return dkt
         if isinstance(o, np.integer):
             return int(o)
         if isinstance(o, np.floating):
@@ -254,10 +277,20 @@ def profile_hook(dkt):
     ...     data = json.load(fp, object_hook=profile_hook)
 
     """
+    if "__class__" in dkt:
+        module_name, class_name = dkt["__class__"].rsplit(".", maxsplit=1)
+        # the migration code should be called here
+        try:
+            del dkt["__class__"]
+            module = importlib.import_module(module_name)
+            obj = getattr(module, class_name)(**dkt)
+            return obj
+        except Exception as e:
+            dkt["__class__"] = module_name + "." + class_name
+            dkt["__error__"] = e
     if "__ProfileDict__" in dkt:
         del dkt["__ProfileDict__"]
-        res = ProfileDict()
-        res.my_dict = dkt
+        res = ProfileDict(**dkt)
         return res
     if "__RadiusType__" in dkt:
         return RadiusType(dkt["value"])
@@ -304,7 +337,7 @@ def check_loaded_dict(dkt) -> bool:
 
     :param dkt: dict to check
     """
-    if not isinstance(dkt, dict):
+    if not isinstance(dkt, (dict, EventedDict)):
         return True
     if "__error__" in dkt:
         return False

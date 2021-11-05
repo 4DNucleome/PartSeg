@@ -16,6 +16,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt import ensure_main_thread
 
 import PartSegData
 from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
@@ -107,6 +108,7 @@ class Options(QWidget):
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
         self.algorithm_choose_widget.algorithm_changed.connect(self.interactive_algorithm_execute)
+        self._settings.roi_profiles_changed
 
         self.label = TextShow()
 
@@ -140,6 +142,14 @@ class Options(QWidget):
         layout.addWidget(self._ch_control2)
         # layout.setSpacing(0)
         self.setLayout(layout)
+
+    @ensure_main_thread
+    def update_profiles(self):
+        self.update_combo_box(self.choose_profile, self._settings.roi_profiles)
+
+    @ensure_main_thread
+    def update_pipelines(self):
+        self.update_combo_box(self.choose_profile, self._settings.roi_pipelines)
 
     def compare_action(self):
         if self.compare_btn.text() == "Compare":
