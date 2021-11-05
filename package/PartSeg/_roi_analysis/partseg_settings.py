@@ -36,8 +36,8 @@ class PartSettings(BaseSettings):
         "multiple_open_directory",
     ]
 
-    def __init__(self, json_path):
-        super().__init__(json_path)
+    def __init__(self, json_path, profile_name="default"):
+        super().__init__(json_path, profile_name)
         self._mask = None
         self.compare_segmentation = None
         self.segmentation_pipelines_dict = ProfileDict()

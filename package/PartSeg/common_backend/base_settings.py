@@ -481,11 +481,15 @@ class BaseSettings(ViewSettings):
     save_locations_keys = []
     data_changed = Signal(str, object)
 
-    def __init__(self, json_path):
+    def __init__(self, json_path: Union[Path, str], profile_name: str = "default"):
+        """
+        :param json_path: path to store
+        :param profile_name: name of profile to be used. default value is "default"
+        """
         super().__init__()
         napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
         self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
-        self._current_roi_dict = "default"
+        self._current_roi_dict = profile_name
         self._roi_dict = ProfileDict()
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""

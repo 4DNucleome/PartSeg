@@ -33,8 +33,8 @@ class StackSettings(BaseSettings):
         "multiple_open_directory",
     ]
 
-    def __init__(self, json_path):
-        super().__init__(json_path)
+    def __init__(self, json_path, profile_name="default"):
+        super().__init__(json_path, profile_name)
         self.chosen_components_widget = None
         self.keep_chosen_components = False
         self.components_parameters_dict: typing.Dict[int, ROIExtractionProfile] = {}
