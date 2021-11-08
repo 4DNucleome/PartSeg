@@ -47,7 +47,7 @@ class LoadRegisterFileDialog(QFileDialog):
     ):
         if isinstance(io_register, str):
             io_register = {io_register: IOMethodMock(io_register)}
-        if not isinstance(io_register, dict):
+        if not isinstance(io_register, typing.MutableMapping):
             io_register = {io_register.get_name(): io_register}
         super().__init__(parent, caption)
         self.io_register = {x.get_name_with_suffix(): x for x in io_register.values()}

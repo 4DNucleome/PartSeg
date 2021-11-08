@@ -8,7 +8,7 @@ import warnings
 from argparse import Namespace
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, MutableMapping, NamedTuple, Optional, Sequence, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
@@ -694,7 +694,7 @@ class BaseSettings(ViewSettings):
     def load_part(cls, file_path):
         data = cls.load_metadata(file_path)
         bad_key = []
-        if isinstance(data, dict) and not check_loaded_dict(data):
+        if isinstance(data, MutableMapping) and not check_loaded_dict(data):
             for k, v in data.items():
                 if not check_loaded_dict(v):
                     bad_key.append(k)

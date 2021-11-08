@@ -279,11 +279,13 @@ class ROIExtractionProfile:
         )
 
     @classmethod
-    def _pretty_print(cls, values: dict, translate_dict: typing.Dict[str, AlgorithmProperty], indent=0):
+    def _pretty_print(
+        cls, values: typing.MutableMapping, translate_dict: typing.Dict[str, AlgorithmProperty], indent=0
+    ):
         res = ""
         for k, v in values.items():
             if k not in translate_dict:
-                if isinstance(v, dict):
+                if isinstance(v, typing.MutableMapping):
                     res += " " * indent + f"{k}: {cls._pretty_print(v, {}, indent + 2)}\n"
                 else:
                     res += " " * indent + f"{k}: {v}\n"
@@ -297,7 +299,7 @@ class ROIExtractionProfile:
                 if v["values"]:
                     res += "\n"
                     res += cls._pretty_print(v["values"], desc.possible_values[v["name"]].get_fields_dict(), indent + 2)
-            elif isinstance(v, dict):
+            elif isinstance(v, typing.MutableMapping):
                 res += cls._pretty_print(v, {}, indent + 2)
             else:
                 res += str(v)
@@ -308,7 +310,7 @@ class ROIExtractionProfile:
     def print_dict(cls, dkt, indent=0, name: str = ""):
         if isinstance(dkt, Enum):
             return dkt.name
-        if not isinstance(dkt, dict):
+        if not isinstance(dkt, typing.MutableMapping):
             # FIXME update in future method of proper printing channel number
             if name.startswith("channel") and isinstance(dkt, int):
                 return dkt + 1

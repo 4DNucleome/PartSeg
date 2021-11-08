@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import napari
 import numpy as np
@@ -836,13 +836,13 @@ def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tupl
 prepare_layers = thread_worker(_prepare_layers)
 
 
-def _print_dict(dkt: dict, indent=""):
-    if not isinstance(dkt, dict):
+def _print_dict(dkt: MutableMapping, indent=""):
+    if not isinstance(dkt, MutableMapping):
         logging.error(f"{type(dkt)} instead of dict passed to _print_dict")
         return indent + str(dkt)
     res = []
     for k, v in dkt.items():
-        if isinstance(v, dict):
+        if isinstance(v, MutableMapping):
             res.append(f"{indent}{k}:\n{_print_dict(v, indent+'  ')}")
         else:
             res.append(f"{indent}{k}: {v}")
