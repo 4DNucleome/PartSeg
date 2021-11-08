@@ -16,46 +16,42 @@ from .image_operations import RadiusType
 from .utils import CallbackBase, get_callback
 
 
-def recursive_update_dict(main_dict: dict, other_dict: dict):
-    """
-    recursive update main_dict with elements of other_dict
-
-    :param main_dict: dict to be updated recursively
-    :param other_dict: source dict
-
-    >>> dkt1 = {"test": {"test": 1, "test2": {"test4": 1}}}
-    >>> dkt2 = {"test": {"test": 4, "test2": {"test2": 1}}}
-    >>> recursive_update_dict(dkt1, dkt2)
-    >>> dkt1
-        {"test": {"test": 1, "test2": {"test4": 1, "test2": 1}}}
-    """
-    for key, val in other_dict.items():
-        if key in main_dict and isinstance(main_dict[key], dict) and isinstance(val, dict):
-            recursive_update_dict(main_dict[key], val)
-        else:
-            main_dict[key] = val
-
-
 class EventedDict(typing.MutableMapping):
     setted = Signal(str)
     deleted = Signal(str)
 
-    def __init__(self, d=None, **kwargs):
+    def __init__(self, **kwargs):
         # TODO add positional only argument when drop python 3.7
-        self._dict = {k: EventedDict(**v) if isinstance(v, dict) else v for k, v in kwargs.items()}
+        self._dict = {}
+        for key, dkt in kwargs.items():
+            if isinstance(dkt, dict):
+                dkt = EventedDict(**dkt)
+            if isinstance(dkt, EventedDict):
+                dkt.base_key = key
+                dkt.setted.connect(self._propagate_setitem)
+                dkt.deleted.connect(self._propagate_del)
+            self._dict[key] = dkt
+        self.base_key = ""
 
     def __setitem__(self, k, v) -> None:
         if isinstance(v, dict):
             v = EventedDict(**v)
         if isinstance(v, EventedDict):
-            v.setted.connect(partial(self._propagate_setitem, k))
-            v.deleted.connect(partial(self._propagate_del, k))
+            v.base_key = k
+            v.setted.connect(self._propagate_setitem)
+            v.deleted.connect(self._propagate_del)
+        if k in self._dict and isinstance(self._dict[k], EventedDict):
+            self._dict[k].setted.disconnect(self._propagate_setitem)
+            self._dict[k].deleted.disconnect(self._propagate_del)
         self._dict[k] = v
         self.setted.emit(k)
 
-    def __delitem__(self, v) -> None:
-        del self._dict[v]
-        self.deleted.emit(v)
+    def __delitem__(self, k) -> None:
+        if k in self._dict and isinstance(self._dict[k], EventedDict):
+            self._dict[k].setted.disconnect(self._propagate_setitem)
+            self._dict[k].deleted.disconnect(self._propagate_del)
+        del self._dict[k]
+        self.deleted.emit(k)
 
     def __getitem__(self, k):
         return self._dict[k]
@@ -75,11 +71,41 @@ class EventedDict(typing.MutableMapping):
     def __repr__(self):
         return f"EventedDict({repr(self._dict)})"
 
-    def _propagate_setitem(self, local_key, key):
-        self.setted.emit(f"{local_key}.{key}")
+    def _propagate_setitem(self, key):
+        # Fixme when partial disconnect will work
+        sender: EventedDict = Signal.sender()
+        if sender.base_key:
+            self.setted.emit(f"{sender.base_key}.{key}")
+        else:
+            self.setted.emit(key)
 
-    def _propagate_del(self, local_key, key):
-        self.deleted.emit(f"{local_key}.{key}")
+    def _propagate_del(self, key):
+        # Fixme when partial disconnect will work
+        sender: EventedDict = Signal.sender()
+        if sender.base_key:
+            self.deleted.emit(f"{sender.base_key}.{key}")
+        else:
+            self.deleted.emit(key)
+
+
+def recursive_update_dict(main_dict: typing.Union[dict, EventedDict], other_dict: typing.Union[dict, EventedDict]):
+    """
+    recursive update main_dict with elements of other_dict
+
+    :param main_dict: dict to be updated recursively
+    :param other_dict: source dict
+
+    >>> dkt1 = {"test": {"test": 1, "test2": {"test4": 1}}}
+    >>> dkt2 = {"test": {"test": 4, "test2": {"test2": 1}}}
+    >>> recursive_update_dict(dkt1, dkt2)
+    >>> dkt1
+        {"test": {"test": 1, "test2": {"test4": 1, "test2": 1}}}
+    """
+    for key, val in other_dict.items():
+        if key in main_dict and isinstance(main_dict[key], dict) and isinstance(val, dict):
+            recursive_update_dict(main_dict[key], val)
+        else:
+            main_dict[key] = val
 
 
 class ProfileDict:

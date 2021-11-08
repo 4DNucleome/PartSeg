@@ -95,7 +95,7 @@ class TestEventedDict:
 
     def test_signal_names(self):
         receiver = MagicMock()
-        dkt = EventedDict()
+        dkt = EventedDict(baz={"foo": 1})
         dkt.setted.connect(receiver.set)
         dkt.deleted.connect(receiver.deleted)
         dkt["foo"] = 1
@@ -107,6 +107,10 @@ class TestEventedDict:
         dkt["bar"]["baz"] = 1
         assert receiver.set.call_count == 3
         receiver.set.assert_called_with("bar.baz")
+        dkt["baz"]["foo"] = 2
+        assert receiver.set.call_count == 4
+        receiver.set.assert_called_with("baz.foo")
+
         del dkt["bar"]["baz"]
         assert receiver.deleted.call_count == 1
         receiver.deleted.assert_called_with("bar.baz")
