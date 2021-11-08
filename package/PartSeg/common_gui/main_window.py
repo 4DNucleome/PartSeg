@@ -153,8 +153,8 @@ class BaseMainWindow(QMainWindow):
         self.multiple_files = None
         self.settings.request_load_files.connect(self.read_drop)
         self.recent_file_menu = QMenu("Open recent")
-        self._refresh_recent(FILE_HISTORY, self.settings.get_last_files())
-        self.settings.data_changed.connect(self._refresh_recent)
+        self._refresh_recent()
+        self.settings.connect(FILE_HISTORY, self._refresh_recent)
         self.settings.napari_settings.appearance.events.theme.connect(self.change_theme)
         self.settings.set_parent(self)
         self.console = None
@@ -170,11 +170,10 @@ class BaseMainWindow(QMainWindow):
             self.console_dock.setWidget(self.console)
         self.console_dock.setVisible(not self.console_dock.isVisible())
 
-    def _refresh_recent(self, name, value):
-        if name != FILE_HISTORY or self._load_dict is None:
-            return
+    def _refresh_recent(self):
+
         self.recent_file_menu.clear()
-        for name_list, method in value:
+        for name_list, method in self.settings.get_last_files():
             action = self.recent_file_menu.addAction(f"{name_list[0]}, {method}")
             action.setData((name_list, method))
             action.triggered.connect(self._load_recent)

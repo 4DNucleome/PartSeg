@@ -158,7 +158,7 @@ class MultipleFileWidget(QWidget):
         self.error_list = []
 
         self._add_state.connect(self.save_state_action)
-        self.settings.data_changed.connect(self.view_changed)
+        self.settings.connect("multiple_files_widget", self.view_changed)
 
     def load_recent(self):
         dial = LoadRecentFiles(self.settings, self)
@@ -180,9 +180,8 @@ class MultipleFileWidget(QWidget):
         for file_list, method in reversed(load_list):
             self.settings.add_last_files_multiple(file_list, method)
 
-    def view_changed(self, path, value):
-        if path == "multiple_files_widget":
-            self.setVisible(value)
+    def view_changed(self):
+        self.setVisible(self.settings.get("multiple_files_widget"))
 
     def execute_load_files(self, load_data: LoadProperty, range_changed, step_changed):
         range_changed(0, len(load_data.load_location))

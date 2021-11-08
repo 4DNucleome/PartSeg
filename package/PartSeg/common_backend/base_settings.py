@@ -469,7 +469,6 @@ class BaseSettings(ViewSettings):
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
     save_locations_keys = []
-    data_changed = Signal(str, object)
 
     def __init__(self, json_path: Union[Path, str], profile_name: str = "default"):
         """
@@ -666,7 +665,6 @@ class BaseSettings(ViewSettings):
         :param value: value to store. The value need to be json serializable.
         """
         self._roi_dict.set(f"{self._current_roi_dict}.{key_path}", value)
-        self.data_changed.emit(key_path, value)
 
     def get(self, key_path: str, default=None):
         """
