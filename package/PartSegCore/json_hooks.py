@@ -37,12 +37,8 @@ def recursive_update_dict(main_dict: dict, other_dict: dict):
 
 
 class EventedDict(typing.MutableMapping):
-    setted = Signal()
-    deleted = Signal()
-
-    def __hash__(self):
-        # Fixme when updated psygnal
-        return hash(id(self))
+    setted = Signal(str)
+    deleted = Signal(str)
 
     def __init__(self, d=None, **kwargs):
         # TODO add positional only argument when drop python 3.7
@@ -51,12 +47,15 @@ class EventedDict(typing.MutableMapping):
     def __setitem__(self, k, v) -> None:
         if isinstance(v, dict):
             v = EventedDict(**v)
+        if isinstance(v, EventedDict):
+            v.setted.connect(partial(self._propagate_setitem, k))
+            v.deleted.connect(partial(self._propagate_del, k))
         self._dict[k] = v
-        self.setted.emit()
+        self.setted.emit(k)
 
     def __delitem__(self, v) -> None:
         del self._dict[v]
-        self.deleted.emit()
+        self.deleted.emit(v)
 
     def __getitem__(self, k):
         return self._dict[k]
@@ -75,6 +74,12 @@ class EventedDict(typing.MutableMapping):
 
     def __repr__(self):
         return f"EventedDict({repr(self._dict)})"
+
+    def _propagate_setitem(self, local_key, key):
+        self.setted.emit(f"{local_key}.{key}")
+
+    def _propagate_del(self, local_key, key):
+        self.deleted.emit(f"{local_key}.{key}")
 
 
 class ProfileDict:

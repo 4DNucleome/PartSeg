@@ -1,6 +1,7 @@
 # pylint: disable=R0201
 
 import json
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -91,6 +92,27 @@ class TestEventedDict:
         assert isinstance(dkt2, EventedDict)
         assert isinstance(dkt2["a"], EventedDict)
         assert dkt["g"]["k"] == [6, 7, 8]
+
+    def test_signal_names(self):
+        receiver = MagicMock()
+        dkt = EventedDict()
+        dkt.setted.connect(receiver.set)
+        dkt.deleted.connect(receiver.deleted)
+        dkt["foo"] = 1
+        assert receiver.set.call_count == 1
+        receiver.set.assert_called_with("foo")
+        dkt["bar"] = EventedDict()
+        assert receiver.set.call_count == 2
+        receiver.set.assert_called_with("bar")
+        dkt["bar"]["baz"] = 1
+        assert receiver.set.call_count == 3
+        receiver.set.assert_called_with("bar.baz")
+        del dkt["bar"]["baz"]
+        assert receiver.deleted.call_count == 1
+        receiver.deleted.assert_called_with("bar.baz")
+        del dkt["bar"]
+        assert receiver.deleted.call_count == 2
+        receiver.deleted.assert_called_with("bar")
 
 
 class TestProfileDict:
