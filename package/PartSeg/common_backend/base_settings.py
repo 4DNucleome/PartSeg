@@ -634,7 +634,8 @@ class BaseSettings(ViewSettings):
         return self.add_last_files(file_path, load_method)
 
     def add_last_files(self, file_path: Sequence[Union[str, Path]], load_method: str):
-        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [tuple(file_path), load_method]))
+        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [list(file_path), load_method]))
+        # keep list of files as list because json serialize tuple to list
         self.add_path_history(os.path.dirname(file_path[0]))
 
     def get_last_files_multiple(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
@@ -644,9 +645,10 @@ class BaseSettings(ViewSettings):
         self.set(
             MULTIPLE_FILES_OPEN_HISTORY,
             self._add_elem_to_list(
-                self.get(MULTIPLE_FILES_OPEN_HISTORY, []), [tuple(file_paths), load_method], keep_len=30
+                self.get(MULTIPLE_FILES_OPEN_HISTORY, []), [list(file_paths), load_method], keep_len=30
             ),
         )
+        # keep list of files as list because json serialize tuple to list
         self.add_path_history(os.path.dirname(file_paths[0]))
 
     def add_path_history(self, dir_path: Union[str, Path]):
