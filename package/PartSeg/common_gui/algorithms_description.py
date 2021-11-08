@@ -42,7 +42,7 @@ from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpin
 
 
 def update(d, u):
-    if not isinstance(d, dict):
+    if not isinstance(d, typing.MutableMapping):
         d = {}
     for k, v in u.items():
         d[k] = update(d.get(k, {}), v) if isinstance(v, collections.abc.Mapping) else v
@@ -50,7 +50,7 @@ def update(d, u):
 
 
 def _pretty_print(data, indent=2) -> str:
-    if isinstance(data, dict):
+    if isinstance(data, typing.Mapping):
         res = "\n"
         for k, v in data.items():
             res += f"{' ' * indent}{k}: {_pretty_print(v, indent+2)}\n"
@@ -336,7 +336,7 @@ class FormWidget(QWidget):
         self.setLayout(layout)
         self.value_changed.connect(self.update_size)
 
-    def _add_to_layout(self, layout, ap: QtAlgorithmProperty, start_values, settings):
+    def _add_to_layout(self, layout, ap: QtAlgorithmProperty, start_values: typing.MutableMapping, settings):
         label = QLabel(ap.user_name)
         if ap.help_text:
             label.setToolTip(ap.help_text)
@@ -400,7 +400,7 @@ class SubAlgorithmWidget(QWidget):
 
     def __init__(self, algorithm_property: AlgorithmProperty):
         super().__init__()
-        if not isinstance(algorithm_property.possible_values, dict):
+        if not isinstance(algorithm_property.possible_values, typing.MutableMapping):
             raise ValueError(
                 "algorithm_property.possible_values should be dict." f"It is {type(algorithm_property.possible_values)}"
             )
@@ -441,8 +441,8 @@ class SubAlgorithmWidget(QWidget):
         self.starting_values = starting_values
         # self.set_values(starting_values)
 
-    def set_values(self, val: dict):
-        if not isinstance(val, dict):
+    def set_values(self, val: typing.Mapping):
+        if not isinstance(val, typing.Mapping):
             return
         self.choose.setCurrentText(val["name"])
         if val["name"] not in self.widgets_dict:
@@ -710,7 +710,7 @@ class AlgorithmChooseBase(QWidget):
     def recursive_get_values(self):
         result = {key: widget.recursive_get_values() for key, widget in self.algorithm_dict.items()}
 
-        self.settings.set("algorithm_widget_state", update(self.settings.get("algorithm_widget_state", dict), result))
+        self.settings.set("algorithm_widget_state", update(self.settings.get("algorithm_widget_state", {}), result))
         return result
 
     def change_algorithm(self, name, values: dict = None):

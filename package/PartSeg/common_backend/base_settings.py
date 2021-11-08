@@ -533,6 +533,7 @@ class BaseSettings(ViewSettings):
         self._additional_layers = result.additional_layers
         self.last_executed_algorithm = result.parameters.algorithm
         self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
+        # Fixme not use EventedDict here
         try:
             roi_info = result.roi_info.fit_to_image(self.image)
         except ValueError:  # pragma: no cover
