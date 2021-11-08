@@ -3,7 +3,6 @@ import importlib
 import itertools
 import typing
 from collections import defaultdict
-from functools import partial
 
 import numpy as np
 from napari.utils import Colormap
@@ -123,13 +122,29 @@ class ProfileDict:
     """
 
     def __init__(self, **kwargs):
-        self.my_dict = {k: EventedDict(**v) if isinstance(v, dict) else v for k, v in kwargs.items()}
+        self._my_dict = EventedDict(**kwargs)
         self._callback_dict: typing.Dict[str, typing.List[CallbackBase]] = defaultdict(list)
-        for value in self.my_dict.values():
-            self._connect_evented_dict("", value)
+
+        self._my_dict.setted.connect(self._call_callback)
+        self._my_dict.deleted.connect(self._call_callback)
 
     def as_dict(self):
-        return copy.copy(self.my_dict)
+        return self.my_dict.as_dict()
+
+    @property
+    def my_dict(self) -> EventedDict:
+        return self._my_dict
+
+    @my_dict.setter
+    def my_dict(self, value: typing.Union[dict, EventedDict]):
+        if isinstance(value, dict):
+            value = EventedDict(**value)
+
+        self._my_dict.setted.disconnect(self._call_callback)
+        self._my_dict.deleted.disconnect(self._call_callback)
+        self._my_dict = value
+        self._my_dict.setted.connect(self._call_callback)
+        self._my_dict.deleted.connect(self._call_callback)
 
     def update(self, ob: typing.Union["ProfileDict", dict, None] = None, **kwargs):
         """
@@ -185,21 +200,13 @@ class ProfileDict:
                 curr_dict = curr_dict[key]
             except KeyError:
                 for key2 in key_path[i:-1]:
-                    curr_dict[key2] = {}
+                    with curr_dict.setted.blocked():
+                        curr_dict[key2] = EventedDict()
                     curr_dict = curr_dict[key2]
                     break
         if isinstance(value, dict):
             value = EventedDict(**value)
         curr_dict[key_path[-1]] = value
-        if isinstance(value, EventedDict):
-            callback_path = ".".join(key_path[1:])
-            self._connect_evented_dict(callback_path, value)
-
-        self._call_callback(key_path)
-
-    def _connect_evented_dict(self, initial_path: str, evented_dict: EventedDict):
-        evented_dict.setted.connect(partial(self._call_callback, initial_path))
-        evented_dict.deleted.connect(partial(self._call_callback, initial_path))
 
     def _call_callback(self, key_path: typing.Union[typing.Sequence[str], str]):
         if isinstance(key_path, str):

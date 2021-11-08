@@ -165,21 +165,21 @@ class TestProfileDict:
         assert dkt.my_dict == dkt2.my_dict
 
     def test_callback(self):
-        call_list = []
-
-        def fun():
-            call_list.append(1)
+        receiver = MagicMock()
 
         dkt = ProfileDict()
-        dkt.connect("", fun)
-        dkt.connect("b", fun)
+        dkt.connect("", receiver.empty)
+        dkt.connect("b", receiver.b)
 
         dkt.set("test.a", 1)
-        assert call_list == [1]
+        assert receiver.empty.call_count == 1
+        receiver.b.assert_not_called()
         dkt.set("test2.a", 1)
-        assert call_list == [1, 1]
+        assert receiver.empty.call_count == 2
+        receiver.b.assert_not_called()
         dkt.set("test.b", 1)
-        assert call_list == [1, 1, 1, 1]
+        assert receiver.empty.call_count == 3
+        assert receiver.b.call_count == 1
 
 
 def test_profile_hook_colormap_load(bundle_test_dir):
