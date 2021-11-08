@@ -2,7 +2,7 @@ import os
 from typing import Type
 
 import numpy as np
-from qtpy.QtCore import QByteArray, QEvent, Qt
+from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -108,7 +108,8 @@ class Options(QWidget):
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
         self.algorithm_choose_widget.algorithm_changed.connect(self.interactive_algorithm_execute)
-        self._settings.roi_profiles_changed
+        self._settings.roi_profiles_changed.connect(self._update_profiles)
+        self._settings.roi_pipelines_changed.connect(self._update_pipelines)
 
         self.label = TextShow()
 
@@ -144,12 +145,14 @@ class Options(QWidget):
         self.setLayout(layout)
 
     @ensure_main_thread
-    def update_profiles(self):
+    def _update_profiles(self):
         self.update_combo_box(self.choose_profile, self._settings.roi_profiles)
+        self.update_tooltips()
 
     @ensure_main_thread
-    def update_pipelines(self):
-        self.update_combo_box(self.choose_profile, self._settings.roi_pipelines)
+    def _update_pipelines(self):
+        self.update_combo_box(self.choose_pipe, self._settings.roi_pipelines)
+        self.update_tooltips()
 
     def compare_action(self):
         if self.compare_btn.text() == "Compare":
@@ -254,15 +257,6 @@ class Options(QWidget):
         if len(new_names) > 0:
             combo_box.addItems(list(sorted(new_names)))
 
-    def event(self, event: QEvent):
-        if event.type() == QEvent.WindowActivate:
-            # update combobox for segmentation
-            self.update_combo_box(self.choose_profile, self._settings.roi_profiles)
-            # update combobox for pipeline
-            self.update_combo_box(self.choose_pipe, self._settings.roi_pipelines)
-            self.update_tooltips()
-        return super().event(event)
-
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() in [Qt.Key_Enter, Qt.Key_Return] and event.modifiers() == Qt.ControlModifier:
             self.execute_btn.click()
@@ -284,8 +278,6 @@ class Options(QWidget):
             resp = ROIExtractionProfile(text, widget.name, widget.get_values())
             self._settings.roi_profiles[text] = resp
             self._settings.dump()
-            self.choose_profile.addItem(text)
-            self.update_tooltips()
             break
 
     def change_profile(self, val):

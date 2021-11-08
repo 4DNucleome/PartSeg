@@ -48,7 +48,7 @@ class PartSettings(BaseSettings):
         self.segmentation_profiles_dict = ProfileDict()
         self.batch_plans_dict = ProfileDict()
         self.measurement_profiles_dict = ProfileDict()
-        self.segmentation_profiles_dict.connect("", self.roi_pipelines_changed.emit)
+        self.segmentation_profiles_dict.connect("", self.roi_profiles_changed.emit)
         self.segmentation_pipelines_dict.connect("", self.roi_pipelines_changed.emit)
         self.measurement_profiles_dict.connect("", self.measurement_profiles_changed.emit)
         self.batch_plans_dict.connect("", self.batch_plans_changed.emit)

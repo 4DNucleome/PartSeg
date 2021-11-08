@@ -87,6 +87,10 @@ class Properties(QWidget):
         self.lock_spacing.stateChanged.connect(self.synchronize_spacing)
         # noinspection PyUnresolvedReferences
         self.spacing[2].valueChanged.connect(self.synchronize_spacing)
+
+        self._settings.roi_profiles_changed.connect(self.update_profile_list)
+        self._settings.roi_pipelines_changed.connect(self.update_profile_list)
+
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
@@ -129,6 +133,7 @@ class Properties(QWidget):
 
         layout.addLayout(profile_layout, 1)
         self.setLayout(layout)
+        self.update_profile_list()
 
     @Slot(int)
     def multiple_files_visibility(self, val: int):
@@ -206,12 +211,10 @@ class Properties(QWidget):
         self.info_label.setPlainText("")
 
     def showEvent(self, _event):
-        self.update_profile_list()
         self.update_spacing()
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate and self.isVisible():
-            self.update_profile_list()
             self.update_spacing()
             self.multiple_files_chk.setChecked(self._settings.get("multiple_files_widget", False))
         return super().event(event)
