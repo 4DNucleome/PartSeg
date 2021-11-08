@@ -79,9 +79,12 @@ class PartSettings(BaseSettings):
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
         if algorithm_name:
+            value = self.get(f"algorithms.{algorithm_name}")
+            if isinstance(value, EventedDict):
+                value = value.as_dict_deep()
             algorithm_val = {
                 "algorithm_name": algorithm_name,
-                "values": deepcopy(self.get(f"algorithms.{algorithm_name}")),
+                "values": deepcopy(value),
             }
         else:
             algorithm_val = {}

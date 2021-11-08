@@ -64,6 +64,9 @@ class EventedDict(typing.MutableMapping):
     def as_dict(self):
         return copy.copy(self._dict)
 
+    def as_dict_deep(self):
+        return {k: v.as_dict_deep() if isinstance(v, EventedDict) else v for k, v in self._dict.items()}
+
     def __str__(self):
         return f"EventedDict({self._dict})"
 
@@ -203,10 +206,11 @@ class ProfileDict:
                     with curr_dict.setted.blocked():
                         curr_dict[key2] = EventedDict()
                     curr_dict = curr_dict[key2]
-                    break
+                break
         if isinstance(value, dict):
             value = EventedDict(**value)
         curr_dict[key_path[-1]] = value
+        return value
 
     def _call_callback(self, key_path: typing.Union[typing.Sequence[str], str]):
         if isinstance(key_path, str):
@@ -245,8 +249,7 @@ class ProfileDict:
                     raise e
 
                 val = copy.deepcopy(default)
-                self.set(key_path, val)
-                return val
+                return self.set(key_path, val)
 
         return curr_dict
 
