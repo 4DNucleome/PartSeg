@@ -324,8 +324,7 @@ def profile_hook(dkt):
         try:
             del dkt["__class__"]
             module = importlib.import_module(module_name)
-            obj = getattr(module, class_name)(**dkt)
-            return obj
+            return getattr(module, class_name)(**dkt)
         except Exception as e:
             dkt["__class__"] = module_name + "." + class_name
             dkt["__error__"] = e
