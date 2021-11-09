@@ -21,7 +21,7 @@ from superqt import ensure_main_thread
 import PartSegData
 from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
-from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow
+from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
 from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -439,14 +439,14 @@ class MainMenu(BaseMainMenu):
 
         try:
             dial = PLoadDialog(
-                load_functions.load_dict, settings=self.settings, path="io.open_directory", filter_path="io.open_filter"
+                load_functions.load_dict, settings=self.settings, path=OPEN_DIRECTORY, filter_path=OPEN_FILE_FILTER
             )
-            file_path = self.settings.get("io.open_file", "")
+            file_path = self.settings.get(OPEN_FILE, "")
             if os.path.isfile(file_path):
                 dial.selectFile(file_path)
             if dial.exec_():
                 result = dial.get_result()
-                self.settings.set("io.open_file", result.load_location[0])
+                self.settings.set(OPEN_FILE, result.load_location[0])
                 self.settings.add_last_files(result.load_location, result.load_class.get_name())
                 dial2 = ExecuteFunctionDialog(
                     result.load_class.load,

@@ -45,7 +45,7 @@ from ..common_gui.custom_load_dialog import PLoadDialog
 from ..common_gui.custom_save_dialog import PSaveDialog
 from ..common_gui.exception_hooks import load_data_exception_hook
 from ..common_gui.flow_layout import FlowLayout
-from ..common_gui.main_window import BaseMainMenu, BaseMainWindow
+from ..common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
 from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..common_gui.napari_image_view import LabelEnum
@@ -174,16 +174,16 @@ class MainMenu(BaseMainMenu):
         dial = PLoadDialog(
             io_functions.load_dict,
             settings=self.settings,
-            path="io.load_image_directory",
-            filter_path="io.load_data_filter",
+            path=OPEN_DIRECTORY,
+            filter_path=OPEN_FILE_FILTER,
         )
-        default_file_path = self.settings.get("io.load_image_file", "")
+        default_file_path = self.settings.get(OPEN_FILE, "")
         if os.path.isfile(default_file_path):
             dial.selectFile(default_file_path)
         if not dial.exec_():
             return
         load_property = dial.get_result()
-        self.settings.set("io.load_image_file", load_property.load_location[0])
+        self.settings.set(OPEN_FILE, load_property.load_location[0])
         self.settings.add_last_files(load_property.load_location, load_property.load_class.get_name())
 
         execute_dialog = ExecuteFunctionDialog(

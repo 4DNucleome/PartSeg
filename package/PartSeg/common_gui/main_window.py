@@ -24,6 +24,10 @@ from .qt_console import QtConsole
 from .show_directory_dialog import DirectoryDialog
 from .waiting_dialog import ExecuteFunctionDialog
 
+OPEN_FILE = "io.open_file"
+OPEN_DIRECTORY = "io.open_directory"
+OPEN_FILE_FILTER = "io.open_filter"
+
 
 class BaseMainMenu(QWidget):
     def __init__(self, settings: BaseSettings, main_window):
@@ -188,6 +192,9 @@ class BaseMainWindow(QMainWindow):
                 result = dial.get_result()
                 self.main_menu.set_data(result)
                 self.settings.add_last_files(data[0], method.get_name())
+                self.settings.set(OPEN_DIRECTORY, os.path.dirname(data[0][0]))
+                self.settings.set(OPEN_FILE, data[0][0])
+                self.settings.set(OPEN_FILE_FILTER, data[1])
         except KeyError:
             self.read_drop(data[0])
 
