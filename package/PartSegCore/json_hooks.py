@@ -2,7 +2,7 @@ import copy
 import importlib
 import itertools
 import typing
-from collections import defaultdict
+from collections import MutableMapping, defaultdict
 
 import numpy as np
 from napari.utils import Colormap
@@ -15,12 +15,13 @@ from .image_operations import RadiusType
 from .utils import CallbackBase, get_callback
 
 
-class EventedDict(typing.MutableMapping):
+class EventedDict(MutableMapping):
     setted = Signal(str)
     deleted = Signal(str)
 
     def __init__(self, **kwargs):
         # TODO add positional only argument when drop python 3.7
+        super().__init__()
         self._dict = {}
         for key, dkt in kwargs.items():
             if isinstance(dkt, dict):
@@ -325,7 +326,7 @@ def profile_hook(dkt):
             del dkt["__class__"]
             module = importlib.import_module(module_name)
             return getattr(module, class_name)(**dkt)
-        except Exception as e:
+        except Exception as e:  # skipcq: PTC-W0703`
             dkt["__class__"] = module_name + "." + class_name
             dkt["__error__"] = e
     if "__ProfileDict__" in dkt:
