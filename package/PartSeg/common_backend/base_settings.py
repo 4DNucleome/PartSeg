@@ -676,7 +676,7 @@ class BaseSettings(ViewSettings):
         """
         return self._roi_dict.get(f"{self._current_roi_dict}.{key_path}", default)
 
-    def connect(self, key_path, callback):
+    def connect_(self, key_path, callback):
         # TODO  fixme fix when introduce switch profiles
         self._roi_dict.connect(key_path, callback)
 

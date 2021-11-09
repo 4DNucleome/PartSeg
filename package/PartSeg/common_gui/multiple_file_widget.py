@@ -158,7 +158,7 @@ class MultipleFileWidget(QWidget):
         self.error_list = []
 
         self._add_state.connect(self.save_state_action)
-        self.settings.connect("multiple_files_widget", self.view_changed)
+        self.settings.connect_("multiple_files_widget", self.view_changed)
 
     def load_recent(self):
         dial = LoadRecentFiles(self.settings, self)

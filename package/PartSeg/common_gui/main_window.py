@@ -158,7 +158,7 @@ class BaseMainWindow(QMainWindow):
         self.settings.request_load_files.connect(self.read_drop)
         self.recent_file_menu = QMenu("Open recent")
         self._refresh_recent()
-        self.settings.connect(FILE_HISTORY, self._refresh_recent)
+        self.settings.connect_(FILE_HISTORY, self._refresh_recent)
         self.settings.napari_settings.appearance.events.theme.connect(self.change_theme)
         self.settings.set_parent(self)
         self.console = None
