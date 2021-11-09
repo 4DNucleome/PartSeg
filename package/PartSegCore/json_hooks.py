@@ -326,7 +326,7 @@ def profile_hook(dkt):
             del dkt["__class__"]
             module = importlib.import_module(module_name)
             return getattr(module, class_name)(**dkt)
-        except Exception as e:  # skipcq: PTC-W0703`
+        except Exception as e:  # skipcq: PTC-W0703`  # pylint: disable=W0703
             dkt["__class__"] = module_name + "." + class_name
             dkt["__error__"] = e
     if "__ProfileDict__" in dkt:
