@@ -3,7 +3,7 @@ import os
 from enum import Enum
 from typing import List, Tuple
 
-from qtpy.QtCore import QEvent, Qt
+from qtpy.QtCore import Qt
 from qtpy.QtGui import QKeyEvent, QResizeEvent
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -160,14 +160,13 @@ class MeasurementWidget(QWidget):
         self.measurement_type = SearchComboBox(self)
         # noinspection PyUnresolvedReferences
         self.measurement_type.currentIndexChanged.connect(self.measurement_profile_selection_changed)
-        self.measurement_type.addItem("<none>")
-        self.measurement_type.addItems(list(sorted(self.settings.measurement_profiles.keys())))
         self.measurement_type.setToolTip(
             'You can create new measurement profile in advanced window, in tab "Measurement settings"'
         )
         self.channels_chose = ChannelComboBox()
         self.units_choose = QEnumComboBox(enum_class=Units)
         self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
+        self.settings.measurement_profiles_changed.connect(self.update_measurement_list)
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
@@ -211,6 +210,7 @@ class MeasurementWidget(QWidget):
         self.clip = QApplication.clipboard()
         self.settings.image_changed[int].connect(self.image_changed)
         self.previous_profile = None
+        self.update_measurement_list()
 
     def check_if_measurement_can_be_calculated(self, name):
         if name == "<none>":
@@ -376,14 +376,6 @@ class MeasurementWidget(QWidget):
         self.measurement_type.addItems(available)
         self.measurement_type.setCurrentIndex(index)
         self.measurement_type.blockSignals(False)
-
-    def showEvent(self, _):
-        self.update_measurement_list()
-
-    def event(self, event: QEvent):
-        if event.type() == QEvent.WindowActivate:
-            self.update_measurement_list()
-        return super().event(event)
 
     @staticmethod
     def _move_widgets(widgets_list: List[Tuple[QWidget, int]], layout1: QBoxLayout, layout2: QBoxLayout):
