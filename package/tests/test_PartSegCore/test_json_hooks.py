@@ -29,22 +29,23 @@ def test_recursive_update_dict():
 
 class TestEventedDict:
     def test_simple_add(self):
-        callback_list = []
-
-        def callback_add():
-            callback_list.append(1)
+        receiver = MagicMock()
 
         dkt = EventedDict()
-        dkt.setted.connect(callback_add)
+        dkt.setted.connect(receiver.set)
+        dkt.deleted.connect(receiver.delete)
         dkt["a"] = 1
         assert dkt["a"] == 1
-        assert callback_list == [1]
+        assert receiver.set.call_count == 1
+        assert "'a': 1" in str(dkt)
+        assert "'a': 1" in repr(dkt)
         dkt["a"] = 2
         assert dkt["a"] == 2
-        assert callback_list == [1, 1]
+        assert receiver.set.call_count == 2
         assert len(dkt) == 1
         del dkt["a"]
-        assert callback_list == [1, 1]
+        assert receiver.set.call_count == 2
+        assert receiver.delete.call_count == 1
         assert len(dkt) == 0
 
     def test_simple_add_remove(self):
@@ -118,6 +119,19 @@ class TestEventedDict:
         assert receiver.deleted.call_count == 2
         receiver.deleted.assert_called_with("bar")
 
+    def test_propagate_signal(self):
+        receiver = MagicMock()
+        dkt = EventedDict(baz={"foo": 1})
+        dkt.setted.connect(receiver.set)
+        dkt.deleted.connect(receiver.deleted)
+        dkt["baz"].base_key = ""
+        dkt["baz"]["foo"] = 2
+        receiver.set.assert_called_with("foo")
+        receiver.set.assert_called_once()
+        del dkt["baz"]["foo"]
+        receiver.deleted.assert_called_with("foo")
+        receiver.deleted.assert_called_once()
+
 
 class TestProfileDict:
     def test_simple(self):
@@ -170,6 +184,7 @@ class TestProfileDict:
         dkt = ProfileDict()
         dkt.connect("", receiver.empty)
         dkt.connect("b", receiver.b)
+        dkt.connect(["d", "c"], receiver.dc)
 
         dkt.set("test.a", 1)
         assert receiver.empty.call_count == 1
@@ -177,9 +192,11 @@ class TestProfileDict:
         dkt.set("test2.a", 1)
         assert receiver.empty.call_count == 2
         receiver.b.assert_not_called()
-        dkt.set("test.b", 1)
+        dkt.set(["test", "b"], 1)
         assert receiver.empty.call_count == 3
         assert receiver.b.call_count == 1
+        dkt.set("test.d.c", 1)
+        receiver.dc.assert_called_once()
 
 
 def test_profile_hook_colormap_load(bundle_test_dir):

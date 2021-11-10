@@ -69,7 +69,7 @@ class Properties(QWidget):
         self.delete_btn.setDisabled(True)
         self.delete_btn.clicked.connect(self.delete_profile)
         self.multiple_files_chk = QCheckBox("Show multiple files panel")
-        self.multiple_files_chk.setChecked(self._settings.get("multiple_files_widget", False))
+        self._update_measurement_chk()
         self.multiple_files_chk.stateChanged.connect(self.multiple_files_visibility)
         self.rename_btn = QPushButton("Rename profile")
         self.rename_btn.clicked.connect(self.rename_profile)

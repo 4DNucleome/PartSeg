@@ -83,7 +83,7 @@ class Options(QWidget):
         self.save_pipe_btn.setToolTip("Save current pipeline. Last element is last executed algorithm")
         self.choose_pipe = SearchComboBox()
         self.choose_pipe.addItem("<none>")
-        self.choose_pipe.addItems(list(self._settings.roi_pipelines.keys()))
+        # self.choose_pipe.addItems(list(self._settings.roi_pipelines.keys()))
         self.choose_pipe.textActivated.connect(self.choose_pipeline)
         self.choose_pipe.setToolTip("Execute chosen pipeline")
         self.save_profile_btn = QPushButton("Save profile")
@@ -91,7 +91,7 @@ class Options(QWidget):
         self.save_profile_btn.clicked.connect(self.save_profile)
         self.choose_profile = SearchComboBox()
         self.choose_profile.addItem("<none>")
-        self.choose_profile.addItems(list(self._settings.roi_profiles.keys()))
+        # self.choose_profile.addItems(list(self._settings.roi_profiles.keys()))
         self.choose_profile.setToolTip("Select profile to restore its settings. Execute if interactive is checked")
         # image state
         self.compare_btn = QPushButton("Compare")
@@ -110,6 +110,8 @@ class Options(QWidget):
         self.algorithm_choose_widget.algorithm_changed.connect(self.interactive_algorithm_execute)
         self._settings.roi_profiles_changed.connect(self._update_profiles)
         self._settings.roi_pipelines_changed.connect(self._update_pipelines)
+        self._update_pipelines()
+        self._update_profiles()
 
         self.label = TextShow()
 
