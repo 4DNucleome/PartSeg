@@ -213,7 +213,7 @@ class MeasurementWidget(QWidget):
         self.update_measurement_list()
 
     def check_if_measurement_can_be_calculated(self, name):
-        if name == "<none>":
+        if name in ("<none>", ""):
             return "<none>"
         profile: MeasurementProfile = self.settings.measurement_profiles.get(name)
         if profile.is_any_mask_measurement() and self.settings.mask is None:
