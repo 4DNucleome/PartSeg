@@ -458,6 +458,7 @@ class CreatePlan(QWidget):
         self.file_mask.value_changed.connect(self.mask_stack_change)
         self.mask_name.textChanged.connect(self.mask_stack_change)
         self.node_type_changed()
+        self.refresh_all_profiles()
 
     def change_root_type(self):
         value: RootType = self.change_root.currentEnum()
@@ -798,9 +799,6 @@ class CreatePlan(QWidget):
         list_widget.addItems(new_values)
         if index != -1:
             list_widget.setCurrentRow(index)
-
-    def showEvent(self, _event):
-        self.refresh_all_profiles()
 
     @contextmanager
     def enable_protect(self):
