@@ -27,7 +27,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from superqt import QEnumComboBox
+from superqt import QEnumComboBox, ensure_main_thread
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -90,6 +90,7 @@ class Properties(QWidget):
 
         self._settings.roi_profiles_changed.connect(self.update_profile_list)
         self._settings.roi_pipelines_changed.connect(self.update_profile_list)
+        self._settings.connect_("multiple_files_widget", self._update_measurement_chk)
 
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
@@ -216,8 +217,11 @@ class Properties(QWidget):
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate and self.isVisible():
             self.update_spacing()
-            self.multiple_files_chk.setChecked(self._settings.get("multiple_files_widget", False))
         return super().event(event)
+
+    @ensure_main_thread
+    def _update_measurement_chk(self):
+        self.multiple_files_chk.setChecked(self._settings.get("multiple_files_widget", False))
 
     def delete_profile(self):
         text, dkt = "", {}
