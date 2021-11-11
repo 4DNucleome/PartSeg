@@ -264,7 +264,6 @@ def _check_widget(tab_widget, type_):
 
 class CreatePlan(QWidget):
 
-    plan_created = Signal()
     plan_node_changed = Signal()
 
     def __init__(self, settings: PartSettings):
@@ -781,7 +780,6 @@ class CreatePlan(QWidget):
             plan.set_name(text)
             self.settings.batch_plans[text] = plan
             self.settings.dump()
-            self.plan_created.emit()
 
     @staticmethod
     def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
@@ -1070,6 +1068,7 @@ class CalculateInfo(QWidget):
         self.edit_plan_btn.clicked.connect(self.edit_plan)
         self.export_plans_btn.clicked.connect(self.export_plans)
         self.import_plans_btn.clicked.connect(self.import_plans)
+        self.settings.batch_plans_changed.connect(self.update_plan_list)
 
     def update_plan_list(self):
         new_plan_list = list(sorted(self.settings.batch_plans.keys()))
@@ -1121,7 +1120,6 @@ class CalculateInfo(QWidget):
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():
                     self.settings.batch_plans[final_name] = plans[original_name]
-                self.update_plan_list()
 
     def delete_plan(self):
         if self.calculate_plans.currentItem() is None:
@@ -1131,7 +1129,6 @@ class CalculateInfo(QWidget):
             return
         if text in self.settings.batch_plans:
             del self.settings.batch_plans[text]
-        self.update_plan_list()
         self.plan_view.clear()
 
     def edit_plan(self):
@@ -1165,6 +1162,5 @@ class CalculatePlaner(QSplitter):
         self.info_widget = CalculateInfo(settings)
         self.addWidget(self.info_widget)
         self.create_plan = CreatePlan(settings)
-        self.create_plan.plan_created.connect(self.info_widget.update_plan_list)
         self.info_widget.plan_to_edit_signal.connect(self.create_plan.edit_plan)
         self.addWidget(self.create_plan)
