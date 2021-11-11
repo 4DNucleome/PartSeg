@@ -416,6 +416,7 @@ class MeasurementSettings(QWidget):
         self.profile_list.itemSelectionChanged.connect(self.profile_chosen)
         self.profile_options.itemSelectionChanged.connect(self.create_selection_changed)
         self.profile_options_chosen.itemSelectionChanged.connect(self.create_selection_chosen_changed)
+        self.settings.measurement_profiles_changed.connect(self._refresh_profiles)
 
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Measurement set:"))
@@ -477,9 +478,24 @@ class MeasurementSettings(QWidget):
             lw = MeasurementListWidgetItem(profile.get_starting_leaf())
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
-        self.profile_list.addItems(list(sorted(self.settings.measurement_profiles.keys())))
+        self._refresh_profiles()
+
+    def _refresh_profiles(self):
+        item = self.profile_list.currentItem()
+        items = list(self.settings.measurement_profiles.keys())
+        try:
+            index = items.index(item.text())
+        except (ValueError, AttributeError):
+            index = -1
+
+        self.profile_list.clear()
+        self.profile_list.addItems(items)
+        self.profile_list.setCurrentRow(index)
+
         if self.profile_list.count() == 0:
             self.export_profiles_butt.setDisabled(True)
+        else:
+            self.export_profiles_butt.setEnabled(True)
 
     def remove_element(self):
         elem = self.profile_options_chosen.currentItem()
@@ -496,12 +512,8 @@ class MeasurementSettings(QWidget):
             self.save_butt_with_name.setDisabled(True)
 
     def delete_profile(self):
-        row = self.profile_list.currentRow()
         item = self.profile_list.currentItem()
         del self.settings.measurement_profiles[str(item.text())]
-        self.profile_list.takeItem(row)
-        if self.profile_list.count() == 0:
-            self.delete_profile_butt.setDisabled(True)
 
     def profile_chosen(self):
         self.delete_profile_butt.setEnabled(True)
@@ -672,38 +684,34 @@ class MeasurementSettings(QWidget):
         self.save_butt_with_name.setEnabled(True)
 
     def save_action(self):
-        for i in range(self.profile_list.count()):
-            if self.profile_name.text() == self.profile_list.item(i).text():
-                ret = QMessageBox.warning(
-                    self,
-                    "Profile exist",
-                    "Profile exist\nWould you like to overwrite it?",
-                    QMessageBox.No | QMessageBox.Yes,
-                )
-                if ret == QMessageBox.No:
-                    return
+        if self.profile_name.text() in self.settings.measurement_profiles:
+            ret = QMessageBox.warning(
+                self,
+                "Profile exist",
+                "Profile exist\nWould you like to overwrite it?",
+                QMessageBox.No | QMessageBox.Yes,
+            )
+            if ret == QMessageBox.No:
+                return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
             element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
             selected_values.append(MeasurementEntry(element.text(), element.stat))
         stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
-        if stat_prof.name not in self.settings.measurement_profiles:
-            self.profile_list.addItem(stat_prof.name)
         self.settings.measurement_profiles[stat_prof.name] = stat_prof
         self.settings.dump()
         self.export_profiles_butt.setEnabled(True)
 
     def named_save_action(self):
-        for i in range(self.profile_list.count()):
-            if self.profile_name.text() == self.profile_list.item(i).text():
-                ret = QMessageBox.warning(
-                    self,
-                    "Profile exist",
-                    "Profile exist\nWould you like to overwrite it?",
-                    QMessageBox.No | QMessageBox.Yes,
-                )
-                if ret == QMessageBox.No:
-                    return
+        if self.profile_name.text() in self.settings.measurement_profiles:
+            ret = QMessageBox.warning(
+                self,
+                "Profile exist",
+                "Profile exist\nWould you like to overwrite it?",
+                QMessageBox.No | QMessageBox.Yes,
+            )
+            if ret == QMessageBox.No:
+                return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
             txt = str(self.profile_options_chosen.item(i).text())
@@ -715,8 +723,6 @@ class MeasurementSettings(QWidget):
                 element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
                 selected_values.append(MeasurementEntry(val_dialog.result[element.text()], element.stat))
             stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
-            if stat_prof.name not in self.settings.measurement_profiles:
-                self.profile_list.addItem(stat_prof.name)
             self.settings.measurement_profiles[stat_prof.name] = stat_prof
             self.export_profiles_butt.setEnabled(True)
 
@@ -786,8 +792,6 @@ class MeasurementSettings(QWidget):
                 return
             for original_name, final_name in imp.get_import_list():
                 measurement_dict[final_name] = stat[original_name]
-            self.profile_list.clear()
-            self.profile_list.addItems(list(sorted(measurement_dict.keys())))
             self.settings.dump()
 
 
