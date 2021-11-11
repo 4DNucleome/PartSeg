@@ -44,14 +44,14 @@ class PartSettings(BaseSettings):
         super().__init__(json_path, profile_name)
         self._mask = None
         self.compare_segmentation = None
-        self.segmentation_pipelines_dict = ProfileDict()
-        self.segmentation_profiles_dict = ProfileDict()
-        self.batch_plans_dict = ProfileDict()
-        self.measurement_profiles_dict = ProfileDict()
-        self.segmentation_profiles_dict.connect("", self.roi_profiles_changed.emit)
-        self.segmentation_pipelines_dict.connect("", self.roi_pipelines_changed.emit)
-        self.measurement_profiles_dict.connect("", self.measurement_profiles_changed.emit)
-        self.batch_plans_dict.connect("", self.batch_plans_changed.emit)
+        self._segmentation_pipelines_dict = ProfileDict()
+        self._segmentation_profiles_dict = ProfileDict()
+        self._batch_plans_dict = ProfileDict()
+        self._measurement_profiles_dict = ProfileDict()
+        self._segmentation_profiles_dict.connect("", self.roi_profiles_changed.emit)
+        self._segmentation_pipelines_dict.connect("", self.roi_pipelines_changed.emit)
+        self._measurement_profiles_dict.connect("", self.measurement_profiles_changed.emit)
+        self._batch_plans_dict.connect("", self.batch_plans_changed.emit)
 
     def fix_history(self, algorithm_name, algorithm_values):
         """
@@ -130,10 +130,10 @@ class PartSettings(BaseSettings):
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return super().get_save_list() + [
-            SaveSettingsDescription("segmentation_pipeline_save.json", self.segmentation_pipelines_dict),
-            SaveSettingsDescription("segmentation_profiles_save.json", self.segmentation_profiles_dict),
-            SaveSettingsDescription("statistic_profiles_save.json", self.measurement_profiles_dict),
-            SaveSettingsDescription("batch_plans_save.json", self.batch_plans_dict),
+            SaveSettingsDescription("segmentation_pipeline_save.json", self._segmentation_pipelines_dict),
+            SaveSettingsDescription("segmentation_profiles_save.json", self._segmentation_profiles_dict),
+            SaveSettingsDescription("statistic_profiles_save.json", self._measurement_profiles_dict),
+            SaveSettingsDescription("batch_plans_save.json", self._batch_plans_dict),
         ]
 
     @property
@@ -143,7 +143,7 @@ class PartSettings(BaseSettings):
 
     @property
     def roi_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
-        return self.segmentation_pipelines_dict.get(self._current_roi_dict, EventedDict())
+        return self._segmentation_pipelines_dict.get(self._current_roi_dict, EventedDict())
 
     @property
     def segmentation_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
@@ -152,12 +152,12 @@ class PartSettings(BaseSettings):
 
     @property
     def roi_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
-        return self.segmentation_profiles_dict.get(self._current_roi_dict, EventedDict())
+        return self._segmentation_profiles_dict.get(self._current_roi_dict, EventedDict())
 
     @property
     def batch_plans(self) -> typing.Dict[str, CalculationPlan]:
-        return self.batch_plans_dict.get(self._current_roi_dict, EventedDict())
+        return self._batch_plans_dict.get(self._current_roi_dict, EventedDict())
 
     @property
     def measurement_profiles(self) -> typing.Dict[str, MeasurementProfile]:
-        return self.measurement_profiles_dict.get(self._current_roi_dict, EventedDict())
+        return self._measurement_profiles_dict.get(self._current_roi_dict, EventedDict())
