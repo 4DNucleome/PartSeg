@@ -232,7 +232,7 @@ class FileChoose(QWidget):
         self.run_button = QPushButton("Process")
         self.run_button.setDisabled(True)
         self.calculation_choose = SearchComboBox()
-        self.calculation_choose.addItem("<no workflow>")
+        self.calculation_choose.addItem("<no calculation>")
         self.calculation_choose.currentIndexChanged[str].connect(self.change_situation)
         self.result_file = QLineEdit(self)
         self.result_file.setAlignment(Qt.AlignRight)
@@ -242,6 +242,7 @@ class FileChoose(QWidget):
 
         self.run_button.clicked.connect(self.prepare_calculation)
         self.files_widget.file_list_changed.connect(self.change_situation)
+        self.settings.batch_plans_changed.connect(self._refresh_batch_list)
 
         layout = QVBoxLayout()
         layout.addWidget(self.files_widget)
@@ -255,6 +256,8 @@ class FileChoose(QWidget):
         layout.addLayout(calc_layout)
         layout.addWidget(self.progress)
         self.setLayout(layout)
+
+        self._refresh_batch_list()
 
     def prepare_calculation(self):
         plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
@@ -271,7 +274,7 @@ class FileChoose(QWidget):
                 else:
                     raise e
 
-    def showEvent(self, _):
+    def _refresh_batch_list(self):
         current_calc = str(self.calculation_choose.currentText())
         new_list = ["<no calculation>"] + list(sorted(self.settings.batch_plans.keys()))
         try:
