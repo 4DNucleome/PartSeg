@@ -2,7 +2,8 @@ import copy
 import importlib
 import itertools
 import typing
-from collections import MutableMapping, defaultdict
+from collections import defaultdict
+from collections.abc import MutableMapping
 
 import numpy as np
 from napari.utils import Colormap

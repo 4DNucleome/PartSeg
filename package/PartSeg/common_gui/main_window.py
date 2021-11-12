@@ -1,6 +1,7 @@
 import dataclasses
 import os
-from typing import List, Optional, Type
+from pathlib import Path
+from typing import List, Optional, Type, Union
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
@@ -113,7 +114,7 @@ class BaseMainWindow(QMainWindow):
 
     def __init__(
         self,
-        config_folder: Optional[str] = None,
+        config_folder: Union[str, Path, None] = None,
         title="PartSeg",
         settings: Optional[BaseSettings] = None,
         load_dict: Optional[Register] = None,
