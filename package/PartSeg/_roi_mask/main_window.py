@@ -473,21 +473,23 @@ class ChosenComponents(QWidget):
 
 class AlgorithmOptions(QWidget):
     def __init__(self, settings: StackSettings, image_view: StackImageView):
-        control_view = image_view.get_control_view()
         super().__init__()
         self.settings = settings
+        self.view_name = image_view.name
         self.show_result = QEnumComboBox(enum_class=LabelEnum)  # QCheckBox("Show result")
-        self.show_result.setCurrentEnum(control_view.show_label)
+        self.show_result.setCurrentEnum(
+            settings.get_from_profile(f"{image_view.name}.image_state.show_label", LabelEnum.Show_results)
+        )
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
         self.opacity.setSingleStep(0.1)
-        self.opacity.setValue(control_view.opacity)
+        self.opacity.setValue(settings.get_from_profile(f"{image_view.name}.image_state.opacity", 1.0))
         self.only_borders = QCheckBox("Only borders")
-        self.only_borders.setChecked(control_view.only_borders)
+        self.only_borders.setChecked(settings.get_from_profile(f"{image_view.name}.image_state.only_border", True))
         self.borders_thick = QSpinBox()
         self.borders_thick.setRange(1, 11)
         self.borders_thick.setSingleStep(2)
-        self.borders_thick.setValue(control_view.borders_thick)
+        self.borders_thick.setValue(settings.get_from_profile(f"{image_view.name}.image_state.border_thick", 1))
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(self.border_value_check)
         self.execute_in_background_btn = QPushButton("Execute in background")
@@ -520,7 +522,7 @@ class AlgorithmOptions(QWidget):
         )
         self.show_parameters.clicked.connect(self.show_parameters_widget.show)
         self.choose_components = ChosenComponents()
-        self.choose_components.check_change_signal.connect(control_view.components_change)
+        self.choose_components.check_change_signal.connect(image_view.refresh_selected)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
         self.choose_components.mouse_enter.connect(image_view.component_mark)
         # WARNING works only with one channels algorithms
@@ -584,16 +586,28 @@ class AlgorithmOptions(QWidget):
         self.execute_all_btn.clicked.connect(self.execute_all_action)
         self.save_parameters_btn.clicked.connect(self.save_parameters)
         # noinspection PyUnresolvedReferences
-        self.opacity.valueChanged.connect(control_view.set_opacity)
+        self.opacity.valueChanged.connect(self._set_opacity)
         # noinspection PyUnresolvedReferences
-        self.show_result.currentEnumChanged.connect(control_view.set_show_label)
-        self.only_borders.stateChanged.connect(control_view.set_borders)
+        self.show_result.currentEnumChanged.connect(self._set_show_label)
+        self.only_borders.stateChanged.connect(self._set_border_mode)
         # noinspection PyUnresolvedReferences
-        self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
+        self.borders_thick.valueChanged.connect(self._set_border_thick)
         image_view.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
+
+    def _set_border_mode(self, value: bool):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.only_border", value)
+
+    def _set_border_thick(self, value: int):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.border_thick", value)
+
+    def _set_opacity(self, value: float):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.opacity", value)
+
+    def _set_show_label(self, value: LabelEnum):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.show_label", value)
 
     @Slot(int)
     def set_keep_chosen_components(self, val):

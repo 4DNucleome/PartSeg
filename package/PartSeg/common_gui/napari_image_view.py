@@ -15,7 +15,7 @@ from napari.layers.labels import Labels
 from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QObject, QPoint, Qt, Signal
+from qtpy.QtCore import QEvent, QPoint, Qt, Signal
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QToolTip, QVBoxLayout, QWidget
 from superqt import ensure_main_thread
@@ -28,7 +28,7 @@ from PartSegCore.image_operations import NoiseFilterType, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
-from ..common_backend.base_settings import BaseSettings, ViewSettings
+from ..common_backend.base_settings import BaseSettings
 from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME
 from .channel_control import ChannelProperty, ColorComboBoxGroup
 
@@ -94,68 +94,6 @@ class LabelEnum(Enum):
         return self.name.replace("_", " ")
 
 
-class ImageShowState(QObject):
-    """Object for storing state used when presenting it in :class:`.ImageView`"""
-
-    parameter_changed = Signal()  # signal informing that some of image presenting parameters
-    coloring_changed = Signal()
-    borders_changed = Signal()
-    roi_presented_changed = Signal()
-    # changed and image need to be refreshed
-
-    def __init__(self, settings: ViewSettings, name: str):
-        if len(name) == 0:
-            raise ValueError("Name string should be not empty")
-        super().__init__()
-        self.name = name
-        self.settings = settings
-        self.opacity = settings.get_from_profile(f"{name}.image_state.opacity", 1.0)
-        self.show_label = settings.get_from_profile(f"{name}.image_state.show_label", LabelEnum.Show_results)
-        self.only_borders = settings.get_from_profile(f"{name}.image_state.only_border", True)
-        self.borders_thick = settings.get_from_profile(f"{name}.image_state.border_thick", 1)
-        self.roi_presented = "ROI"
-
-    def set_roi_presented(self, val):
-        self.roi_presented = val
-        self.roi_presented_changed.emit()
-
-    def set_borders(self, val: bool):
-        """decide if draw only component 2D borders, or whole area"""
-        if self.only_borders != val:
-            self.settings.set_in_profile(f"{self.name}.image_state.only_border", val)
-            self.only_borders = val
-            self.parameter_changed.emit()
-            self.borders_changed.emit()
-
-    def set_borders_thick(self, val: int):
-        """If draw only 2D borders of component then set thickness of line used for it"""
-        if val != self.borders_thick:
-            self.settings.set_in_profile(f"{self.name}.image_state.border_thick", val)
-            self.borders_thick = val
-            self.parameter_changed.emit()
-            self.borders_changed.emit()
-
-    def set_opacity(self, val: float):
-        """Set opacity of component labels"""
-        if self.opacity != val:
-            self.settings.set_in_profile(f"{self.name}.image_state.opacity", val)
-            self.opacity = val
-            self.parameter_changed.emit()
-            self.coloring_changed.emit()
-
-    def components_change(self):
-        if self.show_label == LabelEnum.Show_selected:
-            self.parameter_changed.emit()
-            self.coloring_changed.emit()
-
-    def set_show_label(self, val: LabelEnum):
-        if self.show_label != val:
-            self.settings.set_in_profile(f"{self.name}.image_state.show_label", val)
-            self.show_label = val
-            self.parameter_changed.emit()
-            self.coloring_changed.emit()
-
-
 class ImageView(QWidget):
     position_changed = Signal([int, int, int], [int, int])
     component_clicked = Signal(int)
@@ -183,13 +121,13 @@ class ImageView(QWidget):
         self.components = None
         self.worker_list = []
         self.points_layer = None
+        self.roi_presented = "ROI"
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
         self.viewer_widget = NapariQtViewer(self.viewer)
         if hasattr(self.viewer_widget.canvas, "background_color_override"):
             self.viewer_widget.canvas.background_color_override = "black"
-        self.image_state = ImageShowState(settings, name)
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
         self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self._reset_view)
@@ -233,12 +171,13 @@ class ImageView(QWidget):
         settings.points_changed.connect(self.update_points)
         settings.connect_to_profile(RENDERING_MODE_NAME, self.update_rendering)
         settings.labels_changed.connect(self.update_roi_coloring)
+        settings.connect_to_profile(f"{name}.image_state.opacity", self.update_roi_coloring)
+        settings.connect_to_profile(f"{name}.image_state.only_border", self.update_roi_border)
+        settings.connect_to_profile(f"{name}.image_state.border_thick", self.update_roi_border)
+        settings.connect_to_profile(f"{name}.image_state.show_label", self.update_roi_labeling)
         # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
-        self.image_state.coloring_changed.connect(self.update_roi_coloring)
-        self.image_state.roi_presented_changed.connect(self.update_roi_representation)
-        self.image_state.borders_changed.connect(self.update_roi_representation)
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
         self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
         try:
@@ -385,9 +324,6 @@ class ImageView(QWidget):
                 text += f" components: {components}"
         self.text_info_change.emit(text)
 
-    def get_control_view(self) -> ImageShowState:
-        return self.image_state
-
     def mask_opacity(self) -> float:
         """Get mask opacity"""
         return self.settings.get_from_profile("mask_presentation_opacity", 1)
@@ -440,11 +376,16 @@ class ImageView(QWidget):
 
         self.add_roi_layer(image_info)
         image_info.roi.color = self.get_roi_view_parameters(image_info)
-        image_info.roi.opacity = self.image_state.opacity
+        image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
 
     def get_roi_view_parameters(self, image_info: ImageInfo) -> ColorInfo:
         colors = self.settings.label_colors / 255
-        if self.image_state.show_label == LabelEnum.Not_show or image_info.roi_count == 0 or colors.size == 0:
+        if (
+            self.settings.get_from_profile(f"{self.name}.image_state.show_label", LabelEnum.Show_results)
+            == LabelEnum.Not_show
+            or image_info.roi_count == 0
+            or colors.size == 0
+        ):
             return {x: [0, 0, 0, 0] for x in range(image_info.roi_count + 1)}
 
         res = {x: colors[(x - 1) % colors.shape[0]] for x in range(image_info.roi_count + 1)}
@@ -456,7 +397,7 @@ class ImageView(QWidget):
             if image_info.roi is None:
                 continue
             image_info.roi.color = self.get_roi_view_parameters(image_info)
-            image_info.roi.opacity = self.image_state.opacity
+            image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
 
     def remove_all_roi(self):
         if hasattr(self.viewer.layers, "selection"):
@@ -474,6 +415,22 @@ class ImageView(QWidget):
 
         self.viewer.layers.remove_selected()
 
+    def update_roi_border(self) -> None:
+        for image_info in self.image_info.values():
+            if image_info.roi is None:
+                continue
+            roi = image_info.roi_info.alternative.get(self.roi_presented, image_info.roi_info.roi)
+            if self.settings.get_from_profile(f"{self.name}.image_state.only_border", True):
+
+                data = calculate_borders(
+                    roi.transpose(ORDER_DICT[self._current_order]),
+                    self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) // 2,
+                    self.viewer.dims.ndisplay == 2,
+                ).transpose(np.argsort(ORDER_DICT[self._current_order]))
+                image_info.roi.data = data
+            else:
+                image_info.roi.data = roi
+
     @ensure_main_thread
     def update_rendering(self):
         rendering = self.settings.get_from_profile(RENDERING_MODE_NAME)
@@ -490,7 +447,7 @@ class ImageView(QWidget):
     def add_roi_layer(self, image_info: ImageInfo):
         if image_info.roi_info.roi is None:
             return
-        roi = image_info.roi_info.alternative.get(self.image_state.roi_presented, image_info.roi_info.roi)
+        roi = image_info.roi_info.alternative.get(self.roi_presented, image_info.roi_info.roi)
         kwargs = {
             "scale": image_info.image.normalized_scaling(),
             "name": "ROI",
@@ -498,11 +455,11 @@ class ImageView(QWidget):
         }
         if napari_rendering:
             kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
-        if self.image_state.only_borders:
+        if self.settings.get_from_profile(f"{self.name}.image_state.only_border", True):
 
             data = calculate_borders(
                 roi.transpose(ORDER_DICT[self._current_order]),
-                self.image_state.borders_thick // 2,
+                self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) // 2,
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
             image_info.roi = self.viewer.add_labels(data, **kwargs)
@@ -836,7 +793,7 @@ def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tupl
 prepare_layers = thread_worker(_prepare_layers)
 
 
-def _print_dict(dkt: MutableMapping, indent=""):
+def _print_dict(dkt: MutableMapping, indent="") -> str:
     if not isinstance(dkt, MutableMapping):
         logging.error(f"{type(dkt)} instead of dict passed to _print_dict")
         return indent + str(dkt)

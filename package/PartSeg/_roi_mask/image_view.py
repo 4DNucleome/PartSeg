@@ -4,7 +4,7 @@ from napari.layers import Layer
 from vispy.app import MouseEvent
 
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.napari_image_view import ImageView
+from ..common_gui.napari_image_view import ImageView, LabelEnum
 
 
 class StackImageView(ImageView):
@@ -17,6 +17,13 @@ class StackImageView(ImageView):
         self.viewer_widget.canvas.events.mouse_press.connect(self.component_click)
         self.additional_layers: List[Layer] = []
         # self.image_area.pixmap.click_signal.connect(self.component_click)
+
+    def refresh_selected(self):
+        if (
+            self.settings.get_from_profile(f"{self.name}.image_state.show_label", LabelEnum.Show_results)
+            == LabelEnum.Show_selected
+        ):
+            self.update_roi_labeling()
 
     def component_unmark(self, _num):
         if hasattr(self.viewer.layers, "selection"):
