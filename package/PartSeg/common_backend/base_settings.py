@@ -9,7 +9,19 @@ from argparse import Namespace
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, MutableMapping, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    MutableMapping,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import napari.utils.theme
 import numpy as np
@@ -390,10 +402,10 @@ class ViewSettings(ImageSettings):
         cm = self.chosen_colormap
         if default is None:
             default = cm[num % len(cm)]
-        resp = self.get_from_profile(f"{view}.cmap{num}", default)
+        resp = self.get_from_profile(f"{view}.cmap.num{num}", default)
         if resp not in self.colormap_dict:
             resp = cm[num % len(cm)]
-            self.set_in_profile(f"{view}.cmap{num}", resp)
+            self.set_in_profile(f"{view}.cmap.num{num}", resp)
         return resp
 
     def set_channel_info(self, view: str, num, value: str):  # pragma: no cover
@@ -405,7 +417,10 @@ class ViewSettings(ImageSettings):
         self.set_channel_colormap_name(view, num, value)
 
     def set_channel_colormap_name(self, view: str, num, value: str):
-        self.set_in_profile(f"{view}.cmap{num}", value)
+        self.set_in_profile(f"{view}.cmap.num{num}", value)
+
+    def connect_channel_colormap_name(self, view: str, fun: Callable):
+        self.connect_to_profile(f"{view}.cmap", fun)
 
     @property
     def available_colormaps(self):

@@ -446,6 +446,12 @@ class ColorComboBoxGroup(QWidget):
         if channel_property is not None:
             channel_property.register_widget(self)
             self.change_channel.connect(channel_property.change_current)
+        settings.connect_channel_colormap_name(name, self.update_colors)
+
+    def update_colors(self):
+        for i in range(self.layout().count()):
+            el: ColorComboBox = self.layout().itemAt(i).widget()
+            el.setCurrentText(self.settings.get_channel_colormap_name(self.name, i))
 
     def update_color_list(self, colors: typing.Optional[typing.List[str]] = None):
         """update list"""
