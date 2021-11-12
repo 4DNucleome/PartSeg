@@ -194,7 +194,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             res = [name]
             iterator = iter(self._data_dict.keys())
             with suppress(StopIteration):
-                next(iterator)
+                next(iterator)  # skipcq: PTC-W0063`
         else:
             res = []
             iterator = iter(self._data_dict.keys())
@@ -219,7 +219,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             res = [[name] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
             with suppress(StopIteration):
-                next(iterator)
+                next(iterator)  # skipcq: PTC-W0063`
         else:
             res = [[] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
