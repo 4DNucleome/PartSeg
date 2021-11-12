@@ -21,12 +21,12 @@ class ResultImageView(ImageView):
         super().__init__(settings, channel_property, name)
         self._channel_control_top = True
         self.only_border = QCheckBox("")
-        self.only_border.setChecked(settings.get_from_profile(f"{name}.image_state.only_border", False))
+        self._set_border_from_settings()
         self.only_border.stateChanged.connect(self._set_border)
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
-        self.opacity.setValue(settings.get_from_profile(f"{name}.image_state.opacity", 1))
         self.opacity.setSingleStep(0.1)
+        self._set_opacity_from_settings()
         self.opacity.valueChanged.connect(self._set_opacity)
         self.opacity.setMinimumWidth(500)
         self.channel_control_index = self.btn_layout.indexOf(self.channel_control)
@@ -49,11 +49,20 @@ class ResultImageView(ImageView):
         self.only_border.setVisible(False)
         self.roi_alternative_select.setVisible(False)
 
+        self.settings.connect_to_profile(f"{self.name}.image_state.only_border", self._set_border_from_settings)
+        self.settings.connect_to_profile(f"{self.name}.image_state.opacity", self._set_opacity_from_settings)
+
     def _set_border(self, value: bool):
         self.settings.set_in_profile(f"{self.name}.image_state.only_border", value)
 
     def _set_opacity(self, value: float):
         self.settings.set_in_profile(f"{self.name}.image_state.opacity", value)
+
+    def _set_border_from_settings(self):
+        self.only_border.setChecked(self.settings.get_from_profile(f"{self.name}.image_state.only_border", False))
+
+    def _set_opacity_from_settings(self):
+        self.opacity.setValue(self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1))
 
     def _set_roi_representation(self, name: str):
         self.roi_presented = name

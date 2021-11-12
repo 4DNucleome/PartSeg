@@ -478,19 +478,17 @@ class AlgorithmOptions(QWidget):
         self.settings = settings
         self.view_name = image_view.name
         self.show_result = QEnumComboBox(enum_class=LabelEnum)  # QCheckBox("Show result")
-        self.show_result.setCurrentEnum(
-            settings.get_from_profile(f"{image_view.name}.image_state.show_label", LabelEnum.Show_results)
-        )
+        self._set_show_label_from_settings()
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
         self.opacity.setSingleStep(0.1)
-        self.opacity.setValue(settings.get_from_profile(f"{image_view.name}.image_state.opacity", 1.0))
+        self._set_opacity_from_settings()
         self.only_borders = QCheckBox("Only borders")
-        self.only_borders.setChecked(settings.get_from_profile(f"{image_view.name}.image_state.only_border", True))
+        self._set_border_mode_from_settings()
         self.borders_thick = QSpinBox()
         self.borders_thick.setRange(1, 11)
         self.borders_thick.setSingleStep(2)
-        self.borders_thick.setValue(settings.get_from_profile(f"{image_view.name}.image_state.border_thick", 1))
+        self._set_border_thick_from_settings()
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(self.border_value_check)
         self.execute_in_background_btn = QPushButton("Execute in background")
@@ -499,7 +497,7 @@ class AlgorithmOptions(QWidget):
         self.execute_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.execute_all_btn = QPushButton("Execute all")
         self.execute_all_btn.setToolTip(
-            "Execute in batch mode segmentation with current parameter. " "File list need to be specified in image tab."
+            "Execute in batch mode segmentation with current parameter. File list need to be specified in image tab."
         )
         self.execute_all_btn.setDisabled(True)
         self.save_parameters_btn = QPushButton("Save parameters")
@@ -512,7 +510,7 @@ class AlgorithmOptions(QWidget):
         # self.stack_layout = QStackedLayout()
         self.keep_chosen_components_chk = QCheckBox("Save selected components")
         self.keep_chosen_components_chk.setToolTip(
-            "Save chosen components when loading segmentation form file\n" "or from multiple file widget."
+            "Save chosen components when loading segmentation form file\n or from multiple file widget."
         )
         self.keep_chosen_components_chk.stateChanged.connect(self.set_keep_chosen_components)
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
@@ -597,6 +595,10 @@ class AlgorithmOptions(QWidget):
         settings.chosen_components_widget = self.choose_components
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
+        settings.connect_to_profile(f"{self.view_name}.image_state.only_border", self._set_border_mode_from_settings)
+        settings.connect_to_profile(f"{self.view_name}.image_state.border_thick", self._set_border_thick_from_settings)
+        settings.connect_to_profile(f"{self.view_name}.image_state.opacity", self._set_opacity_from_settings)
+        settings.connect_to_profile(f"{self.view_name}.image_state.show_label", self._set_show_label_from_settings)
 
     def _set_border_mode(self, value: bool):
         self.settings.set_in_profile(f"{self.view_name}.image_state.only_border", value)
@@ -609,6 +611,20 @@ class AlgorithmOptions(QWidget):
 
     def _set_show_label(self, value: LabelEnum):
         self.settings.set_in_profile(f"{self.view_name}.image_state.show_label", value)
+
+    def _set_border_mode_from_settings(self):
+        self.only_borders.setChecked(self.settings.get_from_profile(f"{self.view_name}.image_state.only_border", True))
+
+    def _set_border_thick_from_settings(self):
+        self.borders_thick.setValue(self.settings.get_from_profile(f"{self.view_name}.image_state.border_thick", 1))
+
+    def _set_opacity_from_settings(self):
+        self.opacity.setValue(self.settings.get_from_profile(f"{self.view_name}.image_state.opacity", 1.0))
+
+    def _set_show_label_from_settings(self):
+        self.show_result.setCurrentEnum(
+            self.settings.get_from_profile(f"{self.view_name}.image_state.show_label", LabelEnum.Show_results)
+        )
 
     @Slot(int)
     def set_keep_chosen_components(self, val):
