@@ -188,6 +188,8 @@ class TestProfileDict:
 
         dkt.set("test.a", 1)
         assert receiver.empty.call_count == 1
+        dkt.set("test.a", 1)
+        assert receiver.empty.call_count == 1
         receiver.b.assert_not_called()
         dkt.set("test2.a", 1)
         assert receiver.empty.call_count == 2
@@ -197,6 +199,8 @@ class TestProfileDict:
         assert receiver.b.call_count == 1
         dkt.set("test.d.c", 1)
         receiver.dc.assert_called_once()
+        dkt.set("test.a", 2)
+        assert receiver.empty.call_count == 5
 
 
 def test_profile_hook_colormap_load(bundle_test_dir):

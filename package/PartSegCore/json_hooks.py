@@ -4,6 +4,7 @@ import itertools
 import typing
 from collections import defaultdict
 from collections.abc import MutableMapping
+from contextlib import suppress
 
 import numpy as np
 from napari.utils import Colormap
@@ -44,6 +45,10 @@ class EventedDict(MutableMapping):
         if k in self._dict and isinstance(self._dict[k], EventedDict):
             self._dict[k].setted.disconnect(self._propagate_setitem)
             self._dict[k].deleted.disconnect(self._propagate_del)
+        old_value = self._dict[k] if k in self._dict else None
+        with suppress(ValueError):
+            if old_value == v:
+                return
         self._dict[k] = v
         self.setted.emit(k)
 
