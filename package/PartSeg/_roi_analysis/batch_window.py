@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import typing
+from contextlib import suppress
 from io import BytesIO
 from pathlib import Path
 from pickle import PicklingError  # nosec
@@ -326,11 +327,9 @@ class BatchWindow(QTabWidget):
         self.addTab(self.calculate_planer, "Prepare workflow")
         self.addTab(self.file_choose, "Input files")
         self.working = False
-        try:
+        with suppress(KeyError):
             geometry = self.settings.get_from_profile("batch_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-        except KeyError:
-            pass
 
     def focusInEvent(self, event):
         self.calculate_planer.showEvent(event)

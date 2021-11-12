@@ -3,6 +3,7 @@ import os
 import sys
 import tarfile
 import typing
+from contextlib import suppress
 from copy import copy
 from functools import partial
 from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, TextIOBase
@@ -95,7 +96,7 @@ def load_project(
         else:
             alternative = {}
         history = []
-        try:
+        with suppress(KeyError):
             history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
             history_json = load_metadata(history_buff)
             for el in history_json:
@@ -113,8 +114,6 @@ def load_project(
                     )
                 )
 
-        except KeyError:
-            pass
     finally:
         if isinstance(file, (str, Path)):
             tar_file.close()

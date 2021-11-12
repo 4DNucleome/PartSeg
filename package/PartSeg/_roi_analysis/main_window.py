@@ -1,4 +1,5 @@
 import os
+from contextlib import suppress
 from typing import Type
 
 import numpy as np
@@ -614,11 +615,9 @@ class MainWindow(BaseMainWindow):
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
-        try:
+        with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-        except KeyError:
-            pass
 
     def toggle_left_panel(self):
         self.options_panel.hide_left_panel(not self.settings.get_from_profile("hide_left_panel"))

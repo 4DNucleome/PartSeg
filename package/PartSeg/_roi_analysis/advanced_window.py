@@ -1,5 +1,6 @@
 import json
 import os
+from contextlib import suppress
 from copy import deepcopy
 from typing import Optional, Tuple, Union
 
@@ -631,7 +632,7 @@ class MeasurementSettings(QWidget):
             node = node.replace_(area=area)
         if node.per_component is None:
             node = node.replace_(per_component=component)
-        try:
+        with suppress(KeyError):
             arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
             if len(arguments) > 0 and len(node.dict) == 0:
                 dial = FormDialog(arguments, settings=self.settings)
@@ -639,8 +640,6 @@ class MeasurementSettings(QWidget):
                     node = node._replace(dict=dial.get_values())
                 else:
                     return
-        except KeyError:
-            pass
         return node
 
     def choose_option(self):

@@ -2,6 +2,7 @@ import re
 import typing
 import warnings
 from collections.abc import Iterable
+from contextlib import suppress
 from itertools import zip_longest
 
 import numpy as np
@@ -146,10 +147,8 @@ class Image:
             self.ranges = ranges
         if mask is not None:
             data_shape = list(data.shape)
-            try:
+            with suppress(ValueError):
                 data_shape.pop(axes_order.index("C"))
-            except ValueError:  # pragma: no cover
-                pass
             mask = self._fit_array_to_image(data_shape, mask)
             mask = np.take(self.reorder_axes(mask, axes_order.replace("C", "")), 0, self.channel_pos)
             self._mask_array = self.fit_mask_to_image(mask)

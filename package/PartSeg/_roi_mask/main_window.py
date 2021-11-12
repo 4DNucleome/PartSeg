@@ -1,4 +1,5 @@
 import os
+from contextlib import suppress
 from functools import partial
 from typing import Type
 
@@ -930,11 +931,9 @@ class MainWindow(BaseMainWindow):
             self.settings.image = im
         elif initial_image is not False:
             self.settings.image = initial_image
-        try:
+        with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-        except KeyError:
-            pass
 
     def closeEvent(self, event: QCloseEvent):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))

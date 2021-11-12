@@ -1,5 +1,6 @@
 import os
 import typing
+from contextlib import suppress
 from pathlib import Path
 
 from qtpy.QtWidgets import QDialog, QFileDialog, QGridLayout, QPushButton, QStackedWidget
@@ -92,26 +93,20 @@ class CustomSaveDialog(LoadRegisterFileDialog):
     def change_parameters(self, text):
         if not hasattr(self, "stack_widget"):
             return
-        try:
+        with suppress(ValueError):
             self.stack_widget.setCurrentIndex(self.names.index(text))
             if not self.io_register[text].get_fields():
                 self.stack_widget.hide()
             else:
                 self.stack_widget.show()
-        except ValueError:
-            pass
 
     def selectNameFilter(self, filter_name: str):
-        try:
+        with suppress(IndexError):
             self.change_parameters(filter_name)
-        except IndexError:
-            pass
         super().selectNameFilter(filter_name)
-        try:
+        with suppress(KeyError):
             ext = self.io_register[filter_name].get_default_extension()
             self.setDefaultSuffix(ext)
-        except KeyError:
-            pass
 
     def change_filter(self, current_filter):
         if current_filter not in self.io_register:

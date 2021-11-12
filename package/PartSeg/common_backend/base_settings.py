@@ -6,6 +6,7 @@ import re
 import sys
 import warnings
 from argparse import Namespace
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, MutableMapping, NamedTuple, Optional, Sequence, Tuple, Union
@@ -372,10 +373,8 @@ class ViewSettings(ImageSettings):
         if visibility:
             colormaps.add(name)
         else:
-            try:
+            with suppress(KeyError):
                 colormaps.remove(name)
-            except KeyError:
-                pass
         # TODO update sorting rule
         self.chosen_colormap = list(sorted(colormaps, key=self.colormap_dict.get_position))
 

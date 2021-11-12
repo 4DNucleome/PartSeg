@@ -88,10 +88,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
         self._widget = self._get_field()
         self.change_fun = self.get_change_signal(self._widget)
         self._getter, self._setter = self.get_getter_and_setter_function(self._widget)
-        try:
+        with suppress(TypeError, ValueError):
             self._setter(self._widget, self.default_value)
-        except (TypeError, ValueError):
-            pass
 
     def get_value(self):
         return self._getter(self._widget)
@@ -103,10 +101,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
 
     def set_value(self, val):
         """set value of widget"""
-        try:
+        with suppress(TypeError, ValueError):
             return self._setter(self._widget, val)
-        except (TypeError, ValueError):
-            pass
 
     def get_field(self) -> QWidget:
         """

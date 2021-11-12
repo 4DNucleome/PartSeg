@@ -1,5 +1,6 @@
 import itertools
 import logging
+from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
@@ -241,10 +242,8 @@ class ImageView(QWidget):
             for i, val in enumerate(dkt["point"]):
                 self.viewer.dims.set_point(i, val)
         if "camera" in dkt:
-            try:
+            with suppress(KeyError):
                 self.viewer_widget.view.camera.set_state(dkt["camera"])
-            except KeyError:
-                pass
 
     def change_mask_visibility(self):
         for image_info in self.image_info.values():

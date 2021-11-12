@@ -4,6 +4,7 @@ In this moment controlling colormaps tabs and developer PartSegCore
 """
 import importlib
 import sys
+from contextlib import suppress
 from functools import partial
 from typing import List
 
@@ -212,11 +213,9 @@ class AdvancedWindow(QTabWidget):
         if state_store.develop:
             self.addTab(self.develop, "Develop")
         if self.window() == self:
-            try:
+            with suppress(KeyError):
                 geometry = self.settings.get_from_profile("advanced_window_geometry")
                 self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-            except KeyError:
-                pass
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """

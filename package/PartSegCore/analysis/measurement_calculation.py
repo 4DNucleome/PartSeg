@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from contextlib import suppress
 from enum import Enum
 from functools import reduce
 from math import pi
@@ -192,10 +193,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             name = self._data_dict[FILE_NAME_STR]
             res = [name]
             iterator = iter(self._data_dict.keys())
-            try:
+            with suppress(StopIteration):
                 next(iterator)
-            except StopIteration:
-                pass
         else:
             res = []
             iterator = iter(self._data_dict.keys())
@@ -219,10 +218,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             name = self._data_dict[FILE_NAME_STR]
             res = [[name] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
-            try:
+            with suppress(StopIteration):
                 next(iterator)
-            except StopIteration:
-                pass
         else:
             res = [[] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())

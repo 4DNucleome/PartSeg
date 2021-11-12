@@ -1,4 +1,5 @@
 import collections
+from contextlib import suppress
 
 import packaging.version
 import tifffile.tifffile
@@ -43,10 +44,8 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
                     return value
 
                 for t in (int, float, asbool):
-                    try:
+                    with suppress(TypeError, ValueError):
                         return t(value)
-                    except (TypeError, ValueError):
-                        pass
                 return value
 
             def etree2dict(t):

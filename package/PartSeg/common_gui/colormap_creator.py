@@ -1,4 +1,5 @@
 import bisect
+from contextlib import suppress
 from functools import partial
 from math import ceil
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -564,8 +565,6 @@ class PColormapList(ColormapList):
         if visible:
             colormaps.add(name)
         else:
-            try:
+            with suppress(KeyError):
                 colormaps.remove(name)
-            except KeyError:
-                pass
         self.settings.chosen_colormap = list(sorted(colormaps))
