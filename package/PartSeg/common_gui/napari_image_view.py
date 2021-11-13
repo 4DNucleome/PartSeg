@@ -164,7 +164,6 @@ class ImageView(QWidget):
         self.viewer.events.status.connect(self.print_info)
 
         settings.mask_changed.connect(self.set_mask)
-        settings.mask_representation_changed.connect(self.update_mask_parameters)
         settings.roi_changed.connect(self.set_roi)
         settings.roi_clean.connect(self.set_roi)
         settings.image_changed.connect(self.set_image)
@@ -177,6 +176,7 @@ class ImageView(QWidget):
         settings.connect_to_profile(f"{name}.image_state.border_thick", self.update_roi_border)
         settings.connect_to_profile(f"{name}.image_state.show_label", self.update_roi_labeling)
         settings.connect_to_profile("mask_presentation_opacity", self.update_mask_parameters)
+        settings.connect_to_profile("mask_presentation_color", self.update_mask_parameters)
         # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 

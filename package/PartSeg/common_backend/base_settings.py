@@ -475,7 +475,6 @@ class BaseSettings(ViewSettings):
 
     mask_changed = Signal()
     points_changed = Signal()
-    mask_representation_changed = Signal()
     request_load_files = Signal(list)
     """:py:class:`~.Signal` mask changed signal"""
     json_encoder_class = ProfileEncoder

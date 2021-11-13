@@ -128,6 +128,11 @@ class TestImageView:
         base_settings.set_in_profile("mask_presentation_opacity", 0.5)
         # view.update_mask_parameters()
         assert view.image_info[str(tmp_path / "test2.tiff")].mask.opacity == 0.5
+        base_settings.set_in_profile("mask_presentation_color", (255, 0, 0))
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].mask.color[1] == (1, 0, 0, 1))
+        base_settings.set_in_profile("mask_presentation_color", (128, 0, 0))
+        assert np.allclose(view.image_info[str(tmp_path / "test2.tiff")].mask.color[1], (128 / 255, 0, 0, 1))
+
         assert not view.image_info[str(tmp_path / "test2.tiff")].mask.visible
         with qtbot.waitSignal(view.mask_chk.stateChanged):
             view.mask_chk.setChecked(True)

@@ -124,12 +124,10 @@ class MaskControl(QWidget):
         color = self.color_picker.currentColor()
         color = (color.red(), color.green(), color.blue())
         self.settings.set_in_profile("mask_presentation_color", color)
-        self.settings.mask_representation_changed_emit()
         self.set_color_preview(color)
 
     def change_opacity(self):
         self.settings.set_in_profile("mask_presentation_opacity", self.opacity_spin.value())
-        self.settings.mask_representation_changed_emit()
 
 
 class Apperance(QWidget):
