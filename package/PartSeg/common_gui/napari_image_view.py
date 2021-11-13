@@ -433,9 +433,9 @@ class ImageView(QWidget):
 
     @ensure_main_thread
     def update_rendering(self):
-        rendering = self.settings.get_from_profile(RENDERING_MODE_NAME)
+        rendering = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
         for image_info in self.image_info.values():
-            if image_info.roi is not None:
+            if image_info.roi is not None and hasattr(image_info.roi, "rendering"):
                 image_info.roi.rendering = rendering
 
     @ensure_main_thread

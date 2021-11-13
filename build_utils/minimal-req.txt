@@ -1,7 +1,6 @@
 
-PartSegCore_compiled_backend==0.13.11
+PartSegCore-compiled-backend==0.13.11
 PartSegData==0.10.0
-PyOpenGL-accelerate==3.1.5
 QtAwesome==1.0.3
 QtPy==1.7.0
 SimpleITK==1.1.0
@@ -11,6 +10,7 @@ defusedxml==0.6.0
 h5py==2.8.0
 imagecodecs==2020.5.30
 imageio==2.5.0
+magicgui==0.3.3
 mahotas==1.4.9
 napari==0.4.8
 numpy==1.18.0
@@ -18,9 +18,10 @@ oiffile==2019.1.1
 openpyxl==2.4.9
 packaging==20.0
 pandas==0.24.0
+psygnal==0.2.0
 requests==2.18.0
 scipy==1.2.0
-sentry_sdk==0.14.3
+sentry-sdk==0.14.3
 six==1.11.0
 superqt==0.2.4
 sympy==1.1.1

@@ -1,12 +1,17 @@
 # pylint: disable=R0201
+import platform
+
 import numpy as np
+import pytest
+import qtpy
 from napari.layers import Image as NapariImage
 from qtpy.QtCore import QPoint
-from qtpy.QtWidgets import QMenu
 
 from PartSeg.common_gui.channel_control import ChannelProperty
-from PartSeg.common_gui.napari_image_view import ORDER_DICT, ImageInfo, ImageView, _print_dict
+from PartSeg.common_gui.napari_image_view import ORDER_DICT, ImageInfo, ImageView, QMenu, _print_dict
 from PartSegImage import Image
+
+pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
 
 
 def test_image_info():
@@ -163,6 +168,7 @@ class TestImageView:
         view.toggle_points_visibility()
         assert not view.points_layer.visible
 
+    @pyside_skip
     def test_dim_menu(self, base_settings, image2, qtbot, monkeypatch):
         called = []
 
