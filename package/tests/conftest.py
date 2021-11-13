@@ -62,21 +62,23 @@ def sigint_after_time():
 
 
 @pytest.fixture
-def image():
+def image(tmp_path):
     data = np.zeros([20, 20, 20, 2], dtype=np.uint8)
     data[10:-1, 1:-1, 1:-1, 0] = 20
     data[1:10, 1:-1, 1:-1, 1] = 20
     data[1:-1, 1:5, 1:-1, 1] = 20
     data[1:-1, -5:-1, 1:-1, 1] = 20
 
-    return Image(data, (10 ** -3, 10 ** -3, 10 ** -3), axes_order="ZYXC")
+    return Image(data, (10 ** -3, 10 ** -3, 10 ** -3), axes_order="ZYXC", file_path=str(tmp_path / "test.tiff"))
 
 
 @pytest.fixture
-def image2(image):
+def image2(image, tmp_path):
     data = np.zeros([20, 20, 20, 1], dtype=np.uint8)
     data[10:-1, 1:-1, 1:-1, 0] = 20
-    return image.merge(Image(data, (10 ** -3, 10 ** -3, 10 ** -3), axes_order="ZYXC"), "C")
+    img = image.merge(Image(data, (10 ** -3, 10 ** -3, 10 ** -3), axes_order="ZYXC"), "C")
+    img.file_path = str(tmp_path / "test2.tiff")
+    return img
 
 
 @pytest.fixture

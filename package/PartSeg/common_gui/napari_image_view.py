@@ -291,7 +291,7 @@ class ImageView(QWidget):
             return [int(x) for x in active_layer.world_to_data(self.viewer.cursor.position)]
         return [int(x) for x in active_layer.coordinates]
 
-    def print_info(self, value):
+    def print_info(self, event=None):
         cords = self._coordinates()
         if cords is None:
             return
@@ -508,7 +508,7 @@ class ImageView(QWidget):
         for image_info in self.image_info.values():
             if image_info.mask is not None:
                 image_info.mask.opacity = opacity
-                image_info.mask.colormap = colormap
+                image_info.mask.color = colormap
 
     def set_image(self, image: Optional[Image] = None):
         self.image_info = {}

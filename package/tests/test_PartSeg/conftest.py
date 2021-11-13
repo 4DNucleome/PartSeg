@@ -8,10 +8,18 @@ from qtpy.QtWidgets import QApplication, QDialog, QMessageBox
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_mask.main_window import ChosenComponents
 from PartSeg._roi_mask.stack_settings import StackSettings
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui import napari_image_view
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
+
+
+@pytest.fixture
+def base_settings(image, tmp_path, measurement_profiles):
+    settings = BaseSettings(tmp_path)
+    settings.image = image
+    return settings
 
 
 @pytest.fixture

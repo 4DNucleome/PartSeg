@@ -1,7 +1,8 @@
 import numpy as np
 from napari.layers import Image as NapariImage
 
-from PartSeg.common_gui.napari_image_view import ImageInfo, _print_dict
+from PartSeg.common_gui.channel_control import ChannelProperty
+from PartSeg.common_gui.napari_image_view import ImageInfo, ImageView, _print_dict
 from PartSegImage import Image
 
 
@@ -24,4 +25,116 @@ def test_print_dict():
     assert lines[2].startswith("  e")
 
 
-# class TestImageView()
+class TestImageView:
+    def test_constructor(self, base_settings, qtbot):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+
+    def test_print_info(self, base_settings, image2, qtbot, monkeypatch):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+        with qtbot.assert_not_emitted(view.text_info_change):
+            view.print_info()
+        base_settings.image = image2
+        monkeypatch.setattr(view, "_coordinates", lambda: (-10, 0.5, 0.5, 0.5))
+        with qtbot.waitSignal(view.text_info_change, check_params_cb=lambda x: x == ""):
+            view.print_info()
+        base_settings.roi = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
+        monkeypatch.setattr(view, "_coordinates", lambda: (0.5, 0.5, 0.5, 0.5))
+        with qtbot.waitSignal(view.text_info_change, check_params_cb=lambda x: "component: " in x):
+            view.print_info()
+
+    def test_synchronize_viewers(self, base_settings, image2, qtbot):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view1 = ImageView(base_settings, channel_property=ch_prop, name="test")
+        view2 = ImageView(base_settings, channel_property=ch_prop, name="test2")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view1)
+        qtbot.addWidget(view2)
+        base_settings.image = image2
+
+        view1.viewer.dims.set_point(1, 5)
+        view2.set_state(view1.get_state())
+        view1.viewer.dims.ndisplay = 3
+        view2.set_state(view1.get_state())
+
+    def test_order_reset(self, base_settings, image2, qtbot):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+        base_settings.image = image2
+
+        view._rotate_dim()
+        assert view.viewer.dims.order == (0, 2, 1, 3)
+        view._reset_view()
+        assert view.viewer.dims.order == (0, 1, 2, 3)
+
+    def test_update_rendering(self, base_settings, image2, qtbot):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+        base_settings.image = image2
+        base_settings.roi = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
+        view.update_rendering()
+
+    def test_roi_rendering(self, base_settings, image2, qtbot, tmp_path):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+        base_settings.image = image2
+        roi = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
+        roi[..., 1, 1] = 0
+        base_settings.roi = roi
+        view.update_roi_border()
+        assert np.any(view.image_info[str(tmp_path / "test2.tiff")].roi.data == 1)
+        view.settings.set_in_profile(f"{view.name}.image_state.only_border", False)
+        view.update_roi_border()
+        assert np.count_nonzero(view.image_info[str(tmp_path / "test2.tiff")].roi.data) == 20 ** 3 - 20
+        base_settings.roi = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].roi.data)
+        view.update_spacing_info()
+        view.remove_all_roi()
+        assert view.image_info[str(tmp_path / "test2.tiff")].roi is None
+
+    def test_has_image(self, base_settings, image, image2, qtbot):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+        base_settings.image = image2
+        assert view.has_image(image2)
+        assert not view.has_image(image)
+        view.update_spacing_info()
+
+    def test_mask_rendering(self, base_settings, image2, qtbot):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+        base_settings.image = image2
+        view.set_mask()
+        base_settings.mask = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
+        base_settings.mask = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
+        view.update_mask_parameters()
+        view.change_mask_visibility()
+        view.update_spacing_info()
+
+    def test_points_rendering(self, base_settings, image2, qtbot, tmp_path):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+        base_settings.image = image2
+        assert view.points_layer is None
+        base_settings.points = [(0, 5, 5, 5)]
+        assert view.points_layer is not None
+        assert view.points_layer.visible
+        view.toggle_points_visibility()
+        assert not view.points_layer.visible
