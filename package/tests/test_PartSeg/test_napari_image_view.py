@@ -1,9 +1,11 @@
 # pylint: disable=R0201
 import numpy as np
 from napari.layers import Image as NapariImage
+from qtpy.QtCore import QPoint
+from qtpy.QtWidgets import QMenu
 
 from PartSeg.common_gui.channel_control import ChannelProperty
-from PartSeg.common_gui.napari_image_view import ImageInfo, ImageView, _print_dict
+from PartSeg.common_gui.napari_image_view import ORDER_DICT, ImageInfo, ImageView, _print_dict
 from PartSegImage import Image
 
 
@@ -124,7 +126,13 @@ class TestImageView:
         qtbot.addWidget(view)
         base_settings.image = image2
         view.set_mask()
-        base_settings.mask = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
+        with qtbot.waitSignal(base_settings.mask_changed):
+            base_settings.mask = np.zeros(image2.get_channel(0).shape, dtype=np.uint8)
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].mask.data == 1)
+        # double add for test if proper refresh mask is working
+        with qtbot.waitSignal(base_settings.mask_changed):
+            base_settings.mask = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].mask.data == 0)
         base_settings.set_in_profile("mask_presentation_opacity", 0.5)
         # view.update_mask_parameters()
         assert view.image_info[str(tmp_path / "test2.tiff")].mask.opacity == 0.5
@@ -154,3 +162,20 @@ class TestImageView:
         assert view.points_layer.visible
         view.toggle_points_visibility()
         assert not view.points_layer.visible
+
+    def test_dim_menu(self, base_settings, image2, qtbot, monkeypatch):
+        called = []
+
+        def check_menu(self, point):
+            assert len(self.actions()) == len(ORDER_DICT)
+            called.append(1)
+
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+        base_settings.image = image2
+
+        monkeypatch.setattr(QMenu, "exec_", check_menu)
+        view._dim_order_menu(QPoint(0, 0))
+        assert called == [1]
