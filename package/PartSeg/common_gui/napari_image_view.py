@@ -176,6 +176,7 @@ class ImageView(QWidget):
         settings.connect_to_profile(f"{name}.image_state.only_border", self.update_roi_border)
         settings.connect_to_profile(f"{name}.image_state.border_thick", self.update_roi_border)
         settings.connect_to_profile(f"{name}.image_state.show_label", self.update_roi_labeling)
+        settings.connect_to_profile("mask_presentation_opacity", self.update_mask_parameters)
         # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 

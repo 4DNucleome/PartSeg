@@ -1,3 +1,4 @@
+# pylint: disable=R0201
 import numpy as np
 from napari.layers import Image as NapariImage
 
@@ -99,7 +100,10 @@ class TestImageView:
         assert np.count_nonzero(view.image_info[str(tmp_path / "test2.tiff")].roi.data) == 20 ** 3 - 20
         base_settings.roi = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
         assert np.all(view.image_info[str(tmp_path / "test2.tiff")].roi.data)
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].roi.scale == (1, 10 ** 6, 10 ** 6, 10 ** 6))
+        image2.set_spacing((10 ** -4,) * 3)
         view.update_spacing_info()
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].roi.scale == (1, 10 ** 5, 10 ** 5, 10 ** 5))
         view.remove_all_roi()
         assert view.image_info[str(tmp_path / "test2.tiff")].roi is None
 
@@ -113,7 +117,7 @@ class TestImageView:
         assert not view.has_image(image)
         view.update_spacing_info()
 
-    def test_mask_rendering(self, base_settings, image2, qtbot):
+    def test_mask_rendering(self, base_settings, image2, qtbot, tmp_path):
         ch_prop = ChannelProperty(base_settings, "test")
         view = ImageView(base_settings, channel_property=ch_prop, name="test")
         qtbot.addWidget(ch_prop)
@@ -121,10 +125,17 @@ class TestImageView:
         base_settings.image = image2
         view.set_mask()
         base_settings.mask = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
-        base_settings.mask = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
-        view.update_mask_parameters()
-        view.change_mask_visibility()
+        base_settings.set_in_profile("mask_presentation_opacity", 0.5)
+        # view.update_mask_parameters()
+        assert view.image_info[str(tmp_path / "test2.tiff")].mask.opacity == 0.5
+        assert not view.image_info[str(tmp_path / "test2.tiff")].mask.visible
+        with qtbot.waitSignal(view.mask_chk.stateChanged):
+            view.mask_chk.setChecked(True)
+        assert view.image_info[str(tmp_path / "test2.tiff")].mask.visible
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10 ** 6, 10 ** 6, 10 ** 6))
+        image2.set_spacing((10 ** -4,) * 3)
         view.update_spacing_info()
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10 ** 5, 10 ** 5, 10 ** 5))
 
     def test_points_rendering(self, base_settings, image2, qtbot, tmp_path):
         ch_prop = ChannelProperty(base_settings, "test")
