@@ -87,7 +87,10 @@ def _inspect_signature(slot: Callable) -> typing.Optional[int]:
     :param slot: callable to be checked
     :return: number of parameters which could be passed to callable, None if unbound
     """
-    signature = inspect.signature(slot)
+    try:
+        signature = inspect.signature(slot)
+    except ValueError:
+        return 0
     count = 0
     for parameter in signature.parameters.values():
         if parameter.kind in [inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]:
