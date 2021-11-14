@@ -2,7 +2,6 @@ import inspect
 import typing
 import weakref
 from abc import ABC, abstractmethod
-from typing import Callable
 
 import numpy as np
 
@@ -40,7 +39,7 @@ class CallbackBase(ABC):
 
 
 class CallbackFun(CallbackBase):
-    def __init__(self, fun: Callable):
+    def __init__(self, fun: typing.Callable):
         self.fun = fun
         self.count = _inspect_signature(fun)
 
@@ -81,7 +80,7 @@ class CallbackMethod(CallbackBase):
             getattr(obj, self.name)(*args[: self.count], **kwarg)
 
 
-def _inspect_signature(slot: Callable) -> typing.Optional[int]:
+def _inspect_signature(slot: typing.Callable) -> typing.Optional[int]:
     """
     count maximal number of positional argument
     :param slot: callable to be checked
@@ -101,7 +100,7 @@ def _inspect_signature(slot: Callable) -> typing.Optional[int]:
     return count
 
 
-def get_callback(callback: Callable) -> CallbackBase:
+def get_callback(callback: typing.Callable) -> CallbackBase:
     if inspect.ismethod(callback):
         return CallbackMethod(callback)
 
