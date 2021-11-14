@@ -122,7 +122,7 @@ class ImageView(QWidget):
         self.components = None
         self.worker_list = []
         self.points_layer = None
-        self.roi_presented = "ROI"
+        self.roi_alternative_selection = "ROI"
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -419,7 +419,7 @@ class ImageView(QWidget):
         for image_info in self.image_info.values():
             if image_info.roi is None:
                 continue
-            roi = image_info.roi_info.alternative.get(self.roi_presented, image_info.roi_info.roi)
+            roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
             if self.settings.get_from_profile(f"{self.name}.image_state.only_border", True):
 
                 data = calculate_borders(
@@ -447,7 +447,7 @@ class ImageView(QWidget):
     def add_roi_layer(self, image_info: ImageInfo):
         if image_info.roi_info.roi is None:
             return
-        roi = image_info.roi_info.alternative.get(self.roi_presented, image_info.roi_info.roi)
+        roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
         kwargs = {
             "scale": image_info.image.normalized_scaling(),
             "name": "ROI",

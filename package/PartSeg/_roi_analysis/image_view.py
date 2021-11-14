@@ -33,7 +33,7 @@ class ResultImageView(ImageView):
         self.label1 = QLabel("Borders:")
         self.label2 = QLabel("Opacity:")
         self.roi_alternative_select = QComboBox()
-        self.roi_alternative_select.currentTextChanged.connect(self._set_roi_representation)
+        self.roi_alternative_select.currentTextChanged.connect(self._set_roi_alternative_version)
         self.stretch = None
 
         self.btn_layout.insertWidget(self.channel_control_index + 1, self.label1)
@@ -64,8 +64,8 @@ class ResultImageView(ImageView):
     def _set_opacity_from_settings(self):
         self.opacity.setValue(self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1))
 
-    def _set_roi_representation(self, name: str):
-        self.roi_presented = name
+    def _set_roi_alternative_version(self, name: str):
+        self.roi_alternative_selection = name
         self.update_roi_border()
 
     def any_roi(self):
