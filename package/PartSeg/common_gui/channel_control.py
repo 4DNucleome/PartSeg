@@ -344,10 +344,10 @@ class ChannelProperty(QWidget):
         widget.parameters_changed(self.current_channel)
 
     def register_widget(self, widget: "ColorComboBoxGroup"):
-        if widget.name in self.widget_dict:
-            raise ValueError(f"name {widget.name} already register")
-        self.widget_dict[widget.name] = widget
-        self.change_current(widget.name, 0)
+        if widget.viewer_name in self.widget_dict:
+            raise ValueError(f"name {widget.viewer_name} already register")
+        self.widget_dict[widget.viewer_name] = widget
+        self.change_current(widget.viewer_name, 0)
 
     def change_current(self, name, channel):
         if name not in self.widget_dict:
@@ -555,7 +555,7 @@ class ColorComboBoxGroup(QWidget):
                 el.deleteLater()
         if num <= self.active_box:
             self.set_active(num - 1)
-        self.change_channel.emit(self.name, self.active_box)
+        self.change_channel.emit(self.viewer_name, self.active_box)
 
     def set_active(self, pos: int):
         self.active_box = pos
@@ -580,7 +580,7 @@ class ColorComboBoxGroup(QWidget):
             if not self.settings.get_from_profile(f"{self.viewer_name}.lock_{i}", False):
                 resp[i] = None
             else:
-                resp[i] = self.settings.get_from_profile(f"{self.naviewer_nameme}.range_{i}", (0, 65000))
+                resp[i] = self.settings.get_from_profile(f"{self.viewer_name}.range_{i}", (0, 65000))
         return resp
 
     def get_gamma(self) -> typing.List[float]:

@@ -86,6 +86,8 @@ def _inspect_signature(slot: typing.Callable) -> typing.Optional[int]:
     :param slot: callable to be checked
     :return: number of parameters which could be passed to callable, None if unbound
     """
+    if hasattr(slot, "__module__") and isinstance(slot.__module__, str) and slot.__module__.startswith("superqt"):
+        return 0
     try:
         signature = inspect.signature(slot)
     except ValueError:
