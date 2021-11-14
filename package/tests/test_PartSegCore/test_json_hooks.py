@@ -179,15 +179,22 @@ class TestProfileDict:
         assert dkt.my_dict == dkt2.my_dict
 
     def test_callback(self):
+        def dummy_call():
+            receiver.dummy()
+
         receiver = MagicMock()
 
         dkt = ProfileDict()
         dkt.connect("", receiver.empty)
+        dkt.connect("", dummy_call)
         dkt.connect("b", receiver.b)
         dkt.connect(["d", "c"], receiver.dc)
 
         dkt.set("test.a", 1)
         assert receiver.empty.call_count == 1
+        assert receiver.dummy.call_count == 1
+        receiver.empty.assert_called_with("test.a")
+        receiver.dummy.assert_called_with()
         dkt.set("test.a", 1)
         assert receiver.empty.call_count == 1
         receiver.b.assert_not_called()

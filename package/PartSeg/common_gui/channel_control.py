@@ -523,8 +523,8 @@ class ColorComboBoxGroup(QWidget):
         self.coloring_update.emit()
         self.change_channel.emit(self.viewer_name, index)
 
-    def active_channel(self, chanel):
-        return self.layout().itemAt(chanel).widget().is_checked()
+    def active_channel(self, channel: int):
+        return self.layout().itemAt(channel).widget().is_checked()
 
     def set_channels(self, num: int):
         """Set number of channels to display"""

@@ -222,6 +222,7 @@ class ProfileDict:
     def _call_callback(self, key_path: typing.Union[typing.Sequence[str], str]):
         if isinstance(key_path, str):
             key_path = key_path.split(".")
+        full_path = ".".join(key_path)
         callback_path = ""
         callback_list = []
         if callback_path in self._callback_dict:
@@ -234,7 +235,7 @@ class ProfileDict:
                 self._callback_dict[callback_path] = li
                 callback_list.extend(li)
         for callback in callback_list:
-            callback()
+            callback(full_path)
 
     def get(self, key_path: typing.Union[list, str], default=None):
         """

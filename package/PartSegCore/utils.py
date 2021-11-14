@@ -1,4 +1,5 @@
 import inspect
+import typing
 import weakref
 from abc import ABC, abstractmethod
 from typing import Callable
@@ -41,12 +42,13 @@ class CallbackBase(ABC):
 class CallbackFun(CallbackBase):
     def __init__(self, fun: Callable):
         self.fun = fun
+        self.count = _inspect_signature(fun)
 
     def is_alive(self):
         return True
 
     def __call__(self, *args, **kwarg):
-        self.fun(*args, **kwarg)
+        self.fun(*args[: self.count], **kwarg)
 
 
 class CallbackMethod(CallbackBase):
@@ -54,6 +56,7 @@ class CallbackMethod(CallbackBase):
         obj, name = self._get_proper_name(method)
         self.ref = weakref.ref(obj)
         self.name = name
+        self.count = _inspect_signature(method)
 
     @staticmethod
     def _get_proper_name(callback):
@@ -75,11 +78,28 @@ class CallbackMethod(CallbackBase):
     def __call__(self, *args, **kwarg):
         obj = self.ref()
         if obj is not None:
-            getattr(obj, self.name)(*args, **kwarg)
+            getattr(obj, self.name)(*args[: self.count], **kwarg)
 
 
-def get_callback(calback: Callable) -> CallbackBase:
-    if inspect.ismethod(calback):
-        return CallbackMethod(calback)
+def _inspect_signature(slot: Callable) -> typing.Optional[int]:
+    """
+    count maximal number of positional argument
+    :param slot: callable to be checked
+    :return: number of parameters which could be passed to callable, None if unbound
+    """
+    signature = inspect.signature(slot)
+    count = 0
+    for parameter in signature.parameters.values():
+        if parameter.kind in [inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]:
+            count += 1
+        if parameter.kind == inspect.Parameter.VAR_POSITIONAL:
+            count = None
+            break
+    return count
 
-    return CallbackFun(calback)
+
+def get_callback(callback: Callable) -> CallbackBase:
+    if inspect.ismethod(callback):
+        return CallbackMethod(callback)
+
+    return CallbackFun(callback)
