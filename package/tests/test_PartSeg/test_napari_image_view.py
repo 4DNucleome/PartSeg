@@ -1,5 +1,4 @@
 # pylint: disable=R0201
-import platform
 
 import numpy as np
 import pytest
@@ -11,7 +10,7 @@ from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.napari_image_view import ORDER_DICT, ImageInfo, ImageView, QMenu, _print_dict
 from PartSegImage import Image
 
-pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem with mocking excec_")
 
 
 def test_image_info():
