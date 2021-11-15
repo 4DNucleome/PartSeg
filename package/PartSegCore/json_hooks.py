@@ -177,7 +177,7 @@ class ProfileDict:
             callback()
 
     def connect(
-        self, key_path: typing.Union[typing.Sequence[str], str], callback: typing.Callable[[], typing.Any]
+        self, key_path: typing.Union[typing.Sequence[str], str], callback: typing.Callable[[], typing.Any], maxargs=None
     ) -> typing.Callable:
         """
         Connect function to receive information when object on path was changed using :py:meth:`.set`
@@ -190,7 +190,7 @@ class ProfileDict:
         if not isinstance(key_path, str):
             key_path = ".".join(key_path)
 
-        self._callback_dict[key_path].append(get_callback(callback))
+        self._callback_dict[key_path].append(get_callback(callback, maxargs))
         return callback
 
     def set(self, key_path: typing.Union[typing.Sequence[str], str], value):

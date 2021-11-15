@@ -2,6 +2,7 @@ import inspect
 import typing
 import weakref
 from abc import ABC, abstractmethod
+from types import MethodType
 
 import numpy as np
 
@@ -39,9 +40,9 @@ class CallbackBase(ABC):
 
 
 class CallbackFun(CallbackBase):
-    def __init__(self, fun: typing.Callable):
+    def __init__(self, fun: typing.Callable, max_args: typing.Optional[int] = None):
         self.fun = fun
-        self.count = _inspect_signature(fun)
+        self.count = _inspect_signature(fun) if max_args is None else max_args
 
     def is_alive(self):
         return True
@@ -51,11 +52,11 @@ class CallbackFun(CallbackBase):
 
 
 class CallbackMethod(CallbackBase):
-    def __init__(self, method):
+    def __init__(self, method, max_args: typing.Optional[int] = None):
         obj, name = self._get_proper_name(method)
         self.ref = weakref.ref(obj)
         self.name = name
-        self.count = _inspect_signature(method)
+        self.count = _inspect_signature(method) if max_args is None else max_args
 
     @staticmethod
     def _get_proper_name(callback):
@@ -102,8 +103,8 @@ def _inspect_signature(slot: typing.Callable) -> typing.Optional[int]:
     return count
 
 
-def get_callback(callback: typing.Callable) -> CallbackBase:
+def get_callback(callback: typing.Union[typing.Callable, MethodType], max_args=None) -> CallbackBase:
     if inspect.ismethod(callback):
-        return CallbackMethod(callback)
+        return CallbackMethod(callback, max_args)
 
-    return CallbackFun(callback)
+    return CallbackFun(callback, max_args)

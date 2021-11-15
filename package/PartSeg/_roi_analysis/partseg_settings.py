@@ -48,10 +48,10 @@ class PartSettings(BaseSettings):
         self._segmentation_profiles_dict = ProfileDict()
         self._batch_plans_dict = ProfileDict()
         self._measurement_profiles_dict = ProfileDict()
-        self._segmentation_profiles_dict.connect("", self.roi_profiles_changed.emit)
-        self._segmentation_pipelines_dict.connect("", self.roi_pipelines_changed.emit)
-        self._measurement_profiles_dict.connect("", self.measurement_profiles_changed.emit)
-        self._batch_plans_dict.connect("", self.batch_plans_changed.emit)
+        self._segmentation_profiles_dict.connect("", self.roi_profiles_changed.emit, maxargs=0)
+        self._segmentation_pipelines_dict.connect("", self.roi_pipelines_changed.emit, maxargs=0)
+        self._measurement_profiles_dict.connect("", self.measurement_profiles_changed.emit, maxargs=0)
+        self._batch_plans_dict.connect("", self.batch_plans_changed.emit, maxargs=0)
 
     def fix_history(self, algorithm_name, algorithm_values):
         """
