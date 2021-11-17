@@ -67,6 +67,7 @@ class MaskCreateNapari(QWidget):
 
     def reset_choices(self, event=None):
         self.roi_select.reset_choices(event)
+        self.mask_select.reset_choices(event)
 
     def create_mask(self):
         if self.roi_select.value is None:
