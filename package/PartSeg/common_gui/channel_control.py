@@ -458,7 +458,7 @@ class ColorComboBoxGroup(QWidget):
     def settings_updated(self, path: str = ""):
         if "." in path:
             potential_name = path.rsplit(".", maxsplit=1)[-1]
-            if "_" not in path:
+            if "_" not in potential_name:
                 return
             name, potential_num = potential_name.rsplit("_", maxsplit=1)
             if potential_num.isnumeric() and name in {"use_filter", "lock", "gamma_value"}:

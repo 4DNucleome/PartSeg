@@ -1,3 +1,5 @@
+# pylint: disable=R0201
+
 import platform
 from unittest.mock import MagicMock
 
