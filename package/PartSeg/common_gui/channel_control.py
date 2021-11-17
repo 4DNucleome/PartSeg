@@ -455,8 +455,17 @@ class ColorComboBoxGroup(QWidget):
         settings.connect_channel_colormap_name(viewer_name, self.update_colors)
         settings.connect_to_profile(self.viewer_name, self.settings_updated)
 
-    def settings_updated(self, path):
-        pass
+    def settings_updated(self, path: str = ""):
+        if "." in path:
+            potential_name = path.rsplit(".", maxsplit=1)[-1]
+            if "_" not in path:
+                return
+            name, potential_num = potential_name.rsplit("_", maxsplit=1)
+            if potential_num.isnumeric() and name in {"use_filter", "lock", "gamma_value"}:
+                self.parameters_changed(int(potential_num))
+        else:
+            for i in range(self.layout().count()):
+                self.parameters_changed(i)
 
     @property
     def name(self):  # pragma: no cover

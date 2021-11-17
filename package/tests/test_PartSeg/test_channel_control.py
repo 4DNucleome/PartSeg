@@ -160,6 +160,20 @@ class TestColorComboBoxGroup:
         box.update_color_list()
         assert box.layout().itemAt(0).widget().count() == len(starting_colors)
 
+    def test_settings_updated(self, qtbot, base_settings, monkeypatch):
+        box = ColorComboBoxGroup(base_settings, "test", height=30)
+        box.set_channels(4)
+        mock = MagicMock()
+        monkeypatch.setattr(box, "parameters_changed", mock)
+        base_settings.set_in_profile("test.lock_0", True)
+        mock.assert_called_once_with(0)
+        dkt = dict(**base_settings.get_from_profile("test"))
+        dkt["lock_0"] = False
+        dkt["lock_1"] = True
+        base_settings.set_in_profile("test", dkt)
+        assert mock.call_count == 5
+        mock.assert_called_with(3)
+
     def test_color_combo_box_group(self, qtbot):
         settings = ViewSettings()
         box = ColorComboBoxGroup(settings, "test", height=30)
