@@ -144,12 +144,11 @@ class ColorComboBox(QComboBox):
         """change list of colormaps to choose"""
         self.colors = colors
         current_color = self.currentText()
+        prev = self.blockSignals(True)
         try:
             index = colors.index(current_color)
-            prev = self.blockSignals(True)
         except ValueError:
             index = -1
-            prev = self.signalsBlocked()
 
         self.clear()
         self.addItems(colors)
@@ -157,6 +156,7 @@ class ColorComboBox(QComboBox):
             self.setCurrentIndex(index)
             self.blockSignals(prev)
         else:
+            self.blockSignals(prev)
             self._update_image()
             self.repaint()
 
@@ -279,9 +279,9 @@ class ChannelProperty(QWidget):
     """
 
     def __init__(self, settings: ViewSettings, start_name: str):
-        super().__init__()
         if start_name == "":
             raise ValueError("ChannelProperty should have non empty start_name")
+        super().__init__()
         self.current_name = start_name
         self.current_channel = 0
         self._settings = settings
@@ -347,7 +347,12 @@ class ChannelProperty(QWidget):
         if widget.viewer_name in self.widget_dict:
             raise ValueError(f"name {widget.viewer_name} already register")
         self.widget_dict[widget.viewer_name] = widget
+        self._settings.connect_to_profile(widget.viewer_name, self.refresh_values)
         self.change_current(widget.viewer_name, 0)
+
+    def refresh_values(self, path: typing.Optional[str]):
+        if path is None or path.startswith(self.current_name):
+            self.change_current(self.current_name, self.current_channel)
 
     def change_current(self, name, channel):
         if name not in self.widget_dict:
@@ -448,9 +453,13 @@ class ColorComboBoxGroup(QWidget):
             channel_property.register_widget(self)
             self.change_channel.connect(channel_property.change_current)
         settings.connect_channel_colormap_name(viewer_name, self.update_colors)
+        settings.connect_to_profile(self.viewer_name, self.settings_updated)
+
+    def settings_updated(self, path):
+        pass
 
     @property
-    def name(self):
+    def name(self):  # pragma: no cover
         warnings.warn("name is deprecated", DeprecationWarning, stacklevel=2)
         return self.viewer_name
 

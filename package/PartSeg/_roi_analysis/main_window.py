@@ -535,7 +535,7 @@ class MainWindow(BaseMainWindow):
         # thi isinstance is only for hinting in IDE
         assert isinstance(self.settings, PartSettings)  # nosec
         self.main_menu = MainMenu(self.settings, self)
-        self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
+        self.channel_control2 = ChannelProperty(self.settings, start_name="result_image")
         self.raw_image = CompareImageView(self.settings, self.channel_control2, "raw_image")
         self.measurements = MeasurementWidget(self.settings)
         self.left_stack = StackedWidgetWithSelector()

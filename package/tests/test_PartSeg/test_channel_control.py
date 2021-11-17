@@ -1,4 +1,5 @@
 import platform
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -31,48 +32,112 @@ else:
         return np.frombuffer(image.bits(), dtype=np.uint8, count=size * image.depth() // 8)
 
 
-def test_color_combo_box(qtbot):
-    dkt = ColormapDict({})
-    box = ColorComboBox(0, starting_colors, dkt)
-    box.show()
-    qtbot.add_widget(box)
-    with qtbot.waitSignal(box.channel_visible_changed), qtbot.assertNotEmitted(box.clicked):
-        qtbot.mouseClick(box.check_box, Qt.LeftButton)
-    with qtbot.waitSignal(box.clicked, timeout=1000):
-        qtbot.mouseClick(box, Qt.LeftButton, pos=QPoint(5, 5))
-    with qtbot.waitSignal(box.clicked):
-        qtbot.mouseClick(box, Qt.LeftButton, pos=QPoint(box.width() - 5, 5))
-    index = 3
-    with qtbot.waitSignal(box.currentTextChanged):
-        box.set_color(starting_colors[index])
-    img = np.array(make_colorbar(dkt[starting_colors[index]][0], size=(1, 512)))
-    print(array_from_image(box.image), array_from_image(box.image).size)
-    print(img)
-    print(img.flatten(), img.size, img.shape)
-    print(dkt[starting_colors[index]][0])
-    print(box.image, box.image.size(), box.image.depth())
-    assert np.all(array_from_image(box.image) == img.flatten())
+class TestChannelProperty:
+    def test_fail_construct(self, base_settings):
+        with pytest.raises(ValueError):
+            ChannelProperty(base_settings, start_name="")
+
+    def test_collapse(self, base_settings, qtbot):
+        ch_prop = ChannelProperty(base_settings, start_name="test")
+        qtbot.add_widget(ch_prop)
+        ch_prop.show()
+        assert not ch_prop.collapse_widget.isChecked()
+        assert ch_prop.minimum_value.isVisible()
+        ch_prop.collapse_widget.setChecked(True)
+        assert not ch_prop.minimum_value.isVisible()
+        ch_prop.hide()
+
+    def test_get_value_from_settings(self, base_settings, qtbot):
+        ch_prop = ChannelProperty(base_settings, start_name="test1")
+        base_settings.set_in_profile("test.range_0", (100, 300))
+        mock = MagicMock()
+        mock.viewer_name = "test"
+        ch_prop.register_widget(mock)
+        with pytest.raises(ValueError):
+            ch_prop.register_widget(mock)
+        assert ch_prop.minimum_value.value() == 100
+        assert ch_prop.maximum_value.value() == 300
+        base_settings.set_in_profile("test.range_0", (200, 500))
+        assert ch_prop.minimum_value.value() == 200
+        assert ch_prop.maximum_value.value() == 500
+        base_settings.set_in_profile("test.range_1", (20, 50))
+        assert ch_prop.minimum_value.value() == 200
+        assert ch_prop.maximum_value.value() == 500
+        with pytest.raises(ValueError):
+            ch_prop.change_current("test7", 1)
 
 
 class TestColorComboBox:
+    def test_base(self, qtbot):
+        dkt = ColormapDict({})
+        box = ColorComboBox(0, starting_colors, dkt)
+        box.show()
+        qtbot.add_widget(box)
+        with qtbot.waitSignal(box.channel_visible_changed), qtbot.assertNotEmitted(box.clicked):
+            qtbot.mouseClick(box.check_box, Qt.LeftButton)
+        with qtbot.waitSignal(box.clicked, timeout=1000):
+            qtbot.mouseClick(box, Qt.LeftButton, pos=QPoint(5, 5))
+        with qtbot.waitSignal(box.clicked):
+            qtbot.mouseClick(box, Qt.LeftButton, pos=QPoint(box.width() - 5, 5))
+        index = 3
+        with qtbot.waitSignal(box.currentTextChanged):
+            box.set_color(starting_colors[index])
+        img = np.array(make_colorbar(dkt[starting_colors[index]][0], size=(1, 512)))
+        print(array_from_image(box.image), array_from_image(box.image).size)
+        print(img)
+        print(img.flatten(), img.size, img.shape)
+        print(dkt[starting_colors[index]][0])
+        print(box.image, box.image.size(), box.image.depth())
+        assert np.all(array_from_image(box.image) == img.flatten())
+        box.hide()
+
     def test_visibility(self, qtbot):
         dkt = ColormapDict({})
         box = ColorComboBox(0, starting_colors, dkt, lock=True)
-        box.show()
         qtbot.add_widget(box)
+        box.show()
+        qtbot.wait(100)
         assert box.lock.isVisible()
+        box.hide()
         box = ColorComboBox(0, starting_colors, dkt, blur=NoiseFilterType.Gauss)
-        box.show()
         qtbot.add_widget(box)
+        box.show()
+        qtbot.wait(100)
         assert box.blur.isVisible()
+        box.hide()
         box = ColorComboBox(0, starting_colors, dkt, gamma=2)
-        box.show()
         qtbot.add_widget(box)
+        box.show()
+        qtbot.wait(100)
         assert box.gamma.isVisible()
+        box.hide()
+
+    def test_show_frame_arrow(self, qtbot):
+        dkt = ColormapDict({})
+        box = ColorComboBox(0, starting_colors, dkt)
+        qtbot.add_widget(box)
+        box.show()
+        box.show_arrow = True
+        box.repaint()
+        qtbot.wait(100)
+        box.show_arrow = False
+        box.show_frame = True
+        box.repaint()
+        qtbot.wait(100)
+        box.hide()
+
+    def test_change_colors(self, qtbot):
+        dkt = ColormapDict({})
+        box = ColorComboBox(0, starting_colors, dkt)
+        qtbot.add_widget(box)
+        box.change_colors(starting_colors[:-1])
+        assert box.count() == len(starting_colors) - 1
+        box.change_colors(starting_colors[1:])
+        assert box.count() == len(starting_colors) - 1
 
 
 class TestColorComboBoxGroup:
-    def test_change_channels_num(self, qtbot):
+    def test_change_channels_num(self, qtbot, image2):
         settings = ViewSettings()
         box = ColorComboBoxGroup(settings, "test", height=30)
         qtbot.add_widget(box)
@@ -81,7 +146,19 @@ class TestColorComboBoxGroup:
         box.set_channels(10)
         box.set_channels(4)
         box.set_channels(10)
-        box.set_channels(2)
+        settings.image = image2
+        box.update_channels()
+        assert box.layout().count() == image2.channels
+
+    def test_update_colormaps(self, qtbot, base_settings):
+        box = ColorComboBoxGroup(base_settings, "test", height=30)
+        qtbot.add_widget(box)
+        box.set_channels(4)
+        assert box.current_colormaps == [base_settings.colormap_dict[x][0] for x in starting_colors[:4]]
+        box.update_color_list(starting_colors[1:2])
+        assert box.current_colors == [starting_colors[1] for _ in range(4)]
+        box.update_color_list()
+        assert box.layout().itemAt(0).widget().count() == len(starting_colors)
 
     def test_color_combo_box_group(self, qtbot):
         settings = ViewSettings()

@@ -193,7 +193,7 @@ class TestProfileDict:
         dkt.set("test.a", 1)
         assert receiver.empty.call_count == 1
         assert receiver.dummy.call_count == 1
-        receiver.empty.assert_called_with("test.a")
+        receiver.empty.assert_called_with("a")
         receiver.dummy.assert_called_with()
         dkt.set("test.a", 1)
         assert receiver.empty.call_count == 1

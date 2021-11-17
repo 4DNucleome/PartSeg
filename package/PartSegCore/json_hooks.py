@@ -222,7 +222,7 @@ class ProfileDict:
     def _call_callback(self, key_path: typing.Union[typing.Sequence[str], str]):
         if isinstance(key_path, str):
             key_path = key_path.split(".")
-        full_path = ".".join(key_path)
+        full_path = ".".join(key_path[1:])
         callback_path = ""
         callback_list = []
         if callback_path in self._callback_dict:
