@@ -44,11 +44,10 @@ class CheckVersionThread(QThread):
             return
         try:
             if os.path.exists(os.path.join(state_store.save_folder, IGNORE_FILE)):
-                with open(os.path.join(state_store.save_folder, IGNORE_FILE)) as f_p:
-                    with suppress(ValueError):
-                        old_date = date.fromisoformat(f_p.read())
-                        if (date.today() - old_date).days < IGNORE_DAYS:
-                            return
+                with open(os.path.join(state_store.save_folder, IGNORE_FILE)) as f_p, suppress(ValueError):
+                    old_date = date.fromisoformat(f_p.read())
+                    if (date.today() - old_date).days < IGNORE_DAYS:
+                        return
                 os.remove(os.path.join(state_store.save_folder, IGNORE_FILE))
 
             with urllib.request.urlopen(f"https://pypi.org/pypi/{self.package_name}/json") as r:  # nosec
