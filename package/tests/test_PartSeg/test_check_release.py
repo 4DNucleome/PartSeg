@@ -1,11 +1,15 @@
 import json
 import urllib.request
+from datetime import date, timedelta
 from io import StringIO
+from unittest.mock import MagicMock
 
 import packaging.version
 import pytest
 
 from PartSeg._launcher import check_version
+from PartSeg._launcher.check_version import IGNORE_FILE
+from PartSegCore import state_store
 
 
 @pytest.mark.enablethread
@@ -45,6 +49,7 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
     class MockMessageBox:
         Information = 1
         Ok = 2
+        Ignore = 3
 
         def __init__(self, _type, title, message, _buttons):
             values[0] = title
@@ -52,7 +57,7 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
 
         @staticmethod
         def exec_():
-            return True
+            return check_version.QMessageBox.Ok
 
     chk_thr = check_version.CheckVersionThread(base_version="0.10.0")
     chk_thr.release = "0.11.0"
@@ -92,3 +97,46 @@ def test_error_report(monkeypatch, qtbot):
     chk_thr.run()
 
     assert sentry_val[0] is True
+
+
+def test_ignore_file_exists(monkeypatch, qtbot, tmp_path):
+    with (tmp_path / IGNORE_FILE).open("w") as f_p:
+        f_p.write(date.today().isoformat())
+
+    monkeypatch.setattr(state_store, "save_folder", tmp_path)
+
+    def urlopen_mock(url):
+        raise RuntimeError()
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
+
+    chk_thr = check_version.CheckVersionThread()
+    chk_thr.run()
+
+
+def test_ignore_file_exists_old_date(monkeypatch, qtbot, tmp_path):
+    with (tmp_path / IGNORE_FILE).open("w") as f_p:
+        f_p.write((date.today() - timedelta(days=60)).isoformat())
+
+    monkeypatch.setattr(state_store, "save_folder", tmp_path)
+
+    def urlopen_mock(_url):
+        return StringIO("")
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
+
+    chk_thr = check_version.CheckVersionThread()
+    chk_thr.run()
+    assert not (tmp_path / IGNORE_FILE).exists()
+
+
+def test_create_ignore(qtbot, tmp_path, monkeypatch):
+    monkeypatch.setattr(state_store, "save_folder", tmp_path)
+
+    chk_thr = check_version.CheckVersionThread(base_version="0.10.0")
+    chk_thr.release = "0.11.0"
+    monkeypatch.setattr(check_version.QMessageBox, "exec_", MagicMock(return_value=check_version.QMessageBox.Ignore))
+    chk_thr.show_version_info()
+    assert (tmp_path / IGNORE_FILE).exists()
+    with (tmp_path / IGNORE_FILE).open() as f_p:
+        assert f_p.read() == date.today().isoformat()

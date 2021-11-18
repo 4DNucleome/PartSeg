@@ -1,7 +1,10 @@
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
+from contextlib import suppress
+from datetime import date
 
 import packaging.version
 import sentry_sdk
@@ -12,6 +15,9 @@ from superqt import ensure_main_thread
 from PartSegCore import state_store
 
 from .. import __version__
+
+IGNORE_DAYS = 21
+IGNORE_FILE = "ignore.txt"
 
 
 class CheckVersionThread(QThread):
@@ -37,6 +43,13 @@ class CheckVersionThread(QThread):
         if not state_store.check_for_updates:
             return
         try:
+            if os.path.exists(os.path.join(state_store.save_folder, IGNORE_FILE)):
+                with open(os.path.join(state_store.save_folder, IGNORE_FILE)) as f_p, suppress(ValueError):
+                    old_date = date.fromisoformat(f_p.read())
+                    if (date.today() - old_date).days < IGNORE_DAYS:
+                        return
+                os.remove(os.path.join(state_store.save_folder, IGNORE_FILE))
+
             with urllib.request.urlopen(f"https://pypi.org/pypi/{self.package_name}/json") as r:  # nosec
                 data = json.load(r)
             self.release = data["info"]["version"]
@@ -61,7 +74,7 @@ class CheckVersionThread(QThread):
                     f"You use outdated version of PartSeg. "
                     f"Your version is {my_version} and current is {remote_version}. "
                     f"You can download next release form {self.url}",
-                    QMessageBox.Ok,
+                    QMessageBox.Ok | QMessageBox.Ignore,
                 )
             else:
                 message = QMessageBox(
@@ -70,7 +83,9 @@ class CheckVersionThread(QThread):
                     f"You use outdated version of PartSeg. "
                     f"Your version is {my_version} and current is {remote_version}. "
                     "You can update it from pypi (pip install -U PartSeg)",
-                    QMessageBox.Ok,
+                    QMessageBox.Ok | QMessageBox.Ignore,
                 )
 
-            message.exec_()
+            if message.exec_() == QMessageBox.Ignore:
+                with open(os.path.join(state_store.save_folder, IGNORE_FILE), "w") as f_p:
+                    f_p.write(date.today().isoformat())

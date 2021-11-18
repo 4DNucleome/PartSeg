@@ -392,7 +392,7 @@ class TestLoadBackup:
     @pytest.mark.parametrize("response", [load_backup.QMessageBox.Yes, load_backup.QMessageBox.No])
     def test_older_exist(self, monkeypatch, tmp_path, response):
         def create_file(file_path: Path):
-            file_path.parent.mkdir()
+            file_path.parent.mkdir(exist_ok=True)
             with open(file_path, "w") as f:
                 print(1, file=f)
 
@@ -405,10 +405,12 @@ class TestLoadBackup:
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         create_file(tmp_path / "0.13.14" / "14.txt")
         create_file(tmp_path / "0.13.12" / "12.txt")
+        create_file(tmp_path / "0.13.12" / load_backup.IGNORE_FILE)
         create_file(tmp_path / "0.13.10" / "10.txt")
         load_backup.import_config()
         if response == QMessageBox.Yes:
             assert (tmp_path / "0.13.13" / "12.txt").exists()
+            assert not (tmp_path / "0.13.13" / load_backup.IGNORE_FILE).exists()
         else:
             assert not (tmp_path / "0.13.13").exists()
 
