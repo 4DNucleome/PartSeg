@@ -49,6 +49,7 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
     class MockMessageBox:
         Information = 1
         Ok = 2
+        Ignore = 3
 
         def __init__(self, _type, title, message, _buttons):
             values[0] = title
