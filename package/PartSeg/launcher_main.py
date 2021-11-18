@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import platform
 import sys
+from contextlib import suppress
 from functools import partial
 
 from qtpy.QtCore import Qt
@@ -88,12 +89,10 @@ def main():
     my_app.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))
 
     napari_get_settings(os.path.join(os.path.dirname(state_store.save_folder), "napari"))
-    try:
+    with suppress(ImportError):
         from napari.qt import get_app
 
         get_app()
-    except ImportError:
-        pass
 
     wind = select_window(args)
 

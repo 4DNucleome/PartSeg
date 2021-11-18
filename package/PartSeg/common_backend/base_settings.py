@@ -6,9 +6,22 @@ import re
 import sys
 import warnings
 from argparse import Namespace
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    MutableMapping,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import napari.utils.theme
 import numpy as np
@@ -372,10 +385,8 @@ class ViewSettings(ImageSettings):
         if visibility:
             colormaps.add(name)
         else:
-            try:
+            with suppress(KeyError):
                 colormaps.remove(name)
-            except KeyError:
-                pass
         # TODO update sorting rule
         self.chosen_colormap = list(sorted(colormaps, key=self.colormap_dict.get_position))
 
@@ -391,10 +402,10 @@ class ViewSettings(ImageSettings):
         cm = self.chosen_colormap
         if default is None:
             default = cm[num % len(cm)]
-        resp = self.get_from_profile(f"{view}.cmap{num}", default)
+        resp = self.get_from_profile(f"{view}.cmap.num{num}", default)
         if resp not in self.colormap_dict:
             resp = cm[num % len(cm)]
-            self.set_in_profile(f"{view}.cmap{num}", resp)
+            self.set_in_profile(f"{view}.cmap.num{num}", resp)
         return resp
 
     def set_channel_info(self, view: str, num, value: str):  # pragma: no cover
@@ -406,7 +417,10 @@ class ViewSettings(ImageSettings):
         self.set_channel_colormap_name(view, num, value)
 
     def set_channel_colormap_name(self, view: str, num, value: str):
-        self.set_in_profile(f"{view}.cmap{num}", value)
+        self.set_in_profile(f"{view}.cmap.num{num}", value)
+
+    def connect_channel_colormap_name(self, view: str, fun: Callable):
+        self.connect_to_profile(f"{view}.cmap", fun)
 
     @property
     def available_colormaps(self):
@@ -418,17 +432,7 @@ class ViewSettings(ImageSettings):
 
     def change_profile(self, name):
         self.current_profile_dict = name
-
-        callback_list = []
-        for path, callback in list(self.view_settings_dict._callback_dict.items()):  # pylint: disable=W0212
-            callback_list.extend(callback)
-            if "." not in path:  # pragma: no cover
-                continue
-            self.view_settings_dict._callback_dict[  # pylint: disable=W0212
-                f'{name}.{path.split(".", 1)[1]}'
-            ] = callback  # pylint: disable=W0212
-        for callback in callback_list:
-            callback()
+        self.view_settings_dict.profile_change()
 
     def set_in_profile(self, key_path, value):
         """
@@ -452,7 +456,7 @@ class ViewSettings(ImageSettings):
 
     def connect_to_profile(self, key_path, callback):
         # TODO  fixme fix when introduce switch profiles
-        self.view_settings_dict.connect(f"{self.current_profile_dict}.{key_path}", callback)
+        self.view_settings_dict.connect(key_path, callback)
 
 
 class SaveSettingsDescription(NamedTuple):
@@ -471,7 +475,6 @@ class BaseSettings(ViewSettings):
 
     mask_changed = Signal()
     points_changed = Signal()
-    mask_representation_changed = Signal()
     request_load_files = Signal(list)
     """:py:class:`~.Signal` mask changed signal"""
     json_encoder_class = ProfileEncoder
@@ -479,13 +482,16 @@ class BaseSettings(ViewSettings):
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
     save_locations_keys = []
-    data_changed = Signal(str, object)
 
-    def __init__(self, json_path):
+    def __init__(self, json_path: Union[Path, str], profile_name: str = "default"):
+        """
+        :param json_path: path to store
+        :param profile_name: name of profile to be used. default value is "default"
+        """
         super().__init__()
         napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
         self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
-        self._current_roi_dict = "default"
+        self._current_roi_dict = profile_name
         self._roi_dict = ProfileDict()
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""
@@ -539,6 +545,7 @@ class BaseSettings(ViewSettings):
         self._additional_layers = result.additional_layers
         self.last_executed_algorithm = result.parameters.algorithm
         self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
+        # Fixme not use EventedDict here
         try:
             roi_info = result.roi_info.fit_to_image(self.image)
         except ValueError:  # pragma: no cover
@@ -640,7 +647,8 @@ class BaseSettings(ViewSettings):
         return self.add_last_files(file_path, load_method)
 
     def add_last_files(self, file_path: Sequence[Union[str, Path]], load_method: str):
-        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [tuple(file_path), load_method]))
+        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [list(file_path), load_method]))
+        # keep list of files as list because json serialize tuple to list
         self.add_path_history(os.path.dirname(file_path[0]))
 
     def get_last_files_multiple(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
@@ -650,9 +658,10 @@ class BaseSettings(ViewSettings):
         self.set(
             MULTIPLE_FILES_OPEN_HISTORY,
             self._add_elem_to_list(
-                self.get(MULTIPLE_FILES_OPEN_HISTORY, []), [tuple(file_paths), load_method], keep_len=30
+                self.get(MULTIPLE_FILES_OPEN_HISTORY, []), [list(file_paths), load_method], keep_len=30
             ),
         )
+        # keep list of files as list because json serialize tuple to list
         self.add_path_history(os.path.dirname(file_paths[0]))
 
     def add_path_history(self, dir_path: Union[str, Path]):
@@ -669,7 +678,6 @@ class BaseSettings(ViewSettings):
         :param value: value to store. The value need to be json serializable.
         """
         self._roi_dict.set(f"{self._current_roi_dict}.{key_path}", value)
-        self.data_changed.emit(key_path, value)
 
     def get(self, key_path: str, default=None):
         """
@@ -680,6 +688,10 @@ class BaseSettings(ViewSettings):
         :param default: default value if key is missed
         """
         return self._roi_dict.get(f"{self._current_roi_dict}.{key_path}", default)
+
+    def connect_(self, key_path, callback):
+        # TODO  fixme fix when introduce switch profiles
+        self._roi_dict.connect(key_path, callback)
 
     def dump_part(self, file_path, path_in_dict, names=None):
         data = self.get(path_in_dict)
@@ -693,7 +705,7 @@ class BaseSettings(ViewSettings):
     def load_part(cls, file_path):
         data = cls.load_metadata(file_path)
         bad_key = []
-        if isinstance(data, dict) and not check_loaded_dict(data):
+        if isinstance(data, MutableMapping) and not check_loaded_dict(data):
             for k, v in data.items():
                 if not check_loaded_dict(v):
                     bad_key.append(k)

@@ -215,7 +215,7 @@ class UpdateLoadedMetadataBase:
             return cls.update_segmentation_profile(data)
         if isinstance(data, Enum):
             return cls.update_enum(data)
-        if isinstance(data, dict):
+        if isinstance(data, typing.MutableMapping):
             for key in data.keys():
                 data[key] = cls.recursive_update(data[key])
                 if key == "custom_colormap":
@@ -236,7 +236,7 @@ class UpdateLoadedMetadataBase:
 
     # noinspection PyUnusedLocal
     @classmethod
-    def update_segmentation_sub_dict(cls, name: str, dkt: dict) -> dict:
+    def update_segmentation_sub_dict(cls, name: str, dkt: typing.MutableMapping) -> typing.MutableMapping:
         if "values" not in dkt:
             return dkt
         if name == "sprawl_type" and dkt["name"].endswith(" sprawl"):
@@ -245,7 +245,7 @@ class UpdateLoadedMetadataBase:
             item = dkt["values"][key]
             if isinstance(item, Enum):
                 dkt["values"][key] = cls.update_enum(item)
-            elif isinstance(item, dict):
+            elif isinstance(item, typing.MutableMapping):
                 dkt["values"][key] = cls.update_segmentation_sub_dict(key, item)
         return dkt
 
@@ -255,7 +255,7 @@ class UpdateLoadedMetadataBase:
             item = profile_data.values[key]
             if isinstance(item, Enum):
                 profile_data.values[key] = cls.update_enum(item)
-            elif isinstance(item, dict):
+            elif isinstance(item, typing.MutableMapping):
                 if key == "noise_removal":
                     del profile_data.values[key]
                     key = "noise_filtering"

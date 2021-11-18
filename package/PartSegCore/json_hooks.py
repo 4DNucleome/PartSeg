@@ -1,9 +1,14 @@
 import copy
+import importlib
+import itertools
 import typing
 from collections import defaultdict
+from collections.abc import MutableMapping
+from contextlib import suppress
 
 import numpy as np
 from napari.utils import Colormap
+from psygnal import Signal
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 
@@ -12,7 +17,87 @@ from .image_operations import RadiusType
 from .utils import CallbackBase, get_callback
 
 
-def recursive_update_dict(main_dict: dict, other_dict: dict):
+class EventedDict(MutableMapping):
+    setted = Signal(str)
+    deleted = Signal(str)
+
+    def __init__(self, **kwargs):
+        # TODO add positional only argument when drop python 3.7
+        super().__init__()
+        self._dict = {}
+        for key, dkt in kwargs.items():
+            if isinstance(dkt, dict):
+                dkt = EventedDict(**dkt)
+            if isinstance(dkt, EventedDict):
+                dkt.base_key = key
+                dkt.setted.connect(self._propagate_setitem)
+                dkt.deleted.connect(self._propagate_del)
+            self._dict[key] = dkt
+        self.base_key = ""
+
+    def __setitem__(self, k, v) -> None:
+        if isinstance(v, dict):
+            v = EventedDict(**v)
+        if isinstance(v, EventedDict):
+            v.base_key = k
+            v.setted.connect(self._propagate_setitem)
+            v.deleted.connect(self._propagate_del)
+        if k in self._dict and isinstance(self._dict[k], EventedDict):
+            self._dict[k].setted.disconnect(self._propagate_setitem)
+            self._dict[k].deleted.disconnect(self._propagate_del)
+        old_value = self._dict[k] if k in self._dict else None
+        with suppress(ValueError):
+            if old_value == v:
+                return
+        self._dict[k] = v
+        self.setted.emit(k)
+
+    def __delitem__(self, k) -> None:
+        if k in self._dict and isinstance(self._dict[k], EventedDict):
+            self._dict[k].setted.disconnect(self._propagate_setitem)
+            self._dict[k].deleted.disconnect(self._propagate_del)
+        del self._dict[k]
+        self.deleted.emit(k)
+
+    def __getitem__(self, k):
+        return self._dict[k]
+
+    def __len__(self) -> int:
+        return len(self._dict)
+
+    def __iter__(self) -> typing.Iterator:
+        return iter(self._dict)
+
+    def as_dict(self):
+        return copy.copy(self._dict)
+
+    def as_dict_deep(self):
+        return {k: v.as_dict_deep() if isinstance(v, EventedDict) else v for k, v in self._dict.items()}
+
+    def __str__(self):
+        return f"EventedDict({self._dict})"
+
+    def __repr__(self):
+        return f"EventedDict({repr(self._dict)})"
+
+    def _propagate_setitem(self, key):
+        # Fixme when partial disconnect will work
+        sender: EventedDict = Signal.sender()
+        if sender.base_key:
+            self.setted.emit(f"{sender.base_key}.{key}")
+        else:
+            self.setted.emit(key)
+
+    def _propagate_del(self, key):
+        # Fixme when partial disconnect will work
+        sender: EventedDict = Signal.sender()
+        if sender.base_key:
+            self.deleted.emit(f"{sender.base_key}.{key}")
+        else:
+            self.deleted.emit(key)
+
+
+def recursive_update_dict(main_dict: typing.Union[dict, EventedDict], other_dict: typing.Union[dict, EventedDict]):
     """
     recursive update main_dict with elements of other_dict
 
@@ -46,9 +131,30 @@ class ProfileDict:
         {'c1': 7, 'c2': 8}
     """
 
-    def __init__(self):
-        self.my_dict = {}
+    def __init__(self, **kwargs):
+        self._my_dict = EventedDict(**kwargs)
         self._callback_dict: typing.Dict[str, typing.List[CallbackBase]] = defaultdict(list)
+
+        self._my_dict.setted.connect(self._call_callback)
+        self._my_dict.deleted.connect(self._call_callback)
+
+    def as_dict(self):
+        return self.my_dict.as_dict()
+
+    @property
+    def my_dict(self) -> EventedDict:
+        return self._my_dict
+
+    @my_dict.setter
+    def my_dict(self, value: typing.Union[dict, EventedDict]):
+        if isinstance(value, dict):
+            value = EventedDict(**value)
+
+        self._my_dict.setted.disconnect(self._call_callback)
+        self._my_dict.deleted.disconnect(self._call_callback)
+        self._my_dict = value
+        self._my_dict.setted.connect(self._call_callback)
+        self._my_dict.deleted.connect(self._call_callback)
 
     def update(self, ob: typing.Union["ProfileDict", dict, None] = None, **kwargs):
         """
@@ -66,11 +172,26 @@ class ProfileDict:
         elif ob is None:
             recursive_update_dict(self.my_dict, kwargs)
 
-    def connect(self, key_path: typing.Union[typing.Sequence[str], str], callback):
+    def profile_change(self):
+        for callback in itertools.chain(*self._callback_dict.values()):
+            callback()
+
+    def connect(
+        self, key_path: typing.Union[typing.Sequence[str], str], callback: typing.Callable[[], typing.Any], maxargs=None
+    ) -> typing.Callable:
+        """
+        Connect function to receive information when object on path was changed using :py:meth:`.set`
+
+        :param key_path: path for which signal should be emitted
+        :param callback: parameterless function which should be called
+
+        :return: callback function itself.
+        """
         if not isinstance(key_path, str):
             key_path = ".".join(key_path)
 
-        self._callback_dict[key_path].append(get_callback(callback))
+        self._callback_dict[key_path].append(get_callback(callback, maxargs))
+        return callback
 
     def set(self, key_path: typing.Union[typing.Sequence[str], str], value):
         """
@@ -89,25 +210,32 @@ class ProfileDict:
                 curr_dict = curr_dict[key]
             except KeyError:
                 for key2 in key_path[i:-1]:
-                    curr_dict[key2] = {}
+                    with curr_dict.setted.blocked():
+                        curr_dict[key2] = EventedDict()
                     curr_dict = curr_dict[key2]
-                    break
+                break
+        if isinstance(value, dict):
+            value = EventedDict(**value)
         curr_dict[key_path[-1]] = value
+        return value
 
-        callback_path = key_path[0]
+    def _call_callback(self, key_path: typing.Union[typing.Sequence[str], str]):
+        if isinstance(key_path, str):
+            key_path = key_path.split(".")
+        full_path = ".".join(key_path[1:])
+        callback_path = ""
         callback_list = []
         if callback_path in self._callback_dict:
             callback_list = self._callback_dict[callback_path]
 
-        for key in key_path[1:]:
-            callback_path = callback_path + "." + key
+        for callback_path in itertools.accumulate(key_path[1:], lambda x, y: f"{x}.{y}"):
             if callback_path in self._callback_dict:
                 li = self._callback_dict[callback_path]
                 li = [x for x in li if x.is_alive()]
                 self._callback_dict[callback_path] = li
                 callback_list.extend(li)
         for callback in callback_list:
-            callback()
+            callback(full_path)
 
     def get(self, key_path: typing.Union[list, str], default=None):
         """
@@ -129,8 +257,7 @@ class ProfileDict:
                     raise e
 
                 val = copy.deepcopy(default)
-                self.set(key_path, val)
-                return val
+                return self.set(key_path, val)
 
         return curr_dict
 
@@ -143,7 +270,7 @@ class ProfileDict:
     def filter_data(self):
         error_list = []
         for group, up_dkt in list(self.my_dict.items()):
-            if not isinstance(up_dkt, dict):
+            if not isinstance(up_dkt, (dict, EventedDict)):
                 continue
             for key, dkt in list(up_dkt.items()):
                 if not check_loaded_dict(dkt):
@@ -167,8 +294,6 @@ class ProfileEncoder(SerializeClassEncoder):
     # pylint: disable=E0202
     def default(self, o):
         """encoder implementation"""
-        if isinstance(o, ProfileDict):
-            return {"__ProfileDict__": True, **o.my_dict}
         if isinstance(o, RadiusType):
             return {"__RadiusType__": True, "value": o.value}
         if isinstance(o, ROIExtractionProfile):
@@ -181,6 +306,10 @@ class ProfileEncoder(SerializeClassEncoder):
                 "interpolation": o.interpolation,
                 "controls": o.controls.tolist(),
             }
+        if hasattr(o, "as_dict"):
+            dkt = o.as_dict()
+            dkt["__class__"] = o.__module__ + "." + o.__class__.__name__
+            return dkt
         if isinstance(o, np.integer):
             return int(o)
         if isinstance(o, np.floating):
@@ -197,10 +326,19 @@ def profile_hook(dkt):
     ...     data = json.load(fp, object_hook=profile_hook)
 
     """
+    if "__class__" in dkt:
+        module_name, class_name = dkt["__class__"].rsplit(".", maxsplit=1)
+        # the migration code should be called here
+        try:
+            del dkt["__class__"]
+            module = importlib.import_module(module_name)
+            return getattr(module, class_name)(**dkt)
+        except Exception as e:  # skipcq: PTC-W0703`  # pylint: disable=W0703    # pragma: no cover
+            dkt["__class__"] = module_name + "." + class_name
+            dkt["__error__"] = e
     if "__ProfileDict__" in dkt:
         del dkt["__ProfileDict__"]
-        res = ProfileDict()
-        res.my_dict = dkt
+        res = ProfileDict(**dkt)
         return res
     if "__RadiusType__" in dkt:
         return RadiusType(dkt["value"])
@@ -247,7 +385,7 @@ def check_loaded_dict(dkt) -> bool:
 
     :param dkt: dict to check
     """
-    if not isinstance(dkt, dict):
+    if not isinstance(dkt, (dict, EventedDict)):
         return True
     if "__error__" in dkt:
         return False

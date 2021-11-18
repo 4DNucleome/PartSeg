@@ -6,6 +6,7 @@ import tarfile
 import typing
 import warnings
 from collections import defaultdict
+from contextlib import suppress
 from functools import partial
 from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, TextIOBase
 from pathlib import Path
@@ -233,7 +234,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         roi_info = ROIInfo(reduce_array(roi), annotations=metadata.get("annotations", {}), alternative=alternative)
         step_changed(5)
         history = []
-        try:
+        with suppress(KeyError):
             history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
             history_json = load_metadata(history_buff)
             for el in history_json:
@@ -248,9 +249,6 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
                         annotations=el.get("annotations", {}),
                     )
                 )
-
-        except KeyError:
-            pass
         step_changed(6)
     finally:
         if isinstance(file_data, (str, Path)):

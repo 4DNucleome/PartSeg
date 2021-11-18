@@ -21,6 +21,7 @@ import sys
 import time
 import traceback
 import uuid
+from contextlib import suppress
 from enum import Enum
 from queue import Empty, Queue
 from threading import RLock, Timer
@@ -236,13 +237,11 @@ class BatchWorker:
         logging.debug(f"Process started {os.getpid()}")
         while True:
             if not self.order_queue.empty():
-                try:
+                with suppress(Empty):
                     order = self.order_queue.get_nowait()
                     logging.debug(f"Order message: {order}")
                     if order == SubprocessOrder.kill:
                         break
-                except Empty:  # pragma: no cover
-                    pass
             if not self.task_queue.empty():
                 try:
                     task = self.task_queue.get_nowait()

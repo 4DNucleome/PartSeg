@@ -1,8 +1,9 @@
 import os
+from contextlib import suppress
 from typing import Type
 
 import numpy as np
-from qtpy.QtCore import QByteArray, QEvent, Qt
+from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -16,11 +17,12 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt import ensure_main_thread
 
 import PartSegData
 from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
-from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow
+from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
 from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -82,7 +84,7 @@ class Options(QWidget):
         self.save_pipe_btn.setToolTip("Save current pipeline. Last element is last executed algorithm")
         self.choose_pipe = SearchComboBox()
         self.choose_pipe.addItem("<none>")
-        self.choose_pipe.addItems(list(self._settings.roi_pipelines.keys()))
+        # self.choose_pipe.addItems(list(self._settings.roi_pipelines.keys()))
         self.choose_pipe.textActivated.connect(self.choose_pipeline)
         self.choose_pipe.setToolTip("Execute chosen pipeline")
         self.save_profile_btn = QPushButton("Save profile")
@@ -90,7 +92,7 @@ class Options(QWidget):
         self.save_profile_btn.clicked.connect(self.save_profile)
         self.choose_profile = SearchComboBox()
         self.choose_profile.addItem("<none>")
-        self.choose_profile.addItems(list(self._settings.roi_profiles.keys()))
+        # self.choose_profile.addItems(list(self._settings.roi_profiles.keys()))
         self.choose_profile.setToolTip("Select profile to restore its settings. Execute if interactive is checked")
         # image state
         self.compare_btn = QPushButton("Compare")
@@ -107,6 +109,10 @@ class Options(QWidget):
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
         self.algorithm_choose_widget.algorithm_changed.connect(self.interactive_algorithm_execute)
+        self._settings.roi_profiles_changed.connect(self._update_profiles)
+        self._settings.roi_pipelines_changed.connect(self._update_pipelines)
+        self._update_pipelines()
+        self._update_profiles()
 
         self.label = TextShow()
 
@@ -140,6 +146,16 @@ class Options(QWidget):
         layout.addWidget(self._ch_control2)
         # layout.setSpacing(0)
         self.setLayout(layout)
+
+    @ensure_main_thread
+    def _update_profiles(self):
+        self.update_combo_box(self.choose_profile, self._settings.roi_profiles)
+        self.update_tooltips()
+
+    @ensure_main_thread
+    def _update_pipelines(self):
+        self.update_combo_box(self.choose_pipe, self._settings.roi_pipelines)
+        self.update_tooltips()
 
     def compare_action(self):
         if self.compare_btn.text() == "Compare":
@@ -244,15 +260,6 @@ class Options(QWidget):
         if len(new_names) > 0:
             combo_box.addItems(list(sorted(new_names)))
 
-    def event(self, event: QEvent):
-        if event.type() == QEvent.WindowActivate:
-            # update combobox for segmentation
-            self.update_combo_box(self.choose_profile, self._settings.roi_profiles)
-            # update combobox for pipeline
-            self.update_combo_box(self.choose_pipe, self._settings.roi_pipelines)
-            self.update_tooltips()
-        return super().event(event)
-
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() in [Qt.Key_Enter, Qt.Key_Return] and event.modifiers() == Qt.ControlModifier:
             self.execute_btn.click()
@@ -274,8 +281,6 @@ class Options(QWidget):
             resp = ROIExtractionProfile(text, widget.name, widget.get_values())
             self._settings.roi_profiles[text] = resp
             self._settings.dump()
-            self.choose_profile.addItem(text)
-            self.update_tooltips()
             break
 
     def change_profile(self, val):
@@ -437,14 +442,14 @@ class MainMenu(BaseMainMenu):
 
         try:
             dial = PLoadDialog(
-                load_functions.load_dict, settings=self.settings, path="io.open_directory", filter_path="io.open_filter"
+                load_functions.load_dict, settings=self.settings, path=OPEN_DIRECTORY, filter_path=OPEN_FILE_FILTER
             )
-            file_path = self.settings.get("io.open_file", "")
+            file_path = self.settings.get(OPEN_FILE, "")
             if os.path.isfile(file_path):
                 dial.selectFile(file_path)
             if dial.exec_():
                 result = dial.get_result()
-                self.settings.set("io.open_file", result.load_location[0])
+                self.settings.set(OPEN_FILE, result.load_location[0])
                 self.settings.add_last_files(result.load_location, result.load_class.get_name())
                 dial2 = ExecuteFunctionDialog(
                     result.load_class.load,
@@ -530,7 +535,7 @@ class MainWindow(BaseMainWindow):
         # thi isinstance is only for hinting in IDE
         assert isinstance(self.settings, PartSettings)  # nosec
         self.main_menu = MainMenu(self.settings, self)
-        self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
+        self.channel_control2 = ChannelProperty(self.settings, start_name="result_image")
         self.raw_image = CompareImageView(self.settings, self.channel_control2, "raw_image")
         self.measurements = MeasurementWidget(self.settings)
         self.left_stack = StackedWidgetWithSelector()
@@ -610,11 +615,9 @@ class MainWindow(BaseMainWindow):
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
-        try:
+        with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-        except KeyError:
-            pass
 
     def toggle_left_panel(self):
         self.options_panel.hide_left_panel(not self.settings.get_from_profile("hide_left_panel"))

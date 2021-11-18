@@ -1,13 +1,14 @@
 # pylint: disable=R0201
 
 import json
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 from napari.utils import Colormap
 
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, profile_hook, recursive_update_dict
+from PartSegCore.json_hooks import EventedDict, ProfileDict, ProfileEncoder, profile_hook, recursive_update_dict
 
 
 def test_recursive_update_dict_basic():
@@ -24,6 +25,112 @@ def test_recursive_update_dict():
     dict2 = {"a": {"m": 3, "l": 4}, "b": 3, "c": 4}
     recursive_update_dict(dict1, dict2)
     assert dict1 == {"a": {"k": 1, "l": 4, "m": 3}, "b": 3, "c": 4}
+
+
+class TestEventedDict:
+    def test_simple_add(self):
+        receiver = MagicMock()
+
+        dkt = EventedDict()
+        dkt.setted.connect(receiver.set)
+        dkt.deleted.connect(receiver.delete)
+        dkt["a"] = 1
+        assert dkt["a"] == 1
+        assert receiver.set.call_count == 1
+        assert "'a': 1" in str(dkt)
+        assert "'a': 1" in repr(dkt)
+        dkt["a"] = 2
+        assert dkt["a"] == 2
+        assert receiver.set.call_count == 2
+        assert len(dkt) == 1
+        del dkt["a"]
+        assert receiver.set.call_count == 2
+        assert receiver.delete.call_count == 1
+        assert len(dkt) == 0
+
+    def test_simple_add_remove(self):
+        callback_list = []
+
+        def callback_add():
+            callback_list.append(1)
+
+        def callback_delete():
+            callback_list.append(2)
+
+        dkt = EventedDict()
+        dkt.setted.connect(callback_add)
+        dkt.deleted.connect(callback_delete)
+
+        dkt[1] = 1
+        dkt[2] = 1
+        assert len(dkt) == 2
+        assert callback_list == [1, 1]
+        del dkt[1]
+        assert len(dkt) == 1
+        assert callback_list == [1, 1, 2]
+
+    def test_nested_evented(self):
+        dkt = EventedDict(bar={"foo": {"baz": 1}})
+        assert isinstance(dkt["bar"], EventedDict)
+        assert isinstance(dkt["bar"]["foo"], EventedDict)
+        assert dkt["bar"]["foo"]["baz"] == 1
+
+        dkt["baz"] = {"bar": {"foo": 1}}
+        assert isinstance(dkt["baz"], EventedDict)
+        assert isinstance(dkt["baz"]["bar"], EventedDict)
+        assert dkt["baz"]["bar"]["foo"] == 1
+
+    def test_serialize(self, tmp_path):
+        dkt = EventedDict(
+            **{"a": {"b": {"c": 1, "d": 2, "e": 3}, "f": 1}, "g": {"h": {"i": 1, "j": 2}, "k": [6, 7, 8]}}
+        )
+        with (tmp_path / "test_dict.json").open("w") as f_p:
+            json.dump(dkt, f_p, cls=ProfileEncoder)
+
+        with (tmp_path / "test_dict.json").open("r") as f_p:
+            dkt2 = json.load(f_p, object_hook=profile_hook)
+
+        assert isinstance(dkt2, EventedDict)
+        assert isinstance(dkt2["a"], EventedDict)
+        assert dkt["g"]["k"] == [6, 7, 8]
+
+    def test_signal_names(self):
+        receiver = MagicMock()
+        dkt = EventedDict(baz={"foo": 1})
+        dkt.setted.connect(receiver.set)
+        dkt.deleted.connect(receiver.deleted)
+        dkt["foo"] = 1
+        assert receiver.set.call_count == 1
+        receiver.set.assert_called_with("foo")
+        dkt["bar"] = EventedDict()
+        assert receiver.set.call_count == 2
+        receiver.set.assert_called_with("bar")
+        dkt["bar"]["baz"] = 1
+        assert receiver.set.call_count == 3
+        receiver.set.assert_called_with("bar.baz")
+        dkt["baz"]["foo"] = 2
+        assert receiver.set.call_count == 4
+        receiver.set.assert_called_with("baz.foo")
+
+        del dkt["bar"]["baz"]
+        assert receiver.deleted.call_count == 1
+        receiver.deleted.assert_called_with("bar.baz")
+        del dkt["bar"]
+        assert receiver.deleted.call_count == 2
+        receiver.deleted.assert_called_with("bar")
+
+    def test_propagate_signal(self):
+        receiver = MagicMock()
+        dkt = EventedDict(baz={"foo": 1})
+        dkt.setted.connect(receiver.set)
+        dkt.deleted.connect(receiver.deleted)
+        dkt["baz"].base_key = ""
+        dkt["baz"]["foo"] = 2
+        receiver.set.assert_called_with("foo")
+        receiver.set.assert_called_once()
+        del dkt["baz"]["foo"]
+        receiver.deleted.assert_called_with("foo")
+        receiver.deleted.assert_called_once()
 
 
 class TestProfileDict:
@@ -72,19 +179,35 @@ class TestProfileDict:
         assert dkt.my_dict == dkt2.my_dict
 
     def test_callback(self):
-        call_list = []
+        def dummy_call():
+            receiver.dummy()
 
-        def fun():
-            call_list.append(1)
+        receiver = MagicMock()
 
         dkt = ProfileDict()
-        dkt.connect("test", fun)
-        dkt.connect("test.b", fun)
+        dkt.connect("", receiver.empty)
+        dkt.connect("", dummy_call)
+        dkt.connect("b", receiver.b)
+        dkt.connect(["d", "c"], receiver.dc)
 
         dkt.set("test.a", 1)
-        # assert call_list == [1]
-        dkt.set("test.b", 1)
-        assert call_list == [1, 1, 1]
+        assert receiver.empty.call_count == 1
+        assert receiver.dummy.call_count == 1
+        receiver.empty.assert_called_with("a")
+        receiver.dummy.assert_called_with()
+        dkt.set("test.a", 1)
+        assert receiver.empty.call_count == 1
+        receiver.b.assert_not_called()
+        dkt.set("test2.a", 1)
+        assert receiver.empty.call_count == 2
+        receiver.b.assert_not_called()
+        dkt.set(["test", "b"], 1)
+        assert receiver.empty.call_count == 3
+        assert receiver.b.call_count == 1
+        dkt.set("test.d.c", 1)
+        receiver.dc.assert_called_once()
+        dkt.set("test.a", 2)
+        assert receiver.empty.call_count == 5
 
 
 def test_profile_hook_colormap_load(bundle_test_dir):

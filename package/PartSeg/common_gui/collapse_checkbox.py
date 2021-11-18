@@ -1,4 +1,5 @@
 import typing
+from contextlib import suppress
 
 import qtawesome as qta
 from qtpy import QtGui
@@ -37,10 +38,8 @@ class CollapseCheckbox(QCheckBox):
         """
         Stop controlling widget visibility by CollapseCheckbox
         """
-        try:
+        with suppress(ValueError):
             self.hide_list.remove(val)
-        except ValueError:
-            pass
 
     def hide_element(self, a0: int):
         for el in self.hide_list:

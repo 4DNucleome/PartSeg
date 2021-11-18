@@ -1,4 +1,5 @@
 import typing
+import warnings
 from functools import partial
 
 import qtawesome as qta
@@ -143,12 +144,11 @@ class ColorComboBox(QComboBox):
         """change list of colormaps to choose"""
         self.colors = colors
         current_color = self.currentText()
+        prev = self.blockSignals(True)
         try:
             index = colors.index(current_color)
-            prev = self.blockSignals(True)
         except ValueError:
             index = -1
-            prev = self.signalsBlocked()
 
         self.clear()
         self.addItems(colors)
@@ -156,6 +156,7 @@ class ColorComboBox(QComboBox):
             self.setCurrentIndex(index)
             self.blockSignals(prev)
         else:
+            self.blockSignals(prev)
             self._update_image()
             self.repaint()
 
@@ -278,9 +279,9 @@ class ChannelProperty(QWidget):
     """
 
     def __init__(self, settings: ViewSettings, start_name: str):
-        super().__init__()
         if start_name == "":
             raise ValueError("ChannelProperty should have non empty start_name")
+        super().__init__()
         self.current_name = start_name
         self.current_channel = 0
         self._settings = settings
@@ -342,13 +343,30 @@ class ChannelProperty(QWidget):
         widget = self.widget_dict[self.current_name]
         widget.parameters_changed(self.current_channel)
 
-    def register_widget(self, widget: "ColorComboBoxGroup"):
-        if widget.name in self.widget_dict:
-            raise ValueError(f"name {widget.name} already register")
-        self.widget_dict[widget.name] = widget
-        self.change_current(widget.name, 0)
+    def register_widget(self, widget: "ColorComboBoxGroup") -> None:
+        """
+        Register new viewer by its color combo box group
 
-    def change_current(self, name, channel):
+        :param ColorComboBoxGroup widget: viewer widget for color control
+        """
+        if widget.viewer_name in self.widget_dict:
+            raise ValueError(f"name {widget.viewer_name} already register")
+        self.widget_dict[widget.viewer_name] = widget
+        self._settings.connect_to_profile(widget.viewer_name, self.refresh_values)
+        self.change_current(widget.viewer_name, 0)
+
+    def refresh_values(self, path: typing.Optional[str]):
+        if path is None or path.startswith(self.current_name):
+            self.change_current(self.current_name, self.current_channel)
+
+    def change_current(self, name: str, channel: int) -> None:
+        """
+        Change to show values connected with channel `channel` from viewer `viewer`
+
+        :param str name: name of viewer
+        :param int channel: channel to which data should be presented
+        :rtype: None
+        """
         if name not in self.widget_dict:
             raise ValueError(f"name {name} not in register")
         self.current_name = name
@@ -430,12 +448,12 @@ class ColorComboBoxGroup(QWidget):
     def __init__(
         self,
         settings: ViewSettings,
-        name: str,
+        viewer_name: str,
         channel_property: typing.Optional[ChannelProperty] = None,
         height: int = 40,
     ):
         super().__init__()
-        self.name = name
+        self.viewer_name = viewer_name
         self.height = height
         self.settings = settings
         self.settings.colormap_changes.connect(self.update_color_list)
@@ -446,9 +464,34 @@ class ColorComboBoxGroup(QWidget):
         if channel_property is not None:
             channel_property.register_widget(self)
             self.change_channel.connect(channel_property.change_current)
+        settings.connect_channel_colormap_name(viewer_name, self.update_colors)
+        settings.connect_to_profile(self.viewer_name, self._settings_updated)
+
+    def _settings_updated(self, path: str = ""):
+        if "." in path:
+            potential_name = path.rsplit(".", maxsplit=1)[-1]
+            if "_" not in potential_name:
+                return
+            name, potential_num = potential_name.rsplit("_", maxsplit=1)
+            if potential_num.isnumeric() and name in {"use_filter", "lock", "gamma_value"}:
+                self.parameters_changed(int(potential_num))
+        else:
+            for i in range(self.layout().count()):
+                self.parameters_changed(i)
+
+    @property
+    def name(self):  # pragma: no cover
+        warnings.warn("name is deprecated", DeprecationWarning, stacklevel=2)
+        return self.viewer_name
+
+    def update_colors(self):
+        """For each channel update colormap to reflect settings"""
+        for i in range(self.layout().count()):
+            el: ColorComboBox = self.layout().itemAt(i).widget()
+            el.setCurrentText(self.settings.get_channel_colormap_name(self.viewer_name, i))
 
     def update_color_list(self, colors: typing.Optional[typing.List[str]] = None):
-        """update list"""
+        """Update list of available colormaps in each selector"""
         if colors is None:
             colors = self.settings.chosen_colormap
         for i in range(self.layout().count()):
@@ -465,6 +508,7 @@ class ColorComboBoxGroup(QWidget):
 
     @property
     def selected_colormaps(self) -> typing.List[Colormap]:
+        """For each channel give information about selected colormap by name"""
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
@@ -481,7 +525,7 @@ class ColorComboBoxGroup(QWidget):
 
     @property
     def current_colors(self) -> typing.List[typing.Optional[str]]:
-        """ """
+        """List of  current colors. None if channel is not selected."""
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
@@ -492,7 +536,8 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     @property
-    def current_colormaps(self):
+    def current_colormaps(self) -> typing.List[typing.Optional[Colormap]]:
+        """List of current colormaps. None if channel is not selected"""
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
@@ -504,30 +549,30 @@ class ColorComboBoxGroup(QWidget):
 
     def visibility_changed(self, index):
         self.coloring_update.emit()
-        self.change_channel.emit(self.name, index)
+        self.change_channel.emit(self.viewer_name, index)
 
     def change_selected_color(self, index, color):
-        self.settings.set_channel_colormap_name(self.name, index, str(color))
+        self.settings.set_channel_colormap_name(self.viewer_name, index, str(color))
         self.coloring_update.emit()
-        self.change_channel.emit(self.name, index)
+        self.change_channel.emit(self.viewer_name, index)
 
-    def active_channel(self, chanel):
-        return self.layout().itemAt(chanel).widget().is_checked()
+    def active_channel(self, channel: int):
+        return self.layout().itemAt(channel).widget().is_checked()
 
     def set_channels(self, num: int):
         """Set number of channels to display"""
-        self.settings.set_in_profile(f"{self.name}.channels_count", num)
+        self.settings.set_in_profile(f"{self.viewer_name}.channels_count", num)
         if num >= self.layout().count():
             for i in range(self.layout().count(), num):
                 el = ColorComboBox(
                     id_num=i,
                     colors=self.settings.chosen_colormap,
                     color_dict=self.settings.colormap_dict,
-                    colormap=self.settings.get_channel_colormap_name(self.name, i),
+                    colormap=self.settings.get_channel_colormap_name(self.viewer_name, i),
                     base_height=self.height,
-                    lock=self.settings.get_from_profile(f"{self.name}.lock_{i}", False),
-                    blur=self.settings.get_from_profile(f"{self.name}.use_filter_{i}", NoiseFilterType.No),
-                    gamma=self.settings.get_from_profile(f"{self.name}.gamma_value_{i}", 1),
+                    lock=self.settings.get_from_profile(f"{self.viewer_name}.lock_{i}", False),
+                    blur=self.settings.get_from_profile(f"{self.viewer_name}.use_filter_{i}", NoiseFilterType.No),
+                    gamma=self.settings.get_from_profile(f"{self.viewer_name}.gamma_value_{i}", 1),
                 )
                 el.clicked.connect(self.set_active)
                 el.channel_visible_changed.connect(self.visibility_changed)
@@ -543,21 +588,21 @@ class ColorComboBoxGroup(QWidget):
                 el.deleteLater()
         if num <= self.active_box:
             self.set_active(num - 1)
-        self.change_channel.emit(self.name, self.active_box)
+        self.change_channel.emit(self.viewer_name, self.active_box)
 
     def set_active(self, pos: int):
         self.active_box = pos
         for i in range(self.layout().count()):
             el = self.layout().itemAt(i).widget()
             el.show_frame = i == self.active_box
-        self.change_channel.emit(self.name, pos)
+        self.change_channel.emit(self.viewer_name, pos)
         self.repaint()
 
     def get_filter(self) -> typing.List[typing.Tuple[NoiseFilterType, float]]:
         return [
             (
-                self.settings.get_from_profile(f"{self.name}.use_filter_{i}", NoiseFilterType.No),
-                self.settings.get_from_profile(f"{self.name}.filter_radius_{i}", 1),
+                self.settings.get_from_profile(f"{self.viewer_name}.use_filter_{i}", NoiseFilterType.No),
+                self.settings.get_from_profile(f"{self.viewer_name}.filter_radius_{i}", 1),
             )
             for i in range(self.layout().count())
         ]
@@ -565,14 +610,17 @@ class ColorComboBoxGroup(QWidget):
     def get_limits(self) -> typing.List[typing.Union[typing.Tuple[int, int], None]]:
         resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = [(0, 0)] * self.layout().count()  #
         for i in range(self.layout().count()):
-            if not self.settings.get_from_profile(f"{self.name}.lock_{i}", False):
+            if not self.settings.get_from_profile(f"{self.viewer_name}.lock_{i}", False):
                 resp[i] = None
             else:
-                resp[i] = self.settings.get_from_profile(f"{self.name}.range_{i}", (0, 65000))
+                resp[i] = self.settings.get_from_profile(f"{self.viewer_name}.range_{i}", (0, 65000))
         return resp
 
     def get_gamma(self) -> typing.List[float]:
-        return [self.settings.get_from_profile(f"{self.name}.gamma_value_{i}", 1) for i in range(self.layout().count())]
+        return [
+            self.settings.get_from_profile(f"{self.viewer_name}.gamma_value_{i}", 1)
+            for i in range(self.layout().count())
+        ]
 
     def parameters_changed(self, channel):
         """for ChannelProperty to inform about change of parameters"""
@@ -580,15 +628,15 @@ class ColorComboBoxGroup(QWidget):
             return
         widget: ColorComboBox = self.layout().itemAt(channel).widget()
         widget.set_blur(
-            self.settings.get_from_profile(f"{self.name}.use_filter_{channel}", NoiseFilterType.No)
+            self.settings.get_from_profile(f"{self.viewer_name}.use_filter_{channel}", NoiseFilterType.No)
             != NoiseFilterType.No
         )
-        widget.set_lock(self.settings.get_from_profile(f"{self.name}.lock_{channel}", False))
-        widget.set_gamma(self.settings.get_from_profile(f"{self.name}.gamma_value_{channel}", 1) != 1)
+        widget.set_lock(self.settings.get_from_profile(f"{self.viewer_name}.lock_{channel}", False))
+        widget.set_gamma(self.settings.get_from_profile(f"{self.viewer_name}.gamma_value_{channel}", 1) != 1)
         if self.active_channel(channel):
             self.coloring_update.emit()
         if self.active_box == channel:
-            self.change_channel.emit(self.name, channel)
+            self.change_channel.emit(self.viewer_name, channel)
 
 
 class LockedInfoWidget(QWidget):

@@ -4,6 +4,7 @@ In this moment controlling colormaps tabs and developer PartSegCore
 """
 import importlib
 import sys
+from contextlib import suppress
 from functools import partial
 from typing import List
 
@@ -123,12 +124,10 @@ class MaskControl(QWidget):
         color = self.color_picker.currentColor()
         color = (color.red(), color.green(), color.blue())
         self.settings.set_in_profile("mask_presentation_color", color)
-        self.settings.mask_representation_changed_emit()
         self.set_color_preview(color)
 
     def change_opacity(self):
         self.settings.set_in_profile("mask_presentation_opacity", self.opacity_spin.value())
-        self.settings.mask_representation_changed_emit()
 
 
 class Apperance(QWidget):
@@ -212,11 +211,9 @@ class AdvancedWindow(QTabWidget):
         if state_store.develop:
             self.addTab(self.develop, "Develop")
         if self.window() == self:
-            try:
+            with suppress(KeyError):
                 geometry = self.settings.get_from_profile("advanced_window_geometry")
                 self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-            except KeyError:
-                pass
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """

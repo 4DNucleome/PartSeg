@@ -7,6 +7,7 @@ import pathlib
 import pprint
 import sys
 import typing
+from contextlib import suppress
 from enum import Enum, EnumMeta
 
 # TODO read about dataclsss and maybe apply
@@ -116,10 +117,8 @@ class RegisterClass(typing.Generic[T]):
             return self.exact_class_register[path]
         name = path[path.rfind(".") + 1 :]
         if name not in self.predict_class_register:
-            try:
+            with suppress(ImportError):
                 importlib.import_module(path[: path.rfind(".")])
-            except ImportError:
-                pass
         if name in self.predict_class_register:
             if len(self.predict_class_register[name]) == 1:
                 return self.predict_class_register[name][0]
@@ -279,10 +278,8 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     result._source = class_definition
     result._field_defaults = defaults_dict  # pylint: disable=W0212
     result.__annotations__ = types
-    try:
+    with suppress(AttributeError):
         result.__signature__ = inspect.signature(result)
-    except AttributeError:
-        pass
     result._field_types = collections.OrderedDict(types)  # pylint: disable=W0212
     return result
 
@@ -328,10 +325,8 @@ class BaseMeta(type):
         # nm_tpl._field_defaults = defaults_dict
         module = attrs.get("__module__", None)
         if module is None:
-            try:
+            with suppress(AttributeError, ValueError):
                 module = sys._getframe(1).f_globals.get("__name__", "__main__")
-            except (AttributeError, ValueError):
-                pass
         if module is not None:
             result.__module__ = module
 

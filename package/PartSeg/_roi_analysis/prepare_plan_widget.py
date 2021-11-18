@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import typing
+from contextlib import contextmanager
 from copy import copy, deepcopy
 from enum import Enum
 
@@ -263,7 +264,6 @@ def _check_widget(tab_widget, type_):
 
 class CreatePlan(QWidget):
 
-    plan_created = Signal()
     plan_node_changed = Signal()
 
     def __init__(self, settings: PartSettings):
@@ -343,6 +343,9 @@ class CreatePlan(QWidget):
         self.update_element_chk.stateChanged.connect(self.show_segment)
         self.update_element_chk.stateChanged.connect(self.update_names)
         self.segment_stack.currentChanged.connect(self.change_segmentation_table)
+        self.settings.measurement_profiles_changed.connect(self._refresh_measurement)
+        self.settings.roi_profiles_changed.connect(self._refresh_profiles)
+        self.settings.roi_pipelines_changed.connect(self._refresh_pipelines)
 
         plan_box = QGroupBox("Prepare workflow:")
         lay = QVBoxLayout()
@@ -454,6 +457,7 @@ class CreatePlan(QWidget):
         self.file_mask.value_changed.connect(self.mask_stack_change)
         self.mask_name.textChanged.connect(self.mask_stack_change)
         self.node_type_changed()
+        self.refresh_all_profiles()
 
     def change_root_type(self):
         value: RootType = self.change_root.currentEnum()
@@ -497,7 +501,6 @@ class CreatePlan(QWidget):
         self.save_btn.setDisabled(True)
         if self.node_type == self.expected_node_type:
             self.save_btn.setEnabled(True)
-            return
 
     def segmentation_from_project(self):
         self.calculation_plan.add_step(Operations.reset_to_base)
@@ -777,7 +780,6 @@ class CreatePlan(QWidget):
             plan.set_name(text)
             self.settings.batch_plans[text] = plan
             self.settings.dump()
-            self.plan_created.emit()
 
     @staticmethod
     def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
@@ -789,28 +791,38 @@ class CreatePlan(QWidget):
         except ValueError:
             return -1
 
-    @staticmethod
-    def refresh_profiles(list_widget: QListWidget, new_values: typing.List[str], index: int):
+    def refresh_profiles(self, list_widget: QListWidget, new_values: typing.List[str]):
+        index = self.get_index(list_widget.currentItem(), new_values)
         list_widget.clear()
         list_widget.addItems(new_values)
         if index != -1:
             list_widget.setCurrentRow(index)
 
-    def showEvent(self, _event):
-        self.refresh_all_profiles()
+    @contextmanager
+    def enable_protect(self):
+        self.protect = True
+        yield
+        self.protect = False
+
+    def _refresh_measurement(self):
+        new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
+        with self.enable_protect():
+            self.refresh_profiles(self.measurements_list, new_measurements)
+
+    def _refresh_profiles(self):
+        new_profiles = list(sorted(self.settings.roi_profiles.keys(), key=str.lower))
+        with self.enable_protect():
+            self.refresh_profiles(self.segment_profile, new_profiles)
+
+    def _refresh_pipelines(self):
+        new_pipelines = list(sorted(self.settings.roi_pipelines.keys(), key=str.lower))
+        with self.enable_protect():
+            self.refresh_profiles(self.pipeline_profile, new_pipelines)
 
     def refresh_all_profiles(self):
-        new_measurements = list(sorted(self.settings.measurement_profiles.keys()))
-        new_segment = list(sorted(self.settings.roi_profiles.keys()))
-        new_pipelines = list(sorted(self.settings.roi_pipelines.keys()))
-        measurement_index = self.get_index(self.measurements_list.currentItem(), new_measurements)
-        segment_index = self.get_index(self.segment_profile.currentItem(), new_segment)
-        pipeline_index = self.get_index(self.pipeline_profile.currentItem(), new_pipelines)
-        self.protect = True
-        self.refresh_profiles(self.measurements_list, new_measurements, measurement_index)
-        self.refresh_profiles(self.segment_profile, new_segment, segment_index)
-        self.refresh_profiles(self.pipeline_profile, new_pipelines, pipeline_index)
-        self.protect = False
+        self._refresh_measurement()
+        self._refresh_profiles()
+        self._refresh_pipelines()
 
     def show_measurement_info(self, text=None):
         if self.protect:
@@ -1056,6 +1068,7 @@ class CalculateInfo(QWidget):
         self.edit_plan_btn.clicked.connect(self.edit_plan)
         self.export_plans_btn.clicked.connect(self.export_plans)
         self.import_plans_btn.clicked.connect(self.import_plans)
+        self.settings.batch_plans_changed.connect(self.update_plan_list)
 
     def update_plan_list(self):
         new_plan_list = list(sorted(self.settings.batch_plans.keys()))
@@ -1107,7 +1120,6 @@ class CalculateInfo(QWidget):
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():
                     self.settings.batch_plans[final_name] = plans[original_name]
-                self.update_plan_list()
 
     def delete_plan(self):
         if self.calculate_plans.currentItem() is None:
@@ -1117,7 +1129,6 @@ class CalculateInfo(QWidget):
             return
         if text in self.settings.batch_plans:
             del self.settings.batch_plans[text]
-        self.update_plan_list()
         self.plan_view.clear()
 
     def edit_plan(self):
@@ -1151,6 +1162,5 @@ class CalculatePlaner(QSplitter):
         self.info_widget = CalculateInfo(settings)
         self.addWidget(self.info_widget)
         self.create_plan = CreatePlan(settings)
-        self.create_plan.plan_created.connect(self.info_widget.update_plan_list)
         self.info_widget.plan_to_edit_signal.connect(self.create_plan.edit_plan)
         self.addWidget(self.create_plan)

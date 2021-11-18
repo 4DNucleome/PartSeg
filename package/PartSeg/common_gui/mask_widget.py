@@ -1,3 +1,4 @@
+from contextlib import suppress
 from functools import partial
 
 from qtpy.QtCore import Signal
@@ -147,11 +148,9 @@ class MaskDialogBase(QDialog):
         main_layout = QVBoxLayout()
         self.mask_widget = MaskWidget(settings, self)
         main_layout.addWidget(self.mask_widget)
-        try:
+        with suppress(KeyError):
             mask_property = self.settings.get("mask_manager.mask_property")
             self.mask_widget.set_mask_property(mask_property)
-        except KeyError:
-            pass
 
         self.reset_next_btn = QPushButton("Reset Next")
         self.reset_next_btn.clicked.connect(self.reset_next_fun)

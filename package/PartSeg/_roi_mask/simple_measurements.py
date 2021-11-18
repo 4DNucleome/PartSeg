@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from qtpy.QtCore import QByteArray, QEvent, Qt
 from qtpy.QtGui import QCloseEvent, QKeyEvent
 from qtpy.QtWidgets import (
@@ -53,11 +55,9 @@ class SimpleMeasurements(QWidget):
         self.setLayout(layout)
         self.setWindowTitle("Measurement")
         if self.window() == self:
-            try:
+            with suppress(KeyError):
                 geometry = self.settings.get_from_profile("simple_measurement_window_geometry")
                 self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-            except KeyError:
-                pass
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """

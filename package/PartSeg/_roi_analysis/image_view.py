@@ -21,20 +21,19 @@ class ResultImageView(ImageView):
         super().__init__(settings, channel_property, name)
         self._channel_control_top = True
         self.only_border = QCheckBox("")
-        self.image_state.only_borders = False
-        self.only_border.setChecked(self.image_state.only_borders)
-        self.only_border.stateChanged.connect(self.image_state.set_borders)
+        self._set_border_from_settings()
+        self.only_border.stateChanged.connect(self._set_border)
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
-        self.opacity.setValue(self.image_state.opacity)
         self.opacity.setSingleStep(0.1)
-        self.opacity.valueChanged.connect(self.image_state.set_opacity)
+        self._set_opacity_from_settings()
+        self.opacity.valueChanged.connect(self._set_opacity)
         self.opacity.setMinimumWidth(500)
         self.channel_control_index = self.btn_layout.indexOf(self.channel_control)
         self.label1 = QLabel("Borders:")
         self.label2 = QLabel("Opacity:")
         self.roi_alternative_select = QComboBox()
-        self.roi_alternative_select.currentTextChanged.connect(self.image_state.set_roi_presented)
+        self.roi_alternative_select.currentTextChanged.connect(self._set_roi_alternative_version)
         self.stretch = None
 
         self.btn_layout.insertWidget(self.channel_control_index + 1, self.label1)
@@ -49,6 +48,25 @@ class ResultImageView(ImageView):
         self.opacity.setVisible(False)
         self.only_border.setVisible(False)
         self.roi_alternative_select.setVisible(False)
+
+        self.settings.connect_to_profile(f"{self.name}.image_state.only_border", self._set_border_from_settings)
+        self.settings.connect_to_profile(f"{self.name}.image_state.opacity", self._set_opacity_from_settings)
+
+    def _set_border(self, value: bool):
+        self.settings.set_in_profile(f"{self.name}.image_state.only_border", value)
+
+    def _set_opacity(self, value: float):
+        self.settings.set_in_profile(f"{self.name}.image_state.opacity", value)
+
+    def _set_border_from_settings(self):
+        self.only_border.setChecked(self.settings.get_from_profile(f"{self.name}.image_state.only_border", False))
+
+    def _set_opacity_from_settings(self):
+        self.opacity.setValue(self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1))
+
+    def _set_roi_alternative_version(self, name: str):
+        self.roi_alternative_selection = name
+        self.update_roi_border()
 
     def any_roi(self):
         return any(image_info.roi is not None for image_info in self.image_info.values())

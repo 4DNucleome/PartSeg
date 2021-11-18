@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, MutableMapping, Optional
 
 import numpy as np
 
@@ -25,7 +25,7 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     return radius
 
 
-def dict_repr(dkt: dict) -> str:
+def dict_repr(dkt: MutableMapping) -> str:
     """
     calculate dict representation which use :py:func:`numpy_repr` for numpy representation.
 
@@ -34,7 +34,7 @@ def dict_repr(dkt: dict) -> str:
     """
     res = []
     for k, v in dkt.items():
-        if isinstance(v, dict):
+        if isinstance(v, MutableMapping):
             res.append(f"{k}: {dict_repr(v)}")
         elif isinstance(v, np.ndarray):
             res.append(f"{k}: {numpy_repr(v)}")

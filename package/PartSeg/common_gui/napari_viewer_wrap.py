@@ -1,3 +1,4 @@
+from contextlib import suppress
 from typing import List, Optional
 
 from napari import Viewer as NViewer
@@ -56,10 +57,8 @@ class SynchronizeWidget(QWidget):
 
     def _clean_layers(self, layers_list):
         for name in layers_list:
-            try:
+            with suppress(KeyError, ValueError):
                 del self.viewer.layers[name]
-            except (KeyError, ValueError):  # pragma: no cover pylint: disable=W0703
-                pass
 
     def _substitute_image_layer(self, name, data, scale, cmap, name_list):
         if name in name_list and name in self.viewer.layers:
@@ -79,10 +78,8 @@ class SynchronizeWidget(QWidget):
             blending="additive",
             colormap=cmap,
         )
-        try:
+        with suppress(KeyError):
             name_list.remove(layer.name)
-        except KeyError:  # pragma: no cover
-            pass
         return layer
 
     def _substitute_labels_layer(self, name, data, scale, name_list):
@@ -101,10 +98,8 @@ class SynchronizeWidget(QWidget):
             name=name,
             scale=scale,
         )
-        try:
+        with suppress(KeyError):
             name_list.remove(layer.name)
-        except KeyError:  # pragma: no cover
-            pass
         return layer
 
     def _substitute_points_layer(self, name, data, scale, name_list):
@@ -122,10 +117,8 @@ class SynchronizeWidget(QWidget):
             name=name,
             scale=scale,
         )
-        try:
+        with suppress(KeyError):
             name_list.remove(layer.name)
-        except KeyError:  # pragma: no cover
-            pass
         return layer
 
     def _sync_image(self):

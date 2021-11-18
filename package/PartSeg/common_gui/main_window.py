@@ -1,6 +1,7 @@
 import dataclasses
 import os
-from typing import List, Optional, Type
+from pathlib import Path
+from typing import List, Optional, Type, Union
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
@@ -23,6 +24,10 @@ from .napari_viewer_wrap import Viewer
 from .qt_console import QtConsole
 from .show_directory_dialog import DirectoryDialog
 from .waiting_dialog import ExecuteFunctionDialog
+
+OPEN_FILE = "io.open_file"
+OPEN_DIRECTORY = "io.open_directory"
+OPEN_FILE_FILTER = "io.open_filter"
 
 
 class BaseMainMenu(QWidget):
@@ -109,7 +114,7 @@ class BaseMainWindow(QMainWindow):
 
     def __init__(
         self,
-        config_folder: Optional[str] = None,
+        config_folder: Union[str, Path, None] = None,
         title="PartSeg",
         settings: Optional[BaseSettings] = None,
         load_dict: Optional[Register] = None,
@@ -153,8 +158,8 @@ class BaseMainWindow(QMainWindow):
         self.multiple_files = None
         self.settings.request_load_files.connect(self.read_drop)
         self.recent_file_menu = QMenu("Open recent")
-        self._refresh_recent(FILE_HISTORY, self.settings.get_last_files())
-        self.settings.data_changed.connect(self._refresh_recent)
+        self._refresh_recent()
+        self.settings.connect_(FILE_HISTORY, self._refresh_recent)
         self.settings.napari_settings.appearance.events.theme.connect(self.change_theme)
         self.settings.set_parent(self)
         self.console = None
@@ -170,11 +175,10 @@ class BaseMainWindow(QMainWindow):
             self.console_dock.setWidget(self.console)
         self.console_dock.setVisible(not self.console_dock.isVisible())
 
-    def _refresh_recent(self, name, value):
-        if name != FILE_HISTORY or self._load_dict is None:
-            return
+    def _refresh_recent(self):
+
         self.recent_file_menu.clear()
-        for name_list, method in value:
+        for name_list, method in self.settings.get_last_files():
             action = self.recent_file_menu.addAction(f"{name_list[0]}, {method}")
             action.setData((name_list, method))
             action.triggered.connect(self._load_recent)
@@ -189,6 +193,9 @@ class BaseMainWindow(QMainWindow):
                 result = dial.get_result()
                 self.main_menu.set_data(result)
                 self.settings.add_last_files(data[0], method.get_name())
+                self.settings.set(OPEN_DIRECTORY, os.path.dirname(data[0][0]))
+                self.settings.set(OPEN_FILE, data[0][0])
+                self.settings.set(OPEN_FILE_FILTER, data[1])
         except KeyError:
             self.read_drop(data[0])
 

@@ -4,6 +4,7 @@ import platform
 import sys
 from enum import Enum
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -15,6 +16,7 @@ from PartSeg.common_gui import select_multiple_files
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, LoadProperty, PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
+from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
@@ -408,7 +410,7 @@ def test_recent_files(part_settings, qtbot):
     assert dial.file_list.count() == 3
     assert dial.size() == QSize(*new_size)
     dial.file_list.selectAll()
-    assert dial.get_files() == [(("bbb.txt",), "method"), (("aaa.txt",), "method"), (("ccc.txt",), "method")]
+    assert dial.get_files() == [(["bbb.txt"], "method"), (["aaa.txt"], "method"), (["ccc.txt"], "method")]
 
 
 class TestMultipleFileWidget:
@@ -429,7 +431,15 @@ class TestMultipleFileWidget:
             ImageWriter.save(
                 Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
             )
-        file_list = [[(tmp_path / f"img_{i}.tif",), LoadStackImage.get_name()] for i in range(5)]
+        file_list = [
+            [
+                [
+                    tmp_path / f"img_{i}.tif",
+                ],
+                LoadStackImage.get_name(),
+            ]
+            for i in range(5)
+        ]
         with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
             widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
         assert part_settings.get_last_files_multiple() == file_list
@@ -453,9 +463,9 @@ class TestMultipleFileWidget:
             ImageWriter.save(
                 Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
             )
-        file_list = [[(tmp_path / f"img_{i}.tif",), LoadStackImage.get_name()] for i in range(5)]
+        file_list = [[[str(tmp_path / f"img_{i}.tif")], LoadStackImage.get_name()] for i in range(5)]
         load_property = LoadProperty(
-            [tmp_path / f"img_{i}.tif" for i in range(5)], LoadStackImage.get_name(), LoadStackImage
+            [str(tmp_path / f"img_{i}.tif") for i in range(5)], LoadStackImage.get_name(), LoadStackImage
         )
         with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
             widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
@@ -470,3 +480,37 @@ class TestMultipleFileWidget:
             widget.load_files()
         assert widget.file_view.topLevelItemCount() == 5
         assert part_settings.get_last_files_multiple() == file_list
+        part_settings.dump()
+        part_settings.load()
+        assert part_settings.get_last_files_multiple() == file_list
+
+
+class TestBaseMainWindow:
+    def test_create(self, tmp_path, qtbot):
+        window = BaseMainWindow(config_folder=tmp_path)
+        qtbot.add_widget(window)
+
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
+    def test_recent(self, tmp_path, qtbot, monkeypatch):
+        load_mock = MagicMock()
+        load_mock.load = MagicMock(return_value=1)
+        load_mock.get_name = MagicMock(return_value="test")
+        window = BaseMainWindow(config_folder=tmp_path, load_dict={"test": load_mock})
+        qtbot.add_widget(window)
+        assert window.recent_file_menu.isEmpty()
+        window.settings.add_last_files([tmp_path / "test.txt"], "test")
+        actions = window.recent_file_menu.actions()
+        assert len(actions) == 1
+        assert actions[0].data() == ([tmp_path / "test.txt"], "test")
+        monkeypatch.setattr(window, "sender", lambda: actions[0])
+        main_menu = MagicMock()
+        add_last_files = MagicMock()
+        monkeypatch.setattr(window, "main_menu", main_menu, raising=False)
+        monkeypatch.setattr(window.settings, "add_last_files", add_last_files)
+        window._load_recent()
+        window.settings.add_last_files.assert_called_once_with([tmp_path / "test.txt"], "test")
+        main_menu.set_data.assert_called_with(1)
+        assert window.settings.get(OPEN_DIRECTORY) == str(tmp_path)
+        assert str(window.settings.get(OPEN_FILE)) == str(tmp_path / "test.txt")
+        assert window.settings.get(OPEN_FILE_FILTER) == "test"

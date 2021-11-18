@@ -12,7 +12,7 @@ from PartSegCore.analysis.load_functions import load_metadata
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_hooks import PartEncoder
 from PartSegCore.io_utils import PointsInfo
-from PartSegCore.json_hooks import ProfileDict
+from PartSegCore.json_hooks import EventedDict, ProfileDict
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 
@@ -25,6 +25,10 @@ class PartSettings(BaseSettings):
     """
 
     compare_segmentation_change = Signal(ROIInfo)
+    roi_profiles_changed = Signal()
+    roi_pipelines_changed = Signal()
+    measurement_profiles_changed = Signal()
+    batch_plans_changed = Signal()
     json_encoder_class = PartEncoder
     load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
@@ -36,14 +40,18 @@ class PartSettings(BaseSettings):
         "multiple_open_directory",
     ]
 
-    def __init__(self, json_path):
-        super().__init__(json_path)
+    def __init__(self, json_path, profile_name="default"):
+        super().__init__(json_path, profile_name)
         self._mask = None
         self.compare_segmentation = None
-        self.segmentation_pipelines_dict = ProfileDict()
-        self.segmentation_profiles_dict = ProfileDict()
-        self.batch_plans_dict = ProfileDict()
-        self.measurement_profiles_dict = ProfileDict()
+        self._segmentation_pipelines_dict = ProfileDict()
+        self._segmentation_profiles_dict = ProfileDict()
+        self._batch_plans_dict = ProfileDict()
+        self._measurement_profiles_dict = ProfileDict()
+        self._segmentation_profiles_dict.connect("", self.roi_profiles_changed.emit, maxargs=0)
+        self._segmentation_pipelines_dict.connect("", self.roi_pipelines_changed.emit, maxargs=0)
+        self._measurement_profiles_dict.connect("", self.measurement_profiles_changed.emit, maxargs=0)
+        self._batch_plans_dict.connect("", self.batch_plans_changed.emit, maxargs=0)
 
     def fix_history(self, algorithm_name, algorithm_values):
         """
@@ -71,9 +79,12 @@ class PartSettings(BaseSettings):
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
         if algorithm_name:
+            value = self.get(f"algorithms.{algorithm_name}")
+            if isinstance(value, EventedDict):
+                value = value.as_dict_deep()
             algorithm_val = {
                 "algorithm_name": algorithm_name,
-                "values": deepcopy(self.get(f"algorithms.{algorithm_name}")),
+                "values": deepcopy(value),
             }
         else:
             algorithm_val = {}
@@ -119,10 +130,10 @@ class PartSettings(BaseSettings):
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return super().get_save_list() + [
-            SaveSettingsDescription("segmentation_pipeline_save.json", self.segmentation_pipelines_dict),
-            SaveSettingsDescription("segmentation_profiles_save.json", self.segmentation_profiles_dict),
-            SaveSettingsDescription("statistic_profiles_save.json", self.measurement_profiles_dict),
-            SaveSettingsDescription("batch_plans_save.json", self.batch_plans_dict),
+            SaveSettingsDescription("segmentation_pipeline_save.json", self._segmentation_pipelines_dict),
+            SaveSettingsDescription("segmentation_profiles_save.json", self._segmentation_profiles_dict),
+            SaveSettingsDescription("statistic_profiles_save.json", self._measurement_profiles_dict),
+            SaveSettingsDescription("batch_plans_save.json", self._batch_plans_dict),
         ]
 
     @property
@@ -132,7 +143,7 @@ class PartSettings(BaseSettings):
 
     @property
     def roi_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
-        return self.segmentation_pipelines_dict.get(self._current_roi_dict, {})
+        return self._segmentation_pipelines_dict.get(self._current_roi_dict, EventedDict())
 
     @property
     def segmentation_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
@@ -141,12 +152,12 @@ class PartSettings(BaseSettings):
 
     @property
     def roi_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
-        return self.segmentation_profiles_dict.get(self._current_roi_dict, {})
+        return self._segmentation_profiles_dict.get(self._current_roi_dict, EventedDict())
 
     @property
     def batch_plans(self) -> typing.Dict[str, CalculationPlan]:
-        return self.batch_plans_dict.get(self._current_roi_dict, {})
+        return self._batch_plans_dict.get(self._current_roi_dict, EventedDict())
 
     @property
     def measurement_profiles(self) -> typing.Dict[str, MeasurementProfile]:
-        return self.measurement_profiles_dict.get(self._current_roi_dict, {})
+        return self._measurement_profiles_dict.get(self._current_roi_dict, EventedDict())

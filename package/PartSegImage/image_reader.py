@@ -2,6 +2,7 @@ import os.path
 import typing
 import warnings
 from abc import abstractmethod
+from contextlib import suppress
 from io import BytesIO
 from pathlib import Path
 from threading import Lock
@@ -168,7 +169,7 @@ class OifImagReader(BaseImageReader):
         axes = tiffs.axes + tif_file.series[0].axes
         image_data = image_file.asarray()
         image_data = self.update_array_shape(image_data, axes)
-        try:
+        with suppress(KeyError):
             flat_parm = image_file.mainfile["Reference Image Parameter"]
             x_scale = flat_parm["HeightConvertValue"] * name_to_scalar[flat_parm["HeightUnit"]]
             y_scale = flat_parm["WidthConvertValue"] * name_to_scalar[flat_parm["WidthUnit"]]
@@ -185,8 +186,6 @@ class OifImagReader(BaseImageReader):
                 i += 1
 
             self.spacing = z_scale, x_scale, y_scale
-        except KeyError:  # pragma: no cover
-            pass
         # TODO add mask reading
         return self.image_class(
             image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
@@ -203,7 +202,7 @@ class CziImageReader(BaseImageReader):
         image_data = image_file.asarray()
         image_data = self.update_array_shape(image_data, image_file.axes)
         metadata = image_file.metadata(False)
-        try:
+        with suppress(KeyError):
             scaling = metadata["ImageDocument"]["Metadata"]["Scaling"]["Items"]["Distance"]
             scale_info = {el["Id"]: el["Value"] for el in scaling}
             self.spacing = (
@@ -211,8 +210,6 @@ class CziImageReader(BaseImageReader):
                 scale_info.get("Y", self.default_spacing[1]),
                 scale_info.get("X", self.default_spacing[2]),
             )
-        except KeyError:  # pragma: no cover
-            pass
         # TODO add mask reading
         return self.image_class(
             image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
@@ -429,14 +426,10 @@ class TiffImageReader(BaseImageReader):
         if "Channel" not in meta_data["Pixels"]:
             return
         if isinstance(meta_data["Pixels"]["Channel"], (list, tuple)):
-            try:
+            with suppress(KeyError):
                 self.channel_names = [ch["Name"] for ch in meta_data["Pixels"]["Channel"]]
-            except KeyError:
-                pass
-            try:
+            with suppress(KeyError):
                 self.colors = [self.decode_int(ch["Color"])[:-1] for ch in meta_data["Pixels"]["Channel"]]
-            except KeyError:
-                pass
             return
         if "Name" in meta_data["Pixels"]["Channel"]:
             self.channel_names = [meta_data["Pixels"]["Channel"]["Name"]]
@@ -445,21 +438,17 @@ class TiffImageReader(BaseImageReader):
 
     def read_ome_metadata(self, image_file):
         meta_data = tifffile.xml2dict(image_file.ome_metadata)["OME"]["Image"]
-        try:
+        with suppress(KeyError):
             self.spacing = [
                 meta_data["Pixels"][f"PhysicalSize{x}"] * name_to_scalar[meta_data["Pixels"][f"PhysicalSize{x}Unit"]]
                 for x in ["Z", "Y", "X"]
             ]
-        except KeyError:  # pragma: no cover
-            pass
-        try:
+        with suppress(KeyError):
             self.shift = [
                 meta_data["Pixels"]["Plane"][0][f"Position{x}"]
                 * name_to_scalar[meta_data["Pixels"]["Plane"][0][f"Position{x}Unit"]]
                 for x in ["Z", "Y", "X"]
             ]
-        except KeyError:
-            pass
         self.name = meta_data.get("Name", "")
         self._read_ome_channel_information(meta_data)
 

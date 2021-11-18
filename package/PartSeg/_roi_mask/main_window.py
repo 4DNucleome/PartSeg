@@ -1,4 +1,5 @@
 import os
+from contextlib import suppress
 from functools import partial
 from typing import Type
 
@@ -45,7 +46,7 @@ from ..common_gui.custom_load_dialog import PLoadDialog
 from ..common_gui.custom_save_dialog import PSaveDialog
 from ..common_gui.exception_hooks import load_data_exception_hook
 from ..common_gui.flow_layout import FlowLayout
-from ..common_gui.main_window import BaseMainMenu, BaseMainWindow
+from ..common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
 from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..common_gui.napari_image_view import LabelEnum
@@ -174,16 +175,16 @@ class MainMenu(BaseMainMenu):
         dial = PLoadDialog(
             io_functions.load_dict,
             settings=self.settings,
-            path="io.load_image_directory",
-            filter_path="io.load_data_filter",
+            path=OPEN_DIRECTORY,
+            filter_path=OPEN_FILE_FILTER,
         )
-        default_file_path = self.settings.get("io.load_image_file", "")
+        default_file_path = self.settings.get(OPEN_FILE, "")
         if os.path.isfile(default_file_path):
             dial.selectFile(default_file_path)
         if not dial.exec_():
             return
         load_property = dial.get_result()
-        self.settings.set("io.load_image_file", load_property.load_location[0])
+        self.settings.set(OPEN_FILE, load_property.load_location[0])
         self.settings.add_last_files(load_property.load_location, load_property.load_class.get_name())
 
         execute_dialog = ExecuteFunctionDialog(
@@ -473,21 +474,21 @@ class ChosenComponents(QWidget):
 
 class AlgorithmOptions(QWidget):
     def __init__(self, settings: StackSettings, image_view: StackImageView):
-        control_view = image_view.get_control_view()
         super().__init__()
         self.settings = settings
+        self.view_name = image_view.name
         self.show_result = QEnumComboBox(enum_class=LabelEnum)  # QCheckBox("Show result")
-        self.show_result.setCurrentEnum(control_view.show_label)
+        self._set_show_label_from_settings()
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
         self.opacity.setSingleStep(0.1)
-        self.opacity.setValue(control_view.opacity)
+        self._set_opacity_from_settings()
         self.only_borders = QCheckBox("Only borders")
-        self.only_borders.setChecked(control_view.only_borders)
+        self._set_border_mode_from_settings()
         self.borders_thick = QSpinBox()
         self.borders_thick.setRange(1, 11)
         self.borders_thick.setSingleStep(2)
-        self.borders_thick.setValue(control_view.borders_thick)
+        self._set_border_thick_from_settings()
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(self.border_value_check)
         self.execute_in_background_btn = QPushButton("Execute in background")
@@ -496,7 +497,7 @@ class AlgorithmOptions(QWidget):
         self.execute_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.execute_all_btn = QPushButton("Execute all")
         self.execute_all_btn.setToolTip(
-            "Execute in batch mode segmentation with current parameter. " "File list need to be specified in image tab."
+            "Execute in batch mode segmentation with current parameter. File list need to be specified in image tab."
         )
         self.execute_all_btn.setDisabled(True)
         self.save_parameters_btn = QPushButton("Save parameters")
@@ -509,7 +510,7 @@ class AlgorithmOptions(QWidget):
         # self.stack_layout = QStackedLayout()
         self.keep_chosen_components_chk = QCheckBox("Save selected components")
         self.keep_chosen_components_chk.setToolTip(
-            "Save chosen components when loading segmentation form file\n" "or from multiple file widget."
+            "Save chosen components when loading segmentation form file\n or from multiple file widget."
         )
         self.keep_chosen_components_chk.stateChanged.connect(self.set_keep_chosen_components)
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
@@ -520,7 +521,7 @@ class AlgorithmOptions(QWidget):
         )
         self.show_parameters.clicked.connect(self.show_parameters_widget.show)
         self.choose_components = ChosenComponents()
-        self.choose_components.check_change_signal.connect(control_view.components_change)
+        self.choose_components.check_change_signal.connect(image_view.refresh_selected)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
         self.choose_components.mouse_enter.connect(image_view.component_mark)
         # WARNING works only with one channels algorithms
@@ -584,16 +585,46 @@ class AlgorithmOptions(QWidget):
         self.execute_all_btn.clicked.connect(self.execute_all_action)
         self.save_parameters_btn.clicked.connect(self.save_parameters)
         # noinspection PyUnresolvedReferences
-        self.opacity.valueChanged.connect(control_view.set_opacity)
+        self.opacity.valueChanged.connect(self._set_opacity)
         # noinspection PyUnresolvedReferences
-        self.show_result.currentEnumChanged.connect(control_view.set_show_label)
-        self.only_borders.stateChanged.connect(control_view.set_borders)
+        self.show_result.currentEnumChanged.connect(self._set_show_label)
+        self.only_borders.stateChanged.connect(self._set_border_mode)
         # noinspection PyUnresolvedReferences
-        self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
+        self.borders_thick.valueChanged.connect(self._set_border_thick)
         image_view.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
+        settings.connect_to_profile(f"{self.view_name}.image_state.only_border", self._set_border_mode_from_settings)
+        settings.connect_to_profile(f"{self.view_name}.image_state.border_thick", self._set_border_thick_from_settings)
+        settings.connect_to_profile(f"{self.view_name}.image_state.opacity", self._set_opacity_from_settings)
+        settings.connect_to_profile(f"{self.view_name}.image_state.show_label", self._set_show_label_from_settings)
+
+    def _set_border_mode(self, value: bool):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.only_border", value)
+
+    def _set_border_thick(self, value: int):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.border_thick", value)
+
+    def _set_opacity(self, value: float):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.opacity", value)
+
+    def _set_show_label(self, value: LabelEnum):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.show_label", value)
+
+    def _set_border_mode_from_settings(self):
+        self.only_borders.setChecked(self.settings.get_from_profile(f"{self.view_name}.image_state.only_border", True))
+
+    def _set_border_thick_from_settings(self):
+        self.borders_thick.setValue(self.settings.get_from_profile(f"{self.view_name}.image_state.border_thick", 1))
+
+    def _set_opacity_from_settings(self):
+        self.opacity.setValue(self.settings.get_from_profile(f"{self.view_name}.image_state.opacity", 1.0))
+
+    def _set_show_label_from_settings(self):
+        self.show_result.setCurrentEnum(
+            self.settings.get_from_profile(f"{self.view_name}.image_state.show_label", LabelEnum.Show_results)
+        )
 
     @Slot(int)
     def set_keep_chosen_components(self, val):
@@ -916,11 +947,9 @@ class MainWindow(BaseMainWindow):
             self.settings.image = im
         elif initial_image is not False:
             self.settings.image = initial_image
-        try:
+        with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-        except KeyError:
-            pass
 
     def closeEvent(self, event: QCloseEvent):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
