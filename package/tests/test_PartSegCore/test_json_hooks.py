@@ -6,9 +6,18 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 from napari.utils import Colormap
+from napari.utils.notifications import NotificationSeverity
 
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.json_hooks import EventedDict, ProfileDict, ProfileEncoder, profile_hook, recursive_update_dict
+from PartSegCore.json_hooks import (
+    EventedDict,
+    PartSegEncoder,
+    ProfileDict,
+    ProfileEncoder,
+    partseg_object_hook,
+    profile_hook,
+    recursive_update_dict,
+)
 
 
 def test_recursive_update_dict_basic():
@@ -261,3 +270,23 @@ class TestProfileEncoder:
         loaded = json.loads(text, object_hook=profile_hook)
         assert loaded["a"] == RadiusType.R2D
         assert loaded["b"].get("a.b.c") == 1
+
+
+class TestPartSegEncoder:
+    def test_enum_serialize(self, tmp_path):
+        data = {"value1": RadiusType.R2D, "value2": RadiusType.NO, "value3": NotificationSeverity.ERROR}
+        with (tmp_path / "test.json").open("w") as f_p:
+            json.dump(data, f_p, cls=PartSegEncoder)
+        with (tmp_path / "test.json").open("r") as f_p:
+            data2 = json.load(f_p, object_hook=partseg_object_hook)
+        assert data2["value1"] == RadiusType.R2D
+        assert data2["value2"] == RadiusType.NO
+        assert data2["value3"] == NotificationSeverity.ERROR
+
+    def test_pydantic_serialize(self, tmp_path):
+        data = {"color1": Colormap("black")}
+        with (tmp_path / "test.json").open("w") as f_p:
+            json.dump(data, f_p, cls=PartSegEncoder)
+        with (tmp_path / "test.json").open("r") as f_p:
+            data2 = json.load(f_p, object_hook=partseg_object_hook)
+        assert data2["color1"] == Colormap("black")

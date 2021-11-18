@@ -71,6 +71,10 @@ class {typename}({base_classes}):
         'Return a new OrderedDict which maps field names to their values.'
         return OrderedDict(zip(self._fields, _attrgetter(*self.__slots__)(self)))
 
+    def as_dict(self):
+        'Return a new OrderedDict which maps field names to their values.'
+        return dict(zip(self._fields, _attrgetter(*self.__slots__)(self)))
+
     def as_tuple(self):
         return {tuple_fields}
 

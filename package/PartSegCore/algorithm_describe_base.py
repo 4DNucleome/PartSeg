@@ -257,6 +257,13 @@ class ROIExtractionProfile:
         self.algorithm = algorithm
         self.values = values
 
+    def as_dict(self):
+        return {
+            "name": self.name,
+            "algorithm": self.algorithm,
+            "values": self.values,
+        }
+
     def pretty_print(self, algorithm_dict):
         try:
             algorithm = algorithm_dict[self.algorithm]

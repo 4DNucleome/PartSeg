@@ -10,6 +10,7 @@ from collections.abc import MutableMapping
 from contextlib import suppress
 
 import numpy as np
+import pydantic
 from napari.utils import Colormap
 from psygnal import Signal
 
@@ -395,23 +396,35 @@ def check_loaded_dict(dkt) -> bool:
     return all(check_loaded_dict(val) for val in dkt.values())
 
 
+def class_to_str(cls) -> str:
+    return cls.__module__ + "." + cls.__name__
+
+
 class PartSegEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, enum.Enum):
             return {
-                "__class__": obj.__module__ + "." + obj.__class__,
+                "__class__": class_to_str(obj.__class__),
                 "value": obj.value,
             }
         if dataclasses.is_dataclass(obj):
             fields = dataclasses.fields(obj)
             dkt = {x.name: getattr(obj, x.name) for x in fields}
-            dkt["__class__"] = obj.__module__ + "." + obj.__class__
-            return super().default(dkt)
+            dkt["__class__"] = class_to_str(obj.__class__)
+            return dkt
+
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+
+        if isinstance(obj, pydantic.BaseModel):
+            dkt = obj.dict()
+            dkt["__class__"] = class_to_str(obj.__class__)
+            return dkt
 
         if hasattr(obj, "as_dict"):
             dkt = obj.as_dict()
-            dkt["__class__"] = obj.__module__ + "." + obj.__class__
-            return super().default(dkt)
+            dkt["__class__"] = class_to_str(obj.__class__)
+            return dkt
 
         if isinstance(obj, np.integer):
             return int(obj)
@@ -424,13 +437,12 @@ class PartSegEncoder(json.JSONEncoder):
 
 def partseg_object_hook(dkt):
     if "__class__" in dkt:
-        module_name, class_name = dkt["__class__"].rsplit(".")
+        module_name, class_name = dkt["__class__"].rsplit(".", maxsplit=1)
         # the migration code should be called here
         try:
             del dkt["__class__"]
             module = importlib.import_module(module_name)
-            obj = getattr(module, class_name)(**dkt)
-            return obj
+            return getattr(module, class_name)(**dkt)
         except Exception as e:
             dkt["__class__"] = module_name + "." + class_name
             dkt["__error__"] = e
