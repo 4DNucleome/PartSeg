@@ -343,7 +343,12 @@ class ChannelProperty(QWidget):
         widget = self.widget_dict[self.current_name]
         widget.parameters_changed(self.current_channel)
 
-    def register_widget(self, widget: "ColorComboBoxGroup"):
+    def register_widget(self, widget: "ColorComboBoxGroup") -> None:
+        """
+        Register new viewer by its color combo box group
+
+        :param ColorComboBoxGroup widget: viewer widget for color control
+        """
         if widget.viewer_name in self.widget_dict:
             raise ValueError(f"name {widget.viewer_name} already register")
         self.widget_dict[widget.viewer_name] = widget
@@ -354,7 +359,14 @@ class ChannelProperty(QWidget):
         if path is None or path.startswith(self.current_name):
             self.change_current(self.current_name, self.current_channel)
 
-    def change_current(self, name, channel):
+    def change_current(self, name: str, channel: int) -> None:
+        """
+        Change to show values connected with channel `channel` from viewer `viewer`
+
+        :param str name: name of viewer
+        :param int channel: channel to which data should be presented
+        :rtype: None
+        """
         if name not in self.widget_dict:
             raise ValueError(f"name {name} not in register")
         self.current_name = name
@@ -453,9 +465,9 @@ class ColorComboBoxGroup(QWidget):
             channel_property.register_widget(self)
             self.change_channel.connect(channel_property.change_current)
         settings.connect_channel_colormap_name(viewer_name, self.update_colors)
-        settings.connect_to_profile(self.viewer_name, self.settings_updated)
+        settings.connect_to_profile(self.viewer_name, self._settings_updated)
 
-    def settings_updated(self, path: str = ""):
+    def _settings_updated(self, path: str = ""):
         if "." in path:
             potential_name = path.rsplit(".", maxsplit=1)[-1]
             if "_" not in potential_name:
@@ -473,12 +485,13 @@ class ColorComboBoxGroup(QWidget):
         return self.viewer_name
 
     def update_colors(self):
+        """For each channel update colormap to reflect settings"""
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
             el.setCurrentText(self.settings.get_channel_colormap_name(self.viewer_name, i))
 
     def update_color_list(self, colors: typing.Optional[typing.List[str]] = None):
-        """update list"""
+        """Update list of available colormaps in each selector"""
         if colors is None:
             colors = self.settings.chosen_colormap
         for i in range(self.layout().count()):
@@ -495,6 +508,7 @@ class ColorComboBoxGroup(QWidget):
 
     @property
     def selected_colormaps(self) -> typing.List[Colormap]:
+        """For each channel give information about selected colormap by name"""
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
@@ -511,7 +525,7 @@ class ColorComboBoxGroup(QWidget):
 
     @property
     def current_colors(self) -> typing.List[typing.Optional[str]]:
-        """ """
+        """List of  current colors. None if channel is not selected."""
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
@@ -522,7 +536,8 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     @property
-    def current_colormaps(self):
+    def current_colormaps(self) -> typing.List[typing.Optional[Colormap]]:
+        """List of current colormaps. None if channel is not selected"""
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
