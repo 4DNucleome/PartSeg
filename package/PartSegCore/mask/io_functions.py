@@ -549,6 +549,8 @@ def save_components(
     important_axis = "XY" if image.is_2d else "XYZ"
     index_to_frame_points = image.calc_index_to_frame(image.axis_order, important_axis)
     points_casted = points.astype(np.uint16) if points is not None else None
+    if not components:
+        components = list(roi_info.bound_info.keys())
     range_changed(0, 2 * len(components))
     for i in components:
         components_mark = np.array(roi_info.roi == i)

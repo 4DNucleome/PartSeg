@@ -374,6 +374,15 @@ class TestSegmentationMask:
         assert len(glob(os.path.join(tmpdir, "seg_save", "*"))) == 4
         seg2 = LoadROI.load([os.path.join(tmpdir, "segmentation.seg")])
         assert seg2 is not None
+        save_components(
+            seg.image,
+            [],
+            os.path.join(tmpdir, "seg_save2"),
+            seg.roi_info,
+            SaveComponents.get_default_values(),
+        )
+        assert os.path.isdir(os.path.join(tmpdir, "seg_save2"))
+        assert len(glob(os.path.join(tmpdir, "seg_save2", "*"))) == 8
 
     def test_save_segmentation_without_image(self, tmpdir, data_test_dir):
         seg = LoadROIImage.load(
