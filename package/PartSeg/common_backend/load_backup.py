@@ -46,7 +46,7 @@ def import_config():
         )
         if resp == QMessageBox.Yes:
             shutil.copytree(os.path.join(base_folder, before_name), state_store.save_folder)
-            if os.path.join(state_store.save_folder, IGNORE_FILE):
+            if os.path.exists(os.path.join(state_store.save_folder, IGNORE_FILE)):
                 os.remove(os.path.join(state_store.save_folder, IGNORE_FILE))
             napari_settings = napari_get_settings(state_store.save_folder)
             if hasattr(napari_settings, "load") and napari_settings.load is not None:
