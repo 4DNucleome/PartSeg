@@ -201,7 +201,7 @@ class ROIExtractionAlgorithms(QWidget):
                 QMessageBox.No,
             ):
                 break  # pragma: no cover
-        resp = ROIExtractionProfile(text, widget.name, widget.get_values())
+        resp = ROIExtractionProfile(name=text, algorithm=widget.name, values=widget.get_values())
         profiles[text] = resp
         self.settings.dump()
         self.profile_combo_box.addItem(text)

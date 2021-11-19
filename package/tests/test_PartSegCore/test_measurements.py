@@ -2022,7 +2022,7 @@ def roi_to_roi_extract():
     parameters["threshold"]["values"]["threshold"] = 1
     parameters["minimum_size"] = 1
     parameters["channel"] = 1
-    return ROIExtractionProfile("default", LowerThresholdAlgorithm.get_name(), parameters)
+    return ROIExtractionProfile(name="default", algorithm=LowerThresholdAlgorithm.get_name(), values=parameters)
 
 
 @pytest.mark.parametrize("roi_dist", DistancePoint.__members__.values())

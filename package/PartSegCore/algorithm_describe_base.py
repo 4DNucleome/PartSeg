@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
 
+from pydantic import BaseModel
+
 from PartSegCore.channel_class import Channel
 
 
@@ -244,7 +246,7 @@ class Register(OrderedDict, typing.Generic[AlgorithmType]):
             raise ValueError("Register does not contain any algorithm.")
 
 
-class ROIExtractionProfile:
+class ROIExtractionProfile(BaseModel):
     """
 
     :ivar str ~.name: name for segmentation profile
@@ -252,17 +254,9 @@ class ROIExtractionProfile:
     :ivar dict ~.values: algorithm parameters
     """
 
-    def __init__(self, name: str, algorithm: str, values: dict):
-        self.name = name
-        self.algorithm = algorithm
-        self.values = values
-
-    def as_dict(self):
-        return {
-            "name": self.name,
-            "algorithm": self.algorithm,
-            "values": self.values,
-        }
+    name: str
+    algorithm: str
+    values: typing.Dict[str, typing.Any]
 
     def pretty_print(self, algorithm_dict):
         try:

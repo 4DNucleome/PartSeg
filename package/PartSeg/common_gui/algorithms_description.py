@@ -628,7 +628,7 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
             el.setEnabled(True)
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.algorithm.get_name(), self.get_values())
+        return ROIExtractionProfile(name="", algorithm=self.algorithm.get_name(), values=self.get_values())
 
 
 class AlgorithmChooseBase(QWidget):
@@ -733,7 +733,7 @@ class AlgorithmChooseBase(QWidget):
 
     def current_parameters(self) -> ROIExtractionProfile:
         widget = self.current_widget()
-        return ROIExtractionProfile("", widget.name, widget.get_values())
+        return ROIExtractionProfile(name="", algorithm=widget.name, values=widget.get_values())
 
     def get_info_text(self):
         return self.current_widget().algorithm_thread.get_info_text()

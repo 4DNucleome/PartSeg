@@ -241,7 +241,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.new_parameters = deepcopy(kwargs)
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
+        return ROIExtractionProfile(name="", algorithm=self.get_name(), values=deepcopy(self.new_parameters))
 
     @staticmethod
     def get_steps_num():

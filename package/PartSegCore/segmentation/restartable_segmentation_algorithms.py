@@ -54,7 +54,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
         return "No info [Report this ass error]"
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
+        return ROIExtractionProfile(name="", algorithm=self.get_name(), values=deepcopy(self.new_parameters))
 
     @classmethod
     def support_time(cls):

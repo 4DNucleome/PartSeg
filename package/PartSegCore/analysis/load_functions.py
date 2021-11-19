@@ -452,9 +452,9 @@ def load_metadata(data: typing.Union[str, Path]):
 
 def update_algorithm_dict(dkt):
     if "name" in dkt:
-        profile = ROIExtractionProfile("", dkt["name"], dkt["values"])
+        profile = ROIExtractionProfile(name="", algorithm=dkt["name"], values=dkt["values"])
     elif "algorithm_name" in dkt:
-        profile = ROIExtractionProfile("", dkt["algorithm_name"], dkt["values"])
+        profile = ROIExtractionProfile(name="", algorithm=dkt["algorithm_name"], values=dkt["values"])
     else:
         return dkt
     profile = UpdateLoadedMetadataAnalysis.recursive_update(profile)

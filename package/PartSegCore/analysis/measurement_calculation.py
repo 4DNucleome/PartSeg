@@ -1311,7 +1311,9 @@ class DistanceROIROI(DistanceMaskROI):
                 "profile",
                 "ROI extraction profile",
                 ROIExtractionProfile(
-                    "default", LowerThresholdAlgorithm.get_name(), LowerThresholdAlgorithm.get_default_values()
+                    name="default",
+                    algorithm=LowerThresholdAlgorithm.get_name(),
+                    values=LowerThresholdAlgorithm.get_default_values(),
                 ),
                 value_type=ROIExtractionProfile,
             ),
@@ -1387,7 +1389,9 @@ class ROINeighbourhoodROI(DistanceMaskROI):
                 "profile",
                 "ROI extraction profile",
                 ROIExtractionProfile(
-                    "default", LowerThresholdAlgorithm.get_name(), LowerThresholdAlgorithm.get_default_values()
+                    name="default",
+                    algorithm=LowerThresholdAlgorithm.get_name(),
+                    values=LowerThresholdAlgorithm.get_default_values(),
                 ),
                 value_type=ROIExtractionProfile,
             ),
