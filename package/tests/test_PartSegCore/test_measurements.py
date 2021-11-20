@@ -5,12 +5,13 @@ import os
 from functools import partial, reduce
 from math import isclose, pi
 from operator import eq, lt
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 from sympy import symbols
 
-from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
@@ -48,6 +49,7 @@ from PartSegCore.analysis.measurement_calculation import (
     Voxels,
 )
 from PartSegCore.autofit import density_mass_center
+from PartSegCore.channel_class import Channel
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.universal_const import UNIT_SCALE, Units
@@ -104,6 +106,27 @@ def get_two_component_mask():
     mask = np.zeros(get_two_components_image().get_channel(0).shape[1:], dtype=np.uint8)
     mask[3:-3, 2:-2, 2:-2] = 1
     return mask
+
+
+class TestLeaf:
+    def test_channel_calc(self, monkeypatch):
+        mock = MagicMock()
+        mock.get_fields = MagicMock(return_value=[])
+        leaf = Leaf("aa", {})
+        assert leaf.get_channel_num({"aa": mock}) == set()
+        leaf = Leaf("aa", {}, channel=Channel(1))
+        assert leaf.get_channel_num({"aa": mock}) == {1}
+        mock.get_fields = MagicMock(
+            return_value=[
+                "eee",
+                AlgorithmProperty("value", "Value", 1),
+                AlgorithmProperty("ch", "Ch", 1, value_type=Channel),
+            ]
+        )
+        leaf = Leaf("aa", {"value": 15, "ch": 3})
+        assert leaf.get_channel_num({"aa": mock}) == {3}
+        leaf = Leaf("aa", {"value": 15, "ch": 3}, channel=Channel(1))
+        assert leaf.get_channel_num({"aa": mock}) == {1, 3}
 
 
 class TestDiameter:
