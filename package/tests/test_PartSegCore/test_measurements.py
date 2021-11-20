@@ -2,6 +2,7 @@
 
 import itertools
 import os
+import sys
 from functools import partial, reduce
 from math import isclose, pi
 from operator import eq, lt
@@ -127,6 +128,28 @@ class TestLeaf:
         assert leaf.get_channel_num({"aa": mock}) == {3}
         leaf = Leaf("aa", {"value": 15, "ch": 3}, channel=Channel(1))
         assert leaf.get_channel_num({"aa": mock}) == {1, 3}
+
+    def test_pretty_print(self, monkeypatch):
+        mock = MagicMock()
+        mock.get_fields = MagicMock(return_value=[])
+        leaf = Leaf("aa", {})
+        text = leaf.pretty_print({"aa": mock})
+        assert "ROI" not in text
+        assert "Mask" not in text
+        assert "per component" not in text
+        assert "mean component" not in text
+        assert "to the power" not in text
+        assert "per component" in Leaf("aa", {}, per_component=PerComponent.Yes).pretty_print({"aa": mock})
+        assert "mean component" in Leaf("aa", {}, per_component=PerComponent.Mean).pretty_print({"aa": mock})
+        assert "to the power" not in Leaf("aa", {}, power=1).pretty_print({"aa": mock})
+        assert "to the power 2" in Leaf("aa", {}, power=2).pretty_print({"aa": mock})
+        monkeypatch.setattr(mock, "__module__", "PartSegCore.test")
+        assert Leaf("aa", {}).pretty_print({"aa": mock})[0] != "["
+        monkeypatch.setattr(mock, "__module__", "PartSegPlugin.submodule")
+        assert Leaf("aa", {}).pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
+        monkeypatch.setattr(sys, "frozen", True, raising=False)
+        monkeypatch.setattr(mock, "__module__", "plugins.PartSegPlugin.submodule")
+        assert Leaf("aa", {}).pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
 
 
 class TestDiameter:

@@ -118,7 +118,7 @@ class Leaf(BaseSerializableClass):
             return f"[{measurement_method.__module__.split('.', 1)[0]}] "
         return ""
 
-    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:  # pragma: no cover
+    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
