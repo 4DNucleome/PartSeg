@@ -1,3 +1,4 @@
+import sys
 from abc import ABC
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Union
@@ -110,6 +111,8 @@ class Leaf(BaseSerializableClass):
             hasattr(measurement_method, "__module__")
             and measurement_method.__module__.split(".", 1)[0] != "PartSegCore"
         ):
+            if getattr(sys, "frozen", False):
+                return f"[{measurement_method.__module__.split('.', 2)[1]}] "
             return f"[{measurement_method.__module__.split('.', 1)[0]}] "
         return ""
 
