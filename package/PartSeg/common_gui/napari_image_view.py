@@ -794,10 +794,14 @@ class ImageView(QWidget):
             size = u_bound - l_bound
             rect.size = tuple(np.max([rect.size, size * 1.2], axis=0))
             pos = rect.pos
-            if rect.left > l_bound[0] or rect.right < u_bound[0]:
+            if rect.left > l_bound[0]:
                 pos = l_bound[0], pos[1]
-            if rect.top > l_bound[1] or rect.bottom < u_bound[1]:
+            if rect.right < u_bound[0]:
+                pos = pos[0] + u_bound[0] - rect.right, pos[1]
+            if rect.bottom > l_bound[1]:
                 pos = pos[0], l_bound[1]
+            if rect.top < u_bound[1]:
+                pos = pos[0], pos[1] + (u_bound[1] - rect.top)
             rect.pos = pos
             self.viewer_widget.view.camera.set_state({"rect": rect})
 
