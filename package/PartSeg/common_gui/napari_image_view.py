@@ -17,7 +17,7 @@ from napari.layers.labels import Labels
 from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QPoint, Qt, Signal
+from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from superqt import QEnumComboBox, ensure_main_thread
@@ -748,11 +748,13 @@ class ImageView(QWidget):
     def component_unmark(self, _num):
         self.viewer.layers.selection.clear()
         for el in self.additional_layers:
+            if "timer" in el.metadata:
+                el.metadata["timer"].stop()
             self.viewer.layers.selection.add(el)
         self.viewer.layers.remove_selected()
         self.additional_layers = []
 
-    def component_mark(self, num):
+    def component_mark(self, num, flash=False):
         self.component_unmark(num)
         self._search_type = SearchType.Highlight
         self._last_component = num
@@ -781,6 +783,20 @@ class ImageView(QWidget):
                 )
             )
             self.additional_layers[-1].translate_grid = translate_grid
+            if flash:
+                layer = self.additional_layers[-1]
+
+                def flash_fun(layer_=layer):
+                    opacity = layer_.opacity + 0.1
+                    if opacity > 1:
+                        opacity = 0.1
+                    layer_.opacity = opacity
+
+                timer = QTimer()
+                timer.setInterval(100)
+                timer.timeout.connect(flash_fun)
+                timer.start()
+                layer.metadata["timer"] = timer
 
         lower_bound, upper_bound = bounding_box
         self._update_point(lower_bound, upper_bound)
@@ -891,9 +907,13 @@ class SearchComponentModal(QtPopup):
 
     def _component_num_changed(self):
         if self.zoom_to.currentEnum() == SearchType.Highlight:
-            self.image_view.component_mark(self.component_selector.value())
+            self.image_view.component_mark(self.component_selector.value(), flash=True)
         else:
             self.image_view.zoom_component(self.component_selector.value())
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.image_view.component_unmark(0)
 
 
 @dataclass
