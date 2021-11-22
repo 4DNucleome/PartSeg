@@ -1,5 +1,6 @@
 import itertools
 import logging
+import typing
 from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
@@ -18,9 +19,10 @@ from napari.qt.threading import thread_worker
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, Signal
 from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QToolTip, QVBoxLayout, QWidget
-from superqt import ensure_main_thread
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QSpinBox, QToolTip, QVBoxLayout, QWidget
+from superqt import QEnumComboBox, ensure_main_thread
 from vispy.color import Color, Colormap
+from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
 from PartSegCore.class_generator import enum_register
@@ -32,6 +34,7 @@ from PartSegImage import Image
 from ..common_backend.base_settings import BaseSettings
 from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME
 from .channel_control import ChannelProperty, ColorComboBoxGroup
+from .qt_modal import QtPopup
 
 try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton
@@ -95,6 +98,11 @@ class LabelEnum(Enum):
         return self.name.replace("_", " ")
 
 
+class SearchType(Enum):
+    Highlight = 0
+    Zoom_in = 1
+
+
 class ImageView(QWidget):
     position_changed = Signal([int, int, int], [int, int])
     component_clicked = Signal(int)
@@ -123,6 +131,9 @@ class ImageView(QWidget):
         self.worker_list = []
         self.points_layer = None
         self.roi_alternative_selection = "ROI"
+        self.additional_layers: List[Layer] = []
+        self._search_type = SearchType.Highlight
+        self._last_component = 1
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -136,7 +147,8 @@ class ImageView(QWidget):
             self.viewer, "new_points", "Show points", self.toggle_points_visibility
         )
         self.search_roi_btn = SearchROIButton(self)
-        self.search_roi_btn.setDisabled(True)
+        # self.search_roi_btn.setDisabled(True)
+        self.search_roi_btn.clicked.connect(self._search_component)
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
         self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
@@ -727,6 +739,109 @@ class ImageView(QWidget):
                 QToolTip.showText(event.globalPos(), text)
         return super().event(event)
 
+    def _search_component(self):
+        max_components = max(max(image_info.roi_info.bound_info) for image_info in self.image_info.values())
+
+        dial = SearchComponentModal(self, self._search_type, self._last_component, max_components)
+        dial.show_right_of_mouse()
+
+    def component_unmark(self, _num):
+        self.viewer.layers.selection.clear()
+        for el in self.additional_layers:
+            self.viewer.layers.selection.add(el)
+        self.viewer.layers.remove_selected()
+        self.additional_layers = []
+
+    def component_mark(self, num):
+        self.component_unmark(num)
+        self._search_type = SearchType.Highlight
+        self._last_component = num
+
+        bounding_box = self._bounding_box(num)
+        if bounding_box is None:
+            return
+
+        for image_info in self.image_info.values():
+            bound_info = image_info.roi_info.bound_info.get(num, None)
+            if bound_info is None:
+                continue
+            # TODO think about marking on bright background
+            slices = bound_info.get_slices()
+            slices[image_info.image.stack_pos] = slice(None)
+            component_mark = image_info.roi_info.roi[tuple(slices)] == num
+            translate_grid = image_info.roi.translate_grid + (bound_info.lower) * image_info.roi.scale
+            translate_grid[image_info.image.stack_pos] = 0
+            self.additional_layers.append(
+                self.viewer.add_image(
+                    component_mark,
+                    scale=image_info.roi.scale,
+                    blending="additive",
+                    colormap="gray",
+                    opacity=0.5,
+                )
+            )
+            self.additional_layers[-1].translate_grid = translate_grid
+
+        lower_bound, upper_bound = bounding_box
+        self._update_point(lower_bound, upper_bound)
+
+        if self.viewer.dims.ndisplay == 2:
+            l_bound = lower_bound[-2:][::-1]
+            u_bound = upper_bound[-2:][::-1]
+            rect = Rect(self.viewer_widget.view.camera.get_state()["rect"])
+            if rect.contains(*l_bound) and rect.contains(*u_bound):
+                return
+            size = u_bound - l_bound
+            rect.size = tuple(np.max([rect.size, size * 1.2], axis=0))
+            pos = rect.pos
+            if rect.left > l_bound[0] or rect.right < u_bound[0]:
+                pos = l_bound[0], pos[1]
+            if rect.top > l_bound[1] or rect.bottom < u_bound[1]:
+                pos = pos[0], l_bound[1]
+            rect.pos = pos
+            self.viewer_widget.view.camera.set_state({"rect": rect})
+
+    def zoom_component(self, num):
+        self.component_unmark(num)
+        self._search_type = SearchType.Zoom_in
+        self._last_component = num
+
+        bounding_box = self._bounding_box(num)
+        if bounding_box is None:
+            return
+
+        lower_bound, upper_bound = bounding_box
+        diff = upper_bound - lower_bound
+        frame = diff * 0.2
+        if self.viewer.dims.ndisplay == 2:
+            rect = Rect(pos=(lower_bound - frame)[-2:][::-1], size=(diff + 2 * frame)[-2:][::-1])
+            self.set_state({"camera": {"rect": rect}})
+        self._update_point(lower_bound, upper_bound)
+
+    def _update_point(self, lower_bound, upper_bound):
+        point = (lower_bound + upper_bound) / 2
+        current_point = self.viewer.dims.point
+        for i in range(self.viewer.dims.ndim - self.viewer.dims.ndisplay):
+            if not (lower_bound[i] <= current_point[i] <= upper_bound[i]):
+                self.viewer.dims.set_point(i, point[i])
+
+    def _bounding_box(self, num) -> typing.Optional[typing.Tuple[np.ndarray, np.ndarray]]:
+        lower_bound_list = []
+        upper_bound_list = []
+        for image_info in self.image_info.values():
+            bound_info = image_info.roi_info.bound_info.get(num, None)
+            if bound_info is None:
+                continue
+            lower_bound_list.append(image_info.roi._data_to_world(bound_info.lower))
+            upper_bound_list.append(image_info.roi._data_to_world(bound_info.upper))
+
+        if not lower_bound_list:
+            return
+
+        lower_bound = np.min(lower_bound_list, axis=0)
+        upper_bound = np.min(upper_bound_list, axis=0)
+        return lower_bound, upper_bound
+
 
 class NapariQtViewer(QtViewer):
     def __init__(self, viewer):
@@ -750,6 +865,31 @@ class NapariQtViewer(QtViewer):
     def closeEvent(self, event):
         self.close()
         super().closeEvent(event)
+
+
+class SearchComponentModal(QtPopup):
+    def __init__(self, image_view: ImageView, search_type: SearchType, component_num: int, max_components):
+        super().__init__(image_view)
+        self.image_view = image_view
+        self.zoom_to = QEnumComboBox(self, SearchType)
+        self.zoom_to.setCurrentEnum(search_type)
+        self.component_selector = QSpinBox()
+        self.component_selector.valueChanged.connect(self._component_num_changed)
+        self.component_selector.setMaximum(max_components)
+        self.component_selector.setValue(component_num)
+
+        layout = QHBoxLayout()
+        layout.addWidget(QLabel("Component:"))
+        layout.addWidget(self.component_selector)
+        layout.addWidget(QLabel("Selection:"))
+        layout.addWidget(self.zoom_to)
+        self.frame.setLayout(layout)
+
+    def _component_num_changed(self):
+        if self.zoom_to.currentEnum() == SearchType.Highlight:
+            self.image_view.component_mark(self.component_selector.value())
+        else:
+            self.image_view.zoom_component(self.component_selector.value())
 
 
 @dataclass
