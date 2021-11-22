@@ -422,16 +422,21 @@ class ImageView(QWidget):
             if image_info.roi is None:
                 continue
             roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
-            if self.settings.get_from_profile(f"{self.name}.image_state.only_border", True):
-
+            border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) == 1
+            only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
+            if only_border and border_thick != 1:
                 data = calculate_borders(
                     roi.transpose(ORDER_DICT[self._current_order]),
                     self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) // 2,
                     self.viewer.dims.ndisplay == 2,
                 ).transpose(np.argsort(ORDER_DICT[self._current_order]))
                 image_info.roi.data = data
+                image_info.roi.metadata["border_thick"] = border_thick
             else:
-                image_info.roi.data = roi
+                if image_info.roi.metadata.get("border_thick", 1) != 1:
+                    image_info.roi.data = roi
+                image_info.roi.metadata["border_thick"] = 1
+                image_info.roi.contour = only_border
 
     @ensure_main_thread
     def update_rendering(self):
