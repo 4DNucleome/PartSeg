@@ -856,8 +856,8 @@ class ImageView(QWidget):
             bound_info = image_info.roi_info.bound_info.get(num, None)
             if bound_info is None:
                 continue
-            lower_bound_list.append(image_info.roi._data_to_world(bound_info.lower))
-            upper_bound_list.append(image_info.roi._data_to_world(bound_info.upper))
+            lower_bound_list.append(image_info.roi._data_to_world(bound_info.lower))  # pylint: disable=W0212
+            upper_bound_list.append(image_info.roi._data_to_world(bound_info.upper))  # pylint: disable=W0212
 
         if not lower_bound_list:
             return
