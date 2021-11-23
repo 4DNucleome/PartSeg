@@ -855,7 +855,8 @@ class ImageView(QWidget):
             if not (lower_bound[i] <= current_point[i] <= upper_bound[i]):
                 self.viewer.dims.set_point(i, point[i])
 
-    def _data_to_world(self, layer: Layer, cords):
+    @staticmethod
+    def _data_to_world(layer: Layer, cords):  # pylint: disable=W0212
         return layer._transforms[1:3].simplified(cords)
 
     def _bounding_box(self, num) -> Optional[Tuple[np.ndarray, np.ndarray]]:
