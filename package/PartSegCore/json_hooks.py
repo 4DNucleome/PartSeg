@@ -17,6 +17,7 @@ from psygnal import Signal
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 
 from .class_generator import SerializeClassEncoder, serialize_hook
+from .class_register import class_to_str
 from .image_operations import RadiusType
 from .utils import CallbackBase, get_callback
 
@@ -394,10 +395,6 @@ def check_loaded_dict(dkt) -> bool:
     if "__error__" in dkt:
         return False
     return all(check_loaded_dict(val) for val in dkt.values())
-
-
-def class_to_str(cls) -> str:
-    return cls.__module__ + "." + cls.__name__
 
 
 class PartSegEncoder(json.JSONEncoder):
