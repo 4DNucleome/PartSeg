@@ -17,7 +17,7 @@ from psygnal import Signal
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 
 from .class_generator import SerializeClassEncoder, serialize_hook
-from .class_register import class_to_str
+from .class_register import REGISTER, class_to_str
 from .image_operations import RadiusType
 from .utils import CallbackBase, get_callback
 
@@ -397,11 +397,17 @@ def check_loaded_dict(dkt) -> bool:
     return all(check_loaded_dict(val) for val in dkt.values())
 
 
+def add_class_info(obj, dkt):
+    dkt["__class__"] = class_to_str(obj.__class__)
+    dkt["__version__"] = str(REGISTER.get_version(obj.__class__))
+
+
 class PartSegEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, enum.Enum):
             return {
                 "__class__": class_to_str(obj.__class__),
+                "__version__": str(REGISTER.get_version(obj.__class__)),
                 "value": obj.value,
             }
         if dataclasses.is_dataclass(obj):
@@ -414,13 +420,16 @@ class PartSegEncoder(json.JSONEncoder):
             return obj.tolist()
 
         if isinstance(obj, pydantic.BaseModel):
-            dkt = obj.dict()
-            dkt["__class__"] = class_to_str(obj.__class__)
+            try:
+                dkt = dict(obj)
+            except ValueError:
+                dkt = obj.dict()
+            add_class_info(obj, dkt)
             return dkt
 
         if hasattr(obj, "as_dict"):
             dkt = obj.as_dict()
-            dkt["__class__"] = class_to_str(obj.__class__)
+            add_class_info(obj, dkt)
             return dkt
 
         if isinstance(obj, np.integer):
@@ -428,7 +437,7 @@ class PartSegEncoder(json.JSONEncoder):
         if isinstance(obj, np.floating):
             return float(obj)
         if isinstance(obj, dict) and "__error__" in obj:
-            del obj["__error__"]  # diffrent napari environments without same plugins installed
+            del obj["__error__"]  # different environments without same plugins installed
         return super().default(obj)
 
 
@@ -436,11 +445,14 @@ def partseg_object_hook(dkt):
     if "__class__" in dkt:
         module_name, class_name = dkt["__class__"].rsplit(".", maxsplit=1)
         # the migration code should be called here
+        cls_str = dkt.pop("__class__")
+        version_str = dkt.pop("__version__")
         try:
-            del dkt["__class__"]
-            module = importlib.import_module(module_name)
-            return getattr(module, class_name)(**dkt)
+            dkt_migrated = REGISTER.migrate_data(cls_str, version_str, dkt)
+            cls = REGISTER.get_class(cls_str)
+            return cls(**dkt_migrated)
         except Exception as e:
-            dkt["__class__"] = module_name + "." + class_name
+            dkt["__class__"] = cls_str
+            dkt["__version__"] = version_str
             dkt["__error__"] = e
     return dkt
