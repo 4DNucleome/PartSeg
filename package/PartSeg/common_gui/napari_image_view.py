@@ -435,6 +435,7 @@ class ImageView(QWidget):
             roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
             border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) == 1
             only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
+            alternative = image_info.roi.metadata.get("alternative", self.roi_alternative_selection)
             if only_border and border_thick != 1:
                 data = calculate_borders(
                     roi.transpose(ORDER_DICT[self._current_order]),
@@ -442,12 +443,13 @@ class ImageView(QWidget):
                     self.viewer.dims.ndisplay == 2,
                 ).transpose(np.argsort(ORDER_DICT[self._current_order]))
                 image_info.roi.data = data
-                image_info.roi.metadata["border_thick"] = border_thick
             else:
-                if image_info.roi.metadata.get("border_thick", 1) != 1:
+                if image_info.roi.metadata.get("border_thick", 1) != 1 or alternative != self.roi_alternative_selection:
                     image_info.roi.data = roi
-                image_info.roi.metadata["border_thick"] = 1
                 image_info.roi.contour = only_border
+
+            image_info.roi.metadata["border_thick"] = border_thick
+            image_info.roi.metadata["alternative"] = self.roi_alternative_selection
 
     @ensure_main_thread
     def update_rendering(self):
@@ -471,7 +473,7 @@ class ImageView(QWidget):
             "scale": image_info.image.normalized_scaling(),
             "name": "ROI",
             "blending": "translucent",
-            "metadata": {"border_thick": border_thick},
+            "metadata": {"border_thick": border_thick, "alternative": self.roi_alternative_selection},
         }
         if napari_rendering:
             kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
