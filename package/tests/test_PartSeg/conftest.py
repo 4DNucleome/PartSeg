@@ -50,13 +50,17 @@ def part_settings_with_project(image, analysis_segmentation2, tmp_path):
 
 @pytest.fixture
 def border_rim_profile():
-    return ROIExtractionProfile("border_profile", BorderRim.get_name(), BorderRim.get_default_values())
+    return ROIExtractionProfile(
+        name="border_profile", algorithm=BorderRim.get_name(), values=BorderRim.get_default_values()
+    )
 
 
 @pytest.fixture
 def lower_threshold_profile():
     return ROIExtractionProfile(
-        "lower_profile", LowerThresholdAlgorithm.get_name(), LowerThresholdAlgorithm.get_default_values()
+        name="lower_profile",
+        algorithm=LowerThresholdAlgorithm.get_name(),
+        values=LowerThresholdAlgorithm.get_default_values(),
     )
 
 
