@@ -855,6 +855,9 @@ class ImageView(QWidget):
             if not (lower_bound[i] <= current_point[i] <= upper_bound[i]):
                 self.viewer.dims.set_point(i, point[i])
 
+    def _data_to_world(self, layer: Layer, cords):
+        return layer._transforms[1:3].simplified(cords)
+
     def _bounding_box(self, num) -> Optional[Tuple[np.ndarray, np.ndarray]]:
         lower_bound_list = []
         upper_bound_list = []
@@ -862,8 +865,8 @@ class ImageView(QWidget):
             bound_info = image_info.roi_info.bound_info.get(num, None)
             if bound_info is None:
                 continue
-            lower_bound_list.append(image_info.roi._data_to_world(bound_info.lower))  # pylint: disable=W0212
-            upper_bound_list.append(image_info.roi._data_to_world(bound_info.upper))  # pylint: disable=W0212
+            lower_bound_list.append(self._data_to_world(image_info.roi, bound_info.lower))  # pylint: disable=W0212
+            upper_bound_list.append(self._data_to_world(image_info.roi, bound_info.upper))  # pylint: disable=W0212
 
         if not lower_bound_list:
             return

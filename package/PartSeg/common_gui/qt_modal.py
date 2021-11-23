@@ -97,7 +97,7 @@ class QtPopup(QDialog):
                 height = self.sizeHint().height()
                 top += 24 if position == "top" else (window.height() - height - 12)
             elif position in ("left", "right"):
-                height = window.height() * win_ratio
+                height = int(window.height() * win_ratio)
                 height = max(height, min_length)
                 # 22 is for the title bar
                 top += 22 + (window.height() - height) // 2
