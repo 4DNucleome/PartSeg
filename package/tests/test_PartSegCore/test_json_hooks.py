@@ -34,6 +34,15 @@ class SamplePydantic(BaseModel):
     sample_datacls: SampleDataclass
 
 
+class SampleAsDict:
+    def __init__(self, value1, value2):
+        self.value1 = value1
+        self.value2 = value2
+
+    def as_dict(self):
+        return {"value1": self.value1, "value2": self.value2}
+
+
 def test_recursive_update_dict_basic():
     dict1 = {"a": 1, "b": 2}
     dict2 = {"b": 3, "c": 4}
@@ -329,3 +338,13 @@ class TestPartSegEncoder:
         assert data2["arr"] == [i for i in range(10)]
         assert np.isclose(data["f"], 0.1)
         assert data2["i"] == 1000
+
+    def test_class_with_as_dict(self, tmp_path):
+        data = {"d": SampleAsDict(1, 10)}
+        with (tmp_path / "test.json").open("w") as f_p:
+            json.dump(data, f_p, cls=PartSegEncoder)
+        with (tmp_path / "test.json").open("r") as f_p:
+            data2 = json.load(f_p, object_hook=partseg_object_hook)
+        assert isinstance(data2["d"], SampleAsDict)
+        assert data2["d"].value1 == data["d"].value1
+        assert data2["d"].value2 == data["d"].value2
