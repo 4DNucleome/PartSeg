@@ -8,6 +8,7 @@ from qtpy.QtCore import QPoint
 
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.napari_image_view import ORDER_DICT, ImageInfo, ImageView, QMenu, _print_dict
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem with mocking excec_")
@@ -184,3 +185,18 @@ class TestImageView:
         monkeypatch.setattr(QMenu, "exec_", check_menu)
         view._dim_order_menu(QPoint(0, 0))
         assert called == [1]
+
+    def test_update_alternatives(self, base_settings, image2, qtbot, tmp_path):
+        ch_prop = ChannelProperty(base_settings, "test")
+        view = ImageView(base_settings, channel_property=ch_prop, name="test")
+        qtbot.addWidget(ch_prop)
+        qtbot.addWidget(view)
+        base_settings.image = image2
+        roi = np.ones(image2.get_channel(0).shape, dtype=np.uint8)
+        roi[..., 1, 1] = 0
+        base_settings.roi = ROIInfo(roi, alternative={"test": np.ones(roi.shape, dtype=np.uint8) - roi})
+        view.update_roi_border()
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].roi.data == roi)
+        view.roi_alternative_selection = "test"
+        view.update_roi_border()
+        assert np.all(view.image_info[str(tmp_path / "test2.tiff")].roi.data != roi)
