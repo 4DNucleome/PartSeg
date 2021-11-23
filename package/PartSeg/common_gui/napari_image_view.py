@@ -487,6 +487,7 @@ class ImageView(QWidget):
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
             image_info.roi = self.viewer.add_labels(data, **kwargs)
+            image_info.roi.contour = False
         else:
             image_info.roi = self.viewer.add_labels(roi, **kwargs)
             image_info.roi.contour = only_border
@@ -760,7 +761,42 @@ class ImageView(QWidget):
         self.viewer.layers.remove_selected()
         self.additional_layers = []
 
-    def component_mark(self, num, flash=False):
+    def _mark_layer(self, num: int, flash: bool, image_info: ImageInfo):
+        bound_info = image_info.roi_info.bound_info.get(num, None)
+        if bound_info is None:
+            return
+        # TODO think about marking on bright background
+        slices = bound_info.get_slices()
+        slices[image_info.image.stack_pos] = slice(None)
+        component_mark = image_info.roi_info.roi[tuple(slices)] == num
+        translate_grid = image_info.roi.translate_grid + (bound_info.lower) * image_info.roi.scale
+        translate_grid[image_info.image.stack_pos] = 0
+        self.additional_layers.append(
+            self.viewer.add_labels(
+                component_mark,
+                scale=image_info.roi.scale,
+                blending="additive",
+                color={0: "black", 1: "white"},
+                opacity=0.5,
+            )
+        )
+        self.additional_layers[-1].translate_grid = translate_grid
+        if flash:
+            layer = self.additional_layers[-1]
+
+            def flash_fun(layer_=layer):
+                opacity = layer_.opacity + 0.1
+                if opacity > 1:
+                    opacity = 0.1
+                layer_.opacity = opacity
+
+            timer = QTimer()
+            timer.setInterval(100)
+            timer.timeout.connect(flash_fun)
+            timer.start()
+            layer.metadata["timer"] = timer
+
+    def component_mark(self, num: int, flash: bool = False):
         self.component_unmark(num)
         self._search_type = SearchType.Highlight
         self._last_component = num
@@ -770,39 +806,7 @@ class ImageView(QWidget):
             return
 
         for image_info in self.image_info.values():
-            bound_info = image_info.roi_info.bound_info.get(num, None)
-            if bound_info is None:
-                continue
-            # TODO think about marking on bright background
-            slices = bound_info.get_slices()
-            slices[image_info.image.stack_pos] = slice(None)
-            component_mark = image_info.roi_info.roi[tuple(slices)] == num
-            translate_grid = image_info.roi.translate_grid + (bound_info.lower) * image_info.roi.scale
-            translate_grid[image_info.image.stack_pos] = 0
-            self.additional_layers.append(
-                self.viewer.add_image(
-                    component_mark,
-                    scale=image_info.roi.scale,
-                    blending="additive",
-                    colormap="gray",
-                    opacity=0.5,
-                )
-            )
-            self.additional_layers[-1].translate_grid = translate_grid
-            if flash:
-                layer = self.additional_layers[-1]
-
-                def flash_fun(layer_=layer):
-                    opacity = layer_.opacity + 0.1
-                    if opacity > 1:
-                        opacity = 0.1
-                    layer_.opacity = opacity
-
-                timer = QTimer()
-                timer.setInterval(100)
-                timer.timeout.connect(flash_fun)
-                timer.start()
-                layer.metadata["timer"] = timer
+            self._mark_layer(num, flash, image_info)
 
         lower_bound, upper_bound = bounding_box
         self._update_point(lower_bound, upper_bound)
@@ -827,7 +831,7 @@ class ImageView(QWidget):
             rect.pos = pos
             self.viewer_widget.view.camera.set_state({"rect": rect})
 
-    def zoom_component(self, num):
+    def component_zoom(self, num):
         self.component_unmark(num)
         self._search_type = SearchType.Zoom_in
         self._last_component = num
@@ -899,6 +903,7 @@ class SearchComponentModal(QtPopup):
         self.image_view = image_view
         self.zoom_to = QEnumComboBox(self, SearchType)
         self.zoom_to.setCurrentEnum(search_type)
+        self.zoom_to.currentEnumChanged.connect(self._component_num_changed)
         self.component_selector = QSpinBox()
         self.component_selector.valueChanged.connect(self._component_num_changed)
         self.component_selector.setMaximum(max_components)
@@ -915,7 +920,7 @@ class SearchComponentModal(QtPopup):
         if self.zoom_to.currentEnum() == SearchType.Highlight:
             self.image_view.component_mark(self.component_selector.value(), flash=True)
         else:
-            self.image_view.zoom_component(self.component_selector.value())
+            self.image_view.component_zoom(self.component_selector.value())
 
     def closeEvent(self, event):
         super().closeEvent(event)

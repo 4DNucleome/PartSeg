@@ -1,13 +1,23 @@
 # pylint: disable=R0201
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 import qtpy
 from napari.layers import Image as NapariImage
 from qtpy.QtCore import QPoint
+from vispy.geometry import Rect
 
 from PartSeg.common_gui.channel_control import ChannelProperty
-from PartSeg.common_gui.napari_image_view import ORDER_DICT, ImageInfo, ImageView, QMenu, _print_dict
+from PartSeg.common_gui.napari_image_view import (
+    ORDER_DICT,
+    ImageInfo,
+    ImageView,
+    QMenu,
+    SearchComponentModal,
+    SearchType,
+    _print_dict,
+)
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
@@ -169,3 +179,70 @@ class TestImageView:
         image_view.roi_alternative_selection = "test"
         image_view.update_roi_border()
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].roi.data != roi)
+
+    def test_marking_component(self, base_settings, image_view, tmp_path):
+        roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
+        roi[..., 2:-2, 2:-2, 2:-2] = 1
+        base_settings.roi = roi
+        image_view.component_mark(1, False)
+        assert len(image_view.additional_layers) == 1
+        assert image_view.additional_layers[0] in image_view.viewer.layers
+        assert "timer" not in image_view.additional_layers[0].metadata
+        image_view.component_unmark(0)
+        assert len(image_view.additional_layers) == 0
+        image_view.component_mark(10, False)
+        assert len(image_view.additional_layers) == 0
+
+    @pytest.mark.enablethread
+    def test_marking_component_flash(self, base_settings, image_view, tmp_path, qtbot):
+        roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
+        roi[..., 2:-2, 2:-2, 2:-2] = 1
+        base_settings.roi = roi
+        image_view.component_mark(1, True)
+        assert len(image_view.additional_layers) == 1
+        assert "timer" in image_view.additional_layers[0].metadata
+        timer = image_view.additional_layers[0].metadata["timer"]
+        assert timer.isActive()
+        qtbot.wait(800)
+        image_view.component_unmark(0)
+        assert len(image_view.additional_layers) == 0
+        assert not timer.isActive()
+
+    @pytest.mark.parametrize("pos", [(-(10 ** 8), -(10 ** 8)), (10 ** 8, 10 ** 8)])
+    def test_update_camera_position_component_marking(self, base_settings, image_view, pos):
+        roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
+        roi[..., 2:-2, 2:-2, 2:-2] = 1
+        base_settings.roi = roi
+        image_view.viewer.dims.set_point(1, 0)
+        rect = Rect(image_view.viewer_widget.view.camera.get_state()["rect"])
+        rect.pos = pos
+        rect.size = (100, 100)
+        image_view.viewer_widget.view.camera.set_state({"rect": rect})
+        image_view.component_mark(1, False)
+        assert image_view.viewer.dims.point[1] != 0
+        assert image_view.viewer_widget.view.camera.get_state()["rect"].pos != pos
+
+    def test_zoom_mark(self, base_settings, image_view):
+        roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
+        roi[..., 2:-2, 2:-2, 2:-2] = 1
+        base_settings.roi = roi
+        image_view.component_zoom(1)
+        image_view.component_zoom(10)
+
+
+def test_search_component_modal(qtbot, image_view, monkeypatch):
+    monkeypatch.setattr(image_view, "component_mark", MagicMock())
+    monkeypatch.setattr(image_view, "component_zoom", MagicMock())
+    monkeypatch.setattr(image_view, "component_unmark", MagicMock())
+    modal = SearchComponentModal(image_view, SearchType.Highlight, component_num=1, max_components=5)
+    image_view.component_mark.assert_called_with(1, flash=True)
+    modal.component_selector.setValue(2)
+    image_view.component_mark.assert_called_with(2, flash=True)
+    assert image_view.component_zoom.call_count == 0
+    modal.zoom_to.setCurrentEnum(SearchType.Zoom_in)
+    image_view.component_zoom.assert_called_with(2)
+    assert image_view.component_mark.call_count == 2
+    modal.component_selector.setValue(1)
+    image_view.component_zoom.assert_called_with(1)
+    modal.close()
+    image_view.component_unmark.assert_called_once()
