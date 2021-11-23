@@ -9,8 +9,8 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 import qtpy
-from qtpy.QtCore import QSize
-from qtpy.QtWidgets import QFileDialog, QWidget
+from qtpy.QtCore import QSize, Qt
+from qtpy.QtWidgets import QFileDialog, QMainWindow, QWidget
 
 from PartSeg.common_gui import select_multiple_files
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, LoadProperty, PLoadDialog
@@ -18,6 +18,7 @@ from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, 
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
+from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
@@ -514,3 +515,62 @@ class TestBaseMainWindow:
         assert window.settings.get(OPEN_DIRECTORY) == str(tmp_path)
         assert str(window.settings.get(OPEN_FILE)) == str(tmp_path / "test.txt")
         assert window.settings.get(OPEN_FILE_FILTER) == "test"
+
+
+class TestQtPopup:
+    def test_show_above(self, qtbot):
+        popup = QtPopup(None)
+        qtbot.addWidget(popup)
+        popup.show_above_mouse()
+        popup.close()
+
+    def test_show_right(self, qtbot):
+        popup = QtPopup(None)
+        qtbot.addWidget(popup)
+        popup.show_right_of_mouse()
+        popup.close()
+
+    def test_move_to_error_no_parent(self, qtbot):
+        popup = QtPopup(None)
+        qtbot.add_widget(popup)
+        with pytest.raises(ValueError):
+            popup.move_to()
+
+    @pytest.mark.parametrize("pos", ["top", "bottom", "left", "right"])
+    def test_move_to(self, pos, qtbot):
+        window = QMainWindow()
+        qtbot.addWidget(window)
+        widget = QWidget()
+        window.setCentralWidget(widget)
+        popup = QtPopup(widget)
+        popup.move_to(pos)
+
+    def test_move_to_error_wrong_params(self, qtbot):
+        window = QMainWindow()
+        qtbot.addWidget(window)
+        widget = QWidget()
+        window.setCentralWidget(widget)
+        popup = QtPopup(widget)
+        with pytest.raises(ValueError):
+            popup.move_to("dummy_text")
+
+        with pytest.raises(ValueError):
+            popup.move_to({})
+
+    @pytest.mark.parametrize("pos", [[10, 10, 10, 10], (15, 10, 10, 10)])
+    def test_move_to_cords(self, pos, qtbot):
+        window = QMainWindow()
+        qtbot.addWidget(window)
+        widget = QWidget()
+        window.setCentralWidget(widget)
+        popup = QtPopup(widget)
+        popup.move_to(pos)
+
+    def test_click(self, qtbot, monkeypatch):
+        popup = QtPopup(None)
+        monkeypatch.setattr(popup, "close", MagicMock())
+        qtbot.addWidget(popup)
+        qtbot.keyClick(popup, Qt.Key_8)
+        popup.close.assert_not_called()
+        qtbot.keyClick(popup, Qt.Key_Return)
+        popup.close.assert_called_once()
