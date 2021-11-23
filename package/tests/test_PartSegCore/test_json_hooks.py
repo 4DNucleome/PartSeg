@@ -1,12 +1,14 @@
 # pylint: disable=R0201
 
 import json
+from dataclasses import dataclass
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 from napari.utils import Colormap
 from napari.utils.notifications import NotificationSeverity
+from pydantic import BaseModel
 
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.json_hooks import (
@@ -18,6 +20,18 @@ from PartSegCore.json_hooks import (
     profile_hook,
     recursive_update_dict,
 )
+
+
+@dataclass
+class SampleDataclass:
+    filed1: int
+    field2: str
+
+
+class SamplePydantic(BaseModel):
+    sample_int: int
+    sample_str: str
+    sample_datacls: SampleDataclass
 
 
 def test_recursive_update_dict_basic():
@@ -283,10 +297,35 @@ class TestPartSegEncoder:
         assert data2["value2"] == RadiusType.NO
         assert data2["value3"] == NotificationSeverity.ERROR
 
+    def test_dataclass_serialze(self, tmp_path):
+        data = {"value": SampleDataclass(1, "text")}
+        with (tmp_path / "test.json").open("w") as f_p:
+            json.dump(data, f_p, cls=PartSegEncoder)
+        with (tmp_path / "test.json").open("r") as f_p:
+            data2 = json.load(f_p, object_hook=partseg_object_hook)
+
+        assert isinstance(data2["value"], SampleDataclass)
+        assert data2["value"] == SampleDataclass(1, "text")
+
     def test_pydantic_serialize(self, tmp_path):
-        data = {"color1": Colormap("black")}
+        data = {
+            "color1": Colormap("black"),
+            "other": SamplePydantic(sample_int=1, sample_str="text", sample_datacls=SampleDataclass(1, "text")),
+        }
         with (tmp_path / "test.json").open("w") as f_p:
             json.dump(data, f_p, cls=PartSegEncoder)
         with (tmp_path / "test.json").open("r") as f_p:
             data2 = json.load(f_p, object_hook=partseg_object_hook)
         assert data2["color1"] == Colormap("black")
+        assert isinstance(data2["other"], SamplePydantic)
+        assert isinstance(data2["other"].sample_datacls, SampleDataclass)
+
+    def test_numpy_serialize(self, tmp_path):
+        data = {"arr": np.arange(10), "f": np.float32(0.1), "i": np.int16(1000)}
+        with (tmp_path / "test.json").open("w") as f_p:
+            json.dump(data, f_p, cls=PartSegEncoder)
+        with (tmp_path / "test.json").open("r") as f_p:
+            data2 = json.load(f_p, object_hook=partseg_object_hook)
+        assert data2["arr"] == [i for i in range(10)]
+        assert np.isclose(data["f"], 0.1)
+        assert data2["i"] == 1000

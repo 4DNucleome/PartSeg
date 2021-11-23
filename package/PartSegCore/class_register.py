@@ -10,6 +10,9 @@ from packaging.version import parse as parse_version
 
 
 def class_to_str(cls) -> str:
+    if cls.__module__.startswith("pydantic.dataclass"):
+        cls = cls.__mro__[1]
+        return class_to_str(cls)
     return cls.__module__ + "." + cls.__name__
 
 

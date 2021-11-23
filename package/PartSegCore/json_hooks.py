@@ -413,7 +413,7 @@ class PartSegEncoder(json.JSONEncoder):
         if dataclasses.is_dataclass(obj):
             fields = dataclasses.fields(obj)
             dkt = {x.name: getattr(obj, x.name) for x in fields}
-            dkt["__class__"] = class_to_str(obj.__class__)
+            add_class_info(obj, dkt)
             return dkt
 
         if isinstance(obj, np.ndarray):
@@ -441,9 +441,8 @@ class PartSegEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def partseg_object_hook(dkt):
+def partseg_object_hook(dkt: dict):
     if "__class__" in dkt:
-        module_name, class_name = dkt["__class__"].rsplit(".", maxsplit=1)
         # the migration code should be called here
         cls_str = dkt.pop("__class__")
         version_str = dkt.pop("__version__")
