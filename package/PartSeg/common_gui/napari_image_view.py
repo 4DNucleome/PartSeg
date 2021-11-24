@@ -210,7 +210,7 @@ class ImageView(QWidget):
     def _set_new_order(self, text: str):
         self._current_order = text
         self.viewer.dims.order = ORDER_DICT[text]
-        self.update_roi_representation()
+        # self.update_roi_representation()
 
     def _reset_view(self):
         self._set_new_order("xy")
