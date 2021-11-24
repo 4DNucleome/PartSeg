@@ -8,7 +8,6 @@ from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import napari
 import numpy as np
-import qtawesome as qta
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
@@ -17,8 +16,7 @@ from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QSpinBox, QToolTip, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from superqt import QEnumComboBox, ensure_main_thread
 from vispy.color import Color, Colormap
 from vispy.geometry.rect import Rect
@@ -33,6 +31,7 @@ from PartSegImage import Image
 from ..common_backend.base_settings import BaseSettings
 from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME
 from .channel_control import ChannelProperty, ColorComboBoxGroup
+from .custom_buttons import SearchROIButton
 from .qt_modal import QtPopup
 
 try:
@@ -145,7 +144,8 @@ class ImageView(QWidget):
         self.points_view_button = QtViewerPushButton(
             self.viewer, "new_points", "Show points", self.toggle_points_visibility
         )
-        self.search_roi_btn = SearchROIButton(self)
+        self.search_roi_btn = SearchROIButton(self.settings)
+        self.search_roi_btn.setToolTip("Search component")
         # self.search_roi_btn.setDisabled(True)
         self.search_roi_btn.clicked.connect(self._search_component)
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
@@ -939,18 +939,6 @@ class ImageParameters:
     colormaps: List[Colormap]
     scaling: Tuple[Union[float, int]]
     layers: int = 0
-
-
-class SearchROIButton(QPushButton):
-    def __init__(self, image_view: ImageView):
-        super().__init__(qta.icon("fa5s.search"), "")
-        self.image_view = image_view
-        image_view.settings.theme_changed.connect(self._theme_changed)
-        self._theme_changed()
-
-    def _theme_changed(self):
-        color = self.image_view.settings.theme.text
-        self.setIcon(qta.icon("fa5s.search", color=QColor(*color.as_rgb_tuple())))
 
 
 def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:
