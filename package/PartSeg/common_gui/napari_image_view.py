@@ -135,6 +135,7 @@ class ImageView(QWidget):
         self.points_view_button = QtViewerPushButton(
             self.viewer, "new_points", "Show points", self.toggle_points_visibility
         )
+        self.points_view_button.setVisible(False)
         self.search_roi_btn = SearchROIButton(self)
         self.search_roi_btn.setHidden(True)
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
