@@ -8,7 +8,6 @@ from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import napari
 import numpy as np
-import qtawesome as qta
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
@@ -16,11 +15,11 @@ from napari.layers.labels import Labels
 from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QPoint, Qt, Signal
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QToolTip, QVBoxLayout, QWidget
-from superqt import ensure_main_thread
+from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
+from superqt import QEnumComboBox, ensure_main_thread
 from vispy.color import Color, Colormap
+from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
 from PartSegCore.class_generator import enum_register
@@ -32,6 +31,8 @@ from PartSegImage import Image
 from ..common_backend.base_settings import BaseSettings
 from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME
 from .channel_control import ChannelProperty, ColorComboBoxGroup
+from .custom_buttons import SearchROIButton
+from .qt_modal import QtPopup
 
 try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton
@@ -95,6 +96,11 @@ class LabelEnum(Enum):
         return self.name.replace("_", " ")
 
 
+class SearchType(Enum):
+    Highlight = 0
+    Zoom_in = 1
+
+
 class ImageView(QWidget):
     position_changed = Signal([int, int, int], [int, int])
     component_clicked = Signal(int)
@@ -123,6 +129,9 @@ class ImageView(QWidget):
         self.worker_list = []
         self.points_layer = None
         self.roi_alternative_selection = "ROI"
+        self.additional_layers: List[Layer] = []
+        self._search_type = SearchType.Highlight
+        self._last_component = 1
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -135,8 +144,10 @@ class ImageView(QWidget):
         self.points_view_button = QtViewerPushButton(
             self.viewer, "new_points", "Show points", self.toggle_points_visibility
         )
-        self.search_roi_btn = SearchROIButton(self)
-        self.search_roi_btn.setHidden(True)
+        self.search_roi_btn = SearchROIButton(self.settings)
+        self.search_roi_btn.setToolTip("Search component")
+        # self.search_roi_btn.setDisabled(True)
+        self.search_roi_btn.clicked.connect(self._search_component)
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
         self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
@@ -372,7 +383,9 @@ class ImageView(QWidget):
         image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
 
         if roi_info.roi is None:
+            self.search_roi_btn.setDisabled(True)
             return
+        self.search_roi_btn.setDisabled(False)
 
         self.add_roi_layer(image_info)
         image_info.roi.color = self.get_roi_view_parameters(image_info)
@@ -420,8 +433,10 @@ class ImageView(QWidget):
             if image_info.roi is None:
                 continue
             roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
-            if self.settings.get_from_profile(f"{self.name}.image_state.only_border", True):
-
+            border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) == 1
+            only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
+            alternative = image_info.roi.metadata.get("alternative", self.roi_alternative_selection)
+            if only_border and border_thick != 1:
                 data = calculate_borders(
                     roi.transpose(ORDER_DICT[self._current_order]),
                     self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) // 2,
@@ -429,7 +444,12 @@ class ImageView(QWidget):
                 ).transpose(np.argsort(ORDER_DICT[self._current_order]))
                 image_info.roi.data = data
             else:
-                image_info.roi.data = roi
+                if image_info.roi.metadata.get("border_thick", 1) != 1 or alternative != self.roi_alternative_selection:
+                    image_info.roi.data = roi
+                image_info.roi.contour = only_border
+
+            image_info.roi.metadata["border_thick"] = border_thick
+            image_info.roi.metadata["alternative"] = self.roi_alternative_selection
 
     @ensure_main_thread
     def update_rendering(self):
@@ -448,23 +468,29 @@ class ImageView(QWidget):
         if image_info.roi_info.roi is None:
             return
         roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
+        border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) == 1
         kwargs = {
             "scale": image_info.image.normalized_scaling(),
             "name": "ROI",
             "blending": "translucent",
+            "metadata": {"border_thick": border_thick, "alternative": self.roi_alternative_selection},
         }
         if napari_rendering:
             kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
-        if self.settings.get_from_profile(f"{self.name}.image_state.only_border", True):
+
+        only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
+        if only_border and border_thick != 1:
 
             data = calculate_borders(
                 roi.transpose(ORDER_DICT[self._current_order]),
-                self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) // 2,
+                border_thick // 2,
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
             image_info.roi = self.viewer.add_labels(data, **kwargs)
+            image_info.roi.contour = False
         else:
             image_info.roi = self.viewer.add_labels(roi, **kwargs)
+            image_info.roi.contour = only_border
 
     def update_roi_representation(self):
         self.remove_all_roi()
@@ -720,6 +746,136 @@ class ImageView(QWidget):
                 QToolTip.showText(event.globalPos(), text)
         return super().event(event)
 
+    def _search_component(self):
+        max_components = max(max(image_info.roi_info.bound_info) for image_info in self.image_info.values())
+
+        dial = SearchComponentModal(self, self._search_type, self._last_component, max_components)
+        dial.show_right_of_mouse()
+
+    def component_unmark(self, _num):
+        self.viewer.layers.selection.clear()
+        for el in self.additional_layers:
+            if "timer" in el.metadata:
+                el.metadata["timer"].stop()
+            self.viewer.layers.selection.add(el)
+        self.viewer.layers.remove_selected()
+        self.additional_layers = []
+
+    def _mark_layer(self, num: int, flash: bool, image_info: ImageInfo):
+        bound_info = image_info.roi_info.bound_info.get(num, None)
+        if bound_info is None:
+            return
+        # TODO think about marking on bright background
+        slices = bound_info.get_slices()
+        slices[image_info.image.stack_pos] = slice(None)
+        component_mark = image_info.roi_info.roi[tuple(slices)] == num
+        translate_grid = image_info.roi.translate_grid + (bound_info.lower) * image_info.roi.scale
+        translate_grid[image_info.image.stack_pos] = 0
+        self.additional_layers.append(
+            self.viewer.add_labels(
+                component_mark,
+                scale=image_info.roi.scale,
+                blending="additive",
+                color={0: "black", 1: "white"},
+                opacity=0.5,
+            )
+        )
+        self.additional_layers[-1].translate_grid = translate_grid
+        if flash:
+            layer = self.additional_layers[-1]
+
+            def flash_fun(layer_=layer):
+                opacity = layer_.opacity + 0.1
+                if opacity > 1:
+                    opacity = 0.1
+                layer_.opacity = opacity
+
+            timer = QTimer()
+            timer.setInterval(100)
+            timer.timeout.connect(flash_fun)
+            timer.start()
+            layer.metadata["timer"] = timer
+
+    def component_mark(self, num: int, flash: bool = False):
+        self.component_unmark(num)
+        self._search_type = SearchType.Highlight
+        self._last_component = num
+
+        bounding_box = self._bounding_box(num)
+        if bounding_box is None:
+            return
+
+        for image_info in self.image_info.values():
+            self._mark_layer(num, flash, image_info)
+
+        lower_bound, upper_bound = bounding_box
+        self._update_point(lower_bound, upper_bound)
+
+        if self.viewer.dims.ndisplay == 2:
+            l_bound = lower_bound[-2:][::-1]
+            u_bound = upper_bound[-2:][::-1]
+            rect = Rect(self.viewer_widget.view.camera.get_state()["rect"])
+            if rect.contains(*l_bound) and rect.contains(*u_bound):
+                return
+            size = u_bound - l_bound
+            rect.size = tuple(np.max([rect.size, size * 1.2], axis=0))
+            pos = rect.pos
+            if rect.left > l_bound[0]:
+                pos = l_bound[0], pos[1]
+            if rect.right < u_bound[0]:
+                pos = pos[0] + u_bound[0] - rect.right, pos[1]
+            if rect.bottom > l_bound[1]:
+                pos = pos[0], l_bound[1]
+            if rect.top < u_bound[1]:
+                pos = pos[0], pos[1] + (u_bound[1] - rect.top)
+            rect.pos = pos
+            self.viewer_widget.view.camera.set_state({"rect": rect})
+
+    def component_zoom(self, num):
+        self.component_unmark(num)
+        self._search_type = SearchType.Zoom_in
+        self._last_component = num
+
+        bounding_box = self._bounding_box(num)
+        if bounding_box is None:
+            return
+
+        lower_bound, upper_bound = bounding_box
+        diff = upper_bound - lower_bound
+        frame = diff * 0.2
+        if self.viewer.dims.ndisplay == 2:
+            rect = Rect(pos=(lower_bound - frame)[-2:][::-1], size=(diff + 2 * frame)[-2:][::-1])
+            self.set_state({"camera": {"rect": rect}})
+        self._update_point(lower_bound, upper_bound)
+
+    def _update_point(self, lower_bound, upper_bound):
+        point = (lower_bound + upper_bound) / 2
+        current_point = self.viewer.dims.point
+        for i in range(self.viewer.dims.ndim - self.viewer.dims.ndisplay):
+            if not (lower_bound[i] <= current_point[i] <= upper_bound[i]):
+                self.viewer.dims.set_point(i, point[i])
+
+    @staticmethod
+    def _data_to_world(layer: Layer, cords):
+        return layer._transforms[1:3].simplified(cords)  # pylint: disable=W0212
+
+    def _bounding_box(self, num) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+        lower_bound_list = []
+        upper_bound_list = []
+        for image_info in self.image_info.values():
+            bound_info = image_info.roi_info.bound_info.get(num, None)
+            if bound_info is None:
+                continue
+            lower_bound_list.append(self._data_to_world(image_info.roi, bound_info.lower))
+            upper_bound_list.append(self._data_to_world(image_info.roi, bound_info.upper))
+
+        if not lower_bound_list:
+            return
+
+        lower_bound = np.min(lower_bound_list, axis=0)
+        upper_bound = np.min(upper_bound_list, axis=0)
+        return lower_bound, upper_bound
+
 
 class NapariQtViewer(QtViewer):
     def __init__(self, viewer):
@@ -745,6 +901,36 @@ class NapariQtViewer(QtViewer):
         super().closeEvent(event)
 
 
+class SearchComponentModal(QtPopup):
+    def __init__(self, image_view: ImageView, search_type: SearchType, component_num: int, max_components):
+        super().__init__(image_view)
+        self.image_view = image_view
+        self.zoom_to = QEnumComboBox(self, SearchType)
+        self.zoom_to.setCurrentEnum(search_type)
+        self.zoom_to.currentEnumChanged.connect(self._component_num_changed)
+        self.component_selector = QSpinBox()
+        self.component_selector.valueChanged.connect(self._component_num_changed)
+        self.component_selector.setMaximum(max_components)
+        self.component_selector.setValue(component_num)
+
+        layout = QHBoxLayout()
+        layout.addWidget(QLabel("Component:"))
+        layout.addWidget(self.component_selector)
+        layout.addWidget(QLabel("Selection:"))
+        layout.addWidget(self.zoom_to)
+        self.frame.setLayout(layout)
+
+    def _component_num_changed(self):
+        if self.zoom_to.currentEnum() == SearchType.Highlight:
+            self.image_view.component_mark(self.component_selector.value(), flash=True)
+        else:
+            self.image_view.component_zoom(self.component_selector.value())
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.image_view.component_unmark(0)
+
+
 @dataclass
 class ImageParameters:
     limits: List[Tuple[float, float]]
@@ -753,18 +939,6 @@ class ImageParameters:
     colormaps: List[Colormap]
     scaling: Tuple[Union[float, int]]
     layers: int = 0
-
-
-class SearchROIButton(QPushButton):
-    def __init__(self, image_view: ImageView):
-        super().__init__(qta.icon("fa5s.search"), "")
-        self.image_view = image_view
-        image_view.settings.theme_changed.connect(self._theme_changed)
-        self._theme_changed()
-
-    def _theme_changed(self):
-        color = self.image_view.settings.theme.text
-        self.setIcon(qta.icon("fa5s.search", color=QColor(*color.as_rgb_tuple())))
 
 
 def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:
