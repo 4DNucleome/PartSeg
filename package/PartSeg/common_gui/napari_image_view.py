@@ -142,7 +142,9 @@ class ImageView(QWidget):
         self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
         self.mask_chk = QCheckBox()
+        self.mask_chk.setVisible(False)
         self.mask_label = QLabel("Mask:")
+        self.mask_label.setVisible(False)
 
         self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_view_button)
@@ -494,6 +496,7 @@ class ImageView(QWidget):
             image_info.mask = None
 
         if mask is None:
+            self._toggle_mask_chk_visibility()
             return
 
         mask_marker = mask == 0
@@ -503,6 +506,12 @@ class ImageView(QWidget):
         layer.opacity = self.mask_opacity()
         layer.visible = self.mask_chk.isChecked()
         image_info.mask = layer
+        self._toggle_mask_chk_visibility()
+
+    def _toggle_mask_chk_visibility(self):
+        visibility = any(image_info.mask is not None for image_info in self.image_info.values())
+        self.mask_chk.setVisible(visibility)
+        self.mask_label.setVisible(visibility)
 
     def update_mask_parameters(self):
         opacity = self.mask_opacity()
@@ -592,6 +601,7 @@ class ImageView(QWidget):
             self.set_roi()
         if image_info.image.mask is not None:
             self.set_mask()
+        self._toggle_mask_chk_visibility()
         self.image_added.emit()
 
     def add_image(self, image: Optional[Image], replace=False):
