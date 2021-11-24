@@ -129,13 +129,9 @@ class TestImageView:
         qtbot.addWidget(ch_prop)
         qtbot.addWidget(view)
         base_settings.image = image2
-        view.show()
-        assert not view.mask_chk.isVisible()
         view.set_mask()
-        assert not view.mask_chk.isVisible()
         with qtbot.waitSignal(base_settings.mask_changed):
             base_settings.mask = np.zeros(image2.get_channel(0).shape, dtype=np.uint8)
-        assert view.mask_chk.isVisible()
         assert np.all(view.image_info[str(tmp_path / "test2.tiff")].mask.data == 1)
         # double add for test if proper refresh mask is working
         with qtbot.waitSignal(base_settings.mask_changed):
@@ -157,7 +153,6 @@ class TestImageView:
         image2.set_spacing((10 ** -4,) * 3)
         view.update_spacing_info()
         assert np.all(view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10 ** 5, 10 ** 5, 10 ** 5))
-        view.hide()
 
     def test_points_rendering(self, base_settings, image2, qtbot, tmp_path):
         ch_prop = ChannelProperty(base_settings, "test")
@@ -165,16 +160,12 @@ class TestImageView:
         qtbot.addWidget(ch_prop)
         qtbot.addWidget(view)
         base_settings.image = image2
-        view.show()
         assert view.points_layer is None
-        assert not view.points_view_button.isVisible()
         base_settings.points = [(0, 5, 5, 5)]
-        assert view.points_view_button.isVisible()
         assert view.points_layer is not None
         assert view.points_layer.visible
         view.toggle_points_visibility()
         assert not view.points_layer.visible
-        view.hide()
 
     @pyside_skip
     def test_dim_menu(self, base_settings, image2, qtbot, monkeypatch):
