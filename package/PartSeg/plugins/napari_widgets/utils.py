@@ -5,7 +5,7 @@ import typing
 from magicgui.widgets import Widget, create_widget
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
-from PyQt5.QtWidgets import QWidget
+from qtpy.QtWidgets import QWidget
 
 from PartSeg.common_gui.algorithms_description import FormWidget, QtAlgorithmProperty
 from PartSeg.common_gui.custom_save_dialog import FormDialog
