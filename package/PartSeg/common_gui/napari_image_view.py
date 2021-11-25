@@ -418,14 +418,16 @@ class ImageView(QWidget):
             or image_info.roi_count == 0
             or colors.size == 0
         ):
-            return Colormap([[0, 0, 0, 0], [0, 0, 0, 0]])
+            image_info.roi.colormap = Colormap([[0, 0, 0, 0], [0, 0, 0, 0]])
 
         res = [list(colors[(x - 1) % colors.shape[0]]) + [1] for x in range(image_info.roi_count + 1)]
         res[0] = [0, 0, 0, 0]
 
         image_info.roi.colormap = Colormap(colors=res, interpolation=ColormapInterpolationMode.ZERO)
         max_val = image_info.roi_count + 1
-        image_info.roi._all_vals = np.array([0] + [(x + 1) / (max_val + 1) for x in range(1, max_val)])
+        image_info.roi._all_vals = np.array(  # pylint: disable=W0212
+            [0] + [(x + 1) / (max_val + 1) for x in range(1, max_val)]
+        )
 
     def update_roi_coloring(self):
         for image_info in self.image_info.values():
