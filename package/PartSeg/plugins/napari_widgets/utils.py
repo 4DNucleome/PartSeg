@@ -33,8 +33,7 @@ class NapariFormWidget(FormWidget):
 
 
 class NapariFormWidgetWithMask(NapariFormWidget):
-    @staticmethod
-    def _element_list(fields) -> typing.Iterable[QtAlgorithmProperty]:
+    def _element_list(self, fields) -> typing.Iterable[QtAlgorithmProperty]:
         mask = AlgorithmProperty("mask", "Mask", None, value_type=typing.Optional[Labels])
         return super()._element_list(itertools.chain([mask], fields))
 

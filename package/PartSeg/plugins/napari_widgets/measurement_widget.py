@@ -38,7 +38,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         super().showEvent(event)
 
 
-class MeasurementWidget(QTabWidget):
+class Measurement(QTabWidget):
     def __init__(self, napari_viewer: Viewer):
         super().__init__()
         self.viewer = napari_viewer

@@ -131,7 +131,7 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp
 
 
 @napari_skip
-def test_measurement_create(make_napari_viewer, qtbot):
+def test_simple_measurement_create(make_napari_viewer, qtbot):
     from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
 
     data = np.zeros((10, 10), dtype=np.uint8)
@@ -154,6 +154,18 @@ def test_measurement_create(make_napari_viewer, qtbot):
             break
 
     assert measurement.calculate_btn.enabled
+
+
+@napari_skip
+def test_measurement_create(make_napari_viewer, qtbot):
+    from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
+
+    data = np.zeros((10, 10), dtype=np.uint8)
+
+    viewer = make_napari_viewer()
+    viewer.add_labels(data, name="label")
+    measurement = Measurement(viewer)
+    viewer.window.add_dock_widget(measurement)
 
 
 def test_mask_create(make_napari_viewer, qtbot):

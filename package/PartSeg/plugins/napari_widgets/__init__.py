@@ -28,6 +28,6 @@ def napari_experimental_provide_dock_widget3():
 
 @napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
 def napari_experimental_provide_dock_widget4():
-    from PartSeg.plugins.napari_widgets.measurement_widget import MeasurementWidget
+    from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
 
-    return MeasurementWidget
+    return Measurement
