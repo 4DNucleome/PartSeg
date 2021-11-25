@@ -376,6 +376,7 @@ class ImageView(QWidget):
         if image_info.roi is None and roi_info.roi is not None:
             image_info.roi_info = roi_info
             self.add_roi_layer(image_info)
+            self.search_roi_btn.setDisabled(False)
         elif image_info.roi is None:
             return
         elif roi_info.roi is None:
