@@ -399,10 +399,7 @@ class ImageView(QWidget):
             return {x: [0, 0, 0, 0] for x in range(image_info.roi_count + 1)}
 
         # res[0] = [0, 0, 0, 0]
-        return {
-            x: colors[(x - 1) % colors.shape[0]]
-            for x in range(1, image_info.roi_count + 1)
-        }
+        return {x: colors[(x - 1) % colors.shape[0]] for x in range(1, image_info.roi_count + 1)}
 
     def update_roi_coloring(self):
         for image_info in self.image_info.values():
