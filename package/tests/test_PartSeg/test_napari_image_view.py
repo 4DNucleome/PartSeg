@@ -1,4 +1,5 @@
 # pylint: disable=R0201
+import platform
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -6,6 +7,7 @@ import pytest
 import qtpy
 from napari.layers import Image as NapariImage
 from qtpy.QtCore import QPoint
+from test_PartSeg.utils import CI_BUILD
 from vispy.geometry import Rect
 
 from PartSeg.common_gui.channel_control import ChannelProperty
@@ -150,6 +152,20 @@ class TestImageView:
         image_view.update_spacing_info()
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10 ** 5, 10 ** 5, 10 ** 5))
 
+    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+    def test_mask_control_visibility(self, base_settings, image_view, qtbot, tmp_path):
+        image_view.show()
+        assert not image_view.mask_chk.isVisible()
+        image_view.set_mask()
+        assert not image_view.mask_chk.isVisible()
+        with qtbot.waitSignal(base_settings.mask_changed):
+            base_settings.mask = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
+        assert image_view.mask_chk.isVisible()
+        with qtbot.waitSignal(base_settings.mask_changed):
+            base_settings.mask = None
+        assert not image_view.mask_chk.isVisible()
+        image_view.hide()
+
     def test_points_rendering(self, base_settings, image_view, tmp_path):
         assert image_view.points_layer is None
         base_settings.points = [(0, 5, 5, 5)]
@@ -157,6 +173,16 @@ class TestImageView:
         assert image_view.points_layer.visible
         image_view.toggle_points_visibility()
         assert not image_view.points_layer.visible
+
+    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+    def test_points_button_visibility(self, base_settings, image_view, qtbot, tmp_path):
+        image_view.show()
+        assert not image_view.points_view_button.isVisible()
+        base_settings.points = [(0, 5, 5, 5)]
+        assert image_view.points_view_button.isVisible()
+        base_settings.points = None
+        assert not image_view.points_view_button.isVisible()
+        image_view.hide()
 
     @pyside_skip
     def test_dim_menu(self, base_settings, image_view, monkeypatch):
