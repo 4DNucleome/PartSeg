@@ -23,7 +23,6 @@ from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
 from PartSegCore.class_generator import enum_register
-from PartSegCore.color_image import calculate_borders
 from PartSegCore.image_operations import NoiseFilterType, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
@@ -433,22 +432,13 @@ class ImageView(QWidget):
             if image_info.roi is None:
                 continue
             roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
-            border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) == 1
+            border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1)
             only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
             alternative = image_info.roi.metadata.get("alternative", self.roi_alternative_selection)
-            if only_border and border_thick != 1:
-                data = calculate_borders(
-                    roi.transpose(ORDER_DICT[self._current_order]),
-                    self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) // 2,
-                    self.viewer.dims.ndisplay == 2,
-                ).transpose(np.argsort(ORDER_DICT[self._current_order]))
-                image_info.roi.data = data
-            else:
-                if image_info.roi.metadata.get("border_thick", 1) != 1 or alternative != self.roi_alternative_selection:
-                    image_info.roi.data = roi
-                image_info.roi.contour = only_border
-
-            image_info.roi.metadata["border_thick"] = border_thick
+            if alternative != self.roi_alternative_selection:
+                image_info.roi.data = roi
+            print("eeee", border_thick)
+            image_info.roi.contour = border_thick if only_border else 0
             image_info.roi.metadata["alternative"] = self.roi_alternative_selection
 
     @ensure_main_thread
@@ -468,37 +458,19 @@ class ImageView(QWidget):
         if image_info.roi_info.roi is None:
             return
         roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
-        border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) == 1
+        border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1)
         kwargs = {
             "scale": image_info.image.normalized_scaling(),
             "name": "ROI",
             "blending": "translucent",
-            "metadata": {"border_thick": border_thick, "alternative": self.roi_alternative_selection},
+            "metadata": {"alternative": self.roi_alternative_selection},
         }
         if napari_rendering:
             kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
 
         only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
-        if only_border and border_thick != 1:
-
-            data = calculate_borders(
-                roi.transpose(ORDER_DICT[self._current_order]),
-                border_thick // 2,
-                self.viewer.dims.ndisplay == 2,
-            ).transpose(np.argsort(ORDER_DICT[self._current_order]))
-            image_info.roi = self.viewer.add_labels(data, **kwargs)
-            image_info.roi.contour = False
-        else:
-            image_info.roi = self.viewer.add_labels(roi, **kwargs)
-            image_info.roi.contour = only_border
-
-    def update_roi_representation(self):
-        self.remove_all_roi()
-
-        for image_info in self.image_info.values():
-            self.add_roi_layer(image_info)
-
-        self.update_roi_coloring()
+        image_info.roi = self.viewer.add_labels(roi, **kwargs)
+        image_info.roi.contour = border_thick if only_border else 0
 
     def set_mask(self, mask: Optional[np.ndarray] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)

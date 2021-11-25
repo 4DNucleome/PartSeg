@@ -486,11 +486,9 @@ class AlgorithmOptions(QWidget):
         self.only_borders = QCheckBox("Only borders")
         self._set_border_mode_from_settings()
         self.borders_thick = QSpinBox()
-        self.borders_thick.setRange(1, 11)
-        self.borders_thick.setSingleStep(2)
+        self.borders_thick.setRange(1, 25)
+        self.borders_thick.setSingleStep(1)
         self._set_border_thick_from_settings()
-        # noinspection PyUnresolvedReferences
-        self.borders_thick.valueChanged.connect(self.border_value_check)
         self.execute_in_background_btn = QPushButton("Execute in background")
         self.execute_in_background_btn.setToolTip("Run calculation in background. Put result in multiple files panel")
         self.execute_btn = QPushButton("Execute")
@@ -638,10 +636,6 @@ class AlgorithmOptions(QWidget):
             return
         res = dial.get_result()
         res.save_class.save(res.save_destination, self.algorithm_choose_widget.current_parameters())
-
-    def border_value_check(self, value):
-        if value % 2 == 0:
-            self.borders_thick.setValue(value + 1)
 
     def file_list_change(self, val):
         self.file_list = val
