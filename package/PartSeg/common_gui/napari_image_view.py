@@ -368,25 +368,23 @@ class ImageView(QWidget):
         if roi_info is None:
             roi_info = self.settings.roi_info
         image_info = self.image_info[image.file_path]
-        if image_info.roi is not None and image_info.roi in self.viewer.layers:
-            if hasattr(self.viewer.layers, "selection"):
-                self.viewer.layers.selection.clear()
-                self.viewer.layers.selection.add(image_info.roi)
-            else:
-                self.viewer.layers.unselect_all()
-                image_info.roi.selected = True
-            self.viewer.layers.remove_selected()
-            image_info.roi = None
+        if image_info.roi is None and roi_info.roi is not None:
+            image_info.roi_info = roi_info
+            self.add_roi_layer(image_info)
+        elif image_info.roi is None:
+            return
+        elif roi_info.roi is None:
+            image_info.roi.visible = False
+            self.search_roi_btn.setDisabled(False)
+            return
+        else:
+            image_info.roi_info = roi_info
+            image_info.roi.data = roi_info.roi
+            image_info.roi.visible = True
+            self.search_roi_btn.setDisabled(True)
 
-        image_info.roi_info = roi_info
         image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
 
-        if roi_info.roi is None:
-            self.search_roi_btn.setDisabled(True)
-            return
-        self.search_roi_btn.setDisabled(False)
-
-        self.add_roi_layer(image_info)
         image_info.roi.color = self.get_roi_view_parameters(image_info)
         image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
 
@@ -400,8 +398,8 @@ class ImageView(QWidget):
         ):
             return {x: [0, 0, 0, 0] for x in range(image_info.roi_count + 1)}
 
-        res = {x: colors[(x - 1) % colors.shape[0]] for x in range(image_info.roi_count + 1)}
-        res[0] = [0, 0, 0, 0]
+        res = {x: colors[(x - 1) % colors.shape[0]] for x in range(1, image_info.roi_count + 1)}
+        # res[0] = [0, 0, 0, 0]
         return res
 
     def update_roi_coloring(self):
@@ -437,7 +435,6 @@ class ImageView(QWidget):
             alternative = image_info.roi.metadata.get("alternative", self.roi_alternative_selection)
             if alternative != self.roi_alternative_selection:
                 image_info.roi.data = roi
-            print("eeee", border_thick)
             image_info.roi.contour = border_thick if only_border else 0
             image_info.roi.metadata["alternative"] = self.roi_alternative_selection
 
