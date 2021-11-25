@@ -14,6 +14,7 @@ from napari.layers.image import Image as NapariImage
 from napari.layers.labels import Labels
 from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
+from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
@@ -37,6 +38,8 @@ try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton
 except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
+
+_napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13")
 
 
 class QtNDisplayButton(QtStateButton):
@@ -376,17 +379,18 @@ class ImageView(QWidget):
             return
         elif roi_info.roi is None:
             image_info.roi.visible = False
-            self.search_roi_btn.setDisabled(False)
+            self.search_roi_btn.setDisabled(True)
             return
         else:
             image_info.roi_info = roi_info
             image_info.roi.data = roi_info.roi
             image_info.roi.visible = True
-            self.search_roi_btn.setDisabled(True)
+            self.search_roi_btn.setDisabled(False)
 
         image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
 
-        image_info.roi.color = self.get_roi_view_parameters(image_info)
+        # image_info.roi.color = self.get_roi_view_parameters(image_info)
+        self.set_roi_colormap(image_info)
         image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
 
     def get_roi_view_parameters(self, image_info: ImageInfo) -> ColorInfo:
@@ -403,11 +407,32 @@ class ImageView(QWidget):
         res[0] = [0, 0, 0, 0]
         return res
 
+    def set_roi_colormap(self, image_info) -> None:
+        if _napari_ge_4_13:
+            image_info.roi.color = self.get_roi_view_parameters(image_info)
+            return
+        colors = self.settings.label_colors / 255
+        if (
+            self.settings.get_from_profile(f"{self.name}.image_state.show_label", LabelEnum.Show_results)
+            == LabelEnum.Not_show
+            or image_info.roi_count == 0
+            or colors.size == 0
+        ):
+            return Colormap([[0, 0, 0, 0], [0, 0, 0, 0]])
+
+        res = [list(colors[(x - 1) % colors.shape[0]]) + [1] for x in range(image_info.roi_count + 1)]
+        res[0] = [0, 0, 0, 0]
+
+        image_info.roi.colormap = Colormap(colors=res, interpolation=ColormapInterpolationMode.ZERO)
+        max_val = image_info.roi_count + 1
+        image_info.roi._all_vals = np.array([0] + [(x + 1) / (max_val + 1) for x in range(1, max_val)])
+
     def update_roi_coloring(self):
         for image_info in self.image_info.values():
             if image_info.roi is None:
                 continue
-            image_info.roi.color = self.get_roi_view_parameters(image_info)
+            # image_info.roi.color = self.get_roi_view_parameters(image_info)
+            self.set_roi_colormap(image_info)
             image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
 
     def remove_all_roi(self):
@@ -450,7 +475,8 @@ class ImageView(QWidget):
     def update_roi_labeling(self):
         for image_info in self.image_info.values():
             if image_info.roi is not None:
-                image_info.roi.color = self.get_roi_view_parameters(image_info)
+                # image_info.roi.color = self.get_roi_view_parameters(image_info)
+                self.set_roi_colormap(image_info)
 
     def add_roi_layer(self, image_info: ImageInfo):
         if image_info.roi_info.roi is None:
