@@ -127,7 +127,7 @@ class MeasurementsStorage:
         return self.get_header(not save_orientation)
 
 
-class MeasurementWidget(QWidget):
+class MeasurementWidgetBase(QWidget):
     """
     :type settings: Settings
     :type segment: Segment
@@ -163,7 +163,6 @@ class MeasurementWidget(QWidget):
         self.measurement_type.setToolTip(
             'You can create new measurement profile in advanced window, in tab "Measurement settings"'
         )
-        self.channels_chose = ChannelComboBox()
         self.units_choose = QEnumComboBox(enum_class=Units)
         self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
         self.settings.measurement_profiles_changed.connect(self.update_measurement_list)
@@ -190,8 +189,6 @@ class MeasurementWidget(QWidget):
         self.butt_layout.addWidget(self.copy_button, 2)
         self.butt_layout2 = QHBoxLayout()
         self.butt_layout3 = QHBoxLayout()
-        self.butt_layout3.addWidget(QLabel("Channel:"))
-        self.butt_layout3.addWidget(self.channels_chose)
         self.butt_layout3.addWidget(QLabel("Units:"))
         self.butt_layout3.addWidget(self.units_choose)
         # self.butt_layout3.addWidget(QLabel("Noise removal:"))
@@ -208,7 +205,6 @@ class MeasurementWidget(QWidget):
         self.setLayout(layout)
         # noinspection PyArgumentList
         self.clip = QApplication.clipboard()
-        self.settings.image_changed[int].connect(self.image_changed)
         self.previous_profile = None
         self.update_measurement_list()
 
@@ -232,9 +228,6 @@ class MeasurementWidget(QWidget):
             self.measurement_type.setCurrentIndex(0)
             return "<none>"
         return name
-
-    def image_changed(self, channels_num):
-        self.channels_chose.change_channels_num(channels_num)
 
     def measurement_profile_selection_changed(self, index):
         text = self.measurement_type.itemText(index)
@@ -304,47 +297,8 @@ class MeasurementWidget(QWidget):
 
         self.info_field.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-    def append_measurement_result(self):
-        try:
-            compute_class = self.settings.measurement_profiles[self.measurement_type.currentText()]
-        except KeyError:
-            QMessageBox.warning(
-                self,
-                "Measurement profile not found",
-                f"Measurement profile '{self.measurement_type.currentText()}' not found'",
-            )
-            return
-
-        if self.settings.roi is None:
-            return
-        units = self.units_choose.currentEnum()
-
-        # FIXME find which errors should be displayed as warning
-        # def exception_hook(exception):
-        #    QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
-
-        for num in compute_class.get_channels_num():
-            if num >= self.settings.image.channels:
-                QMessageBox.warning(
-                    self,
-                    "Measurement error",
-                    "Cannot calculate this measurement because " f"image do not have channel {num+1}",
-                )
-                return
-
-        dial = ExecuteFunctionDialog(
-            compute_class.calculate,
-            [self.settings.image, self.channels_chose.currentIndex(), self.settings.roi_info, units],
-            text="Measurement calculation",
-        )  # , exception_hook=exception_hook)
-        dial.exec_()
-        stat: MeasurementResult = dial.get_result()
-        if stat is None:
-            return
-        stat.set_filename(self.settings.image_path)
-        self.measurements_storage.add_measurements(stat)
-        self.previous_profile = compute_class.name
-        self.refresh_view()
+    def append_measurement_result(self):  # pragma: no cover
+        raise NotImplementedError
 
     def keyPressEvent(self, e: QKeyEvent):
         if not e.modifiers() & Qt.ControlModifier:
@@ -396,3 +350,62 @@ class MeasurementWidget(QWidget):
                 self.butt_layout2,
                 self.butt_layout,
             )
+
+
+class MeasurementWidget(MeasurementWidgetBase):
+    """
+    :type settings: Settings
+    :type segment: Segment
+    """
+
+    def __init__(self, settings: PartSettings, segment=None):
+        super().__init__(settings, segment)
+        self.channels_chose = ChannelComboBox()
+        self.butt_layout3.insertWidget(0, QLabel("Channel:"))
+        self.butt_layout3.insertWidget(1, self.channels_chose)
+        self.settings.image_changed[int].connect(self.image_changed)
+
+    def append_measurement_result(self):
+        try:
+            compute_class = self.settings.measurement_profiles[self.measurement_type.currentText()]
+        except KeyError:
+            QMessageBox.warning(
+                self,
+                "Measurement profile not found",
+                f"Measurement profile '{self.measurement_type.currentText()}' not found'",
+            )
+            return
+
+        if self.settings.roi is None:
+            return
+        units = self.units_choose.currentEnum()
+
+        # FIXME find which errors should be displayed as warning
+        # def exception_hook(exception):
+        #    QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
+
+        for num in compute_class.get_channels_num():
+            if num >= self.settings.image.channels:
+                QMessageBox.warning(
+                    self,
+                    "Measurement error",
+                    "Cannot calculate this measurement because " f"image do not have channel {num+1}",
+                )
+                return
+
+        dial = ExecuteFunctionDialog(
+            compute_class.calculate,
+            [self.settings.image, self.channels_chose.currentIndex(), self.settings.roi_info, units],
+            text="Measurement calculation",
+        )  # , exception_hook=exception_hook)
+        dial.exec_()
+        stat: MeasurementResult = dial.get_result()
+        if stat is None:
+            return
+        stat.set_filename(self.settings.image_path)
+        self.measurements_storage.add_measurements(stat)
+        self.previous_profile = compute_class.name
+        self.refresh_view()
+
+    def image_changed(self, channels_num):
+        self.channels_chose.change_channels_num(channels_num)
