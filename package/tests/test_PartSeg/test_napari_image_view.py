@@ -211,13 +211,14 @@ class TestImageView:
         roi[..., 2:-2, 2:-2, 2:-2] = 1
         base_settings.roi = roi
         image_view.component_mark(1, False)
-        assert len(image_view.additional_layers) == 1
-        assert image_view.additional_layers[0] in image_view.viewer.layers
-        assert "timer" not in image_view.additional_layers[0].metadata
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].highlight is not None
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].highlight in image_view.viewer.layers
+        assert "timer" not in image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata
         image_view.component_unmark(0)
-        assert len(image_view.additional_layers) == 0
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
         image_view.component_mark(10, False)
-        assert len(image_view.additional_layers) == 0
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
 
     @pytest.mark.enablethread
     def test_marking_component_flash(self, base_settings, image_view, tmp_path, qtbot):
@@ -225,13 +226,13 @@ class TestImageView:
         roi[..., 2:-2, 2:-2, 2:-2] = 1
         base_settings.roi = roi
         image_view.component_mark(1, True)
-        assert len(image_view.additional_layers) == 1
-        assert "timer" in image_view.additional_layers[0].metadata
-        timer = image_view.additional_layers[0].metadata["timer"]
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
+        assert "timer" in image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata
+        timer = image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata["timer"]
         assert timer.isActive()
         qtbot.wait(800)
         image_view.component_unmark(0)
-        assert len(image_view.additional_layers) == 0
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
         assert not timer.isActive()
 
     @pytest.mark.parametrize("pos", [(-(10 ** 8), -(10 ** 8)), (10 ** 8, 10 ** 8)])

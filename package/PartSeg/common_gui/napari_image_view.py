@@ -18,6 +18,7 @@ from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
+from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
 from vispy.color import Color, Colormap
 from vispy.geometry.rect import Rect
@@ -72,6 +73,7 @@ class ImageInfo:
     roi: Optional[Labels] = None
     roi_info: ROIInfo = field(default_factory=lambda: ROIInfo(None))
     roi_count: int = 0
+    highlight: Optional[Labels] = None
 
     def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
         if not self.layers:
@@ -131,7 +133,6 @@ class ImageView(QWidget):
         self.worker_list = []
         self.points_layer = None
         self.roi_alternative_selection = "ROI"
-        self.additional_layers: List[Layer] = []
         self._search_type = SearchType.Highlight
         self._last_component = 1
 
@@ -756,41 +757,49 @@ class ImageView(QWidget):
 
     def _search_component(self):
         max_components = max(max(image_info.roi_info.bound_info) for image_info in self.image_info.values())
+        if self.viewer.dims.ndisplay == 3:
+            self._search_type = SearchType.Highlight
 
         dial = SearchComponentModal(self, self._search_type, self._last_component, max_components)
+        if self.viewer.dims.ndisplay == 3:
+            dial.zoom_to.setDisabled(True)
         dial.show_right_of_mouse()
 
     def component_unmark(self, _num):
         self.viewer.layers.selection.clear()
-        for el in self.additional_layers:
-            if "timer" in el.metadata:
-                el.metadata["timer"].stop()
-            self.viewer.layers.selection.add(el)
-        self.viewer.layers.remove_selected()
-        self.additional_layers = []
+        for el in self.image_info.values():
+            if el.highlight is None:
+                continue
+            if "timer" in el.highlight.metadata:
+                el.highlight.metadata["timer"].stop()
+            el.highlight.visible = False
 
     def _mark_layer(self, num: int, flash: bool, image_info: ImageInfo):
         bound_info = image_info.roi_info.bound_info.get(num, None)
         if bound_info is None:
             return
         # TODO think about marking on bright background
-        slices = bound_info.get_slices()
+        slices = bound_info.get_slices(1)
         slices[image_info.image.stack_pos] = slice(None)
         component_mark = image_info.roi_info.roi[tuple(slices)] == num
-        translate_grid = image_info.roi.translate_grid + (bound_info.lower) * image_info.roi.scale
+        if self.viewer.dims.ndisplay == 3:
+            component_mark = binary_dilation(component_mark)
+        translate_grid = image_info.roi.translate_grid + (bound_info.lower - 1) * image_info.roi.scale
         translate_grid[image_info.image.stack_pos] = 0
-        self.additional_layers.append(
-            self.viewer.add_labels(
+        if image_info.highlight is None:
+            image_info.highlight = self.viewer.add_labels(
                 component_mark,
                 scale=image_info.roi.scale,
                 blending="additive",
                 color={0: "black", 1: "white"},
-                opacity=0.5,
+                opacity=0.7,
             )
-        )
-        self.additional_layers[-1].translate_grid = translate_grid
+        else:
+            image_info.highlight.data = component_mark
+        image_info.highlight.translate_grid = translate_grid
+        image_info.highlight.visible = True
         if flash:
-            layer = self.additional_layers[-1]
+            layer = image_info.highlight
 
             def flash_fun(layer_=layer):
                 opacity = layer_.opacity + 0.1
