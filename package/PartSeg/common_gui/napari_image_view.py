@@ -149,6 +149,7 @@ class ImageView(QWidget):
         self.points_view_button.setVisible(False)
         self.search_roi_btn = SearchROIButton(self.settings)
         self.search_roi_btn.clicked.connect(self._search_component)
+        self.search_roi_btn.setDisabled(True)
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
         self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
