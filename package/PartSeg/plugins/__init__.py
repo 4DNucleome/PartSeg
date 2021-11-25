@@ -15,7 +15,7 @@ def register_napari_plugins():
     import napari_plugin_engine
     import napari_svg
 
-    from PartSeg.plugins.napari_widgets import simple_measurement_widget
+    from PartSeg.plugins import napari_widgets
     from PartSegCore.napari_plugins import (
         load_image,
         load_mask_project,
@@ -32,7 +32,7 @@ def register_napari_plugins():
         load_masked_image,
         load_roi_project,
         save_mask_roi,
-        simple_measurement_widget,
+        napari_widgets,
     ]:
         napari.plugins.plugin_manager.register(module)
 
