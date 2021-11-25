@@ -153,23 +153,18 @@ class TestImageView:
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10 ** 5, 10 ** 5, 10 ** 5))
 
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
-    def test_mask_control_visibility(self, base_settings, image2, qtbot, tmp_path):
-        ch_prop = ChannelProperty(base_settings, "test")
-        view = ImageView(base_settings, channel_property=ch_prop, name="test")
-        qtbot.addWidget(ch_prop)
-        qtbot.addWidget(view)
-        base_settings.image = image2
-        view.show()
-        assert not view.mask_chk.isVisible()
-        view.set_mask()
-        assert not view.mask_chk.isVisible()
+    def test_mask_control_visibility(self, base_settings, image_view, qtbot, tmp_path):
+        image_view.show()
+        assert not image_view.mask_chk.isVisible()
+        image_view.set_mask()
+        assert not image_view.mask_chk.isVisible()
         with qtbot.waitSignal(base_settings.mask_changed):
-            base_settings.mask = np.zeros(image2.get_channel(0).shape, dtype=np.uint8)
-        assert view.mask_chk.isVisible()
+            base_settings.mask = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
+        assert image_view.mask_chk.isVisible()
         with qtbot.waitSignal(base_settings.mask_changed):
             base_settings.mask = None
-        assert not view.mask_chk.isVisible()
-        view.hide()
+        assert not image_view.mask_chk.isVisible()
+        image_view.hide()
 
     def test_points_rendering(self, base_settings, image_view, tmp_path):
         assert image_view.points_layer is None
@@ -180,19 +175,14 @@ class TestImageView:
         assert not image_view.points_layer.visible
 
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
-    def test_points_button_visibility(self, base_settings, image2, qtbot, tmp_path):
-        ch_prop = ChannelProperty(base_settings, "test")
-        view = ImageView(base_settings, channel_property=ch_prop, name="test")
-        qtbot.addWidget(ch_prop)
-        qtbot.addWidget(view)
-        base_settings.image = image2
-        view.show()
-        assert not view.points_view_button.isVisible()
+    def test_points_button_visibility(self, base_settings, image_view, qtbot, tmp_path):
+        image_view.show()
+        assert not image_view.points_view_button.isVisible()
         base_settings.points = [(0, 5, 5, 5)]
-        assert view.points_view_button.isVisible()
+        assert image_view.points_view_button.isVisible()
         base_settings.points = None
-        assert not view.points_view_button.isVisible()
-        view.hide()
+        assert not image_view.points_view_button.isVisible()
+        image_view.hide()
 
     @pyside_skip
     def test_dim_menu(self, base_settings, image_view, monkeypatch):
