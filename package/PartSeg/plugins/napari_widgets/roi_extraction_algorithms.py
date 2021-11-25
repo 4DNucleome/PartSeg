@@ -1,10 +1,7 @@
-import inspect
-import itertools
 import typing
 
 import numpy as np
 import pandas as pd
-from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
@@ -26,11 +23,10 @@ from qtpy.QtWidgets import (
 
 from PartSeg import plugins
 from PartSegCore import UNIT_SCALE, Units
-from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import Register, ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
 from PartSegCore.analysis.save_functions import SaveProfilesToJSON
-from PartSegCore.channel_class import Channel
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.segmentation import ROIExtractionResult
 from PartSegImage import Image
@@ -38,18 +34,14 @@ from PartSegImage import Image
 from ..._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
 from ...common_backend.base_settings import IO_SAVE_DIRECTORY, BaseSettings
 from ...common_backend.except_hook import show_warning
-from ...common_gui.algorithms_description import (
-    AlgorithmChooseBase,
-    FormWidget,
-    InteractiveAlgorithmSettingsWidget,
-    QtAlgorithmProperty,
-)
+from ...common_gui.algorithms_description import AlgorithmChooseBase, FormWidget, InteractiveAlgorithmSettingsWidget
 from ...common_gui.custom_load_dialog import PLoadDialog
 from ...common_gui.custom_save_dialog import PSaveDialog
 from ...common_gui.searchable_combo_box import SearchComboBox
 from ...common_gui.searchable_list_widget import SearchableListWidget
 from ...common_gui.universal_gui_part import TextShow
 from ._settings import get_settings
+from .utils import NapariFormWidgetWithMask
 
 if typing.TYPE_CHECKING:
     from qtpy.QtGui import QHideEvent, QShowEvent  # pragma: no cover
@@ -58,30 +50,10 @@ if typing.TYPE_CHECKING:
 SELECT_TEXT = "<select>"
 
 
-class QtNapariAlgorithmProperty(QtAlgorithmProperty):
-    @classmethod
-    def _get_field_from_value_type(cls, ap: AlgorithmProperty) -> typing.Union[QWidget, Widget]:
-        if inspect.isclass(ap.value_type) and issubclass(ap.value_type, Channel):
-            return create_widget(annotation=NapariImage, label="Image", options={})
-        return super()._get_field_from_value_type(ap)
-
-
-class NapariFormWidget(FormWidget):
-    @staticmethod
-    def _element_list(fields) -> typing.Iterable[QtAlgorithmProperty]:
-        mask = AlgorithmProperty("mask", "Mask", None, value_type=typing.Optional[Labels])
-        return map(QtNapariAlgorithmProperty.from_algorithm_property, itertools.chain([mask], fields))
-
-    def reset_choices(self, event=None):
-        for widget in self.widgets_dict.values():
-            if hasattr(widget.get_field(), "reset_choices"):
-                widget.get_field().reset_choices(event)
-
-
 class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidget):
     @staticmethod
     def _form_widget(algorithm, start_values) -> FormWidget:
-        return NapariFormWidget(algorithm.get_fields(), start_values=start_values)
+        return NapariFormWidgetWithMask(algorithm.get_fields(), start_values=start_values)
 
     def reset_choices(self, event=None):
         self.form_widget.reset_choices(event)

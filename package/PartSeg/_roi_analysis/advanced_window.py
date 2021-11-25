@@ -624,6 +624,9 @@ class MeasurementSettings(QWidget):
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
 
+    def form_dialog(self, arguments):
+        return FormDialog(arguments, settings=self.settings, parent=self)
+
     def get_parameters(self, node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float):
         if isinstance(node, Node):
             return node
@@ -635,7 +638,7 @@ class MeasurementSettings(QWidget):
         with suppress(KeyError):
             arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
             if len(arguments) > 0 and len(node.dict) == 0:
-                dial = FormDialog(arguments, settings=self.settings, parent=self)
+                dial = self.form_dialog(arguments)
                 if dial.exec_():
                     node = node._replace(dict=dial.get_values())
                 else:
