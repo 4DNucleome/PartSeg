@@ -1,5 +1,3 @@
-import os.path
-
 import napari
 import numpy as np
 import packaging.version
@@ -161,7 +159,7 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
 @napari_skip
 @pytest.mark.enablethread
 @pytest.mark.enabledialog
-def test_measurement_create(make_napari_viewer, qtbot):
+def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
     from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
 
     data = np.zeros((10, 10), dtype=np.uint8)
@@ -174,14 +172,13 @@ def test_measurement_create(make_napari_viewer, qtbot):
     measurement = Measurement(viewer)
     viewer.window.add_dock_widget(measurement)
     measurement.reset_choices()
-    measurement_data = measurement.settings.load_metadata(
-        os.path.join(os.path.dirname(__file__), "napari_measurements_profile.json")
-    )
+    measurement_data = measurement.settings.load_metadata(str(bundle_test_dir / "napari_measurements_profile.json"))
     measurement.settings.measurement_profiles["test"] = measurement_data["test"]
     assert measurement.measurement_widget.measurement_type.count() == 2
     measurement.measurement_widget.measurement_type.setCurrentIndex(1)
     assert measurement.measurement_widget.measurement_type.currentText() == "test"
     assert measurement.measurement_widget.recalculate_button.isEnabled()
+    assert measurement.measurement_widget.check_if_measurement_can_be_calculated("test") == "test"
     measurement.measurement_widget.append_measurement_result()
 
 
