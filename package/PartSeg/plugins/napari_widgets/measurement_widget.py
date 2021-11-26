@@ -56,7 +56,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         image = generate_image(self.napari_viewer, self.channels_chose.value.name, *compute_class.get_channels_num())
         if self.mask_chose.value is not None:
             image.mask = self.mask_chose.value.data
-        roi_info = ROIInfo(self.roi_chose.value.data)
+        roi_info = ROIInfo(self.roi_chose.value.data).fit_to_image(image)
         dial = ExecuteFunctionDialog(
             compute_class.calculate,
             [image, self.channels_chose.value.name, roi_info, units],

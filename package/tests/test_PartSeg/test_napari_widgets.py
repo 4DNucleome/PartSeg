@@ -1,3 +1,5 @@
+import os.path
+
 import napari
 import numpy as np
 import packaging.version
@@ -157,15 +159,30 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
 
 
 @napari_skip
+@pytest.mark.enablethread
+@pytest.mark.enabledialog
 def test_measurement_create(make_napari_viewer, qtbot):
     from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
 
     data = np.zeros((10, 10), dtype=np.uint8)
+    data[2:5, 2:-2] = 1
+    data[5:-2, 2:-2] = 2
 
     viewer = make_napari_viewer()
     viewer.add_labels(data, name="label")
+    viewer.add_image(data, name="image")
     measurement = Measurement(viewer)
     viewer.window.add_dock_widget(measurement)
+    measurement.reset_choices()
+    measurement_data = measurement.settings.load_metadata(
+        os.path.join(os.path.dirname(__file__), "napari_measurements_profile.json")
+    )
+    measurement.settings.measurement_profiles["test"] = measurement_data["test"]
+    assert measurement.measurement_widget.measurement_type.count() == 2
+    measurement.measurement_widget.measurement_type.setCurrentIndex(1)
+    assert measurement.measurement_widget.measurement_type.currentText() == "test"
+    assert measurement.measurement_widget.recalculate_button.isEnabled()
+    measurement.measurement_widget.append_measurement_result()
 
 
 def test_mask_create(make_napari_viewer, qtbot):

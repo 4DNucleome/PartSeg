@@ -759,7 +759,7 @@ class MeasurementSettings(QWidget):
         self.create_selection_changed()
 
     def export_measurement_profiles(self):
-        exp = ExportDialog(self.settings.measurement_profiles, StringViewer)
+        exp = ExportDialog(self.settings.measurement_profiles, StringViewer, parent=self)
         if not exp.exec_():
             return
         dial = PSaveDialog(
@@ -782,6 +782,7 @@ class MeasurementSettings(QWidget):
             settings=self.settings,
             path="io.export_directory",
             caption="Import settings profiles",
+            parent=self,
         )
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
