@@ -29,6 +29,8 @@ from ..common_gui.universal_gui_part import ChannelComboBox
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from .partseg_settings import PartSettings
 
+NO_MEASUREMENT_STRING = "<none>"
+
 
 class FileNamesEnum(Enum):
     No = 1
@@ -143,7 +145,7 @@ class MeasurementWidgetBase(QWidget):
         self.recalculate_append_button = QPushButton("Recalculate and\n append measurement", self)
         self.recalculate_append_button.clicked.connect(self.append_measurement_result)
         self.copy_button = QPushButton("Copy to clipboard", self)
-        self.copy_button.setToolTip("You cacn copy also with 'Ctrl+C'. To get raw copy copy with 'Ctrl+Shit+C'")
+        self.copy_button.setToolTip("You can copy also with 'Ctrl+C'. To get raw copy copy with 'Ctrl+Shit+C'")
         self.horizontal_measurement_present = QCheckBox("Horizontal view", self)
         self.no_header = QCheckBox("No header", self)
         self.no_units = QCheckBox("No units", self)
@@ -208,26 +210,8 @@ class MeasurementWidgetBase(QWidget):
         self.previous_profile = None
         self.update_measurement_list()
 
-    def check_if_measurement_can_be_calculated(self, name):
-        if name in ("<none>", ""):
-            return "<none>"
-        profile: MeasurementProfile = self.settings.measurement_profiles.get(name)
-        if profile.is_any_mask_measurement() and self.settings.mask is None:
-            QMessageBox.information(
-                self, "Need mask", "To use this measurement set please use data with mask loaded", QMessageBox.Ok
-            )
-            self.measurement_type.setCurrentIndex(0)
-            return "<none>"
-        if self.settings.roi is None:
-            QMessageBox.information(
-                self,
-                "Need segmentation",
-                'Before calculating please create segmentation ("Execute" button)',
-                QMessageBox.Ok,
-            )
-            self.measurement_type.setCurrentIndex(0)
-            return "<none>"
-        return name
+    def check_if_measurement_can_be_calculated(self, name):  # pragma: no cover
+        raise NotImplementedError
 
     def measurement_profile_selection_changed(self, index):
         text = self.measurement_type.itemText(index)
@@ -326,7 +310,7 @@ class MeasurementWidgetBase(QWidget):
         except ValueError:
             index = 0
         self.measurement_type.clear()
-        self.measurement_type.addItem("<none>")
+        self.measurement_type.addItem(NO_MEASUREMENT_STRING)
         self.measurement_type.addItems(available)
         self.measurement_type.setCurrentIndex(index)
         self.measurement_type.blockSignals(False)
@@ -372,7 +356,7 @@ class MeasurementWidget(MeasurementWidgetBase):
             QMessageBox.warning(
                 self,
                 "Measurement profile not found",
-                f"Measurement profile '{self.measurement_type.currentText()}' not found'",
+                f"Measurement profile '{self.measurement_type.currentText()}' not found",
             )
             return
 
@@ -409,3 +393,24 @@ class MeasurementWidget(MeasurementWidgetBase):
 
     def image_changed(self, channels_num):
         self.channels_chose.change_channels_num(channels_num)
+
+    def check_if_measurement_can_be_calculated(self, name):
+        if name in (NO_MEASUREMENT_STRING, ""):
+            return NO_MEASUREMENT_STRING
+        profile: MeasurementProfile = self.settings.measurement_profiles.get(name)
+        if profile.is_any_mask_measurement() and self.settings.mask is None:
+            QMessageBox.information(
+                self, "Need mask", "To use this measurement set please use data with mask loaded", QMessageBox.Ok
+            )
+            self.measurement_type.setCurrentIndex(0)
+            return NO_MEASUREMENT_STRING
+        if self.settings.roi is None:
+            QMessageBox.information(
+                self,
+                "Need segmentation",
+                'Before calculating please create segmentation ("Execute" button)',
+                QMessageBox.Ok,
+            )
+            self.measurement_type.setCurrentIndex(0)
+            return NO_MEASUREMENT_STRING
+        return name
