@@ -1812,8 +1812,8 @@ class TestStatisticProfile:
             ),
         ]
         assert result["LongestMainAxisLength"][0] == 55 * 50 * UNIT_SCALE[Units.nm.value]
-        assert result["LongestMainAxisLength per component"][0][0] == 35 * 50 * UNIT_SCALE[Units.nm.value]
-        assert result["LongestMainAxisLength per component"][0][1] == 26 * 50 * UNIT_SCALE[Units.nm.value]
+        assert np.isclose(result["LongestMainAxisLength per component"][0][0], 35 * 50 * UNIT_SCALE[Units.nm.value])
+        assert np.isclose(result["LongestMainAxisLength per component"][0][1], 26 * 50 * UNIT_SCALE[Units.nm.value])
 
     def test_all_variants(self, bundle_test_dir):
         """This test check if all calculations finished, not values."""
