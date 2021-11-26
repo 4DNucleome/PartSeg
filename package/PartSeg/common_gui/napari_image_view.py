@@ -198,10 +198,7 @@ class ImageView(QWidget):
 
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
         self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
-        try:
-            self.viewer.dims.events.current_step.connect(self._view_changed, position="last")
-        except AttributeError:
-            self.viewer.dims.events.axis.connect(self._view_changed, position="last")
+        self.viewer.dims.events.current_step.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self.camera_change, position="last")
@@ -441,20 +438,10 @@ class ImageView(QWidget):
             image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
 
     def remove_all_roi(self):
-        if hasattr(self.viewer.layers, "selection"):
-            self.viewer.layers.selection.clear()
-        else:
-            self.viewer.layers.unselect_all()
         for image_info in self.image_info.values():
             if image_info.roi is None:
                 continue
-            if hasattr(self.viewer.layers, "selection"):
-                self.viewer.layers.selection.add(image_info.roi)
-            else:
-                image_info.roi.selected = True
-            image_info.roi = None
-
-        self.viewer.layers.remove_selected()
+            image_info.roi.visible = False
 
     def update_roi_border(self) -> None:
         for image_info in self.image_info.values():
@@ -509,31 +496,30 @@ class ImageView(QWidget):
             mask = image.mask
 
         image_info = self.image_info[image.file_path]
-        if image_info.mask is not None:
-            if hasattr(self.viewer.layers, "selection"):
-                self.viewer.layers.selection.clear()
-                self.viewer.layers.selection.add(image_info.mask)
-            else:
-                self.viewer.layers.unselect_all()
-                image_info.mask.selected = True
-            self.viewer.layers.remove_selected()
-            image_info.mask = None
-
         if mask is None:
-            self._toggle_mask_chk_visibility()
+            if image_info.mask is not None:
+                image_info.mask.visible = False
+                image_info.mask.metadata["valid"] = False
+                self._toggle_mask_chk_visibility()
             return
-
         mask_marker = mask == 0
-
-        layer = self.viewer.add_labels(mask_marker, scale=image.normalized_scaling(), blending="additive", name="Mask")
-        layer.color = self.mask_color()
-        layer.opacity = self.mask_opacity()
-        layer.visible = self.mask_chk.isChecked()
-        image_info.mask = layer
+        if image_info.mask is None:
+            image_info.mask = self.viewer.add_labels(
+                mask_marker, scale=image.normalized_scaling(), blending="additive", name="Mask"
+            )
+        else:
+            image_info.mask.data = mask_marker
+        image_info.mask.metadata["valid"] = True
+        image_info.mask.color = self.mask_color()
+        image_info.mask.opacity = self.mask_opacity()
+        image_info.mask.visible = self.mask_chk.isChecked()
         self._toggle_mask_chk_visibility()
 
     def _toggle_mask_chk_visibility(self):
-        visibility = any(image_info.mask is not None for image_info in self.image_info.values())
+        visibility = any(
+            image_info.mask is not None and image_info.mask.metadata.get("valid", False)
+            for image_info in self.image_info.values()
+        )
         self.mask_chk.setVisible(visibility)
         self.mask_label.setVisible(visibility)
 

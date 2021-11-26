@@ -105,6 +105,7 @@ class TestImageView:
     def test_roi_rendering(self, base_settings, image_view, tmp_path):
         roi = np.ones(base_settings.image.get_channel(0).shape, dtype=np.uint8)
         roi[..., 1, 1] = 0
+        image_view.set_roi(ROIInfo(None))
         base_settings.roi = roi
         image_view.update_roi_border()
         assert np.any(image_view.image_info[str(tmp_path / "test2.tiff")].roi.data == 1)
@@ -117,8 +118,12 @@ class TestImageView:
         base_settings.image.set_spacing((10 ** -4,) * 3)
         image_view.update_spacing_info()
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].roi.scale == (1, 10 ** 5, 10 ** 5, 10 ** 5))
+        base_settings.roi = None
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].roi.visible
+        base_settings.roi = roi
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].roi.visible
         image_view.remove_all_roi()
-        assert image_view.image_info[str(tmp_path / "test2.tiff")].roi is None
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].roi.visible
 
     def test_has_image(self, base_settings, image_view, image, image2):
         base_settings.image = image2
