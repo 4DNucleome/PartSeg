@@ -61,8 +61,8 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
             compute_class.calculate,
             [image, self.channels_chose.value.name, roi_info, units],
             text="Measurement calculation",
+            parent=self,
         )  # , exception_hook=exception_hook)
-        dial.setParent(self)
         dial.exec_()
         stat: MeasurementResult = dial.get_result()
         self.roi_chose.value.properties = stat.to_dataframe()

@@ -718,7 +718,7 @@ class MeasurementSettings(QWidget):
         for i in range(self.profile_options_chosen.count()):
             txt = str(self.profile_options_chosen.item(i).text())
             selected_values.append((txt, str, txt))
-        val_dialog = MultipleInput("Set fields name", list(selected_values))
+        val_dialog = MultipleInput("Set fields name", list(selected_values), parent=self)
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
@@ -819,7 +819,7 @@ class SegAdvancedWindow(AdvancedWindow):
 
 
 class MultipleInput(QDialog):
-    def __init__(self, text, help_text, objects_list=None):
+    def __init__(self, text, help_text, objects_list=None, parent=None):
         if objects_list is None:
             objects_list = help_text
             help_text = ""
@@ -847,7 +847,7 @@ class MultipleInput(QDialog):
             return res
 
         field_dict = {str: QLineEdit, float: create_input_float, int: create_input_int}
-        super().__init__()
+        super().__init__(parent=parent)
         ok_butt = QPushButton("Ok", self)
         cancel_butt = QPushButton("Cancel", self)
         self.object_dict = {}
