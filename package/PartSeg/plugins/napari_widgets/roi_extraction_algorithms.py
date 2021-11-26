@@ -29,7 +29,6 @@ from PartSegCore.analysis.load_functions import LoadProfileFromJSON
 from PartSegCore.analysis.save_functions import SaveProfilesToJSON
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.segmentation import ROIExtractionResult
-from PartSegImage import Image
 
 from ..._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
 from ...common_backend.base_settings import IO_SAVE_DIRECTORY, BaseSettings
@@ -41,7 +40,7 @@ from ...common_gui.searchable_combo_box import SearchComboBox
 from ...common_gui.searchable_list_widget import SearchableListWidget
 from ...common_gui.universal_gui_part import TextShow
 from ._settings import get_settings
-from .utils import NapariFormWidgetWithMask
+from .utils import NapariFormWidgetWithMask, generate_image
 
 if typing.TYPE_CHECKING:
     from qtpy.QtGui import QHideEvent, QShowEvent  # pragma: no cover
@@ -58,13 +57,8 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
     def reset_choices(self, event=None):
         self.form_widget.reset_choices(event)
 
-    def get_order_mapping(self):
-        layers = self.get_layers()
-        layer_order_dict = {}
-        for layer in layers.values():
-            if isinstance(layer, NapariImage) and layer not in layer_order_dict:
-                layer_order_dict[layer] = len(layer_order_dict)
-        return layer_order_dict
+    def get_layer_list(self) -> typing.List[str]:
+        return [x.name for x in self.get_layers().values()]
 
     def get_values(self):
         return {
@@ -73,7 +67,7 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
             if not isinstance(v, Labels) and k != "mask"
         }
 
-    def get_layers(self):
+    def get_layers(self) -> typing.Dict[str, Layer]:
         return {k: v for k, v in self.form_widget.get_values().items() if isinstance(v, Layer)}
 
 
@@ -203,33 +197,11 @@ class ROIExtractionAlgorithms(QWidget):
     def update_image(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
         self.settings.last_executed_algorithm = widget.name
-        layers = widget.get_order_mapping()
-        axis_order = Image.axis_order.replace("C", "")
-        channel_list = []
-        for image_layer in layers:
-            if image_layer.name not in channel_list:
-                channel_list.append(image_layer)
-        if self.channel_names == channel_list:
-            return
+        image = generate_image(self.viewer, *widget.get_layer_list())
 
-        image_list = []
-        for image_layer in layers:
-            data_scale = image_layer.scale[-3:] / UNIT_SCALE[Units.nm.value]
-            image_list.append(
-                Image(
-                    image_layer.data,
-                    data_scale,
-                    axes_order=axis_order[-image_layer.data.ndim :],
-                    channel_names=[image_layer.name],
-                )
-            )
-        res_image = image_list[0]
-        for image in image_list[1:]:
-            res_image = res_image.merge(image, "C")
-
-        self._scale = np.array(res_image.spacing)
-        self.channel_names = res_image.channel_names
-        widget.image_changed(res_image)
+        self._scale = np.array(image.spacing)
+        self.channel_names = image.channel_names
+        widget.image_changed(image)
 
     def _run_calculation(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
