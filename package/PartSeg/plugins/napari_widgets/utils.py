@@ -3,14 +3,17 @@ import itertools
 import typing
 
 from magicgui.widgets import Widget, create_widget
+from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from qtpy.QtWidgets import QWidget
 
 from PartSeg.common_gui.algorithms_description import FormWidget, QtAlgorithmProperty
 from PartSeg.common_gui.custom_save_dialog import FormDialog
+from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.channel_class import Channel
+from PartSegImage import Image
 
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
@@ -46,3 +49,24 @@ class NapariFormDialog(FormDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.widget.reset_choices()
+
+
+def generate_image(viever: Viewer, *layer_names):
+    axis_order = Image.axis_order.replace("C", "")
+    image_list = []
+    for name in layer_names:
+        image_layer = viever.layers[name]
+        data_scale = image_layer.scale[-3:] / UNIT_SCALE[Units.nm.value]
+        image_list.append(
+            Image(
+                image_layer.data,
+                data_scale,
+                axes_order=axis_order[-image_layer.data.ndim :],
+                channel_names=[image_layer.name],
+            )
+        )
+    res_image = image_list[0]
+    for image in image_list[1:]:
+        res_image = res_image.merge(image, "C")
+
+    return res_image

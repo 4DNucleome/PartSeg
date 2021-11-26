@@ -9,9 +9,10 @@ from qtpy.QtWidgets import QLabel, QTabWidget
 
 from PartSeg._roi_analysis.advanced_window import MeasurementSettings
 from PartSeg._roi_analysis.measurement_widget import NO_MEASUREMENT_STRING, MeasurementWidgetBase
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSeg.plugins.napari_widgets._settings import get_settings
 from PartSeg.plugins.napari_widgets.utils import NapariFormDialog
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 
 
 class NapariMeasurementSettings(MeasurementSettings):
@@ -37,15 +38,30 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         try:
             compute_class = self.settings.measurement_profiles[self.measurement_type.currentText()]
         except KeyError:
-            show_info(f"Measurement profile '{self.measurement_type.currentText()}' not found"),
+            show_info(f"Measurement profile '{self.measurement_type.currentText()}' not found")
             return
         if self.roi_chose.value is None:
             return
+        if self.channels_chose.value is None:
+            return
         for name in compute_class.get_channels_num():
             if name not in self.napari_viewer.layers:
-                show_info("Cannot calculate this measurement because " f"image do not have layer {name}"),
+                show_info("Cannot calculate this measurement because " f"image do not have layer {name}")
                 return
-        # TODO implement
+        units = self.units_choose.currentEnum()
+        dial = ExecuteFunctionDialog(
+            compute_class.calculate,
+            [self.settings.image, self.channels_chose.value.name, self.settings.roi_info, units],
+            text="Measurement calculation",
+        )  # , exception_hook=exception_hook)
+        dial.exec_()
+        stat: MeasurementResult = dial.get_result()
+        if stat is None:
+            return
+        stat.set_filename(self.settings.image_path)
+        self.measurements_storage.add_measurements(stat)
+        self.previous_profile = compute_class.name
+        self.refresh_view()
 
     def check_if_measurement_can_be_calculated(self, name):
         if name in (NO_MEASUREMENT_STRING, ""):
