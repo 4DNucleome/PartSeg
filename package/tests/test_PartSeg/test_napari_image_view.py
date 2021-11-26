@@ -105,6 +105,7 @@ class TestImageView:
     def test_roi_rendering(self, base_settings, image_view, tmp_path):
         roi = np.ones(base_settings.image.get_channel(0).shape, dtype=np.uint8)
         roi[..., 1, 1] = 0
+        image_view.set_roi(ROIInfo(None))
         base_settings.roi = roi
         image_view.update_roi_border()
         assert np.any(image_view.image_info[str(tmp_path / "test2.tiff")].roi.data == 1)
@@ -117,8 +118,12 @@ class TestImageView:
         base_settings.image.set_spacing((10 ** -4,) * 3)
         image_view.update_spacing_info()
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].roi.scale == (1, 10 ** 5, 10 ** 5, 10 ** 5))
+        base_settings.roi = None
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].roi.visible
+        base_settings.roi = roi
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].roi.visible
         image_view.remove_all_roi()
-        assert image_view.image_info[str(tmp_path / "test2.tiff")].roi is None
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].roi.visible
 
     def test_has_image(self, base_settings, image_view, image, image2):
         base_settings.image = image2
@@ -211,13 +216,14 @@ class TestImageView:
         roi[..., 2:-2, 2:-2, 2:-2] = 1
         base_settings.roi = roi
         image_view.component_mark(1, False)
-        assert len(image_view.additional_layers) == 1
-        assert image_view.additional_layers[0] in image_view.viewer.layers
-        assert "timer" not in image_view.additional_layers[0].metadata
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].highlight is not None
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].highlight in image_view.viewer.layers
+        assert "timer" not in image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata
         image_view.component_unmark(0)
-        assert len(image_view.additional_layers) == 0
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
         image_view.component_mark(10, False)
-        assert len(image_view.additional_layers) == 0
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
 
     @pytest.mark.enablethread
     def test_marking_component_flash(self, base_settings, image_view, tmp_path, qtbot):
@@ -225,13 +231,13 @@ class TestImageView:
         roi[..., 2:-2, 2:-2, 2:-2] = 1
         base_settings.roi = roi
         image_view.component_mark(1, True)
-        assert len(image_view.additional_layers) == 1
-        assert "timer" in image_view.additional_layers[0].metadata
-        timer = image_view.additional_layers[0].metadata["timer"]
+        assert image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
+        assert "timer" in image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata
+        timer = image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata["timer"]
         assert timer.isActive()
         qtbot.wait(800)
         image_view.component_unmark(0)
-        assert len(image_view.additional_layers) == 0
+        assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
         assert not timer.isActive()
 
     @pytest.mark.parametrize("pos", [(-(10 ** 8), -(10 ** 8)), (10 ** 8, 10 ** 8)])
