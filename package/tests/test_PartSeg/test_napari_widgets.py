@@ -27,6 +27,10 @@ napari_skip = pytest.mark.skipif(
     packaging.version.parse(napari.__version__) < packaging.version.parse("0.4.10"), reason="To old napari"
 )
 
+napari_4_11_skip = pytest.mark.skipif(
+    packaging.version.parse(napari.__version__) == packaging.version.parse("0.4.11"), reason="To old napari"
+)
+
 
 @pytest.fixture(autouse=True)
 def clean_settings(tmp_path):
@@ -203,6 +207,7 @@ def test_mask_create(make_napari_viewer, qtbot):
     assert "Mask" in viewer.layers
 
 
+@napari_4_11_skip
 @pytest.mark.enablethread
 def test_search_labels(make_napari_viewer, qtbot):
     viewer = make_napari_viewer()
