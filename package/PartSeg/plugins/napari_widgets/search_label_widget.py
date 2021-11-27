@@ -147,7 +147,3 @@ class SearchLabel(Container):
             self._highlight()
         else:
             self._zoom()
-
-    def closeEvent(self, event):
-        super().closeEvent(event)
-        self.image_view.component_unmark(0)
