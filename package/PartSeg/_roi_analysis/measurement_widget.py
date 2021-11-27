@@ -29,6 +29,8 @@ from ..common_gui.universal_gui_part import ChannelComboBox
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from .partseg_settings import PartSettings
 
+NO_MEASUREMENT_STRING = "<none>"
+
 
 class FileNamesEnum(Enum):
     No = 1
@@ -127,7 +129,7 @@ class MeasurementsStorage:
         return self.get_header(not save_orientation)
 
 
-class MeasurementWidget(QWidget):
+class MeasurementWidgetBase(QWidget):
     """
     :type settings: Settings
     :type segment: Segment
@@ -143,7 +145,7 @@ class MeasurementWidget(QWidget):
         self.recalculate_append_button = QPushButton("Recalculate and\n append measurement", self)
         self.recalculate_append_button.clicked.connect(self.append_measurement_result)
         self.copy_button = QPushButton("Copy to clipboard", self)
-        self.copy_button.setToolTip("You cacn copy also with 'Ctrl+C'. To get raw copy copy with 'Ctrl+Shit+C'")
+        self.copy_button.setToolTip("You can copy also with 'Ctrl+C'. To get raw copy copy with 'Ctrl+Shit+C'")
         self.horizontal_measurement_present = QCheckBox("Horizontal view", self)
         self.no_header = QCheckBox("No header", self)
         self.no_units = QCheckBox("No units", self)
@@ -163,7 +165,6 @@ class MeasurementWidget(QWidget):
         self.measurement_type.setToolTip(
             'You can create new measurement profile in advanced window, in tab "Measurement settings"'
         )
-        self.channels_chose = ChannelComboBox()
         self.units_choose = QEnumComboBox(enum_class=Units)
         self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
         self.settings.measurement_profiles_changed.connect(self.update_measurement_list)
@@ -190,8 +191,6 @@ class MeasurementWidget(QWidget):
         self.butt_layout.addWidget(self.copy_button, 2)
         self.butt_layout2 = QHBoxLayout()
         self.butt_layout3 = QHBoxLayout()
-        self.butt_layout3.addWidget(QLabel("Channel:"))
-        self.butt_layout3.addWidget(self.channels_chose)
         self.butt_layout3.addWidget(QLabel("Units:"))
         self.butt_layout3.addWidget(self.units_choose)
         # self.butt_layout3.addWidget(QLabel("Noise removal:"))
@@ -208,33 +207,11 @@ class MeasurementWidget(QWidget):
         self.setLayout(layout)
         # noinspection PyArgumentList
         self.clip = QApplication.clipboard()
-        self.settings.image_changed[int].connect(self.image_changed)
         self.previous_profile = None
         self.update_measurement_list()
 
-    def check_if_measurement_can_be_calculated(self, name):
-        if name in ("<none>", ""):
-            return "<none>"
-        profile: MeasurementProfile = self.settings.measurement_profiles.get(name)
-        if profile.is_any_mask_measurement() and self.settings.mask is None:
-            QMessageBox.information(
-                self, "Need mask", "To use this measurement set please use data with mask loaded", QMessageBox.Ok
-            )
-            self.measurement_type.setCurrentIndex(0)
-            return "<none>"
-        if self.settings.roi is None:
-            QMessageBox.information(
-                self,
-                "Need segmentation",
-                'Before calculating please create segmentation ("Execute" button)',
-                QMessageBox.Ok,
-            )
-            self.measurement_type.setCurrentIndex(0)
-            return "<none>"
-        return name
-
-    def image_changed(self, channels_num):
-        self.channels_chose.change_channels_num(channels_num)
+    def check_if_measurement_can_be_calculated(self, name):  # pragma: no cover
+        raise NotImplementedError
 
     def measurement_profile_selection_changed(self, index):
         text = self.measurement_type.itemText(index)
@@ -304,6 +281,74 @@ class MeasurementWidget(QWidget):
 
         self.info_field.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
+    def append_measurement_result(self):  # pragma: no cover
+        raise NotImplementedError
+
+    def keyPressEvent(self, e: QKeyEvent):
+        if not e.modifiers() & Qt.ControlModifier:
+            return
+        selected = self.info_field.selectedRanges()
+
+        if e.key() == Qt.Key_C:  # copy
+            s = ""
+
+            for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
+                for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
+                    try:
+                        s += str(self.info_field.item(r, c).text()) + "\t"
+                    except AttributeError:
+                        s += "\t"
+                s = s[:-1] + "\n"  # eliminate last '\t'
+            self.clip.setText(s)
+
+    def update_measurement_list(self):
+        self.measurement_type.blockSignals(True)
+        available = list(sorted(self.settings.measurement_profiles.keys()))
+        text = self.measurement_type.currentText()
+        try:
+            index = available.index(text) + 1
+        except ValueError:
+            index = 0
+        self.measurement_type.clear()
+        self.measurement_type.addItem(NO_MEASUREMENT_STRING)
+        self.measurement_type.addItems(available)
+        self.measurement_type.setCurrentIndex(index)
+        self.measurement_type.blockSignals(False)
+
+    @staticmethod
+    def _move_widgets(widgets_list: List[Tuple[QWidget, int]], layout1: QBoxLayout, layout2: QBoxLayout):
+        for el in widgets_list:
+            layout1.removeWidget(el[0])
+            layout2.addWidget(el[0], el[1])
+
+    def resizeEvent(self, _event: QResizeEvent) -> None:
+        if self.width() < 800 and self.butt_layout2.count() == 0:
+            self._move_widgets(
+                [(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
+                self.butt_layout,
+                self.butt_layout2,
+            )
+        elif self.width() > 800 and self.butt_layout2.count() != 0:
+            self._move_widgets(
+                [(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
+                self.butt_layout2,
+                self.butt_layout,
+            )
+
+
+class MeasurementWidget(MeasurementWidgetBase):
+    """
+    :type settings: Settings
+    :type segment: Segment
+    """
+
+    def __init__(self, settings: PartSettings, segment=None):
+        super().__init__(settings, segment)
+        self.channels_chose = ChannelComboBox()
+        self.butt_layout3.insertWidget(0, QLabel("Channel:"))
+        self.butt_layout3.insertWidget(1, self.channels_chose)
+        self.settings.image_changed[int].connect(self.image_changed)
+
     def append_measurement_result(self):
         try:
             compute_class = self.settings.measurement_profiles[self.measurement_type.currentText()]
@@ -311,7 +356,7 @@ class MeasurementWidget(QWidget):
             QMessageBox.warning(
                 self,
                 "Measurement profile not found",
-                f"Measurement profile '{self.measurement_type.currentText()}' not found'",
+                f"Measurement profile '{self.measurement_type.currentText()}' not found",
             )
             return
 
@@ -346,53 +391,26 @@ class MeasurementWidget(QWidget):
         self.previous_profile = compute_class.name
         self.refresh_view()
 
-    def keyPressEvent(self, e: QKeyEvent):
-        if not e.modifiers() & Qt.ControlModifier:
-            return
-        selected = self.info_field.selectedRanges()
+    def image_changed(self, channels_num):
+        self.channels_chose.change_channels_num(channels_num)
 
-        if e.key() == Qt.Key_C:  # copy
-            s = ""
-
-            for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
-                for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
-                    try:
-                        s += str(self.info_field.item(r, c).text()) + "\t"
-                    except AttributeError:
-                        s += "\t"
-                s = s[:-1] + "\n"  # eliminate last '\t'
-            self.clip.setText(s)
-
-    def update_measurement_list(self):
-        self.measurement_type.blockSignals(True)
-        available = list(sorted(self.settings.measurement_profiles.keys()))
-        text = self.measurement_type.currentText()
-        try:
-            index = available.index(text) + 1
-        except ValueError:
-            index = 0
-        self.measurement_type.clear()
-        self.measurement_type.addItem("<none>")
-        self.measurement_type.addItems(available)
-        self.measurement_type.setCurrentIndex(index)
-        self.measurement_type.blockSignals(False)
-
-    @staticmethod
-    def _move_widgets(widgets_list: List[Tuple[QWidget, int]], layout1: QBoxLayout, layout2: QBoxLayout):
-        for el in widgets_list:
-            layout1.removeWidget(el[0])
-            layout2.addWidget(el[0], el[1])
-
-    def resizeEvent(self, _event: QResizeEvent) -> None:
-        if self.width() < 800 and self.butt_layout2.count() == 0:
-            self._move_widgets(
-                [(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
-                self.butt_layout,
-                self.butt_layout2,
+    def check_if_measurement_can_be_calculated(self, name):
+        if name in (NO_MEASUREMENT_STRING, ""):
+            return NO_MEASUREMENT_STRING
+        profile: MeasurementProfile = self.settings.measurement_profiles.get(name)
+        if profile.is_any_mask_measurement() and self.settings.mask is None:
+            QMessageBox.information(
+                self, "Need mask", "To use this measurement set please use data with mask loaded", QMessageBox.Ok
             )
-        elif self.width() > 800 and self.butt_layout2.count() != 0:
-            self._move_widgets(
-                [(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
-                self.butt_layout2,
-                self.butt_layout,
+            self.measurement_type.setCurrentIndex(0)
+            return NO_MEASUREMENT_STRING
+        if self.settings.roi is None:
+            QMessageBox.information(
+                self,
+                "Need segmentation",
+                'Before calculating please create segmentation ("Execute" button)',
+                QMessageBox.Ok,
             )
+            self.measurement_type.setCurrentIndex(0)
+            return NO_MEASUREMENT_STRING
+        return name

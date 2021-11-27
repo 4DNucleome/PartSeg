@@ -134,7 +134,7 @@ a = Analysis(
     + qt_data
     + [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "plugins/itk_snap_save")]
     + [(os.path.join(base_path, "plugins/napari_widgets/__init__.py"), "plugins/napari")]
-    + [(os.path.join(base_path, "plugins/napari_widgets/measurement_widget.py"), "plugins/napari")]
+    + [(os.path.join(base_path, "plugins/napari_widgets/simple_measurement_widget.py"), "plugins/napari")]
     # + [ ("Readme.md", "/"), ("changelog.md", "/")]
     + [(napari_resource_path, napari_resource_dest_path)]
     + [(os.path.join(os.path.dirname(config.__file__), "dask.yaml"), "dask")]

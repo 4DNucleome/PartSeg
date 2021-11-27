@@ -6,7 +6,7 @@ from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ROIAnalysis
 
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
-    from PartSeg.plugins.napari_widgets.measurement_widget import SimpleMeasurement
+    from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
 
     return SimpleMeasurement
 
@@ -24,3 +24,10 @@ def napari_experimental_provide_dock_widget2():
 @napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
 def napari_experimental_provide_dock_widget3():
     return MaskCreateNapari
+
+
+@napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
+def napari_experimental_provide_dock_widget4():
+    from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
+
+    return Measurement

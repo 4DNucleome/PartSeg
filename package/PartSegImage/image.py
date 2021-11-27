@@ -133,7 +133,8 @@ class Image:
             channel_names = [channel_names]
         if isinstance(channel_names, Iterable):
             self._channel_names = [
-                x if x is not None else y for x, y in zip_longest(channel_names, default_channel_names, fillvalue=None)
+                str(x) if x is not None else y
+                for x, y in zip_longest(channel_names, default_channel_names, fillvalue=None)
             ]
         else:
             self._channel_names = default_channel_names
