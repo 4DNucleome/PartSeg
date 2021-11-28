@@ -1,8 +1,7 @@
 global-include *.pyx
 global-include *.pxd
 include package/tests/test_data/ome.xsd.xml
-include package/PartSegCore/sprawl_utils/*.h
-include package/PartSegCore/multiscale_opening/*.h
+include package/tests/test_data/napari_measurements_profile.json
 include Readme.md
 include changelog.md
 include pyproject.toml

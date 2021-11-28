@@ -8,23 +8,23 @@ from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import napari
 import numpy as np
-import qtawesome as qta
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
 from napari.layers.labels import Labels
 from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
+from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QPoint, Qt, Signal
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QToolTip, QVBoxLayout, QWidget
-from superqt import ensure_main_thread
+from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
+from scipy.ndimage import binary_dilation
+from superqt import QEnumComboBox, ensure_main_thread
 from vispy.color import Color, Colormap
+from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
 from PartSegCore.class_generator import enum_register
-from PartSegCore.color_image import calculate_borders
 from PartSegCore.image_operations import NoiseFilterType, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
@@ -32,11 +32,15 @@ from PartSegImage import Image
 from ..common_backend.base_settings import BaseSettings
 from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME
 from .channel_control import ChannelProperty, ColorComboBoxGroup
+from .custom_buttons import SearchROIButton
+from .qt_modal import QtPopup
 
 try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton
 except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
+
+_napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13")
 
 
 class QtNDisplayButton(QtStateButton):
@@ -69,6 +73,7 @@ class ImageInfo:
     roi: Optional[Labels] = None
     roi_info: ROIInfo = field(default_factory=lambda: ROIInfo(None))
     roi_count: int = 0
+    highlight: Optional[Labels] = None
 
     def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
         if not self.layers:
@@ -93,6 +98,11 @@ class LabelEnum(Enum):
         if self.value == 0:  # pylint: disable=W0143
             return "Don't show"
         return self.name.replace("_", " ")
+
+
+class SearchType(Enum):
+    Highlight = 0
+    Zoom_in = 1
 
 
 class ImageView(QWidget):
@@ -123,6 +133,8 @@ class ImageView(QWidget):
         self.worker_list = []
         self.points_layer = None
         self.roi_alternative_selection = "ROI"
+        self._search_type = SearchType.Highlight
+        self._last_component = 1
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -135,13 +147,17 @@ class ImageView(QWidget):
         self.points_view_button = QtViewerPushButton(
             self.viewer, "new_points", "Show points", self.toggle_points_visibility
         )
-        self.search_roi_btn = SearchROIButton(self)
-        self.search_roi_btn.setHidden(True)
+        self.points_view_button.setVisible(False)
+        self.search_roi_btn = SearchROIButton(self.settings)
+        self.search_roi_btn.clicked.connect(self._search_component)
+        self.search_roi_btn.setDisabled(True)
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
         self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
         self.mask_chk = QCheckBox()
+        self.mask_chk.setVisible(False)
         self.mask_label = QLabel("Mask:")
+        self.mask_label.setVisible(False)
 
         self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_view_button)
@@ -182,10 +198,7 @@ class ImageView(QWidget):
 
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
         self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
-        try:
-            self.viewer.dims.events.current_step.connect(self._view_changed, position="last")
-        except AttributeError:
-            self.viewer.dims.events.axis.connect(self._view_changed, position="last")
+        self.viewer.dims.events.current_step.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self.camera_change, position="last")
@@ -210,7 +223,7 @@ class ImageView(QWidget):
     def _set_new_order(self, text: str):
         self._current_order = text
         self.viewer.dims.order = ORDER_DICT[text]
-        self.update_roi_representation()
+        # self.update_roi_representation()
 
     def _reset_view(self):
         self._set_new_order("xy")
@@ -358,24 +371,26 @@ class ImageView(QWidget):
         if roi_info is None:
             roi_info = self.settings.roi_info
         image_info = self.image_info[image.file_path]
-        if image_info.roi is not None and image_info.roi in self.viewer.layers:
-            if hasattr(self.viewer.layers, "selection"):
-                self.viewer.layers.selection.clear()
-                self.viewer.layers.selection.add(image_info.roi)
-            else:
-                self.viewer.layers.unselect_all()
-                image_info.roi.selected = True
-            self.viewer.layers.remove_selected()
-            image_info.roi = None
+        if image_info.roi is None and roi_info.roi is not None:
+            image_info.roi_info = roi_info
+            self.add_roi_layer(image_info)
+            self.search_roi_btn.setDisabled(False)
+        elif image_info.roi is None:
+            return
+        elif roi_info.roi is None:
+            image_info.roi.visible = False
+            self.search_roi_btn.setDisabled(True)
+            return
+        else:
+            image_info.roi_info = roi_info
+            image_info.roi.data = roi_info.roi
+            image_info.roi.visible = True
+            self.search_roi_btn.setDisabled(False)
 
-        image_info.roi_info = roi_info
         image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
 
-        if roi_info.roi is None:
-            return
-
-        self.add_roi_layer(image_info)
-        image_info.roi.color = self.get_roi_view_parameters(image_info)
+        # image_info.roi.color = self.get_roi_view_parameters(image_info)
+        self.set_roi_colormap(image_info)
         image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
 
     def get_roi_view_parameters(self, image_info: ImageInfo) -> ColorInfo:
@@ -388,48 +403,58 @@ class ImageView(QWidget):
         ):
             return {x: [0, 0, 0, 0] for x in range(image_info.roi_count + 1)}
 
-        res = {x: colors[(x - 1) % colors.shape[0]] for x in range(image_info.roi_count + 1)}
+        res = {x: colors[(x - 1) % colors.shape[0]] for x in range(1, image_info.roi_count + 1)}
         res[0] = [0, 0, 0, 0]
         return res
+
+    def set_roi_colormap(self, image_info) -> None:
+        if _napari_ge_4_13:
+            image_info.roi.color = self.get_roi_view_parameters(image_info)
+            return
+        colors = self.settings.label_colors / 255
+        if (
+            self.settings.get_from_profile(f"{self.name}.image_state.show_label", LabelEnum.Show_results)
+            == LabelEnum.Not_show
+            or image_info.roi_count == 0
+            or colors.size == 0
+        ):
+            image_info.roi.colormap = Colormap([[0, 0, 0, 0], [0, 0, 0, 0]])
+
+        res = [list(colors[(x - 1) % colors.shape[0]]) + [1] for x in range(image_info.roi_count + 1)]
+        res[0] = [0, 0, 0, 0]
+
+        image_info.roi.colormap = Colormap(colors=res, interpolation=ColormapInterpolationMode.ZERO)
+        max_val = image_info.roi_count + 1
+        image_info.roi._all_vals = np.array(  # pylint: disable=W0212
+            [0] + [(x + 1) / (max_val + 1) for x in range(1, max_val)]
+        )
 
     def update_roi_coloring(self):
         for image_info in self.image_info.values():
             if image_info.roi is None:
                 continue
-            image_info.roi.color = self.get_roi_view_parameters(image_info)
+            # image_info.roi.color = self.get_roi_view_parameters(image_info)
+            self.set_roi_colormap(image_info)
             image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
 
     def remove_all_roi(self):
-        if hasattr(self.viewer.layers, "selection"):
-            self.viewer.layers.selection.clear()
-        else:
-            self.viewer.layers.unselect_all()
         for image_info in self.image_info.values():
             if image_info.roi is None:
                 continue
-            if hasattr(self.viewer.layers, "selection"):
-                self.viewer.layers.selection.add(image_info.roi)
-            else:
-                image_info.roi.selected = True
-            image_info.roi = None
-
-        self.viewer.layers.remove_selected()
+            image_info.roi.visible = False
 
     def update_roi_border(self) -> None:
         for image_info in self.image_info.values():
             if image_info.roi is None:
                 continue
             roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
-            if self.settings.get_from_profile(f"{self.name}.image_state.only_border", True):
-
-                data = calculate_borders(
-                    roi.transpose(ORDER_DICT[self._current_order]),
-                    self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) // 2,
-                    self.viewer.dims.ndisplay == 2,
-                ).transpose(np.argsort(ORDER_DICT[self._current_order]))
-                image_info.roi.data = data
-            else:
+            border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1)
+            only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
+            alternative = image_info.roi.metadata.get("alternative", self.roi_alternative_selection)
+            if alternative != self.roi_alternative_selection:
                 image_info.roi.data = roi
+            image_info.roi.contour = border_thick if only_border else 0
+            image_info.roi.metadata["alternative"] = self.roi_alternative_selection
 
     @ensure_main_thread
     def update_rendering(self):
@@ -442,37 +467,26 @@ class ImageView(QWidget):
     def update_roi_labeling(self):
         for image_info in self.image_info.values():
             if image_info.roi is not None:
-                image_info.roi.color = self.get_roi_view_parameters(image_info)
+                # image_info.roi.color = self.get_roi_view_parameters(image_info)
+                self.set_roi_colormap(image_info)
 
     def add_roi_layer(self, image_info: ImageInfo):
         if image_info.roi_info.roi is None:
             return
         roi = image_info.roi_info.alternative.get(self.roi_alternative_selection, image_info.roi_info.roi)
+        border_thick = self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1)
         kwargs = {
             "scale": image_info.image.normalized_scaling(),
             "name": "ROI",
             "blending": "translucent",
+            "metadata": {"alternative": self.roi_alternative_selection},
         }
         if napari_rendering:
             kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
-        if self.settings.get_from_profile(f"{self.name}.image_state.only_border", True):
 
-            data = calculate_borders(
-                roi.transpose(ORDER_DICT[self._current_order]),
-                self.settings.get_from_profile(f"{self.name}.image_state.border_thick", 1) // 2,
-                self.viewer.dims.ndisplay == 2,
-            ).transpose(np.argsort(ORDER_DICT[self._current_order]))
-            image_info.roi = self.viewer.add_labels(data, **kwargs)
-        else:
-            image_info.roi = self.viewer.add_labels(roi, **kwargs)
-
-    def update_roi_representation(self):
-        self.remove_all_roi()
-
-        for image_info in self.image_info.values():
-            self.add_roi_layer(image_info)
-
-        self.update_roi_coloring()
+        only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
+        image_info.roi = self.viewer.add_labels(roi, **kwargs)
+        image_info.roi.contour = border_thick if only_border else 0
 
     def set_mask(self, mask: Optional[np.ndarray] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)
@@ -482,26 +496,32 @@ class ImageView(QWidget):
             mask = image.mask
 
         image_info = self.image_info[image.file_path]
-        if image_info.mask is not None:
-            if hasattr(self.viewer.layers, "selection"):
-                self.viewer.layers.selection.clear()
-                self.viewer.layers.selection.add(image_info.mask)
-            else:
-                self.viewer.layers.unselect_all()
-                image_info.mask.selected = True
-            self.viewer.layers.remove_selected()
-            image_info.mask = None
-
         if mask is None:
+            if image_info.mask is not None:
+                image_info.mask.visible = False
+                image_info.mask.metadata["valid"] = False
+                self._toggle_mask_chk_visibility()
             return
-
         mask_marker = mask == 0
+        if image_info.mask is None:
+            image_info.mask = self.viewer.add_labels(
+                mask_marker, scale=image.normalized_scaling(), blending="additive", name="Mask"
+            )
+        else:
+            image_info.mask.data = mask_marker
+        image_info.mask.metadata["valid"] = True
+        image_info.mask.color = self.mask_color()
+        image_info.mask.opacity = self.mask_opacity()
+        image_info.mask.visible = self.mask_chk.isChecked()
+        self._toggle_mask_chk_visibility()
 
-        layer = self.viewer.add_labels(mask_marker, scale=image.normalized_scaling(), blending="additive", name="Mask")
-        layer.color = self.mask_color()
-        layer.opacity = self.mask_opacity()
-        layer.visible = self.mask_chk.isChecked()
-        image_info.mask = layer
+    def _toggle_mask_chk_visibility(self):
+        visibility = any(
+            image_info.mask is not None and image_info.mask.metadata.get("valid", False)
+            for image_info in self.image_info.values()
+        )
+        self.mask_chk.setVisible(visibility)
+        self.mask_label.setVisible(visibility)
 
     def update_mask_parameters(self):
         opacity = self.mask_opacity()
@@ -591,6 +611,7 @@ class ImageView(QWidget):
             self.set_roi()
         if image_info.image.mask is not None:
             self.set_mask()
+        self._toggle_mask_chk_visibility()
         self.image_added.emit()
 
     def add_image(self, image: Optional[Image], replace=False):
@@ -720,6 +741,144 @@ class ImageView(QWidget):
                 QToolTip.showText(event.globalPos(), text)
         return super().event(event)
 
+    def _search_component(self):
+        max_components = max(max(image_info.roi_info.bound_info) for image_info in self.image_info.values())
+        if self.viewer.dims.ndisplay == 3:
+            self._search_type = SearchType.Highlight
+
+        dial = SearchComponentModal(self, self._search_type, self._last_component, max_components)
+        if self.viewer.dims.ndisplay == 3:
+            dial.zoom_to.setDisabled(True)
+        dial.show_right_of_mouse()
+
+    def component_unmark(self, _num):
+        self.viewer.layers.selection.clear()
+        for el in self.image_info.values():
+            if el.highlight is None:
+                continue
+            if "timer" in el.highlight.metadata:
+                el.highlight.metadata["timer"].stop()
+            el.highlight.visible = False
+
+    def _mark_layer(self, num: int, flash: bool, image_info: ImageInfo):
+        bound_info = image_info.roi_info.bound_info.get(num, None)
+        if bound_info is None:
+            return
+        # TODO think about marking on bright background
+        slices = bound_info.get_slices(1)
+        slices[image_info.image.stack_pos] = slice(None)
+        component_mark = image_info.roi_info.roi[tuple(slices)] == num
+        if self.viewer.dims.ndisplay == 3:
+            component_mark = binary_dilation(component_mark)
+        translate_grid = image_info.roi.translate_grid + (bound_info.lower - 1) * image_info.roi.scale
+        translate_grid[image_info.image.stack_pos] = 0
+        if image_info.highlight is None:
+            image_info.highlight = self.viewer.add_labels(
+                component_mark,
+                scale=image_info.roi.scale,
+                blending="additive",
+                color={0: "black", 1: "white"},
+                opacity=0.7,
+            )
+        else:
+            image_info.highlight.data = component_mark
+        image_info.highlight.translate_grid = translate_grid
+        image_info.highlight.visible = True
+        if flash:
+            layer = image_info.highlight
+
+            def flash_fun(layer_=layer):
+                opacity = layer_.opacity + 0.1
+                if opacity > 1:
+                    opacity = 0.1
+                layer_.opacity = opacity
+
+            timer = QTimer()
+            timer.setInterval(100)
+            timer.timeout.connect(flash_fun)
+            timer.start()
+            layer.metadata["timer"] = timer
+
+    def component_mark(self, num: int, flash: bool = False):
+        self.component_unmark(num)
+        self._search_type = SearchType.Highlight
+        self._last_component = num
+
+        bounding_box = self._bounding_box(num)
+        if bounding_box is None:
+            return
+
+        for image_info in self.image_info.values():
+            self._mark_layer(num, flash, image_info)
+
+        lower_bound, upper_bound = bounding_box
+        self._update_point(lower_bound, upper_bound)
+
+        if self.viewer.dims.ndisplay == 2:
+            l_bound = lower_bound[-2:][::-1]
+            u_bound = upper_bound[-2:][::-1]
+            rect = Rect(self.viewer_widget.view.camera.get_state()["rect"])
+            if rect.contains(*l_bound) and rect.contains(*u_bound):
+                return
+            size = u_bound - l_bound
+            rect.size = tuple(np.max([rect.size, size * 1.2], axis=0))
+            pos = rect.pos
+            if rect.left > l_bound[0]:
+                pos = l_bound[0], pos[1]
+            if rect.right < u_bound[0]:
+                pos = pos[0] + u_bound[0] - rect.right, pos[1]
+            if rect.bottom > l_bound[1]:
+                pos = pos[0], l_bound[1]
+            if rect.top < u_bound[1]:
+                pos = pos[0], pos[1] + (u_bound[1] - rect.top)
+            rect.pos = pos
+            self.viewer_widget.view.camera.set_state({"rect": rect})
+
+    def component_zoom(self, num):
+        self.component_unmark(num)
+        self._search_type = SearchType.Zoom_in
+        self._last_component = num
+
+        bounding_box = self._bounding_box(num)
+        if bounding_box is None:
+            return
+
+        lower_bound, upper_bound = bounding_box
+        diff = upper_bound - lower_bound
+        frame = diff * 0.2
+        if self.viewer.dims.ndisplay == 2:
+            rect = Rect(pos=(lower_bound - frame)[-2:][::-1], size=(diff + 2 * frame)[-2:][::-1])
+            self.set_state({"camera": {"rect": rect}})
+        self._update_point(lower_bound, upper_bound)
+
+    def _update_point(self, lower_bound, upper_bound):
+        point = (lower_bound + upper_bound) / 2
+        current_point = self.viewer.dims.point
+        for i in range(self.viewer.dims.ndim - self.viewer.dims.ndisplay):
+            if not (lower_bound[i] <= current_point[i] <= upper_bound[i]):
+                self.viewer.dims.set_point(i, point[i])
+
+    @staticmethod
+    def _data_to_world(layer: Layer, cords):
+        return layer._transforms[1:3].simplified(cords)  # pylint: disable=W0212
+
+    def _bounding_box(self, num) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+        lower_bound_list = []
+        upper_bound_list = []
+        for image_info in self.image_info.values():
+            bound_info = image_info.roi_info.bound_info.get(num, None)
+            if bound_info is None:
+                continue
+            lower_bound_list.append(self._data_to_world(image_info.roi, bound_info.lower))
+            upper_bound_list.append(self._data_to_world(image_info.roi, bound_info.upper))
+
+        if not lower_bound_list:
+            return
+
+        lower_bound = np.min(lower_bound_list, axis=0)
+        upper_bound = np.min(upper_bound_list, axis=0)
+        return lower_bound, upper_bound
+
 
 class NapariQtViewer(QtViewer):
     def __init__(self, viewer):
@@ -745,6 +904,36 @@ class NapariQtViewer(QtViewer):
         super().closeEvent(event)
 
 
+class SearchComponentModal(QtPopup):
+    def __init__(self, image_view: ImageView, search_type: SearchType, component_num: int, max_components):
+        super().__init__(image_view)
+        self.image_view = image_view
+        self.zoom_to = QEnumComboBox(self, SearchType)
+        self.zoom_to.setCurrentEnum(search_type)
+        self.zoom_to.currentEnumChanged.connect(self._component_num_changed)
+        self.component_selector = QSpinBox()
+        self.component_selector.valueChanged.connect(self._component_num_changed)
+        self.component_selector.setMaximum(max_components)
+        self.component_selector.setValue(component_num)
+
+        layout = QHBoxLayout()
+        layout.addWidget(QLabel("Component:"))
+        layout.addWidget(self.component_selector)
+        layout.addWidget(QLabel("Selection:"))
+        layout.addWidget(self.zoom_to)
+        self.frame.setLayout(layout)
+
+    def _component_num_changed(self):
+        if self.zoom_to.currentEnum() == SearchType.Highlight:
+            self.image_view.component_mark(self.component_selector.value(), flash=True)
+        else:
+            self.image_view.component_zoom(self.component_selector.value())
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.image_view.component_unmark(0)
+
+
 @dataclass
 class ImageParameters:
     limits: List[Tuple[float, float]]
@@ -753,18 +942,6 @@ class ImageParameters:
     colormaps: List[Colormap]
     scaling: Tuple[Union[float, int]]
     layers: int = 0
-
-
-class SearchROIButton(QPushButton):
-    def __init__(self, image_view: ImageView):
-        super().__init__(qta.icon("fa5s.search"), "")
-        self.image_view = image_view
-        image_view.settings.theme_changed.connect(self._theme_changed)
-        self._theme_changed()
-
-    def _theme_changed(self):
-        color = self.image_view.settings.theme.text
-        self.setIcon(qta.icon("fa5s.search", color=QColor(*color.as_rgb_tuple())))
 
 
 def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:

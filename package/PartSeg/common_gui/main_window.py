@@ -339,7 +339,8 @@ class BaseMainWindow(QMainWindow):
         return _screenshot
 
     def image_read(self):
-        self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
+        folder_name, file_name = os.path.split(self.settings.image_path)
+        self.setWindowTitle(f"{self.title_base}: {os.path.join(os.path.basename(folder_name), file_name)}")
         self.statusBar().showMessage(self.settings.image_path)
 
     def deleteLater(self) -> None:

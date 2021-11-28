@@ -1,0 +1,170 @@
+{
+  "test": {
+    "__MeasurementProfile__": true,
+    "name": "test",
+    "chosen_fields": [
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+        "name": "Volume",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+          "name": "Volume",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+        "name": "Volume PC",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+          "name": "Volume",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+            "value": 2
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+        "name": "Volume %",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSegCore.analysis.measurement_base.Node",
+          "left": {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+            "name": "Volume",
+            "dict": {},
+            "power": 1.0,
+            "area": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+              "value": 1
+            },
+            "per_component": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+              "value": 2
+            },
+            "channel": null
+          },
+          "op": "/",
+          "right": {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+            "name": "Volume",
+            "dict": {},
+            "power": 1.0,
+            "area": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+              "value": 1
+            },
+            "per_component": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+              "value": 1
+            },
+            "channel": null
+          }
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+        "name": "Mean brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+          "name": "Mean pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+        "name": "Voxels",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+          "name": "Voxels",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+        "name": "Voxels PC",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+          "name": "Voxels",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+            "value": 2
+          },
+          "channel": null
+        }
+      }
+    ],
+    "name_prefix": ""
+  }
+}

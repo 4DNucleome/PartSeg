@@ -182,7 +182,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         :return: algorithm result description
         """
         sizes = np.bincount(roi.flat)
-        annotation = {i: {"voxels": size} for i, size in enumerate(sizes[1:], 1) if size > 0}
+        annotation = {i: {"component": i, "voxels": size} for i, size in enumerate(sizes[1:], 1) if size > 0}
         return ROIExtractionResult(
             roi=roi,
             parameters=self.get_segmentation_profile(),
@@ -480,7 +480,8 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 parameters=self.get_segmentation_profile(),
                 additional_layers=self.get_additional_layers(full_segmentation=self.sprawl_area),
                 roi_annotation={
-                    i: {"core voxels": self._sizes_array[i], "voxels": v} for i, v in enumerate(self.final_sizes[1:], 1)
+                    i: {"component": i, "core voxels": self._sizes_array[i], "voxels": v}
+                    for i, v in enumerate(self.final_sizes[1:], 1)
                 },
                 alternative_representation={"core_objects": finally_segment},
             )

@@ -624,6 +624,9 @@ class MeasurementSettings(QWidget):
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
 
+    def form_dialog(self, arguments):
+        return FormDialog(arguments, settings=self.settings, parent=self)
+
     def get_parameters(self, node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float):
         if isinstance(node, Node):
             return node
@@ -635,7 +638,7 @@ class MeasurementSettings(QWidget):
         with suppress(KeyError):
             arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
             if len(arguments) > 0 and len(node.dict) == 0:
-                dial = FormDialog(arguments, settings=self.settings)
+                dial = self.form_dialog(arguments)
                 if dial.exec_():
                     node = node._replace(dict=dial.get_values())
                 else:
@@ -715,7 +718,7 @@ class MeasurementSettings(QWidget):
         for i in range(self.profile_options_chosen.count()):
             txt = str(self.profile_options_chosen.item(i).text())
             selected_values.append((txt, str, txt))
-        val_dialog = MultipleInput("Set fields name", list(selected_values))
+        val_dialog = MultipleInput("Set fields name", list(selected_values), parent=self)
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
@@ -756,7 +759,7 @@ class MeasurementSettings(QWidget):
         self.create_selection_changed()
 
     def export_measurement_profiles(self):
-        exp = ExportDialog(self.settings.measurement_profiles, StringViewer)
+        exp = ExportDialog(self.settings.measurement_profiles, StringViewer, parent=self)
         if not exp.exec_():
             return
         dial = PSaveDialog(
@@ -779,6 +782,7 @@ class MeasurementSettings(QWidget):
             settings=self.settings,
             path="io.export_directory",
             caption="Import settings profiles",
+            parent=self,
         )
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
@@ -816,7 +820,7 @@ class SegAdvancedWindow(AdvancedWindow):
 
 
 class MultipleInput(QDialog):
-    def __init__(self, text, help_text, objects_list=None):
+    def __init__(self, text, help_text, objects_list=None, parent=None):
         if objects_list is None:
             objects_list = help_text
             help_text = ""
@@ -844,7 +848,7 @@ class MultipleInput(QDialog):
             return res
 
         field_dict = {str: QLineEdit, float: create_input_float, int: create_input_int}
-        super().__init__()
+        super().__init__(parent=parent)
         ok_butt = QPushButton("Ok", self)
         cancel_butt = QPushButton("Cancel", self)
         self.object_dict = {}
