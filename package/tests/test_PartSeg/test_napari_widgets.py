@@ -6,7 +6,14 @@ import pytest
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
-from PartSeg.plugins.napari_widgets import MaskCreateNapari, ROIAnalysisExtraction, ROIMaskExtraction, _settings
+from PartSeg.common_gui.napari_image_view import SearchType
+from PartSeg.plugins.napari_widgets import (
+    MaskCreateNapari,
+    ROIAnalysisExtraction,
+    ROIMaskExtraction,
+    SearchLabel,
+    _settings,
+)
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -18,6 +25,10 @@ from PartSegCore.segmentation import ROIExtractionResult
 
 napari_skip = pytest.mark.skipif(
     packaging.version.parse(napari.__version__) < packaging.version.parse("0.4.10"), reason="To old napari"
+)
+
+napari_4_11_skip = pytest.mark.skipif(
+    packaging.version.parse(napari.__version__) == packaging.version.parse("0.4.11"), reason="To old napari"
 )
 
 
@@ -194,3 +205,30 @@ def test_mask_create(make_napari_viewer, qtbot):
     assert mask_create.mask_widget.get_dilate_radius() == 0
 
     assert "Mask" in viewer.layers
+
+
+@napari_4_11_skip
+@pytest.mark.enablethread
+def test_search_labels(make_napari_viewer, qtbot):
+    viewer = make_napari_viewer()
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[2:5, 2:-2] = 1
+    data[5:-2, 2:-2] = 2
+    viewer.add_labels(data, name="label")
+    search = SearchLabel(napari_viewer=viewer)
+    viewer.window.add_dock_widget(search)
+
+    search.search_type.value = SearchType.Highlight
+    search.component_selector.value = 1
+    assert ".Highlight" in viewer.layers
+    qtbot.wait(500)
+    assert ".Highlight" in viewer.layers
+    search._stop()
+    assert ".Highlight" not in viewer.layers
+    search.search_type.value = SearchType.Zoom_in
+    search.search_type.value = SearchType.Highlight
+    assert ".Highlight" in viewer.layers
+    search.search_type.value = SearchType.Zoom_in
+    assert ".Highlight" not in viewer.layers
+    search.search_type.value = SearchType.Highlight
+    search.component_selector.value = 2
