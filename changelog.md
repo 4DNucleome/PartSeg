@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.13.13
+
+### Bug Fixes
+
+-   Fix bugs in the generation process of the changelog for release. (#428)
+-   Restoring ROI on home button click in compare viewer (#443)
+-   Fix Measurement name prefix in bundled PartSeg. (#458)
+-   Napari widgets registration in pyinstaller bundle (#465)
+-   Hide points button if no points are loaded, hide Mask checkbox if no mask is set (#463)
+-   Replace Label data instead of adding/removing layers - fix blending layers (#464)
+
+### Features
+
+-   Add threshold information in layer annotation in the Multiple Otsu ROI extraction method (#430)
+-   Add option to select rendering method for ROI (#431)
+-   Add callback mechanism to ProfileDict, live update of ROI render parameters (#432)
+-   Move the info bar on the bottom of the viewer (#442)
+-   Add options to load recent files in multiple files widget (#444)
+-   Add ROI annotations as properties to napari labels layer created by ROI Extraction widgets (#445)
+-   Add signals to ProfileDict, remove redundant synchronization mechanisms (#449)
+-   Allow ignoring updates for 21 days (#453)
+-   Save all components if no components selected in mask segmentation (#456)
+-   Add modal dialog for search ROI components (#459)
+-   Add full measurement support as napari widget (#460)
+-   Add search labels as napari widget (#467)
+
+### Refactor
+
+-   Export common code for load/save dialog to one place (#437)
+-   Change most of call QFileDialog to more generic code (#440)
+
+### Testing
+
+-   Add test for `PartSeg.common_backend` module (#433)
+
 ## 0.13.12
 
 ### Bug Fixes
