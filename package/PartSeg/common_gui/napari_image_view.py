@@ -25,7 +25,7 @@ from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
 from PartSegCore.class_generator import enum_register
-from PartSegCore.image_operations import NoiseFilterType, gaussian, median
+from PartSegCore.image_operations import NoiseFilterType, bilateral, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
@@ -544,6 +544,8 @@ class ImageView(QWidget):
             return array
         if parameters[0] == NoiseFilterType.Gauss:
             return gaussian(array, parameters[1])
+        if parameters[0] == NoiseFilterType.Bilateral:
+            return bilateral(array, parameters[1])
         return median(array, int(parameters[1]))
 
     def _remove_worker(self, sender):
