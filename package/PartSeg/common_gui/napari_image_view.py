@@ -392,6 +392,7 @@ class ImageView(QWidget):
         # image_info.roi.color = self.get_roi_view_parameters(image_info)
         self.set_roi_colormap(image_info)
         image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
+        image_info.roi.refresh()
 
     def get_roi_view_parameters(self, image_info: ImageInfo) -> ColorInfo:
         colors = self.settings.label_colors / 255
@@ -422,6 +423,8 @@ class ImageView(QWidget):
 
         res = [list(colors[(x - 1) % colors.shape[0]]) + [1] for x in range(image_info.roi_count + 1)]
         res[0] = [0, 0, 0, 0]
+        if len(res) < 2:
+            res += [[0, 0, 0, 0]] * (2 - len(res))
 
         image_info.roi.colormap = Colormap(colors=res, interpolation=ColormapInterpolationMode.ZERO)
         max_val = image_info.roi_count + 1
