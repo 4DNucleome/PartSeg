@@ -91,7 +91,7 @@ class BilateralNoiseFiltering(NoiseFilteringBase):
     def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
         gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["dimension_type"])
         layer = arguments["dimension_type"] == DimensionType.Layer
-        return bilateral(channel, gauss_radius, layer=layer)
+        return bilateral(channel, max(gauss_radius), layer=layer)
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
