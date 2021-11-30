@@ -383,7 +383,7 @@ class ImageView(QWidget):
             return
         else:
             image_info.roi_info = roi_info
-            image_info.roi.data = roi_info.roi
+            image_info.roi.data = roi_info.alternative.get(self.roi_alternative_selection, roi_info.roi)
             image_info.roi.visible = True
             self.search_roi_btn.setDisabled(False)
 
