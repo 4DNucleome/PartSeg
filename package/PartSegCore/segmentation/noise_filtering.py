@@ -78,7 +78,7 @@ class GaussNoiseFiltering(NoiseFilteringBase):
 class BilateralNoiseFiltering(NoiseFilteringBase):
     @classmethod
     def get_name(cls):
-        return "Gauss"
+        return "Bilateral"
 
     @classmethod
     def get_fields(cls):
