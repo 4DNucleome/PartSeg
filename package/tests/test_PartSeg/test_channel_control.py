@@ -251,6 +251,7 @@ class TestColorComboBoxGroup:
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.filter_radius.setValue(0.5)
 
+    @pytest.mark.xfail((platform.system() == "Windows") and CI_BUILD, reason="GL problem")
     @pytest.mark.parametrize("filter_value", NoiseFilterType.__members__.values())
     def test_image_view_integration_filter(self, qtbot, tmp_path, filter_value):
         settings = BaseSettings(tmp_path)
