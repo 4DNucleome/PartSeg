@@ -96,8 +96,12 @@ class ResultImageView(ImageView):
         block = self.roi_alternative_select.signalsBlocked()
         self.roi_alternative_select.blockSignals(True)
         self.roi_alternative_select.clear()
-        self.roi_alternative_select.addItems(["ROI"] + list(alternatives))
-        self.roi_alternative_select.setCurrentText(text)
+        values = ["ROI"] + list(alternatives)
+        self.roi_alternative_select.addItems(values)
+        try:
+            self.roi_alternative_select.setCurrentIndex(values.index(text))
+        except ValueError:
+            pass
         self.roi_alternative_select.blockSignals(block)
 
     def resizeEvent(self, event: QResizeEvent):
