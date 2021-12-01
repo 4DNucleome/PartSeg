@@ -251,8 +251,8 @@ class TestColorComboBoxGroup:
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.filter_radius.setValue(0.5)
 
-    @pytest.mark.parametrize("filter", NoiseFilterType.__members__.values())
-    def test_image_view_integration_filter(self, qtbot, tmp_path, filter):
+    @pytest.mark.parametrize("filter_value", NoiseFilterType.__members__.values())
+    def test_image_view_integration_filter(self, qtbot, tmp_path, filter_value):
         settings = BaseSettings(tmp_path)
         ch_property = ChannelProperty(settings, "test")
         image_view = ImageView(settings, ch_property, "test")
@@ -268,7 +268,7 @@ class TestColorComboBoxGroup:
         def check_parameters(name, index):
             return name == "test" and index == 1
 
-        if filter is NoiseFilterType.No:
+        if filter_value is NoiseFilterType.No:
             with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
                 image_view.channel_control.change_channel, check_params_cb=check_parameters
             ):
@@ -276,10 +276,10 @@ class TestColorComboBoxGroup:
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
-            ch_property.use_filter.setCurrentEnum(filter)
+            ch_property.use_filter.setCurrentEnum(filter_value)
         image4 = image_view.viewer_widget.screenshot()
-        assert (filter != NoiseFilterType.No and np.any(image4 != 255)) or (
-            filter == NoiseFilterType.No and np.any(image4 == 255)
+        assert (filter_value != NoiseFilterType.No and np.any(image4 != 255)) or (
+            filter_value == NoiseFilterType.No and np.any(image4 == 255)
         )
 
     @pytest.mark.xfail((platform.system() == "Windows") and CI_BUILD, reason="GL problem")
