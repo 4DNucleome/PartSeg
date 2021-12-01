@@ -130,6 +130,88 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         ]
 
 
+class MorphologicalWatersheed(BaseThresholdAlgorithm):
+    def __init__(self):
+        super().__init__()
+        self.base_sizes = [0]
+
+    @classmethod
+    def get_name(cls):
+        return "Morphological Watersheed"
+
+    @staticmethod
+    def get_steps_num():
+        return 7
+
+    def _threshold_and_exclude(self, image, report_fun):
+        report_fun("Threshold calculation", 1)
+        threshold_algorithm: BaseThreshold = threshold_dict[self.new_parameters["threshold"]["name"]]
+        mask, _thr_val = threshold_algorithm.calculate_mask(
+            image, self.mask, self.new_parameters["threshold"]["values"], operator.ge
+        )
+        report_fun("Threshold calculated", 2)
+        return mask
+
+    def calculation_run(self, report_fun):
+        report_fun("Noise removal", 0)
+        image = self.get_noise_filtered_channel(self.new_parameters["channel"], self.new_parameters["noise_filtering"])
+        mask = self._threshold_and_exclude(image, report_fun)
+        if self.new_parameters["close_holes"]:
+            report_fun("Filing holes", 3)
+            mask = close_small_holes(mask, self.new_parameters["close_holes_size"])
+        report_fun("Smooth border", 4)
+        self.segmentation = smooth_dict[self.new_parameters["smooth_border"]["name"]].smooth(
+            mask, self.new_parameters["smooth_border"]["values"]
+        )
+
+        report_fun("Components calculating", 5)
+        seg_image = sitk.GetImageFromArray(self.segmentation)
+        distance_map = sitk.SignedMaurerDistanceMap(
+            seg_image, insideIsPositive=False, squaredDistance=False, useImageSpacing=False
+        )
+
+        ws = sitk.MorphologicalWatershed(distance_map, markWatershedLine=False, level=1)
+        self.segmentation = sitk.GetArrayFromImage(
+            sitk.RelabelComponent(sitk.Mask(ws, sitk.Cast(seg_image, ws.GetPixelID())), 20)
+        )
+
+        self.base_sizes = np.bincount(self.segmentation.flat)
+        ind = bisect(self.base_sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
+        resp = np.copy(self.segmentation)
+        resp[resp > ind] = 0
+
+        if len(self.base_sizes) == 1:
+            info_text = "Please check the threshold parameter. There is no object bigger than 20 voxels."
+        elif ind == 0:
+            info_text = f"Please check the minimum size parameter. The biggest element has size {self.base_sizes[1]}"
+        else:
+            info_text = ""
+        self.sizes = self.base_sizes[: ind + 1]
+        if self.new_parameters["use_convex"]:
+            report_fun("convex hull", 6)
+            resp = convex_fill(resp)
+            self.sizes = np.bincount(resp.flat)
+
+        report_fun("Calculation done", 7)
+        return ROIExtractionResult(
+            roi=self.image.fit_array_to_image(resp),
+            parameters=self.get_segmentation_profile(),
+            additional_layers={
+                "denoised image": AdditionalLayerDescription(data=image, layer_type="image"),
+                "no size filtering": AdditionalLayerDescription(data=self.segmentation, layer_type="labels"),
+            },
+            info_text=info_text,
+            roi_annotation={i: {"voxels": v} for i, v in enumerate(self.sizes[1:], start=1)},
+        )
+
+    def get_info_text(self):
+        base_text = super().get_info_text()
+        base_sizes = self.base_sizes[: self.sizes.size]
+        if np.any(base_sizes != self.sizes):
+            base_text += "\nBase ROI sizes " + ", ".join(map(str, base_sizes))
+        return base_text
+
+
 class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
     def __init__(self):
         super().__init__()
@@ -193,6 +275,7 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
                 "no size filtering": AdditionalLayerDescription(data=self.segmentation, layer_type="labels"),
             },
             info_text=info_text,
+            roi_annotation={i: {"voxels": v} for i, v in enumerate(self.sizes[1:], start=1)},
         )
 
     def get_info_text(self):
@@ -509,6 +592,7 @@ class CellFromNucleusFlow(StackAlgorithm):
 final_algorithm_list = [
     ThresholdAlgorithm,
     ThresholdFlowAlgorithm,
+    MorphologicalWatersheed,
     ThresholdPreview,
     AutoThresholdAlgorithm,
     CellFromNucleusFlow,
