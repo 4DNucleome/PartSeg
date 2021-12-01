@@ -184,3 +184,24 @@ def block_message_box(monkeypatch, request):
     monkeypatch.setattr(QMessageBox, "warning", raise_on_call)
     if "enabledialog" not in request.keywords:
         monkeypatch.setattr(QDialog, "exec_", raise_on_call)
+
+
+@pytest.fixture(autouse=True)
+def wrap_remove_flash_animation(monkeypatch):
+    if packaging.version.parse(napari.__version__) > packaging.version.parse("0.4.12"):
+        return
+    try:
+        from napari._qt import utils
+
+        if hasattr(utils, "remove_flash_animation"):
+            fun = utils.remove_flash_animation
+
+            def _ignore_runtime_error(widget_ref):
+                try:
+                    fun(widget_ref)
+                except RuntimeError:
+                    pass
+
+            monkeypatch.setattr(utils, "remove_flash_animation", _ignore_runtime_error)
+    except ImportError:
+        pass
