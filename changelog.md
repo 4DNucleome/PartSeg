@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.13.14
+
+### Bug Fixes
+
+-   ROI alternative representation (#471)
+-   Change additive to translucent in rendering ROI and Mask (#472)
+
+### Features
+
+-   Add morphological watershed segmentation (#469)
+-   Add Bilateral image filter (#470)
+
 ## 0.13.13
 
 ### Bug Fixes
