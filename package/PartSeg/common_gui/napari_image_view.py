@@ -508,7 +508,7 @@ class ImageView(QWidget):
         mask_marker = mask == 0
         if image_info.mask is None:
             image_info.mask = self.viewer.add_labels(
-                mask_marker, scale=image.normalized_scaling(), blending="additive", name="Mask"
+                mask_marker, scale=image.normalized_scaling(), blending="translucent", name="Mask"
             )
         else:
             image_info.mask.data = mask_marker
@@ -779,7 +779,7 @@ class ImageView(QWidget):
             image_info.highlight = self.viewer.add_labels(
                 component_mark,
                 scale=image_info.roi.scale,
-                blending="additive",
+                blending="translucent",
                 color={0: "black", 1: "white"},
                 opacity=0.7,
             )

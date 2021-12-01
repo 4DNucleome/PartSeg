@@ -66,7 +66,7 @@ class SearchLabel(Container):
                 component_mark,
                 name=".Highlight",
                 scale=labels.scale,
-                blending="additive",
+                blending="translucent",
                 color={0: "black", 1: "white"},
                 opacity=0.7,
             )
