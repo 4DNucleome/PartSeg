@@ -782,7 +782,7 @@ class ImageView(QWidget):
                 component_mark,
                 scale=image_info.roi.scale,
                 blending="translucent",
-                color={0: "black", 1: "white"},
+                color={0: (0, 0, 0, 0), 1: "white"},
                 opacity=0.7,
             )
         else:

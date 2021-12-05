@@ -67,7 +67,7 @@ class SearchLabel(Container):
                 name=".Highlight",
                 scale=labels.scale,
                 blending="translucent",
-                color={0: "black", 1: "white"},
+                color={0: (0, 0, 0, 0), 1: "white"},
                 opacity=0.7,
             )
 
@@ -83,7 +83,7 @@ class SearchLabel(Container):
             timer.start()
             layer.metadata["timer"] = timer
 
-        self.napari_viewer.layers[".Highlight"].translate_grid = translate_grid
+        self.napari_viewer.layers[".Highlight"].translate = translate_grid
         self._shift_if_need(labels, bound_info)
 
     def _shift_if_need(self, labels, bound_info):
