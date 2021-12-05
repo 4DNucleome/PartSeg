@@ -86,7 +86,7 @@ class ImageInfo:
         if not self.layers:
             return np.array(coords)
         fst_layer = self.layers[0]
-        return np.subtract(coords, fst_layer.translate_grid).astype(int)
+        return np.subtract(coords, fst_layer.translate).astype(int)
 
 
 class LabelEnum(Enum):
@@ -677,7 +677,7 @@ class ImageView(QWidget):
     def _shift_layer(layer: Layer, translate_2d):
         translate = [0] * layer.ndim
         translate[-2:] = translate_2d
-        layer.translate_grid = translate
+        layer.translate = translate
 
     def grid_view(self):
         """Present multiple images in grid view"""
@@ -775,19 +775,19 @@ class ImageView(QWidget):
         component_mark = image_info.roi_info.roi[tuple(slices)] == num
         if self.viewer.dims.ndisplay == 3:
             component_mark = binary_dilation(component_mark)
-        translate_grid = image_info.roi.translate_grid + (bound_info.lower - 1) * image_info.roi.scale
-        translate_grid[image_info.image.stack_pos] = 0
+        translate = image_info.roi.translate + (bound_info.lower - 1) * image_info.roi.scale
+        translate[image_info.image.stack_pos] = 0
         if image_info.highlight is None:
             image_info.highlight = self.viewer.add_labels(
                 component_mark,
                 scale=image_info.roi.scale,
                 blending="translucent",
-                color={0: "black", 1: "white"},
+                color={0: (0, 0, 0, 0), 1: "white"},
                 opacity=0.7,
             )
         else:
             image_info.highlight.data = component_mark
-        image_info.highlight.translate_grid = translate_grid
+        image_info.highlight.translate = translate
         image_info.highlight.visible = True
         if flash:
             layer = image_info.highlight
