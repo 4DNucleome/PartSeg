@@ -23,31 +23,37 @@ class IOMethodMock:
     def __init__(self, name: str):
         self.name = name
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
 
-    def get_name_with_suffix(self):
+    def get_name_with_suffix(self) -> str:
+        return self.get_name()
+
+    def get_short_name(self) -> str:
         return self.get_name()
 
     @staticmethod
-    def get_default_extension():
+    def get_default_extension() -> str:
         return ""
 
     @staticmethod
-    def need_segmentation():
+    def need_segmentation() -> bool:
         return False
 
     @staticmethod
-    def need_mask():
+    def need_mask() -> bool:
         return False
 
     @staticmethod
-    def get_fields():
+    def get_fields() -> list:
         return []
 
     @staticmethod
-    def number_of_files():
+    def number_of_files() -> int:
         return 1
+
+    def save(*args, **kwargs):
+        pass
 
 
 class LoadRegisterFileDialog(QFileDialog):
