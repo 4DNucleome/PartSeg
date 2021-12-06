@@ -344,7 +344,7 @@ class ImageView(QWidget):
     def mask_color(self) -> ColorInfo:
         """Get mask marking color"""
         color = Color(np.divide(self.settings.get_from_profile("mask_presentation_color", [255, 255, 255]), 255))
-        return {0: "black", 1: color.rgba}
+        return {0: (0, 0, 0, 0), 1: color.rgba}
 
     def get_image(self, image: Optional[Image]) -> Image:
         if image is not None:
