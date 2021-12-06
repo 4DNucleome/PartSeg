@@ -775,7 +775,9 @@ class ImageView(QWidget):
         component_mark = image_info.roi_info.roi[tuple(slices)] == num
         if self.viewer.dims.ndisplay == 3:
             component_mark = binary_dilation(component_mark)
-        translate = image_info.roi.translate + (bound_info.lower - 1) * image_info.roi.scale
+        shift_base = bound_info.lower - 1
+        shift_base[0] += 1  # remove shift on time axis
+        translate = image_info.roi.translate + shift_base * image_info.roi.scale
         translate[image_info.image.stack_pos] = 0
         if image_info.highlight is None:
             image_info.highlight = self.viewer.add_labels(
