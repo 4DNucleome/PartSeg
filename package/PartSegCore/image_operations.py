@@ -27,6 +27,7 @@ class NoiseFilterType(Enum):
     No = 0
     Gauss = 1
     Median = 2
+    Bilateral = 3
 
     def __str__(self):
         return self.name
@@ -69,6 +70,18 @@ def gaussian(image: np.ndarray, radius: float, layer=True):
     :return:
     """
     return _generic_image_operation(image, radius, sitk.DiscreteGaussian, layer)
+
+
+def bilateral(image: np.ndarray, radius: float, layer=True):
+    """
+    Gaussian blur of image.
+
+    :param np.ndarray image: image to apply gaussian filter
+    :param float radius: radius for gaussian kernel
+    :param bool layer: if operation should be run on each layer separately
+    :return:
+    """
+    return _generic_image_operation(image, radius, sitk.Bilateral, layer)
 
 
 def median(image: np.ndarray, radius: Union[int, List[int]], layer=True):

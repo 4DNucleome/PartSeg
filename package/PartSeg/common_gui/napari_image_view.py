@@ -25,7 +25,7 @@ from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
 from PartSegCore.class_generator import enum_register
-from PartSegCore.image_operations import NoiseFilterType, gaussian, median
+from PartSegCore.image_operations import NoiseFilterType, bilateral, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
@@ -86,7 +86,7 @@ class ImageInfo:
         if not self.layers:
             return np.array(coords)
         fst_layer = self.layers[0]
-        return np.subtract(coords, fst_layer.translate_grid).astype(int)
+        return np.subtract(coords, fst_layer.translate).astype(int)
 
 
 class LabelEnum(Enum):
@@ -383,7 +383,7 @@ class ImageView(QWidget):
             return
         else:
             image_info.roi_info = roi_info
-            image_info.roi.data = roi_info.roi
+            image_info.roi.data = roi_info.alternative.get(self.roi_alternative_selection, roi_info.roi)
             image_info.roi.visible = True
             self.search_roi_btn.setDisabled(False)
 
@@ -392,6 +392,7 @@ class ImageView(QWidget):
         # image_info.roi.color = self.get_roi_view_parameters(image_info)
         self.set_roi_colormap(image_info)
         image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
+        image_info.roi.refresh()
 
     def get_roi_view_parameters(self, image_info: ImageInfo) -> ColorInfo:
         colors = self.settings.label_colors / 255
@@ -422,6 +423,8 @@ class ImageView(QWidget):
 
         res = [list(colors[(x - 1) % colors.shape[0]]) + [1] for x in range(image_info.roi_count + 1)]
         res[0] = [0, 0, 0, 0]
+        if len(res) < 2:
+            res += [[0, 0, 0, 0]] * (2 - len(res))
 
         image_info.roi.colormap = Colormap(colors=res, interpolation=ColormapInterpolationMode.ZERO)
         max_val = image_info.roi_count + 1
@@ -505,7 +508,7 @@ class ImageView(QWidget):
         mask_marker = mask == 0
         if image_info.mask is None:
             image_info.mask = self.viewer.add_labels(
-                mask_marker, scale=image.normalized_scaling(), blending="additive", name="Mask"
+                mask_marker, scale=image.normalized_scaling(), blending="translucent", name="Mask"
             )
         else:
             image_info.mask.data = mask_marker
@@ -544,6 +547,8 @@ class ImageView(QWidget):
             return array
         if parameters[0] == NoiseFilterType.Gauss:
             return gaussian(array, parameters[1])
+        if parameters[0] == NoiseFilterType.Bilateral:
+            return bilateral(array, parameters[1])
         return median(array, int(parameters[1]))
 
     def _remove_worker(self, sender):
@@ -672,7 +677,7 @@ class ImageView(QWidget):
     def _shift_layer(layer: Layer, translate_2d):
         translate = [0] * layer.ndim
         translate[-2:] = translate_2d
-        layer.translate_grid = translate
+        layer.translate = translate
 
     def grid_view(self):
         """Present multiple images in grid view"""
@@ -770,19 +775,19 @@ class ImageView(QWidget):
         component_mark = image_info.roi_info.roi[tuple(slices)] == num
         if self.viewer.dims.ndisplay == 3:
             component_mark = binary_dilation(component_mark)
-        translate_grid = image_info.roi.translate_grid + (bound_info.lower - 1) * image_info.roi.scale
-        translate_grid[image_info.image.stack_pos] = 0
+        translate = image_info.roi.translate + (bound_info.lower - 1) * image_info.roi.scale
+        translate[image_info.image.stack_pos] = 0
         if image_info.highlight is None:
             image_info.highlight = self.viewer.add_labels(
                 component_mark,
                 scale=image_info.roi.scale,
-                blending="additive",
-                color={0: "black", 1: "white"},
+                blending="translucent",
+                color={0: (0, 0, 0, 0), 1: "white"},
                 opacity=0.7,
             )
         else:
             image_info.highlight.data = component_mark
-        image_info.highlight.translate_grid = translate_grid
+        image_info.highlight.translate = translate
         image_info.highlight.visible = True
         if flash:
             layer = image_info.highlight

@@ -6,7 +6,7 @@ import numpy as np
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
 from ..class_generator import enum_register
-from ..image_operations import gaussian, median
+from ..image_operations import bilateral, gaussian, median
 from .algorithm_base import calculate_operation_radius as _calculate_operation_radius
 
 
@@ -75,6 +75,25 @@ class GaussNoiseFiltering(NoiseFilteringBase):
         return gaussian(channel, gauss_radius, layer=layer)
 
 
+class BilateralNoiseFiltering(NoiseFilteringBase):
+    @classmethod
+    def get_name(cls):
+        return "Bilateral"
+
+    @classmethod
+    def get_fields(cls):
+        return [
+            AlgorithmProperty("dimension_type", "Gauss type", DimensionType.Layer),
+            AlgorithmProperty("radius", "Gauss radius", 1.0, value_type=float),
+        ]
+
+    @classmethod
+    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
+        gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["dimension_type"])
+        layer = arguments["dimension_type"] == DimensionType.Layer
+        return bilateral(channel, max(gauss_radius), layer=layer)
+
+
 def calculate_operation_radius(radius, spacing, gauss_type):
     res = _calculate_operation_radius(radius, spacing, gauss_type)
     if res == radius:
@@ -103,5 +122,9 @@ class MedianNoiseFiltering(NoiseFilteringBase):
 
 
 noise_filtering_dict = Register(
-    NoneNoiseFiltering, GaussNoiseFiltering, MedianNoiseFiltering, class_methods=["noise_filter"]
+    NoneNoiseFiltering,
+    GaussNoiseFiltering,
+    MedianNoiseFiltering,
+    BilateralNoiseFiltering,
+    class_methods=["noise_filter"],
 )
