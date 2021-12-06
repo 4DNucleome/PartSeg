@@ -13,7 +13,7 @@ from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import QFileDialog, QMainWindow, QWidget
 
 from PartSeg.common_gui import select_multiple_files
-from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, LoadProperty, PLoadDialog
+from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, IOMethodMock, LoadProperty, PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
@@ -21,10 +21,11 @@ from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFil
 from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
-from PartSegCore.algorithm_describe_base import AlgorithmProperty
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
+from PartSegCore.io_utils import SaveBase
 from PartSegImage import Image, ImageWriter
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
@@ -161,6 +162,7 @@ class TestAddFiles:
         widget.selected_files.setCurrentRow(2)
 
         def check_res(val):
+
             return val == [str(tmp_path / "test_2.txt")]
 
         with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res):
@@ -574,3 +576,9 @@ class TestQtPopup:
         popup.close.assert_not_called()
         qtbot.keyClick(popup, Qt.Key_Return)
         popup.close.assert_called_once()
+
+
+@pytest.mark.parametrize("function_name", SaveBase.need_functions)
+def test_IOMethodMock(function_name):
+    Register.check_function(IOMethodMock("test"), function_name, True)
+    getattr(IOMethodMock("test"), function_name)()
