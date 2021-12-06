@@ -52,8 +52,9 @@ class IOMethodMock:
     def number_of_files() -> int:
         return 1
 
+    @staticmethod
     def save(*args, **kwargs):
-        pass
+        """For keep compatibility with SaveBase"""
 
 
 class LoadRegisterFileDialog(QFileDialog):
