@@ -30,6 +30,18 @@ class IOMethodMock:
         return self.get_name()
 
     @staticmethod
+    def get_default_extension():
+        return ""
+
+    @staticmethod
+    def need_segmentation():
+        return False
+
+    @staticmethod
+    def need_mask():
+        return False
+
+    @staticmethod
     def get_fields():
         return []
 
