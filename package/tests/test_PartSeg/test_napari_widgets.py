@@ -6,7 +6,14 @@ import pytest
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
-from PartSeg.plugins.napari_widgets import MaskCreateNapari, ROIAnalysisExtraction, ROIMaskExtraction, _settings
+from PartSeg.common_gui.napari_image_view import SearchType
+from PartSeg.plugins.napari_widgets import (
+    MaskCreateNapari,
+    ROIAnalysisExtraction,
+    ROIMaskExtraction,
+    SearchLabel,
+    _settings,
+)
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -18,6 +25,10 @@ from PartSegCore.segmentation import ROIExtractionResult
 
 napari_skip = pytest.mark.skipif(
     packaging.version.parse(napari.__version__) < packaging.version.parse("0.4.10"), reason="To old napari"
+)
+
+napari_4_11_skip = pytest.mark.skipif(
+    packaging.version.parse(napari.__version__) == packaging.version.parse("0.4.11"), reason="To old napari"
 )
 
 
@@ -131,8 +142,8 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp
 
 
 @napari_skip
-def test_measurement_create(make_napari_viewer, qtbot):
-    from PartSeg.plugins.napari_widgets.measurement_widget import SimpleMeasurement
+def test_simple_measurement_create(make_napari_viewer, qtbot):
+    from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
 
     data = np.zeros((10, 10), dtype=np.uint8)
 
@@ -156,6 +167,32 @@ def test_measurement_create(make_napari_viewer, qtbot):
     assert measurement.calculate_btn.enabled
 
 
+@napari_skip
+@pytest.mark.enablethread
+@pytest.mark.enabledialog
+def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
+    from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
+
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[2:5, 2:-2] = 1
+    data[5:-2, 2:-2] = 2
+
+    viewer = make_napari_viewer()
+    viewer.add_labels(data, name="label")
+    viewer.add_image(data, name="image")
+    measurement = Measurement(viewer)
+    viewer.window.add_dock_widget(measurement)
+    measurement.reset_choices()
+    measurement_data = measurement.settings.load_metadata(str(bundle_test_dir / "napari_measurements_profile.json"))
+    measurement.settings.measurement_profiles["test"] = measurement_data["test"]
+    assert measurement.measurement_widget.measurement_type.count() == 2
+    measurement.measurement_widget.measurement_type.setCurrentIndex(1)
+    assert measurement.measurement_widget.measurement_type.currentText() == "test"
+    assert measurement.measurement_widget.recalculate_button.isEnabled()
+    assert measurement.measurement_widget.check_if_measurement_can_be_calculated("test") == "test"
+    measurement.measurement_widget.append_measurement_result()
+
+
 def test_mask_create(make_napari_viewer, qtbot):
     data = np.zeros((10, 10), dtype=np.uint8)
 
@@ -168,3 +205,30 @@ def test_mask_create(make_napari_viewer, qtbot):
     assert mask_create.mask_widget.get_dilate_radius() == 0
 
     assert "Mask" in viewer.layers
+
+
+@napari_4_11_skip
+@pytest.mark.enablethread
+def test_search_labels(make_napari_viewer, qtbot):
+    viewer = make_napari_viewer()
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[2:5, 2:-2] = 1
+    data[5:-2, 2:-2] = 2
+    viewer.add_labels(data, name="label")
+    search = SearchLabel(napari_viewer=viewer)
+    viewer.window.add_dock_widget(search)
+
+    search.search_type.value = SearchType.Highlight
+    search.component_selector.value = 1
+    assert ".Highlight" in viewer.layers
+    qtbot.wait(500)
+    assert ".Highlight" in viewer.layers
+    search._stop()
+    assert ".Highlight" not in viewer.layers
+    search.search_type.value = SearchType.Zoom_in
+    search.search_type.value = SearchType.Highlight
+    assert ".Highlight" in viewer.layers
+    search.search_type.value = SearchType.Zoom_in
+    assert ".Highlight" not in viewer.layers
+    search.search_type.value = SearchType.Highlight
+    search.component_selector.value = 2

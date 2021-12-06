@@ -96,12 +96,16 @@ class ResultImageView(ImageView):
         block = self.roi_alternative_select.signalsBlocked()
         self.roi_alternative_select.blockSignals(True)
         self.roi_alternative_select.clear()
-        self.roi_alternative_select.addItems(["ROI"] + list(alternatives))
-        self.roi_alternative_select.setCurrentText(text)
+        values = ["ROI"] + list(alternatives)
+        self.roi_alternative_select.addItems(values)
+        try:
+            self.roi_alternative_select.setCurrentIndex(values.index(text))
+        except ValueError:
+            pass
         self.roi_alternative_select.blockSignals(block)
 
     def resizeEvent(self, event: QResizeEvent):
-        if event.size().width() > 700 and not self._channel_control_top:
+        if event.size().width() > 800 and not self._channel_control_top:
             w = self.btn_layout2.takeAt(0).widget()
             channel_control_index = self.btn_layout.indexOf(self.search_roi_btn) + 1
             self.btn_layout.takeAt(channel_control_index)
@@ -110,7 +114,7 @@ class ResultImageView(ImageView):
             select = self.btn_layout2.takeAt(self.btn_layout2.indexOf(self.roi_alternative_select)).widget()
             self.btn_layout.insertWidget(channel_control_index + 1, select)
             self._channel_control_top = True
-        elif event.size().width() <= 700 and self._channel_control_top:
+        elif event.size().width() <= 800 and self._channel_control_top:
             channel_control_index = self.btn_layout.indexOf(self.channel_control)
             w = self.btn_layout.takeAt(channel_control_index).widget()
             self.btn_layout.insertStretch(channel_control_index, 1)

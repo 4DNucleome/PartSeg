@@ -252,6 +252,38 @@ class TestColorComboBoxGroup:
             ch_property.filter_radius.setValue(0.5)
 
     @pytest.mark.xfail((platform.system() == "Windows") and CI_BUILD, reason="GL problem")
+    @pytest.mark.parametrize("filter_value", NoiseFilterType.__members__.values())
+    def test_image_view_integration_filter(self, qtbot, tmp_path, filter_value):
+        settings = BaseSettings(tmp_path)
+        ch_property = ChannelProperty(settings, "test")
+        image_view = ImageView(settings, ch_property, "test")
+        # image_view.show()
+        qtbot.addWidget(image_view)
+        qtbot.addWidget(ch_property)
+        image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
+        with qtbot.waitSignal(image_view.image_added, timeout=10 ** 6):
+            settings.image = image
+
+        image_view.channel_control.set_active(1)
+
+        def check_parameters(name, index):
+            return name == "test" and index == 1
+
+        if filter_value is NoiseFilterType.No:
+            with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
+                image_view.channel_control.change_channel, check_params_cb=check_parameters
+            ):
+                ch_property.use_filter.setCurrentEnum(NoiseFilterType.Gauss)
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
+            image_view.channel_control.change_channel, check_params_cb=check_parameters
+        ):
+            ch_property.use_filter.setCurrentEnum(filter_value)
+        image4 = image_view.viewer_widget.screenshot()
+        assert (filter_value != NoiseFilterType.No and np.any(image4 != 255)) or (
+            filter_value == NoiseFilterType.No and np.any(image4 == 255)
+        )
+
+    @pytest.mark.xfail((platform.system() == "Windows") and CI_BUILD, reason="GL problem")
     def test_image_view_integration(self, qtbot, tmp_path):
         settings = BaseSettings(tmp_path)
         ch_property = ChannelProperty(settings, "test")
