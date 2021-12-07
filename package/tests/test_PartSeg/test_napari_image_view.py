@@ -235,6 +235,7 @@ class TestImageView:
         assert "timer" in image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata
         timer = image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata["timer"]
         assert timer.isActive()
+        assert image_view.viewer.dims.range[0] == (0, 1, 1)
         qtbot.wait(800)
         image_view.component_unmark(0)
         assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
