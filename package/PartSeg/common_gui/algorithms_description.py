@@ -6,7 +6,8 @@ from copy import deepcopy
 from enum import Enum
 
 import magicgui
-from magicgui.widgets import Widget, create_widget
+from magicgui.widgets import ComboBox, Widget, create_widget
+from napari.layers.base import Layer
 from packaging.version import parse as parse_version
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
@@ -761,4 +762,9 @@ def _value_get(self):
 
 
 def _value_set(self, value):
+    if isinstance(self, ComboBox) and issubclass(self.annotation, Layer) and isinstance(value, str):
+        for el in self.choices:
+            if el.name == value:
+                self.value = el
+                return
     self.value = value
