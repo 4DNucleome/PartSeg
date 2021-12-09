@@ -43,6 +43,7 @@ class SearchLabel(Container):
         if self.labels_layer.value is None:
             return
         self.roi_info = ROIInfo(self.labels_layer.value.data)
+        self._component_num_changed()
 
     def _stop(self):
         if ".Highlight" in self.napari_viewer.layers:
@@ -135,10 +136,12 @@ class SearchLabel(Container):
 
     def _update_point(self, lower_bound, upper_bound):
         point = (lower_bound + upper_bound) / 2
-        current_point = self.napari_viewer.dims.point
-        for i in range(self.napari_viewer.dims.ndim - self.napari_viewer.dims.ndisplay):
+        current_point = self.napari_viewer.dims.point[-len(lower_bound) :]
+        dims = len(lower_bound) - self.napari_viewer.dims.ndisplay
+        start_dims = self.napari_viewer.dims.ndim - len(lower_bound)
+        for i in range(dims):
             if not (lower_bound[i] <= current_point[i] <= upper_bound[i]):
-                self.napari_viewer.dims.set_point(i, point[i])
+                self.napari_viewer.dims.set_point(start_dims + i, point[i])
 
     def _component_num_changed(self):
         if self.roi_info is None:

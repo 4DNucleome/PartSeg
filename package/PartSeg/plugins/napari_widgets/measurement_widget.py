@@ -65,7 +65,10 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         )  # , exception_hook=exception_hook)
         dial.exec_()
         stat: MeasurementResult = dial.get_result()
-        self.roi_chose.value.properties = stat.to_dataframe()
+
+        df = stat.to_dataframe()
+        df["index"] = df.index
+        self.roi_chose.value.properties = df
         if stat is None:
             return
         # stat.set_filename(self.settings.image_path)

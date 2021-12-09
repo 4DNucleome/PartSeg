@@ -1,4 +1,5 @@
 import typing
+from contextlib import suppress
 
 import numpy as np
 import pandas as pd
@@ -228,8 +229,12 @@ class ROIExtractionAlgorithms(QWidget):
             if not result.info_text:
                 show_info("There is no ROI in result. Pleas check algorithm parameters.")
             return
+        roi = result.roi
         if self.sender() is not None:
             self.info_text.setPlainText(self.sender().get_info_text())
+            with suppress(Exception):
+                roi = self.sender().current_widget().algorithm_thread.algorithm.image.fit_array_to_image(result.roi)
+
         layer_name = self.target_layer_name.text()
         self.settings.set(f"{self.prefix()}.target_layer_name", layer_name)
         column_list = []
@@ -247,7 +252,7 @@ class ROIExtractionAlgorithms(QWidget):
             self.viewer.layers[layer_name].properties = properties
         else:
             self.viewer.add_labels(
-                result.roi,
+                roi,
                 scale=np.array(self._scale)[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value],
                 name=layer_name,
                 metadata={"parameters": result.parameters},
