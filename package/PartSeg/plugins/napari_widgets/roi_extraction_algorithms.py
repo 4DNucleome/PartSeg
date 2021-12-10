@@ -130,12 +130,16 @@ class ROIExtractionAlgorithms(QWidget):
         self.setLayout(layout)
 
         self.algorithm_chose.result.connect(self.set_result)
+        self.algorithm_chose.finished.connect(self._enable_calculation_btn)
         self.algorithm_chose.algorithm_changed.connect(self.algorithm_changed)
         self.save_btn.clicked.connect(self.save_action)
         self.manage_btn.clicked.connect(self.manage_action)
         self.profile_combo_box.textActivated.connect(self.select_profile)
 
         self.update_tooltips()
+
+    def _enable_calculation_btn(self):
+        self.calculate_btn.setEnabled(True)
 
     def manage_action(self):
         dialog = ProfilePreviewDialog(self.profile_dict, self.get_method_dict(), self.settings, parent=self)
@@ -210,6 +214,7 @@ class ROIExtractionAlgorithms(QWidget):
         self.update_image()
         self.update_mask()
         widget.execute()
+        self.calculate_btn.setDisabled(True)
 
     def showEvent(self, event: "QShowEvent") -> None:
         self.reset_choices(None)
