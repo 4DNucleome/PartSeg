@@ -195,18 +195,22 @@ class ROIExtractionAlgorithms(QWidget):
     def update_mask(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
         mask = widget.get_layers().get("mask", None)
-        if getattr(mask, "name", "") != self.mask_name:
+        if getattr(mask, "name", "") != self.mask_name or (widget.mask() is None and mask is not None):
             widget.set_mask(getattr(mask, "data", None))
             self.mask_name = getattr(mask, "name", "")
 
     def update_image(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
         self.settings.last_executed_algorithm = widget.name
-        image = generate_image(self.viewer, *widget.get_layer_list())
+        layer_names: typing.List[str] = widget.get_layer_list()
+        if layer_names == self.channel_names:
+            return
+        image = generate_image(self.viewer, *layer_names)
 
         self._scale = np.array(image.spacing)
         self.channel_names = image.channel_names
         widget.image_changed(image)
+        self.mask_name = ""
 
     def _run_calculation(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()

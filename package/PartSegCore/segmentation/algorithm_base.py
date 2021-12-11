@@ -230,7 +230,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
     def set_image(self, image):
         self.image = image
         self.channel = None
-        self._mask = None
+        self.mask = None
 
     def set_parameters(self, **kwargs):
         base_names = [x.name for x in self.get_fields() if isinstance(x, AlgorithmProperty)]
