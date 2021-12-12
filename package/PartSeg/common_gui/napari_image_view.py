@@ -743,7 +743,7 @@ class ImageView(QWidget):
         if event.type() == QEvent.ToolTip and self.components:
             text = self.get_tool_tip_text()
             if text:
-                QToolTip.showText(event.globalPos(), text)
+                QToolTip.showText(event.globalPos(), text, self)
         return super().event(event)
 
     def _search_component(self):
