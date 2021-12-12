@@ -130,12 +130,16 @@ class ROIExtractionAlgorithms(QWidget):
         self.setLayout(layout)
 
         self.algorithm_chose.result.connect(self.set_result)
+        self.algorithm_chose.finished.connect(self._enable_calculation_btn)
         self.algorithm_chose.algorithm_changed.connect(self.algorithm_changed)
         self.save_btn.clicked.connect(self.save_action)
         self.manage_btn.clicked.connect(self.manage_action)
         self.profile_combo_box.textActivated.connect(self.select_profile)
 
         self.update_tooltips()
+
+    def _enable_calculation_btn(self):
+        self.calculate_btn.setEnabled(True)
 
     def manage_action(self):
         dialog = ProfilePreviewDialog(self.profile_dict, self.get_method_dict(), self.settings, parent=self)
@@ -191,18 +195,22 @@ class ROIExtractionAlgorithms(QWidget):
     def update_mask(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
         mask = widget.get_layers().get("mask", None)
-        if getattr(mask, "name", "") != self.mask_name:
+        if getattr(mask, "name", "") != self.mask_name or (widget.mask() is None and mask is not None):
             widget.set_mask(getattr(mask, "data", None))
             self.mask_name = getattr(mask, "name", "")
 
     def update_image(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
         self.settings.last_executed_algorithm = widget.name
-        image = generate_image(self.viewer, *widget.get_layer_list())
+        layer_names: typing.List[str] = widget.get_layer_list()
+        if layer_names == self.channel_names:
+            return
+        image = generate_image(self.viewer, *layer_names)
 
         self._scale = np.array(image.spacing)
         self.channel_names = image.channel_names
         widget.image_changed(image)
+        self.mask_name = ""
 
     def _run_calculation(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
@@ -210,6 +218,7 @@ class ROIExtractionAlgorithms(QWidget):
         self.update_image()
         self.update_mask()
         widget.execute()
+        self.calculate_btn.setDisabled(True)
 
     def showEvent(self, event: "QShowEvent") -> None:
         self.reset_choices(None)
