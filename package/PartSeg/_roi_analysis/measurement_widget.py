@@ -49,7 +49,7 @@ class MeasurementsStorage:
         self.max_rows = 0
         self.content = []
         self.measurements = []
-        self.expand = False
+        self.expand = True
         self.show_units = False
 
     def clear(self):
@@ -152,6 +152,7 @@ class MeasurementWidgetBase(QWidget):
         self.no_units.setChecked(True)
         self.no_units.clicked.connect(self.refresh_view)
         self.expand_mode = QCheckBox("Expand", self)
+        self.expand_mode.setChecked(True)
         self.expand_mode.setToolTip("Shows results for each component in separate entry")
         self.file_names = QEnumComboBox(enum_class=FileNamesEnum)
         self.file_names_label = QLabel("Add file name:")
