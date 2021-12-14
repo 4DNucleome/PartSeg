@@ -68,7 +68,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
 
         df = stat.to_dataframe()
         df["index"] = df.index
-        self.roi_chose.value.properties = df
+        update_properties(df, self.roi_chose.value)
         if stat is None:
             return
         # stat.set_filename(self.settings.image_path)
@@ -112,3 +112,10 @@ class Measurement(QTabWidget):
 
     def reset_choices(self, event=None):
         self.measurement_widget.reset_choices()
+
+
+def update_properties(new_properties, layer: Labels):
+    for key, value in layer.properties.items():
+        if key not in new_properties:
+            new_properties[key] = value
+    layer.properties = new_properties
