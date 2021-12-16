@@ -214,13 +214,16 @@ class MeasurementWidgetBase(QWidget):
     def check_if_measurement_can_be_calculated(self, name):  # pragma: no cover
         raise NotImplementedError
 
+    def _get_mask(self):
+        raise NotImplementedError
+
     def measurement_profile_selection_changed(self, index):
         text = self.measurement_type.itemText(index)
         text = self.check_if_measurement_can_be_calculated(text)
         try:
             stat = self.settings.measurement_profiles[text]
             is_mask = stat.is_any_mask_measurement()
-            disable = is_mask and (self.settings.mask is None)
+            disable = is_mask and (self._get_mask() is None)
         except KeyError:
             disable = True
         self.recalculate_button.setDisabled(disable)
@@ -349,6 +352,9 @@ class MeasurementWidget(MeasurementWidgetBase):
         self.butt_layout3.insertWidget(0, QLabel("Channel:"))
         self.butt_layout3.insertWidget(1, self.channels_chose)
         self.settings.image_changed[int].connect(self.image_changed)
+
+    def _get_mask(self):
+        return self.settings.mask
 
     def append_measurement_result(self):
         try:

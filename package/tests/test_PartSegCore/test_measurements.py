@@ -2034,6 +2034,23 @@ class TestMeasurementResult:
         assert np.all(df.index == [1, 2, 3])
         assert np.all(df.values == [[1, 4], [1, 5], [1, 6]])
 
+    def test_mask_aggregation(self):
+        info = ComponentsInfo(np.arange(1, 4), np.arange(1, 3), {1: [1], 2: [2], 3: [1]})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = [4, 5, 8], "np", (PerComponent.Yes, AreaType.ROI)
+        df = storage.to_dataframe(True)
+        df2 = df.groupby("Mask component").mean()
+        assert df2.loc[1]["bb (np)"] == 6
+
+    def test_mask_aggregation_np_mask(self):
+        info = ComponentsInfo(np.arange(1, 4), np.arange(0), {1: [], 2: [], 3: []})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = [4, 5, 8], "np", (PerComponent.Yes, AreaType.ROI)
+        df = storage.to_dataframe(True)
+        assert "Mask component" not in df.columns
+
 
 class TestHaralick:
     def test_base(self):

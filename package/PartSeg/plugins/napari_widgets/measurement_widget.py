@@ -38,6 +38,9 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         self.file_names.setVisible(False)
         self.file_names_label.setVisible(False)
 
+    def _get_mask(self):
+        return self.mask_chose.value
+
     def append_measurement_result(self):
         try:
             compute_class = self.settings.measurement_profiles[self.measurement_type.currentText()]
@@ -55,7 +58,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         units = self.units_choose.currentEnum()
         image = generate_image(self.napari_viewer, self.channels_chose.value.name, *compute_class.get_channels_num())
         if self.mask_chose.value is not None:
-            image.mask = self.mask_chose.value.data
+            image.set_mask(self.mask_chose.value.data)
         roi_info = ROIInfo(self.roi_chose.value.data).fit_to_image(image)
         dial = ExecuteFunctionDialog(
             compute_class.calculate,
@@ -66,7 +69,11 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         dial.exec_()
         stat: MeasurementResult = dial.get_result()
 
-        df = stat.to_dataframe()
+        df = stat.to_dataframe(True)
+        if "Mask component" in df and self.mask_chose.value is not None:
+            df2 = df.groupby("Mask component").mean()
+            df2["index"] = df2.index
+            update_properties(df, self.mask_chose.value)
         df["index"] = df.index
         update_properties(df, self.roi_chose.value)
         if stat is None:
@@ -81,7 +88,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
             return NO_MEASUREMENT_STRING
         profile: MeasurementProfile = self.settings.measurement_profiles.get(name)
         if profile.is_any_mask_measurement() and self.mask_chose.value is None:
-            show_info("To use this measurement set please use data with mask loaded")
+            show_info("To use this measurement set please select mask layer")
             self.measurement_type.setCurrentIndex(0)
             return NO_MEASUREMENT_STRING
         if self.roi_chose.value is None:

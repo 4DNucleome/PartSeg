@@ -80,6 +80,9 @@ class ComponentsInfo(NamedTuple):
     mask_components: np.ndarray
     components_translation: Dict[int, List[int]]
 
+    def has_components(self):
+        return all(len(x) for x in self.components_translation.values())
+
 
 def empty_fun(_a0=None, _a1=None):
     """This function  is be used as dummy reporting function."""
@@ -132,10 +135,11 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def __iter__(self) -> Iterator[str]:
         return iter(self._data_dict)
 
-    def to_dataframe(self) -> pd.DataFrame:
-        data = self.get_separated()
+    def to_dataframe(self, all_components=False) -> pd.DataFrame:
+        data = self.get_separated(all_components)
         columns = [
-            f"{label} ({units})" if units else label for label, units in zip(self.get_labels(), self.get_units())
+            f"{label} ({units})" if units else label
+            for label, units in zip(self.get_labels(all_components=all_components), self.get_units(all_components))
         ]
         df = pd.DataFrame(data, columns=columns, index=self.components_info.roi_components)
         return df.astype({"Segmentation component": int}).set_index("Segmentation component")
@@ -149,19 +153,21 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         self._units_dict[FILE_NAME_STR] = ""
         self._data_dict.move_to_end(FILE_NAME_STR, False)
 
-    def get_component_info(self) -> Tuple[bool, bool]:
+    def get_component_info(self, all_components: bool = False) -> Tuple[bool, bool]:
         """
         Get information which type of components are in storage.
 
         :return: has_mask_components, has_segmentation_components
         """
+        if all_components and self.components_info.has_components():
+            return True, True
         has_mask_components = any((x == PerComponent.Yes and y != AreaType.ROI for x, y in self._type_dict.values()))
         has_segmentation_components = any(
             (x == PerComponent.Yes and y == AreaType.ROI for x, y in self._type_dict.values())
         )
         return has_mask_components, has_segmentation_components
 
-    def get_labels(self, expand=True) -> List[str]:
+    def get_labels(self, expand=True, all_components=False) -> List[str]:
         """
         If expand is false return list of keys of this storage.
         Otherwise return  labels for measurement. Base are keys of this storage.
@@ -170,7 +176,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
         if not expand:
             return list(self.keys())
-        has_mask_components, has_segmentation_components = self.get_component_info()
+        has_mask_components, has_segmentation_components = self.get_component_info(all_components)
         labels = list(self._data_dict.keys())
         index = 1 if FILE_NAME_STR in self._data_dict else 0
         if has_mask_components:
@@ -179,8 +185,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             labels.insert(index, "Segmentation component")
         return labels
 
-    def get_units(self) -> List[str]:
-        return [self._units_dict[x] for x in self.get_labels()]
+    def get_units(self, all_components=False) -> List[str]:
+        return [self._units_dict[x] for x in self.get_labels(all_components=all_components)]
 
     def get_global_names(self):
         """Get names for only parameters which are not 'PerComponent.Yes'"""
@@ -225,9 +231,9 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             iterator = iter(self._data_dict.keys())
         return res, iterator
 
-    def get_separated(self) -> List[List[MeasurementValueType]]:
+    def get_separated(self, all_components=False) -> List[List[MeasurementValueType]]:
         """Get measurements separated for each component"""
-        has_mask_components, has_segmentation_components = self.get_component_info()
+        has_mask_components, has_segmentation_components = self.get_component_info(all_components)
         if not has_mask_components and not has_segmentation_components:
             return [list(self._data_dict.values())]
         component_info = self._get_component_info(has_mask_components, has_segmentation_components)
