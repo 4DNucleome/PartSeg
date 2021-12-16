@@ -98,6 +98,7 @@ class TestMeasurementsStorage:
         storage["bb"] = [4, 5, 6], "np", (PerComponent.Yes, AreaType.ROI)
         obj = MeasurementsStorage()
         obj.add_measurements(storage)
+        obj.set_expand(False)
         assert obj.get_size(True) == (2, 2)
         obj.set_expand(True)
         assert obj.get_size(True) == (3, 4)
