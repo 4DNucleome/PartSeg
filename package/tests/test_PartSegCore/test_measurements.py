@@ -2132,7 +2132,7 @@ class TestDistanceROIROI:
         data[1, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2] = 5
         image = Image(data, image_spacing=(1, 1, 1), axes_order="CYX")
-        roi = (data[0:1] > 1).astype(np.uint8)
+        roi = (data[:1] > 1).astype(np.uint8)
         res = DistanceROIROI.calculate_property(
             channel=data[2:3],
             image=image,
@@ -2180,7 +2180,7 @@ class TestROINeighbourhoodROI:
         data[1, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2] = 5
         image = Image(data, image_spacing=(100 * (10 ** -9),) * 2, axes_order="CYX")
-        roi = (data[0:1] > 1).astype(np.uint8)
+        roi = (data[:1] > 1).astype(np.uint8)
         kwargs = {
             "image": image,
             "area_array": roi,
