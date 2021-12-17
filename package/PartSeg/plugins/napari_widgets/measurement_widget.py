@@ -5,7 +5,7 @@ from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from napari.utils.notifications import show_info
-from qtpy.QtWidgets import QLabel, QTabWidget
+from qtpy.QtWidgets import QCheckBox, QLabel, QTabWidget
 
 from PartSeg._roi_analysis.advanced_window import MeasurementSettings
 from PartSeg._roi_analysis.measurement_widget import NO_MEASUREMENT_STRING, FileNamesEnum, MeasurementWidgetBase
@@ -28,6 +28,9 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         self.channels_chose = create_widget(annotation=NapariImage, label="Image", options={})
         self.roi_chose = create_widget(annotation=Labels, label="ROI", options={})
         self.mask_chose = create_widget(annotation=Optional[Labels], label="ROI", options={})
+        self.overwrite = QCheckBox("Overwrite")
+        self.overwrite.setToolTip("If overwrite properties")
+        self.butt_layout.insertWidget(3, self.overwrite)
         self.butt_layout3.insertWidget(0, QLabel("Channel:"))
         self.butt_layout3.insertWidget(1, self.channels_chose.native)
         self.butt_layout3.insertWidget(2, QLabel("ROI:"))
@@ -37,6 +40,9 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         self.file_names.setCurrentEnum(FileNamesEnum.No)
         self.file_names.setVisible(False)
         self.file_names_label.setVisible(False)
+
+    def _get_mask(self):
+        return self.mask_chose.value
 
     def append_measurement_result(self):
         try:
@@ -55,7 +61,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         units = self.units_choose.currentEnum()
         image = generate_image(self.napari_viewer, self.channels_chose.value.name, *compute_class.get_channels_num())
         if self.mask_chose.value is not None:
-            image.mask = self.mask_chose.value.data
+            image.set_mask(self.mask_chose.value.data)
         roi_info = ROIInfo(self.roi_chose.value.data).fit_to_image(image)
         dial = ExecuteFunctionDialog(
             compute_class.calculate,
@@ -66,9 +72,13 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         dial.exec_()
         stat: MeasurementResult = dial.get_result()
 
-        df = stat.to_dataframe()
+        df = stat.to_dataframe(True)
+        if "Mask component" in df and self.mask_chose.value is not None:
+            df2 = df.groupby("Mask component").mean()
+            df2["index"] = df2.index
+            update_properties(df, self.mask_chose.value, self.overwrite.isChecked())
         df["index"] = df.index
-        self.roi_chose.value.properties = df
+        update_properties(df, self.roi_chose.value, self.overwrite.isChecked())
         if stat is None:
             return
         # stat.set_filename(self.settings.image_path)
@@ -81,7 +91,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
             return NO_MEASUREMENT_STRING
         profile: MeasurementProfile = self.settings.measurement_profiles.get(name)
         if profile.is_any_mask_measurement() and self.mask_chose.value is None:
-            show_info("To use this measurement set please use data with mask loaded")
+            show_info("To use this measurement set please select mask layer")
             self.measurement_type.setCurrentIndex(0)
             return NO_MEASUREMENT_STRING
         if self.roi_chose.value is None:
@@ -112,3 +122,11 @@ class Measurement(QTabWidget):
 
     def reset_choices(self, event=None):
         self.measurement_widget.reset_choices()
+
+
+def update_properties(new_properties, layer: Labels, overwrite):
+    if not overwrite:
+        for key, value in layer.properties.items():
+            if key not in new_properties:
+                new_properties[key] = value
+    layer.properties = new_properties
