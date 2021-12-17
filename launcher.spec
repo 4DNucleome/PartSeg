@@ -34,6 +34,8 @@ elif napari_version < parse_version("0.4.6"):
 
     def import_resources():
         return napari_import_resources()[0]
+
+
 else:
     from pathlib import Path
 
@@ -45,7 +47,7 @@ else:
     def import_resources():
         qt_resources._register_napari_resources()
         icon_hash = dir_hash(ICON_PATH)  # get hash of icons folder contents
-        key = f'_qt_resources_{qtpy.API_NAME}_{qtpy.QT_VERSION}_{icon_hash}'
+        key = f"_qt_resources_{qtpy.API_NAME}_{qtpy.QT_VERSION}_{icon_hash}"
         key = key.replace(".", "_")
         return Path(qt_resources.__file__).parent / f"{key}.py"
 
@@ -56,32 +58,41 @@ import imagecodecs
 
 napari.plugins.plugin_manager.discover()
 
-hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] +\
-                ["imagecodecs._shared"] + [x.__name__ for x in napari.plugins.plugin_manager.plugins.values()] + \
-                ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"] + [
-                    "numpy.core._dtype_ctypes",
-                    "sentry_sdk.integrations.logging",
-                    "sentry_sdk.integrations.stdlib",
-                    "sentry_sdk.integrations.excepthook",
-                    "sentry_sdk.integrations.dedupe",
-                    "sentry_sdk.integrations.atexit",
-                    "sentry_sdk.integrations.modules",
-                    "sentry_sdk.integrations.argv",
-                    "sentry_sdk.integrations.threading",
-                    "numpy.random.common",
-                    "numpy.random.bounded_integers",
-                    "numpy.random.entropy",
-                    "PartSegCore.register",
-                    "defusedxml.cElementTree",
-                    "vispy.app.backends._pyqt5",
-                    "scipy.spatial.transform._rotation_groups",
-                    "magicgui.backends._qtpy",
-                    "freetype",
-                    "psygnal._signal"
-                ]
+from imageio.config.plugins import known_plugins as imageio_known_plugins
+
+hiddenimports = (
+    ["imagecodecs._" + x for x in imagecodecs._extensions()]
+    + ["imagecodecs._shared"]
+    + [x.__name__ for x in napari.plugins.plugin_manager.plugins.values()]
+    + ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"]
+    + [
+        "numpy.core._dtype_ctypes",
+        "sentry_sdk.integrations.logging",
+        "sentry_sdk.integrations.stdlib",
+        "sentry_sdk.integrations.excepthook",
+        "sentry_sdk.integrations.dedupe",
+        "sentry_sdk.integrations.atexit",
+        "sentry_sdk.integrations.modules",
+        "sentry_sdk.integrations.argv",
+        "sentry_sdk.integrations.threading",
+        "numpy.random.common",
+        "numpy.random.bounded_integers",
+        "numpy.random.entropy",
+        "PartSegCore.register",
+        "defusedxml.cElementTree",
+        "vispy.app.backends._pyqt5",
+        "scipy.spatial.transform._rotation_groups",
+        "magicgui.backends._qtpy",
+        "freetype",
+        "psygnal._signal",
+    ]
+    + [x.module_name for x in imageio_known_plugins.values()]
+)
+
 
 try:
     from sentry_sdk.integrations import _AUTO_ENABLING_INTEGRATIONS
+
     for el in _AUTO_ENABLING_INTEGRATIONS:
         hiddenimports.append(os.path.splitext(el)[0])
 except ImportError:
@@ -103,11 +114,11 @@ napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
 napari_resource_dest_path = os.path.relpath(os.path.dirname(napari_resource_path), napari_base_path)
 
 packages = itertools.chain(
-        pkg_resources.iter_entry_points("PartSeg.plugins"),
-        pkg_resources.iter_entry_points("partseg.plugins"),
-        pkg_resources.iter_entry_points("PartSegCore.plugins"),
-        pkg_resources.iter_entry_points("partsegcore.plugins"),
-    )
+    pkg_resources.iter_entry_points("PartSeg.plugins"),
+    pkg_resources.iter_entry_points("partseg.plugins"),
+    pkg_resources.iter_entry_points("PartSegCore.plugins"),
+    pkg_resources.iter_entry_points("partsegcore.plugins"),
+)
 
 plugins_data = []
 
@@ -116,7 +127,9 @@ for package in packages:
     if hasattr(module, "_hiddentimports"):
         hiddenimports += module._hiddentimports
     path_to_module = os.path.dirname(module.__file__)
-    plugins_data.append((os.path.join(path_to_module, "*.py"), os.path.join("plugins", os.path.basename(path_to_module))))
+    plugins_data.append(
+        (os.path.join(path_to_module, "*.py"), os.path.join("plugins", os.path.basename(path_to_module)))
+    )
 
 a = Analysis(
     [os.path.join(base_path, "launcher_main.py")],
@@ -128,7 +141,7 @@ a = Analysis(
             ("static_files/icons/*", "PartSegData/static_files/icons"),
             ("static_files/initial_images/*", "PartSegData/static_files/initial_images"),
             ("static_files/colors.npz", "PartSegData/static_files/"),
-            ("fonts/*", "PartSegData/fonts/")
+            ("fonts/*", "PartSegData/fonts/"),
         ]
     ]
     + qt_data
