@@ -535,7 +535,6 @@ class ImageView(QWidget):
                 image_info.mask.color = colormap
 
     def set_image(self, image: Optional[Image] = None):
-        self.image_info = {}
         self.add_image(image, True)
 
     def has_image(self, image: Image):
@@ -586,6 +585,7 @@ class ImageView(QWidget):
         image_info, replace = image_data
         image = image_info.image
         if replace:
+            self.image_info = {}
             self.viewer.layers.select_all()
             self.viewer.layers.remove_selected()
 
