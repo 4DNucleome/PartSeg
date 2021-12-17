@@ -77,7 +77,8 @@ hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] +\
                     "scipy.spatial.transform._rotation_groups",
                     "magicgui.backends._qtpy",
                     "freetype",
-                    "psygnal._signal"
+                    "psygnal._signal",
+                    "imageio.plugins.tifffile",
                 ]
 
 try:
