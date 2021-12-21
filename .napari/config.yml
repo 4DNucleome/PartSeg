@@ -1,0 +1,12 @@
+
+# Add labels from the EDAM Bioimaging ontology
+labels:
+  ontology: EDAM-BIOIMAGING:alpha06
+  terms:
+  - Cell segmentation
+  - Connected-component analysis
+  - 3D image
+  - Image reconstruction
+  - Image feature detection
+  - Multi-channel
+  - Object feature extraction
