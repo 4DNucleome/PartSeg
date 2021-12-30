@@ -69,7 +69,13 @@ def test_extraction_widget(make_napari_viewer, widget_class, monkeypatch, qtbot)
     assert widget.profile_combo_box.count() == 2
     widget.manage_action()
     widget.select_profile("prof3")
+    widget.mask_name = "1"
     widget.update_image()
+    assert widget.mask_name == ""
+    # check if mask is not cleaned if channels does not change
+    widget.mask_name = "1"
+    widget.update_image()
+    assert widget.mask_name == "1"
 
     res = ROIExtractionResult(
         np.ones((10, 10), dtype=np.uint8), widget.profile_dict["prof3"], roi_annotation={1: {"foo": 1, "baz": 2}}

@@ -17,7 +17,7 @@ from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
 from vispy.color import Color, Colormap
@@ -344,7 +344,7 @@ class ImageView(QWidget):
     def mask_color(self) -> ColorInfo:
         """Get mask marking color"""
         color = Color(np.divide(self.settings.get_from_profile("mask_presentation_color", [255, 255, 255]), 255))
-        return {0: "black", 1: color.rgba}
+        return {0: (0, 0, 0, 0), 1: color.rgba}
 
     def get_image(self, image: Optional[Image]) -> Image:
         if image is not None:
@@ -588,6 +588,7 @@ class ImageView(QWidget):
         if replace:
             self.viewer.layers.select_all()
             self.viewer.layers.remove_selected()
+            QApplication.instance().processEvents()
 
         filters = self.channel_control.get_filter()
         for i, layer in enumerate(image_info.layers):
@@ -743,7 +744,7 @@ class ImageView(QWidget):
         if event.type() == QEvent.ToolTip and self.components:
             text = self.get_tool_tip_text()
             if text:
-                QToolTip.showText(event.globalPos(), text)
+                QToolTip.showText(event.globalPos(), text, self)
         return super().event(event)
 
     def _search_component(self):
@@ -775,7 +776,9 @@ class ImageView(QWidget):
         component_mark = image_info.roi_info.roi[tuple(slices)] == num
         if self.viewer.dims.ndisplay == 3:
             component_mark = binary_dilation(component_mark)
-        translate = image_info.roi.translate + (bound_info.lower - 1) * image_info.roi.scale
+        shift_base = bound_info.lower - 1
+        shift_base[0] += 1  # remove shift on time axis
+        translate = image_info.roi.translate + shift_base * image_info.roi.scale
         translate[image_info.image.stack_pos] = 0
         if image_info.highlight is None:
             image_info.highlight = self.viewer.add_labels(

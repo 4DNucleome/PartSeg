@@ -1,4 +1,5 @@
 import typing
+from contextlib import suppress
 
 import numpy as np
 import pandas as pd
@@ -129,12 +130,16 @@ class ROIExtractionAlgorithms(QWidget):
         self.setLayout(layout)
 
         self.algorithm_chose.result.connect(self.set_result)
+        self.algorithm_chose.finished.connect(self._enable_calculation_btn)
         self.algorithm_chose.algorithm_changed.connect(self.algorithm_changed)
         self.save_btn.clicked.connect(self.save_action)
         self.manage_btn.clicked.connect(self.manage_action)
         self.profile_combo_box.textActivated.connect(self.select_profile)
 
         self.update_tooltips()
+
+    def _enable_calculation_btn(self):
+        self.calculate_btn.setEnabled(True)
 
     def manage_action(self):
         dialog = ProfilePreviewDialog(self.profile_dict, self.get_method_dict(), self.settings, parent=self)
@@ -190,18 +195,22 @@ class ROIExtractionAlgorithms(QWidget):
     def update_mask(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
         mask = widget.get_layers().get("mask", None)
-        if getattr(mask, "name", "") != self.mask_name:
+        if getattr(mask, "name", "") != self.mask_name or (widget.mask() is None and mask is not None):
             widget.set_mask(getattr(mask, "data", None))
             self.mask_name = getattr(mask, "name", "")
 
     def update_image(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
         self.settings.last_executed_algorithm = widget.name
-        image = generate_image(self.viewer, *widget.get_layer_list())
+        layer_names: typing.List[str] = widget.get_layer_list()
+        if layer_names == self.channel_names:
+            return
+        image = generate_image(self.viewer, *layer_names)
 
         self._scale = np.array(image.spacing)
         self.channel_names = image.channel_names
         widget.image_changed(image)
+        self.mask_name = ""
 
     def _run_calculation(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
@@ -209,6 +218,7 @@ class ROIExtractionAlgorithms(QWidget):
         self.update_image()
         self.update_mask()
         widget.execute()
+        self.calculate_btn.setDisabled(True)
 
     def showEvent(self, event: "QShowEvent") -> None:
         self.reset_choices(None)
@@ -228,8 +238,12 @@ class ROIExtractionAlgorithms(QWidget):
             if not result.info_text:
                 show_info("There is no ROI in result. Pleas check algorithm parameters.")
             return
+        roi = result.roi
         if self.sender() is not None:
             self.info_text.setPlainText(self.sender().get_info_text())
+            with suppress(Exception):
+                roi = self.sender().current_widget().algorithm_thread.algorithm.image.fit_array_to_image(result.roi)
+
         layer_name = self.target_layer_name.text()
         self.settings.set(f"{self.prefix()}.target_layer_name", layer_name)
         column_list = []
@@ -247,7 +261,7 @@ class ROIExtractionAlgorithms(QWidget):
             self.viewer.layers[layer_name].properties = properties
         else:
             self.viewer.add_labels(
-                result.roi,
+                roi,
                 scale=np.array(self._scale)[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value],
                 name=layer_name,
                 metadata={"parameters": result.parameters},

@@ -26,7 +26,6 @@ if PYQT5:
         size = image.size().width() * image.size().height()
         return np.frombuffer(image.bits().asstring(size * image.depth() // 8), dtype=np.uint8)
 
-
 else:
 
     def array_from_image(image: QImage):

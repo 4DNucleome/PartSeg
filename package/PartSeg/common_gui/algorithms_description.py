@@ -6,7 +6,9 @@ from copy import deepcopy
 from enum import Enum
 
 import magicgui
-from magicgui.widgets import Widget, create_widget
+import numpy as np
+from magicgui.widgets import ComboBox, Widget, create_widget
+from napari.layers.base import Layer
 from packaging.version import parse as parse_version
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
@@ -562,6 +564,9 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     def set_mask(self, mask):
         self.algorithm_thread.algorithm.set_mask(mask)
 
+    def mask(self) -> typing.Optional[np.ndarray]:
+        return self.algorithm_thread.algorithm.mask
+
     def set_values(self, values_dict):
         self.form_widget.set_values(values_dict)
 
@@ -761,4 +766,9 @@ def _value_get(self):
 
 
 def _value_set(self, value):
+    if isinstance(self, ComboBox) and issubclass(self.annotation, Layer) and isinstance(value, str):
+        for el in self.choices:
+            if el.name == value:
+                self.value = el
+                return
     self.value = value
