@@ -10,16 +10,9 @@ from napari.utils import Colormap
 from napari.utils.notifications import NotificationSeverity
 from pydantic import BaseModel
 
+from PartSegCore._old_json_hooks import ProfileEncoder, profile_hook
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.json_hooks import (
-    EventedDict,
-    PartSegEncoder,
-    ProfileDict,
-    ProfileEncoder,
-    partseg_object_hook,
-    profile_hook,
-    recursive_update_dict,
-)
+from PartSegCore.json_hooks import EventedDict, PartSegEncoder, ProfileDict, partseg_object_hook, recursive_update_dict
 
 
 @dataclass

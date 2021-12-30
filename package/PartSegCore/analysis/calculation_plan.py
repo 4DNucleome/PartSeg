@@ -327,6 +327,9 @@ class CalculationTree:
     def __repr__(self):
         return f"CalculationTree(operation={repr(self.operation)}, children={self.children})"
 
+    def as_dict(self):
+        return {"operation": self.operation, "children": self.children}
+
 
 class NodeType(Enum):
     """Type of node in calculation"""
@@ -489,6 +492,9 @@ class CalculationPlan:
         self.current_pos = []
         self.changes = []
         self.current_node = None
+
+    def as_dict(self):
+        return {"tree": self.execution_tree, "name": self.name}
 
     def get_root_type(self):
         return self.execution_tree.operation

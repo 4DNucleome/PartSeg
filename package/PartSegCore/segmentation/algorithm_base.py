@@ -10,7 +10,7 @@ from PartSegImage import Image
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from ..image_operations import RadiusType
-from ..project_info import AdditionalLayerDescription, ProjectInfoBase
+from ..project_info import AdditionalLayerDescription
 from ..roi_info import ROIInfo
 from ..utils import numpy_repr
 
@@ -147,11 +147,6 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.channel = None
         self.mask = None
 
-    @staticmethod
-    def single_channel():
-        """Check if algorithm run on single channel"""
-        return True
-
     @property
     def mask(self) -> Optional[np.ndarray]:
         if self._mask is not None and not self.support_time():
@@ -192,21 +187,6 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
     @abstractmethod
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         raise NotImplementedError()
-
-    @classmethod
-    def segment_project(cls, project: ProjectInfoBase, parameters: dict) -> ROIExtractionResult:
-        """
-
-        :param ProjectInfoBase project:
-        :param dict parameters:
-        :return:
-        :rtype:
-        """
-        instance = cls()
-        instance.set_image(project.image)
-        instance.set_mask(project.mask)
-        instance.set_parameters(**parameters)
-        return instance.calculation_run(report_empty_fun)
 
     @abstractmethod
     def get_info_text(self):

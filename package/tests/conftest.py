@@ -14,7 +14,6 @@ from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import ComponentsNumber, MeasurementProfile, Volume
-from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.roi_info import ROIInfo
@@ -170,7 +169,7 @@ def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_paramet
 
 @pytest.fixture
 def mask_property():
-    return MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, False, False, False)
+    return MaskProperty.simple_mask()
 
 
 @pytest.fixture

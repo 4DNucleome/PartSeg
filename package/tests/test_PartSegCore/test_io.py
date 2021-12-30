@@ -24,11 +24,8 @@ from PartSegCore.analysis.load_functions import LoadProject, UpdateLoadedMetadat
 from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
-from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
-from PartSegCore.class_generator import enum_register
-from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadBase, SaveBase, SaveROIAsNumpy, UpdateLoadedMetadataBase
-from PartSegCore.json_hooks import check_loaded_dict
+from PartSegCore.json_hooks import PartSegEncoder, check_loaded_dict, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
     LoadROI,
@@ -110,7 +107,13 @@ def analysis_project_reversed() -> ProjectTuple:
 
 @pytest.fixture
 def mask_prop():
-    return MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, False, False)
+    return MaskProperty.simple_mask()
+
+
+class TestEnumClass(Enum):
+    test0 = 0
+    test1 = 1
+    test2 = 2
 
 
 class TestHistoryElement:
@@ -245,7 +248,7 @@ class TestJsonLoad:
         # noinspection PyBroadException
         try:
             with open(profile_path) as ff:
-                data = json.load(ff, object_hook=part_hook)
+                data = json.load(ff, object_hook=partseg_object_hook)
             assert check_loaded_dict(data)
         except Exception:  # pylint: disable=W0703
             pytest.fail("Fail in loading profile")
@@ -255,7 +258,7 @@ class TestJsonLoad:
         # noinspection PyBroadException
         try:
             with open(profile_path) as ff:
-                data = json.load(ff, object_hook=part_hook)
+                data = json.load(ff, object_hook=partseg_object_hook)
             assert check_loaded_dict(data)
         except Exception:  # pylint: disable=W0703
             pytest.fail("Fail in loading profile")
@@ -263,23 +266,13 @@ class TestJsonLoad:
     def test_json_dump(self):
         with pytest.raises(TypeError):
             json.dumps(DimensionType.Layer)
-        data_string = json.dumps(DimensionType.Layer, cls=PartEncoder)
-        assert re.search('"__Enum__":[^,}]+[,}]', data_string) is not None
-        assert re.search('"__subtype__":[^,}]+[,}]', data_string) is not None
+        data_string = json.dumps(DimensionType.Layer, cls=PartSegEncoder)
+        assert re.search('"__class__":[^,}]+[,}]', data_string) is not None
         assert re.search('"value":[^,}]+[,}]', data_string) is not None
 
     def test_json_load(self):
-        class Test(Enum):
-            test0 = 0
-            test1 = 1
-            test2 = 2
-
-        test_json = json.dumps(Test.test0, cls=PartEncoder)
-
-        assert not check_loaded_dict(json.loads(test_json, object_hook=part_hook))
-
-        enum_register.register_class(Test)
-        assert isinstance(json.loads(test_json, object_hook=part_hook), Test)
+        test_json = json.dumps(TestEnumClass.test0, cls=PartSegEncoder)
+        assert isinstance(json.loads(test_json, object_hook=partseg_object_hook), TestEnumClass)
 
     def test_modernize_0_9_2_3(self, bundle_test_dir):
         file_path = os.path.join(bundle_test_dir, "segment_profile_0.9.2.3.json")
@@ -292,7 +285,6 @@ class TestJsonLoad:
 
     def test_update_name(self):
         data = UpdateLoadedMetadataAnalysis.load_json_data(update_name_json)
-        print(data)
         mp = data["problematic set"]
         assert isinstance(mp, MeasurementProfile)
         assert isinstance(mp.chosen_fields[0], MeasurementEntry)

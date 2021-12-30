@@ -14,11 +14,11 @@ from PartSegImage import Image, ImageWriter
 from ..algorithm_describe_base import AlgorithmProperty, Register
 from ..channel_class import Channel
 from ..io_utils import NotSupportedImage, SaveBase, SaveMaskAsTiff, SaveROIAsNumpy, SaveROIAsTIFF, get_tarinfo
+from ..json_hooks import PartSegEncoder
 from ..project_info import HistoryElement
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
 from .io_utils import ProjectTuple, project_version_info
-from .save_hooks import PartEncoder
 
 __all__ = [
     "SaveProject",
@@ -65,13 +65,13 @@ def save_project(
         ImageWriter.save(image, image_buff, compression=None)
         tar_image = get_tarinfo("image.tif", image_buff)
         tar.addfile(tarinfo=tar_image, fileobj=image_buff)
-        para_str = json.dumps(algorithm_parameters, cls=PartEncoder)
+        para_str = json.dumps(algorithm_parameters, cls=PartSegEncoder)
         parameters_buff = BytesIO(para_str.encode("utf-8"))
         tar_algorithm = get_tarinfo("algorithm.json", parameters_buff)
         tar.addfile(tar_algorithm, parameters_buff)
         meta_str = json.dumps(
             {"project_version_info": str(project_version_info), "roi_annotations": roi_info.annotations},
-            cls=PartEncoder,
+            cls=PartSegEncoder,
         )
         meta_buff = BytesIO(meta_str.encode("utf-8"))
         tar_meta = get_tarinfo("metadata.json", meta_buff)
@@ -92,7 +92,7 @@ def save_project(
             el.arrays.seek(0)
             tar.addfile(hist_info, el.arrays)
         if el_info:
-            hist_str = json.dumps(el_info, cls=PartEncoder)
+            hist_str = json.dumps(el_info, cls=PartSegEncoder)
             hist_buff = BytesIO(hist_str.encode("utf-8"))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
             tar.addfile(tar_algorithm, hist_buff)
@@ -378,7 +378,7 @@ class SaveProfilesToJSON(SaveBase):
         step_changed=None,
     ):
         with open(save_location, "w") as ff:
-            json.dump(project_info, ff, cls=PartEncoder, indent=2)
+            json.dump(project_info, ff, cls=PartSegEncoder, indent=2)
 
     @classmethod
     def get_name(cls) -> str:

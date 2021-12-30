@@ -1,3 +1,4 @@
+import warnings
 from collections import OrderedDict
 from contextlib import suppress
 from enum import Enum
@@ -272,8 +273,16 @@ class MeasurementProfile:
             self._need_mask = self._need_mask or self.need_mask(cf_val.calculation_tree)
         self.name_prefix = name_prefix
 
-    def to_dict(self):
+    def as_dict(self):
         return {"name": self.name, "chosen_fields": self.chosen_fields, "name_prefix": self.name_prefix}
+
+    def to_dict(self):
+        warnings.warn(
+            f"{self.__class__.__name__}.to_dict is deprecated. Use as_dict instead",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+        return self.as_dict()
 
     def need_mask(self, tree):
         if isinstance(tree, Leaf):

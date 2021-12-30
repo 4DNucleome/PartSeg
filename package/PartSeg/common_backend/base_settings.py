@@ -36,7 +36,7 @@ from PartSegCore import register
 from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import load_metadata_base
-from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
+from PartSegCore.json_hooks import PartSegEncoder, ProfileDict, check_loaded_dict
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
@@ -477,7 +477,7 @@ class BaseSettings(ViewSettings):
     points_changed = Signal()
     request_load_files = Signal(list)
     """:py:class:`~.Signal` mask changed signal"""
-    json_encoder_class = ProfileEncoder
+    json_encoder_class = PartSegEncoder
     load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""

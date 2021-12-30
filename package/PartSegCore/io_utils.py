@@ -15,7 +15,7 @@ import pandas as pd
 import tifffile
 from napari.utils import Colormap
 
-from PartSegCore.json_hooks import ProfileDict, profile_hook
+from PartSegCore.json_hooks import ProfileDict, partseg_object_hook
 from PartSegImage import ImageWriter
 from PartSegImage.image import minimal_dtype
 
@@ -191,7 +191,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
 
 
 class UpdateLoadedMetadataBase:
-    json_hook = staticmethod(profile_hook)
+    json_hook = staticmethod(partseg_object_hook)
 
     @classmethod
     def load_json_data(cls, data: typing.Union[str, Path, typing.TextIO]):

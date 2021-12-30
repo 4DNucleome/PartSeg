@@ -40,7 +40,6 @@ from .calculation_plan import CalculationPlan, CalculationTree, MeasurementCalcu
 from .io_utils import MaskInfo, ProjectTuple, project_version_info
 from .measurement_base import Leaf, MeasurementEntry, Node
 from .measurement_calculation import MeasurementProfile
-from .save_hooks import part_hook
 
 __all__ = [
     "LoadStackImage",
@@ -318,8 +317,6 @@ class LoadMaskSegmentation(LoadBase):
 
 
 class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
-    json_hook = part_hook
-
     @classmethod
     def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
         replace_name_dict = {

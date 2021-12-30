@@ -236,7 +236,18 @@ class TestCalculationProcess:
         statistic_calculate = MeasurementCalculate(
             channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
         )
-        mask_create = MaskCreate("", MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, True, False, False))
+        mask_create = MaskCreate(
+            "",
+            MaskProperty(
+                dilate=RadiusType.NO,
+                dilate_radius=0,
+                fill_holes=RadiusType.NO,
+                max_holes_size=0,
+                save_components=True,
+                clip_to_mask=False,
+                reversed_mask=False,
+            ),
+        )
         parameters2 = {
             "channel": 1,
             "minimum_size": 200,

@@ -68,10 +68,10 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, repo
 from PartSegImage import Image, TiffImageReader
 
 from ...io_utils import WrongFileTypeException
+from ...json_hooks import PartSegEncoder
 from ...project_info import AdditionalLayerDescription, HistoryElement
 from ...roi_info import ROIInfo
 from ...segmentation import RestartableAlgorithm
-from .. import PartEncoder
 from .parallel_backend import BatchManager, SubprocessOrder
 
 
@@ -581,7 +581,9 @@ class FileData:
             self.file_type = FileType.text_file
         self.writing = False
         data = SheetData("calculation_info", [("Description", "str"), ("JSON", "str")], raw=True)
-        data.add_data([str(calculation.calculation_plan), json.dumps(calculation.calculation_plan, cls=PartEncoder)], 0)
+        data.add_data(
+            [str(calculation.calculation_plan), json.dumps(calculation.calculation_plan, cls=PartSegEncoder)], 0
+        )
         self.sheet_dict = {}
         self.calculation_info = {}
         self.sheet_set = {"Errors"}
@@ -812,7 +814,7 @@ class FileData:
         sheet.set_row(1, description.count("\n") * 12 + 10)
         sheet.set_column(0, 0, max(map(len, description.split("\n"))))
         sheet.set_column(1, 1, 15)
-        sheet.write("B2", json.dumps(calculation_plan, cls=PartEncoder, indent=2))
+        sheet.write("B2", json.dumps(calculation_plan, cls=PartSegEncoder, indent=2))
 
     def get_errors(self) -> List[ErrorInfo]:
         """

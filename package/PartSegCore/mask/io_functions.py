@@ -18,6 +18,7 @@ from napari.plugins._builtins import napari_write_points
 from PartSegImage import BaseImageWriter, GenericImageReader, Image, IMAGEJImageWriter, ImageWriter, TiffImageReader
 from PartSegImage.image import FRAME_THICKNESS, reduce_array
 
+from .._old_json_hooks import ProfileEncoder
 from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from ..io_utils import (
     LoadBase,
@@ -35,7 +36,7 @@ from ..io_utils import (
     proxy_callback,
     tar_to_buff,
 )
-from ..json_hooks import ProfileEncoder
+from ..json_hooks import PartSegEncoder
 from ..project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from ..roi_info import ROIInfo
 
@@ -177,7 +178,7 @@ def save_stack_segmentation(
             hist.arrays.seek(0)
             tar_file.addfile(hist_info, hist.arrays)
         if el_info:
-            hist_str = json.dumps(el_info, cls=ProfileEncoder)
+            hist_str = json.dumps(el_info, cls=PartSegEncoder)
             hist_buff = BytesIO(hist_str.encode("utf-8"))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
             tar_file.addfile(tar_algorithm, hist_buff)

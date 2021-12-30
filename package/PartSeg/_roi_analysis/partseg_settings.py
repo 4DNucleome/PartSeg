@@ -10,9 +10,8 @@ from PartSegCore.analysis.calculation_plan import CalculationPlan
 from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple
 from PartSegCore.analysis.load_functions import load_metadata
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
-from PartSegCore.analysis.save_hooks import PartEncoder
 from PartSegCore.io_utils import PointsInfo
-from PartSegCore.json_hooks import EventedDict, ProfileDict
+from PartSegCore.json_hooks import EventedDict, PartSegEncoder, ProfileDict
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 
@@ -29,7 +28,7 @@ class PartSettings(BaseSettings):
     roi_pipelines_changed = Signal()
     measurement_profiles_changed = Signal()
     batch_plans_changed = Signal()
-    json_encoder_class = PartEncoder
+    json_encoder_class = PartSegEncoder
     load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
     save_locations_keys = [
