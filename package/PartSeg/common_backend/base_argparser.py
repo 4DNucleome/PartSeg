@@ -25,7 +25,7 @@ def proper_suffix(val: str):
 
     :raise argparse.ArgumentTypeError: on validation error
     """
-    if len(val) > 0 and not val.isalnum():
+    if val != "" and not val.isalnum():
         raise argparse.ArgumentTypeError(f"suffix '{val}' need to contains only alpha numeric characters")
     return val
 

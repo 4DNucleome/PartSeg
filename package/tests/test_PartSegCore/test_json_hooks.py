@@ -328,7 +328,7 @@ class TestPartSegEncoder:
             json.dump(data, f_p, cls=PartSegEncoder)
         with (tmp_path / "test.json").open("r") as f_p:
             data2 = json.load(f_p, object_hook=partseg_object_hook)
-        assert data2["arr"] == [i for i in range(10)]
+        assert data2["arr"] == list(range(10))
         assert np.isclose(data["f"], 0.1)
         assert data2["i"] == 1000
 
