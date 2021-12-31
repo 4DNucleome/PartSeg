@@ -239,7 +239,7 @@ class CalculationProcess:
         :param ROIExtractionProfile operation: Specification of segmentation operation
         :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
-        segmentation_class = analysis_algorithm_dict.get(operation.algorithm, None)
+        segmentation_class = analysis_algorithm_dict.get(operation.algorithm)
         if segmentation_class is None:  # pragma: no cover
             raise ValueError(f"Segmentation class {operation.algorithm} do not found")
         segmentation_algorithm: RestartableAlgorithm = segmentation_class()
@@ -344,7 +344,7 @@ class CalculationProcess:
         channel = operation.channel
         if channel == -1:
             segmentation_class: Type[ROIExtractionAlgorithm] = analysis_algorithm_dict.get(
-                self.algorithm_parameters["algorithm_name"], None
+                self.algorithm_parameters["algorithm_name"]
             )
             if segmentation_class is None:  # pragma: no cover
                 raise ValueError(f"Segmentation class {self.algorithm_parameters['algorithm_name']} do not found")
