@@ -4,8 +4,6 @@ import numpy as np
 from napari.utils import Colormap
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.class_generator import SerializeClassEncoder, serialize_hook
 from PartSegCore.image_operations import RadiusType
 
@@ -51,6 +49,9 @@ class ProfileEncoder(SerializeClassEncoder):
 class PartEncoder(ProfileEncoder):
     # pylint: disable=E0202
     def default(self, o):
+        from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree
+        from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+
         if isinstance(o, MeasurementProfile):
             return {"__MeasurementProfile__": True, **o.as_dict()}
         if isinstance(o, CalculationPlan):
@@ -61,6 +62,9 @@ class PartEncoder(ProfileEncoder):
 
 
 def part_hook(dkt):
+    from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree
+    from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+
     if "__StatisticProfile__" in dkt:
         del dkt["__StatisticProfile__"]
         res = MeasurementProfile(**dkt)
