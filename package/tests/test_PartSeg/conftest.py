@@ -67,7 +67,9 @@ def lower_threshold_profile():
 @pytest.fixture
 def sample_pipeline(border_rim_profile, lower_threshold_profile, mask_property):
     return SegmentationPipeline(
-        "sample_pipeline", border_rim_profile, [SegmentationPipelineElement(lower_threshold_profile, mask_property)]
+        name="sample_pipeline",
+        segmentation=border_rim_profile,
+        mask_history=[SegmentationPipelineElement(segmentation=lower_threshold_profile, mask_property=mask_property)],
     )
 
 
