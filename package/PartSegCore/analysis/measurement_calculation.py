@@ -270,7 +270,7 @@ class MeasurementProfile:
         self.chosen_fields: List[MeasurementEntry] = chosen_fields
         self._need_mask = False
         for cf_val in chosen_fields:
-            self._need_mask = self._need_mask or self.need_mask(cf_val.calculation_tree)
+            self._need_mask = self._need_mask or cf_val.calculation_tree.need_mask()
         self.name_prefix = name_prefix
 
     def as_dict(self):
@@ -284,10 +284,9 @@ class MeasurementProfile:
         )
         return self.as_dict()
 
-    def need_mask(self, tree):
-        if isinstance(tree, Leaf):
-            return tree.area in [AreaType.Mask, AreaType.Mask_without_ROI]
-        return self.need_mask(tree.left) or self.need_mask(tree.right)
+    def need_mask(self, tree: Union[Leaf, Node]):
+        warnings.warn("need_mask is deprecated", stacklevel=2, category=FutureWarning)
+        return tree.need_mask()
 
     def _need_mask_without_segmentation(self, tree):
         if isinstance(tree, Leaf):
@@ -346,7 +345,7 @@ class MeasurementProfile:
         ]
 
     def is_any_mask_measurement(self):
-        return any(self.need_mask(el.calculation_tree) for el in self.chosen_fields)
+        return any(el.calculation_tree.need_mask() for el in self.chosen_fields)
 
     def _is_component_measurement(self, node):
         if isinstance(node, Leaf):
@@ -362,7 +361,7 @@ class MeasurementProfile:
             AreaType.ROI: "segmentation",
         }
         kw = dict(kwargs)
-        kw.update(node.dict)
+        kw.update(node.parameter_dict)
 
         if node.channel is not None:
             kw["channel"] = kw[f"channel_{node.channel}"]

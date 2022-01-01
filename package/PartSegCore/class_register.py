@@ -58,6 +58,8 @@ class MigrationRegistration:
         def _register(cls_):
             base_path = class_to_str(cls_)
             type_info = TypeInfo(base_path=base_path, type_=cls_, version=version, migrations=migrations)
+            if base_path in self._data_dkt:
+                raise RuntimeError(f"Class name {base_path} already taken by {self._data_dkt[base_path].base_path}")
             self._data_dkt[base_path] = type_info
             for name in old_paths:
                 if name in self._data_dkt and self._data_dkt[name].base_path != base_path:

@@ -6,9 +6,11 @@ from pydantic import BaseModel
 
 from PartSegImage.image import minimal_dtype
 
+from .class_register import register_class
 from .image_operations import RadiusType, dilate, erode
 
 
+@register_class(old_paths=["PartSeg.utils.mask_create.MaskProperty"])
 class MaskProperty(BaseModel):
     """
     Description of creation mask from segmentation

@@ -349,4 +349,19 @@ def partseg_object_hook(dkt: dict):
             dkt["__class__"] = cls_str
             dkt["__version__"] = version_str
             dkt["__error__"] = e
+
+    if "__ReadOnly__" in dkt or "__Serializable__" in dkt:
+        if "__Serializable__" in dkt:
+            del dkt["__Serializable__"]
+        else:
+            del dkt["__ReadOnly__"]
+        cls_str = dkt["__subtype__"]
+        del dkt["__subtype__"]
+        try:
+            dkt_migrated = REGISTER.migrate_data(cls_str, "0.0.0", dkt)
+            cls = REGISTER.get_class(cls_str)
+            return cls(**dkt_migrated)
+        except Exception:
+            dkt["__subtype__"] = cls_str
+            dkt["__Serializable__"] = True
     return part_hook(dkt)

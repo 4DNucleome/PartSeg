@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Union
 
 import numpy as np
+from pydantic import BaseModel, Field
 from sympy import Symbol, symbols
 
 from PartSegImage.image import Spacing
@@ -11,6 +12,7 @@ from PartSegImage.image import Spacing
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, AlgorithmProperty
 from ..channel_class import Channel
 from ..class_generator import BaseSerializableClass, enum_register
+from ..class_register import register_class
 from ..universal_const import Units
 
 
@@ -36,33 +38,47 @@ enum_register.register_class(AreaType)
 enum_register.register_class(PerComponent)
 
 
-class Leaf(BaseSerializableClass):
+def _migrate_leaf_dict(dkt):
+    new_dkt = dkt.copy()
+    new_dkt["parameter_dict"] = new_dkt.pop("dict")
+    replace_name_dict = {
+        "Moment of inertia": "Moment",
+        "Components Number": "Components number",
+        "Pixel Brightness Sum": "Pixel brightness sum",
+        "Longest main axis length": "First principal axis length",
+        "Middle main axis length": "Second principal axis length",
+        "Shortest main axis length": "Third principal axis length",
+        "split on part volume": "distance splitting volume",
+        "split on part pixel brightness sum": "distance splitting pixel brightness sum",
+        "Rim Volume": "rim volume",
+        "Rim Pixel Brightness Sum": "rim pixel brightness sum",
+        "segmentation distance": "ROI distance",
+    }
+    if new_dkt["name"] in replace_name_dict:
+        new_dkt["name"] = replace_name_dict[new_dkt["name"]]
+
+    return new_dkt
+
+
+@register_class(
+    version="0.0.0",
+    old_paths=["PartSeg.utils.analysis.statistics_calculation.Leaf", "PartSeg.utils.analysis.measurement_base.Leaf"],
+    migrations=[("0.0.1", _migrate_leaf_dict)],
+)
+class Leaf(BaseModel):
     """
     Class for describe calculation of basic measurement
 
     :ivar str name: node name of method used to calculate
-    :ivar dict dict: additional parameters of method
+    :ivar dict parameter_dict: additional parameters of method
     :ivar float power: power to be applied to result of calculation methods
     :ivar AreaType area: which type of ROI should be used for calculation
     :ivar PerComponent per_component: if value should be calculated per component or for whole roi set
     :ivar Channel channel: probably not used TODO Check
     """
 
-    # noinspection PyMissingConstructor,PyShadowingBuiltins, PyUnusedLocal
-    # pylint: disable=W0104,W0221,W0622,W0231
-    def __init__(
-        self,
-        name: str,
-        dict: Dict = None,
-        power: float = 1.0,
-        area: Optional[AreaType] = None,
-        per_component: Optional[PerComponent] = None,
-        channel: Optional[Channel] = None,
-    ):
-        ...
-
     name: str
-    dict: Dict = {}
+    parameter_dict: Dict = Field(default_factory=dict)
     power: float = 1.0
     area: Optional[AreaType] = None
     per_component: Optional[PerComponent] = None
@@ -83,14 +99,14 @@ class Leaf(BaseSerializableClass):
             for el in measurement_method.get_fields():
                 if isinstance(el, str):
                     continue
-                if issubclass(el.value_type, Channel) and el.name in self.dict:
-                    resp.add(self.dict[el.name])
+                if issubclass(el.value_type, Channel) and el.name in self.parameter_dict:
+                    resp.add(self.parameter_dict[el.name])
         except KeyError:
             raise AlgorithmDescribeNotFound(self.name)
         return resp
 
     def _parameters_string(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
-        if len(self.dict) == 0 and self.channel is None:
+        if len(self.parameter_dict) == 0 and self.channel is None:
             return ""
         arr = []
         if self.channel is not None and self.channel >= 0:
@@ -98,10 +114,10 @@ class Leaf(BaseSerializableClass):
         if self.name in measurement_dict:
             measurement_method = measurement_dict[self.name]
             fields_dict = measurement_method.get_fields_dict()
-            for k, v in self.dict.items():
+            for k, v in self.parameter_dict.items():
                 arr.append(f"{fields_dict[k].user_name}={v}")
         else:
-            for k, v in self.dict.items():
+            for k, v in self.parameter_dict.items():
                 arr.append(f"{k.replace('_', ' ')}={v}")
         return "[" + ", ".join(arr) + "]"
 
@@ -147,6 +163,9 @@ class Leaf(BaseSerializableClass):
     def is_per_component(self) -> bool:
         return self.per_component == PerComponent.Yes
 
+    def need_mask(self):
+        return self.area in [AreaType.Mask, AreaType.Mask_without_ROI]
+
 
 def replace(self, **kwargs) -> Leaf:
     for key in list(kwargs.keys()):
@@ -154,26 +173,19 @@ def replace(self, **kwargs) -> Leaf:
             continue
         if not hasattr(self, key):
             raise ValueError(f"Unknown parameter {key}")
-        if getattr(self, key) is not None and (key != "dict" or self.dict):
+        if getattr(self, key) is not None and (key != "parameter_dict" or self.parameter_dict):
             del kwargs[key]
 
-    dkt = self.asdict()
-    dkt.update(kwargs)
-    return Leaf(**dkt)
+    return self.copy(update=kwargs)
 
 
 Leaf.replace_ = replace
 
 
-class Node(BaseSerializableClass):
+class Node(BaseModel):
     left: Union["Node", Leaf]
     op: str
     right: Union["Node", Leaf]
-
-    # noinspection PyMissingConstructor, PyUnusedLocal
-    # pylint: disable=W0104,W0231
-    def __init__(self, left: Union["Node", Leaf], op: str, right: Union["Node", Leaf]):
-        ...
 
     def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
@@ -204,7 +216,19 @@ class Node(BaseSerializableClass):
     def is_per_component(self) -> bool:
         return self.left.is_per_component() or self.right.is_per_component()
 
+    def need_mask(self):
+        return self.left.need_mask() or self.right.need_mask()
 
+
+Node.update_forward_refs()
+
+
+@register_class(
+    old_paths=[
+        "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "PartSeg.utils.analysis.measurement_base.StatisticEntry",
+    ]
+)
 class MeasurementEntry(BaseSerializableClass):
     # noinspection PyUnusedLocal
     # noinspection PyMissingConstructor
@@ -295,8 +319,8 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_starting_leaf(cls) -> Leaf:
-        """This leaf is putted on default list"""
-        return Leaf(cls._display_name())
+        """This leaf is put on default list"""
+        return Leaf(name=cls._display_name())
 
     @classmethod
     def _display_name(cls):

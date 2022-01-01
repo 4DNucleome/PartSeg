@@ -113,9 +113,9 @@ class TestLeaf:
     def test_channel_calc(self, monkeypatch):
         mock = MagicMock()
         mock.get_fields = MagicMock(return_value=[])
-        leaf = Leaf("aa", {})
+        leaf = Leaf(name="aa")
         assert leaf.get_channel_num({"aa": mock}) == set()
-        leaf = Leaf("aa", {}, channel=Channel(1))
+        leaf = Leaf(name="aa", channel=Channel(1))
         assert leaf.get_channel_num({"aa": mock}) == {1}
         mock.get_fields = MagicMock(
             return_value=[
@@ -124,32 +124,32 @@ class TestLeaf:
                 AlgorithmProperty("ch", "Ch", 1, value_type=Channel),
             ]
         )
-        leaf = Leaf("aa", {"value": 15, "ch": 3})
+        leaf = Leaf(name="aa", parameter_dict={"value": 15, "ch": 3})
         assert leaf.get_channel_num({"aa": mock}) == {3}
-        leaf = Leaf("aa", {"value": 15, "ch": 3}, channel=Channel(1))
+        leaf = Leaf(name="aa", parameter_dict={"value": 15, "ch": 3}, channel=Channel(1))
         assert leaf.get_channel_num({"aa": mock}) == {1, 3}
 
     def test_pretty_print(self, monkeypatch):
         mock = MagicMock()
         mock.get_fields = MagicMock(return_value=[])
-        leaf = Leaf("aa", {})
+        leaf = Leaf(name="aa")
         text = leaf.pretty_print({"aa": mock})
         assert "ROI" not in text
         assert "Mask" not in text
         assert "per component" not in text
         assert "mean component" not in text
         assert "to the power" not in text
-        assert "per component" in Leaf("aa", {}, per_component=PerComponent.Yes).pretty_print({"aa": mock})
-        assert "mean component" in Leaf("aa", {}, per_component=PerComponent.Mean).pretty_print({"aa": mock})
-        assert "to the power" not in Leaf("aa", {}, power=1).pretty_print({"aa": mock})
-        assert "to the power 2" in Leaf("aa", {}, power=2).pretty_print({"aa": mock})
+        assert "per component" in Leaf(name="aa", per_component=PerComponent.Yes).pretty_print({"aa": mock})
+        assert "mean component" in Leaf(name="aa", per_component=PerComponent.Mean).pretty_print({"aa": mock})
+        assert "to the power" not in Leaf(name="aa", power=1).pretty_print({"aa": mock})
+        assert "to the power 2" in Leaf(name="aa", power=2).pretty_print({"aa": mock})
         monkeypatch.setattr(mock, "__module__", "PartSegCore.test")
-        assert Leaf("aa", {}).pretty_print({"aa": mock})[0] != "["
+        assert Leaf(name="aa").pretty_print({"aa": mock})[0] != "["
         monkeypatch.setattr(mock, "__module__", "PartSegPlugin.submodule")
-        assert Leaf("aa", {}).pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
+        assert Leaf(name="aa").pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
         monkeypatch.setattr(sys, "frozen", True, raising=False)
         monkeypatch.setattr(mock, "__module__", "plugins.PartSegPlugin.submodule")
-        assert Leaf("aa", {}).pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
+        assert Leaf(name="aa").pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
 
 
 class TestDiameter:
@@ -1667,25 +1667,31 @@ class TestStatisticProfile:
             MeasurementEntry(
                 "Mask Volume/PixelBrightnessSum",
                 Node(
-                    Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
-                    "/",
-                    PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                    left=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                    op="/",
+                    right=PixelBrightnessSum.get_starting_leaf().replace_(
+                        area=AreaType.Mask, per_component=PerComponent.No
+                    ),
                 ),
             ),
             MeasurementEntry(
                 "Segmentation Volume/PixelBrightnessSum",
                 Node(
-                    Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
-                    "/",
-                    PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                    left=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                    op="/",
+                    right=PixelBrightnessSum.get_starting_leaf().replace_(
+                        area=AreaType.ROI, per_component=PerComponent.No
+                    ),
                 ),
             ),
             MeasurementEntry(
                 "Mask without segmentation Volume/PixelBrightnessSum",
                 Node(
-                    Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
-                    "/",
-                    PixelBrightnessSum.get_starting_leaf().replace_(
+                    left=Volume.get_starting_leaf().replace_(
+                        area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                    ),
+                    op="/",
+                    right=PixelBrightnessSum.get_starting_leaf().replace_(
                         area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                     ),
                 ),
@@ -1720,9 +1726,11 @@ class TestStatisticProfile:
             MeasurementEntry(
                 "Mask Volume 2",
                 Node(
-                    Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No, power=2),
-                    "/",
-                    Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                    left=Volume.get_starting_leaf().replace_(
+                        area=AreaType.Mask, per_component=PerComponent.No, power=2
+                    ),
+                    op="/",
+                    right=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
                 ),
             ),
             MeasurementEntry(
@@ -1853,12 +1861,16 @@ class TestStatisticProfile:
                 "Mask Volume per component",
                 leaf2,
             ),
-            MeasurementEntry("ROI Volume per component/Mask Volume per component", Node(leaf1, "/", leaf2)),
-            MeasurementEntry("Mask Volume per component/ROI Volume per component", Node(leaf2, "/", leaf1)),
             MeasurementEntry(
-                "Mask Volume per component/Mask without ROI Volume per component", Node(leaf2, "/", leaf3)
+                "ROI Volume per component/Mask Volume per component", Node(left=leaf1, op="/", right=leaf2)
             ),
-            MeasurementEntry("Density per component", Node(leaf4, "/", leaf1)),
+            MeasurementEntry(
+                "Mask Volume per component/ROI Volume per component", Node(left=leaf2, op="/", right=leaf1)
+            ),
+            MeasurementEntry(
+                "Mask Volume per component/Mask without ROI Volume per component", Node(left=leaf2, op="/", right=leaf3)
+            ),
+            MeasurementEntry("Density per component", Node(left=leaf4, op="/", right=leaf1)),
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
@@ -2250,13 +2262,13 @@ def test_per_component(method, area):
         MeasurementEntry(
             "Measurement",
             method.get_starting_leaf().replace_(
-                per_component=PerComponent.No, area=area, dict=method.get_default_values()
+                per_component=PerComponent.No, area=area, parameter_dict=method.get_default_values()
             ),
         ),
         MeasurementEntry(
             "Measurement per component",
             method.get_starting_leaf().replace_(
-                per_component=PerComponent.Yes, area=area, dict=method.get_default_values()
+                per_component=PerComponent.Yes, area=area, parameter_dict=method.get_default_values()
             ),
         ),
     ]

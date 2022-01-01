@@ -8,15 +8,18 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
+from pydantic import BaseModel
+
 from ..algorithm_describe_base import ROIExtractionProfile
-from ..class_generator import BaseSerializableClass, enum_register
+from ..class_generator import enum_register
+from ..class_register import register_class
 from ..mask_create import MaskProperty
 from ..universal_const import Units
 from . import analysis_algorithm_dict
 from .measurement_calculation import MeasurementProfile
 
 
-class MaskBase:
+class MaskBase(BaseModel):
     """
     Base class for mask in calculation plan.
 
@@ -43,7 +46,8 @@ class RootType(Enum):
 enum_register.register_class(RootType)
 
 
-class MaskCreate(MaskBase, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskCreate"])
+class MaskCreate(MaskBase):
     """
     Description of mask creation in calculation plan.
 
@@ -57,14 +61,16 @@ class MaskCreate(MaskBase, BaseSerializableClass):
         return f"Mask create: {self.name}\n" + str(self.mask_property).split("\n", 1)[1]
 
 
-class MaskUse(MaskBase, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskUse"])
+class MaskUse(MaskBase):
     """
     Reuse of already defined mask
     Will be deprecated in short time
     """
 
 
-class MaskSum(MaskBase, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskSum"])
+class MaskSum(MaskBase):
     """
     Description of OR operation on mask
 
@@ -77,7 +83,8 @@ class MaskSum(MaskBase, BaseSerializableClass):
     mask2: str
 
 
-class MaskIntersection(MaskBase, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskIntersection"])
+class MaskIntersection(MaskBase):
     """
     Description of AND operation on mask
 
@@ -90,7 +97,8 @@ class MaskIntersection(MaskBase, BaseSerializableClass):
     mask2: str
 
 
-class Save(BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.Save"])
+class Save(BaseModel):
     """
     Save operation description
 
@@ -108,7 +116,18 @@ class Save(BaseSerializableClass):
     values: dict
 
 
-class MeasurementCalculate(BaseSerializableClass):
+def _update_measurement_dict(dkt: dict):
+    new_dict = dkt.copy()
+    new_dict["measurement_profile"] = new_dict.pop("statistic_profile")
+    return new_dict
+
+
+@register_class(
+    version="0.0.1",
+    migrations=[("0.0.1", _update_measurement_dict)],
+    old_paths=["PartSeg.utils.analysis.calculation_plan.StatisticCalculate"],
+)
+class MeasurementCalculate(BaseModel):
     """
     Measurement calculation description
 
@@ -118,19 +137,14 @@ class MeasurementCalculate(BaseSerializableClass):
     :ivar str name_prefix: prefix of column names
     """
 
-    __old_names__ = "StatisticCalculate"
     channel: int
     units: Units
     measurement_profile: MeasurementProfile
     name_prefix: str
     # TODO rename statistic_profile to measurement_profile
 
-    # noinspection PyOverloads,PyMissingConstructor
-    # pylint: disable=W0104
-    # pragma: no cover
-    @typing.overload
-    def __init__(self, channel: int, units: Units, measurement_profile: MeasurementProfile, name_prefix: str):
-        ...
+    class Config:
+        arbitrary_types_allowed = True
 
     @property
     def name(self):
@@ -164,7 +178,8 @@ def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     return os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
 
 
-class MaskMapper:
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskMapper"])
+class MaskMapper(BaseModel):
     """
     Base class for obtaining mask from computer disc
 
@@ -191,7 +206,8 @@ class MaskMapper:
         return True
 
 
-class MaskSuffix(MaskMapper, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskSuffix"])
+class MaskSuffix(MaskMapper):
     """
     Description of mask form file obtained by adding suffix to image file path
 
@@ -201,12 +217,6 @@ class MaskSuffix(MaskMapper, BaseSerializableClass):
 
     suffix: str
 
-    # noinspection PyMissingConstructor,PyOverloads
-    # pylint: disable=W0104
-    @typing.overload
-    def __init__(self, name: str, suffix: str):  # pragma: no cover
-        ...
-
     def get_mask_path(self, file_path: str) -> str:
         base, ext = os.path.splitext(file_path)
         return base + self.suffix + ext
@@ -215,7 +225,8 @@ class MaskSuffix(MaskMapper, BaseSerializableClass):
         return {"name": self.name, "suffix": self.suffix}
 
 
-class MaskSub(MaskMapper, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskSub"])
+class MaskSub(MaskMapper):
     """
     Description of mask form file obtained by substitution
 
@@ -227,12 +238,6 @@ class MaskSub(MaskMapper, BaseSerializableClass):
     base: str
     rep: str
 
-    # noinspection PyMissingConstructor,PyOverloads
-    # pylint: disable=W0104
-    @typing.overload
-    def __init__(self, name: str, base: str, rep: str):  # pragma: no cover
-        ...
-
     def get_mask_path(self, file_path: str) -> str:
         dir_name, filename = os.path.split(file_path)
         filename = filename.replace(self.base, self.rep)
@@ -242,16 +247,11 @@ class MaskSub(MaskMapper, BaseSerializableClass):
         return {"name": self.name, "base": self.base, "rep": self.rep}
 
 
-class MaskFile(MaskMapper, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskFile"])
+class MaskFile(MaskMapper):
     # TODO Check implementation
     path_to_file: str
     name_dict: typing.Optional[dict] = None
-
-    # noinspection PyMissingConstructor,PyOverloads
-    # pylint: disable=W0104
-    @typing.overload
-    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):  # pragma: no cover
-        ...
 
     def is_ready(self) -> bool:
         return os.path.exists(self.path_to_file)
@@ -306,6 +306,7 @@ class PlanChanges(Enum):
     replace_node = 3  #:
 
 
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.CalculationTree"])
 class CalculationTree:
     """
     Structure for describe calculation structure
@@ -313,7 +314,7 @@ class CalculationTree:
 
     def __init__(
         self,
-        operation: typing.Union[BaseSerializableClass, ROIExtractionProfile, MeasurementCalculate, RootType],
+        operation: typing.Union[BaseModel, ROIExtractionProfile, MeasurementCalculate, RootType],
         children: typing.List["CalculationTree"],
     ):
         if operation == "root":

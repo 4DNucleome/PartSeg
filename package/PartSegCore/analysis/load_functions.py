@@ -379,17 +379,19 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
 
             if data.name in replace_name_dict:
                 # noinspection PyUnresolvedReferences
-                return data._replace(name=replace_name_dict[data.name])
+                return data.copy(update=dict(name=replace_name_dict[data.name]))
             return data
 
-        return data.replace_(
-            left=cls.update_measurement_calculation_tree(data.left),
-            right=cls.update_measurement_calculation_tree(data.right),
+        return data.copy(
+            update=dict(
+                left=cls.update_measurement_calculation_tree(data.left),
+                right=cls.update_measurement_calculation_tree(data.right),
+            )
         )
 
     @classmethod
     def update_measurement_calculate(cls, data: MeasurementCalculate):
-        return data.replace_(measurement_profile=cls.update_measurement_profile(data.measurement_profile))
+        return data.copy(update=dict(measurement_profile=cls.update_measurement_profile(data.measurement_profile)))
 
     @classmethod
     def recursive_update(cls, data):

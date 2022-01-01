@@ -59,7 +59,6 @@ def test_import_part():
 def test_old_class_error():
     with pytest.raises(RuntimeError):
         register_class(SampleClass6, old_paths=[class_to_str(SampleClass4)])
-    register_class(SampleClass4, old_paths=["test.test.BBase"], version="0.0.2")
 
 
 def test_get_version():
