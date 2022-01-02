@@ -548,7 +548,7 @@ class CalculationPlan:
     def __deepcopy__(self, memo):
         return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
-    def get_node(self, search_pos=None):
+    def get_node(self, search_pos: typing.Optional[typing.List[int]] = None) -> CalculationTree:
         """
         :param search_pos:
         :return: CalculationTree
@@ -645,7 +645,7 @@ class CalculationPlan:
         if self.current_pos is None:
             return
         node = self.get_node()
-        node.operation = node.operation.replace_(name=name)
+        node.operation = node.operation.copy(update={"name": name})
         self.changes.append((self.current_pos, node, PlanChanges.replace_node))
 
     def has_children(self):

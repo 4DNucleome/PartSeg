@@ -59,8 +59,8 @@ class PartSettings(BaseSettings):
         :param str algorithm_name:
         :param dict algorithm_values:
         """
-        self.history[self.history_index + 1] = self.history[self.history_index + 1].replace_(
-            roi_extraction_parameters={"algorithm_name": algorithm_name, "values": algorithm_values}
+        self.history[self.history_index + 1] = self.history[self.history_index + 1].copy(
+            update=dict(roi_extraction_parameters={"algorithm_name": algorithm_name, "values": algorithm_values})
         )
 
     @staticmethod
