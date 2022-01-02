@@ -21,6 +21,15 @@ class EventedDict(MutableMapping):
     setted = Signal(str)
     deleted = Signal(str)
 
+    def __deepcopy__(self, memodict=None):
+        if memodict is None:
+            memodict = {}
+        cls = self.__class__
+        result = cls(**copy.deepcopy(self._dict))
+        result.base_key = self.base_key
+        memodict[id(self)] = result
+        return result
+
     def __init__(self, **kwargs):
         # TODO add positional only argument when drop python 3.7
         super().__init__()
