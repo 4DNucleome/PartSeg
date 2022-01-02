@@ -62,7 +62,11 @@ def _migrate_leaf_dict(dkt):
 
 @register_class(
     version="0.0.0",
-    old_paths=["PartSeg.utils.analysis.statistics_calculation.Leaf", "PartSeg.utils.analysis.measurement_base.Leaf"],
+    old_paths=[
+        "PartSeg.utils.analysis.statistics_calculation.Leaf",
+        "PartSeg.utils.analysis.measurement_base.Leaf",
+        "segmentation_analysis.statistics_calculation.Leaf",
+    ],
     migrations=[("0.0.1", _migrate_leaf_dict)],
 )
 class Leaf(BaseModel):
@@ -182,6 +186,13 @@ def replace(self, **kwargs) -> Leaf:
 Leaf.replace_ = replace
 
 
+@register_class(
+    old_paths=[
+        "PartSeg.utils.analysis.statistics_calculation.Node",
+        "PartSeg.utils.analysis.measurement_base.Node",
+        "segmentation_analysis.statistics_calculation.Node",
+    ]
+)
 class Node(BaseModel):
     left: Union["Node", Leaf]
     op: str
