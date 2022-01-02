@@ -340,7 +340,7 @@ def partseg_object_hook(dkt: dict):
     if "__class__" in dkt:
         # the migration code should be called here
         cls_str = dkt.pop("__class__")
-        version_str = dkt.pop("__version__")
+        version_str = dkt.pop("__version__") if "__version__" in dkt else "0.0.0"
         try:
             dkt_migrated = REGISTER.migrate_data(cls_str, version_str, dkt)
             cls = REGISTER.get_class(cls_str)
