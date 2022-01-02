@@ -284,7 +284,8 @@ class MeasurementProfile:
         )
         return self.as_dict()
 
-    def need_mask(self, tree: Union[Leaf, Node]):
+    @staticmethod
+    def need_mask(tree: Union[Leaf, Node]):
         warnings.warn("need_mask is deprecated", stacklevel=2, category=FutureWarning)
         return tree.need_mask()
 

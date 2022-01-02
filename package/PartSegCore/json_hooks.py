@@ -298,42 +298,42 @@ def add_class_info(obj, dkt):
 
 
 class PartSegEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, enum.Enum):
+    def default(self, o):
+        if isinstance(o, enum.Enum):
             return {
-                "__class__": class_to_str(obj.__class__),
-                "__version__": str(REGISTER.get_version(obj.__class__)),
-                "value": obj.value,
+                "__class__": class_to_str(o.__class__),
+                "__version__": str(REGISTER.get_version(o.__class__)),
+                "value": o.value,
             }
-        if dataclasses.is_dataclass(obj):
-            fields = dataclasses.fields(obj)
-            dkt = {x.name: getattr(obj, x.name) for x in fields}
-            add_class_info(obj, dkt)
+        if dataclasses.is_dataclass(o):
+            fields = dataclasses.fields(o)
+            dkt = {x.name: getattr(o, x.name) for x in fields}
+            add_class_info(o, dkt)
             return dkt
 
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
+        if isinstance(o, np.ndarray):
+            return o.tolist()
 
-        if isinstance(obj, pydantic.BaseModel):
+        if isinstance(o, pydantic.BaseModel):
             try:
-                dkt = dict(obj)
+                dkt = dict(o)
             except ValueError:
-                dkt = obj.dict()
-            add_class_info(obj, dkt)
+                dkt = o.dict()
+            add_class_info(o, dkt)
             return dkt
 
-        if hasattr(obj, "as_dict"):
-            dkt = obj.as_dict()
-            add_class_info(obj, dkt)
+        if hasattr(o, "as_dict"):
+            dkt = o.as_dict()
+            add_class_info(o, dkt)
             return dkt
 
-        if isinstance(obj, np.integer):
-            return int(obj)
-        if isinstance(obj, np.floating):
-            return float(obj)
-        if isinstance(obj, dict) and "__error__" in obj:
-            del obj["__error__"]  # different environments without same plugins installed
-        return super().default(obj)
+        if isinstance(o, np.integer):
+            return int(o)
+        if isinstance(o, np.floating):
+            return float(o)
+        if isinstance(o, dict) and "__error__" in o:
+            del o["__error__"]  # different environments without same plugins installed
+        return super().default(o)
 
 
 def partseg_object_hook(dkt: dict):
@@ -345,7 +345,7 @@ def partseg_object_hook(dkt: dict):
             dkt_migrated = REGISTER.migrate_data(cls_str, version_str, dkt)
             cls = REGISTER.get_class(cls_str)
             return cls(**dkt_migrated)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0703
             dkt["__class__"] = cls_str
             dkt["__version__"] = version_str
             dkt["__error__"] = e
@@ -361,7 +361,7 @@ def partseg_object_hook(dkt: dict):
             dkt_migrated = REGISTER.migrate_data(cls_str, "0.0.0", dkt)
             cls = REGISTER.get_class(cls_str)
             return cls(**dkt_migrated)
-        except Exception:
+        except Exception:  # pylint: disable=W0703
             dkt["__subtype__"] = cls_str
             dkt["__Serializable__"] = True
     return part_hook(dkt)
