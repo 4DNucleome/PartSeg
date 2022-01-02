@@ -176,17 +176,20 @@ def mask_property():
 def measurement_profiles():
     statistics = [
         MeasurementEntry(
-            "Segmentation Volume",
-            Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+            name="Segmentation Volume",
+            calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
         ),
         MeasurementEntry(
-            "ROI Components Number",
-            ComponentsNumber.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+            name="ROI Components Number",
+            calculation_tree=ComponentsNumber.get_starting_leaf().replace_(
+                area=AreaType.ROI, per_component=PerComponent.No
+            ),
         ),
     ]
     statistics2 = [
         MeasurementEntry(
-            "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+            name="Mask Volume",
+            calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
         ),
     ]
     return MeasurementProfile("statistic1", statistics), MeasurementProfile("statistic2", statistics + statistics2)

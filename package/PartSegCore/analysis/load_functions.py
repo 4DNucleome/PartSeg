@@ -358,7 +358,7 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
 
     @classmethod
     def update_measurement_entry(cls, data: MeasurementEntry) -> MeasurementEntry:
-        return data.replace_(calculation_tree=cls.update_measurement_calculation_tree(data.calculation_tree))
+        return data.copy(update=dict(calculation_tree=cls.update_measurement_calculation_tree(data.calculation_tree)))
 
     @classmethod
     def update_measurement_calculation_tree(cls, data: typing.Union[Leaf, Node]) -> typing.Union[Leaf, Node]:

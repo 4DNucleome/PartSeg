@@ -1519,15 +1519,18 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask without segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
+                name="Mask without segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                ),
             ),
         ]
         profile = MeasurementProfile("statistic", statistics)
@@ -1549,15 +1552,18 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask without segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
+                name="Mask without segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                ),
             ),
         ]
         profile = MeasurementProfile("statistic", statistics)
@@ -1579,16 +1585,20 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                name="Mask PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Mask without segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(
+                name="Mask without segmentation PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
                     area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                 ),
             ),
@@ -1611,15 +1621,20 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Surface", Surface.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Surface",
+                calculation_tree=Surface.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Segmentation Surface",
-                Surface.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Surface",
+                calculation_tree=Surface.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask without segmentation Surface",
-                Surface.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
+                name="Mask without segmentation Surface",
+                calculation_tree=Surface.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                ),
             ),
         ]
         profile = MeasurementProfile("statistic", statistics)
@@ -1640,33 +1655,40 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask without segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                "Mask PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                "Segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                "Mask without segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(
+                name="Mask without segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(
                     area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                 ),
             ),
             MeasurementEntry(
-                "Mask Volume/PixelBrightnessSum",
-                Node(
+                name="Mask PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                name="Segmentation PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                name="Mask without segmentation PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                name="Mask Volume/PixelBrightnessSum",
+                calculation_tree=Node(
                     left=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
                     op="/",
                     right=PixelBrightnessSum.get_starting_leaf().replace_(
@@ -1675,8 +1697,8 @@ class TestStatisticProfile:
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Volume/PixelBrightnessSum",
-                Node(
+                name="Segmentation Volume/PixelBrightnessSum",
+                calculation_tree=Node(
                     left=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
                     op="/",
                     right=PixelBrightnessSum.get_starting_leaf().replace_(
@@ -1685,8 +1707,8 @@ class TestStatisticProfile:
                 ),
             ),
             MeasurementEntry(
-                "Mask without segmentation Volume/PixelBrightnessSum",
-                Node(
+                name="Mask without segmentation Volume/PixelBrightnessSum",
+                calculation_tree=Node(
                     left=Volume.get_starting_leaf().replace_(
                         area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                     ),
@@ -1717,15 +1739,18 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask Volume power 2",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No, power=2),
+                name="Mask Volume power 2",
+                calculation_tree=Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No, power=2
+                ),
             ),
             MeasurementEntry(
-                "Mask Volume 2",
-                Node(
+                name="Mask Volume 2",
+                calculation_tree=Node(
                     left=Volume.get_starting_leaf().replace_(
                         area=AreaType.Mask, per_component=PerComponent.No, power=2
                     ),
@@ -1734,8 +1759,10 @@ class TestStatisticProfile:
                 ),
             ),
             MeasurementEntry(
-                "Mask Volume power -1",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No, power=-1),
+                name="Mask Volume power -1",
+                calculation_tree=Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No, power=-1
+                ),
             ),
         ]
         profile = MeasurementProfile("statistic", statistics)
@@ -1758,43 +1785,58 @@ class TestStatisticProfile:
         segmentation[image.get_channel(0) == 60] = 2
         statistics = [
             MeasurementEntry(
-                "Volume", Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No)
+                name="Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Volume per component",
-                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="Volume per component",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
             MeasurementEntry(
-                "Diameter",
-                Diameter.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Diameter",
+                calculation_tree=Diameter.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Diameter per component",
-                Diameter.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="Diameter per component",
+                calculation_tree=Diameter.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.Yes
+                ),
             ),
             MeasurementEntry(
-                "MaximumPixelBrightness",
-                MaximumPixelBrightness.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="MaximumPixelBrightness",
+                calculation_tree=MaximumPixelBrightness.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "MaximumPixelBrightness per component",
-                MaximumPixelBrightness.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="MaximumPixelBrightness per component",
+                calculation_tree=MaximumPixelBrightness.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.Yes
+                ),
             ),
             MeasurementEntry(
-                "Sphericity",
-                Sphericity.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Sphericity",
+                calculation_tree=Sphericity.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Sphericity per component",
-                Sphericity.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="Sphericity per component",
+                calculation_tree=Sphericity.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.Yes
+                ),
             ),
             MeasurementEntry(
-                "LongestMainAxisLength",
-                FirstPrincipalAxisLength.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="LongestMainAxisLength",
+                calculation_tree=FirstPrincipalAxisLength.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "LongestMainAxisLength per component",
-                FirstPrincipalAxisLength.get_starting_leaf().replace_(
+                name="LongestMainAxisLength per component",
+                calculation_tree=FirstPrincipalAxisLength.get_starting_leaf().replace_(
                     area=AreaType.ROI, per_component=PerComponent.Yes
                 ),
             ),
@@ -1854,23 +1896,26 @@ class TestStatisticProfile:
         leaf4 = PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
         statistics = [
             MeasurementEntry(
-                "ROI Volume per component",
-                leaf1,
+                name="ROI Volume per component",
+                calculation_tree=leaf1,
             ),
             MeasurementEntry(
-                "Mask Volume per component",
-                leaf2,
+                name="Mask Volume per component",
+                calculation_tree=leaf2,
             ),
             MeasurementEntry(
-                "ROI Volume per component/Mask Volume per component", Node(left=leaf1, op="/", right=leaf2)
+                name="ROI Volume per component/Mask Volume per component",
+                calculation_tree=Node(left=leaf1, op="/", right=leaf2),
             ),
             MeasurementEntry(
-                "Mask Volume per component/ROI Volume per component", Node(left=leaf2, op="/", right=leaf1)
+                name="Mask Volume per component/ROI Volume per component",
+                calculation_tree=Node(left=leaf2, op="/", right=leaf1),
             ),
             MeasurementEntry(
-                "Mask Volume per component/Mask without ROI Volume per component", Node(left=leaf2, op="/", right=leaf3)
+                name="Mask Volume per component/Mask without ROI Volume per component",
+                calculation_tree=Node(left=leaf2, op="/", right=leaf3),
             ),
-            MeasurementEntry("Density per component", Node(left=leaf4, op="/", right=leaf1)),
+            MeasurementEntry(name="Density per component", calculation_tree=Node(left=leaf4, op="/", right=leaf1)),
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
@@ -2260,14 +2305,14 @@ def test_per_component(method, area):
 
     statistics = [
         MeasurementEntry(
-            "Measurement",
-            method.get_starting_leaf().replace_(
+            name="Measurement",
+            calculation_tree=method.get_starting_leaf().replace_(
                 per_component=PerComponent.No, area=area, parameter_dict=method.get_default_values()
             ),
         ),
         MeasurementEntry(
-            "Measurement per component",
-            method.get_starting_leaf().replace_(
+            name="Measurement per component",
+            calculation_tree=method.get_starting_leaf().replace_(
                 per_component=PerComponent.Yes, area=area, parameter_dict=method.get_default_values()
             ),
         ),

@@ -106,7 +106,7 @@ class TestCalculationProcess:
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Components Number",
+                name="Segmentation Components Number",
                 calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
             ),
         ]
@@ -152,7 +152,7 @@ class TestCalculationProcess:
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Components Number",
+                name="Segmentation Components Number",
                 calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
             ),
         ]
@@ -224,11 +224,11 @@ class TestCalculationProcess:
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Components Number",
+                name="Segmentation Components Number",
                 calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Segmentation Volume per component",
+                name="Segmentation Volume per component",
                 calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
         ]
@@ -271,11 +271,11 @@ class TestCalculationProcess:
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Components Number",
+                name="Segmentation Components Number",
                 calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask Volume per component",
+                name="Mask Volume per component",
                 calculation_tree=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.Yes),
             ),
         ]
@@ -285,7 +285,7 @@ class TestCalculationProcess:
         )
         chosen_fields.append(
             MeasurementEntry(
-                "Segmentation Volume per component",
+                name="Segmentation Volume per component",
                 calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
             )
         )

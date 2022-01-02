@@ -11,7 +11,7 @@ from PartSegImage.image import Spacing
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, AlgorithmProperty
 from ..channel_class import Channel
-from ..class_generator import BaseSerializableClass, enum_register
+from ..class_generator import enum_register
 from ..class_register import register_class
 from ..universal_const import Units
 
@@ -240,16 +240,7 @@ Node.update_forward_refs()
         "PartSeg.utils.analysis.measurement_base.StatisticEntry",
     ]
 )
-class MeasurementEntry(BaseSerializableClass):
-    # noinspection PyUnusedLocal
-    # noinspection PyMissingConstructor
-    __old_names__ = "StatisticEntry"
-
-    # noinspection PyMissingConstructor,PyUnusedLocal
-    # pylint: disable=W0104,W0231
-    def __init__(self, name: str, calculation_tree: Union[Node, Leaf]):
-        ...
-
+class MeasurementEntry(BaseModel):
     name: str
     calculation_tree: Union[Node, Leaf]
 
