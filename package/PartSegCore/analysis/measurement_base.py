@@ -238,6 +238,7 @@ Node.update_forward_refs()
     old_paths=[
         "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
         "PartSeg.utils.analysis.measurement_base.StatisticEntry",
+        "segmentation_analysis.statistics_calculation.StatisticEntry",
     ]
 )
 class MeasurementEntry(BaseModel):
