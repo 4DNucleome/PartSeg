@@ -6,6 +6,7 @@ include Readme.md
 include changelog.md
 include pyproject.toml
 include requirements/*
+include .napari/*
 recursive-include package *.py
 include package/tests/test_data/*.json
 exclude .tox/**
