@@ -341,3 +341,21 @@ class TestPartSegEncoder:
         assert isinstance(data2["d"], SampleAsDict)
         assert data2["d"].value1 == data["d"].value1
         assert data2["d"].value2 == data["d"].value2
+
+    def test_sub_class_serialization(self, tmp_path):
+        ob = DummyClassForTest.DummySubClassForTest(1, 2)
+        with (tmp_path / "test.json").open("w") as f_p:
+            json.dump(ob, f_p, cls=PartSegEncoder)
+        with (tmp_path / "test.json").open("r") as f_p:
+            ob2 = json.load(f_p, object_hook=partseg_object_hook)
+        assert ob2.data1 == 1
+        assert ob2.data2 == 2
+
+
+class DummyClassForTest:
+    class DummySubClassForTest:
+        def __init__(self, data1, data2):
+            self.data1, self.data2 = data1, data2
+
+        def as_dict(self):
+            return {"data1": self.data1, "data2": self.data2}

@@ -13,7 +13,7 @@ def class_to_str(cls) -> str:
     if cls.__module__.startswith("pydantic.dataclass"):
         cls = cls.__mro__[1]
         return class_to_str(cls)
-    return cls.__module__ + "." + cls.__name__
+    return cls.__module__ + "." + cls.__qualname__
 
 
 MigrationCallable = Callable[[Dict[str, Any]], Dict[str, Any]]
@@ -93,10 +93,19 @@ class MigrationRegistration:
         if class_str in self._data_dkt:
             return
         module_name, class_name = class_str.rsplit(".", maxsplit=1)
-        module = importlib.import_module(module_name)
+        class_path = [class_name]
+        while True:
+            try:
+                module = importlib.import_module(module_name)
+                break
+            except ModuleNotFoundError:
+                module_name, class_name_ = module_name.rsplit(".", maxsplit=1)
+                class_path.append(class_name_)
         if class_str in self._data_dkt:
             return
-        class_ = getattr(module, class_name)
+        class_ = module
+        for name in class_path[::-1]:
+            class_ = getattr(class_, name)
         self.register(class_)
 
 
