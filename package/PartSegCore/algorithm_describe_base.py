@@ -89,15 +89,18 @@ class _GetDescriptionClass:
             klass = type(obj)
 
         name = typing.cast(str, self._name)
-        fields_dkt = {}
         field: AlgorithmProperty
-        for field in klass.get_fields():
-            if isinstance(field, str):
-                continue
-            fields_dkt[field.name] = (
-                Annotated[field.value_type, field.user_name, field.range, field.help_text],
+        fields_dkt = {
+            field.name: (
+                Annotated[
+                    field.value_type, field.user_name, field.range, field.help_text
+                ],
                 field.default_value,
             )
+            for field in klass.get_fields()
+            if not isinstance(field, str)
+        }
+
         model = create_model(name, **fields_dkt)
         model.__qualname__ = klass.__qualname__ + "." + name
         setattr(klass, name, model)
