@@ -92,9 +92,7 @@ class _GetDescriptionClass:
         field: AlgorithmProperty
         fields_dkt = {
             field.name: (
-                Annotated[
-                    field.value_type, field.user_name, field.range, field.help_text
-                ],
+                Annotated[field.value_type, field.user_name, field.range, field.help_text],
                 field.default_value,
             )
             for field in klass.get_fields()
