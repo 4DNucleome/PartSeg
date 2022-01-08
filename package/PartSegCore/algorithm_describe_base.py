@@ -5,7 +5,8 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
+from typing_extensions import Annotated
 
 from PartSegCore.channel_class import Channel
 
@@ -73,12 +74,44 @@ class AlgorithmProperty:
         )
 
 
+class _GetDescriptionClass:
+    __slots__ = ("_name",)
+
+    def __init__(self):
+        self._name = None
+
+    def __set_name__(self, owner, name: str):
+        if self._name is None:
+            self._name = name
+
+    def __get__(self, obj, klass):
+        if klass is None:
+            klass = type(obj)
+
+        name = typing.cast(str, self._name)
+        fields_dkt = {}
+        field: AlgorithmProperty
+        for field in klass.get_fields():
+            if isinstance(field, str):
+                continue
+            fields_dkt[field.name] = (
+                Annotated[field.value_type, field.user_name, field.range, field.help_text],
+                field.default_value,
+            )
+        model = create_model(name, **fields_dkt)
+        model.__qualname__ = klass.__qualname__ + "." + name
+        setattr(klass, name, model)
+        return model
+
+
 class AlgorithmDescribeBase(ABC):
     """
     This is abstract class for all algorithm exported to user interface.
     Based on get_name and get_fields methods the interface will be generated
     For each group of algorithm base abstract class will add additional methods
     """
+
+    # __data_class__ = _GetDescriptionClass()
 
     @classmethod
     def get_doc_from_fields(cls):
@@ -165,9 +198,9 @@ class Register(OrderedDict, typing.Generic[AlgorithmType]):
         for el in args:
             self.register(el)
 
-    def values(self) -> typing.Iterable[AlgorithmType]:  # pylint: disable=W0235
+    def values(self) -> typing.Iterable[AlgorithmType]:
         # noinspection PyTypeChecker
-        return super().values()
+        return typing.cast(typing.Iterable[AlgorithmType], super().values())
 
     def __eq__(self, other):
         return (
@@ -178,8 +211,8 @@ class Register(OrderedDict, typing.Generic[AlgorithmType]):
             and self.suggested_base_class == other.suggested_base_class
         )
 
-    def __getitem__(self, item) -> AlgorithmType:  # pylint: disable=W0235
-        return super().__getitem__(item)
+    def __getitem__(self, item) -> AlgorithmType:
+        return typing.cast(AlgorithmType, super().__getitem__(item))
 
     def register(self, value: AlgorithmType, replace=False):
         """
