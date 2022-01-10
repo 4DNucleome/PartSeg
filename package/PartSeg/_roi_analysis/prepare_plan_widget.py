@@ -800,9 +800,12 @@ class CreatePlan(QWidget):
 
     @contextmanager
     def enable_protect(self):
+        previous = self.protect
         self.protect = True
-        yield
-        self.protect = False
+        try:
+            yield
+        finally:
+            self.protect = previous
 
     def _refresh_measurement(self):
         new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
