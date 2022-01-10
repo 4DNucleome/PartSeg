@@ -3,9 +3,28 @@ from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
+from pydantic import BaseModel, Field, root_validator
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from PartSegCore.class_register import register_class, rename_key
+
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, AlgorithmSelection, Register
 from .algorithm_base import SegmentationLimitException
+
+
+class SingleThresholdParams(BaseModel):
+    threshold: float = Field(8000.0, ge=-100000, le=100000, title="Threshold", description="Threshold values")
+
+
+@register_class(version="0.0.1", migrations=[("0.0.0", rename_key("masked", "apply_mask"))])
+class SimpleITKThresholdParams(BaseModel):
+    apply_mask: bool = Field(True, title="Apply mask", description="If apply mask before calculate threshold")
+    bins: int = Field(128, title="Histogram bins", ge=8, le=2 ** 16)
+
+    @root_validator(pre=True)
+    def rename_to_apply_mask(cls, values):
+        if "masked" in values:
+            return rename_key("masked", "apply_mask")(values)
+        return values
 
 
 class BaseThreshold(AlgorithmDescribeBase, ABC):
@@ -237,6 +256,10 @@ threshold_dict.register(MomentsThreshold)
 threshold_dict.register(MaximumEntropyThreshold)
 
 
+class ThresholdSelection(AlgorithmSelection):
+    __register__ = threshold_dict
+
+
 class DoubleThreshold(BaseThreshold):
     @classmethod
     def get_name(cls):
@@ -306,3 +329,7 @@ double_threshold_dict = Register()
 
 double_threshold_dict.register(DoubleThreshold)
 double_threshold_dict.register(DoubleOtsu)
+
+
+class DoubleThresholdSelection(AlgorithmSelection):
+    __register__ = double_threshold_dict
