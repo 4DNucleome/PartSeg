@@ -2,7 +2,6 @@ import inspect
 import typing
 import warnings
 from abc import ABC, abstractmethod
-from collections import OrderedDict
 from enum import Enum
 
 from pydantic import BaseModel, create_model
@@ -89,15 +88,16 @@ class _GetDescriptionClass:
             klass = type(obj)
 
         name = typing.cast(str, self._name)
-        fields_dkt = {}
         field: AlgorithmProperty
-        for field in klass.get_fields():
-            if isinstance(field, str):
-                continue
-            fields_dkt[field.name] = (
+        fields_dkt = {
+            field.name: (
                 Annotated[field.value_type, field.user_name, field.range, field.help_text],
                 field.default_value,
             )
+            for field in klass.get_fields()
+            if not isinstance(field, str)
+        }
+
         model = create_model(name, **fields_dkt)
         model.__qualname__ = klass.__qualname__ + "." + name
         setattr(klass, name, model)
@@ -110,8 +110,6 @@ class AlgorithmDescribeBase(ABC):
     Based on get_name and get_fields methods the interface will be generated
     For each group of algorithm base abstract class will add additional methods
     """
-
-    # __data_class__ = _GetDescriptionClass()
 
     @classmethod
     def get_doc_from_fields(cls):
@@ -174,7 +172,7 @@ def is_static(fun):
 AlgorithmType = typing.TypeVar("AlgorithmType", bound=type(AlgorithmDescribeBase))
 
 
-class Register(OrderedDict, typing.Generic[AlgorithmType]):
+class Register(typing.Dict, typing.Generic[AlgorithmType]):
     """
     Dict used for register :class:`.AlgorithmDescribeBase` classes.
     All registers from `PartSeg.PartSegCore.register` are this
