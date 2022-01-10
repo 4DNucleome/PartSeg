@@ -4,10 +4,11 @@ import warnings
 from abc import ABC, abstractmethod
 from enum import Enum
 
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, create_model, validator
 from typing_extensions import Annotated
 
 from PartSegCore.channel_class import Channel
+from PartSegCore.class_register import class_to_str
 
 
 class AlgorithmDescribeNotFound(Exception):
@@ -228,6 +229,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         if not isinstance(name, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(name)}")
         self[name] = value
+        return value
 
     @staticmethod
     def check_function(ob, function_name, is_class):
@@ -277,6 +279,32 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             raise ValueError("Register does not contain any algorithm.")
 
 
+class AlgorithmSelection(BaseModel):
+    """
+    Base class for algorithm selection.
+    For given algorithm there should be Register instance set __register__ class variable.
+    """
+
+    name: str
+    values: typing.Union[BaseModel, typing.Dict[str, typing.Any]]
+    class_path: str = ""
+
+    __register__: Register = None
+
+    @validator("name")
+    def check_name(cls, v):
+        if v not in cls.__register__:
+            raise ValueError(f"Missed algorithm {v}")
+        return v
+
+    @validator("class_path", always=True)
+    def update_class_path(cls, v, values):
+        if v or "name" not in values:
+            return v
+        klass = cls.__register__[values["name"]]
+        return class_to_str(klass)
+
+
 class ROIExtractionProfile(BaseModel):
     """
 
@@ -287,19 +315,20 @@ class ROIExtractionProfile(BaseModel):
 
     name: str
     algorithm: str
-    values: typing.Dict[str, typing.Any]
+    values: typing.Union[typing.Dict[str, typing.Any], BaseModel]
 
     def pretty_print(self, algorithm_dict):
         try:
             algorithm = algorithm_dict[self.algorithm]
         except KeyError:
             return str(self)
+        values = self.values if isinstance(self.values, dict) else self.values.dict()
         if self.name in {"", "Unknown"}:
             return (
                 "ROI extraction profile\nAlgorithm: "
                 + self.algorithm
                 + "\n"
-                + self._pretty_print(self.values, algorithm.get_fields_dict())
+                + self._pretty_print(values, algorithm.get_fields_dict())
             )
         return (
             "ROI extraction profile name: "
@@ -307,7 +336,7 @@ class ROIExtractionProfile(BaseModel):
             + "\nAlgorithm: "
             + self.algorithm
             + "\n"
-            + self._pretty_print(self.values, algorithm.get_fields_dict())
+            + self._pretty_print(values, algorithm.get_fields_dict())
         )
 
     @classmethod
@@ -339,14 +368,14 @@ class ROIExtractionProfile(BaseModel):
         return res[:-1]
 
     @classmethod
-    def print_dict(cls, dkt, indent=0, name: str = ""):
+    def print_dict(cls, dkt, indent=0, name: str = "") -> str:
         if isinstance(dkt, Enum):
             return dkt.name
         if not isinstance(dkt, typing.MutableMapping):
             # FIXME update in future method of proper printing channel number
             if name.startswith("channel") and isinstance(dkt, int):
-                return dkt + 1
-            return dkt
+                return str(dkt + 1)
+            return str(dkt)
         return "\n" + "\n".join(
             " " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}" for k, v in dkt.items()
         )

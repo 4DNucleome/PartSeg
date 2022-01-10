@@ -112,6 +112,23 @@ class MigrationRegistration:
 REGISTER = MigrationRegistration()
 
 
+def rename_key(from_key: str, to_key: str) -> MigrationCallable:
+    """
+    simple migration function for rename fields
+
+    :param from_key: original name
+    :param to_key: destination name
+    :return: migration function
+    """
+
+    def _migrate(dkt: Dict[str, Any]) -> Dict[str, Any]:
+        res_dkt = dkt.copy()
+        res_dkt[to_key] = res_dkt.pop(from_key)
+        return res_dkt
+
+    return _migrate
+
+
 def register_class(
     cls: Type = None,
     version: Union[str, Version] = "0.0.0",
