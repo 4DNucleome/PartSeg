@@ -10,6 +10,9 @@ from typing_extensions import Annotated
 from PartSegCore.channel_class import Channel
 from PartSegCore.class_register import class_to_str
 
+if typing.TYPE_CHECKING:
+    from pydantic.typing import ModelField
+
 
 class AlgorithmDescribeNotFound(Exception):
     """
@@ -399,3 +402,14 @@ class ROIExtractionProfile(BaseModel):
             and self.algorithm == other.algorithm
             and self.values == other.values
         )
+
+
+def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List[AlgorithmProperty]:
+    res = []
+    value: "ModelField"
+    for name, value in obj.__fields__.items():
+        user_name = value.field_info.title
+        if user_name is None:
+            user_name = name.replace("_", " ")
+        res.append(AlgorithmProperty(name=name, user_name=user_name, default_value=value.field_info.default))
+    return res
