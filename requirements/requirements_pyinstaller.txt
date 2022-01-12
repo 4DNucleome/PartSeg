@@ -240,7 +240,7 @@ qtpy==1.11.3
     #   napari-console
     #   qtawesome
     #   qtconsole
-requests==2.26.0
+requests==2.27.1
     # via
     #   -r requirements_pyinstaller.in
     #   sphinx
