@@ -156,6 +156,7 @@ packaging==21.3
     #   -r requirements_pyinstaller.in
     #   dask
     #   pint
+    #   qtpy
     #   sphinx
 pandas==1.3.5
     # via -r requirements_pyinstaller.in
@@ -232,7 +233,7 @@ qtawesome==1.1.1
     # via -r requirements_pyinstaller.in
 qtconsole==5.2.2
     # via napari-console
-qtpy==1.11.3
+qtpy==2.0.0
     # via
     #   -r requirements_pyinstaller.in
     #   magicgui
