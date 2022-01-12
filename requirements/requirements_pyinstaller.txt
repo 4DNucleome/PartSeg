@@ -186,7 +186,7 @@ psygnal==0.2.0
     # via magicgui
 ptyprocess==0.7.0
     # via pexpect
-pydantic==1.8.2
+pydantic==1.9.0
     # via
     #   -r requirements_pyinstaller.in
     #   napari
