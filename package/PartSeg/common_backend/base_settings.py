@@ -128,9 +128,7 @@ class ImageSettings(QObject):
     @property
     def image_spacing(self):
         """:py:meth:`Image.spacing` proxy"""
-        if self._image is not None:
-            return self._image.spacing
-        return ()
+        return self._image.spacing if self._image is not None else ()
 
     def is_image_2d(self):
         """:py:meth:`Image.is_2d` proxy"""
@@ -213,16 +211,12 @@ class ImageSettings(QObject):
 
     @property
     def image_path(self):
-        if self.image is not None:
-            return self._image.file_path
-        return ""
+        return self._image.file_path if self.image is not None else ""
 
     @property
     def image_shape(self):
         # TODO analyse and decide if channels should be part of shape
-        if self.image is not None:
-            return self._image.shape
-        return ()
+        return self._image.shape if self.image is not None else ()
 
     @image_path.setter
     def image_path(self, value):
@@ -231,9 +225,7 @@ class ImageSettings(QObject):
 
     @property
     def channels(self):
-        if self._image is None:
-            return 0
-        return self._image.channels
+        return 0 if self._image is None else self._image.channels
 
     def components_mask(self):
         return np.array([0] + [1] * np.max(self.roi), dtype=np.uint8)

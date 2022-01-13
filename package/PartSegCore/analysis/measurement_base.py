@@ -276,9 +276,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_description(cls) -> str:
         """Measurement long description"""
-        if isinstance(cls.text_info, str):
-            return ""
-        return cls.text_info[1]
+        return "" if isinstance(cls.text_info, str) else cls.text_info[1]
 
     @classmethod
     def is_component(cls) -> bool:
@@ -327,9 +325,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def _display_name(cls):
-        if isinstance(cls.text_info, str):
-            return cls.text_info
-        return cls.text_info[0]
+        return cls.text_info if isinstance(cls.text_info, str) else cls.text_info[0]
 
     @classmethod
     def get_units(cls, ndim) -> symbols:

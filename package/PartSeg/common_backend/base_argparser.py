@@ -131,6 +131,4 @@ def _setup_sentry():  # pragma: no cover
 
 
 def safe_repr(val):
-    if isinstance(val, np.ndarray):
-        return numpy_repr(val)
-    return _safe_repr(val)
+    return numpy_repr(val) if isinstance(val, np.ndarray) else _safe_repr(val)
