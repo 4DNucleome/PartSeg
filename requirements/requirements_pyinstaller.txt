@@ -195,7 +195,7 @@ pygments==2.10.0
     #   ipython
     #   qtconsole
     #   sphinx
-pyinstaller==4.7
+pyinstaller==4.8
     # via -r requirements_pyinstaller.in
 pyinstaller-hooks-contrib==2021.4
     # via pyinstaller
