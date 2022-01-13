@@ -1,7 +1,7 @@
 # Description
 
 PartSeg is a specialized GUI for feature extraction from multichannel light microscopy images, but also most of its features are available as napari Widgets.
-Information about PartSeg as standalone program are [here](https://github.com/4DNucleome/PartSeg)
+Information about PartSeg as standalone program or library are [here](https://github.com/4DNucleome/PartSeg)
 
 ## Who is This For?
 
