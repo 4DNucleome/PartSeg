@@ -85,9 +85,7 @@ class BorderRim(RestartableAlgorithm):
         return ["Need mask"] + BorderRimBase.get_fields()
 
     def get_info_text(self):
-        if self.mask is None:
-            return "Need mask"
-        return ""
+        return "Need mask" if self.mask is None else ""
 
     def calculation_run(self, _report_fun) -> ROIExtractionResult:
         if self.mask is not None:
