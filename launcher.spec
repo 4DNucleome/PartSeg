@@ -75,7 +75,6 @@ hiddenimports = (
         "sentry_sdk.integrations.modules",
         "sentry_sdk.integrations.argv",
         "sentry_sdk.integrations.threading",
-        "numpy.distutils",
         "numpy.random.common",
         "numpy.random.bounded_integers",
         "numpy.random.entropy",
