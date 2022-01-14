@@ -40,10 +40,10 @@ class TestColormapEdit:
         pos = 20 / width
         widget.add_color(pos, Color(0.274, 0.02, 0.745))
         widget.add_color(pos / 2, Color(0.274, 0.2, 0.745))
-        assert len(widget.colormap.colors) == 2
+        assert len(widget.colormap.colors) == 4
         with qtbot.assertNotEmitted(widget.double_clicked):
             qtbot.mouseDClick(widget, Qt.LeftButton, pos=QPoint(30, widget.height() // 2))
-        assert len(widget.colormap.colors) == 1
+        assert len(widget.colormap.colors) == 3
 
     def test_distribute_evenly(self, qtbot: QtBot):
         widget = ColormapEdit()
@@ -51,7 +51,7 @@ class TestColormapEdit:
         widget.add_color(0.1, Color(0.49, 0.9, 0.08))
         widget.add_color(0.23, Color(0.09, 0.03, 0.788))
         widget.add_color(0.84, Color(0.874, 0, 0.2))
-        assert len(widget.colormap.colors) == 3
+        assert len(widget.colormap.colors) == 5
         widget.distribute_evenly()
         assert len(widget.colormap.colors) == 3
         assert widget.colormap.controls[0] == 0
@@ -66,13 +66,13 @@ class TestColormapEdit:
         width = widget.width() - 20
         pos = 20 / width
         widget.add_color(pos, Color(0.49, 0.9, 0.08))
-        assert widget.colormap.controls[0] == pos
+        assert widget.colormap.controls[1] == pos
         qtbot.mousePress(widget, Qt.LeftButton, pos=QPoint(30, widget.height() // 2))
         pos2 = 150 / width
         qtbot.mouseMove(widget, QPoint(70, widget.height() // 2))
         qtbot.mouseMove(widget, QPoint(160, widget.height() // 2))
         qtbot.mouseRelease(widget, Qt.LeftButton, pos=QPoint(160, widget.height() // 2))
-        assert widget.colormap.controls[0] == pos2
+        assert widget.colormap.controls[1] == pos2
 
 
 class TestColormapCreator:
@@ -84,17 +84,17 @@ class TestColormapCreator:
         widget.color_picker.setCurrentColor(color1)
         with qtbot.waitSignal(colormap_edit.double_clicked):
             qtbot.mouseDClick(colormap_edit, Qt.LeftButton, pos=QPoint(30, widget.height() // 2))
-        assert len(widget.current_colormap().colors) == 1
+        assert len(widget.current_colormap().colors) == 3
         assert np.allclose(widget.current_colormap().colors[0], Color(10 / 255, 40 / 255, 12 / 255))
-        assert isclose(widget.current_colormap().controls[0], 20 / (colormap_edit.width() - 20))
+        assert isclose(widget.current_colormap().controls[1], 20 / (colormap_edit.width() - 20))
         widget.color_picker.setCurrentColor(color2)
         with qtbot.waitSignal(colormap_edit.double_clicked):
             qtbot.mouseDClick(colormap_edit, Qt.LeftButton, pos=QPoint(80, widget.height() // 2))
-        assert len(widget.current_colormap().colors) == 2
-        assert np.allclose(widget.current_colormap().colors[0], Color(10 / 255, 40 / 255, 12 / 255))
-        assert np.allclose(widget.current_colormap().colors[1], Color(100 / 255, 4 / 255, 220 / 255))
-        assert isclose(widget.current_colormap().controls[0], 20 / (colormap_edit.width() - 20))
-        assert isclose(widget.current_colormap().controls[1], 70 / (colormap_edit.width() - 20))
+        assert len(widget.current_colormap().colors) == 4
+        assert np.allclose(widget.current_colormap().colors[1], Color(10 / 255, 40 / 255, 12 / 255))
+        assert np.allclose(widget.current_colormap().colors[2], Color(100 / 255, 4 / 255, 220 / 255))
+        assert isclose(widget.current_colormap().controls[1], 20 / (colormap_edit.width() - 20))
+        assert isclose(widget.current_colormap().controls[2], 70 / (colormap_edit.width() - 20))
 
     def test_save(self, qtbot):
         widget = ColormapCreator()
@@ -107,16 +107,12 @@ class TestColormapCreator:
         widget.add_color(0.8)
 
         def check_res(colormap):
-            print(len(colormap.colors) == 2)
-            print(colormap)
-            print(color_from_qcolor(color1))
-            print(color_from_qcolor(color2))
             return (
-                len(colormap.colors) == 2
-                and np.allclose(colormap.colors[0], color_from_qcolor(color1))
-                and np.allclose(colormap.colors[1], color_from_qcolor(color2))
-                and colormap.controls[0] == 0.1
-                and colormap.controls[1] == 0.8
+                len(colormap.colors) == 4
+                and np.allclose(colormap.colors[1], color_from_qcolor(color1))
+                and np.allclose(colormap.colors[2], color_from_qcolor(color2))
+                and colormap.controls[1] == 0.1
+                and colormap.controls[2] == 0.8
             )
 
         with qtbot.wait_signal(widget.colormap_selected, check_params_cb=check_res):
@@ -141,14 +137,16 @@ class TestColormapCreator:
         widget.color_picker.setCurrentColor(color5)
         widget.add_color(0.95)
         li = widget.current_colormap()
-        assert np.array_equal(li.controls, [0.1, 0.3, 0.6, 0.9, 0.95])
+        assert np.array_equal(li.controls, [0, 0.1, 0.3, 0.6, 0.9, 0.95, 1])
         for el, col in zip(
             li.colors,
             [
                 color_from_qcolor(color1),
+                color_from_qcolor(color1),
                 color_from_qcolor(color2),
                 color_from_qcolor(color3),
                 color_from_qcolor(color4),
+                color_from_qcolor(color5),
                 color_from_qcolor(color5),
             ],
         ):
