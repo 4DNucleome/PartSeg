@@ -1,0 +1,38 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  PartSeg: a tool for quantitative feature extraction
+  from 3D microscopy images for dummies
+message: Cite as
+type: software
+authors:
+  - given-names: Grzegorz
+    family-names: Bokota
+    email: g.bokota@mimuw.edu.pl
+    orcid: 'https://orcid.org/0000-0002-5470-1676'
+  - given-names: Jacek
+    family-names: Sroka
+    orcid: 'https://orcid.org/0000-0002-1714-9667'
+  - orcid: 'https://orcid.org/0000-0003-1780-0461'
+    given-names: Subhadip
+    family-names: Basu
+  - given-names: Nirmal
+    family-names: Das
+  - given-names: Paweł
+    family-names: Trzaskoma
+    orcid: 'https://orcid.org/0000-0002-5823-6572'
+  - given-names: Yana
+    family-names: Yushkevich
+    orcid: 'https://orcid.org/0000-0002-5475-8613'
+  - given-names: Agnieszka
+    family-names: Grabowska
+    orcid: 'https://orcid.org/0000-0002-8804-6817'
+  - given-names: Adriana
+    family-names: Magalska
+    orcid: 'https://orcid.org/0000-0002-0517-7134'
+  - given-names: Dariusz
+    family-names: Plewczyński
+    orcid: 'https://orcid.org/0000-0002-3840-7610'
+doi: doi.org/10.1186/s12859-021-03984-1
