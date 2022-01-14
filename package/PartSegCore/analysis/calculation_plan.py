@@ -274,7 +274,7 @@ class MaskFile(MaskMapper, BaseSerializableClass):
         if not os.path.exists(self.path_to_file):
             logging.error(f"File does not exists: {self.path_to_file}")
             raise ValueError(f"File for mapping mask does not exists: {self.path_to_file}")
-        with open(self.path_to_file) as map_file:
+        with open(self.path_to_file, encoding="utf-8") as map_file:
             dir_name = os.path.dirname(self.path_to_file)
             for i, line in enumerate(map_file):
                 try:

@@ -377,7 +377,7 @@ class SaveProfilesToJSON(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        with open(save_location, "w") as ff:
+        with open(save_location, "w", encoding="utf-8") as ff:
             json.dump(project_info, ff, cls=PartEncoder, indent=2)
 
     @classmethod

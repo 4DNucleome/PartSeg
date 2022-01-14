@@ -670,7 +670,7 @@ class SaveParametersJSON(SaveBase):
         :param step_changed: Not used, keep for satisfy interface
         :return:
         """
-        with open(save_location, "w") as ff:
+        with open(save_location, "w", encoding="utf-8") as ff:
             json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=ProfileEncoder)
 
     @classmethod

@@ -25,7 +25,7 @@ class AboutDialog(QDialog):
         )
         dev_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(PartSeg.__file__))), "changelog.md")
         if os.path.exists(dev_path):
-            with open(dev_path) as ff:
+            with open(dev_path, encoding="utf-8") as ff:
                 changelog_text = ff.read()
         else:
             changelog_text = PartSeg.changelog

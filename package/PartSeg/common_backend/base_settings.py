@@ -698,7 +698,7 @@ class BaseSettings(ViewSettings):
         if names is not None:
             data = {name: data[name] for name in names}
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, "w") as ff:
+        with open(file_path, "w", encoding="utf-8") as ff:
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 
     @classmethod
@@ -734,7 +734,7 @@ class BaseSettings(ViewSettings):
         for el in self.get_save_list():
             try:
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
-                with open(os.path.join(folder_path, el.file_name), "w") as ff:
+                with open(os.path.join(folder_path, el.file_name), "w", encoding="utf-8") as ff:
                     ff.write(dump_string)
             except Exception as e:  # pylint: disable=W0703
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))

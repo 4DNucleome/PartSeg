@@ -1101,7 +1101,7 @@ class CalculateInfo(QWidget):
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             data = {x: self.settings.batch_plans[x] for x in choose.get_export_list()}
-            with open(file_path, "w") as ff:
+            with open(file_path, "w", encoding="utf-8") as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
 
     def import_plans(self):
