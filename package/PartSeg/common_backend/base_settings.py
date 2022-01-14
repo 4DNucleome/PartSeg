@@ -128,9 +128,7 @@ class ImageSettings(QObject):
     @property
     def image_spacing(self):
         """:py:meth:`Image.spacing` proxy"""
-        if self._image is not None:
-            return self._image.spacing
-        return ()
+        return self._image.spacing if self._image is not None else ()
 
     def is_image_2d(self):
         """:py:meth:`Image.is_2d` proxy"""
@@ -213,16 +211,12 @@ class ImageSettings(QObject):
 
     @property
     def image_path(self):
-        if self.image is not None:
-            return self._image.file_path
-        return ""
+        return self._image.file_path if self.image is not None else ""
 
     @property
     def image_shape(self):
         # TODO analyse and decide if channels should be part of shape
-        if self.image is not None:
-            return self._image.shape
-        return ()
+        return self._image.shape if self.image is not None else ()
 
     @image_path.setter
     def image_path(self, value):
@@ -231,9 +225,7 @@ class ImageSettings(QObject):
 
     @property
     def channels(self):
-        if self._image is None:
-            return 0
-        return self._image.channels
+        return 0 if self._image is None else self._image.channels
 
     def components_mask(self):
         return np.array([0] + [1] * np.max(self.roi), dtype=np.uint8)
@@ -698,7 +690,7 @@ class BaseSettings(ViewSettings):
         if names is not None:
             data = {name: data[name] for name in names}
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, "w") as ff:
+        with open(file_path, "w", encoding="utf-8") as ff:
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 
     @classmethod
@@ -734,7 +726,7 @@ class BaseSettings(ViewSettings):
         for el in self.get_save_list():
             try:
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
-                with open(os.path.join(folder_path, el.file_name), "w") as ff:
+                with open(os.path.join(folder_path, el.file_name), "w", encoding="utf-8") as ff:
                     ff.write(dump_string)
             except Exception as e:  # pylint: disable=W0703
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))

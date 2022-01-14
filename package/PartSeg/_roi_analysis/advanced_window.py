@@ -251,7 +251,7 @@ class Properties(QWidget):
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             data = {x: self._settings.roi_profiles[x] for x in exp.get_export_list()}
-            with open(file_path, "w") as ff:
+            with open(file_path, "w", encoding="utf-8") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
 
     def import_profiles(self):
@@ -289,7 +289,7 @@ class Properties(QWidget):
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             data = {x: self._settings.roi_pipelines[x] for x in exp.get_export_list()}
-            with open(file_path, "w") as ff:
+            with open(file_path, "w", encoding="utf-8") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
 
     def import_pipeline(self):
@@ -773,7 +773,7 @@ class MeasurementSettings(QWidget):
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             data = {x: self.settings.measurement_profiles[x] for x in exp.get_export_list()}
-            with open(file_path, "w") as ff:
+            with open(file_path, "w", encoding="utf-8") as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
 
     def import_measurement_profiles(self):
