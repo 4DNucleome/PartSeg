@@ -731,9 +731,7 @@ class CalculationPlan:
                 return f"Measurement: {el.name}"
             return f"Measurement: {el.name} with prefix: {el.name_prefix}"
         if isinstance(el, MaskCreate):
-            if el.name != "":
-                return f"Create mask: {el.name}"
-            return "Create mask:"
+            return f"Create mask: {el.name}" if el.name != "" else "Create mask:"
         if isinstance(el, MaskUse):
             return f"Use mask: {el.name}"
         if isinstance(el, MaskSuffix):
