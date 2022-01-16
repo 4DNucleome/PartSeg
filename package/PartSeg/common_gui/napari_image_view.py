@@ -116,9 +116,7 @@ class LabelEnum(Enum):
     Show_selected = 2
 
     def __str__(self):
-        if self.value == 0:  # pylint: disable=W0143
-            return "Don't show"
-        return self.name.replace("_", " ")
+        return "Don't show" if self.value == 0 else self.name.replace("_", " ")
 
 
 class SearchType(Enum):
