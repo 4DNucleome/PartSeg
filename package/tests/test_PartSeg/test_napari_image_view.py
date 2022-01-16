@@ -50,13 +50,16 @@ def test_print_dict():
 
 
 @pytest.fixture
-def image_view(base_settings, image2, qtbot):
+def image_view(base_settings, image2, qtbot, request):
     ch_prop = ChannelProperty(base_settings, "test")
-    view = ImageView(base_settings, channel_property=ch_prop, name="test")
-    qtbot.addWidget(ch_prop)
-    qtbot.addWidget(view)
+    view = ImageView(base_settings, channel_property=ch_prop, name=request.function.__name__)
     base_settings.image = image2
-    return view
+    yield view
+    ch_prop.close()
+    view.close()
+    ch_prop.deleteLater()
+    view.deleteLater()
+    qtbot.wait(50)
 
 
 class TestImageView:
@@ -272,6 +275,7 @@ def test_search_component_modal(qtbot, image_view, monkeypatch):
     monkeypatch.setattr(image_view, "component_zoom", MagicMock())
     monkeypatch.setattr(image_view, "component_unmark", MagicMock())
     modal = SearchComponentModal(image_view, SearchType.Highlight, component_num=1, max_components=5)
+    qtbot.addWidget(modal)
     image_view.component_mark.assert_called_with(1, flash=True)
     modal.component_selector.setValue(2)
     image_view.component_mark.assert_called_with(2, flash=True)
