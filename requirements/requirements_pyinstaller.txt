@@ -128,7 +128,7 @@ napari-svg==0.1.5
     # via napari
 nest-asyncio==1.5.4
     # via jupyter-client
-numpy==1.22.0
+numpy==1.22.1
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
