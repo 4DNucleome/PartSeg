@@ -16,14 +16,14 @@ on:
 
 jobs:
   test_napar:
-    name: ${{ matrix.platform }} py${{ matrix.python }}
+    name: ${{ matrix.napari_version }} py${{ matrix.python }}
     runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
         platform: [ ubuntu-20.04 ]
         python: [ 3.8, 3.9 ]
-        napari_version: [napari410, napari411, napari412]
+        napari_version: [napari410, napari411, napari412, napari413]
     steps:
       - uses: actions/checkout@v2
 

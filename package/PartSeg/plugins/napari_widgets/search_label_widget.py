@@ -59,7 +59,7 @@ class SearchLabel(Container):
             return
         slices = bound_info.get_slices()
         component_mark = self.roi_info.roi[tuple(slices)] == num
-        translate_grid = labels.translate_grid + bound_info.lower * labels.scale
+        translate_grid = labels.translate + bound_info.lower * labels.scale
         if ".Highlight" in self.napari_viewer.layers:
             self.napari_viewer.layers[".Highlight"].data = component_mark
         else:

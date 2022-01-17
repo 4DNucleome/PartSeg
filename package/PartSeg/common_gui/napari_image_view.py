@@ -36,23 +36,44 @@ from .custom_buttons import SearchROIButton
 from .qt_modal import QtPopup
 
 try:
-    from napari._qt.qt_viewer_buttons import QtViewerPushButton
+    from napari._qt.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
 except ImportError:
-    from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
+    from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
 
-_napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13")
+_napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
 
 
-class QtNDisplayButton(QtStateButton):
-    def __init__(self, viewer):
-        super().__init__(
-            "ndisplay_button",
-            viewer.dims,
-            "ndisplay",
-            viewer.dims.events.ndisplay,
-            2,
-            3,
-        )
+class QtViewerPushButton(QtViewerPushButton_):
+    def __init__(self, viewer, *args, **kwargs):
+        if _napari_ge_4_13:
+            super().__init__(*args, **kwargs)
+        else:
+            super().__init__(viewer, *args, **kwargs)
+
+
+if _napari_ge_4_13:
+
+    class QtNDisplayButton(QtViewerPushButton_):
+        def __init__(self, viewer):
+            super().__init__(button_name="ndisplay_button", tooltip="Toggle dimensions", slot=self.toggle_ndisplay)
+            self.viewer = viewer
+            self.setCheckable(True)
+
+        def toggle_ndisplay(self):
+            self.viewer.dims.ndisplay = 2 + (self.viewer.dims.ndisplay == 2)
+
+else:
+
+    class QtNDisplayButton(QtStateButton):
+        def __init__(self, viewer):
+            super().__init__(
+                "ndisplay_button",
+                viewer.dims,
+                "ndisplay",
+                viewer.dims.events.ndisplay,
+                2,
+                3,
+            )
 
 
 ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
@@ -95,9 +116,7 @@ class LabelEnum(Enum):
     Show_selected = 2
 
     def __str__(self):
-        if self.value == 0:  # pylint: disable=W0143
-            return "Don't show"
-        return self.name.replace("_", " ")
+        return "Don't show" if self.value == 0 else self.name.replace("_", " ")
 
 
 class SearchType(Enum):
