@@ -16,7 +16,7 @@ on:
 
 jobs:
   test_napar:
-    name: ${{ matrix.platform }} py${{ matrix.python }}
+    name: ${{ matrix.napari_version }} py${{ matrix.python }}
     runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
