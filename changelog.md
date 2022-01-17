@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.13.15
+
+### Bug Fixes
+
+-   Using `translation` instead of `translation_grid` for shifting layers. (#474)
+-   Bugs in napari plugins (#478)
+-   Missing mask when using roi extraction from napari (#479)
+-   Fix segmentation fault on macos machines (#487)
+-   Fixes for napari 0.4.13 (#506)
+
+### Documentation
+
+-   Create 0.13.15 release (#511)
+-   Add categories and preview page workflow for the napari hub (#489)
+
+### Features
+
+-   Assign properties to mask layer in napari measurement widget (#480)
+
+### Build
+
+-   Bump qtpy from 1.11.3 to 2.0.0 in /requirements (#498)
+-   Bump pydantic from 1.8.2 to 1.9.0 in /requirements (#496)
+-   Bump sentry-sdk from 1.5.1 to 1.5.2 in /requirements (#497)
+-   Bump sphinx from 4.3.1 to 4.3.2 in /requirements (#500)
+-   Bump pyinstaller from 4.7 to 4.8 in /requirements (#502)
+-   Bump pillow from 8.4.0 to 9.0.0 in /requirements (#501)
+-   Bump requests from 2.26.0 to 2.27.1 in /requirements (#495)
+-   Bump numpy from 1.21.4 to 1.22.0 in /requirements (#499)
+-   Bump numpy from 1.22.0 to 1.22.1 in /requirements (#509)
+-   Bump sphinx from 4.3.2 to 4.4.0 in /requirements (#510)
+
 ## 0.13.14
 
 ### Bug Fixes
