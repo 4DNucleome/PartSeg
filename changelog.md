@@ -12,6 +12,7 @@
 
 ### Documentation
 
+-   Create 0.13.15 release (#511)
 -   Add categories and preview page workflow for the napari hub (#489)
 
 ### Features
