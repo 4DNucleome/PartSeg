@@ -253,7 +253,10 @@ def test_colormap_dump(tmp_path):
     assert np.array_equal(cmap_list[1].colors, cmap_list2[1].colors)
     assert np.array_equal(cmap_list[1].controls, cmap_list2[1].controls)
 
-    cmap_list = [Colormap([(0, 0, 0), (1, 1, 1)]), Colormap([(0, 0, 0), (1, 1, 1)], controls=[0.1, 0.8])]
+    cmap_list = [
+        Colormap([(0, 0, 0), (1, 1, 1)]),
+        Colormap([(0, 0, 0), (0, 0, 0), (1, 1, 1), (1, 1, 1)], controls=[0, 0.1, 0.8, 1]),
+    ]
     with open(tmp_path / "test2.json", "w") as f_p:
         json.dump(cmap_list, f_p, cls=ProfileEncoder)
 
@@ -262,8 +265,8 @@ def test_colormap_dump(tmp_path):
 
     assert np.array_equal(cmap_list[0].colors, cmap_list2[0].colors)
     assert np.array_equal(cmap_list[0].controls, cmap_list2[0].controls)
-    assert np.array_equal(cmap_list[1].colors, cmap_list2[1].colors[1:3])
-    assert np.array_equal(cmap_list[1].controls, cmap_list2[1].controls[1:3])
+    assert np.array_equal(cmap_list[1].colors, cmap_list2[1].colors)
+    assert np.array_equal(cmap_list[1].controls, cmap_list2[1].controls)
     assert cmap_list2[1].controls[0] == 0
     assert cmap_list2[1].controls[-1] == 1
     assert np.array_equal(cmap_list[1].colors[0], cmap_list2[1].colors[0])

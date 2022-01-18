@@ -44,7 +44,9 @@ class CheckVersionThread(QThread):
             return
         try:
             if os.path.exists(os.path.join(state_store.save_folder, IGNORE_FILE)):
-                with open(os.path.join(state_store.save_folder, IGNORE_FILE)) as f_p, suppress(ValueError):
+                with open(os.path.join(state_store.save_folder, IGNORE_FILE), encoding="utf-8") as f_p, suppress(
+                    ValueError
+                ):
                     old_date = date.fromisoformat(f_p.read())
                     if (date.today() - old_date).days < IGNORE_DAYS:
                         return
@@ -87,5 +89,5 @@ class CheckVersionThread(QThread):
                 )
 
             if message.exec_() == QMessageBox.Ignore:
-                with open(os.path.join(state_store.save_folder, IGNORE_FILE), "w") as f_p:
+                with open(os.path.join(state_store.save_folder, IGNORE_FILE), "w", encoding="utf-8") as f_p:
                     f_p.write(date.today().isoformat())

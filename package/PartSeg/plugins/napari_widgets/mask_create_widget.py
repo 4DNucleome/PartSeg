@@ -28,7 +28,7 @@ class NapariMaskWidget(MaskWidget):
         return int(radius)
 
 
-class MaskCreateNapari(QWidget):
+class MaskCreate(QWidget):
     def __init__(self, napari_viewer: Viewer):
         super().__init__()
         self.viewer = napari_viewer

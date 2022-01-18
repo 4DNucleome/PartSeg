@@ -7,13 +7,7 @@ from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
 from PartSeg.common_gui.napari_image_view import SearchType
-from PartSeg.plugins.napari_widgets import (
-    MaskCreateNapari,
-    ROIAnalysisExtraction,
-    ROIMaskExtraction,
-    SearchLabel,
-    _settings,
-)
+from PartSeg.plugins.napari_widgets import MaskCreate, ROIAnalysisExtraction, ROIMaskExtraction, SearchLabel, _settings
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -208,7 +202,7 @@ def test_mask_create(make_napari_viewer, qtbot):
 
     viewer = make_napari_viewer()
     viewer.add_labels(data, name="label")
-    mask_create = MaskCreateNapari(viewer)
+    mask_create = MaskCreate(viewer)
     viewer.window.add_dock_widget(mask_create)
     mask_create.reset_choices()
     mask_create.create_mask()

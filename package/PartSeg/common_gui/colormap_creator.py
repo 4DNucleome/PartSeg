@@ -182,7 +182,18 @@ class ColormapEdit(QWidget):
         """colormap getter"""
         if len(self.color_list) == 0:
             return Colormap("black")
-        return Colormap(colors=self.color_list, controls=self.position_list)
+
+        color_list = self.color_list[:]
+        position_list = self.position_list[:]
+        if position_list[0] != 0:
+            position_list.insert(0, 0)
+            color_list.insert(0, color_list[0])
+
+        if position_list[-1] != 1:
+            position_list.append(1)
+            color_list.append(color_list[-1])
+
+        return Colormap(colors=color_list, controls=position_list)
 
     @colormap.setter
     def colormap(self, val: Colormap):
