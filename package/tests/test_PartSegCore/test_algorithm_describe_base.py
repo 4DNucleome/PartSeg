@@ -8,7 +8,6 @@ from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
     AlgorithmSelection,
-    Register,
     _GetDescriptionClass,
     base_model_to_algorithm_property,
 )
@@ -31,7 +30,11 @@ def test_get_description_class():
 
 
 def test_algorithm_selection():
-    register = Register()
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class TestSelection2(AlgorithmSelection):
+        pass
 
     class Class1(AlgorithmDescribeBase):
         @classmethod
@@ -51,11 +54,11 @@ def test_algorithm_selection():
         def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
             return []
 
-    register.register(Class1)
-    register.register(Class2)
+    TestSelection.register(Class1)
+    TestSelection.register(Class2)
 
-    class TestSelection(AlgorithmSelection):
-        __register__ = register
+    assert "test1" in TestSelection.__register__
+    assert "test1" not in TestSelection2.__register__
 
     v = TestSelection(name="test1", values={})
     assert v.name == "test1"
@@ -63,6 +66,8 @@ def test_algorithm_selection():
 
     with pytest.raises(ValidationError):
         TestSelection(name="test3", values={})
+
+    assert TestSelection["test1"] is Class1
 
 
 def test_base_model_to_algorithm_property():

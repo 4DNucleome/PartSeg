@@ -1,4 +1,5 @@
 import typing
+import warnings
 from abc import ABC
 
 import numpy as np
@@ -7,7 +8,7 @@ from pydantic import BaseModel, Field, root_validator
 
 from PartSegCore.class_register import register_class, rename_key
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, AlgorithmSelection, Register
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, AlgorithmSelection
 from .algorithm_base import SegmentationLimitException
 
 
@@ -240,24 +241,23 @@ class MomentsThreshold(SitkThreshold):
         return sitk.MomentsThreshold(*args)
 
 
-threshold_dict = Register()
-threshold_dict.register(ManualThreshold)
-threshold_dict.register(OtsuThreshold)
-threshold_dict.register(LiThreshold)
-threshold_dict.register(RenyiEntropyThreshold)
-threshold_dict.register(ShanbhagThreshold)
-threshold_dict.register(TriangleThreshold)
-threshold_dict.register(YenThreshold)
-threshold_dict.register(HuangThreshold)
-threshold_dict.register(IntermodesThreshold)
-threshold_dict.register(IsoDataThreshold)
-threshold_dict.register(KittlerIllingworthThreshold)
-threshold_dict.register(MomentsThreshold)
-threshold_dict.register(MaximumEntropyThreshold)
-
-
 class ThresholdSelection(AlgorithmSelection):
-    __register__ = threshold_dict
+    pass
+
+
+ThresholdSelection.register(ManualThreshold)
+ThresholdSelection.register(OtsuThreshold)
+ThresholdSelection.register(LiThreshold)
+ThresholdSelection.register(RenyiEntropyThreshold)
+ThresholdSelection.register(ShanbhagThreshold)
+ThresholdSelection.register(TriangleThreshold)
+ThresholdSelection.register(YenThreshold)
+ThresholdSelection.register(HuangThreshold)
+ThresholdSelection.register(IntermodesThreshold)
+ThresholdSelection.register(IsoDataThreshold)
+ThresholdSelection.register(KittlerIllingworthThreshold)
+ThresholdSelection.register(MomentsThreshold)
+ThresholdSelection.register(MaximumEntropyThreshold)
 
 
 class DoubleThreshold(BaseThreshold):
@@ -272,15 +272,15 @@ class DoubleThreshold(BaseThreshold):
             AlgorithmProperty(
                 "core_threshold",
                 "Core threshold",
-                threshold_dict.get_default(),
-                possible_values=threshold_dict,
+                ThresholdSelection.__register__.get_default(),
+                possible_values=ThresholdSelection,
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "base_threshold",
                 "Base threshold",
-                threshold_dict.get_default(),
-                possible_values=threshold_dict,
+                ThresholdSelection.__register__.get_default(),
+                possible_values=ThresholdSelection,
                 value_type=AlgorithmDescribeBase,
             ),
         ]
@@ -325,11 +325,30 @@ class DoubleOtsu(BaseThreshold):
         return res, (thr1, thr2)
 
 
-double_threshold_dict = Register()
-
-double_threshold_dict.register(DoubleThreshold)
-double_threshold_dict.register(DoubleOtsu)
-
-
 class DoubleThresholdSelection(AlgorithmSelection):
-    __register__ = double_threshold_dict
+    pass
+
+
+DoubleThresholdSelection.register(DoubleThreshold)
+DoubleThresholdSelection.register(DoubleOtsu)
+
+double_threshold_dict = DoubleThresholdSelection.__register__
+threshold_dict = ThresholdSelection.__register__
+
+
+def __getattr__(name):
+    if name == "threshold_dict":
+        warnings.warn(
+            "threshold_dict is deprecated. Please use ThresholdSelection instead", category=FutureWarning, stacklevel=2
+        )
+        return ThresholdSelection.__register__
+
+    if name == "double_threshold_dict":
+        warnings.warn(
+            "double_threshold_dict is deprecated. Please use DoubleThresholdSelection instead",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+        return DoubleThresholdSelection.__register__
+
+    raise AttributeError(f"module {__name__} has no attribute {name}")

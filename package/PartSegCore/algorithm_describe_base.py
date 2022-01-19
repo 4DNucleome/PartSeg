@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 from pydantic import BaseModel, create_model, validator
+from pydantic.main import ModelMetaclass
 from typing_extensions import Annotated
 
 from PartSegCore.channel_class import Channel
@@ -282,7 +283,17 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             raise ValueError("Register does not contain any algorithm.")
 
 
-class AlgorithmSelection(BaseModel):
+class AddRegister(ModelMetaclass):
+    def __new__(cls, name, bases, attrs, **kwargs):
+        cls = super().__new__(cls, name, bases, attrs, **kwargs)
+        cls.__register__ = Register()
+        return cls
+
+    def __getitem__(cls, item) -> AlgorithmType:
+        return cls.__register__[item]
+
+
+class AlgorithmSelection(BaseModel, metaclass=AddRegister):
     """
     Base class for algorithm selection.
     For given algorithm there should be Register instance set __register__ class variable.
@@ -291,8 +302,8 @@ class AlgorithmSelection(BaseModel):
     name: str
     values: typing.Union[BaseModel, typing.Dict[str, typing.Any]]
     class_path: str = ""
-
-    __register__: Register = None
+    if typing.TYPE_CHECKING:
+        __register__: Register
 
     @validator("name")
     def check_name(cls, v):
@@ -306,6 +317,10 @@ class AlgorithmSelection(BaseModel):
             return v
         klass = cls.__register__[values["name"]]
         return class_to_str(klass)
+
+    @classmethod
+    def register(cls, value: AlgorithmType, replace=False):
+        cls.__register__.register(value, replace)
 
 
 class ROIExtractionProfile(BaseModel):
