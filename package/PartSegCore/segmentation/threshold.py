@@ -34,7 +34,7 @@ class BaseThreshold(AlgorithmDescribeBase, ABC):
         cls,
         data: np.ndarray,
         mask: typing.Optional[np.ndarray],
-        arguments: dict,
+        arguments: BaseModel,
         operator: typing.Callable[[object, object], bool],
     ):
         raise NotImplementedError()
@@ -50,11 +50,13 @@ class ManualThreshold(BaseThreshold):
         return [AlgorithmProperty("threshold", "Threshold", 8000.0, (-100000, 100000))]
 
     @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
-        result = np.array(operator(data, arguments["threshold"])).astype(np.uint8)
+    def calculate_mask(
+        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SingleThresholdParams, operator
+    ):
+        result = np.array(operator(data, arguments.threshold)).astype(np.uint8)
         if mask is not None:
             result[mask == 0] = 0
-        return result, arguments["threshold"]
+        return result, arguments.threshold
 
 
 class SitkThreshold(BaseThreshold, ABC):
@@ -68,16 +70,18 @@ class SitkThreshold(BaseThreshold, ABC):
         ]
 
     @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
+    def calculate_mask(
+        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SimpleITKThresholdParams, operator
+    ):
         if mask is not None and mask.dtype != np.uint8:
             mask = (mask > 0).astype(np.uint8)
         ob, bg, th_op = (0, 1, np.min) if operator(1, 0) else (1, 0, np.max)
         image_sitk = sitk.GetImageFromArray(data)
-        if arguments["masked"] and mask is not None:
+        if arguments.apply_mask and mask is not None:
             mask_sitk = sitk.GetImageFromArray(mask)
-            calculated = cls.calculate_threshold(image_sitk, mask_sitk, ob, bg, arguments["bins"], True, 1)
+            calculated = cls.calculate_threshold(image_sitk, mask_sitk, ob, bg, arguments.bins, True, 1)
         else:
-            calculated = cls.calculate_threshold(image_sitk, ob, bg, arguments["bins"])
+            calculated = cls.calculate_threshold(image_sitk, ob, bg, arguments.bins)
         result = sitk.GetArrayFromImage(calculated)
         if mask is not None:
             result[mask == 0] = 0
