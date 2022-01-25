@@ -89,7 +89,7 @@ ipykernel==6.7.0
     # via
     #   napari-console
     #   qtconsole
-ipython==8.0.0
+ipython==8.0.1
     # via
     #   ipykernel
     #   napari-console
