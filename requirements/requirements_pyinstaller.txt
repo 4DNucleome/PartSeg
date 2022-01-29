@@ -181,7 +181,7 @@ packaging==21.3
     #   pint
     #   qtpy
     #   sphinx
-pandas==1.3.5
+pandas==1.4.0
     # via
     #   -r requirements_pyinstaller.in
     #   napari
