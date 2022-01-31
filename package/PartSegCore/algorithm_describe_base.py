@@ -178,7 +178,7 @@ def is_static(fun):
     return args[0] != "self"
 
 
-AlgorithmType = typing.Type[AlgorithmDescribeBase]
+AlgorithmType = typing.TypeVar("AlgorithmType", bound=typing.Type[AlgorithmDescribeBase])
 
 
 class Register(typing.Dict, typing.Generic[AlgorithmType]):
@@ -439,7 +439,11 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
 
         res.append(
             AlgorithmProperty(
-                name=name, user_name=user_name, default_value=value.field_info.default, options_range=value_range
+                name=name,
+                user_name=user_name,
+                default_value=value.field_info.default,
+                options_range=value_range,
+                value_type=value.type_,
             )
         )
     return res
