@@ -11,7 +11,7 @@ class TestProperties:
         widget.lock_spacing.setChecked(True)
         widget.update_spacing()
         value = widget.spacing[1].value()
-        with qtbot.waitSignal(widget.spacing[2].valueChanged, timeout=10 ** 4):
+        with qtbot.waitSignal(widget.spacing[2].valueChanged, timeout=10**4):
             widget.spacing[2].setValue(value - 20)
         assert widget.spacing[1].value() == value - 20
 
@@ -30,7 +30,7 @@ class TestProperties:
         assert widget.profile_list.count() == 2
         assert widget.pipeline_list.count() == 1
         assert widget.info_label.toPlainText() == ""
-        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10 ** 4):
+        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10**4):
             widget.profile_list.setCurrentRow(1)
         profile = part_settings.roi_profiles[widget.profile_list.item(1).text()]
         assert widget.info_label.toPlainText() == profile.pretty_print(analysis_algorithm_dict)
@@ -46,7 +46,7 @@ class TestProperties:
         qtbot.addWidget(widget)
         widget.update_profile_list()
         assert widget.profile_list.count() == 2
-        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10 ** 4):
+        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10**4):
             widget.profile_list.setCurrentRow(0)
         assert widget.delete_btn.isEnabled()
         with qtbot.waitSignal(widget.delete_btn.clicked):

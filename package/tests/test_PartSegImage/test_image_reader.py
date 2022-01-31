@@ -77,19 +77,19 @@ class TestImageClass:
     def test_decode_int(self):
         assert TiffImageReader.decode_int(0) == [0, 0, 0, 0]
         assert TiffImageReader.decode_int(15) == [0, 0, 0, 15]
-        assert TiffImageReader.decode_int(3 + 7 * 256 + 11 * 256 ** 2 + 13 * 256 ** 3) == [13, 11, 7, 3]
+        assert TiffImageReader.decode_int(3 + 7 * 256 + 11 * 256**2 + 13 * 256**3) == [13, 11, 7, 3]
 
     def test_set_spacing(self):
         reader = TiffImageReader()
         reader.set_default_spacing((11, 12, 13))
         assert reader.default_spacing == (11, 12, 13)
         reader.set_default_spacing((5, 7))
-        assert reader.default_spacing == (10 ** -6, 5, 7)
+        assert reader.default_spacing == (10**-6, 5, 7)
 
     def test_obsep_read(self, data_test_dir):
         image = ObsepImageReader.read_image(os.path.join(data_test_dir, "obsep", "test.obsep"))
         assert image.channels == 2
-        assert np.allclose(image.spacing, (500 * 10 ** -9, 64 * 10 ** -9, 64 * 10 ** -9))
+        assert np.allclose(image.spacing, (500 * 10**-9, 64 * 10**-9, 64 * 10**-9))
         assert image.channel_names == ["channel 1", "channel 2"]
 
     def test_obsep_deconv_read(self, data_test_dir, tmp_path):
@@ -97,7 +97,7 @@ class TestImageClass:
             shutil.copy(os.path.join(data_test_dir, "obsep", el), tmp_path)
         image = GenericImageReader.read_image(tmp_path / "test.obsep")
         assert image.channels == 2
-        assert np.allclose(image.spacing, (500 * 10 ** -9, 64 * 10 ** -9, 64 * 10 ** -9))
+        assert np.allclose(image.spacing, (500 * 10**-9, 64 * 10**-9, 64 * 10**-9))
         assert image.channel_names == ["channel 1", "channel 2"]
         shutil.copy(tmp_path / "Cy5.TIF", tmp_path / "Cy5_decon2.TIF")
         image = GenericImageReader.read_image(tmp_path / "test.obsep")

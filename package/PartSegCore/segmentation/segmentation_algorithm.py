@@ -50,7 +50,7 @@ class ThresholdPreview(StackAlgorithm):
                 possible_values=noise_filtering_dict,
                 value_type=AlgorithmDescribeBase,
             ),
-            AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
+            AlgorithmProperty("threshold", "Threshold", 1000, (0, 10**6), 100),
         ]
 
     @classmethod
@@ -110,7 +110,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
-            AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 5), 10),
+            AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10**5), 10),
             AlgorithmProperty(
                 "smooth_border",
                 "Smooth borders",
@@ -125,7 +125,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 (True, False),
                 help_text="During calculation of connected components includes" " only side by side connected pixels",
             ),
-            AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
+            AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10**6), 1000),
             AlgorithmProperty("use_convex", "Use convex hull", False, (True, False)),
         ]
 
@@ -328,7 +328,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
-            AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 5), 10),
+            AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10**5), 10),
             AlgorithmProperty(
                 "smooth_border",
                 "Smooth borders",
@@ -343,7 +343,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
                 (True, False),
                 help_text="During calculation of connected components includes only side by side connected pixels",
             ),
-            AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
+            AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10**6), 1000),
             AlgorithmProperty(
                 "sprawl_type",
                 "Flow type",
@@ -424,7 +424,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
     @classmethod
     def get_fields(cls):
         res = super().get_fields()
-        res.insert(-1, AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000))
+        res.insert(-1, AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10**6), 1000))
         return res
 
     @classmethod
@@ -565,7 +565,7 @@ class CellFromNucleusFlow(StackAlgorithm):
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
-            AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 5), 10),
+            AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10**5), 10),
             AlgorithmProperty(
                 "smooth_border",
                 "Smooth borders",
@@ -580,7 +580,7 @@ class CellFromNucleusFlow(StackAlgorithm):
                 (True, False),
                 help_text="During calculation of connected components includes only side by side connected pixels",
             ),
-            AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
+            AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10**6), 1000),
             AlgorithmProperty("use_convex", "Use convex hull", False, (True, False)),
         ]
 

@@ -115,7 +115,7 @@ def save_stack_segmentation(
         if segmentation_info.image is not None:
             spacing = segmentation_info.image.spacing
         else:
-            spacing = parameters.get("spacing", (10 ** -6, 10 ** -6, 10 ** -6))
+            spacing = parameters.get("spacing", (10**-6, 10**-6, 10**-6))
         segmentation_image = Image(
             segmentation_info.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", "")
         )
@@ -261,7 +261,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         mask=mask,
         roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
         history=history,
-        spacing=([10 ** -9] + list(spacing)) if spacing is not None else None,
+        spacing=([10**-9] + list(spacing)) if spacing is not None else None,
     )
 
 
@@ -407,7 +407,7 @@ class LoadROIImage(LoadBase):
         if not os.path.exists(file_path):
             raise OSError(f"Base file for segmentation do not exists: {base_file} -> {file_path}")
         if metadata is None:
-            metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
+            metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
         image = GenericImageReader.read_image(
             file_path,
             callback_function=partial(proxy_callback, range_changed, step_changed),
@@ -442,7 +442,7 @@ class LoadStackImage(LoadBase):
         metadata: typing.Optional[dict] = None,
     ) -> MaskProjectTuple:
         if metadata is None:
-            metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
+            metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
         image = GenericImageReader.read_image(
             load_locations[0],
             callback_function=partial(proxy_callback, range_changed, step_changed),
@@ -479,7 +479,7 @@ class LoadStackImageWithMask(LoadBase):
         metadata: typing.Optional[dict] = None,
     ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
         if metadata is None:
-            metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
+            metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
         image = GenericImageReader.read_image(
             load_locations[0],
             load_locations[1],

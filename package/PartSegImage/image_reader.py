@@ -47,7 +47,7 @@ class BaseImageReader:
         return cls.image_class.axis_order
 
     def __init__(self, callback_function=None):
-        self.default_spacing = 10 ** -6, 10 ** -6, 10 ** -6
+        self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
         if callback_function is None:
             self.callback_function = lambda x, y: 0
@@ -58,7 +58,7 @@ class BaseImageReader:
         spacing = tuple(spacing)
         if len(spacing) == 2:
             # one micrometer
-            spacing = (10 ** -6,) + spacing
+            spacing = (10**-6,) + spacing
         if len(spacing) != 3:
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
@@ -462,17 +462,17 @@ class TiffImageReader(BaseImageReader):
 
 
 name_to_scalar = {
-    "micron": 10 ** -6,
-    "µm": 10 ** -6,
-    "um": 10 ** -6,
-    "nm": 10 ** -9,
-    "mm": 10 ** -3,
-    "millimeter": 10 ** -3,
-    "pm": 10 ** -12,
-    "picometer": 100 ** -12,
-    "nanometer": 10 ** -9,
-    "\\u00B5m": 10 ** -6,
-    "centimeter": 10 ** -2,
-    "cm": 10 ** -2,
-    "cal": 2.54 * 10 ** -2,
+    "micron": 10**-6,
+    "µm": 10**-6,
+    "um": 10**-6,
+    "nm": 10**-9,
+    "mm": 10**-3,
+    "millimeter": 10**-3,
+    "pm": 10**-12,
+    "picometer": 100**-12,
+    "nanometer": 10**-9,
+    "\\u00B5m": 10**-6,
+    "centimeter": 10**-2,
+    "cm": 10**-2,
+    "cal": 2.54 * 10**-2,
 }  #: dict with known names of scalar to scalar value. May be some missed
