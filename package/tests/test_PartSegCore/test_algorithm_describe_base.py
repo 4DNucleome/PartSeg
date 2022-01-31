@@ -76,8 +76,15 @@ def test_base_model_to_algorithm_property():
         b = 2
 
     class Sample(BaseModel):
-        field1: int = Field(0, le=100, gt=0, title="Field 1")
+        field1: int = Field(0, le=100, ge=0, title="Field 1")
         field2: SampleEnum = SampleEnum.a
 
     converted = base_model_to_algorithm_property(Sample)
     assert len(converted) == 2
+    assert converted[0].name == "field1"
+    assert converted[0].user_name == "Field 1"
+    assert converted[0].value_type is int
+    assert converted[0].range == (0, 100)
+    assert converted[1].name == "field2"
+    assert converted[1].user_name == "field2"
+    assert converted[1].value_type is SampleEnum

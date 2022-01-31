@@ -10,6 +10,7 @@ import numpy as np
 from magicgui.widgets import ComboBox, Widget, create_widget
 from napari.layers.base import Layer
 from packaging.version import parse as parse_version
+from pydantic import BaseModel
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -129,7 +130,6 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 user_name=ob.user_name,
                 default_value=ob.default_value,
                 options_range=ob.range,
-                single_steep=ob.single_step,
                 value_type=ob.value_type,
                 possible_values=ob.possible_values,
                 help_text=ob.help_text,
@@ -312,7 +312,7 @@ class FormWidget(QWidget):
 
     def __init__(
         self,
-        fields: typing.List[AlgorithmProperty],
+        fields: typing.Union[typing.List[AlgorithmProperty], BaseModel],
         start_values=None,
         dimension_num=1,
         settings: typing.Optional[BaseSettings] = None,

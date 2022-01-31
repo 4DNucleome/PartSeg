@@ -38,7 +38,6 @@ class AlgorithmProperty:
         user_name: str,
         default_value: typing.Union[str, int, float, object],
         options_range=None,
-        single_steep=None,
         possible_values=None,
         value_type=None,
         help_text="",
@@ -63,7 +62,6 @@ class AlgorithmProperty:
         self.default_value = default_value
         self.range = options_range
         self.possible_values = possible_values
-        self.single_step = single_steep
         self.help_text = help_text
         self.per_dimension = per_dimension
         if self.value_type is list and default_value not in possible_values:
@@ -107,6 +105,12 @@ class _GetDescriptionClass:
         model.__qualname__ = klass.__qualname__ + "." + name
         setattr(klass, name, model)
         return model
+
+
+def algorithm_property_list_to_base_model(
+    property_list: typing.List[typing.Union[AlgorithmProperty, str]]
+) -> typing.Tuple[Annotated, typing.Any]:
+    pass
 
 
 class AlgorithmDescribeBase(ABC):
@@ -174,7 +178,7 @@ def is_static(fun):
     return args[0] != "self"
 
 
-AlgorithmType = typing.TypeVar("AlgorithmType", bound=type(AlgorithmDescribeBase))
+AlgorithmType = typing.Type[AlgorithmDescribeBase]
 
 
 class Register(typing.Dict, typing.Generic[AlgorithmType]):
@@ -319,8 +323,8 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegister):
         return class_to_str(klass)
 
     @classmethod
-    def register(cls, value: AlgorithmType, replace=False):
-        cls.__register__.register(value, replace)
+    def register(cls, value: AlgorithmType, replace=False) -> AlgorithmType:
+        return cls.__register__.register(value, replace)
 
 
 class ROIExtractionProfile(BaseModel):
@@ -424,7 +428,18 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
     value: "ModelField"
     for name, value in obj.__fields__.items():
         user_name = value.field_info.title
+        value_range = None
         if user_name is None:
             user_name = name.replace("_", " ")
-        res.append(AlgorithmProperty(name=name, user_name=user_name, default_value=value.field_info.default))
+        if issubclass(value.type_, (int, float)):
+            value_range = (
+                value.field_info.ge or value.field_info.gt or 0,
+                value.field_info.le or value.field_info.lt or 1000,
+            )
+
+        res.append(
+            AlgorithmProperty(
+                name=name, user_name=user_name, default_value=value.field_info.default, options_range=value_range
+            )
+        )
     return res
