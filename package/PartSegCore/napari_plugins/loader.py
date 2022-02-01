@@ -59,7 +59,7 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
             )
     else:
         if isinstance(project_info, MaskProjectTuple) and project_info.spacing is not None:
-            scale = np.multiply(project_info.spacing, 10 ** 9)
+            scale = np.multiply(project_info.spacing, 10**9)
         else:
             scale = None
         if project_info.roi_info.roi is not None:

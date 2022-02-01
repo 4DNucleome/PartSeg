@@ -118,13 +118,13 @@ class TestImageView:
         assert np.any(image_view.image_info[str(tmp_path / "test2.tiff")].roi.data == 1)
         image_view.settings.set_in_profile(f"{image_view.name}.image_state.only_border", False)
         image_view.update_roi_border()
-        assert np.count_nonzero(image_view.image_info[str(tmp_path / "test2.tiff")].roi.data) == 20 ** 3 - 20
+        assert np.count_nonzero(image_view.image_info[str(tmp_path / "test2.tiff")].roi.data) == 20**3 - 20
         base_settings.roi = np.ones(base_settings.image.get_channel(0).shape, dtype=np.uint8)
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].roi.data)
-        assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].roi.scale == (1, 10 ** 6, 10 ** 6, 10 ** 6))
-        base_settings.image.set_spacing((10 ** -4,) * 3)
+        assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].roi.scale == (1, 10**6, 10**6, 10**6))
+        base_settings.image.set_spacing((10**-4,) * 3)
         image_view.update_spacing_info()
-        assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].roi.scale == (1, 10 ** 5, 10 ** 5, 10 ** 5))
+        assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].roi.scale == (1, 10**5, 10**5, 10**5))
         base_settings.roi = None
         assert not image_view.image_info[str(tmp_path / "test2.tiff")].roi.visible
         base_settings.roi = roi
@@ -159,10 +159,10 @@ class TestImageView:
         with qtbot.waitSignal(image_view.mask_chk.stateChanged):
             image_view.mask_chk.setChecked(True)
         assert image_view.image_info[str(tmp_path / "test2.tiff")].mask.visible
-        assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10 ** 6, 10 ** 6, 10 ** 6))
-        base_settings.image.set_spacing((10 ** -4,) * 3)
+        assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10**6, 10**6, 10**6))
+        base_settings.image.set_spacing((10**-4,) * 3)
         image_view.update_spacing_info()
-        assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10 ** 5, 10 ** 5, 10 ** 5))
+        assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10**5, 10**5, 10**5))
 
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_mask_control_visibility(self, base_settings, image_view, qtbot, tmp_path):
@@ -248,7 +248,7 @@ class TestImageView:
         assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
         assert not timer.isActive()
 
-    @pytest.mark.parametrize("pos", [(-(10 ** 8), -(10 ** 8)), (10 ** 8, 10 ** 8)])
+    @pytest.mark.parametrize("pos", [(-(10**8), -(10**8)), (10**8, 10**8)])
     def test_update_camera_position_component_marking(self, base_settings, image_view, pos):
         roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
         roi[..., 2:-2, 2:-2, 2:-2] = 1

@@ -228,11 +228,11 @@ class TestPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60 ** 2 * 50 + 40 * 40 * 20
+        assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60**2 * 50 + 40 * 40 * 20
 
-        assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40 ** 2 * 70
+        assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40**2 * 70
 
-        assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60 ** 2 - 40 ** 2) * 50
+        assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60**2 - 40**2) * 50
 
     def test_empty(self):
         image = get_cube_image()
@@ -274,11 +274,11 @@ class TestVolume:
     def test_scale(self):
         image = get_cube_image()
         mask1 = image.get_channel(0) > 40
-        assert Volume.calculate_property(mask1, image.spacing, 2) == 2 ** 3 * (100 * 30) * (50 * 60) * (50 * 60)
+        assert Volume.calculate_property(mask1, image.spacing, 2) == 2**3 * (100 * 30) * (50 * 60) * (50 * 60)
 
         image = get_square_image()
         mask1 = image.get_channel(0) > 40
-        assert Volume.calculate_property(mask1, image.spacing, 2) == 2 ** 2 * (50 * 60) * (50 * 60)
+        assert Volume.calculate_property(mask1, image.spacing, 2) == 2**2 * (50 * 60) * (50 * 60)
 
     def test_empty(self):
         image = get_cube_image()
@@ -313,7 +313,7 @@ class TestVoxels:
         mask3 = mask1 * ~mask2
         assert Voxels.calculate_property(mask1) == 60 * 60
         assert Voxels.calculate_property(mask2) == 40 * 40
-        assert Voxels.calculate_property(mask3) == 60 ** 2 - 40 ** 2
+        assert Voxels.calculate_property(mask3) == 60**2 - 40**2
 
     def test_empty(self):
         image = get_cube_image()
@@ -460,11 +460,11 @@ class TestMoment:
         image_array = np.zeros((10, 16, 16))
         image_array[5, 8, 8] = 1
         image_array[5, 10, 8] = 3
-        assert Moment.calculate_property(mask, image_array, spacing) == 9 ** 2 + 3 ** 2 * 3
+        assert Moment.calculate_property(mask, image_array, spacing) == 9**2 + 3**2 * 3
         image_array = np.zeros((10, 16, 16))
         image_array[5, 6, 8] = 3
         image_array[5, 10, 8] = 3
-        assert Moment.calculate_property(mask, image_array, spacing) == 3 * 2 * 12 ** 2
+        assert Moment.calculate_property(mask, image_array, spacing) == 3 * 2 * 12**2
 
     def test_density_mass_center(self):
         spacing = (10, 6, 6)
@@ -593,7 +593,7 @@ class TestSurface:
     def test_scale(self):
         image = get_cube_image()
         mask1 = image.get_channel(0)[0] > 40
-        assert Surface.calculate_property(mask1, image.spacing, 3) == 3 ** 2 * 6 * (60 * 50) ** 2
+        assert Surface.calculate_property(mask1, image.spacing, 3) == 3**2 * 6 * (60 * 50) ** 2
 
         image = get_square_image()
         mask1 = image.get_channel(0)[0] > 40
@@ -635,7 +635,7 @@ class TestRimVolume:
                 distance=10 * 50,
                 units=Units.nm,
             )
-            == np.count_nonzero(mask3) * result_scale * scale ** exp
+            == np.count_nonzero(mask3) * result_scale * scale**exp
         )
         assert (
             RimVolume.calculate_property(
@@ -787,21 +787,21 @@ class TestSphericity:
         mask1_volume = np.count_nonzero(mask1) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
-            mask1_volume / (4 / 3 * pi * mask1_radius ** 3),
+            mask1_volume / (4 / 3 * pi * mask1_radius**3),
         )
 
         mask2_radius = np.sqrt(2 * (50 * 39) ** 2 + (100 * 19) ** 2) / 2
         mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
-            mask2_volume / (4 / 3 * pi * mask2_radius ** 3),
+            mask2_volume / (4 / 3 * pi * mask2_radius**3),
         )
 
         mask3_radius = mask1_radius
         mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
-            mask3_volume / (4 / 3 * pi * mask3_radius ** 3),
+            mask3_volume / (4 / 3 * pi * mask3_radius**3),
         )
 
     def test_square(self):
@@ -813,21 +813,21 @@ class TestSphericity:
         mask1_volume = np.count_nonzero(mask1) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
-            mask1_volume / (pi * mask1_radius ** 2),
+            mask1_volume / (pi * mask1_radius**2),
         )
 
         mask2_radius = np.sqrt(2 * (50 * 39) ** 2) / 2
         mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
-            mask2_volume / (pi * mask2_radius ** 2),
+            mask2_volume / (pi * mask2_radius**2),
         )
 
         mask3_radius = mask1_radius
         mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
-            mask3_volume / (pi * mask3_radius ** 2),
+            mask3_volume / (pi * mask3_radius**2),
         )
 
 
@@ -1283,7 +1283,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 ** 2 - 40 ** 2) * result_scale
+            == (60**2 - 40**2) * result_scale
         )
 
         assert (
@@ -1296,7 +1296,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 30 ** 2) * result_scale
+            == (60 * 60 - 30**2) * result_scale
         )
 
         assert (
@@ -1356,7 +1356,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 ** 2 - 44 * 44) * result_scale
+            == (60**2 - 44 * 44) * result_scale
         )
 
         assert (
@@ -1481,10 +1481,10 @@ class TestSplitOnPartPixelBrightnessSum:
         "nr, sum_val, diff_array, equal_volume",
         [
             (3, (60 * 60 - 40 * 40) * 50, False, False),
-            (2, (60 ** 2 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
+            (2, (60**2 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
             (3, 0, True, False),
-            (2, (40 ** 2 - 30 ** 2) * 70, True, False),
-            (3, (60 * 60 - 50 ** 2) * 50, False, True),
+            (2, (40**2 - 30**2) * 70, True, False),
+            (3, (60 * 60 - 50**2) * 50, False, True),
             (2, (60 * 60 - 44 * 44) * 50, False, True),
             (3, 0, True, True),
             (2, 0, True, True),
@@ -2210,7 +2210,7 @@ class TestROINeighbourhoodROI:
         data[0, 2:-2, 2:-2, 2:-12] = 5
         data[1, 2:-2, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2, 2:-2] = 5
-        image = Image(data, image_spacing=(100 * (10 ** -9),) * 3, axes_order="CZYX")
+        image = Image(data, image_spacing=(100 * (10**-9),) * 3, axes_order="CZYX")
         roi = (data[0] > 1).astype(np.uint8)
         kwargs = {
             "image": image,
@@ -2225,7 +2225,7 @@ class TestROINeighbourhoodROI:
         kwargs["distance"] = 1000
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
         data[1, 3:-3, 3:-3, 3:10] = 5
-        image = Image(data, image_spacing=(100 * (10 ** -9),) * 3, axes_order="CZYX")
+        image = Image(data, image_spacing=(100 * (10**-9),) * 3, axes_order="CZYX")
         kwargs["image"] = image
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
         kwargs["distance"] = 100
@@ -2236,7 +2236,7 @@ class TestROINeighbourhoodROI:
         data[0, 2:-2, 2:-12] = 5
         data[1, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2] = 5
-        image = Image(data, image_spacing=(100 * (10 ** -9),) * 2, axes_order="CYX")
+        image = Image(data, image_spacing=(100 * (10**-9),) * 2, axes_order="CYX")
         roi = (data[:1] > 1).astype(np.uint8)
         kwargs = {
             "image": image,
@@ -2251,7 +2251,7 @@ class TestROINeighbourhoodROI:
         kwargs["distance"] = 1000
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
         data[1, 3:-3, 3:10] = 5
-        image = Image(data, image_spacing=(100 * (10 ** -9),) * 2, axes_order="CYX")
+        image = Image(data, image_spacing=(100 * (10**-9),) * 2, axes_order="CYX")
         kwargs["image"] = image
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
         kwargs["distance"] = 100
@@ -2300,7 +2300,7 @@ def test_per_component(method, area):
     data[1:-1, 6, 6] = 5
     roi = (data[..., 0] > 2).astype(np.uint8)
     mask = (data[..., 0] > 0).astype(np.uint8)
-    image = Image(data, image_spacing=(10 ** -8,) * 3, axes_order="ZYXC")
+    image = Image(data, image_spacing=(10**-8,) * 3, axes_order="ZYXC")
     image.set_mask(mask, axes="ZYX")
 
     statistics = [

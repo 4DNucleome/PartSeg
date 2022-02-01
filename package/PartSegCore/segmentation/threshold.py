@@ -66,7 +66,7 @@ class SitkThreshold(BaseThreshold, ABC):
     def get_fields(cls):
         return [
             AlgorithmProperty("masked", "Apply mask", True),
-            AlgorithmProperty("bins", "histogram bins", cls.bins_num, (8, 2 ** 16)),
+            AlgorithmProperty("bins", "histogram bins", cls.bins_num, (8, 2**16)),
         ]
 
     @classmethod
@@ -310,7 +310,7 @@ class DoubleOtsu(BaseThreshold):
     def get_fields(cls):
         return [  # AlgorithmProperty("mask", "Use mask in calculation", True),
             AlgorithmProperty("valley", "Valley emphasis", True),
-            AlgorithmProperty("hist_num", "Histogram bins", 128, (8, 2 ** 16)),
+            AlgorithmProperty("hist_num", "Histogram bins", 128, (8, 2**16)),
         ]
 
     @classmethod

@@ -39,7 +39,7 @@ def test_ome_save(tmp_path, bundle_test_dir, ome_xml, z_size):
     data = np.zeros((z_size, 20, 20, 2), dtype=np.uint8)
     image = Image(
         data,
-        image_spacing=(27 * 10 ** -6, 6 * 10 ** -6, 6 * 10 ** -6),
+        image_spacing=(27 * 10**-6, 6 * 10**-6, 6 * 10**-6),
         axes_order="ZYXC",
         channel_names=["a", "b"],
         shift=(10, 9, 8),

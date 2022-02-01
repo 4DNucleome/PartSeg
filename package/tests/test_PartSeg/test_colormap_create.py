@@ -280,7 +280,7 @@ class TestColormapList:
         color_list = PColormapList(settings, ["test"])
         qtbot.addWidget(color_list)
         image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
-        with qtbot.wait_signal(image_view.image_added, timeout=10 ** 6):
+        with qtbot.wait_signal(image_view.image_added, timeout=10**6):
             settings.image = image
         color_list.refresh()
         assert image_view.channel_control.channels_count == image.channels

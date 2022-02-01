@@ -763,7 +763,7 @@ class TestSegmentationInfo:
         assert np.all(si.bound_info[1].lower == 0)
         assert np.all(si.bound_info[1].upper == 9)
         assert len(si.sizes) == 2
-        assert np.all(si.sizes == [0, 10 ** dims])
+        assert np.all(si.sizes == [0, 10**dims])
 
     @pytest.mark.parametrize("comp_num", [2, 4, 8])
     def test_multiple_components(self, comp_num):

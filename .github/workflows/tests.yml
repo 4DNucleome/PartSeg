@@ -72,15 +72,27 @@ jobs:
       run: |
         python -m pip install -r requirements/requirements_dev.txt tox-gh-actions
 
-    - name: Test with tox
+    - name: Test with tox linux
       # run tests using pip install --pre
+      if: runner.os == 'Linux'
       uses: GabrielBB/xvfb-action@v1
       timeout-minutes: 60
       with:
         run: tox
       env:
+        PLATFORM: ${{ matrix.platform }}
+        PYVISTA_OFF_SCREEN: True  # required for opengl on windows
         NAPARI: None
 
+    - name: Test with tox linux
+      # run tests using pip install --pre
+      if: runner.os != 'Linux'
+      timeout-minutes: 60
+      run: tox
+      env:
+        PLATFORM: ${{ matrix.platform }}
+        PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+        NAPARI: None
 
   test_feature:
     name: PartSeg on ${{ matrix.os }} py ${{ matrix.python_version }}

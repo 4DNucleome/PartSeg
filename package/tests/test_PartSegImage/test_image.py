@@ -90,11 +90,11 @@ class TestImageBase:
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
         assert image.mask.dtype == np.uint16
 
-        mask_base[: 2 ** 16 + 5] = np.arange(2 ** 16 + 5, dtype=np.uint32)
+        mask_base[: 2**16 + 5] = np.arange(2**16 + 5, dtype=np.uint32)
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
         assert image.mask.dtype == np.uint32
 
-        mask_base[: 2 ** 16 + 5] = np.arange(2 ** 16 + 5, dtype=np.uint32) + 5
+        mask_base[: 2**16 + 5] = np.arange(2**16 + 5, dtype=np.uint32) + 5
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
         assert image.mask.dtype == np.uint32
 
@@ -334,11 +334,11 @@ class TestImageBase:
 
     def test_get_um_spacing(self):
         image = self.image_class(
-            np.zeros((1, 10, 20, 30, 3), np.uint8), (10 ** -6, 10 ** -6, 10 ** -6), "", axes_order="TZYXC"
+            np.zeros((1, 10, 20, 30, 3), np.uint8), (10**-6, 10**-6, 10**-6), "", axes_order="TZYXC"
         )
         assert image.get_um_spacing() == (1, 1, 1)
         image = self.image_class(
-            np.zeros((1, 1, 20, 30, 3), np.uint8), (10 ** -6, 10 ** -6, 10 ** -6), "", axes_order="TZYXC"
+            np.zeros((1, 1, 20, 30, 3), np.uint8), (10**-6, 10**-6, 10**-6), "", axes_order="TZYXC"
         )
         assert image.get_um_spacing() == (1, 1)
 
@@ -347,7 +347,7 @@ class TestImageBase:
         data[..., :10, 0] = 2
         data[..., :10, 1] = 20
         data[..., :10, 2] = 9
-        image = self.image_class(data, (10 ** -6, 10 ** -6, 10 ** -6), "", axes_order="TZYXC")
+        image = self.image_class(data, (10**-6, 10**-6, 10**-6), "", axes_order="TZYXC")
         mask = np.zeros((10, 20, 30), np.uint8)
         mask[..., 2:12] = 1
         image.set_mask(mask, "ZYX")
