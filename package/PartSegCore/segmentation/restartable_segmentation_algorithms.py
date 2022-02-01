@@ -138,7 +138,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                 possible_values=noise_filtering_dict,
                 value_type=AlgorithmDescribeBase,
             ),
-            AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
+            AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10**6), 1000),
             AlgorithmProperty(
                 "side_connection",
                 "Connect only sides",
@@ -356,8 +356,8 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
     @classmethod
     def get_fields(cls):
         fields = super().get_fields()
-        fields.insert(2, AlgorithmProperty("lower_threshold", "Lower threshold", 10000, (0, 10 ** 6), 100))
-        fields.insert(3, AlgorithmProperty("upper_threshold", "Upper threshold", 10000, (0, 10 ** 6), 100))
+        fields.insert(2, AlgorithmProperty("lower_threshold", "Lower threshold", 10000, (0, 10**6), 100))
+        fields.insert(3, AlgorithmProperty("upper_threshold", "Upper threshold", 10000, (0, 10**6), 100))
         return fields
 
     @classmethod
@@ -411,7 +411,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 break
         else:
             raise ValueError("No minimum size field")
-        fields[index] = AlgorithmProperty("minimum_size", "Minimum core\nsize (px)", 8000, (0, 10 ** 6), 1000)
+        fields[index] = AlgorithmProperty("minimum_size", "Minimum core\nsize (px)", 8000, (0, 10**6), 1000)
         return fields
 
     def get_info_text(self):
@@ -522,7 +522,7 @@ class OtsuSegment(RestartableAlgorithm):
             AlgorithmProperty("components", "Number of Components", 2, (0, 100)),
             # AlgorithmProperty("mask", "Use mask in calculation", True),
             AlgorithmProperty("valley", "Valley emphasis", True),
-            AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16)),
+            AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2**16)),
         ]
 
     def __init__(self):

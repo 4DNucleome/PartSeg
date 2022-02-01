@@ -288,10 +288,10 @@ class ChannelProperty(QWidget):
         self.widget_dict: typing.Dict[str, ColorComboBoxGroup] = {}
 
         self.minimum_value = CustomSpinBox(self)
-        self.minimum_value.setRange(-(10 ** 6), 10 ** 6)
+        self.minimum_value.setRange(-(10**6), 10**6)
         self.minimum_value.valueChanged.connect(self.range_changed)
         self.maximum_value = CustomSpinBox(self)
-        self.maximum_value.setRange(-(10 ** 6), 10 ** 6)
+        self.maximum_value.setRange(-(10**6), 10**6)
         self.maximum_value.valueChanged.connect(self.range_changed)
         self.fixed = QCheckBox("Fix range")
         self.fixed.stateChanged.connect(self.lock_channel)

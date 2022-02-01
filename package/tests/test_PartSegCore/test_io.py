@@ -393,7 +393,7 @@ class TestSegmentationMask:
         SaveROI.save(
             os.path.join(tmpdir, "segmentation1.seg"),
             seg_clean,
-            {"relative_path": False, "spacing": (210 * 10 ** -6, 70 * 10 ** -6, 70 * 10 ** -6)},
+            {"relative_path": False, "spacing": (210 * 10**-6, 70 * 10**-6, 70 * 10**-6)},
         )
 
     def test_loading_new_segmentation(self, tmpdir, data_test_dir):

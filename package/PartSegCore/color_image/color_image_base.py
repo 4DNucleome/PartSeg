@@ -35,7 +35,7 @@ def create_color_map(colormap_definition: BaseColormap, power: float = 1.0) -> n
     if len(bounds) == 1:
         colormap[:] = values[0]
         return colormap
-    _bounds = [x ** power * ((resolution - 1) / resolution) for x in bounds]
+    _bounds = [x**power * ((resolution - 1) / resolution) for x in bounds]
     bounds = [_bounds[0]]
     _values = values
     values = [_values[0]]

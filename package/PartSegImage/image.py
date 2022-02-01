@@ -12,7 +12,7 @@ Spacing = typing.Tuple[typing.Union[float, int], ...]
 _DEF = object()
 FRAME_THICKNESS = 2
 
-DEFAULT_SCALE_FACTOR = 10 ** 9
+DEFAULT_SCALE_FACTOR = 10**9
 
 
 def minimal_dtype(val: int):
@@ -25,7 +25,7 @@ def minimal_dtype(val: int):
     """
     if val < 250:
         return np.uint8
-    if val < 2 ** 16 - 5:
+    if val < 2**16 - 5:
         return np.uint16
     return np.uint32
 
@@ -119,7 +119,7 @@ class Image:
             image_spacing = tuple(image_spacing)
         self._image_array = self.reorder_axes(data, axes_order)
         self._image_spacing = (1.0,) * (3 - len(image_spacing)) + image_spacing
-        self._image_spacing = tuple(el if el > 0 else 10 ** -6 for el in self._image_spacing)
+        self._image_spacing = tuple(el if el > 0 else 10**-6 for el in self._image_spacing)
 
         self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
         self.name = name
@@ -693,11 +693,11 @@ class Image:
 
     def get_um_spacing(self) -> Spacing:
         """image spacing in micrometers"""
-        return tuple(float(x * 10 ** 6) for x in self.spacing)
+        return tuple(float(x * 10**6) for x in self.spacing)
 
     def get_um_shift(self) -> Spacing:
         """image spacing in micrometers"""
-        return tuple(float(x * 10 ** 6) for x in self.shift)
+        return tuple(float(x * 10**6) for x in self.shift)
 
     def get_ranges(self) -> typing.List[typing.Tuple[float, float]]:
         """image brightness ranges for each channel"""

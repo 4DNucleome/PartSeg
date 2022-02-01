@@ -225,7 +225,7 @@ class LoadImageMask(LoadBase):
         metadata: typing.Optional[dict] = None,
     ):
         if metadata is None:
-            metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
+            metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
         if len(load_locations) == 1:
             new_path, ext = os.path.splitext(load_locations[0])
             new_path += "_mask" + ext

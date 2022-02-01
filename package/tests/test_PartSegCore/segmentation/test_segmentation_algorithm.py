@@ -67,5 +67,5 @@ def test_close_small_holes(ndim, dtype):
     data[(slice(1, -1),) * ndim] = 1
     copy = data.copy()
     data[(slice(3, -3),) * ndim] = 0
-    res = close_small_holes(data, 5 ** 2)
+    res = close_small_holes(data, 5**2)
     assert np.all(res == copy)

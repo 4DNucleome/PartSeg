@@ -1088,7 +1088,7 @@ class Compactness(MeasurementMethodBase):
         else:
             border_surface = Surface.calculate_property(**kwargs)
             volume = Volume.calculate_property(**kwargs)
-        return border_surface ** 1.5 / volume
+        return border_surface**1.5 / volume
 
     @classmethod
     def get_units(cls, ndim):
@@ -1126,8 +1126,8 @@ class Sphericity(MeasurementMethodBase):
             diameter_val = help_dict[diameter_hash_str]
         radius = diameter_val / 2
         if kwargs["area_array"].shape[0] > 1:
-            return volume / (4 / 3 * pi * (radius ** 3))
-        return volume / (pi * (radius ** 2))
+            return volume / (4 / 3 * pi * (radius**3))
+        return volume / (pi * (radius**2))
 
     @classmethod
     def get_units(cls, ndim):
@@ -1650,7 +1650,7 @@ class ColocalizationMeasurement(MeasurementMethodBase):
             return nominator / numerator
         if colocalization == CorrelationEnum.manders:
             nominator = np.sum(data_1 * data_2)
-            numerator = np.sqrt(np.sum(data_1 ** 2) * np.sum(data_2 ** 2))
+            numerator = np.sqrt(np.sum(data_1**2) * np.sum(data_2**2))
             return nominator / numerator
         if colocalization == CorrelationEnum.intensity:
             data_1_mean = np.mean(data_1)

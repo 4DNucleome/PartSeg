@@ -16,7 +16,7 @@ from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_da
 def test_message_clip(monkeypatch):
     message = "a" * 5000
     assert len(sentry_sdk.utils.strip_string(message).value) == 512
-    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10 ** 4)
+    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
     assert len(sentry_sdk.utils.strip_string(message)) == 5000
 
 
@@ -30,7 +30,7 @@ def test_sentry_serialize_clip(monkeypatch):
 
         cliped = serialize(event)
         assert len(cliped["message"]) == 512
-        monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10 ** 4)
+        monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
         cliped = serialize(event)
         assert len(cliped["message"]) == 5000
 
@@ -84,7 +84,7 @@ def test_sentry_report(monkeypatch):
 def test_sentry_report_no_clip(monkeypatch):
     message = "a" * 5000
     happen = [False]
-    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10 ** 4)
+    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
 
     def check_event(event):
         happen[0] = True
