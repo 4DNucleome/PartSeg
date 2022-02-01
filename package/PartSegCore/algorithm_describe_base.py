@@ -429,6 +429,9 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
     for name, value in obj.__fields__.items():
         user_name = value.field_info.title
         value_range = None
+        possible_values = None
+        value_type = value.type_
+        default_value = value.field_info.default
         if user_name is None:
             user_name = name.replace("_", " ")
         if issubclass(value.type_, (int, float)):
@@ -436,14 +439,19 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
                 value.field_info.ge or value.field_info.gt or 0,
                 value.field_info.le or value.field_info.lt or 1000,
             )
+        if issubclass(value.type_, AlgorithmSelection):
+            value_type = AlgorithmDescribeBase
+            default_value = value.field_info.default.name
+            possible_values = value.type_.__register__
 
         res.append(
             AlgorithmProperty(
                 name=name,
                 user_name=user_name,
-                default_value=value.field_info.default,
+                default_value=default_value,
                 options_range=value_range,
-                value_type=value.type_,
+                value_type=value_type,
+                possible_values=possible_values,
             )
         )
     return res

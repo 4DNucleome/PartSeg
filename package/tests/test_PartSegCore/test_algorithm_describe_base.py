@@ -102,3 +102,40 @@ def test_base_model_to_algorithm_property_base():
     assert converted[3].value_type is Channel
     assert converted[3].name == "channel"
     assert converted[3].user_name == "Channel"
+
+
+def test_base_model_to_algorithm_property_algorithm_describe_base():
+    class SampleSelection(AlgorithmSelection):
+        pass
+
+    class SampleClass1(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls) -> str:
+            return "1"
+
+        @classmethod
+        def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+            return []
+
+    class SampleClass2(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls) -> str:
+            return "2"
+
+        @classmethod
+        def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+            return []
+
+    SampleSelection.register(SampleClass1)
+    SampleSelection.register(SampleClass2)
+
+    class SampleModel(BaseModel):
+        field1: int = Field(10, le=100, ge=0, title="Field 1")
+        check_selection: SampleSelection = Field(SampleSelection(name="1", values={}), title="Class selection")
+
+    converted = base_model_to_algorithm_property(SampleModel)
+    assert len(converted) == 2
+    assert issubclass(converted[0].value_type, int)
+    assert issubclass(converted[1].value_type, AlgorithmDescribeBase)
+    assert converted[1].default_value == "1"
+    assert converted[1].possible_values is SampleSelection.__register__
