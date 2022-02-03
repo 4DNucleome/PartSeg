@@ -30,7 +30,12 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 from PartSeg.common_gui.error_report import ErrorDialog
-from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import (
+    AlgorithmDescribeBase,
+    AlgorithmProperty,
+    ROIExtractionProfile,
+    base_model_to_algorithm_property,
+)
 from PartSegCore.channel_class import Channel
 from PartSegCore.segmentation.algorithm_base import (
     ROIExtractionAlgorithm,
@@ -312,7 +317,7 @@ class FormWidget(QWidget):
 
     def __init__(
         self,
-        fields: typing.Union[typing.List[AlgorithmProperty], BaseModel],
+        fields: typing.Union[typing.List[AlgorithmProperty], typing.Type[BaseModel]],
         start_values=None,
         dimension_num=1,
         settings: typing.Optional[BaseSettings] = None,
@@ -325,6 +330,10 @@ class FormWidget(QWidget):
         layout = QFormLayout()
         layout.setContentsMargins(10, 0, 10, 0)
         # layout.setVerticalSpacing(0)
+        self._model_class = None
+        if not isinstance(fields, list):
+            self._model_class = fields
+            fields = base_model_to_algorithm_property(fields)
         element_list = self._element_list(fields)
         for el in element_list:
             if isinstance(el, QLabel):
@@ -373,7 +382,10 @@ class FormWidget(QWidget):
         self.setMinimumHeight(self.layout().minimumSize().height())
 
     def get_values(self):
-        return {name: el.get_value() for name, el in self.widgets_dict.items()}
+        res = {name: el.get_value() for name, el in self.widgets_dict.items()}
+        if self._model_class is not None:
+            return self._model_class(**res)
+        return res
 
     def recursive_get_values(self):
         return {name: el.recursive_get_values() for name, el in self.widgets_dict.items()}

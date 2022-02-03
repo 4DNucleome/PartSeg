@@ -2,6 +2,7 @@
 import os
 import platform
 import sys
+import typing
 from enum import Enum
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -9,10 +10,12 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 import qtpy
+from pydantic import BaseModel, Field
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import QFileDialog, QMainWindow, QWidget
 
 from PartSeg.common_gui import select_multiple_files
+from PartSeg.common_gui.algorithms_description import FormWidget
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, IOMethodMock, LoadProperty, PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
@@ -21,7 +24,7 @@ from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFil
 from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
-from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, AlgorithmSelection, Register
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
@@ -538,7 +541,7 @@ class TestQtPopup:
         with pytest.raises(ValueError):
             popup.move_to()
 
-    @pytest.mark.parametrize("pos", ["top", "bottom", "left", "right"])
+    @pytest.mark.parametrize("pos", ["top", "bottom", "left", "right", (10, 10, 10, 10), (15, 10, 10, 10)])
     def test_move_to(self, pos, qtbot):
         window = QMainWindow()
         qtbot.addWidget(window)
@@ -559,15 +562,6 @@ class TestQtPopup:
         with pytest.raises(ValueError):
             popup.move_to({})
 
-    @pytest.mark.parametrize("pos", [[10, 10, 10, 10], (15, 10, 10, 10)])
-    def test_move_to_cords(self, pos, qtbot):
-        window = QMainWindow()
-        qtbot.addWidget(window)
-        widget = QWidget()
-        window.setCentralWidget(widget)
-        popup = QtPopup(widget)
-        popup.move_to(pos)
-
     def test_click(self, qtbot, monkeypatch):
         popup = QtPopup(None)
         monkeypatch.setattr(popup, "close", MagicMock())
@@ -582,3 +576,91 @@ class TestQtPopup:
 def test_IOMethodMock(function_name):
     Register.check_function(IOMethodMock("test"), function_name, True)
     getattr(IOMethodMock("test"), function_name)()
+
+
+class TestFormWidget:
+    def test_create(self, qtbot):
+        form = FormWidget([])
+        qtbot.add_widget(form)
+        assert not form.has_elements()
+        assert form.get_values() == {}
+
+    def test_single_field_widget(self, qtbot):
+        form = FormWidget([AlgorithmProperty("test", "Test", 1)])
+        qtbot.add_widget(form)
+        assert form.has_elements()
+        assert form.get_values() == {"test": 1}
+
+    def test_single_field_widget_start_values(self, qtbot):
+        form = FormWidget([AlgorithmProperty("test", "Test", 1)], start_values={"test": 2})
+        qtbot.add_widget(form)
+        assert form.has_elements()
+        assert form.get_values() == {"test": 2}
+
+    def test_single_field_widget_wrong_start_values(self, qtbot):
+        form = FormWidget([AlgorithmProperty("test", "Test", 1)], start_values={"test": "aaa"})
+        qtbot.add_widget(form)
+        assert form.has_elements()
+        assert form.get_values() == {"test": 1}
+
+    def test_base_model_simple_create(self, qtbot):
+        class Fields(BaseModel):
+            test: int = 5
+
+        form = FormWidget(Fields)
+        qtbot.add_widget(form)
+        assert form.has_elements()
+        assert isinstance(form.get_values(), Fields)
+        assert form.get_values() == Fields(test=5)
+
+    def test_base_model_nested_create(self, qtbot):
+        class SubFields(BaseModel):
+            field1: int = 0
+            field2: float = 0
+
+        class Fields(BaseModel):
+            test1: SubFields = SubFields(field1=5, field2=7)
+            test2: SubFields = SubFields(field1=15, field2=41)
+
+        form = FormWidget(Fields)
+        qtbot.add_widget(form)
+        assert form.has_elements()
+        assert isinstance(form.get_values(), Fields)
+        assert form.get_values() == Fields(test1=SubFields(field1=5, field2=7), test2=SubFields(field1=15, field2=41))
+
+    def test_base_model_register_create(self, qtbot):
+        class SampleSelection(AlgorithmSelection):
+            pass
+
+        class SampleClass1(AlgorithmDescribeBase):
+            @classmethod
+            def get_name(cls) -> str:
+                return "1"
+
+            @classmethod
+            def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+                return [AlgorithmProperty("field", "Field", 1)]
+
+        class SampleClass2(AlgorithmDescribeBase):
+            @classmethod
+            def get_name(cls) -> str:
+                return "2"
+
+            @classmethod
+            def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+                return [AlgorithmProperty("field_", "Field", 2)]
+
+        SampleSelection.register(SampleClass1)
+        SampleSelection.register(SampleClass2)
+
+        class SampleModel(BaseModel):
+            field1: int = Field(10, le=100, ge=0, title="Field 1")
+            check_selection: SampleSelection = Field(SampleSelection(name="1", values={}), title="Class selection")
+
+        form = FormWidget(SampleModel)
+        qtbot.add_widget(form)
+        assert form.has_elements()
+        assert isinstance(form.get_values(), SampleModel)
+        assert form.get_values() == SampleModel(
+            field1=10, check_selection=SampleSelection(name="1", values={"field": 1})
+        )
