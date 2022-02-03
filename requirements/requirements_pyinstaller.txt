@@ -270,7 +270,7 @@ qtawesome==1.1.1
     # via -r requirements_pyinstaller.in
 qtconsole==5.2.2
     # via napari-console
-qtpy==2.0.0
+qtpy==2.0.1
     # via
     #   -r requirements_pyinstaller.in
     #   magicgui
