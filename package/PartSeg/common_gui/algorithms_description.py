@@ -422,8 +422,7 @@ class SubAlgorithmWidget(QWidget):
         self.property = algorithm_property
         self.widgets_dict: typing.Dict[str, FormWidget] = {}
         # TODO protect for recursion
-        widget = FormWidget(algorithm_property.possible_values[algorithm_property.default_value].get_fields())
-        widget.layout().setContentsMargins(0, 0, 0, 0)
+        widget = self._get_form_widget(algorithm_property)
         widget.value_changed.connect(self.values_changed)
 
         self.widgets_dict[algorithm_property.default_value] = widget
@@ -446,6 +445,19 @@ class SubAlgorithmWidget(QWidget):
         layout.addWidget(tmp_widget)
         self.tmp_widget = tmp_widget
         self.setLayout(layout)
+
+    @staticmethod
+    def _get_form_widget(algorithm_property, start_values=None):
+        calc_class = algorithm_property.possible_values[algorithm_property.default_value]
+        if hasattr(calc_class, "__argument_class__") and calc_class.__argument_class__ is not None:
+            widget = FormWidget(calc_class.__argument_class__, start_values=start_values)
+        else:
+            widget = FormWidget(
+                algorithm_property.possible_values[algorithm_property.default_value].get_fields(),
+                start_values=start_values,
+            )
+        widget.layout().setContentsMargins(0, 0, 0, 0)
+        return widget
 
     def set_starting(self, starting_values):
         self.starting_values = starting_values
@@ -479,13 +491,8 @@ class SubAlgorithmWidget(QWidget):
             if name not in self.property.possible_values:
                 return
             start_dict = {} if name not in self.starting_values else self.starting_values[name]
-            try:
-                self.widgets_dict[name] = FormWidget(
-                    self.property.possible_values[name].get_fields(), start_values=start_dict
-                )
-            except KeyError as e:
-                raise e
-            self.widgets_dict[name].layout().setContentsMargins(0, 0, 0, 0)
+            self.widgets_dict[name] = self._get_form_widget(self.property.possible_values[name], start_dict)
+
             self.layout().addWidget(self.widgets_dict[name])
             self.widgets_dict[name].value_changed.connect(self.values_changed)
         widget = self.widgets_dict[name]

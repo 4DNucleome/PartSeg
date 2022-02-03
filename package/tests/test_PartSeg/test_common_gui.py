@@ -664,3 +664,43 @@ class TestFormWidget:
         assert form.get_values() == SampleModel(
             field1=10, check_selection=SampleSelection(name="1", values={"field": 1})
         )
+
+    def test_base_model_register_nested_create(self, qtbot):
+        class SampleSelection(AlgorithmSelection):
+            pass
+
+        class SubModel1(BaseModel):
+            field1: int = 3
+
+        class SubModel2(BaseModel):
+            field2: int = 5
+
+        class SampleClass1(AlgorithmDescribeBase):
+            __argument_class__ = SubModel1
+
+            @classmethod
+            def get_name(cls) -> str:
+                return "1"
+
+        class SampleClass2(AlgorithmDescribeBase):
+            __argument_class__ = SubModel2
+
+            @classmethod
+            def get_name(cls) -> str:
+                return "2"
+
+        SampleSelection.register(SampleClass1)
+        SampleSelection.register(SampleClass2)
+
+        class SampleModel(BaseModel):
+            field1: int = Field(10, le=100, ge=0, title="Field 1")
+            check_selection: SampleSelection = Field(SampleSelection(name="1", values={}), title="Class selection")
+
+        form = FormWidget(SampleModel)
+        qtbot.add_widget(form)
+        assert form.has_elements()
+        assert isinstance(form.get_values(), SampleModel)
+        assert isinstance(form.get_values().check_selection.values, SubModel1)
+        assert form.get_values() == SampleModel(
+            field1=10, check_selection=SampleSelection(name="1", values=SubModel1(field1=3))
+        )

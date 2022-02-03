@@ -120,6 +120,8 @@ class AlgorithmDescribeBase(ABC):
     For each group of algorithm base abstract class will add additional methods
     """
 
+    __argument_class__ = None
+
     @classmethod
     def get_doc_from_fields(cls):
         resp = "{\n"
@@ -144,13 +146,19 @@ class AlgorithmDescribeBase(ABC):
         raise NotImplementedError()
 
     @classmethod
-    @abstractmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         """
         This function return list of parameters needed by algorithm. It is used for generate form in User Interface
 
         :return: list of algorithm parameters and comments
         """
+        if hasattr(cls, "__argument_class__") and cls.__argument_class__ is not None:
+            warnings.warn(
+                "Class has __argument_class__ defined, one should not use get_fields",
+                category=FutureWarning,
+                stacklevel=2,
+            )
+            return base_model_to_algorithm_property(cls.__argument_class__)
         raise NotImplementedError()
 
     @classmethod
