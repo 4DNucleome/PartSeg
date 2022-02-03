@@ -12,7 +12,7 @@ from PartSegCore.algorithm_describe_base import (
     base_model_to_algorithm_property,
 )
 from PartSegCore.channel_class import Channel
-from PartSegCore.class_register import class_to_str
+from PartSegCore.class_register import class_to_str, register_class
 
 
 def test_get_description_class():
@@ -64,11 +64,50 @@ def test_algorithm_selection():
     v = TestSelection(name="test1", values={})
     assert v.name == "test1"
     assert v.class_path == class_to_str(Class1)
+    assert v.values == {}
 
     with pytest.raises(ValidationError):
         TestSelection(name="test3", values={})
 
     assert TestSelection["test1"] is Class1
+
+
+def test_algorithm_selection_convert_subclass(clean_register):
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    @register_class
+    class TestModel1(BaseModel):
+        field1: int = 0
+
+    @register_class(version="0.0.1", migrations=[("0.0.1", lambda x: {"field2": x["field"]})])
+    class TestModel2(BaseModel):
+        field2: int = 7
+
+    class Class1(AlgorithmDescribeBase):
+        __argument_class__ = TestModel1
+
+        @classmethod
+        def get_name(cls) -> str:
+            return "test1"
+
+    class Class2(AlgorithmDescribeBase):
+        __argument_class__ = TestModel2
+
+        @classmethod
+        def get_name(cls) -> str:
+            return "test2"
+
+    TestSelection.register(Class1)
+    TestSelection.register(Class2)
+
+    ob = TestSelection(name="test1", values={"field1": 4})
+    assert isinstance(ob.values, TestModel1)
+    assert ob.values.field1 == 4
+
+    ob = TestSelection(name="test2", values={"field": 5})
+    assert isinstance(ob.values, TestModel2)
+    assert ob.values.field2 == 5
 
 
 def test_base_model_to_algorithm_property_base():

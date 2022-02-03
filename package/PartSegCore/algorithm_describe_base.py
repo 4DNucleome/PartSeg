@@ -330,6 +330,18 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegister):
         klass = cls.__register__[values["name"]]
         return class_to_str(klass)
 
+    @validator("values", pre=True)
+    def update_values(cls, v, values):
+        if "name" not in values or not isinstance(v, dict):
+            return v
+        klass = cls.__register__[values["name"]]
+        if not (hasattr(klass, "__argument_class__") and klass.__argument_class__ is not None):
+            return v
+        from .json_hooks import REGISTER
+
+        dkt_migrated = REGISTER.migrate_data(class_to_str(klass.__argument_class__), "0.0.0", v)
+        return klass.__argument_class__(**dkt_migrated)
+
     @classmethod
     def register(cls, value: AlgorithmType, replace=False) -> AlgorithmType:
         return cls.__register__.register(value, replace)

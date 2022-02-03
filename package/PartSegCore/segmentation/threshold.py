@@ -4,7 +4,7 @@ from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field
 
 from PartSegCore.class_register import register_class, rename_key
 
@@ -19,13 +19,7 @@ class SingleThresholdParams(BaseModel):
 @register_class(version="0.0.1", migrations=[("0.0.0", rename_key("masked", "apply_mask"))])
 class SimpleITKThresholdParams(BaseModel):
     apply_mask: bool = Field(True, title="Apply mask", description="If apply mask before calculate threshold")
-    bins: int = Field(128, title="Histogram bins", ge=8, le=2 ** 16)
-
-    @root_validator(pre=True)
-    def rename_to_apply_mask(cls, values):
-        if "masked" in values:
-            return rename_key("masked", "apply_mask")(values)
-        return values
+    bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
 
 
 class BaseThreshold(AlgorithmDescribeBase, ABC):
