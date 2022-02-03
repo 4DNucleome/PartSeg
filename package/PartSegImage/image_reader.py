@@ -12,7 +12,7 @@ import tifffile.tifffile
 from czifile.czifile import CziFile
 from defusedxml import ElementTree
 from oiffile import OifFile
-from tifffile import TiffFile
+from tifffile import TiffFile, natural_sorted
 
 from .image import Image
 
@@ -163,30 +163,30 @@ class GenericImageReader(BaseImageReader):
 
 class OifImagReader(BaseImageReader):
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
-        image_file = OifFile(image_path)
-        tiffs = image_file.tiffs
-        tif_file = TiffFile(image_file.open_file(tiffs.files[0]), name=tiffs.files[0])
-        axes = tiffs.axes + tif_file.series[0].axes
-        image_data = image_file.asarray()
-        image_data = self.update_array_shape(image_data, axes)
-        with suppress(KeyError):
-            flat_parm = image_file.mainfile["Reference Image Parameter"]
-            x_scale = flat_parm["HeightConvertValue"] * name_to_scalar[flat_parm["HeightUnit"]]
-            y_scale = flat_parm["WidthConvertValue"] * name_to_scalar[flat_parm["WidthUnit"]]
-            i = 0
-            while True:
-                name = f"Axis {i} Parameters Common"
-                if name not in image_file.mainfile:
-                    z_scale = 1
-                    break
-                axis_info = image_file.mainfile[name]
-                if axis_info["AxisCode"] == "Z":
-                    z_scale = axis_info["Interval"] * name_to_scalar[axis_info["UnitName"]]
-                    break
-                i += 1
+        with OifFile(image_path) as image_file:
+            tiffs = natural_sorted(image_file.glob("*.tif"))
+            with TiffFile(image_file.open_file(tiffs[0]), name=tiffs[0]) as tif_file:
+                axes = image_file.series[0].axes + tif_file.series[0].axes
+            image_data = image_file.asarray()
+            image_data = self.update_array_shape(image_data, axes)
+            with suppress(KeyError):
+                flat_parm = image_file.mainfile["Reference Image Parameter"]
+                x_scale = flat_parm["HeightConvertValue"] * name_to_scalar[flat_parm["HeightUnit"]]
+                y_scale = flat_parm["WidthConvertValue"] * name_to_scalar[flat_parm["WidthUnit"]]
+                i = 0
+                while True:
+                    name = f"Axis {i} Parameters Common"
+                    if name not in image_file.mainfile:
+                        z_scale = 1
+                        break
+                    axis_info = image_file.mainfile[name]
+                    if axis_info["AxisCode"] == "Z":
+                        z_scale = axis_info["Interval"] * name_to_scalar[axis_info["UnitName"]]
+                        break
+                    i += 1
 
-            self.spacing = z_scale, x_scale, y_scale
-        # TODO add mask reading
+                self.spacing = z_scale, x_scale, y_scale
+            # TODO add mask reading
         return self.image_class(
             image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
         )
