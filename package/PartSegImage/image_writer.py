@@ -127,7 +127,7 @@ class IMAGEJImageWriter(BaseImageWriter):
         spacing = image.get_um_spacing()
         metadata = {"mode": "color", "unit": "\\u00B5m"}
         if len(spacing) == 3:
-            metadata.update({"spacing": spacing[0]})
+            metadata["spacing"] = spacing[0]
         if image.channel_names is not None:
             metadata["Labels"] = image.channel_names * image.layers
         coloring = image.get_imagej_colors()
@@ -156,7 +156,7 @@ class IMAGEJImageWriter(BaseImageWriter):
         metadata = {"mode": "color", "unit": "\\u00B5m"}
         spacing = image.get_um_spacing()
         if len(spacing) == 3:
-            metadata.update({"spacing": spacing[0]})
+            metadata["spacing"] = spacing[0]
         resolution = [1 / x for x in spacing[-2:]]
         cls._save(mask, save_path, resolution, metadata)
 
