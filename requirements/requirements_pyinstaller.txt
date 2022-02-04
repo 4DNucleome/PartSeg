@@ -151,7 +151,7 @@ nest-asyncio==1.5.4
     #   jupyter-client
 npe2==0.1.1
     # via napari
-numpy==1.22.1
+numpy==1.22.2
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
