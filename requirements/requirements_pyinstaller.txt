@@ -363,7 +363,7 @@ urllib3==1.26.8
     # via
     #   requests
     #   sentry-sdk
-vispy==0.9.4
+vispy==0.9.6
     # via
     #   -r requirements_pyinstaller.in
     #   napari
