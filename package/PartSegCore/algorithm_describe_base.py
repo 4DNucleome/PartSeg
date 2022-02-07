@@ -304,8 +304,8 @@ class AddRegister(ModelMetaclass):
         cls.__register__ = Register()
         return cls
 
-    def __getitem__(cls, item) -> AlgorithmType:
-        return cls.__register__[item]
+    def __getitem__(self, item) -> AlgorithmType:
+        return self.__register__[item]
 
 
 class AlgorithmSelection(BaseModel, metaclass=AddRegister):
