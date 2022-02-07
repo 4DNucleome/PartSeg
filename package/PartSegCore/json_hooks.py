@@ -326,7 +326,7 @@ class PartSegEncoder(json.JSONEncoder):
         if isinstance(o, pydantic.BaseModel):
             try:
                 dkt = dict(o)
-            except ValueError:
+            except (ValueError, TypeError):
                 dkt = o.dict()
             add_class_info(o, dkt)
             return dkt

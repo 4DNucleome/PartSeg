@@ -314,14 +314,14 @@ class TestPartSegEncoder:
 
     def test_pydantic_serialize(self, tmp_path):
         data = {
-            "color1": Colormap("black"),
+            "color1": Colormap(colors=[[0, 0, 0], [0, 0, 0]], controls=[0, 1]),
             "other": SamplePydantic(sample_int=1, sample_str="text", sample_datacls=SampleDataclass(1, "text")),
         }
         with (tmp_path / "test.json").open("w") as f_p:
             json.dump(data, f_p, cls=PartSegEncoder)
         with (tmp_path / "test.json").open("r") as f_p:
             data2 = json.load(f_p, object_hook=partseg_object_hook)
-        assert data2["color1"] == Colormap("black")
+        assert data2["color1"] == Colormap(colors=[[0, 0, 0], [0, 0, 0]], controls=[0, 1])
         assert isinstance(data2["other"], SamplePydantic)
         assert isinstance(data2["other"].sample_datacls, SampleDataclass)
 
