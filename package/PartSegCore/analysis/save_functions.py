@@ -230,7 +230,7 @@ class SaveCmap(SaveBase):
                 seg = (segmentation == i).astype(np.uint8)
                 if np.any(seg):
                     base, ext = os.path.splitext(save_location)
-                    save_loc = base + f"_comp{i}" + ext
+                    save_loc = f'{base}_comp{i}{ext}'
                     save_cmap(save_loc, data, spacing, seg, reverse_base, parameters)
         else:
             save_cmap(save_location, data, spacing, segmentation, reverse_base, parameters)
@@ -299,7 +299,7 @@ class SaveXYZ(SaveBase):
                 if size > 0:
                     segmentation_mask = np.array(project_info.roi_info.roi == i)[parameters.get("time", 0)]
                     base_path, ext = os.path.splitext(save_location)
-                    new_save_location = base_path + f"_part{i}" + ext
+                    new_save_location = f'{base_path}_part{i}{ext}'
                     cls._save(new_save_location, channel_image, segmentation_mask, shift)
 
 

@@ -465,7 +465,7 @@ class LoadStackImageWithMask(LoadBase):
     @classmethod
     def get_next_file(cls, file_paths: typing.List[str]):
         base, ext = os.path.splitext(file_paths[0])
-        return base + "_mask" + ext
+        return f'{base}_mask{ext}'
 
     @classmethod
     def number_of_files(cls):

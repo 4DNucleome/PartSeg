@@ -15,7 +15,7 @@ def class_to_str(cls) -> str:
     if cls.__module__.startswith("pydantic.dataclass"):
         cls = cls.__mro__[1]
         return class_to_str(cls)
-    return cls.__module__ + "." + cls.__qualname__
+    return f'{cls.__module__}.{cls.__qualname__}'
 
 
 MigrationCallable = Callable[[Dict[str, Any]], Dict[str, Any]]

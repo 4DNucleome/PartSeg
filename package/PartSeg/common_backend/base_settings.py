@@ -618,7 +618,7 @@ class BaseSettings(ViewSettings):
         """
         res = self.get(DIR_HISTORY, [])[:]
         for name in self.save_locations_keys:
-            val = self.get("io." + name, str(Path.home()))
+            val = self.get(f'io.{name}', str(Path.home()))
             if val not in res:
                 res = res + [val]
         return res
@@ -698,9 +698,7 @@ class BaseSettings(ViewSettings):
         data = cls.load_metadata(file_path)
         bad_key = []
         if isinstance(data, MutableMapping) and not check_loaded_dict(data):
-            for k, v in data.items():
-                if not check_loaded_dict(v):
-                    bad_key.append(k)
+            bad_key.extend(k for k, v in data.items() if not check_loaded_dict(v))
             for el in bad_key:
                 del data[el]
         elif isinstance(data, ProfileDict) and not data.verify_data():
@@ -762,7 +760,7 @@ class BaseSettings(ViewSettings):
                 if error:
                     timestamp = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
-                    os.rename(file_path, base_path + "_" + timestamp + ext)
+                    os.rename(file_path, f'{base_path}_{timestamp}{ext}')
 
         if errors_list:
             logger.error(errors_list)
