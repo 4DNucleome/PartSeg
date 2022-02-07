@@ -118,16 +118,10 @@ class Leaf(BaseModel):
         if self.name in measurement_dict:
             measurement_method = measurement_dict[self.name]
             fields_dict = measurement_method.get_fields_dict()
-            arr.extend(
-                f"{fields_dict[k].user_name}={v}"
-                for k, v in self.parameter_dict.items()
-            )
+            arr.extend(f"{fields_dict[k].user_name}={v}" for k, v in self.parameter_dict.items())
 
         else:
-            arr.extend(
-                f"{k.replace('_', ' ')}={v}"
-                for k, v in self.parameter_dict.items()
-            )
+            arr.extend(f"{k.replace('_', ' ')}={v}" for k, v in self.parameter_dict.items())
 
         return "[" + ", ".join(arr) + "]"
 

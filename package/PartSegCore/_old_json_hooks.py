@@ -37,7 +37,7 @@ class ProfileEncoder(SerializeClassEncoder):
             }
         if hasattr(o, "as_dict"):
             dkt = o.as_dict()
-            dkt["__class__"] = f'{o.__module__}.{o.__class__.__name__}'
+            dkt["__class__"] = f"{o.__module__}.{o.__class__.__name__}"
             return dkt
         if isinstance(o, np.integer):
             return int(o)
@@ -109,7 +109,7 @@ def profile_hook(dkt):
             module = importlib.import_module(module_name)
             return getattr(module, class_name)(**dkt)
         except Exception as e:  # skipcq: PTC-W0703`  # pylint: disable=W0703    # pragma: no cover
-            dkt["__class__"] = f'{module_name}.{class_name}'
+            dkt["__class__"] = f"{module_name}.{class_name}"
             dkt["__error__"] = e
     if "__ProfileDict__" in dkt:
         from PartSegCore.json_hooks import ProfileDict

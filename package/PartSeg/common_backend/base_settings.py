@@ -618,7 +618,7 @@ class BaseSettings(ViewSettings):
         """
         res = self.get(DIR_HISTORY, [])[:]
         for name in self.save_locations_keys:
-            val = self.get(f'io.{name}', str(Path.home()))
+            val = self.get(f"io.{name}", str(Path.home()))
             if val not in res:
                 res = res + [val]
         return res
@@ -760,7 +760,7 @@ class BaseSettings(ViewSettings):
                 if error:
                     timestamp = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
-                    os.rename(file_path, f'{base_path}_{timestamp}{ext}')
+                    os.rename(file_path, f"{base_path}_{timestamp}{ext}")
 
         if errors_list:
             logger.error(errors_list)

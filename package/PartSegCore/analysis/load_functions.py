@@ -227,7 +227,7 @@ class LoadImageMask(LoadBase):
             metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
         if len(load_locations) == 1:
             new_path, ext = os.path.splitext(load_locations[0])
-            new_path += f'_mask{ext}'
+            new_path += f"_mask{ext}"
             if not os.path.exists(new_path):
                 raise ValueError("Cannot determine mask file. It need to have '_mask' suffix.")
             load_locations.append(load_locations)
@@ -242,7 +242,7 @@ class LoadImageMask(LoadBase):
     @classmethod
     def get_next_file(cls, file_paths: typing.List[str]):
         base, ext = os.path.splitext(file_paths[0])
-        return f'{base}_mask{ext}'
+        return f"{base}_mask{ext}"
 
 
 class LoadMask(LoadBase):

@@ -470,7 +470,7 @@ class CreatePlan(QWidget):
         if self.update_element_chk.isChecked():
             self.chose_profile_btn.setText("Replace " + text)
         else:
-            self.chose_profile_btn.setText(f'Add {text}')
+            self.chose_profile_btn.setText(f"Add {text}")
         self.segment_profile.setCurrentItem(None)
         self.pipeline_profile.setCurrentItem(None)
 

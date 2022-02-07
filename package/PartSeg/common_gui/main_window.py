@@ -139,7 +139,7 @@ class BaseMainWindow(QMainWindow):
                 errors_message.setStandardButtons(QMessageBox.Ok)
                 for error in errors:
                     sentry_sdk.capture_exception(error[1])
-                text = "\n".join(f'File: {x[0]}' + "\n" + str(x[1]) for x in errors)
+                text = "\n".join(f"File: {x[0]}" + "\n" + str(x[1]) for x in errors)
                 errors_message.setDetailedText(text)
                 errors_message.exec_()
 

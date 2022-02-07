@@ -103,7 +103,7 @@ class _GetDescriptionClass:
         }
 
         model = create_model(name, **fields_dkt)
-        model.__qualname__ = f'{klass.__qualname__}.{name}'
+        model.__qualname__ = f"{klass.__qualname__}.{name}"
         setattr(klass, name, model)
         return model
 
@@ -376,11 +376,7 @@ class ROIExtractionProfile(BaseModel):
                 + self._pretty_print(values, algorithm.get_fields_dict())
             )
         return (
-            (
-                (f'ROI extraction profile name: {self.name}' + "\nAlgorithm: ")
-                + self.algorithm
-            )
-            + "\n"
+            ((f"ROI extraction profile name: {self.name}" + "\nAlgorithm: ") + self.algorithm) + "\n"
         ) + self._pretty_print(values, algorithm.get_fields_dict())
 
     @classmethod
@@ -427,10 +423,9 @@ class ROIExtractionProfile(BaseModel):
         )
 
     def __str__(self):
-        return (
-            (f'ROI extraction profile name: {self.name}' + "\nAlgorithm: ")
-            + self.algorithm
-        ) + self.print_dict(self.values)
+        return ((f"ROI extraction profile name: {self.name}" + "\nAlgorithm: ") + self.algorithm) + self.print_dict(
+            self.values
+        )
 
     def __repr__(self):
         return f"ROIExtractionProfile(name={self.name}, algorithm={repr(self.algorithm)}, values={self.values})"
