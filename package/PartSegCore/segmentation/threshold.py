@@ -6,7 +6,7 @@ import numpy as np
 import SimpleITK as sitk
 from pydantic import BaseModel, Field
 
-from PartSegCore.class_register import register_class, rename_key
+from PartSegCore.class_register import register_class, rename_key, update_argument
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, AlgorithmSelection
 from .algorithm_base import SegmentationLimitException
@@ -16,8 +16,14 @@ class SingleThresholdParams(BaseModel):
     threshold: float = Field(8000.0, ge=-100000, le=100000, title="Threshold", description="Threshold values")
 
 
-@register_class(version="0.0.1", migrations=[("0.0.0", rename_key("masked", "apply_mask"))])
-class SimpleITKThresholdParams(BaseModel):
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("masked", "apply_mask"))])
+class SimpleITKThresholdParams128(BaseModel):
+    apply_mask: bool = Field(True, title="Apply mask", description="If apply mask before calculate threshold")
+    bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
+
+
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("masked", "apply_mask"))])
+class SimpleITKThresholdParams256(BaseModel):
     apply_mask: bool = Field(True, title="Apply mask", description="If apply mask before calculate threshold")
     bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
 
@@ -35,15 +41,14 @@ class BaseThreshold(AlgorithmDescribeBase, ABC):
 
 
 class ManualThreshold(BaseThreshold):
+    __argument_class__ = SingleThresholdParams
+
     @classmethod
     def get_name(cls):
         return "Manual"
 
     @classmethod
-    def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", 8000.0, (-100000, 100000))]
-
-    @classmethod
+    @update_argument("arguments")
     def calculate_mask(
         cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SingleThresholdParams, operator
     ):
@@ -54,18 +59,12 @@ class ManualThreshold(BaseThreshold):
 
 
 class SitkThreshold(BaseThreshold, ABC):
-    bins_num = 128
+    __argument_class__ = SimpleITKThresholdParams128
 
     @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("masked", "Apply mask", True),
-            AlgorithmProperty("bins", "histogram bins", cls.bins_num, (8, 2**16)),
-        ]
-
-    @classmethod
+    @update_argument("arguments")
     def calculate_mask(
-        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SimpleITKThresholdParams, operator
+        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SimpleITKThresholdParams128, operator
     ):
         if mask is not None and mask.dtype != np.uint8:
             mask = (mask > 0).astype(np.uint8)
@@ -98,7 +97,7 @@ class OtsuThreshold(SitkThreshold):
 
 
 class LiThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -110,7 +109,7 @@ class LiThreshold(SitkThreshold):
 
 
 class MaximumEntropyThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -122,7 +121,7 @@ class MaximumEntropyThreshold(SitkThreshold):
 
 
 class RenyiEntropyThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -134,7 +133,7 @@ class RenyiEntropyThreshold(SitkThreshold):
 
 
 class ShanbhagThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -146,7 +145,7 @@ class ShanbhagThreshold(SitkThreshold):
 
 
 class TriangleThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -158,7 +157,7 @@ class TriangleThreshold(SitkThreshold):
 
 
 class YenThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -170,7 +169,7 @@ class YenThreshold(SitkThreshold):
 
 
 class HuangThreshold(SitkThreshold):
-    bins_num = 128
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -182,7 +181,7 @@ class HuangThreshold(SitkThreshold):
 
 
 class IntermodesThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -199,7 +198,7 @@ class IntermodesThreshold(SitkThreshold):
 
 
 class IsoDataThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -211,7 +210,7 @@ class IsoDataThreshold(SitkThreshold):
 
 
 class KittlerIllingworthThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -228,7 +227,7 @@ class KittlerIllingworthThreshold(SitkThreshold):
 
 
 class MomentsThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -271,14 +270,14 @@ class DoubleThreshold(BaseThreshold):
                 "core_threshold",
                 "Core threshold",
                 ThresholdSelection.__register__.get_default(),
-                possible_values=ThresholdSelection,
+                possible_values=ThresholdSelection.__register__,
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "base_threshold",
                 "Base threshold",
                 ThresholdSelection.__register__.get_default(),
-                possible_values=ThresholdSelection,
+                possible_values=ThresholdSelection.__register__,
                 value_type=AlgorithmDescribeBase,
             ),
         ]

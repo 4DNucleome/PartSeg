@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 import pytest
 
-from PartSegCore.class_register import REGISTER, class_to_str, register_class
+from PartSegCore.class_register import REGISTER, class_to_str, register_class, rename_key, update_argument
 
 
 @register_class
@@ -65,3 +65,27 @@ def test_get_version():
     assert str(REGISTER.get_version(SampleClass1)) == "0.0.0"
     assert str(REGISTER.get_version(SampleClass2)) == "0.0.1"
     assert str(REGISTER.get_version(SampleClass4)) == "0.0.2"
+
+
+def test_rename_key():
+    dkt = {"aaa": 1, "bbb": 2}
+    assert rename_key(from_key="aaa", to_key="ccc")(dkt) == {"bbb": 2, "ccc": 1}
+
+
+def test_update_argument(clean_register):
+    @REGISTER.register(version="0.0.1")
+    class MigrateClass:
+        def __init__(self, a, b):
+            self.a = a
+            self.b = b
+
+    class ClassToCall:
+        __argument_class__ = MigrateClass
+
+        @classmethod
+        @update_argument("arg")
+        def call_func(cls, aa, arg):
+            print(aa, arg.a)
+
+    ClassToCall.call_func(aa=1, arg={"a": 1, "b": 2})
+    ClassToCall.call_func(1, {"a": 1, "b": 2})

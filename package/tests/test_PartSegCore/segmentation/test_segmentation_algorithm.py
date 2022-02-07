@@ -21,8 +21,8 @@ def empty(*args):
 @pytest.fixture(autouse=True)
 def fix_threshold_flow(monkeypatch):
     values = ThresholdFlowAlgorithm.get_default_values()
-    values["threshold"]["values"]["core_threshold"]["values"]["threshold"] = 10
-    values["threshold"]["values"]["base_threshold"]["values"]["threshold"] = 5
+    values["threshold"]["values"]["core_threshold"]["values"].threshold = 10
+    values["threshold"]["values"]["base_threshold"]["values"].threshold = 5
 
     def _param(self):
         return values
@@ -30,8 +30,8 @@ def fix_threshold_flow(monkeypatch):
     monkeypatch.setattr(ThresholdFlowAlgorithm, "get_default_values", _param)
 
     values2 = CellFromNucleusFlow.get_default_values()
-    values2["nucleus_threshold"]["values"]["threshold"] = 10
-    values2["cell_threshold"]["values"]["threshold"] = 5
+    values2["nucleus_threshold"]["values"].threshold = 10
+    values2["cell_threshold"]["values"].threshold = 5
 
     def _param2(self):
         return values2

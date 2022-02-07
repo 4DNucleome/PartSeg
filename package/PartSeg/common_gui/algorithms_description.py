@@ -391,6 +391,8 @@ class FormWidget(QWidget):
         return {name: el.recursive_get_values() for name, el in self.widgets_dict.items()}
 
     def set_values(self, values: dict):
+        if isinstance(values, BaseModel):
+            values = dict(values)
         for name, value in values.items():
             if name in self.widgets_dict:
                 self.widgets_dict[name].set_value(value)

@@ -28,6 +28,7 @@ from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, Algorithm
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
+from PartSegCore.class_register import register_class
 from PartSegCore.io_utils import SaveBase
 from PartSegImage import Image, ImageWriter
 
@@ -665,13 +666,15 @@ class TestFormWidget:
             field1=10, check_selection=SampleSelection(name="1", values={"field": 1})
         )
 
-    def test_base_model_register_nested_create(self, qtbot):
+    def test_base_model_register_nested_create(self, qtbot, clean_register):
         class SampleSelection(AlgorithmSelection):
             pass
 
+        @register_class
         class SubModel1(BaseModel):
             field1: int = 3
 
+        @register_class
         class SubModel2(BaseModel):
             field2: int = 5
 
@@ -692,6 +695,7 @@ class TestFormWidget:
         SampleSelection.register(SampleClass1)
         SampleSelection.register(SampleClass2)
 
+        @register_class
         class SampleModel(BaseModel):
             field1: int = Field(10, le=100, ge=0, title="Field 1")
             check_selection: SampleSelection = Field(SampleSelection(name="1", values={}), title="Class selection")

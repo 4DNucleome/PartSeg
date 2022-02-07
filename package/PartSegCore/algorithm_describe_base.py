@@ -1,4 +1,5 @@
 import inspect
+import textwrap
 import typing
 import warnings
 from abc import ABC, abstractmethod
@@ -167,6 +168,8 @@ class AlgorithmDescribeBase(ABC):
 
     @classmethod
     def get_default_values(cls):
+        if cls.__argument_class__ is not None:
+            return cls.__argument_class__()
         return {
             el.name: {
                 "name": el.default_value,
@@ -385,6 +388,8 @@ class ROIExtractionProfile(BaseModel):
     def _pretty_print(
         cls, values: typing.MutableMapping, translate_dict: typing.Dict[str, AlgorithmProperty], indent=0
     ):
+        if not isinstance(values, typing.MutableMapping):
+            return textwrap.indent(str(values), " " * indent)
         res = ""
         for k, v in values.items():
             if k not in translate_dict:

@@ -2,7 +2,9 @@
 This module contains utility for class registration, to provide migration information.
 """
 import importlib
+import inspect
 from dataclasses import dataclass
+from functools import wraps
 from typing import Any, Callable, Dict, List, Tuple, Type, Union
 
 from packaging.version import Version
@@ -127,6 +129,31 @@ def rename_key(from_key: str, to_key: str) -> MigrationCallable:
         return res_dkt
 
     return _migrate
+
+
+def update_argument(argument_name):
+    def _wrapper(func):
+        signature = inspect.signature(func)
+        if argument_name not in signature.parameters:
+            raise RuntimeError("Argument should be accessible using inspect module.")
+        arg_index = list(signature.parameters).index(argument_name)
+
+        @wraps(func)
+        def _update_from_dict(*args, **kwargs):
+            if args and hasattr(args[0], "__argument_class__") and args[0].__argument_class__ is not None:
+                if argument_name in kwargs and isinstance(kwargs[argument_name], dict):
+                    kwargs = kwargs.copy()
+                    kw = REGISTER.migrate_data(class_to_str(args[0].__argument_class__), "0.0.0", kwargs[argument_name])
+                    kwargs[argument_name] = args[0].__argument_class__(**kw)
+                elif len(args) > arg_index and isinstance(args[arg_index], dict):
+                    args = list(args)
+                    kw = REGISTER.migrate_data(class_to_str(args[0].__argument_class__), "0.0.0", args[arg_index])
+                    args[arg_index] = args[0].__argument_class__(**kw)
+            return func(*args, **kwargs)
+
+        return _update_from_dict
+
+    return _wrapper
 
 
 def register_class(

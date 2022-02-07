@@ -7,6 +7,7 @@ import typing
 from collections import defaultdict
 from collections.abc import MutableMapping
 from contextlib import suppress
+from pathlib import Path
 
 import numpy as np
 import pydantic
@@ -340,6 +341,8 @@ class PartSegEncoder(json.JSONEncoder):
             return int(o)
         if isinstance(o, np.floating):
             return float(o)
+        if isinstance(o, Path):
+            return str(o)
         if isinstance(o, dict) and "__error__" in o:
             del o["__error__"]  # different environments without same plugins installed
         return super().default(o)

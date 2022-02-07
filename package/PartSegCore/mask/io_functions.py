@@ -145,7 +145,7 @@ def save_stack_segmentation(
                 metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
             else:
                 metadata["base_file"] = file_path
-        metadata_buff = BytesIO(json.dumps(metadata, cls=ProfileEncoder).encode("utf-8"))
+        metadata_buff = BytesIO(json.dumps(metadata, cls=PartSegEncoder).encode("utf-8"))
         metadata_tar = get_tarinfo("metadata.json", metadata_buff)
         tar_file.addfile(metadata_tar, metadata_buff)
         step_changed(4)

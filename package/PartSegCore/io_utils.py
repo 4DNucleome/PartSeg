@@ -241,10 +241,13 @@ class UpdateLoadedMetadataBase:
     # noinspection PyUnusedLocal
     @classmethod
     def update_segmentation_sub_dict(cls, name: str, dkt: typing.MutableMapping) -> typing.MutableMapping:
+
         if "values" not in dkt:
             return dkt
         if name == "sprawl_type" and dkt["name"].endswith(" sprawl"):
             dkt["name"] = dkt["name"][: -len(" sprawl")]
+        if not isinstance(dkt["values"], typing.MutableMapping):
+            return dkt
         for key in dkt["values"].keys():
             item = dkt["values"][key]
             if isinstance(item, Enum):
