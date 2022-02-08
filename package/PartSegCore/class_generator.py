@@ -338,7 +338,7 @@ class BaseMeta(type):
             if key in _prohibited:
                 if key == "__init__":
                     continue
-                raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
+                raise AttributeError(f'Cannot overwrite NamedTuple attribute {key}')
             if key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
         if "_reloading" not in attrs or not attrs["_reloading"]:

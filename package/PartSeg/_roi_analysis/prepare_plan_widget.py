@@ -468,7 +468,7 @@ class CreatePlan(QWidget):
         index = self.segment_stack.currentIndex()
         text = self.segment_stack.tabText(index)
         if self.update_element_chk.isChecked():
-            self.chose_profile_btn.setText("Replace " + text)
+            self.chose_profile_btn.setText(f'Replace {text}')
         else:
             self.chose_profile_btn.setText(f"Add {text}")
         self.segment_profile.setCurrentItem(None)
