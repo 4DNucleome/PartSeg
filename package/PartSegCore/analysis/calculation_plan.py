@@ -750,8 +750,8 @@ class CalculationPlan:
         if isinstance(el, Save):
             base = el.short_name
             if el.directory:
-                return f"Save {base} in directory with name " + el.suffix
-            return "Save " + base + " with suffix " + el.suffix if el.suffix != "" else "Save " + base
+                return f"Save {base} in directory with name {el.suffix}"
+            return f"Save {base} with suffix {el.suffix}" if el.suffix != "" else f"Save {base}"
 
         if isinstance(el, MaskIntersection):
             if el.name == "":

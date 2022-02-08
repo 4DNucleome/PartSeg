@@ -118,11 +118,11 @@ class Leaf(BaseModel):
         if self.name in measurement_dict:
             measurement_method = measurement_dict[self.name]
             fields_dict = measurement_method.get_fields_dict()
-            for k, v in self.parameter_dict.items():
-                arr.append(f"{fields_dict[k].user_name}={v}")
+            arr.extend(f"{fields_dict[k].user_name}={v}" for k, v in self.parameter_dict.items())
+
         else:
-            for k, v in self.parameter_dict.items():
-                arr.append(f"{k.replace('_', ' ')}={v}")
+            arr.extend(f"{k.replace('_', ' ')}={v}" for k, v in self.parameter_dict.items())
+
         return "[" + ", ".join(arr) + "]"
 
     def _plugin_info(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:

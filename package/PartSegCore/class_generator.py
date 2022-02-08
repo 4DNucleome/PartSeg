@@ -227,7 +227,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         type_str, module = extract_type_info(type_)
         type_dict[name_] = type_str
         if module:
-            import_set.add("import " + module)
+            import_set.add(f"import {module}")
     translate_dict = {type(None): "None"}
     global_state = {typename: "a", "typing": typing}
     add_classes(itertools.chain(types.values(), base_classes), translate_dict, global_state)
@@ -242,8 +242,9 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     )
 
     if readonly:
-        slots = tuple("_" + x for x in field_names)
-        field_definitions = "\n".join(_field_template.format(name=name) for index, name in enumerate(field_names))
+        slots = tuple(f"_{x}" for x in field_names)
+        field_definitions = "\n".join(_field_template.format(name=name) for name in field_names)
+
     else:
         slots = tuple(field_names)
         field_definitions = ""
@@ -311,12 +312,11 @@ class BaseMeta(type):
         if "__readonly__" in attrs:
             readonly = attrs["__readonly__"]
         else:
-            for el in bases:
-                if hasattr(el, "__readonly__"):
-                    readonly = el.__readonly__
-                    break
-            else:
-                readonly = False
+            readonly = next(
+                (el.__readonly__ for el in bases if hasattr(el, "__readonly__")),
+                False,
+            )
+
         if "__old_names__" in attrs:
             old_names = attrs["__old_names__"]
             del attrs["__old_names__"]
