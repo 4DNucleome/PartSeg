@@ -354,6 +354,11 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegister):
     def register(cls, value: AlgorithmType, replace=False) -> AlgorithmType:
         return cls.__register__.register(value, replace)
 
+    @classmethod
+    def get_default(cls):
+        name = cls.__register__.get_default()
+        return cls(name=name, values=cls[name].get_default_values())
+
 
 class ROIExtractionProfile(BaseModel):
     """

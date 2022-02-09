@@ -21,8 +21,8 @@ def empty(*args):
 @pytest.fixture(autouse=True)
 def fix_threshold_flow(monkeypatch):
     values = ThresholdFlowAlgorithm.get_default_values()
-    values["threshold"]["values"]["core_threshold"]["values"].threshold = 10
-    values["threshold"]["values"]["base_threshold"]["values"].threshold = 5
+    values["threshold"]["values"].core_threshold.values.threshold = 10
+    values["threshold"]["values"].base_threshold.values.threshold = 5
 
     def _param(self):
         return values

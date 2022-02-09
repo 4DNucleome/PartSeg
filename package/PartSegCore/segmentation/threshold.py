@@ -257,44 +257,43 @@ ThresholdSelection.register(MomentsThreshold)
 ThresholdSelection.register(MaximumEntropyThreshold)
 
 
+class DoubleThresholdParams(BaseModel):
+    core_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Core threshold")
+    base_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Base threshold")
+
+
 class DoubleThreshold(BaseThreshold):
+    __argument_class__ = DoubleThresholdParams
+
     @classmethod
     def get_name(cls):
         # return "Double Choose"
         return "Base/Core"
 
     @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "core_threshold",
-                "Core threshold",
-                ThresholdSelection.__register__.get_default(),
-                possible_values=ThresholdSelection.__register__,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty(
-                "base_threshold",
-                "Base threshold",
-                ThresholdSelection.__register__.get_default(),
-                possible_values=ThresholdSelection.__register__,
-                value_type=AlgorithmDescribeBase,
-            ),
-        ]
+    @update_argument("arguments")
+    def calculate_mask(
+        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: DoubleThresholdParams, operator
+    ):
+        thr: BaseThreshold = threshold_dict[arguments.core_threshold.name]
+        mask1, thr_val1 = thr.calculate_mask(data, mask, arguments.core_threshold.values, operator)
 
-    @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
-        thr: BaseThreshold = threshold_dict[arguments["core_threshold"]["name"]]
-        mask1, thr_val1 = thr.calculate_mask(data, mask, arguments["core_threshold"]["values"], operator)
-
-        thr: BaseThreshold = threshold_dict[arguments["base_threshold"]["name"]]
-        mask2, thr_val2 = thr.calculate_mask(data, mask, arguments["base_threshold"]["values"], operator)
+        thr: BaseThreshold = threshold_dict[arguments.base_threshold.name]
+        mask2, thr_val2 = thr.calculate_mask(data, mask, arguments.base_threshold.values, operator)
         mask2[mask2 > 0] = 1
         mask2[mask1 > 0] = 2
         return mask2, (thr_val1, thr_val2)
 
 
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("hist_num", "bins"))])
+class DoubleOtsuParams(BaseModel):
+    valley: bool = Field(True, title="Valley emphasis")
+    bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
+
+
 class DoubleOtsu(BaseThreshold):
+    __argument_class__ = DoubleOtsuParams
+
     @classmethod
     def get_name(cls):
         return "Double Otsu"
@@ -307,15 +306,16 @@ class DoubleOtsu(BaseThreshold):
         ]
 
     @classmethod
+    @update_argument("arguments")
     def calculate_mask(
         cls,
         data: np.ndarray,
         mask: typing.Optional[np.ndarray],
-        arguments: dict,
+        arguments: DoubleOtsuParams,
         operator: typing.Callable[[object, object], bool],
     ):
         cleaned_image_sitk = sitk.GetImageFromArray(data)
-        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, 2, 0, arguments["hist_num"], arguments["valley"])
+        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, 2, 0, arguments.bins, arguments.valley)
         res = sitk.GetArrayFromImage(res)
         thr1 = data[res == 2].min()
         thr2 = data[res == 1].min()
