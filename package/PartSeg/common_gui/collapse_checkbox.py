@@ -56,5 +56,5 @@ class CollapseCheckbox(QCheckBox):
             icon = qta.icon("fa5s.caret-right", color=color)
         else:
             icon = qta.icon("fa5s.caret-down", color=color)
-        icon.paint(painter, QRect(0, -self.height() / 4, self.height(), self.height()))
+        icon.paint(painter, QRect(0, int(-self.height() / 4), self.height(), self.height()))
         painter.restore()
