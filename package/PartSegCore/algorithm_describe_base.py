@@ -121,7 +121,7 @@ class AlgorithmDescribeBase(ABC):
     For each group of algorithm base abstract class will add additional methods
     """
 
-    __argument_class__ = None
+    __argument_class__: typing.Type[BaseModel] = None
 
     @classmethod
     def get_doc_from_fields(cls):
