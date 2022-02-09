@@ -1,11 +1,12 @@
 import typing
+import warnings
 from abc import ABC
 from enum import Enum
 
 import numpy as np
 from pydantic import BaseModel, Field
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, Register
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
 from ..class_generator import enum_register
 from ..class_register import update_argument
 from ..image_operations import bilateral, gaussian, median
@@ -128,10 +129,21 @@ class MedianNoiseFiltering(NoiseFilteringBase):
         return median(channel, gauss_radius, layer=layer)
 
 
-noise_filtering_dict = Register(
-    NoneNoiseFiltering,
-    GaussNoiseFiltering,
-    MedianNoiseFiltering,
-    BilateralNoiseFiltering,
-    class_methods=["noise_filter"],
-)
+class NoiseFilterSelection(AlgorithmSelection, class_methods=["noise_filter"]):
+    pass
+
+
+NoiseFilterSelection.register(NoneNoiseFiltering)
+NoiseFilterSelection.register(GaussNoiseFiltering)
+NoiseFilterSelection.register(MedianNoiseFiltering)
+NoiseFilterSelection.register(BilateralNoiseFiltering)
+
+
+def __getattr__(name):
+    if name == "noise_filtering_dict":
+        warnings.warn(
+            "noise_filtering_dict is deprecated. Please use NoiseFilterSelection instead",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+        return NoiseFilterSelection.__register__

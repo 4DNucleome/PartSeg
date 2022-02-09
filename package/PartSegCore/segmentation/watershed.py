@@ -1,6 +1,7 @@
 """
 This module contains PartSeg wrappers for function for :py:mod:`..sprawl_utils.find_split`.
 """
+import warnings
 from abc import ABC
 from enum import Enum
 from typing import Any, Callable
@@ -17,7 +18,7 @@ from PartSegCore_compiled_backend.sprawl_utils.find_split import (
     path_minimum_sprawl,
 )
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, Register
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
 from ..class_register import update_argument
 from .algorithm_base import SegmentationLimitException
 
@@ -241,12 +242,28 @@ class MSOWatershed(BaseWatershed):
         return result
 
 
-flow_dict = Register(
-    MSOWatershed, PathWatershed, DistanceWatershed, PathDistanceWatershed, FDTWatershed, class_methods=["sprawl"]
-)
-"""This register contains algorithms for sprawl area from core object."""
+class FlowMethodSelection(AlgorithmSelection, class_methods=["sprawl"]):
+    """This register contains algorithms for sprawl area from core object."""
 
-sprawl_dict = flow_dict
+
+FlowMethodSelection.register(MSOWatershed)
+FlowMethodSelection.register(PathWatershed)
+FlowMethodSelection.register(DistanceWatershed)
+FlowMethodSelection.register(PathDistanceWatershed)
+FlowMethodSelection.register(FDTWatershed)
+
+
+def __getattr__(name):
+    if name == "flow_dict":
+        warnings.warn(
+            "flow_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
+        )
+        return FlowMethodSelection.__register__
+    if name == "sprawl_dict":
+        warnings.warn(
+            "sprawl_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
+        )
+        return FlowMethodSelection.__register__
 
 
 def get_neigh(sides):

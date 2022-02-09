@@ -300,8 +300,13 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
 
 class AddRegister(ModelMetaclass):
     def __new__(cls, name, bases, attrs, **kwargs):
+        methods = kwargs.pop("methods", [])
+        suggested_base_class = kwargs.pop("suggested_base_class", None)
+        class_methods = kwargs.pop("class_methods", [])
         cls = super().__new__(cls, name, bases, attrs, **kwargs)
-        cls.__register__ = Register()
+        cls.__register__ = Register(
+            class_methods=class_methods, methods=methods, suggested_base_class=suggested_base_class
+        )
         return cls
 
     def __getitem__(self, item) -> AlgorithmType:
