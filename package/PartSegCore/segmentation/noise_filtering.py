@@ -3,9 +3,11 @@ from abc import ABC
 from enum import Enum
 
 import numpy as np
+from pydantic import BaseModel, Field
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from ..algorithm_describe_base import AlgorithmDescribeBase, Register
 from ..class_generator import enum_register
+from ..class_register import update_argument
 from ..image_operations import bilateral, gaussian, median
 from .algorithm_base import calculate_operation_radius as _calculate_operation_radius
 
@@ -56,41 +58,45 @@ class NoneNoiseFiltering(NoiseFilteringBase):
         return channel
 
 
+class GaussNoiseFilteringParams(BaseModel):
+    dimension_type: DimensionType = Field(DimensionType.Layer, title="Gauss type")
+    radius: float = Field(1.0, title="Gauss radius", ge=0, le=100)
+
+
 class GaussNoiseFiltering(NoiseFilteringBase):
+    __argument_class__ = GaussNoiseFilteringParams
+
     @classmethod
     def get_name(cls):
         return "Gauss"
 
     @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("dimension_type", "Gauss type", DimensionType.Layer),
-            AlgorithmProperty("radius", "Gauss radius", 1.0, value_type=float),
-        ]
-
-    @classmethod
-    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
-        gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["dimension_type"])
-        layer = arguments["dimension_type"] == DimensionType.Layer
+    @update_argument("arguments")
+    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: GaussNoiseFilteringParams):
+        gauss_radius = calculate_operation_radius(arguments.radius, spacing, arguments.dimension_type)
+        layer = arguments.dimension_type == DimensionType.Layer
         return gaussian(channel, gauss_radius, layer=layer)
 
 
+class BilateralNoiseFilteringParams(BaseModel):
+    dimension_type: DimensionType = Field(DimensionType.Layer, title="Bilateral type")
+    radius: float = Field(1.0, title="Bilateral radius", ge=0, le=100)
+
+
 class BilateralNoiseFiltering(NoiseFilteringBase):
+    __argument_class__ = BilateralNoiseFilteringParams
+
     @classmethod
     def get_name(cls):
         return "Bilateral"
 
     @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("dimension_type", "Gauss type", DimensionType.Layer),
-            AlgorithmProperty("radius", "Gauss radius", 1.0, value_type=float),
-        ]
-
-    @classmethod
-    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
-        gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["dimension_type"])
-        layer = arguments["dimension_type"] == DimensionType.Layer
+    @update_argument("arguments")
+    def noise_filter(
+        cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: BilateralNoiseFilteringParams
+    ):
+        gauss_radius = calculate_operation_radius(arguments.radius, spacing, arguments.dimension_type)
+        layer = arguments.dimension_type == DimensionType.Layer
         return bilateral(channel, max(gauss_radius), layer=layer)
 
 
@@ -101,22 +107,23 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     return res
 
 
+class MedianNoiseFilteringParams(BaseModel):
+    dimension_type: DimensionType = Field(DimensionType.Layer, title="Median type")
+    radius: int = Field(1, title="Median radius", ge=0, le=100)
+
+
 class MedianNoiseFiltering(NoiseFilteringBase):
+    __argument_class__ = MedianNoiseFilteringParams
+
     @classmethod
     def get_name(cls):
         return "Median"
 
     @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("dimension_type", "Median type", DimensionType.Layer),
-            AlgorithmProperty("radius", "Median radius", 1, value_type=int),
-        ]
-
-    @classmethod
-    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
-        gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["dimension_type"])
-        layer = arguments["dimension_type"] == DimensionType.Layer
+    @update_argument("arguments")
+    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: MedianNoiseFilteringParams):
+        gauss_radius = calculate_operation_radius(arguments.radius, spacing, arguments.dimension_type)
+        layer = arguments.dimension_type == DimensionType.Layer
         gauss_radius = [int(x) for x in gauss_radius]
         return median(channel, gauss_radius, layer=layer)
 
