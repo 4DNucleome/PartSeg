@@ -458,6 +458,7 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
         possible_values = None
         value_type = value.type_
         default_value = value.field_info.default
+        help_text = value.field_info.description
         if user_name is None:
             user_name = name.replace("_", " ")
         if issubclass(value.type_, (int, float)):
@@ -478,6 +479,7 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
                 options_range=value_range,
                 value_type=value_type,
                 possible_values=possible_values,
+                help_text=help_text,
             )
         )
     return res
