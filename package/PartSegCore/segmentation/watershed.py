@@ -242,7 +242,7 @@ class MSOWatershed(BaseWatershed):
         return result
 
 
-class FlowMethodSelection(AlgorithmSelection, class_methods=["sprawl"]):
+class FlowMethodSelection(AlgorithmSelection, class_methods=["sprawl"], suggested_base_class=BaseWatershed):
     """This register contains algorithms for sprawl area from core object."""
 
 

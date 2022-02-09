@@ -129,7 +129,7 @@ class MedianNoiseFiltering(NoiseFilteringBase):
         return median(channel, gauss_radius, layer=layer)
 
 
-class NoiseFilterSelection(AlgorithmSelection, class_methods=["noise_filter"]):
+class NoiseFilterSelection(AlgorithmSelection, class_methods=["noise_filter"], suggested_base_class=NoiseFilteringBase):
     pass
 
 

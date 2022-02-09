@@ -238,7 +238,7 @@ class MomentsThreshold(SitkThreshold):
         return sitk.MomentsThreshold(*args)
 
 
-class ThresholdSelection(AlgorithmSelection):
+class ThresholdSelection(AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold):
     pass
 
 
@@ -322,7 +322,9 @@ class DoubleOtsu(BaseThreshold):
         return res, (thr1, thr2)
 
 
-class DoubleThresholdSelection(AlgorithmSelection):
+class DoubleThresholdSelection(
+    AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold
+):
     pass
 
 
