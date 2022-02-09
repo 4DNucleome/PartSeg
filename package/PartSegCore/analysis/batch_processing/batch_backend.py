@@ -721,11 +721,7 @@ class FileData:
         data = []
         for main_sheet, component_sheets, _ in self.sheet_dict.values():
             data.append(main_sheet.get_data_to_write())
-            data.extend(
-                sheet.get_data_to_write()
-                for sheet in component_sheets
-                if sheet is not None
-            )
+            data.extend(sheet.get_data_to_write() for sheet in component_sheets if sheet is not None)
 
         self.wrote_queue.put((data, list(self.calculation_info.values()), self._error_info[:]))
 
@@ -743,7 +739,7 @@ class FileData:
                 if self.file_type == FileType.text_file:
                     base_path, ext = path.splitext(self.file_path)
                     for sheet_name, data_frame in data[0]:
-                        data_frame.to_csv(f'{base_path}_{sheet_name}{ext}')
+                        data_frame.to_csv(f"{base_path}_{sheet_name}{ext}")
                     continue
                 file_path = self.file_path
                 i = 0
@@ -775,7 +771,7 @@ class FileData:
                 if len(sheet_name) < 32:
                     new_sheet_names.append(sheet_name)
                 else:
-                    new_sheet_names.append(f'{sheet_name[:27]}_{ind}_')
+                    new_sheet_names.append(f"{sheet_name[:27]}_{ind}_")
                     ind += 1
             for sheet_name, (_, data_frame) in zip(new_sheet_names, sheets):
                 data_frame.to_excel(writer, sheet_name=sheet_name)
