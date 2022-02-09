@@ -484,8 +484,7 @@ class CalculationManager:
             for el in result_list:
                 if isinstance(el, ResponseData):
                     errors = self.writer.add_result(el, calculation, ind=ind)
-                    for err in errors:
-                        new_errors.append((el.path_to_file, err))
+                    new_errors.extend((el.path_to_file, err) for err in errors)
                 elif el != SubprocessOrder.cancel_job:
                     file_info = calculation.file_list[ind] if ind != -1 else "unknown file"
                     self.writer.add_calculation_error(calculation, file_info, el[0])
@@ -494,8 +493,7 @@ class CalculationManager:
 
                 if self.counter_dict[uuid_id] == len(calculation.file_list):
                     errors = self.writer.calculation_finished(calculation)
-                    for err in errors:
-                        new_errors.append(("", err))
+                    new_errors.extend(("", err) for err in errors)
         return BatchResultDescription(new_errors, self.calculation_done, self.counter_dict.copy())
 
 
@@ -723,9 +721,12 @@ class FileData:
         data = []
         for main_sheet, component_sheets, _ in self.sheet_dict.values():
             data.append(main_sheet.get_data_to_write())
-            for sheet in component_sheets:
-                if sheet is not None:
-                    data.append(sheet.get_data_to_write())
+            data.extend(
+                sheet.get_data_to_write()
+                for sheet in component_sheets
+                if sheet is not None
+            )
+
         self.wrote_queue.put((data, list(self.calculation_info.values()), self._error_info[:]))
 
     def wrote_data_to_file(self):
@@ -742,7 +743,7 @@ class FileData:
                 if self.file_type == FileType.text_file:
                     base_path, ext = path.splitext(self.file_path)
                     for sheet_name, data_frame in data[0]:
-                        data_frame.to_csv(base_path + "_" + sheet_name + ext)
+                        data_frame.to_csv(f'{base_path}_{sheet_name}{ext}')
                     continue
                 file_path = self.file_path
                 i = 0
@@ -774,7 +775,7 @@ class FileData:
                 if len(sheet_name) < 32:
                     new_sheet_names.append(sheet_name)
                 else:
-                    new_sheet_names.append(sheet_name[:27] + f"_{ind}_")
+                    new_sheet_names.append(f'{sheet_name[:27]}_{ind}_')
                     ind += 1
             for sheet_name, (_, data_frame) in zip(new_sheet_names, sheets):
                 data_frame.to_excel(writer, sheet_name=sheet_name)
