@@ -544,7 +544,7 @@ class SheetData:
         """
         sorted_row = [x[1] for x in sorted(self.row_list)]
         df = pd.DataFrame(sorted_row, columns=self.columns)
-        df2 = self.data_frame.append(df)
+        df2 = pd.concat((self.data_frame, df), axis=0)
         self.data_frame = df2.reset_index(drop=True)
         self.row_list = []
         return self.name, self.data_frame

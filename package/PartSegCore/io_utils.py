@@ -396,7 +396,7 @@ class SaveROIAsTIFF(SaveBase):
         roi = project_info.roi_info.roi
         roi_max = max(project_info.roi_info.bound_info)
         roi = roi.astype(minimal_dtype(roi_max))
-        tifffile.imsave(save_location, roi)
+        tifffile.imwrite(save_location, roi)
 
 
 class SaveROIAsNumpy(SaveBase):
