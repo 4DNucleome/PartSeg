@@ -1,9 +1,11 @@
+import warnings
 from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
+from pydantic import BaseModel, Field
 
-from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
 from PartSegCore.segmentation.watershed import NeighType, get_neighbourhood
 
 
@@ -27,14 +29,16 @@ class NoneSmoothing(BaseSmoothing):
         return segmentation
 
 
+class OpeningSmoothingParams(BaseModel):
+    smooth_border_radius: int = Field(2, title="Smooth borders radius", ge=1, le=20)
+
+
 class OpeningSmoothing(BaseSmoothing):
+    __argument_class__ = OpeningSmoothingParams
+
     @classmethod
     def get_name(cls) -> str:
         return "Opening"
-
-    @classmethod
-    def get_fields(cls):
-        return [AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (1, 20), 1)]
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
@@ -44,29 +48,25 @@ class OpeningSmoothing(BaseSmoothing):
         return sitk.GetArrayFromImage(sitk.BinaryMorphologicalOpening(sitk.GetImageFromArray(segmentation), radius))
 
 
+class VoteSmoothingParams(BaseModel):
+    neighbourhood_type: NeighType = Field(
+        NeighType.edges, title="Side Neighbourhood", description="use 6, 18 or 26 neighbourhood (5, 8, 8 for 2d data)"
+    )
+    support_level: int = Field(
+        1,
+        title="Support level",
+        ge=1,
+        le=27,
+        description="How many voxels in neighbourhood need to be labeled to preserve pixel",
+    )
+
+
 class VoteSmoothing(BaseSmoothing):
+    __argument_class__ = VoteSmoothingParams
+
     @classmethod
     def get_name(cls) -> str:
         return "Vote"
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "neighbourhood_type",
-                "Side Neighbourhood",
-                NeighType.edges,
-                help_text="use 6, 18 or 26 neighbourhood (5, 8, 8 for 2d data)",
-            ),
-            AlgorithmProperty(
-                "support_level",
-                "Support level",
-                1,
-                (1, 27),
-                1,
-                help_text="How many voxels in neighbourhood need to be labeled to preserve pixel",
-            ),
-        ]
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
@@ -82,34 +82,18 @@ class VoteSmoothing(BaseSmoothing):
         return segmentation
 
 
+class IterativeSmoothingParams(VoteSmoothingParams):
+    max_steps: int = Field(
+        1, title="Max steps", description="How many voxels in neighbourhood need to be labeled to preserve pixel"
+    )
+
+
 class IterativeVoteSmoothing(BaseSmoothing):
+    __argument_class__ = IterativeSmoothingParams
+
     @classmethod
     def get_name(cls) -> str:
         return "Iterative Vote"
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "neighbourhood_type", "Side Neighbourhood", NeighType.edges, help_text="use 6, 18 or 26 neighbourhood"
-            ),
-            AlgorithmProperty(
-                "support_level",
-                "Support level",
-                1,
-                (1, 26),
-                1,
-                help_text="How many voxels in neighbourhood need to be labeled to preserve pixel",
-            ),
-            AlgorithmProperty(
-                "max_steps",
-                "Max steps",
-                1,
-                (1, 100),
-                1,
-                help_text="How many voxels in neighbourhood need to be labeled to preserve pixel",
-            ),
-        ]
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
@@ -132,4 +116,21 @@ class IterativeVoteSmoothing(BaseSmoothing):
         return segmentation
 
 
-smooth_dict = Register(NoneSmoothing, OpeningSmoothing, VoteSmoothing, IterativeVoteSmoothing)
+class SmoothAlgorithmSelection(AlgorithmSelection, class_methods=["smooth"], suggested_base_class=BaseSmoothing):
+    pass
+
+
+SmoothAlgorithmSelection.register(NoneSmoothing)
+SmoothAlgorithmSelection.register(OpeningSmoothing)
+SmoothAlgorithmSelection.register(VoteSmoothing)
+SmoothAlgorithmSelection.register(IterativeVoteSmoothing)
+
+
+def __getattr__(name):
+    if name == "smooth_dict":
+        warnings.warn(
+            "threshold_dict is deprecated. Please use SmoothAlgorithmSelection instead",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+        return SmoothAlgorithmSelection.__register__
