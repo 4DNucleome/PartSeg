@@ -298,22 +298,22 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             raise ValueError("Register does not contain any algorithm.")
 
 
-class AddRegister(ModelMetaclass):
+class AddRegisterMeta(ModelMetaclass):
     def __new__(cls, name, bases, attrs, **kwargs):
         methods = kwargs.pop("methods", [])
         suggested_base_class = kwargs.pop("suggested_base_class", None)
         class_methods = kwargs.pop("class_methods", [])
-        cls = super().__new__(cls, name, bases, attrs, **kwargs)
-        cls.__register__ = Register(
+        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+        cls2.__register__ = Register(
             class_methods=class_methods, methods=methods, suggested_base_class=suggested_base_class
         )
-        return cls
+        return cls2
 
     def __getitem__(self, item) -> AlgorithmType:
         return self.__register__[item]
 
 
-class AlgorithmSelection(BaseModel, metaclass=AddRegister):
+class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):
     """
     Base class for algorithm selection.
     For given algorithm there should be Register instance set __register__ class variable.
