@@ -26,9 +26,7 @@ from .algorithm_base import SegmentationLimitException
 class BaseWatershed(AlgorithmDescribeBase, ABC):
     """base class for all sprawl interface"""
 
-    @classmethod
-    def get_fields(cls):
-        return []
+    __argument_class__ = BaseModel
 
     @classmethod
     def sprawl(

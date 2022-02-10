@@ -10,9 +10,7 @@ from PartSegCore.segmentation.watershed import NeighType, get_neighbourhood
 
 
 class BaseSmoothing(AlgorithmDescribeBase, ABC):
-    @classmethod
-    def get_fields(cls):
-        return []
+    __argument_class__ = BaseModel
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:

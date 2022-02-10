@@ -46,13 +46,11 @@ class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
 
 
 class NoneNoiseFiltering(NoiseFilteringBase):
+    __argument_class__ = BaseModel
+
     @classmethod
     def get_name(cls):
         return "None"
-
-    @classmethod
-    def get_fields(cls):
-        return []
 
     @classmethod
     def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):

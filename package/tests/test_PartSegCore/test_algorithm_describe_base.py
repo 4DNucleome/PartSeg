@@ -181,3 +181,7 @@ def test_base_model_to_algorithm_property_algorithm_describe_base():
     assert issubclass(converted[1].value_type, AlgorithmDescribeBase)
     assert converted[1].default_value == "1"
     assert converted[1].possible_values is SampleSelection.__register__
+
+
+def test_base_model_to_algorithm_property_algorithm_describe_empty():
+    assert base_model_to_algorithm_property(BaseModel) == []
