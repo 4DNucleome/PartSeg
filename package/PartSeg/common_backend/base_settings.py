@@ -176,8 +176,8 @@ class ImageSettings(QObject):
                 self._roi_info = ROIInfo(self.image.fit_array_to_image(val))
             else:
                 self._roi_info = val.fit_to_image(self.image)
-        except ValueError:
-            raise ValueError(ROI_NOT_FIT)
+        except ValueError as e:
+            raise ValueError(ROI_NOT_FIT) from e
         self._additional_layers = {}
         self.roi_changed.emit(self._roi_info)
 
@@ -540,8 +540,8 @@ class BaseSettings(ViewSettings):
         # Fixme not use EventedDict here
         try:
             roi_info = result.roi_info.fit_to_image(self.image)
-        except ValueError:  # pragma: no cover
-            raise ValueError(ROI_NOT_FIT)
+        except ValueError as e:  # pragma: no cover
+            raise ValueError(ROI_NOT_FIT) from e
         if result.points is not None:
             self.points = result.points
         self._roi_info = roi_info
@@ -601,8 +601,8 @@ class BaseSettings(ViewSettings):
         try:
             self._image.set_mask(value)
             self.mask_changed.emit()
-        except ValueError:
-            raise ValueError("mask do not fit to image")
+        except ValueError as e:
+            raise ValueError("mask do not fit to image") from e
 
     def get_save_list(self) -> List[SaveSettingsDescription]:
         """List of files in which program save the state."""

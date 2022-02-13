@@ -27,8 +27,7 @@ def proper_suffix(val: str):
     """
     if not val or val.isalnum():
         return val
-    else:
-        raise argparse.ArgumentTypeError(f"suffix '{val}' need to contains only alpha numeric characters")
+    raise argparse.ArgumentTypeError(f"suffix '{val}' need to contains only alpha numeric characters")
 
 
 def proper_path(val: str):
@@ -41,8 +40,9 @@ def proper_path(val: str):
         return val
     try:
         os.makedirs(val)
-    except OSError:
-        raise argparse.ArgumentTypeError(f" Path {val} is not a valid path in this system")
+    except OSError as e:
+        raise argparse.ArgumentTypeError(f" Path {val} is not a valid path in this system") from e
+
     return val
 
 

@@ -105,8 +105,8 @@ class Leaf(BaseModel):
                     continue
                 if issubclass(el.value_type, Channel) and el.name in self.parameter_dict:
                     resp.add(self.parameter_dict[el.name])
-        except KeyError:
-            raise AlgorithmDescribeNotFound(self.name)
+        except KeyError as e:
+            raise AlgorithmDescribeNotFound(self.name) from e
         return resp
 
     def _parameters_string(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
@@ -119,10 +119,8 @@ class Leaf(BaseModel):
             measurement_method = measurement_dict[self.name]
             fields_dict = measurement_method.get_fields_dict()
             arr.extend(f"{fields_dict[k].user_name}={v}" for k, v in self.parameter_dict.items())
-
         else:
             arr.extend(f"{k.replace('_', ' ')}={v}" for k, v in self.parameter_dict.items())
-
         return "[" + ", ".join(arr) + "]"
 
     def _plugin_info(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:

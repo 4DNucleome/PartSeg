@@ -712,9 +712,9 @@ class CalculationPlan:
             res_plan.current_pos = pos[:-1]
             try:
                 res_plan.add_step(CalculationPlan.correct_name[el["type"]](**el["values"]))
-            except TypeError as e:
+            except TypeError:
                 logging.warning(el["type"])
-                raise e
+                raise
         res_plan.changes = []
         return res_plan
 

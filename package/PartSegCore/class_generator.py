@@ -271,13 +271,13 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     try:
         # pylint: disable=W0122
         exec(class_definition, global_state)  # nosec
-    except AttributeError as e:
+    except AttributeError:
         print(class_definition, file=sys.stderr)
-        raise e
-    except NameError as e:
+        raise
+    except NameError:
         for i, el in enumerate(class_definition.split("\n"), 1):
             print(f"{i}: {el}", file=sys.stderr)
-        raise e
+        raise
 
     result = global_state[typename]
     result._source = class_definition
