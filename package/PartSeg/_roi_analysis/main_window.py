@@ -278,7 +278,7 @@ class Options(QWidget):
                 QMessageBox.No,
             ):
                 continue
-            resp = ROIExtractionProfile(text, widget.name, widget.get_values())
+            resp = ROIExtractionProfile(name=text, algorithm=widget.name, values=widget.get_values())
             self._settings.roi_profiles[text] = resp
             self._settings.dump()
             break

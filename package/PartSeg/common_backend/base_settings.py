@@ -176,8 +176,8 @@ class ImageSettings(QObject):
                 self._roi_info = ROIInfo(self.image.fit_array_to_image(val))
             else:
                 self._roi_info = val.fit_to_image(self.image)
-        except ValueError:
-            raise ValueError(ROI_NOT_FIT)
+        except ValueError as e:
+            raise ValueError(ROI_NOT_FIT) from e
         self._additional_layers = {}
         self.roi_changed.emit(self._roi_info)
 
@@ -540,8 +540,8 @@ class BaseSettings(ViewSettings):
         # Fixme not use EventedDict here
         try:
             roi_info = result.roi_info.fit_to_image(self.image)
-        except ValueError:  # pragma: no cover
-            raise ValueError(ROI_NOT_FIT)
+        except ValueError as e:  # pragma: no cover
+            raise ValueError(ROI_NOT_FIT) from e
         if result.points is not None:
             self.points = result.points
         self._roi_info = roi_info
@@ -601,8 +601,8 @@ class BaseSettings(ViewSettings):
         try:
             self._image.set_mask(value)
             self.mask_changed.emit()
-        except ValueError:
-            raise ValueError("mask do not fit to image")
+        except ValueError as e:
+            raise ValueError("mask do not fit to image") from e
 
     def get_save_list(self) -> List[SaveSettingsDescription]:
         """List of files in which program save the state."""
@@ -618,7 +618,7 @@ class BaseSettings(ViewSettings):
         """
         res = self.get(DIR_HISTORY, [])[:]
         for name in self.save_locations_keys:
-            val = self.get("io." + name, str(Path.home()))
+            val = self.get(f"io.{name}", str(Path.home()))
             if val not in res:
                 res = res + [val]
         return res
@@ -698,9 +698,7 @@ class BaseSettings(ViewSettings):
         data = cls.load_metadata(file_path)
         bad_key = []
         if isinstance(data, MutableMapping) and not check_loaded_dict(data):
-            for k, v in data.items():
-                if not check_loaded_dict(v):
-                    bad_key.append(k)
+            bad_key.extend(k for k, v in data.items() if not check_loaded_dict(v))
             for el in bad_key:
                 del data[el]
         elif isinstance(data, ProfileDict) and not data.verify_data():
@@ -762,7 +760,7 @@ class BaseSettings(ViewSettings):
                 if error:
                     timestamp = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
-                    os.rename(file_path, base_path + "_" + timestamp + ext)
+                    os.rename(file_path, f"{base_path}_{timestamp}{ext}")
 
         if errors_list:
             logger.error(errors_list)

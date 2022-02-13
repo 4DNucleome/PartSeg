@@ -65,7 +65,7 @@ def test_extraction_widget(make_napari_viewer, widget_class, monkeypatch, qtbot)
     widget.select_profile("prof3")
     widget.mask_name = "1"
     widget.update_image()
-    assert widget.mask_name == ""
+    assert not widget.mask_name
     # check if mask is not cleaned if channels does not change
     widget.mask_name = "1"
     widget.update_image()
@@ -96,8 +96,12 @@ def get_text_mock(text):
 def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp_path):
     elem_name = next(iter(register))
     profiles = {
-        "prof1": ROIExtractionProfile("prof1", elem_name, register[elem_name].get_default_values()),
-        "prof2": ROIExtractionProfile("prof2", elem_name, register[elem_name].get_default_values()),
+        "prof1": ROIExtractionProfile(
+            name="prof1", algorithm=elem_name, values=register[elem_name].get_default_values()
+        ),
+        "prof2": ROIExtractionProfile(
+            name="prof2", algorithm=elem_name, values=register[elem_name].get_default_values()
+        ),
     }
     dialog = ProfilePreviewDialog(profiles, register, part_settings)
     qtbot.add_widget(dialog)

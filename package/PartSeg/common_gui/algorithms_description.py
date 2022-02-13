@@ -467,12 +467,9 @@ class SubAlgorithmWidget(QWidget):
             if name not in self.property.possible_values:
                 return
             start_dict = {} if name not in self.starting_values else self.starting_values[name]
-            try:
-                self.widgets_dict[name] = FormWidget(
-                    self.property.possible_values[name].get_fields(), start_values=start_dict
-                )
-            except KeyError as e:
-                raise e
+            self.widgets_dict[name] = FormWidget(
+                self.property.possible_values[name].get_fields(), start_values=start_dict
+            )
             self.widgets_dict[name].layout().setContentsMargins(0, 0, 0, 0)
             self.layout().addWidget(self.widgets_dict[name])
             self.widgets_dict[name].value_changed.connect(self.values_changed)
@@ -633,7 +630,7 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
             el.setEnabled(True)
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.algorithm.get_name(), self.get_values())
+        return ROIExtractionProfile(name="", algorithm=self.algorithm.get_name(), values=self.get_values())
 
 
 class AlgorithmChooseBase(QWidget):
@@ -738,7 +735,7 @@ class AlgorithmChooseBase(QWidget):
 
     def current_parameters(self) -> ROIExtractionProfile:
         widget = self.current_widget()
-        return ROIExtractionProfile("", widget.name, widget.get_values())
+        return ROIExtractionProfile(name="", algorithm=widget.name, values=widget.get_values())
 
     def get_info_text(self):
         return self.current_widget().algorithm_thread.get_info_text()

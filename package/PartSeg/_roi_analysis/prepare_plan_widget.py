@@ -468,9 +468,9 @@ class CreatePlan(QWidget):
         index = self.segment_stack.currentIndex()
         text = self.segment_stack.tabText(index)
         if self.update_element_chk.isChecked():
-            self.chose_profile_btn.setText("Replace " + text)
+            self.chose_profile_btn.setText(f"Replace {text}")
         else:
-            self.chose_profile_btn.setText("Add " + text)
+            self.chose_profile_btn.setText(f"Add {text}")
         self.segment_profile.setCurrentItem(None)
         self.pipeline_profile.setCurrentItem(None)
 
@@ -800,9 +800,12 @@ class CreatePlan(QWidget):
 
     @contextmanager
     def enable_protect(self):
+        previous = self.protect
         self.protect = True
-        yield
-        self.protect = False
+        try:
+            yield
+        finally:
+            self.protect = previous
 
     def _refresh_measurement(self):
         new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
@@ -1125,7 +1128,7 @@ class CalculateInfo(QWidget):
         if self.calculate_plans.currentItem() is None:
             return
         text = str(self.calculate_plans.currentItem().text())
-        if text == "":
+        if not text:
             return
         if text in self.settings.batch_plans:
             del self.settings.batch_plans[text]
@@ -1135,7 +1138,7 @@ class CalculateInfo(QWidget):
         if self.calculate_plans.currentItem() is None:
             return
         text = str(self.calculate_plans.currentItem().text())
-        if text == "":
+        if not text:
             return
         if text in self.settings.batch_plans:
             self.plan_to_edit = self.settings.batch_plans[text]

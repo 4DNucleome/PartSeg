@@ -705,9 +705,9 @@ class CalculationPlan:
             res_plan.current_pos = pos[:-1]
             try:
                 res_plan.add_step(CalculationPlan.correct_name[el["type"]](**el["values"]))
-            except TypeError as e:
+            except TypeError:
                 logging.warning(el["type"])
-                raise e
+                raise
         res_plan.changes = []
         return res_plan
 
@@ -743,8 +743,8 @@ class CalculationPlan:
         if isinstance(el, Save):
             base = el.short_name
             if el.directory:
-                return f"Save {base} in directory with name " + el.suffix
-            return "Save " + base + " with suffix " + el.suffix if el.suffix != "" else "Save " + base
+                return f"Save {base} in directory with name {el.suffix}"
+            return f"Save {base} with suffix {el.suffix}" if el.suffix != "" else f"Save {base}"
 
         if isinstance(el, MaskIntersection):
             if el.name == "":

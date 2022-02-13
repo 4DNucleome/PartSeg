@@ -85,8 +85,8 @@ class Leaf(BaseSerializableClass):
                     continue
                 if issubclass(el.value_type, Channel) and el.name in self.dict:
                     resp.add(self.dict[el.name])
-        except KeyError:
-            raise AlgorithmDescribeNotFound(self.name)
+        except KeyError as e:
+            raise AlgorithmDescribeNotFound(self.name) from e
         return resp
 
     def _parameters_string(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
@@ -98,11 +98,9 @@ class Leaf(BaseSerializableClass):
         if self.name in measurement_dict:
             measurement_method = measurement_dict[self.name]
             fields_dict = measurement_method.get_fields_dict()
-            for k, v in self.dict.items():
-                arr.append(f"{fields_dict[k].user_name}={v}")
+            arr.extend(f"{fields_dict[k].user_name}={v}" for k, v in self.dict.items())
         else:
-            for k, v in self.dict.items():
-                arr.append(f"{k.replace('_', ' ')}={v}")
+            arr.extend(f"{k.replace('_', ' ')}={v}" for k, v in self.dict.items())
         return "[" + ", ".join(arr) + "]"
 
     def _plugin_info(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
@@ -249,9 +247,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_description(cls) -> str:
         """Measurement long description"""
-        if isinstance(cls.text_info, str):
-            return ""
-        return cls.text_info[1]
+        return "" if isinstance(cls.text_info, str) else cls.text_info[1]
 
     @classmethod
     def is_component(cls) -> bool:
@@ -296,13 +292,11 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_starting_leaf(cls) -> Leaf:
         """This leaf is putted on default list"""
-        return Leaf(cls._display_name())
+        return Leaf(name=cls._display_name())
 
     @classmethod
     def _display_name(cls):
-        if isinstance(cls.text_info, str):
-            return cls.text_info
-        return cls.text_info[0]
+        return cls.text_info if isinstance(cls.text_info, str) else cls.text_info[0]
 
     @classmethod
     def get_units(cls, ndim) -> symbols:

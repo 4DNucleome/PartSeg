@@ -223,7 +223,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         type_str, module = extract_type_info(type_)
         type_dict[name_] = type_str
         if module:
-            import_set.add("import " + module)
+            import_set.add(f"import {module}")
     translate_dict = {type(None): "None"}
     global_state = {typename: "a", "typing": typing}
     add_classes(itertools.chain(types.values(), base_classes), translate_dict, global_state)
@@ -238,8 +238,9 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     )
 
     if readonly:
-        slots = tuple("_" + x for x in field_names)
-        field_definitions = "\n".join(_field_template.format(name=name) for index, name in enumerate(field_names))
+        slots = tuple(f"_{x}" for x in field_names)
+        field_definitions = "\n".join(_field_template.format(name=name) for name in field_names)
+
     else:
         slots = tuple(field_names)
         field_definitions = ""
@@ -266,13 +267,13 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     try:
         # pylint: disable=W0122
         exec(class_definition, global_state)  # nosec
-    except AttributeError as e:
+    except AttributeError:
         print(class_definition, file=sys.stderr)
-        raise e
-    except NameError as e:
+        raise
+    except NameError:
         for i, el in enumerate(class_definition.split("\n"), 1):
             print(f"{i}: {el}", file=sys.stderr)
-        raise e
+        raise
 
     result = global_state[typename]
     result._source = class_definition
@@ -307,12 +308,11 @@ class BaseMeta(type):
         if "__readonly__" in attrs:
             readonly = attrs["__readonly__"]
         else:
-            for el in bases:
-                if hasattr(el, "__readonly__"):
-                    readonly = el.__readonly__
-                    break
-            else:
-                readonly = False
+            readonly = next(
+                (el.__readonly__ for el in bases if hasattr(el, "__readonly__")),
+                False,
+            )
+
         if "__old_names__" in attrs:
             old_names = attrs["__old_names__"]
             del attrs["__old_names__"]
@@ -334,7 +334,7 @@ class BaseMeta(type):
             if key in _prohibited:
                 if key == "__init__":
                     continue
-                raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
+                raise AttributeError(f"Cannot overwrite NamedTuple attribute {key}")
             if key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
         if "_reloading" not in attrs or not attrs["_reloading"]:

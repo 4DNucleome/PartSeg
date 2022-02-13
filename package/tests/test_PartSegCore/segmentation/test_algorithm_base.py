@@ -9,7 +9,7 @@ class TestSegmentationResult:
     def test_update_alternative_names(self):
         res = ROIExtractionResult(
             roi=np.zeros((10, 10), dtype=np.uint8),
-            parameters=ROIExtractionProfile("test", "test", {}),
+            parameters=ROIExtractionProfile(name="test", algorithm="test", values={}),
             additional_layers={
                 "test1": AdditionalLayerDescription(np.zeros((10, 10), dtype=np.uint8), "image", "aa"),
                 "test2": AdditionalLayerDescription(np.zeros((10, 10), dtype=np.uint8), "image", ""),
