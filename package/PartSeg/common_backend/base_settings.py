@@ -753,7 +753,7 @@ class BaseSettings(ViewSettings):
                     errors_list.append((file_path, data.filter_data()))
                     error = True
                 el.values.update(data)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0703
                 error = True
                 errors_list.append((file_path, e))
             finally:
