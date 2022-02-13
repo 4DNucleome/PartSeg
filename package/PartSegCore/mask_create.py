@@ -23,6 +23,8 @@ class MaskProperty(BaseSerializableClass):
     :ivar bool ~.reversed_mask: If mask should be reversed (region which are not part of segmentation)
     """
 
+    __readonly__ = False
+
     dilate: RadiusType
     dilate_radius: int
     fill_holes: RadiusType

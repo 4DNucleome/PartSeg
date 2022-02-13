@@ -106,8 +106,8 @@ class TestCalculationProcess:
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Components Number",
-                calculation_tree=Leaf("Components number", area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Components Number",
+                calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
             ),
         ]
         statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
@@ -152,8 +152,8 @@ class TestCalculationProcess:
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Components Number",
-                calculation_tree=Leaf("Components number", area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Components Number",
+                calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
             ),
         ]
         statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
@@ -224,19 +224,30 @@ class TestCalculationProcess:
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Components Number",
-                calculation_tree=Leaf("Components number", area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Components Number",
+                calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Segmentation Volume per component",
-                calculation_tree=Leaf("Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="Segmentation Volume per component",
+                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
         ]
         statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
         statistic_calculate = MeasurementCalculate(
             channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
         )
-        mask_create = MaskCreate("", MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, True, False, False))
+        mask_create = MaskCreate(
+            name="",
+            mask_property=MaskProperty(
+                dilate=RadiusType.NO,
+                dilate_radius=0,
+                fill_holes=RadiusType.NO,
+                max_holes_size=0,
+                save_components=True,
+                clip_to_mask=False,
+                reversed_mask=False,
+            ),
+        )
         parameters2 = {
             "channel": 1,
             "minimum_size": 200,
@@ -260,12 +271,12 @@ class TestCalculationProcess:
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Components Number",
-                calculation_tree=Leaf("Components number", area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Components Number",
+                calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask Volume per component",
-                calculation_tree=Leaf("Volume", area=AreaType.Mask, per_component=PerComponent.Yes),
+                name="Mask Volume per component",
+                calculation_tree=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.Yes),
             ),
         ]
         statistic = MeasurementProfile(name="base_measure2", chosen_fields=chosen_fields[:], name_prefix="aa_")
@@ -274,8 +285,8 @@ class TestCalculationProcess:
         )
         chosen_fields.append(
             MeasurementEntry(
-                "Segmentation Volume per component",
-                calculation_tree=Leaf("Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="Segmentation Volume per component",
+                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
             )
         )
         statistic = MeasurementProfile(name="base_measure3", chosen_fields=chosen_fields[:], name_prefix="bb_")
@@ -352,7 +363,12 @@ class TestCalculationProcess:
         return CalculationPlan(tree=tree, name="test")
 
     @pytest.mark.parametrize(
-        "mask_op", [MaskUse("test1"), MaskSum("", "test1", "test2"), MaskIntersection("", "test1", "test2")]
+        "mask_op",
+        [
+            MaskUse(name="test1"),
+            MaskSum(name="", mask1="test1", mask2="test2"),
+            MaskIntersection(name="", mask1="test1", mask2="test2"),
+        ],
     )
     def test_mask_op(self, mask_op, data_test_dir, tmpdir):
         plan = self.create_mask_operation_plan(mask_op)
@@ -551,7 +567,11 @@ class TestCalculationProcess:
     @pytest.mark.parametrize("save_method", save_dict.values())
     def test_do_calculation_save(self, tmpdir, data_test_dir, file_name, root_type, save_method: SaveBase):
         save_desc = Save(
-            "_test", "", save_method.get_name(), save_method.get_short_name(), save_method.get_default_values()
+            suffix="_test",
+            directory="",
+            algorithm=save_method.get_name(),
+            short_name=save_method.get_short_name(),
+            values=save_method.get_default_values(),
         )
         plan = self.create_simple_plan(root_type, save_desc)
         file_path = os.path.join(data_test_dir, file_name)

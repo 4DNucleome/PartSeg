@@ -228,7 +228,7 @@ class LoadImageMask(LoadBase):
             metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
         if len(load_locations) == 1:
             new_path, ext = os.path.splitext(load_locations[0])
-            new_path += "_mask" + ext
+            new_path += f"_mask{ext}"
             if not os.path.exists(new_path):
                 raise ValueError("Cannot determine mask file. It need to have '_mask' suffix.")
             load_locations.append(load_locations)
@@ -243,7 +243,7 @@ class LoadImageMask(LoadBase):
     @classmethod
     def get_next_file(cls, file_paths: typing.List[str]):
         base, ext = os.path.splitext(file_paths[0])
-        return base + "_mask" + ext
+        return f"{base}_mask{ext}"
 
 
 class LoadMask(LoadBase):
@@ -349,9 +349,9 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     @classmethod
     def update_segmentation_pipeline(cls, data: SegmentationPipeline) -> SegmentationPipeline:
         return SegmentationPipeline(
-            data.name,
-            cls.update_segmentation_profile(data.segmentation),
-            [cls.update_segmentation_pipeline_element(x) for x in data.mask_history],
+            name=data.name,
+            segmentaion=cls.update_segmentation_profile(data.segmentation),
+            mask_history=[cls.update_segmentation_pipeline_element(x) for x in data.mask_history],
         )
 
     @classmethod
@@ -426,9 +426,7 @@ class LoadProfileFromJSON(LoadBase):
         data = load_metadata(load_locations[0])
         bad_key = []
         if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
-            for k, v in data.items():
-                if not check_loaded_dict(v):
-                    bad_key.append(k)
+            bad_key.extend(k for k, v in data.items() if not check_loaded_dict(v))
             for el in bad_key:
                 del data[el]
         elif isinstance(data, ProfileDict) and not data.verify_data():
@@ -452,9 +450,9 @@ def load_metadata(data: typing.Union[str, Path]):
 
 def update_algorithm_dict(dkt):
     if "name" in dkt:
-        profile = ROIExtractionProfile("", dkt["name"], dkt["values"])
+        profile = ROIExtractionProfile(name="", algorithm=dkt["name"], values=dkt["values"])
     elif "algorithm_name" in dkt:
-        profile = ROIExtractionProfile("", dkt["algorithm_name"], dkt["values"])
+        profile = ROIExtractionProfile(name="", algorithm=dkt["algorithm_name"], values=dkt["values"])
     else:
         return dkt
     profile = UpdateLoadedMetadataAnalysis.recursive_update(profile)

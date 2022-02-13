@@ -54,7 +54,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
         return "No info [Report this ass error]"
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
+        return ROIExtractionProfile(name="", algorithm=self.get_name(), values=deepcopy(self.new_parameters))
 
     @classmethod
     def support_time(cls):
@@ -85,9 +85,7 @@ class BorderRim(RestartableAlgorithm):
         return ["Need mask"] + BorderRimBase.get_fields()
 
     def get_info_text(self):
-        if self.mask is None:
-            return "Need mask"
-        return ""
+        return "Need mask" if self.mask is None else ""
 
     def calculation_run(self, _report_fun) -> ROIExtractionResult:
         if self.mask is not None:

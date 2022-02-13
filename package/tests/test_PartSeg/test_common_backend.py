@@ -315,7 +315,9 @@ class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
         if self.return_none:
             return
         report_fun("text", 1)
-        return ROIExtractionResult(np.zeros((10, 10), dtype=np.uint8), ROIExtractionProfile("a", "a", {}))
+        return ROIExtractionResult(
+            roi=np.zeros((10, 10), dtype=np.uint8), parameters=ROIExtractionProfile(name="a", algorithm="a", values={})
+        )
 
     def get_info_text(self):
         return "text"

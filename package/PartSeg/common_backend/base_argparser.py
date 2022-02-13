@@ -25,9 +25,9 @@ def proper_suffix(val: str):
 
     :raise argparse.ArgumentTypeError: on validation error
     """
-    if len(val) > 0 and not val.isalnum():
-        raise argparse.ArgumentTypeError(f"suffix '{val}' need to contains only alpha numeric characters")
-    return val
+    if not val or val.isalnum():
+        return val
+    raise argparse.ArgumentTypeError(f"suffix '{val}' need to contains only alpha numeric characters")
 
 
 def proper_path(val: str):
@@ -40,8 +40,9 @@ def proper_path(val: str):
         return val
     try:
         os.makedirs(val)
-    except OSError:
-        raise argparse.ArgumentTypeError(f" Path {val} is not a valid path in this system")
+    except OSError as e:
+        raise argparse.ArgumentTypeError(f" Path {val} is not a valid path in this system") from e
+
     return val
 
 
@@ -105,8 +106,9 @@ class CustomParser(argparse.ArgumentParser):
         state_store.develop = args.develop
         state_store.save_suffix = args.save_suffix[0]
         state_store.save_folder = os.path.abspath(
-            args.save_directory[0] + ("_" + state_store.save_suffix if state_store.save_suffix else "")
+            args.save_directory[0] + (f"_{state_store.save_suffix}" if state_store.save_suffix else "")
         )
+
         if args.no_report and args.no_dialog:
             _setup_sentry()
         sys.excepthook = my_excepthook
@@ -129,6 +131,4 @@ def _setup_sentry():  # pragma: no cover
 
 
 def safe_repr(val):
-    if isinstance(val, np.ndarray):
-        return numpy_repr(val)
-    return _safe_repr(val)
+    return numpy_repr(val) if isinstance(val, np.ndarray) else _safe_repr(val)

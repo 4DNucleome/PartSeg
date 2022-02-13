@@ -40,7 +40,9 @@ class TestStackSettings:
         roi[0, 2, 2:-2, 2:-2] = 2
         roi[0, 3, 2:-2, 2:-2] = 3
         roi_info = ROIInfo(roi).fit_to_image(stack_image.image)
-        roi_extraction_parameters = defaultdict(lambda: ROIExtractionProfile("aa", "aa", {1: "aa"}))
+        roi_extraction_parameters = defaultdict(
+            lambda: ROIExtractionProfile(name="aa", algorithm="aa", values={1: "aa"})
+        )
         new_state = StackSettings.transform_state(
             state=stack_image,
             new_roi_info=roi_info,
@@ -51,7 +53,9 @@ class TestStackSettings:
         assert new_state.selected_components == [2]
 
     def test_transform_state(self, stack_segmentation1):
-        roi_extraction_parameters = defaultdict(lambda: ROIExtractionProfile("aa", "aa", {1: "aa"}))
+        roi_extraction_parameters = defaultdict(
+            lambda: ROIExtractionProfile(name="aa", algorithm="aa", values={1: "aa"})
+        )
         new_state = StackSettings.transform_state(
             state=stack_segmentation1,
             new_roi_info=stack_segmentation1.roi_info,
@@ -61,7 +65,9 @@ class TestStackSettings:
         assert new_state.selected_components == [1, 2, 4]
         assert new_state.roi_extraction_parameters[1] == stack_segmentation1.roi_extraction_parameters[1]
         assert new_state.roi_extraction_parameters[2] == stack_segmentation1.roi_extraction_parameters[3]
-        assert new_state.roi_extraction_parameters[3] == ROIExtractionProfile("aa", "aa", {1: "aa"})
+        assert new_state.roi_extraction_parameters[3] == ROIExtractionProfile(
+            name="aa", algorithm="aa", values={1: "aa"}
+        )
         assert np.all((new_state.roi_info.roi == 2) == (stack_segmentation1.roi_info.roi == 3))
 
     def test_add_project(self, stack_settings, stack_segmentation1, data_test_dir):
@@ -190,7 +196,8 @@ class TestStackSettings:
     def test_set_segmentation_result(self, stack_settings, stack_segmentation1, stack_image):
         stack_settings.set_project_info(stack_image)
         seg = ROIExtractionResult(
-            roi=stack_segmentation1.roi_info.roi, parameters=ROIExtractionProfile("test", "test2", {})
+            roi=stack_segmentation1.roi_info.roi,
+            parameters=ROIExtractionProfile(name="test", algorithm="test2", values={}),
         )
         stack_settings.set_segmentation_result(seg)
         assert stack_settings.last_executed_algorithm == "test2"
