@@ -4,7 +4,7 @@ from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Extra, Field
 
 from PartSegCore.class_register import register_class, rename_key, update_argument
 
@@ -12,18 +12,18 @@ from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, 
 from .algorithm_base import SegmentationLimitException
 
 
-class SingleThresholdParams(BaseModel):
+class SingleThresholdParams(BaseModel, extra=Extra.forbid):
     threshold: float = Field(8000.0, ge=-100000, le=100000, title="Threshold", description="Threshold values")
 
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("masked", "apply_mask"))])
-class SimpleITKThresholdParams128(BaseModel):
+class SimpleITKThresholdParams128(BaseModel, extra=Extra.forbid):
     apply_mask: bool = Field(True, title="Apply mask", description="If apply mask before calculate threshold")
     bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
 
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("masked", "apply_mask"))])
-class SimpleITKThresholdParams256(BaseModel):
+class SimpleITKThresholdParams256(BaseModel, extra=Extra.forbid):
     apply_mask: bool = Field(True, title="Apply mask", description="If apply mask before calculate threshold")
     bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
 
@@ -257,7 +257,7 @@ ThresholdSelection.register(MomentsThreshold)
 ThresholdSelection.register(MaximumEntropyThreshold)
 
 
-class DoubleThresholdParams(BaseModel):
+class DoubleThresholdParams(BaseModel, extra=Extra.forbid):
     core_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Core threshold")
     base_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Base threshold")
 
@@ -286,7 +286,7 @@ class DoubleThreshold(BaseThreshold):
 
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("hist_num", "bins"))])
-class DoubleOtsuParams(BaseModel):
+class DoubleOtsuParams(BaseModel, extra=Extra.forbid):
     valley: bool = Field(True, title="Valley emphasis")
     bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
 

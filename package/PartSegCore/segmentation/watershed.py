@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Callable
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Extra, Field
 
 from PartSegCore.class_generator import enum_register
 from PartSegCore_compiled_backend.multiscale_opening import MuType, PyMSO, calculate_mu
@@ -183,7 +183,7 @@ class PathDistanceWatershed(BaseWatershed):
         )
 
 
-class MSOWatershedParams(BaseModel):
+class MSOWatershedParams(BaseModel, extra=Extra.forbid):
     step_limits: int = Field(100, ge=1, le=1000, title="Threshold", description="Limits of Steps")
     reflective: bool = Field(False, title="Reflective")
 
