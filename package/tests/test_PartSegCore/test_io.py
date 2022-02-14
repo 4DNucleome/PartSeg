@@ -393,8 +393,8 @@ class TestSegmentationMask:
         algorithm = ThresholdAlgorithm()
         algorithm.set_image(image_data.image)
         param = algorithm.get_default_values()
-        param["channel"] = 0
-        algorithm.set_parameters(**param)
+        param.channel = 0
+        algorithm.set_parameters(param)
         res = algorithm.calculation_run(lambda x, y: None)
         num = np.max(res.roi) + 1
         data_dict = {str(i): deepcopy(res.parameters) for i in range(1, num)}

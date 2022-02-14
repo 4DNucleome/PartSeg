@@ -212,7 +212,17 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.channel = None
         self.mask = None
 
-    def set_parameters(self, **kwargs):
+    def set_parameters(self, _params=None, **kwargs):
+        # FIXME when\textbf{} drop python 3.7 use postional only argument
+        if _params is not None:
+            if isinstance(_params, dict):
+                _params = self.__argument_class__(**_params)
+            self.new_parameters = _params
+            return
+        if hasattr(self, "__argument_class__") and self.__argument_class__ is not None:
+            self.new_parameters = self.__argument_class__(**kwargs)
+            return
+
         base_names = [x.name for x in self.get_fields() if isinstance(x, AlgorithmProperty)]
         if set(base_names) != set(kwargs.keys()):
             missed_arguments = ", ".join(set(base_names).difference(set(kwargs.keys())))
