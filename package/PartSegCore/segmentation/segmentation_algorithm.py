@@ -4,7 +4,7 @@ from typing import Callable, Optional
 
 import numpy as np
 import SimpleITK as sitk
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Extra, Field
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from ..channel_class import Channel
@@ -43,7 +43,7 @@ class StackAlgorithm(ROIExtractionAlgorithm, ABC):
         return NoiseFilterSelection[noise_removal.name].noise_filter(channel, self.image.spacing, noise_removal.values)
 
 
-class ThresholdPreviewParameters(BaseModel):
+class ThresholdPreviewParameters(BaseModel, extra=Extra.forbid):
     channel: Channel = Field(0, title="Channel")
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     threshold: int = Field(1000, title="Threshold", ge=0, le=10**6)
@@ -82,7 +82,7 @@ class ThresholdPreview(StackAlgorithm):
         return 3
 
 
-class BaseThresholdAlgorithmParameters(BaseModel):
+class BaseThresholdAlgorithmParameters(BaseModel, extra=Extra.forbid):
     channel: Channel = Field(0, title="Channel")
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Threshold")
@@ -438,7 +438,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         return self._threshold_image(image)
 
 
-class CellFromNucleusFlowParameters(BaseModel):
+class CellFromNucleusFlowParameters(BaseModel, extra=Extra.forbid):
     nucleus_channel: Channel = Field(0, title="Nucleus Channel")
     nucleus_noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     nucleus_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Threshold")
