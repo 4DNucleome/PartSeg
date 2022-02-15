@@ -449,41 +449,47 @@ class ROIExtractionProfile(BaseModel):
         )
 
 
+def _field_to_algorithm_property(name: str, field: "ModelField"):
+    user_name = field.field_info.title
+    value_range = None
+    possible_values = None
+    value_type = field.type_
+    default_value = field.field_info.default
+    help_text = field.field_info.description
+    if user_name is None:
+        user_name = name.replace("_", " ")
+    if issubclass(field.type_, (int, float)):
+        value_range = (
+            field.field_info.ge or field.field_info.gt or 0,
+            field.field_info.le or field.field_info.lt or 1000,
+        )
+    if issubclass(field.type_, AlgorithmSelection):
+        value_type = AlgorithmDescribeBase
+        default_value = field.field_info.default.name
+        possible_values = field.type_.__register__
+
+    return AlgorithmProperty(
+        name=name,
+        user_name=user_name,
+        default_value=default_value,
+        options_range=value_range,
+        value_type=value_type,
+        possible_values=possible_values,
+        help_text=help_text,
+    )
+
+
 def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List[AlgorithmProperty]:
     res = []
     value: "ModelField"
     if hasattr(obj, "header") and obj.header():
         res.append(obj.header())
     for name, value in obj.__fields__.items():
-        user_name = value.field_info.title
-        value_range = None
-        possible_values = None
-        value_type = value.type_
-        default_value = value.field_info.default
-        help_text = value.field_info.description
-        if user_name is None:
-            user_name = name.replace("_", " ")
-        if issubclass(value.type_, (int, float)):
-            value_range = (
-                value.field_info.ge or value.field_info.gt or 0,
-                value.field_info.le or value.field_info.lt or 1000,
-            )
-        if issubclass(value.type_, AlgorithmSelection):
-            value_type = AlgorithmDescribeBase
-            default_value = value.field_info.default.name
-            possible_values = value.type_.__register__
+        ap = _field_to_algorithm_property(name, value)
+
         if "prefix" in value.field_info.extra:
             res.append(value.field_info.extra["prefix"])
 
-        ap = AlgorithmProperty(
-            name=name,
-            user_name=user_name,
-            default_value=default_value,
-            options_range=value_range,
-            value_type=value_type,
-            possible_values=possible_values,
-            help_text=help_text,
-        )
         if "position" in value.field_info.extra:
             res.insert(value.field_info.extra["position"], ap)
         else:
