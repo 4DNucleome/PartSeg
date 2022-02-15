@@ -154,7 +154,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 )
         else:  # issubclass(ap.value_type, float):
             res = CustomDoubleSpinBox()
-            if not isinstance(ap.default_value, float):
+            if not isinstance(ap.default_value, (int, float)):
                 raise ValueError(
                     f"Incompatible types. default_value should be type of float. Is {type(ap.default_value)}"
                 )
