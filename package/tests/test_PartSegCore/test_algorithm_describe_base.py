@@ -185,3 +185,20 @@ def test_base_model_to_algorithm_property_algorithm_describe_base():
 
 def test_base_model_to_algorithm_property_algorithm_describe_empty():
     assert base_model_to_algorithm_property(BaseModel) == []
+
+
+def test_text_addition_model_to_algorithm_property():
+    class ModelWithText(BaseModel):
+        field1: int = 1
+        field2: int = Field(1, prefix="aaaa")
+        field3: int = Field(1, suffix="bbbb")
+        field4: int = 1
+
+        @staticmethod
+        def header():
+            return "cccc"
+
+    property_list = base_model_to_algorithm_property(ModelWithText)
+    assert property_list[0] == "cccc"
+    assert property_list[2] == "aaaa"
+    assert property_list[5] == "bbbb"

@@ -452,6 +452,8 @@ class ROIExtractionProfile(BaseModel):
 def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List[AlgorithmProperty]:
     res = []
     value: "ModelField"
+    if hasattr(obj, "header") and obj.header():
+        res.append(obj.header())
     for name, value in obj.__fields__.items():
         user_name = value.field_info.title
         value_range = None
@@ -470,7 +472,8 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
             value_type = AlgorithmDescribeBase
             default_value = value.field_info.default.name
             possible_values = value.type_.__register__
-
+        if "prefix" in value.field_info.extra:
+            res.append(value.field_info.extra["prefix"])
         res.append(
             AlgorithmProperty(
                 name=name,
@@ -482,4 +485,6 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
                 help_text=help_text,
             )
         )
+        if "suffix" in value.field_info.extra:
+            res.append(value.field_info.extra["suffix"])
     return res
