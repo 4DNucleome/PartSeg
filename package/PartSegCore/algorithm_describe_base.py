@@ -474,17 +474,20 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
             possible_values = value.type_.__register__
         if "prefix" in value.field_info.extra:
             res.append(value.field_info.extra["prefix"])
-        res.append(
-            AlgorithmProperty(
-                name=name,
-                user_name=user_name,
-                default_value=default_value,
-                options_range=value_range,
-                value_type=value_type,
-                possible_values=possible_values,
-                help_text=help_text,
-            )
+
+        ap = AlgorithmProperty(
+            name=name,
+            user_name=user_name,
+            default_value=default_value,
+            options_range=value_range,
+            value_type=value_type,
+            possible_values=possible_values,
+            help_text=help_text,
         )
+        if "position" in value.field_info.extra:
+            res.insert(value.field_info.extra["position"], ap)
+        else:
+            res.append(ap)
         if "suffix" in value.field_info.extra:
             res.append(value.field_info.extra["suffix"])
     return res

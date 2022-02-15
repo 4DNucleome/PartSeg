@@ -202,3 +202,17 @@ def test_text_addition_model_to_algorithm_property():
     assert property_list[0] == "cccc"
     assert property_list[2] == "aaaa"
     assert property_list[5] == "bbbb"
+
+
+def test_base_model_to_algorithm_property_position():
+    class BBaseModel(BaseModel):
+        field1: int = 1
+        field2: int = 1
+
+    class ModelWithPosition(BBaseModel):
+        field3: int = Field(1, position=1)
+
+    property_list = base_model_to_algorithm_property(ModelWithPosition)
+    assert property_list[0].name == "field1"
+    assert property_list[1].name == "field3"
+    assert property_list[2].name == "field2"
