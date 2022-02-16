@@ -2,7 +2,7 @@ import typing
 from enum import Enum
 
 import pytest
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Extra, Field, ValidationError
 
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
@@ -77,11 +77,11 @@ def test_algorithm_selection_convert_subclass(clean_register):
         pass
 
     @register_class
-    class TestModel1(BaseModel):
+    class TestModel1(BaseModel, extra=Extra.forbid):
         field1: int = 0
 
     @register_class(version="0.0.1", migrations=[("0.0.1", lambda x: {"field2": x["field"]})])
-    class TestModel2(BaseModel):
+    class TestModel2(BaseModel, extra=Extra.forbid):
         field2: int = 7
 
     class Class1(AlgorithmDescribeBase):
@@ -115,7 +115,7 @@ def test_algorithm_selection_register_old(clean_register):
         pass
 
     @register_class
-    class TestModel1(BaseModel):
+    class TestModel1(BaseModel, extra=Extra.forbid):
         field1: int = 0
 
     class Class1(AlgorithmDescribeBase):
@@ -140,7 +140,7 @@ def test_base_model_to_algorithm_property_base():
         a = 1
         b = 2
 
-    class Sample(BaseModel):
+    class Sample(BaseModel, extra=Extra.forbid):
         field1: int = Field(0, le=100, ge=0, title="Field 1")
         field2: SampleEnum = SampleEnum.a
         field3: float = Field(0, le=55, ge=-7, title="Field 3")
@@ -213,7 +213,7 @@ def test_base_model_to_algorithm_property_algorithm_describe_empty():
 
 
 def test_text_addition_model_to_algorithm_property():
-    class ModelWithText(BaseModel):
+    class ModelWithText(BaseModel, extra=Extra.forbid):
         field1: int = 1
         field2: int = Field(1, prefix="aaaa")
         field3: int = Field(1, suffix="bbbb")
@@ -230,7 +230,7 @@ def test_text_addition_model_to_algorithm_property():
 
 
 def test_base_model_to_algorithm_property_position():
-    class BBaseModel(BaseModel):
+    class BBaseModel(BaseModel, extra=Extra.forbid):
         field1: int = 1
         field2: int = 1
 
