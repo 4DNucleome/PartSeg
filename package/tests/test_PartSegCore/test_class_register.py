@@ -70,6 +70,10 @@ def test_get_version():
 def test_rename_key():
     dkt = {"aaa": 1, "bbb": 2}
     assert rename_key(from_key="aaa", to_key="ccc")(dkt) == {"bbb": 2, "ccc": 1}
+    with pytest.raises(KeyError):
+        rename_key("ccc", "ddd")(dkt)
+
+    assert rename_key("ccc", "ddd", optional=True)(dkt) == dkt
 
 
 def test_update_argument(clean_register):
