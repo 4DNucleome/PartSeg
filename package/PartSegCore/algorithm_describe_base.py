@@ -213,6 +213,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             list(class_methods) if class_methods else getattr(suggested_base_class, "need_class_method", [])
         )
         self.methods = list(methods) if methods else getattr(suggested_base_class, "need_method", [])
+        self._old_mapping = {}
         for el in args:
             self.register(el)
 
@@ -230,13 +231,23 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         )
 
     def __getitem__(self, item) -> AlgorithmType:
-        return typing.cast(AlgorithmType, super().__getitem__(item))
+        # FIXME add better strategy to get proper class when there is conflict of names
+        try:
+            return typing.cast(AlgorithmType, super().__getitem__(item))
+        except KeyError:
+            return typing.cast(AlgorithmType, super().__getitem__(self._old_mapping[item]))
 
-    def register(self, value: AlgorithmType, replace=False):
+    def __contains__(self, item):
+        return super().__contains__(item) or item in self._old_mapping
+
+    def register(
+        self, value: AlgorithmType, replace: bool = False, old_names: typing.Optional[typing.List[str]] = None
+    ):
         """
         Function for registering :class:`.AlgorithmDescribeBase` based algorithms
         :param value: algorithm to register
-        :param replace: replace existing algorithm, be patient with this
+        :param replace: replace existing algorithm, be patient with
+        :param old_names: list of old names for registered class
         """
         self.check_function(value, "get_name", True)
         try:
@@ -244,10 +255,21 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         except NotImplementedError:
             raise ValueError(f"Class {value} need to implement get_name class method")
         if name in self and not replace:
-            raise ValueError(f"Object with this name: {name} already exist and register is not in replace mode")
+            raise ValueError(
+                f"Object {self[name]} with this name: {name} already exist and register is not in replace mode"
+            )
         if not isinstance(name, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(name)}")
         self[name] = value
+        if old_names is not None:
+            # FIXME add better strategy to get proper class when there is conflict of names
+            for old_name in old_names:
+                if old_name in self._old_mapping and not replace:
+                    raise ValueError(
+                        f"Old value mapping for name {old_name} already registered."
+                        f" Currently pointing to {self._old_mapping[name]}"
+                    )
+                self._old_mapping[old_name] = name
         return value
 
     @staticmethod
@@ -261,7 +283,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
     def __setitem__(self, key: str, value: AlgorithmType):
         if not issubclass(value, AlgorithmDescribeBase):
             raise ValueError(
-                f"Class {value} need to inherit from " f"{AlgorithmDescribeBase.__module__}.AlgorithmDescribeBase"
+                f"Class {value} need to inherit from {AlgorithmDescribeBase.__module__}.AlgorithmDescribeBase"
             )
         self.check_function(value, "get_name", True)
         self.check_function(value, "get_fields", True)
@@ -340,6 +362,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):
 
     @validator("values", pre=True)
     def update_values(cls, v, values):
+        # FIXME add better strategy to get proper class when there is conflict of names
         if "name" not in values or not isinstance(v, dict):
             return v
         klass = cls.__register__[values["name"]]
@@ -351,8 +374,16 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):
         return klass.__argument_class__(**dkt_migrated)
 
     @classmethod
-    def register(cls, value: AlgorithmType, replace=False) -> AlgorithmType:
-        return cls.__register__.register(value, replace)
+    def register(
+        cls, value: AlgorithmType, replace=False, old_names: typing.Optional[typing.List[str]] = None
+    ) -> AlgorithmType:
+        """
+        Function for registering :class:`.AlgorithmDescribeBase` based algorithms
+        :param value: algorithm to register
+        :param replace: replace existing algorithm, be patient with
+        :param old_names: list of old names for registered class
+        """
+        return cls.__register__.register(value, replace, old_names)
 
     @classmethod
     def get_default(cls):

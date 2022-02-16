@@ -110,6 +110,31 @@ def test_algorithm_selection_convert_subclass(clean_register):
     assert ob.values.field2 == 5
 
 
+def test_algorithm_selection_register_old(clean_register):
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    @register_class
+    class TestModel1(BaseModel):
+        field1: int = 0
+
+    class Class1(AlgorithmDescribeBase):
+        __argument_class__ = TestModel1
+
+        @classmethod
+        def get_name(cls) -> str:
+            return "test3"
+
+    TestSelection.register(Class1, old_names=["test"])
+
+    ob = TestSelection(name="test3", values={"field1": 4})
+    assert isinstance(ob.values, TestModel1)
+    ob = TestSelection(name="test", values={"field1": 4})
+    assert isinstance(ob.values, TestModel1)
+    with pytest.raises(ValidationError):
+        TestSelection(name="test4", values={"field1": 4})
+
+
 def test_base_model_to_algorithm_property_base():
     class SampleEnum(Enum):
         a = 1
