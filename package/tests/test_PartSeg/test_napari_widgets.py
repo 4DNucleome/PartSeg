@@ -10,11 +10,11 @@ from PartSeg.common_gui.napari_image_view import SearchType
 from PartSeg.plugins.napari_widgets import MaskCreate, ROIAnalysisExtraction, ROIMaskExtraction, SearchLabel, _settings
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
 from PartSegCore.analysis.measurement_calculation import Volume, Voxels
 from PartSegCore.analysis.save_functions import SaveProfilesToJSON
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.segmentation import ROIExtractionResult
 
 napari_skip = pytest.mark.skipif(
@@ -92,16 +92,12 @@ def get_text_mock(text):
     return func
 
 
-@pytest.mark.parametrize("register", [analysis_algorithm_dict, mask_algorithm_dict])
+@pytest.mark.parametrize("register", [AnalysisAlgorithmSelection, MaskAlgorithmSelection])
 def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp_path):
-    elem_name = next(iter(register))
+    alg = register.get_default()
     profiles = {
-        "prof1": ROIExtractionProfile(
-            name="prof1", algorithm=elem_name, values=register[elem_name].get_default_values()
-        ),
-        "prof2": ROIExtractionProfile(
-            name="prof2", algorithm=elem_name, values=register[elem_name].get_default_values()
-        ),
+        "prof1": ROIExtractionProfile(name="prof1", algorithm=alg.name, values=alg.values),
+        "prof2": ROIExtractionProfile(name="prof2", algorithm=alg.name, values=alg.values),
     }
     dialog = ProfilePreviewDialog(profiles, register, part_settings)
     qtbot.add_widget(dialog)

@@ -33,6 +33,7 @@ from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
+    AlgorithmSelection,
     ROIExtractionProfile,
     base_model_to_algorithm_property,
 )
@@ -665,9 +666,7 @@ class AlgorithmChooseBase(QWidget):
     progress_signal = Signal(str, int)
     algorithm_changed = Signal(str)
 
-    def __init__(
-        self, settings: BaseSettings, algorithms: typing.Dict[str, typing.Type[ROIExtractionAlgorithm]], parent=None
-    ):
+    def __init__(self, settings: BaseSettings, algorithms: typing.Type[AlgorithmSelection], parent=None):
         super().__init__(parent)
         self.settings = settings
         self.algorithms = algorithms
@@ -694,7 +693,7 @@ class AlgorithmChooseBase(QWidget):
     def add_widgets_to_algorithm(self):
         self.algorithm_choose.blockSignals(True)
         self.algorithm_choose.clear()
-        for name, val in self.algorithms.items():
+        for name, val in self.algorithms.__register__.items():
             self.algorithm_choose.addItem(name)
             widget = self._algorithm_widget(self.settings, name, val)
             self.algorithm_dict[name] = widget
@@ -766,9 +765,7 @@ class AlgorithmChooseBase(QWidget):
 
 
 class AlgorithmChoose(AlgorithmChooseBase):
-    def __init__(
-        self, settings: BaseSettings, algorithms: typing.Dict[str, typing.Type[ROIExtractionAlgorithm]], parent=None
-    ):
+    def __init__(self, settings: BaseSettings, algorithms: typing.Type[AlgorithmSelection], parent=None):
         super().__init__(settings, algorithms, parent)
         self.settings.image_changed.connect(self.image_changed)
 

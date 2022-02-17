@@ -9,7 +9,7 @@ from qtpy.QtCore import QThread, Signal
 
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.mask.io_functions import LoadROIImage, LoadStackImage, MaskProjectTuple, SaveROI
 from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
@@ -66,7 +66,7 @@ class BatchProceed(QThread):
             try:
                 name = path.basename(file_path)
                 blank = get_mask(project_tuple.roi, project_tuple.mask, project_tuple.selected_components)
-                algorithm: StackAlgorithm = mask_algorithm_dict[task.parameters.algorithm]()
+                algorithm: StackAlgorithm = MaskAlgorithmSelection[task.parameters.algorithm]()
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
                 algorithm.set_parameters(**task.parameters.values)

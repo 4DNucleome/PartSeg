@@ -10,7 +10,7 @@ import pytest
 from pydantic import BaseModel
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
 from PartSegCore.convex_fill import _convex_fill, convex_fill
@@ -81,9 +81,9 @@ def empty(_s: str, _i: int):
     """mock function for callback"""
 
 
-@pytest.mark.parametrize("algorithm_name", analysis_algorithm_dict.keys())
+@pytest.mark.parametrize("algorithm_name", AnalysisAlgorithmSelection.__register__.keys())
 def test_base_parameters(algorithm_name):
-    algorithm_class = analysis_algorithm_dict[algorithm_name]
+    algorithm_class = AnalysisAlgorithmSelection[algorithm_name]
     assert algorithm_class.get_name() == algorithm_name
     algorithm_class: Type[ROIExtractionAlgorithm]
     obj = algorithm_class()

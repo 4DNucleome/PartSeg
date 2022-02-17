@@ -24,11 +24,11 @@ from qtpy.QtWidgets import (
 
 from PartSeg import plugins
 from PartSegCore import UNIT_SCALE, Units
-from PartSegCore.algorithm_describe_base import Register, ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import AlgorithmSelection, ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
 from PartSegCore.analysis.save_functions import SaveProfilesToJSON
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.segmentation import ROIExtractionResult
 
 from ..._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
@@ -84,7 +84,7 @@ class NapariAlgorithmChoose(AlgorithmChooseBase):
 
 class ROIExtractionAlgorithms(QWidget):
     @staticmethod
-    def get_method_dict():  # pragma: no cover
+    def get_method_dict() -> AlgorithmSelection:  # pragma: no cover
         raise NotImplementedError
 
     @staticmethod
@@ -277,7 +277,7 @@ class ROIExtractionAlgorithms(QWidget):
 class ROIAnalysisExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def get_method_dict():
-        return AnalysisAlgorithmSelection.__register__
+        return AnalysisAlgorithmSelection
 
     @staticmethod
     def prefix() -> str:
@@ -287,7 +287,7 @@ class ROIAnalysisExtraction(ROIExtractionAlgorithms):
 class ROIMaskExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def get_method_dict():
-        return mask_algorithm_dict
+        return MaskAlgorithmSelection
 
     @staticmethod
     def prefix() -> str:
@@ -298,13 +298,13 @@ class ProfilePreviewDialog(QDialog):
     def __init__(
         self,
         profile_dict: typing.Dict[str, ROIExtractionProfile],
-        algorithm_dict: Register,
+        algorithm_selection: AlgorithmSelection,
         settings: BaseSettings,
         parent=None,
     ):
         super().__init__(parent=parent)
         self.profile_dict = profile_dict
-        self.algorithm_dict = algorithm_dict
+        self.algorithm_selection = algorithm_selection
         self.settings = settings
 
         self.profile_list = SearchableListWidget()

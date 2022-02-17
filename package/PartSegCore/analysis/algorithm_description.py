@@ -18,7 +18,7 @@ class AnalysisAlgorithmSelection(
     class_methods=["support_time", "support_z"],
     methods=["set_image", "set_mask", "get_info_text", "calculation_run"],
 ):
-    """Register for segmentation method designed for separate specific areas."""
+    """Register for segmentation method visible in PartSeg ROI Analysis."""
 
 
 AnalysisAlgorithmSelection.register(LowerThresholdAlgorithm)

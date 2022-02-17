@@ -66,7 +66,7 @@ register_dict = {
     RegisterEnum.threshold: threshold.ThresholdSelection.__register__,
     RegisterEnum.noise_filtering: noise_filtering.NoiseFilterSelection.__register__,
     RegisterEnum.analysis_algorithm: analysis_algorithm_description.AnalysisAlgorithmSelection.__register__,
-    RegisterEnum.mask_algorithm: mask_algorithm_description.mask_algorithm_dict,
+    RegisterEnum.mask_algorithm: mask_algorithm_description.MaskAlgorithmSelection.__register__,
     RegisterEnum.analysis_save: save_functions.save_dict,
     RegisterEnum.analysis_load: load_functions.load_dict,
     RegisterEnum.mask_load: io_functions.load_dict,
@@ -76,7 +76,7 @@ register_dict = {
     RegisterEnum.mask_save_segmentation: io_functions.save_segmentation_dict,
     RegisterEnum.analysis_measurement: measurement_calculation.MEASUREMENT_DICT,
     RegisterEnum.roi_analysis_segmentation_algorithm: analysis_algorithm_description.AnalysisAlgorithmSelection.__register__,  # noqa: E501
-    RegisterEnum.roi_mask_segmentation_algorithm: mask_algorithm_description.mask_algorithm_dict,
+    RegisterEnum.roi_mask_segmentation_algorithm: mask_algorithm_description.MaskAlgorithmSelection.__register__,
 }
 
 # noinspection DuplicatedCode
