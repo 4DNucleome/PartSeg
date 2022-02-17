@@ -99,3 +99,4 @@ def __getattr__(name):
             "mu_mid_dict is deprecated. Please use MuMidSelection instead", category=FutureWarning, stacklevel=2
         )
         return MuMidSelection.__register__
+    raise AttributeError(f"module {__name__} has no attribute {name}")

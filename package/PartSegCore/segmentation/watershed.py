@@ -262,6 +262,7 @@ def __getattr__(name):
             "sprawl_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
         )
         return FlowMethodSelection.__register__
+    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 def get_neigh(sides):

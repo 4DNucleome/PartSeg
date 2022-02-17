@@ -15,7 +15,7 @@ from ..class_generator import enum_register
 from ..class_register import register_class
 from ..mask_create import MaskProperty
 from ..universal_const import Units
-from . import analysis_algorithm_dict
+from . import AnalysisAlgorithmSelection
 from .measurement_calculation import MeasurementProfile
 
 
@@ -774,7 +774,7 @@ class CalculationPlan:
             name = self.get_el_name(elem.operation)
         if isinstance(elem.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
             if isinstance(elem.operation, ROIExtractionProfile):
-                txt = elem.operation.pretty_print(analysis_algorithm_dict)
+                txt = elem.operation.pretty_print(AnalysisAlgorithmSelection)
             else:
                 txt = str(elem.operation)
             txt = "\n".join(txt.split("\n")[1:])

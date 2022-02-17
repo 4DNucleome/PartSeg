@@ -2139,9 +2139,9 @@ class TestHaralick:
 @pytest.fixture
 def roi_to_roi_extract():
     parameters = LowerThresholdAlgorithm.get_default_values()
-    parameters["threshold"]["values"].threshold = 1
-    parameters["minimum_size"] = 1
-    parameters["channel"] = 1
+    parameters.threshold.values.threshold = 1
+    parameters.minimum_size = 1
+    parameters.channel = 1
     return ROIExtractionProfile(name="default", algorithm=LowerThresholdAlgorithm.get_name(), values=parameters)
 
 

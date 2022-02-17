@@ -164,7 +164,11 @@ class AlgorithmDescribeBase(ABC):
 
     @classmethod
     def get_fields_dict(cls) -> typing.Dict[str, AlgorithmProperty]:
-        return {v.name: v for v in cls.get_fields() if isinstance(v, AlgorithmProperty)}
+        if hasattr(cls, "__argument_class__") and cls.__argument_class__ is not None:
+            fields = base_model_to_algorithm_property(cls.__argument_class__)
+        else:
+            fields = cls.get_fields()
+        return {v.name: v for v in fields if isinstance(v, AlgorithmProperty)}
 
     @classmethod
     def get_default_values(cls):
@@ -295,12 +299,13 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             raise ValueError(f"Function get_name of class {value} need return string not {type(val)}")
         if key != val:
             raise ValueError("Object need to be registered under name returned by gey_name function")
-        try:
-            val = value.get_fields()
-        except NotImplementedError:
-            raise ValueError(f"Method get_fields of class {value} need to be implemented")
-        if not isinstance(val, list):
-            raise ValueError(f"Function get_fields of class {value} need return list not {type(val)}")
+        if not (hasattr(value, "__argument_class__") and value.__argument_class__ is not None):
+            try:
+                val = value.get_fields()
+                if not isinstance(val, list):
+                    raise ValueError(f"Function get_fields of class {value} need return list not {type(val)}")
+            except NotImplementedError:
+                raise ValueError(f"Method get_fields of class {value} need to be implemented")
         for el in self.class_methods:
             self.check_function(value, el, True)
         for el in self.methods:
@@ -333,6 +338,9 @@ class AddRegisterMeta(ModelMetaclass):
 
     def __getitem__(self, item) -> AlgorithmType:
         return self.__register__[item]
+
+    def get(self, item, default=None):
+        return self.__register__.get(item, default)
 
 
 class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):
@@ -401,9 +409,14 @@ class ROIExtractionProfile(BaseModel):
 
     name: str
     algorithm: str
-    values: typing.Union[typing.Dict[str, typing.Any], BaseModel]
+    values: typing.Any
+
+    class Config:
+        smart_union = True
 
     def pretty_print(self, algorithm_dict):
+        if isinstance(algorithm_dict, AlgorithmSelection):
+            algorithm_dict = algorithm_dict.__register__
         try:
             algorithm = algorithm_dict[self.algorithm]
         except KeyError:
@@ -439,10 +452,16 @@ class ROIExtractionProfile(BaseModel):
             if issubclass(desc.value_type, Channel):
                 res += str(Channel(v))
             elif issubclass(desc.value_type, AlgorithmDescribeBase):
-                res += desc.possible_values[v["name"]].get_name()
-                if v["values"]:
+                if isinstance(v, AlgorithmSelection):
+                    name = v.name
+                    values_ = v.values
+                else:
+                    name = v["name"]
+                    values_ = v["values"]
+                res += desc.possible_values[name].get_name()
+                if values_:
                     res += "\n"
-                    res += cls._pretty_print(v["values"], desc.possible_values[v["name"]].get_fields_dict(), indent + 2)
+                    res += cls._pretty_print(values_, desc.possible_values[name].get_fields_dict(), indent + 2)
             elif isinstance(v, typing.MutableMapping):
                 res += cls._pretty_print(v, {}, indent + 2)
             else:

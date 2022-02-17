@@ -25,7 +25,7 @@ from qtpy.QtWidgets import (
 from PartSeg import plugins
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import Register, ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
 from PartSegCore.analysis.save_functions import SaveProfilesToJSON
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
@@ -277,7 +277,7 @@ class ROIExtractionAlgorithms(QWidget):
 class ROIAnalysisExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def get_method_dict():
-        return analysis_algorithm_dict
+        return AnalysisAlgorithmSelection.__register__
 
     @staticmethod
     def prefix() -> str:

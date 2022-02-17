@@ -19,6 +19,7 @@ from tifffile import TiffFile
 from PartSegImage import GenericImageReader
 
 from ..algorithm_describe_base import Register, ROIExtractionProfile
+from ..class_register import REGISTER, class_to_str
 from ..io_utils import (
     LoadBase,
     LoadPoints,
@@ -35,6 +36,7 @@ from ..mask.io_functions import LoadROIImage
 from ..project_info import HistoryElement
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
+from .algorithm_description import AnalysisAlgorithmSelection
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from .calculation_plan import CalculationPlan, CalculationTree, MeasurementCalculate
 from .io_utils import MaskInfo, ProjectTuple, project_version_info
@@ -319,13 +321,18 @@ class LoadMaskSegmentation(LoadBase):
 class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     @classmethod
     def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
-        replace_name_dict = {
-            "Split Mask on Part": "Mask Distance Splitting",
-            "Lower threshold flow": "Lower threshold with watershed",
-            "Upper threshold flow": "Upper threshold with watershed",
-        }
-        if profile_data.algorithm in replace_name_dict:
-            profile_data.algorithm = replace_name_dict[profile_data.algorithm]
+        with suppress(Exception):
+            algorithm = AnalysisAlgorithmSelection[profile_data.algorithm]
+            if (
+                hasattr(algorithm, "__argument_class__")
+                and algorithm.__argument_class__ is not None
+                and isinstance(profile_data.values, dict)
+            ):
+                dkt_migrated = REGISTER.migrate_data(
+                    class_to_str(algorithm.__argument_class__), "0.0.0", profile_data.values
+                )
+                profile_data.values = algorithm.__argument_class__(**dkt_migrated)
+
         return super().update_segmentation_profile(profile_data)
 
     @classmethod

@@ -93,3 +93,17 @@ def test_update_argument(clean_register):
 
     ClassToCall.call_func(aa=1, arg={"a": 1, "b": 2})
     ClassToCall.call_func(1, {"a": 1, "b": 2})
+
+
+# def test_migrate_parent_class(clean_register):
+#     @register_class(version="0.0.1", migrations=[("0.0.0", rename_key("field", "field1"))])
+#     class BaseMigrateClass:
+#         def __init__(self, field1):
+#             self.field1 = field1
+#
+#     class MigrateClass(BaseMigrateClass):
+#         def __init__(self, field2, **kwargs):
+#             super().__init__(**kwargs)
+#             self.field2 = field2
+#
+#     REGISTER.migrate_data(class_to_str(MigrateClass), )

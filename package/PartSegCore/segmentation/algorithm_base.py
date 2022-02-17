@@ -8,7 +8,13 @@ import numpy as np
 from PartSegCore.channel_class import Channel
 from PartSegImage import Image
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
+from ..algorithm_describe_base import (
+    AlgorithmDescribeBase,
+    AlgorithmProperty,
+    ROIExtractionProfile,
+    base_model_to_algorithm_property,
+)
+from ..class_register import REGISTER, class_to_str
 from ..image_operations import RadiusType
 from ..project_info import AdditionalLayerDescription
 from ..roi_info import ROIInfo
@@ -213,13 +219,15 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.mask = None
 
     def set_parameters(self, _params=None, **kwargs):
-        # FIXME when\textbf{} drop python 3.7 use postional only argument
+        # FIXME when drop python 3.7 use postional only argument
         if _params is not None:
             if isinstance(_params, dict):
+                _params = REGISTER.migrate_data(class_to_str(self.__argument_class__), "0.0.0", _params)
                 _params = self.__argument_class__(**_params)
             self.new_parameters = _params
             return
         if hasattr(self, "__argument_class__") and self.__argument_class__ is not None:
+            kwargs = REGISTER.migrate_data(class_to_str(self.__argument_class__), "0.0.0", kwargs)
             self.new_parameters = self.__argument_class__(**kwargs)
             return
 
@@ -240,7 +248,11 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_channel_parameter_name(cls):
-        for el in cls.get_fields():
+        if hasattr(cls, "__argument_class__") and cls.__argument_class__ is not None:
+            fields = base_model_to_algorithm_property(cls.__argument_class__)
+        else:
+            fields = cls.get_fields()
+        for el in fields:
             if el.value_type == Channel:
                 return el.name
         raise ValueError("No channel defined")

@@ -19,7 +19,7 @@ from qtpy.QtWidgets import (
 
 from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 
 
 class ExportDialog(QDialog):
@@ -314,5 +314,5 @@ class ProfileDictViewer(ObjectPreview):
     """
 
     def preview_object(self, ob: ROIExtractionProfile):
-        text = ob.pretty_print(analysis_algorithm_dict)
+        text = ob.pretty_print(AnalysisAlgorithmSelection.__register__)
         self.setText(text)

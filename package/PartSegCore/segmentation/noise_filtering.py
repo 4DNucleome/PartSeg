@@ -145,3 +145,4 @@ def __getattr__(name):
             stacklevel=2,
         )
         return NoiseFilterSelection.__register__
+    raise AttributeError(f"module {__name__} has no attribute {name}")

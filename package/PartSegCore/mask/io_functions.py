@@ -289,6 +289,8 @@ class LoadROI(LoadBase):
     def fix_parameters(profile: ROIExtractionProfile):
         if profile is None:
             return
+        if not isinstance(profile.values, dict):
+            return profile
         if (profile.algorithm in {"Threshold", "Auto Threshold"}) and isinstance(profile.values["smooth_border"], bool):
             if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
                 profile.values["smooth_border"] = {
@@ -727,6 +729,8 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
     @classmethod
     def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
         profile_data = super().update_segmentation_profile(profile_data)
+        if not isinstance(profile_data.values, dict):
+            return profile_data
         if profile_data.algorithm in {"Threshold", "Auto Threshold"}:
             if isinstance(profile_data.values["smooth_border"], bool):
                 if profile_data.values["smooth_border"]:

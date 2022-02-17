@@ -40,7 +40,7 @@ import tifffile
 import xlsxwriter
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.calculation_plan import (
     BaseCalculation,
     Calculation,
@@ -239,13 +239,19 @@ class CalculationProcess:
         :param ROIExtractionProfile operation: Specification of segmentation operation
         :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
-        segmentation_class = analysis_algorithm_dict.get(operation.algorithm)
+        segmentation_class = AnalysisAlgorithmSelection.get(operation.algorithm)
         if segmentation_class is None:  # pragma: no cover
             raise ValueError(f"Segmentation class {operation.algorithm} do not found")
         segmentation_algorithm: RestartableAlgorithm = segmentation_class()
         segmentation_algorithm.set_image(self.image)
         segmentation_algorithm.set_mask(self.mask)
-        segmentation_algorithm.set_parameters(**operation.values)
+        if (
+            hasattr(segmentation_algorithm, "__argument_class__")
+            and segmentation_algorithm.__argument_class__ is not None
+        ):
+            segmentation_algorithm.set_parameters(operation.values)
+        else:
+            segmentation_algorithm.set_parameters(**operation.values)
         result = segmentation_algorithm.calculation_run(report_empty_fun)
         backup_data = self.roi_info, self.additional_layers, self.algorithm_parameters
         self.roi_info = ROIInfo(result.roi, result.roi_annotation, result.alternative_representation)
@@ -343,7 +349,7 @@ class CalculationProcess:
         """
         channel = operation.channel
         if channel == -1:
-            segmentation_class: Type[ROIExtractionAlgorithm] = analysis_algorithm_dict.get(
+            segmentation_class: Type[ROIExtractionAlgorithm] = AnalysisAlgorithmSelection.get(
                 self.algorithm_parameters["algorithm_name"]
             )
             if segmentation_class is None:  # pragma: no cover

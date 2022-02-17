@@ -258,6 +258,8 @@ class UpdateLoadedMetadataBase:
 
     @classmethod
     def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
+        if not isinstance(profile_data.values, dict):
+            return profile_data
         for key in list(profile_data.values.keys()):
             item = profile_data.values[key]
             if isinstance(item, Enum):

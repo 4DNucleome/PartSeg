@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
 from PartSegCore.json_hooks import check_loaded_dict
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
@@ -34,9 +34,9 @@ class TestSegmentation:
 
         val: ROIExtractionProfile
         for val in data.values():
-            algorithm: ROIExtractionAlgorithm = analysis_algorithm_dict[val.algorithm]()
+            algorithm: ROIExtractionAlgorithm = AnalysisAlgorithmSelection[val.algorithm]()
             algorithm.set_image(image)
             algorithm.set_mask(image.mask.squeeze())
-            algorithm.set_parameters(**val.values)
+            algorithm.set_parameters(val.values)
             result = algorithm.calculation_run(empty)
             assert np.max(result.roi) == 2

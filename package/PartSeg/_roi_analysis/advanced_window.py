@@ -31,7 +31,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox, ensure_main_thread
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.universal_const import UNIT_SCALE, Units
@@ -167,14 +167,15 @@ class Properties(QWidget):
         # TODO update with knowledge from profile dict
         self.delete_btn.setEnabled(True)
         self.rename_btn.setEnabled(True)
-        self.info_label.setPlainText(profile.pretty_print(analysis_algorithm_dict))
+        self.info_label.setPlainText(profile.pretty_print(AnalysisAlgorithmSelection.__register__))
 
     def synchronize_spacing(self):
         if self.lock_spacing.isChecked():
             self.spacing[1].setValue(self.spacing[2].value())
 
     def image_spacing_change(self):
-        spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing)]
+        spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for el in self.spacing]
+
         if not self.spacing[0].isEnabled():
             spacing = spacing[1:]
         self._settings.image_spacing = spacing

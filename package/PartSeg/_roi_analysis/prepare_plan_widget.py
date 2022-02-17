@@ -34,7 +34,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.calculation_plan import (
     CalculationPlan,
     MaskBase,
@@ -599,7 +599,7 @@ class CreatePlan(QWidget):
                 return
             names = dial.get_result()
 
-            mask_ob = MaskConstruct(text, *names)
+            mask_ob = MaskConstruct(name=text, mask1=names[0], mask2=names[1])
         else:
             raise ValueError("Unknowsn widget")
 
@@ -868,7 +868,7 @@ class CreatePlan(QWidget):
                 else:
                     return
             profile = self.settings.roi_pipelines[text]
-        self.information.setText(profile.pretty_print(analysis_algorithm_dict))
+        self.information.setText(profile.pretty_print(AnalysisAlgorithmSelection))
 
     def show_segment(self):
         if self.update_element_chk.isChecked() and self.segment_stack.currentIndex() == 0:
@@ -963,7 +963,7 @@ class PlanPreview(QTreeWidget):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
             if isinstance(node_plan.operation, ROIExtractionProfile):
-                txt = node_plan.operation.pretty_print(analysis_algorithm_dict)
+                txt = node_plan.operation.pretty_print(AnalysisAlgorithmSelection)
             else:
                 txt = str(node_plan.operation)
             for line in txt.split("\n")[1:]:
@@ -1015,7 +1015,7 @@ class PlanPreview(QTreeWidget):
                     child = node.child(0)
                     child.takeChildren()
                     if isinstance(el.operation, ROIExtractionProfile):
-                        txt = el.operation.pretty_print(analysis_algorithm_dict)
+                        txt = el.operation.pretty_print(AnalysisAlgorithmSelection)
                     else:
                         txt = str(el.operation)
                     for line in txt.split("\n")[1:]:
