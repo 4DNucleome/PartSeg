@@ -1,5 +1,7 @@
 import os
 
+from packaging.version import parse as parse_version
+from qtpy import QT_VERSION
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QGridLayout, QLabel, QPushButton
 
@@ -33,9 +35,15 @@ class AboutDialog(QDialog):
         text_label.setText(text)
         self.change_log = TextShow()
         self.change_log.setAcceptRichText(True)
-        self.change_log.setMarkdown(changelog_text)
+        if parse_version(QT_VERSION) < parse_version("5.14.0"):  # pragma: no cover
+            self.change_log.setText(changelog_text)
+        else:
+            self.change_log.setMarkdown(changelog_text)
         self.cite_as = TextShow(lines=3)
-        self.cite_as.setMarkdown(cite_as_text)
+        if parse_version(QT_VERSION) < parse_version("5.14.0"):  # pragma: no cover
+            self.cite_as.setText(cite_as_text)
+        else:
+            self.cite_as.setMarkdown(cite_as_text)
         ok_but = QPushButton("Ok")
         ok_but.clicked.connect(self.accept)
         # text_label.setWordWrap(True)

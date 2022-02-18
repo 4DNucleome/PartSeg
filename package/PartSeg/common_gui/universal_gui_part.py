@@ -128,7 +128,7 @@ class Spacing(QWidget):
         if len(data_sequence) == 2:
             data_sequence = (1,) + tuple(data_sequence)
         for name, value in zip(["z", "y", "x"], data_sequence):
-            lab = QLabel(name + ":")
+            lab = QLabel(f"{name}:")
             layout.addWidget(lab)
             val = input_type()
             val.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -159,9 +159,7 @@ class Spacing(QWidget):
             wid.setValue(val)
 
     def get_unit_str(self):
-        if self.has_units:
-            return self.units.currentText()
-        return ""
+        return self.units.currentText() if self.has_units else ""
 
 
 def right_label(text):
@@ -236,7 +234,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
     Spin box for float with dynamic single steep
 
     :param bounds: Bounds for changing single step. Default value:
-        ``((300, 1), (1000, 10), (10000, 100)), 1000``
+        ``((0.2, 0.01), (2, 0.1), (300, 1), (1000, 10), (10000, 100)), 1000``
         Format:
         ``(List[(threshold, single_step)], default_single_step)``
         the single_step is chosen by checking upper bound of threshold of

@@ -69,7 +69,7 @@ This widget is equivalent to the PartSeg ROI Mask Simple Measurement window.
 
 Widget to find the layer with the given number By highlighting it or zooming on it. The highlight widget uses white color, so the highlight may not be visible if the label has a bright color.
 
-https://user-images.githubusercontent.com/3826210/149330875-84939278-abfb-459a-bde6-e27b6186aa06.mp4
+https://user-images.githubusercontent.com/3826210/154669409-cdac9be8-3dbf-4a0e-a66f-af8a44aed0fb.mp4
 
 ### Mask create
 
