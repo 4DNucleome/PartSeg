@@ -131,7 +131,7 @@ class MaskDistanceSplit(RestartableAlgorithm):
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
 class ThresholdBaseAlgorithmParameters(BaseModel, extra=Extra.forbid):
-    channel: Channel = Field(0, title="Channel")
+    channel: Channel = 0
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     minimum_size: int = Field(8000, title="Minimum size (px)", ge=0, le=10**6)
     side_connection: bool = Field(
@@ -287,7 +287,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
 
 class OneThresholdAlgorithmParameters(ThresholdBaseAlgorithmParameters):
-    threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Threshold", position=2)
+    threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), position=2)
 
 
 class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
@@ -325,8 +325,8 @@ class UpperThresholdAlgorithm(OneThresholdAlgorithm):
 
 
 class TwoThreshold(BaseModel, extra=Extra.forbid):
-    lower_threshold: float = Field(1000, title="Lower threshold", ge=0, le=10**6)
-    upper_threshold: float = Field(10000, title="Upper threshold", ge=0, le=10**6)
+    lower_threshold: float = Field(1000, ge=0, le=10**6)
+    upper_threshold: float = Field(10000, ge=0, le=10**6)
 
 
 def _to_two_thresholds(dkt):
@@ -338,7 +338,7 @@ def _to_two_thresholds(dkt):
 
 @register_class(version="0.0.1", migrations=[("0.0.1", _to_two_thresholds)])
 class RangeThresholdAlgorithmParameters(ThresholdBaseAlgorithmParameters):
-    threshold: TwoThreshold = Field(TwoThreshold(), title="Threshold", position=2)
+    threshold: TwoThreshold = Field(TwoThreshold(), position=2)
 
 
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
@@ -380,8 +380,8 @@ class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("sprawl_type", "flow_type"))])
 class BaseThresholdFlowAlgorithmParameters(ThresholdBaseAlgorithmParameters):
-    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), title="Threshold", position=2)
-    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default(), title="Flow type", position=3)
+    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), position=2)
+    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default(), position=3)
     minimum_size: int = Field(8000, title="Minimum core\nsize (px)", ge=0, le=10**6)
 
 
@@ -480,7 +480,7 @@ class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
 class OtsuSegmentParameters(BaseModel, extra=Extra.forbid):
-    channel: Channel = Field(0, title="Channel")
+    channel: Channel = 0
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Noise Removal")
     components: int = Field(2, title="Number of Components", ge=0, lt=100)
     valley: bool = Field(True, title="Valley emphasis")
@@ -547,7 +547,7 @@ class OtsuSegment(RestartableAlgorithm):
 
 
 class BaseMultiScaleOpeningParameters(TwoLevelThresholdBaseAlgorithm.__argument_class__):
-    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), title="Threshold")
+    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default())
     mu_mid: MuMidSelection = Field(MuMidSelection.get_default(), title="Mu mid value")
     step_limits: int = Field(100, title="Limits of Steps", ge=1, le=1000)
 

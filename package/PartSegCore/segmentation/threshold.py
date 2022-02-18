@@ -18,13 +18,13 @@ class SingleThresholdParams(BaseModel, extra=Extra.forbid):
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("masked", "apply_mask"))])
 class SimpleITKThresholdParams128(BaseModel, extra=Extra.forbid):
-    apply_mask: bool = Field(True, title="Apply mask", description="If apply mask before calculate threshold")
+    apply_mask: bool = Field(True, description="If apply mask before calculate threshold")
     bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
 
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("masked", "apply_mask"))])
 class SimpleITKThresholdParams256(BaseModel, extra=Extra.forbid):
-    apply_mask: bool = Field(True, title="Apply mask", description="If apply mask before calculate threshold")
+    apply_mask: bool = Field(True, description="If apply mask before calculate threshold")
     bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
 
 
@@ -258,8 +258,8 @@ ThresholdSelection.register(MaximumEntropyThreshold)
 
 
 class DoubleThresholdParams(BaseModel, extra=Extra.forbid):
-    core_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Core threshold")
-    base_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Base threshold")
+    core_threshold: ThresholdSelection = ThresholdSelection.get_default()
+    base_threshold: ThresholdSelection = ThresholdSelection.get_default()
 
 
 class DoubleThreshold(BaseThreshold):

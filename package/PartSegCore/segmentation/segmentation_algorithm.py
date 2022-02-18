@@ -38,9 +38,9 @@ class StackAlgorithm(ROIExtractionAlgorithm, ABC):
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
 class ThresholdPreviewParameters(BaseModel, extra=Extra.forbid):
-    channel: Channel = Field(0, title="Channel")
+    channel: Channel = 0
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
-    threshold: int = Field(1000, title="Threshold", ge=0, le=10**6)
+    threshold: int = Field(1000, ge=0, le=10**6)
 
 
 class ThresholdPreview(StackAlgorithm):
@@ -101,7 +101,7 @@ def _migrate_smooth_border(dkt: dict):
     ],
 )
 class BaseThresholdAlgorithmParameters(BaseModel, extra=Extra.forbid):
-    channel: Channel = Field(0, title="Channel")
+    channel: Channel = 0
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Threshold")
     close_holes: bool = Field(True, title="Fill holes")
@@ -112,7 +112,7 @@ class BaseThresholdAlgorithmParameters(BaseModel, extra=Extra.forbid):
         title="Side by Side connections",
         description="During calculation of connected components includes only side by side connected pixels",
     )
-    minimum_size: int = Field(8000, title="Minimum size", ge=20, le=10**6)
+    minimum_size: int = Field(8000, ge=20, le=10**6)
     use_convex: int = Field(False, title="Use convex hull")
 
 
@@ -307,8 +307,8 @@ class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("sprawl_type", "flow_type"))])
 class ThresholdFlowAlgorithmParameters(BaseThresholdAlgorithmParameters):
-    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), title="Threshold")
-    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default(), title="Flow type")
+    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default())
+    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default())
 
 
 class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
@@ -385,7 +385,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
 
 
 class AutoThresholdAlgorithmParams(BaseThresholdAlgorithmParameters):
-    suggested_size: int = Field(200000, title="Suggested size", ge=0, le=10**6)
+    suggested_size: int = Field(200000, ge=0, le=10**6)
 
 
 class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
@@ -434,7 +434,7 @@ class CellFromNucleusFlowParameters(BaseModel, extra=Extra.forbid):
         title="Side by Side connections",
         description="During calculation of connected components includes only side by side connected pixels",
     )
-    minimum_size: int = Field(8000, title="Minimum size", ge=20, le=10**6)
+    minimum_size: int = Field(8000, ge=20, le=10**6)
     use_convex: int = Field(False, title="Use convex hull")
 
 

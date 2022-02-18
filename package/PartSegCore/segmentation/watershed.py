@@ -185,7 +185,7 @@ class PathDistanceWatershed(BaseWatershed):
 
 class MSOWatershedParams(BaseModel, extra=Extra.forbid):
     step_limits: int = Field(100, ge=1, le=1000, title="Threshold", description="Limits of Steps")
-    reflective: bool = Field(False, title="Reflective")
+    reflective: bool = False
 
 
 class MSOWatershed(BaseWatershed):

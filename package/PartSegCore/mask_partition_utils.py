@@ -21,8 +21,8 @@ from .universal_const import UNIT_SCALE, Units
 
 
 class BorderRimParameters(BaseModel, extra=Extra.forbid):
-    distance: float = Field(500, title="Distance", ge=0, le=10**6)
-    units: Units = Field(Units.nm, title="Units")
+    distance: float = Field(500, ge=0, le=10**6)
+    units: Units = Units.nm
 
 
 class BorderRim(AlgorithmDescribeBase):
