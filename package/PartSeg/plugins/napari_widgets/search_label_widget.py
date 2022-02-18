@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from magicgui.widgets import Container, HBox, PushButton, SpinBox, create_widget
 from napari import Viewer
@@ -20,6 +22,8 @@ class SearchLabel(Container):
         self.component_selector.changed.connect(self._component_num_changed)
         self.labels_layer = create_widget(annotation=Labels, label="ROI", options={})
         self.labels_layer.changed.connect(self._update_roi_info)
+        self.zoom_factor = create_widget(annotation=float, label="Zoom factor", value=1.2)
+        self.zoom_factor.changed.connect(self._component_num_changed)
         self.stop = PushButton(name="Stop")
         self.stop.clicked.connect(self._stop)
         self.roi_info = None
@@ -33,11 +37,12 @@ class SearchLabel(Container):
         layout2 = HBox(
             widgets=(
                 self.labels_layer,
-                self.stop,
+                self.zoom_factor,
             )
         )
         self.insert(0, layout)
         self.insert(1, layout2)
+        self.insert(2, self.stop)
 
     def _update_roi_info(self):
         if self.labels_layer.value is None:
@@ -95,7 +100,9 @@ class SearchLabel(Container):
         self._update_point(lower_bound, upper_bound)
         l_bound = lower_bound[-2:][::-1]
         u_bound = upper_bound[-2:][::-1]
-        rect = Rect(self.napari_viewer.window.qt_viewer.view.camera.get_state()["rect"])
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "Public access to Window.qt_viewer")
+            rect = Rect(self.napari_viewer.window.qt_viewer.view.camera.get_state()["rect"])
         if rect.contains(*l_bound) and rect.contains(*u_bound):
             return
         size = u_bound - l_bound
@@ -110,7 +117,9 @@ class SearchLabel(Container):
         if rect.top < u_bound[1]:
             pos = pos[0], pos[1] + (u_bound[1] - rect.top)
         rect.pos = pos
-        self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "Public access to Window.qt_viewer")
+            self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
 
     @staticmethod
     def _data_to_world(layer: Labels, cords):
@@ -128,10 +137,12 @@ class SearchLabel(Container):
         lower_bound = self._data_to_world(labels, bound_info.lower)
         upper_bound = self._data_to_world(labels, bound_info.upper)
         diff = upper_bound - lower_bound
-        frame = diff * 0.2
+        frame = diff * (self.zoom_factor.value - 1)
         if self.napari_viewer.dims.ndisplay == 2:
             rect = Rect(pos=(lower_bound - frame)[-2:][::-1], size=(diff + 2 * frame)[-2:][::-1])
-            self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "Public access to Window.qt_viewer")
+                self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
         self._update_point(lower_bound, upper_bound)
 
     def _update_point(self, lower_bound, upper_bound):
