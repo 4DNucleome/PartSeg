@@ -20,6 +20,8 @@ class SearchLabel(Container):
         self.component_selector.changed.connect(self._component_num_changed)
         self.labels_layer = create_widget(annotation=Labels, label="ROI", options={})
         self.labels_layer.changed.connect(self._update_roi_info)
+        self.zoom_factor = create_widget(annotation=float, label="Zoom factor", value=1.2)
+        self.zoom_factor.changed.connect(self._component_num_changed)
         self.stop = PushButton(name="Stop")
         self.stop.clicked.connect(self._stop)
         self.roi_info = None
@@ -33,11 +35,12 @@ class SearchLabel(Container):
         layout2 = HBox(
             widgets=(
                 self.labels_layer,
-                self.stop,
+                self.zoom_factor,
             )
         )
         self.insert(0, layout)
         self.insert(1, layout2)
+        self.insert(2, self.stop)
 
     def _update_roi_info(self):
         if self.labels_layer.value is None:
@@ -128,7 +131,7 @@ class SearchLabel(Container):
         lower_bound = self._data_to_world(labels, bound_info.lower)
         upper_bound = self._data_to_world(labels, bound_info.upper)
         diff = upper_bound - lower_bound
-        frame = diff * 0.2
+        frame = diff * (self.zoom_factor.value - 1)
         if self.napari_viewer.dims.ndisplay == 2:
             rect = Rect(pos=(lower_bound - frame)[-2:][::-1], size=(diff + 2 * frame)[-2:][::-1])
             self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
