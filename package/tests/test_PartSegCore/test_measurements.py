@@ -2283,7 +2283,7 @@ def test_all_methods(method, dtype):
         roi_annotation={},
         bounds_info=roi_info.bound_info,
         _component_num=1,
-        **method.get_default_values(),
+        **dict(method.get_default_values()),
     )
     if method.get_units(3) != "str":
         float(res)

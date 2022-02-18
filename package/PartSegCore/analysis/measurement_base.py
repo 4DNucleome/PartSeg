@@ -1,7 +1,8 @@
 import sys
+import typing
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -9,7 +10,7 @@ from sympy import Symbol, symbols
 
 from PartSegImage.image import Spacing
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound
 from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..class_register import register_class
@@ -82,7 +83,7 @@ class Leaf(BaseModel):
     """
 
     name: str
-    parameter_dict: Dict = Field(default_factory=dict)
+    parameter_dict: typing.Any = Field(default_factory=dict)
     power: float = 1.0
     area: Optional[AreaType] = None
     per_component: Optional[PerComponent] = None
@@ -103,8 +104,13 @@ class Leaf(BaseModel):
             for el in measurement_method.get_fields():
                 if isinstance(el, str):
                     continue
-                if issubclass(el.value_type, Channel) and el.name in self.parameter_dict:
-                    resp.add(self.parameter_dict[el.name])
+                if issubclass(el.value_type, Channel):
+                    if isinstance(self.parameter_dict, dict):
+                        if el.name in self.parameter_dict:
+                            resp.add(self.parameter_dict[el.name])
+                    else:
+                        if hasattr(self.parameter_dict, el.name):
+                            resp.add(getattr(self.parameter_dict, el.name))
         except KeyError as e:
             raise AlgorithmDescribeNotFound(self.name) from e
         return resp
@@ -256,6 +262,8 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     based on text_info[0] the measurement name wil be generated, based_on text_info[1] the description is generated
     """
 
+    __argument_class__ = BaseModel
+
     text_info = "", ""
 
     need_class_method = [
@@ -280,11 +288,6 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     def is_component(cls) -> bool:
         """Return information if Need information about components"""
         return False
-
-    @classmethod
-    def get_fields(cls) -> List[Union[str, AlgorithmProperty]]:
-        """Additional fields needed by algorithm. like radius of dilation"""
-        return []
 
     @staticmethod
     def calculate_property(

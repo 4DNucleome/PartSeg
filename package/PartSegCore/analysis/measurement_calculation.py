@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 import SimpleITK
 from mahotas.features import haralick
+from pydantic import BaseModel, Extra, Field
 from scipy.spatial.distance import cdist
 from sympy import symbols
 
@@ -31,7 +32,7 @@ from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerTh
 from PartSegImage import Image
 
 from .. import autofit as af
-from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
+from ..algorithm_describe_base import Register, ROIExtractionProfile
 from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
@@ -427,7 +428,9 @@ class MeasurementProfile:
     ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
 
-        hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel, NO_COMPONENT)
+        hash_str = hash_fun_call_name(
+            method, node.parameter_dict, node.area, node.per_component, node.channel, NO_COMPONENT
+        )
         area_type = method.area_type(node.area)
         if hash_str in help_dict:
             val = help_dict[hash_str]
@@ -1157,10 +1160,7 @@ class Surface(MeasurementMethodBase):
 
 class RimVolume(MeasurementMethodBase):
     text_info = "rim volume", "Calculate volumes for elements in radius (in physical units) from mask"
-
-    @classmethod
-    def get_fields(cls):
-        return BorderRim.get_fields()
+    __argument_class__ = BorderRim.__argument_class__
 
     @classmethod
     def get_starting_leaf(cls):
@@ -1188,10 +1188,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
         "rim pixel brightness sum",
         "Calculate mass for components located within rim (in physical units) from mask",
     )
-
-    @classmethod
-    def get_fields(cls):
-        return BorderRim.get_fields()
+    __argument_class__ = BorderRim.__argument_class__
 
     @classmethod
     def get_starting_leaf(cls):
@@ -1241,15 +1238,15 @@ except NameError:
     enum_register.register_class(DistancePoint)
 
 
+class DistanceMaskROIParameters(BaseModel, extra=Extra.forbid):
+    distance_from_mask: DistancePoint = DistancePoint.Border
+    distance_to_segmentation: DistancePoint = Field(DistancePoint.Border, title="Distance to ROI")
+    # TODO migrate name
+
+
 class DistanceMaskROI(MeasurementMethodBase):
     text_info = "ROI distance", "Calculate distance between ROI and mask"
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("distance_from_mask", "Distance from mask", DistancePoint.Border),
-            AlgorithmProperty("distance_to_segmentation", "Distance to ROI", DistancePoint.Border),
-        ]
+    __argument_class__ = DistanceMaskROIParameters
 
     @staticmethod
     def calculate_points(channel, area_array, voxel_size, result_scalar, point_type: DistancePoint) -> np.ndarray:
@@ -1312,29 +1309,26 @@ class DistanceMaskROI(MeasurementMethodBase):
         return AreaType.ROI
 
 
+class DistanceROIROIParameters(BaseModel, extra=Extra.forbid):
+    profile: ROIExtractionProfile = Field(
+        ROIExtractionProfile(
+            name="default",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        ),
+        title="ROI extraction profile",
+    )
+    distance_from_new_roi: DistancePoint = Field(DistancePoint.Border, title="Distance new ROI")
+    distance_to_roi: DistancePoint = Field(DistancePoint.Border, title="Distance to ROI")
+
+
 class DistanceROIROI(DistanceMaskROI):
     text_info = "to new ROI distance", "Calculate distance between ROI and new ROI"
+    __argument_class__ = DistanceROIROIParameters
 
     @classmethod
     def get_starting_leaf(cls):
         return Leaf(name=cls.text_info[0], area=AreaType.ROI)
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "profile",
-                "ROI extraction profile",
-                ROIExtractionProfile(
-                    name="default",
-                    algorithm=LowerThresholdAlgorithm.get_name(),
-                    values=LowerThresholdAlgorithm.get_default_values(),
-                ),
-                value_type=ROIExtractionProfile,
-            ),
-            AlgorithmProperty("distance_from_new_roi", "Distance new ROI", DistancePoint.Border),
-            AlgorithmProperty("distance_to_roi", "Distance to ROI", DistancePoint.Border),
-        ]
 
     # noinspection PyMethodOverriding
     @classmethod
@@ -1390,29 +1384,26 @@ class DistanceROIROI(DistanceMaskROI):
         return True
 
 
+class ROINeighbourhoodROIParameters(BaseModel, extra=Extra.forbid):
+    profile: ROIExtractionProfile = Field(
+        ROIExtractionProfile(
+            name="default",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        ),
+        title="ROI extraction profile",
+    )
+    distance: float = Field(500, ge=0, le=10000, title="Distance")
+    units: Units = Units.nm
+
+
 class ROINeighbourhoodROI(DistanceMaskROI):
     text_info = "Neighbourhood new ROI presence", "Count how many of new roi are present in neighbourhood of new ROI"
+    __argument_class__ = ROINeighbourhoodROIParameters
 
     @classmethod
     def get_starting_leaf(cls):
         return Leaf(name=cls.text_info[0], area=AreaType.ROI)
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "profile",
-                "ROI extraction profile",
-                ROIExtractionProfile(
-                    name="default",
-                    algorithm=LowerThresholdAlgorithm.get_name(),
-                    values=LowerThresholdAlgorithm.get_default_values(),
-                ),
-                value_type=ROIExtractionProfile,
-            ),
-            AlgorithmProperty("distance", "Distance", 500.0, options_range=(0, 10000), value_type=float),
-            AlgorithmProperty("units", "Units", Units.nm, value_type=Units),
-        ]
 
     # noinspection PyMethodOverriding
     @classmethod
@@ -1466,17 +1457,16 @@ class ROINeighbourhoodROI(DistanceMaskROI):
         return True
 
 
+class SplitOnPartParameters(MaskDistanceSplit.__argument_class__):
+    part_selection: int = Field(2, title="Which part (from border)", ge=1, le=1024)
+
+
 class SplitOnPartVolume(MeasurementMethodBase):
     text_info = (
         "distance splitting volume",
         "Split mask on parts and then calculate volume of cross of segmentation and mask part",
     )
-
-    @classmethod
-    def get_fields(cls):
-        return MaskDistanceSplit.get_fields() + [
-            AlgorithmProperty("part_selection", "Which part  (from border)", 2, (1, 1024))
-        ]
+    __argument_class__ = SplitOnPartParameters
 
     @staticmethod
     def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
@@ -1502,12 +1492,7 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
         "distance splitting pixel brightness sum",
         "Split mask on parts and then calculate pixel brightness sum of cross of segmentation and mask part",
     )
-
-    @classmethod
-    def get_fields(cls):
-        return MaskDistanceSplit.get_fields() + [
-            AlgorithmProperty("part_selection", "Which part (from border)", 2, (1, 1024))
-        ]
+    __argument_class__ = SplitOnPartParameters
 
     @staticmethod
     def calculate_property(part_selection, channel, area_array, **kwargs):  # pylint: disable=W0221
@@ -1539,6 +1524,25 @@ InverseDifferenceMoment SumAverage SumVariance SumEntropy Entropy
 DifferenceVariance DifferenceEntropy InfoMeas1 InfoMeas2""".split()
 
 
+class HaralickEnum(Enum):
+    AngularSecondMoment = "AngularSecondMoment"
+    Contrast = "Contrast"
+    Correlation = "Correlation"
+    Variance = "Variance"
+    InverseDifferenceMoment = "InverseDifferenceMoment"
+    SumAverage = "SumAverage"
+    SumVariance = "SumVariance"
+    SumEntropy = "SumEntropy"
+    Entropy = "Entropy"
+    DifferenceVariance = "DifferenceVariance"
+    DifferenceEntropy = "DifferenceEntropy"
+    InfoMeas1 = "InfoMeas1"
+    InfoMeas2 = "InfoMeas2"
+
+    def index(self) -> int:
+        return list(self.__class__).index(self)
+
+
 def _rescale_image(data: np.ndarray):
     if data.dtype == np.uint8:
         return data
@@ -1547,19 +1551,19 @@ def _rescale_image(data: np.ndarray):
     return ((data - min_val) / ((max_val - min_val) / 255)).astype(np.uint8)
 
 
+class HaralickParameters(BaseModel, extra=Extra.forbid):
+    feature: HaralickEnum = HaralickEnum.AngularSecondMoment
+    distance: int = Field(1, ge=1, le=10)
+
+
 class Haralick(MeasurementMethodBase):
+    __argument_class__ = HaralickParameters
+
     @classmethod
     def get_units(cls, ndim) -> symbols:
         return "1"
 
     text_info = "Haralick", "Calculate Haralick features"
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("feature", "Feature", HARALIC_FEATURES[0], possible_values=HARALIC_FEATURES),
-            AlgorithmProperty("distance", "Distance", 1, options_range=(1, 10)),
-        ]
 
     @classmethod
     def need_channel(cls):
@@ -1569,6 +1573,8 @@ class Haralick(MeasurementMethodBase):
     def calculate_property(
         cls, area_array, channel, distance, feature, _cache=False, **kwargs
     ):  # pylint: disable=W0221
+        if isinstance(feature, str):
+            feature = HaralickEnum(feature)
         _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
         if _cache:
             help_dict: Dict = kwargs["help_dict"]
@@ -1579,10 +1585,10 @@ class Haralick(MeasurementMethodBase):
             )
             if hash_name not in help_dict:
                 help_dict[hash_name] = cls.calculate_haralick(channel, area_array, distance)
-            return help_dict[hash_name][HARALIC_FEATURES.index(feature)]
+            return help_dict[hash_name][feature.index()]
 
         res = cls.calculate_haralick(channel, area_array, distance)
-        return res[HARALIC_FEATURES.index(feature)]
+        return res[feature.index()]
 
     @staticmethod
     def calculate_haralick(channel, area_array, distance):
@@ -1608,12 +1614,13 @@ class ComponentBoundingBox(MeasurementMethodBase):
         return super().get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
 
 
+class GetROIAnnotationTypeParameters(BaseModel, extra=Extra.forbid):
+    name: str = ""
+
+
 class GetROIAnnotationType(MeasurementMethodBase):
     text_info = "annotation by name", "Get roi annotation by name"
-
-    @classmethod
-    def get_fields(cls):
-        return [AlgorithmProperty("name", "Name", "")]
+    __argument_class__ = GetROIAnnotationTypeParameters
 
     @classmethod
     def get_starting_leaf(cls):
@@ -1628,26 +1635,19 @@ class GetROIAnnotationType(MeasurementMethodBase):
         return "str"
 
 
+class ColocalizationMeasurementParameters(BaseModel, extra=Extra.forbid):
+    channel_fst: Channel = Field(0, title="Channel 1")
+    channel_scd: Channel = Field(1, title="Channel 2")
+    colocalization: CorrelationEnum = CorrelationEnum.pearson
+    randomize: bool = Field(
+        False, description="If randomize orders of pixels in one channel", title="Randomize channel"
+    )
+    randomize_repeat: int = Field(10, description="Number of repetitions for mean_calculate", title="Randomize num")
+
+
 class ColocalizationMeasurement(MeasurementMethodBase):
     text_info = "Colocalization", "Measurement of colocalization of two channels."
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("channel_fst", "Channel 1", 0, value_type=Channel),
-            AlgorithmProperty("channel_scd", "Channel 2", 1, value_type=Channel),
-            AlgorithmProperty(
-                "colocalization",
-                "Colocalization",
-                CorrelationEnum.pearson,
-            ),
-            AlgorithmProperty(
-                "randomize", "Randomize channel", False, help_text="If randomize orders of pixels in one channel"
-            ),
-            AlgorithmProperty(
-                "randomize_repeat", "Randomize num", 10, help_text="Number of repetitions for mean_calculate"
-            ),
-        ]
+    __argument_class__ = ColocalizationMeasurementParameters
 
     @staticmethod
     def _calculate_masked(data_1, data_2, colocalization):
