@@ -38,8 +38,8 @@ if parse_version(napari.__version__) < parse_version("0.4.11"):
 else:
     RENDERING_LIST = ["iso_categorical", "translucent"]
 
-RENDERING_MODE_NAME = "rendering_mode"
-SEARCH_ZOOM_FACTOR = "search_zoom_factor"
+RENDERING_MODE_NAME_STR = "rendering_mode"
+SEARCH_ZOOM_FACTOR_STR = "search_zoom_factor"
 
 
 class DevelopTab(QWidget):
@@ -132,7 +132,7 @@ class MaskControl(QWidget):
         self.settings.set_in_profile("mask_presentation_opacity", self.opacity_spin.value())
 
 
-class Apperance(QWidget):
+class Appearance(QWidget):
     def __init__(self, settings: ViewSettings):
         super().__init__()
         self.settings = settings
@@ -140,17 +140,18 @@ class Apperance(QWidget):
         self.layout_list = QComboBox()
         self.layout_list.addItems(self.settings.theme_list())
         self.layout_list.setCurrentText(self.settings.theme_name)
-
         self.layout_list.currentIndexChanged.connect(self.change_theme)
+
         self.labels_render_cmb = QComboBox()
         self.labels_render_cmb.addItems(RENDERING_LIST)
         self._update_render_mode()
         self.labels_render_cmb.currentTextChanged.connect(self.change_render_mode)
-        settings.connect_to_profile(RENDERING_MODE_NAME, self._update_render_mode)
+        settings.connect_to_profile(RENDERING_MODE_NAME_STR, self._update_render_mode)
 
-        self.zoom_factor_chk = CustomDoubleSpinBox()
-        self.zoom_factor_chk.setValue(settings.get_from_profile(SEARCH_ZOOM_FACTOR, 1.2))
-        self.zoom_factor_chk.valueChanged.connect(self.change_zoom_factor)
+        self.zoom_factor_spin_box = CustomDoubleSpinBox()
+        self.zoom_factor_spin_box.setValue(settings.get_from_profile(SEARCH_ZOOM_FACTOR_STR, 1.2))
+        self.zoom_factor_spin_box.valueChanged.connect(self.change_zoom_factor)
+        settings.connect_to_profile(SEARCH_ZOOM_FACTOR_STR, self._update_zoom_factor)
 
         layout = QGridLayout()
         layout.addWidget(QLabel("Theme:"), 0, 0)
@@ -158,22 +159,27 @@ class Apperance(QWidget):
         layout.addWidget(QLabel("ROI render mode:"), 1, 0)
         layout.addWidget(self.labels_render_cmb, 1, 1)
         layout.addWidget(QLabel("Zoom factor for search ROI:"), 2, 0)
-        layout.addWidget(self.zoom_factor_chk, 2, 1)
+        layout.addWidget(self.zoom_factor_spin_box, 2, 1)
         layout.setColumnStretch(2, 1)
         layout.setRowStretch(3, 1)
         self.setLayout(layout)
 
     def change_zoom_factor(self):
-        self.settings.set_in_profile(SEARCH_ZOOM_FACTOR, self.zoom_factor_chk.value())
+        self.settings.set_in_profile(SEARCH_ZOOM_FACTOR_STR, self.zoom_factor_spin_box.value())
+
+    def _update_zoom_factor(self):
+        self.zoom_factor_spin_box.setValue(self.settings.get_from_profile(SEARCH_ZOOM_FACTOR_STR))
 
     def change_theme(self):
         self.settings.theme_name = self.layout_list.currentText()
 
     def change_render_mode(self, text):
-        self.settings.set_in_profile(RENDERING_MODE_NAME, text)
+        self.settings.set_in_profile(RENDERING_MODE_NAME_STR, text)
 
     def _update_render_mode(self):
-        self.labels_render_cmb.setCurrentText(self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0]))
+        self.labels_render_cmb.setCurrentText(
+            self.settings.get_from_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0])
+        )
 
 
 class ColorControl(QTabWidget):
@@ -183,7 +189,7 @@ class ColorControl(QTabWidget):
 
     def __init__(self, settings: ViewSettings, image_view_names: List[str]):
         super().__init__()
-        self.appearance = Apperance(settings)
+        self.appearance = Appearance(settings)
         self.colormap_selector = PColormapCreator(settings)
         self.color_preview = PColormapList(settings, image_view_names)
         self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)

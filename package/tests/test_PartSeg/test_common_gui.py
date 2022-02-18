@@ -14,6 +14,13 @@ from qtpy.QtWidgets import QFileDialog, QMainWindow, QWidget
 
 from PartSeg.common_gui import select_multiple_files
 from PartSeg.common_gui.about_dialog import AboutDialog
+from PartSeg.common_gui.advanced_tabs import (
+    RENDERING_LIST,
+    RENDERING_MODE_NAME_STR,
+    SEARCH_ZOOM_FACTOR_STR,
+    AdvancedWindow,
+    Appearance,
+)
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, IOMethodMock, LoadProperty, PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
@@ -22,6 +29,7 @@ from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFil
 from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
+from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
@@ -588,3 +596,60 @@ def test_IOMethodMock(function_name):
 def test_about_dialog_create(qtbot):
     dialog = AboutDialog()
     qtbot.addWidget(dialog)
+
+
+class TestAdvancedWindow:
+    def test_create_no_develop(self, monkeypatch, qtbot, base_settings):
+        monkeypatch.setattr(state_store, "develop", False)
+        wind = AdvancedWindow(base_settings, [])
+        qtbot.add_widget(wind)
+        assert wind.indexOf(wind.develop) == -1
+
+    def test_create_with_develop(self, monkeypatch, qtbot, base_settings):
+        monkeypatch.setattr(state_store, "develop", True)
+        wind = AdvancedWindow(base_settings, [])
+        qtbot.add_widget(wind)
+        assert wind.indexOf(wind.develop) != -1
+
+
+class TestAppearance:
+    def test_change_zoom_factor(self, qtbot, base_settings):
+        base_settings.set_in_profile(SEARCH_ZOOM_FACTOR_STR, 1.5)
+        app = Appearance(base_settings)
+        qtbot.add_widget(app)
+        assert app.zoom_factor_spin_box.value() == 1.5
+        base_settings.set_in_profile(SEARCH_ZOOM_FACTOR_STR, 2)
+        app = Appearance(base_settings)
+        qtbot.add_widget(app)
+        assert app.zoom_factor_spin_box.value() == 2
+
+        with qtbot.wait_signal(app.zoom_factor_spin_box.valueChanged):
+            app.zoom_factor_spin_box.setValue(1)
+        assert base_settings.get_from_profile(SEARCH_ZOOM_FACTOR_STR) == 1
+
+        base_settings.set_in_profile(SEARCH_ZOOM_FACTOR_STR, 2)
+        assert app.zoom_factor_spin_box.value() == 2
+
+    @pytest.mark.skipif(len(RENDERING_LIST) <= 1, reason="no rendering to switch")
+    def test_rendering_select(self, qtbot, base_settings):
+        base_settings.set_in_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0])
+        app = Appearance(base_settings)
+        qtbot.add_widget(app)
+        assert app.labels_render_cmb.currentText() == RENDERING_LIST[0]
+        with qtbot.wait_signal(app.labels_render_cmb.currentIndexChanged):
+            app.labels_render_cmb.setCurrentIndex(1)
+        assert app.labels_render_cmb.currentText() == RENDERING_LIST[1]
+        assert base_settings.get_from_profile(RENDERING_MODE_NAME_STR) == RENDERING_LIST[1]
+        base_settings.set_in_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0])
+        assert app.labels_render_cmb.currentText() == RENDERING_LIST[0]
+
+    def test_theme_select(self, qtbot, base_settings, monkeypatch):
+        monkeypatch.setattr(base_settings, "theme_list", lambda: ["aaa", "bbb", "ccc"])
+        monkeypatch.setattr(base_settings, "napari_settings", MagicMock())
+        monkeypatch.setattr(base_settings, "theme_name", "bbb")
+        app = Appearance(base_settings)
+        qtbot.add_widget(app)
+        assert app.layout_list.currentText() == "bbb"
+        app.layout_list.setCurrentIndex(0)
+        assert app.layout_list.currentText() == "aaa"
+        assert base_settings.theme_name == "aaa"

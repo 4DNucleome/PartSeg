@@ -30,7 +30,7 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings
-from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME, SEARCH_ZOOM_FACTOR
+from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME_STR, SEARCH_ZOOM_FACTOR_STR
 from .channel_control import ChannelProperty, ColorComboBoxGroup
 from .custom_buttons import SearchROIButton
 from .qt_modal import QtPopup
@@ -204,7 +204,7 @@ class ImageView(QWidget):
         settings.image_changed.connect(self.set_image)
         settings.image_spacing_changed.connect(self.update_spacing_info)
         settings.points_changed.connect(self.update_points)
-        settings.connect_to_profile(RENDERING_MODE_NAME, self.update_rendering)
+        settings.connect_to_profile(RENDERING_MODE_NAME_STR, self.update_rendering)
         settings.labels_changed.connect(self.update_roi_coloring)
         settings.connect_to_profile(f"{name}.image_state.opacity", self.update_roi_coloring)
         settings.connect_to_profile(f"{name}.image_state.only_border", self.update_roi_border)
@@ -479,7 +479,7 @@ class ImageView(QWidget):
 
     @ensure_main_thread
     def update_rendering(self):
-        rendering = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
+        rendering = self.settings.get_from_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0])
         for image_info in self.image_info.values():
             if image_info.roi is not None and hasattr(image_info.roi, "rendering"):
                 image_info.roi.rendering = rendering
@@ -503,7 +503,7 @@ class ImageView(QWidget):
             "metadata": {"alternative": self.roi_alternative_selection},
         }
         if napari_rendering:
-            kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME, RENDERING_LIST[0])
+            kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0])
 
         only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
         image_info.roi = self.viewer.add_labels(roi, **kwargs)
@@ -871,7 +871,7 @@ class ImageView(QWidget):
 
         lower_bound, upper_bound = bounding_box
         diff = upper_bound - lower_bound
-        frame = diff * (self.settings.get_from_profile(SEARCH_ZOOM_FACTOR, 1.2) - 1)
+        frame = diff * (self.settings.get_from_profile(SEARCH_ZOOM_FACTOR_STR, 1.2) - 1)
         if self.viewer.dims.ndisplay == 2:
             rect = Rect(pos=(lower_bound - frame)[-2:][::-1], size=(diff + 2 * frame)[-2:][::-1])
             self.set_state({"camera": {"rect": rect}})
