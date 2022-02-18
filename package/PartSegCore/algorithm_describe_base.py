@@ -507,7 +507,7 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     default_value = field.field_info.default
     help_text = field.field_info.description
     if user_name is None:
-        user_name = name.replace("_", " ")
+        user_name = name.replace("_", " ").capitalize()
     if issubclass(field.type_, (int, float)):
         value_range = (
             field.field_info.ge or field.field_info.gt or 0,

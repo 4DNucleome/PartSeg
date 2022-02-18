@@ -143,11 +143,11 @@ def test_base_model_to_algorithm_property_base():
     class Sample(BaseModel, extra=Extra.forbid):
         field1: int = Field(0, le=100, ge=0, title="Field 1")
         field2: SampleEnum = SampleEnum.a
-        field3: float = Field(0, le=55, ge=-7, title="Field 3")
+        field_3: float = Field(0, le=55, ge=-7)
         channel: Channel = Field(0, title="Channel")
 
-    s = Sample(field1=1, field3=1.5)
-    assert s.field3 == 1.5
+    s = Sample(field1=1, field_3=1.5)
+    assert s.field_3 == 1.5
 
     converted = base_model_to_algorithm_property(Sample)
     assert len(converted) == 4
@@ -156,9 +156,9 @@ def test_base_model_to_algorithm_property_base():
     assert issubclass(converted[0].value_type, int)
     assert converted[0].range == (0, 100)
     assert converted[1].name == "field2"
-    assert converted[1].user_name == "field2"
+    assert converted[1].user_name == "Field2"
     assert converted[1].value_type is SampleEnum
-    assert converted[2].name == "field3"
+    assert converted[2].name == "field_3"
     assert converted[2].user_name == "Field 3"
     assert issubclass(converted[2].value_type, float)
     assert converted[2].range == (-7, 55)
