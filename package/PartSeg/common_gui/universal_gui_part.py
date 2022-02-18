@@ -128,7 +128,7 @@ class Spacing(QWidget):
         if len(data_sequence) == 2:
             data_sequence = (1,) + tuple(data_sequence)
         for name, value in zip(["z", "y", "x"], data_sequence):
-            lab = QLabel(f'{name}:')
+            lab = QLabel(f"{name}:")
             layout.addWidget(lab)
             val = input_type()
             val.setButtonSymbols(QAbstractSpinBox.NoButtons)

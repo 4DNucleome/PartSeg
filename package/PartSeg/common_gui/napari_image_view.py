@@ -334,11 +334,7 @@ class ImageView(QWidget):
             if not image_info.coords_in(cords):
                 continue
             moved_coords = image_info.translated_coords(cords)
-            bright_array.extend(
-                layer.data[tuple(moved_coords)]
-                for layer in image_info.layers
-                if layer.visible
-            )
+            bright_array.extend(layer.data[tuple(moved_coords)] for layer in image_info.layers if layer.visible)
 
             if image_info.roi_info.roi is not None and image_info.roi is not None:
                 val = image_info.roi_info.roi[tuple(moved_coords)]
