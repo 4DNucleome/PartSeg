@@ -29,6 +29,7 @@ from PartSeg import plugins
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelEditor
+from PartSeg.common_gui.universal_gui_part import CustomDoubleSpinBox
 from PartSegCore import plugins as core_plugins
 from PartSegCore import register, state_store
 
@@ -38,6 +39,7 @@ else:
     RENDERING_LIST = ["iso_categorical", "translucent"]
 
 RENDERING_MODE_NAME = "rendering_mode"
+SEARCH_ZOOM_FACTOR = "search_zoom_factor"
 
 
 class DevelopTab(QWidget):
@@ -146,14 +148,23 @@ class Apperance(QWidget):
         self.labels_render_cmb.currentTextChanged.connect(self.change_render_mode)
         settings.connect_to_profile(RENDERING_MODE_NAME, self._update_render_mode)
 
+        self.zoom_factor_chk = CustomDoubleSpinBox()
+        self.zoom_factor_chk.setValue(settings.get_from_profile(SEARCH_ZOOM_FACTOR, 1.2))
+        self.zoom_factor_chk.valueChanged.connect(self.change_zoom_factor)
+
         layout = QGridLayout()
         layout.addWidget(QLabel("Theme:"), 0, 0)
         layout.addWidget(self.layout_list, 0, 1)
         layout.addWidget(QLabel("ROI render mode:"), 1, 0)
         layout.addWidget(self.labels_render_cmb, 1, 1)
+        layout.addWidget(QLabel("Zoom factor for search ROI:"), 2, 0)
+        layout.addWidget(self.zoom_factor_chk, 2, 1)
         layout.setColumnStretch(2, 1)
-        layout.setRowStretch(2, 1)
+        layout.setRowStretch(3, 1)
         self.setLayout(layout)
+
+    def change_zoom_factor(self):
+        self.settings.set_in_profile(SEARCH_ZOOM_FACTOR, self.zoom_factor_chk.value())
 
     def change_theme(self):
         self.settings.theme_name = self.layout_list.currentText()

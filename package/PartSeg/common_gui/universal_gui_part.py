@@ -236,7 +236,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
     Spin box for float with dynamic single steep
 
     :param bounds: Bounds for changing single step. Default value:
-        ``((300, 1), (1000, 10), (10000, 100)), 1000``
+        ``((0.2, 0.01), (2, 0.1), (300, 1), (1000, 10), (10000, 100)), 1000``
         Format:
         ``(List[(threshold, single_step)], default_single_step)``
         the single_step is chosen by checking upper bound of threshold of
