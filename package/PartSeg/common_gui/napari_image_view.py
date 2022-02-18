@@ -334,9 +334,8 @@ class ImageView(QWidget):
             if not image_info.coords_in(cords):
                 continue
             moved_coords = image_info.translated_coords(cords)
-            for layer in image_info.layers:
-                if layer.visible:
-                    bright_array.append(layer.data[tuple(moved_coords)])
+            bright_array.extend(layer.data[tuple(moved_coords)] for layer in image_info.layers if layer.visible)
+
             if image_info.roi_info.roi is not None and image_info.roi is not None:
                 val = image_info.roi_info.roi[tuple(moved_coords)]
                 if val:
@@ -1004,7 +1003,7 @@ def _print_dict(dkt: MutableMapping, indent="") -> str:
     res = []
     for k, v in dkt.items():
         if isinstance(v, MutableMapping):
-            res.append(f"{indent}{k}:\n{_print_dict(v, indent+'  ')}")
+            res.append(f'{indent}{k}:\n{_print_dict(v, f"{indent}  ")}')
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)
