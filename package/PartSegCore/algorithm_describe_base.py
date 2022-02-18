@@ -5,7 +5,7 @@ import warnings
 from abc import ABC, abstractmethod
 from enum import Enum
 
-from pydantic import BaseModel, create_model, validator
+from pydantic import BaseModel, Extra, create_model, validator
 from pydantic.main import ModelMetaclass
 from typing_extensions import Annotated
 
@@ -343,7 +343,7 @@ class AddRegisterMeta(ModelMetaclass):
         return self.__register__.get(item, default)
 
 
-class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):
+class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta, extra=Extra.forbid):
     """
     Base class for algorithm selection.
     For given algorithm there should be Register instance set __register__ class variable.

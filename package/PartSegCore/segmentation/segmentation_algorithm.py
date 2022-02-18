@@ -12,7 +12,7 @@ from ..convex_fill import convex_fill
 from ..project_info import AdditionalLayerDescription
 from ..segmentation.algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult
 from ..utils import bisect
-from .border_smoothing import SmoothAlgorithmSelection
+from .border_smoothing import NoneSmoothing, OpeningSmoothing, SmoothAlgorithmSelection
 from .noise_filtering import NoiseFilterSelection
 from .threshold import BaseThreshold, DoubleThresholdSelection, ThresholdSelection
 from .watershed import BaseWatershed, FlowMethodSelection
@@ -36,6 +36,7 @@ class StackAlgorithm(ROIExtractionAlgorithm, ABC):
         return NoiseFilterSelection[noise_removal.name].noise_filter(channel, self.image.spacing, noise_removal.values)
 
 
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
 class ThresholdPreviewParameters(BaseModel, extra=Extra.forbid):
     channel: Channel = Field(0, title="Channel")
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
@@ -75,6 +76,30 @@ class ThresholdPreview(StackAlgorithm):
         return 3
 
 
+def _migrate_smooth_border(dkt: dict):
+    if isinstance(dkt["smooth_border"], bool):
+        dkt = dkt.copy()
+        if dkt["smooth_border"] and "smooth_border_radius" in dkt:
+            dkt["smooth_border"] = SmoothAlgorithmSelection(
+                name=OpeningSmoothing.get_name(),
+                values=OpeningSmoothing.__argument_class__(smooth_border_radius=dkt.pop("smooth_border_radius")),
+            )
+        else:
+            dkt["smooth_border"] = SmoothAlgorithmSelection(
+                name=NoneSmoothing.get_name(), values=NoneSmoothing.__argument_class__()
+            )
+        if "smooth_border_radius" in dkt:
+            del dkt["smooth_border_radius"]
+    return dkt
+
+
+@register_class(
+    version="0.0.1",
+    migrations=[
+        ("0.0.0.5", _migrate_smooth_border),
+        ("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True)),
+    ],
+)
 class BaseThresholdAlgorithmParameters(BaseModel, extra=Extra.forbid):
     channel: Channel = Field(0, title="Channel")
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")

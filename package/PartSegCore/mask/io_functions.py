@@ -285,23 +285,6 @@ class LoadROI(LoadBase):
     def get_short_name(cls):
         return "seg"
 
-    @staticmethod
-    def fix_parameters(profile: ROIExtractionProfile):
-        if profile is None:
-            return
-        if not isinstance(profile.values, dict):
-            return profile
-        if (profile.algorithm in {"Threshold", "Auto Threshold"}) and isinstance(profile.values["smooth_border"], bool):
-            if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
-                profile.values["smooth_border"] = {
-                    "name": "Opening",
-                    "values": {"smooth_border_radius": profile.values["smooth_border_radius"]},
-                }
-                del profile.values["smooth_border_radius"]
-            else:
-                profile.values["smooth_border"] = {"name": "None", "values": {}}
-        return profile
-
     @classmethod
     def load(
         cls,
@@ -318,7 +301,7 @@ class LoadROI(LoadBase):
         else:
             parameters = defaultdict(
                 lambda: None,
-                [(int(k), cls.fix_parameters(v)) for k, v in segmentation_tuple.roi_extraction_parameters.items()],
+                [(int(k), v) for k, v in segmentation_tuple.roi_extraction_parameters.items()],
             )
         return dataclasses.replace(segmentation_tuple, roi_extraction_parameters=parameters)
 
@@ -359,7 +342,7 @@ class LoadROIParameters(LoadBase):
                 else:
                     parameters = defaultdict(
                         lambda: None,
-                        [(int(k), LoadROI.fix_parameters(v)) for k, v in project_metadata["parameters"].items()],
+                        [(int(k), v) for k, v in project_metadata["parameters"].items()],
                     )
                 return MaskProjectTuple(file_path=file_data, image=None, roi_extraction_parameters=parameters)
 
@@ -368,7 +351,7 @@ class LoadROIParameters(LoadBase):
             project_metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
             parameters = defaultdict(
                 lambda: None,
-                [(int(k), LoadROI.fix_parameters(v)) for k, v in project_metadata["parameters"].items()],
+                [(int(k), v) for k, v in project_metadata["parameters"].items()],
             )
         finally:
             if isinstance(file_data, (str, Path)):
@@ -722,30 +705,7 @@ def load_metadata(data: typing.Union[str, Path, typing.TextIO]):
     :param data: path to json file, string with json, or opened file
     :return: restored structures
     """
-    return UpdateLoadedMetadataMask.load_json_data(data)
-
-
-class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
-    @classmethod
-    def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
-        profile_data = super().update_segmentation_profile(profile_data)
-        if not isinstance(profile_data.values, dict):
-            return profile_data
-        if profile_data.algorithm in {"Threshold", "Auto Threshold"}:
-            if isinstance(profile_data.values["smooth_border"], bool):
-                if profile_data.values["smooth_border"]:
-                    profile_data.values["smooth_border"] = {
-                        "name": "Opening",
-                        "values": {"smooth_border_radius": profile_data.values["smooth_border_radius"]},
-                    }
-                else:
-                    profile_data.values["smooth_border"] = {"name": "None", "values": {}}
-                if "smooth_border_radius" in profile_data.values:
-                    del profile_data.values["smooth_border_radius"]
-            if "noise_removal" in profile_data.values:
-                profile_data.values["noise_filtering"] = profile_data.values["noise_removal"]
-                del profile_data.values["noise_removal"]
-        return profile_data
+    return UpdateLoadedMetadataBase.load_json_data(data)
 
 
 load_dict = Register(
