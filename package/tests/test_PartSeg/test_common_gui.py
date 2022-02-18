@@ -13,6 +13,7 @@ from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import QFileDialog, QMainWindow, QWidget
 
 from PartSeg.common_gui import select_multiple_files
+from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, IOMethodMock, LoadProperty, PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
@@ -582,3 +583,8 @@ class TestQtPopup:
 def test_IOMethodMock(function_name):
     Register.check_function(IOMethodMock("test"), function_name, True)
     getattr(IOMethodMock("test"), function_name)()
+
+
+def test_about_dialog_create(qtbot):
+    dialog = AboutDialog()
+    qtbot.addWidget(dialog)
