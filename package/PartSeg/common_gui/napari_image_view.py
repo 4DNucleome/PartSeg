@@ -872,7 +872,7 @@ class ImageView(QWidget):
 
         lower_bound, upper_bound = bounding_box
         diff = upper_bound - lower_bound
-        frame = diff * 0.2
+        frame = diff * (1 - self.settings.get_from_profile("search_zoom_factor", 1.2))
         if self.viewer.dims.ndisplay == 2:
             rect = Rect(pos=(lower_bound - frame)[-2:][::-1], size=(diff + 2 * frame)[-2:][::-1])
             self.set_state({"camera": {"rect": rect}})

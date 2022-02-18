@@ -20,3 +20,4 @@ class QtViewerPushButton(QPushButton):
 class SearchROIButton(QtViewerPushButton):
     def __init__(self, settings: BaseSettings):
         super().__init__("fa5s.search", settings)
+        self.setToolTip("Search component")
