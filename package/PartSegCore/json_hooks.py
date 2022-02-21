@@ -305,9 +305,10 @@ def check_loaded_dict(dkt) -> bool:
 def add_class_info(obj, dkt):
     dkt["__class__"] = class_to_str(obj.__class__)
     dkt["__class_version_dkt__"] = {
-        class_to_str(sup_obj.__class__): str(REGISTER.get_version(sup_obj.__class__))
-        for sup_obj in obj.__class__.__mro__[::-1]
-        if str(sup_obj) not in {"object", "pydantic.main.BaseModel", "pydantic.main.Representation", "<enum 'Enum'>"}
+        class_to_str(sup_obj): str(REGISTER.get_version(sup_obj))
+        for sup_obj in obj.__class__.__mro__
+        if class_to_str(sup_obj)
+        not in {"object", "pydantic.main.BaseModel", "pydantic.utils.Representation", "enum.Enum", "builtins.object"}
     }
     return dkt
 

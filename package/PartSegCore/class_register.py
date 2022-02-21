@@ -38,6 +38,7 @@ class TypeInfo:
 class MigrationRegistration:
     def __init__(self):
         self._data_dkt: Dict[str, TypeInfo] = {}
+        self._parent_migrations: Dict[str, bool] = {}
 
     def register(
         self,
@@ -45,19 +46,18 @@ class MigrationRegistration:
         version: Union[str, Version] = "0.0.0",
         migrations: List[MigrationStartInfo] = None,
         old_paths: List[str] = None,
+        use_parent_migrations: bool = True,
     ):
         if migrations is None:
             migrations = []
         else:
 
-            migrations = list(
-                sorted(map(lambda x: x if isinstance(x, Version) else (parse_version(x[0]), x[1]), migrations))
-            )
+            migrations = list(sorted((str_to_version(x), y) for x, y in migrations))
         if old_paths is None:
             old_paths = []
         version = str_to_version(version)
 
-        if migrations and max(str_to_version(x[0]) for x in migrations) > version:
+        if migrations and max(x for x, _ in migrations) > version:
             raise ValueError("class version lower than in migrations")
 
         def _register(cls_):
@@ -66,15 +66,21 @@ class MigrationRegistration:
             if base_path in self._data_dkt:
                 raise RuntimeError(f"Class name {base_path} already taken by {self._data_dkt[base_path].base_path}")
             self._data_dkt[base_path] = type_info
+            self._parent_migrations[base_path] = use_parent_migrations
             for name in old_paths:
                 if name in self._data_dkt and self._data_dkt[name].base_path != base_path:
                     raise RuntimeError(f"Class name {name} already taken by {self._data_dkt[name].base_path}")
                 self._data_dkt[name] = type_info
+                self._parent_migrations[name] = use_parent_migrations
             return cls_
 
         if cls is None:
             return _register
         return _register(cls)
+
+    def if_use_parent_migrations(self, name: str) -> bool:
+        self._register_missed(class_str=name)
+        return self._parent_migrations[name]
 
     def get_version(self, cls: Type) -> Version:
         class_str = class_to_str(cls)
@@ -98,6 +104,8 @@ class MigrationRegistration:
             for version_, migration in self._data_dkt[class_str].migrations:
                 if version < version_:
                     data = migration(data)
+            if not self.if_use_parent_migrations(class_str):
+                break
 
         return data
 
@@ -176,5 +184,6 @@ def register_class(
     version: Union[str, Version] = "0.0.0",
     migrations: List[MigrationStartInfo] = None,
     old_paths: List[str] = None,
+    use_parent_migrations: bool = True,
 ):
-    return REGISTER.register(cls, version, migrations, old_paths)
+    return REGISTER.register(cls, version, migrations, old_paths, use_parent_migrations)

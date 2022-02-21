@@ -200,9 +200,12 @@ def clean_register():
     from PartSegCore.json_hooks import REGISTER
 
     old_dict = REGISTER._data_dkt
+    old_parent_migrations = REGISTER._parent_migrations
     REGISTER._data_dkt = {}
+    REGISTER._parent_migrations = {}
     yield
     REGISTER._data_dkt = old_dict
+    REGISTER._parent_migrations = old_parent_migrations
 
 
 def pytest_collection_modifyitems(session, config, items):

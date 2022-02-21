@@ -2,6 +2,7 @@
 
 import json
 from dataclasses import dataclass
+from enum import Enum
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -11,8 +12,16 @@ from napari.utils.notifications import NotificationSeverity
 from pydantic import BaseModel
 
 from PartSegCore._old_json_hooks import ProfileEncoder, profile_hook
+from PartSegCore.class_register import class_to_str, register_class, rename_key
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.json_hooks import EventedDict, PartSegEncoder, ProfileDict, partseg_object_hook, recursive_update_dict
+from PartSegCore.json_hooks import (
+    EventedDict,
+    PartSegEncoder,
+    ProfileDict,
+    add_class_info,
+    partseg_object_hook,
+    recursive_update_dict,
+)
 
 
 @dataclass
@@ -353,6 +362,58 @@ class TestPartSegEncoder:
             ob2 = json.load(f_p, object_hook=partseg_object_hook)
         assert ob2.data1 == 1
         assert ob2.data2 == 2
+
+
+def test_add_class_info_pydantic(clean_register):
+    @register_class
+    class SampleClass(BaseModel):
+        field: int = 1
+
+    dkt = {}
+    add_class_info(SampleClass(), dkt)
+    assert "__class__" in dkt
+    assert class_to_str(SampleClass) == dkt["__class__"]
+    assert len(dkt["__class_version_dkt__"]) == 1
+    assert dkt["__class_version_dkt__"][class_to_str(SampleClass)] == "0.0.0"
+
+
+def test_add_class_info_enum(clean_register):
+    @register_class
+    class SampleEnum(Enum):
+        field = 1
+
+    dkt = {}
+    add_class_info(SampleEnum.field, dkt)
+    assert "__class__" in dkt
+    assert class_to_str(SampleEnum) == dkt["__class__"]
+    assert len(dkt["__class_version_dkt__"]) == 1
+    assert dkt["__class_version_dkt__"][class_to_str(SampleEnum)] == "0.0.0"
+
+
+class TestPartSegObjectHook:
+    def test_no_inheritance_read(self, clean_register, tmp_path):
+        @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("field", "field1"))])
+        class BaseClass(BaseModel):
+            field1: int = 1
+
+        @register_class(
+            version="0.0.1", migrations=[("0.0.1", rename_key("field", "field1"))], use_parent_migrations=False
+        )
+        class MainClass(BaseClass):
+            field2: int = 5
+
+        data_str = """
+        {"field": 1, "field2": 5,
+         "__class__":
+         "test_PartSegCore.test_json_hooks.TestPartSegObjectHook.test_no_inheritance_read.<locals>.MainClass",
+         "__class_version_dkt__": {
+         "test_PartSegCore.test_json_hooks.TestPartSegObjectHook.test_no_inheritance_read.<locals>.MainClass": "0.0.0",
+         "test_PartSegCore.test_json_hooks.TestPartSegObjectHook.test_no_inheritance_read.<locals>.BaseClass": "0.0.0"
+         }}
+         """
+
+        ob = json.loads(data_str, object_hook=partseg_object_hook)
+        assert isinstance(ob, MainClass)
 
 
 class DummyClassForTest:
