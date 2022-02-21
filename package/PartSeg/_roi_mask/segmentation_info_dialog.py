@@ -53,9 +53,7 @@ class SegmentationInfoDialog(QWidget):
 
     @property
     def get_parameters(self):
-        if self.parameters_dict:
-            return self.parameters_dict
-        return self.settings.components_parameters_dict
+        return self.parameters_dict or self.settings.components_parameters_dict
 
     def change_component_info(self):
         if self.components.currentItem() is None:
