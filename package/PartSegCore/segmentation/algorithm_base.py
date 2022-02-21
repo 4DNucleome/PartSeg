@@ -222,12 +222,12 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         # FIXME when drop python 3.7 use postional only argument
         if _params is not None:
             if isinstance(_params, dict):
-                _params = REGISTER.migrate_data(class_to_str(self.__argument_class__), "0.0.0", _params)
+                _params = REGISTER.migrate_data({class_to_str(self.__argument_class__): "0.0.0"}, _params)
                 _params = self.__argument_class__(**_params)
             self.new_parameters = _params
             return
         if hasattr(self, "__argument_class__") and self.__argument_class__ is not None:
-            kwargs = REGISTER.migrate_data(class_to_str(self.__argument_class__), "0.0.0", kwargs)
+            kwargs = REGISTER.migrate_data({class_to_str(self.__argument_class__): "0.0.0"}, kwargs)
             self.new_parameters = self.__argument_class__(**kwargs)
             return
 

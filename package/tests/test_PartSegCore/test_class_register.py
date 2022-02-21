@@ -36,9 +36,9 @@ class SampleClass6:
 
 
 def test_migrate():
-    assert REGISTER.migrate_data(class_to_str(SampleClass1), "0.0.0", {"a": 1, "b": 2}) == {"a": 1, "b": 2}
-    assert REGISTER.migrate_data(class_to_str(SampleClass2), "0.0.1", {"a": 1, "b": 2}) == {"a": 1, "b": 2}
-    assert REGISTER.migrate_data(class_to_str(SampleClass2), "0.0.0", {"a": 1, "b": 2}) == {"c": 1, "b": 2}
+    assert REGISTER.migrate_data({class_to_str(SampleClass1): "0.0.0"}, {"a": 1, "b": 2}) == {"a": 1, "b": 2}
+    assert REGISTER.migrate_data({class_to_str(SampleClass2): "0.0.1"}, {"a": 1, "b": 2}) == {"a": 1, "b": 2}
+    assert REGISTER.migrate_data({class_to_str(SampleClass2): "0.0.0"}, {"a": 1, "b": 2}) == {"c": 1, "b": 2}
 
 
 def test_unregistered_class():
@@ -95,15 +95,19 @@ def test_update_argument(clean_register):
     ClassToCall.call_func(1, {"a": 1, "b": 2})
 
 
-# def test_migrate_parent_class(clean_register):
-#     @register_class(version="0.0.1", migrations=[("0.0.0", rename_key("field", "field1"))])
-#     class BaseMigrateClass:
-#         def __init__(self, field1):
-#             self.field1 = field1
-#
-#     class MigrateClass(BaseMigrateClass):
-#         def __init__(self, field2, **kwargs):
-#             super().__init__(**kwargs)
-#             self.field2 = field2
-#
-#     REGISTER.migrate_data(class_to_str(MigrateClass), )
+def test_migrate_parent_class(clean_register):
+    @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("field", "field1"))])
+    class BaseMigrateClass:
+        def __init__(self, field1):
+            self.field1 = field1
+
+    @register_class
+    class MigrateClass(BaseMigrateClass):
+        def __init__(self, field2, **kwargs):
+            super().__init__(**kwargs)
+            self.field2 = field2
+
+    migrated = REGISTER.migrate_data(
+        {class_to_str(BaseMigrateClass): "0.0.0", class_to_str(MigrateClass): "0.0.0"}, {"field2": 1, "field": 5}
+    )
+    assert "field1" in migrated

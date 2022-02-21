@@ -82,13 +82,20 @@ class MigrationRegistration:
         self._register_missed(class_str=class_str)
         return self._data_dkt[class_str].type_
 
-    def migrate_data(self, class_str, version: Union[str, Version], data: Dict[str, Any]) -> Dict[str, Any]:
-        self._register_missed(class_str=class_str)
-        if isinstance(version, str):
-            version = parse_version(version)
-        for version_, migration in self._data_dkt[class_str].migrations:
-            if version < version_:
-                data = migration(data)
+    def migrate_data(
+        self, class_str_to_version_dkt: Dict[str, Union[str, Version]], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        for class_str, version in class_str_to_version_dkt.items():
+            try:
+                self._register_missed(class_str=class_str)
+            except ValueError:
+                continue
+            if isinstance(version, str):
+                version = parse_version(version)
+            for version_, migration in self._data_dkt[class_str].migrations:
+                if version < version_:
+                    data = migration(data)
+
         return data
 
     def _register_missed(self, class_str):
@@ -146,11 +153,13 @@ def update_argument(argument_name):
             if args and hasattr(args[0], "__argument_class__") and args[0].__argument_class__ is not None:
                 if argument_name in kwargs and isinstance(kwargs[argument_name], dict):
                     kwargs = kwargs.copy()
-                    kw = REGISTER.migrate_data(class_to_str(args[0].__argument_class__), "0.0.0", kwargs[argument_name])
+                    kw = REGISTER.migrate_data(
+                        {class_to_str(args[0].__argument_class__): "0.0.0"}, kwargs[argument_name]
+                    )
                     kwargs[argument_name] = args[0].__argument_class__(**kw)
                 elif len(args) > arg_index and isinstance(args[arg_index], dict):
                     args = list(args)
-                    kw = REGISTER.migrate_data(class_to_str(args[0].__argument_class__), "0.0.0", args[arg_index])
+                    kw = REGISTER.migrate_data({class_to_str(args[0].__argument_class__): "0.0.0"}, args[arg_index])
                     args[arg_index] = args[0].__argument_class__(**kw)
             return func(*args, **kwargs)
 

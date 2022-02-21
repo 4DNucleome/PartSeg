@@ -304,22 +304,23 @@ def check_loaded_dict(dkt) -> bool:
 
 def add_class_info(obj, dkt):
     dkt["__class__"] = class_to_str(obj.__class__)
-    dkt["__version__"] = str(REGISTER.get_version(obj.__class__))
+    dkt["__class_version_dkt__"] = {
+        class_to_str(sup_obj.__class__): str(REGISTER.get_version(sup_obj.__class__))
+        for sup_obj in obj.__class__.__mro__[::-1]
+        if str(sup_obj) not in {"object", "pydantic.main.BaseModel", "pydantic.main.Representation", "<enum 'Enum'>"}
+    }
+    return dkt
 
 
 class PartSegEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, enum.Enum):
-            return {
-                "__class__": class_to_str(o.__class__),
-                "__version__": str(REGISTER.get_version(o.__class__)),
-                "value": o.value,
-            }
+            dkt = {"value": o.value}
+            return add_class_info(o, dkt)
         if dataclasses.is_dataclass(o):
             fields = dataclasses.fields(o)
             dkt = {x.name: getattr(o, x.name) for x in fields}
-            add_class_info(o, dkt)
-            return dkt
+            return add_class_info(o, dkt)
 
         if isinstance(o, np.ndarray):
             return o.tolist()
@@ -329,13 +330,11 @@ class PartSegEncoder(json.JSONEncoder):
                 dkt = dict(o)
             except (ValueError, TypeError):
                 dkt = o.dict()
-            add_class_info(o, dkt)
-            return dkt
+            return add_class_info(o, dkt)
 
         if hasattr(o, "as_dict"):
             dkt = o.as_dict()
-            add_class_info(o, dkt)
-            return dkt
+            return add_class_info(o, dkt)
 
         if isinstance(o, np.integer):
             return int(o)
@@ -352,14 +351,14 @@ def partseg_object_hook(dkt: dict):
     if "__class__" in dkt:
         # the migration code should be called here
         cls_str = dkt.pop("__class__")
-        version_str = dkt.pop("__version__") if "__version__" in dkt else "0.0.0"
+        version_dkt = dkt.pop("__class_version_dkt__") if "__class_version_dkt__" in dkt else {cls_str: "0.0.0"}
         try:
-            dkt_migrated = REGISTER.migrate_data(cls_str, version_str, dkt)
+            dkt_migrated = REGISTER.migrate_data(version_dkt, dkt)
             cls = REGISTER.get_class(cls_str)
             return cls(**dkt_migrated)
         except Exception as e:  # pylint: disable=W0703
             dkt["__class__"] = cls_str
-            dkt["__version__"] = version_str
+            dkt["__class_version_dkt__"] = version_dkt
             dkt["__error__"] = e
 
     if "__ReadOnly__" in dkt or "__Serializable__" in dkt:
@@ -370,7 +369,7 @@ def partseg_object_hook(dkt: dict):
         cls_str = dkt["__subtype__"]
         del dkt["__subtype__"]
         try:
-            dkt_migrated = REGISTER.migrate_data(cls_str, "0.0.0", dkt)
+            dkt_migrated = REGISTER.migrate_data({cls_str: "0.0.0"}, dkt)
             cls = REGISTER.get_class(cls_str)
             return cls(**dkt_migrated)
         except Exception:  # pylint: disable=W0703
