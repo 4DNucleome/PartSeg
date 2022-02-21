@@ -1,5 +1,4 @@
 import sys
-import typing
 from abc import ABC
 from enum import Enum
 from typing import Any, Dict, Optional, Set, Union
@@ -83,7 +82,7 @@ class Leaf(BaseModel):
     """
 
     name: str
-    parameter_dict: typing.Any = Field(default_factory=dict)
+    parameter_dict: Any = Field(default_factory=dict)
     power: float = 1.0
     area: Optional[AreaType] = None
     per_component: Optional[PerComponent] = None
@@ -144,7 +143,7 @@ class Leaf(BaseModel):
     def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
         resp = self.name
         if self.area is not None:
-            resp = f"{str(self.area)} {resp}"
+            resp = f"{self.area} {resp}"
         resp = self._plugin_info(measurement_dict) + resp
         if self.per_component is not None:
             if self.per_component == PerComponent.Yes:
