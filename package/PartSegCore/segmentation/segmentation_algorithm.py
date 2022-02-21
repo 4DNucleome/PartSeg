@@ -94,7 +94,7 @@ def _migrate_smooth_border(dkt: dict):
 
 
 @register_class(
-    version="0.0.1",
+    version="0.0.2",
     migrations=[
         ("0.0.1", _migrate_smooth_border),
         ("0.0.2", rename_key("noise_removal", "noise_filtering", optional=True)),
