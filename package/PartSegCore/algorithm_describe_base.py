@@ -92,7 +92,6 @@ class _GetDescriptionClass:
             klass = type(obj)
 
         name = typing.cast(str, self._name)
-        field: AlgorithmProperty
         fields_dkt = {
             field.name: (
                 Annotated[field.value_type, field.user_name, field.range, field.help_text],
@@ -108,12 +107,6 @@ class _GetDescriptionClass:
         return model
 
 
-def algorithm_property_list_to_base_model(
-    property_list: typing.List[typing.Union[AlgorithmProperty, str]]
-) -> typing.Tuple[Annotated, typing.Any]:
-    pass
-
-
 class AlgorithmDescribeBase(ABC):
     """
     This is abstract class for all algorithm exported to user interface.
@@ -121,7 +114,7 @@ class AlgorithmDescribeBase(ABC):
     For each group of algorithm base abstract class will add additional methods
     """
 
-    __argument_class__: typing.Type[BaseModel] = None
+    __argument_class__: typing.Optional[typing.Type[BaseModel]] = None
 
     @classmethod
     def get_doc_from_fields(cls):

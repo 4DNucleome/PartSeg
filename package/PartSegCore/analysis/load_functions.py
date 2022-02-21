@@ -329,7 +329,7 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
                 and isinstance(profile_data.values, dict)
             ):
                 dkt_migrated = REGISTER.migrate_data(
-                    class_to_str(algorithm.__argument_class__), "0.0.0", profile_data.values
+                    {class_to_str(algorithm.__argument_class__): "0.0.0"}, profile_data.values
                 )
                 profile_data.values = algorithm.__argument_class__(**dkt_migrated)
 
