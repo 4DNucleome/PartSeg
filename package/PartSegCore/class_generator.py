@@ -192,7 +192,7 @@ def add_classes(types_list, translate_dict, global_state):
                     if type_._name is None:  # pylint: disable=W0212
                         type_str = str(type_.__origin__)
                     else:
-                        type_str = "typing." + str(type_._name)  # pylint: disable=W0212
+                        type_str = f'typing.{str(type_._name)}'
                     type_str += "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
                     translate_dict[type_] = type_str
                     continue

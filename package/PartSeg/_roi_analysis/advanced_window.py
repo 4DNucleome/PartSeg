@@ -108,7 +108,7 @@ class Properties(QWidget):
         spacing_layout = QHBoxLayout()
         spacing_layout.addWidget(self.lock_spacing)
         for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
-            spacing_layout.addWidget(QLabel(txt + ":"))
+            spacing_layout.addWidget(QLabel(f'{txt}:'))
             spacing_layout.addWidget(el)
         spacing_layout.addWidget(self.units)
         spacing_layout.addStretch(1)

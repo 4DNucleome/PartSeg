@@ -144,7 +144,7 @@ class Leaf(BaseModel):
     def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
         resp = self.name
         if self.area is not None:
-            resp = str(self.area) + " " + resp
+            resp = f'{str(self.area)} {resp}'
         resp = self._plugin_info(measurement_dict) + resp
         if self.per_component is not None:
             if self.per_component == PerComponent.Yes:
@@ -205,21 +205,33 @@ class Node(BaseModel):
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
     def __str__(self):  # pragma: no cover
-        left_text = "(" + str(self.left) + ")" if isinstance(self.left, Node) else str(self.left)
-        right_text = "(" + str(self.right) + ")" if isinstance(self.right, Node) else str(self.right)
+        left_text = (
+            f'({str(self.left)})'
+            if isinstance(self.left, Node)
+            else str(self.left)
+        )
+
+        right_text = (
+            f'({str(self.right)})'
+            if isinstance(self.right, Node)
+            else str(self.right)
+        )
+
         return left_text + self.op + right_text
 
     def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:  # pragma: no cover
         left_text = (
-            "(" + self.left.pretty_print(measurement_dict) + ")"
+            f'({self.left.pretty_print(measurement_dict)})'
             if isinstance(self.left, Node)
             else self.left.pretty_print(measurement_dict)
         )
+
         right_text = (
-            "(" + self.right.pretty_print(measurement_dict) + ")"
+            f'({self.right.pretty_print(measurement_dict)})'
             if isinstance(self.right, Node)
             else self.right.pretty_print(measurement_dict)
         )
+
         return left_text + self.op + right_text
 
     def get_unit(self, ndim) -> Symbol:
