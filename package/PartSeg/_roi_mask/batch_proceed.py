@@ -81,7 +81,7 @@ class BatchProceed(QThread):
                 )
                 if isinstance(task.save_prefix, tuple):
                     self.progress_info(name, "saving", algorithm.get_steps_num())
-                    name = f'{path.splitext(path.basename(file_path))[0]}.seg'
+                    name = f"{path.splitext(path.basename(file_path))[0]}.seg"
                     re_end = re.compile(r"(.*_version)(\d+)\.seg$")
                     while path.exists(path.join(task.save_prefix[0], name)):
                         match = re_end.match(name)
