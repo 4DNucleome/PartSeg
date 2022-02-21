@@ -108,9 +108,8 @@ class Leaf(BaseModel):
                     if isinstance(self.parameter_dict, dict):
                         if el.name in self.parameter_dict:
                             resp.add(self.parameter_dict[el.name])
-                    else:
-                        if hasattr(self.parameter_dict, el.name):
-                            resp.add(getattr(self.parameter_dict, el.name))
+                    elif hasattr(self.parameter_dict, el.name):
+                        resp.add(getattr(self.parameter_dict, el.name))
         except KeyError as e:
             raise AlgorithmDescribeNotFound(self.name) from e
         return resp
