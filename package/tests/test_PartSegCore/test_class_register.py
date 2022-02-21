@@ -17,7 +17,7 @@ def rename_a_to_c(dkt: Dict[str, Any]) -> Dict[str, Any]:
     return dkt
 
 
-@register_class(migrations=[("0.0.1", rename_a_to_c)])
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_a_to_c)])
 class SampleClass2:
     pass
 

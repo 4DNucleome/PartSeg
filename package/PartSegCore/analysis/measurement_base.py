@@ -62,7 +62,7 @@ def _migrate_leaf_dict(dkt):
 
 
 @register_class(
-    version="0.0.0",
+    version="0.0.1",
     old_paths=[
         "PartSeg.utils.analysis.statistics_calculation.Leaf",
         "PartSeg.utils.analysis.measurement_base.Leaf",

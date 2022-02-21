@@ -18,6 +18,10 @@ def class_to_str(cls) -> str:
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
+def str_to_version(version):
+    return parse_version(version) if isinstance(version, str) else version
+
+
 MigrationCallable = Callable[[Dict[str, Any]], Dict[str, Any]]
 MigrationInfo = Tuple[Version, MigrationCallable]
 MigrationStartInfo = Tuple[Union[str, Version], MigrationCallable]
@@ -51,11 +55,10 @@ class MigrationRegistration:
             )
         if old_paths is None:
             old_paths = []
-        if isinstance(version, str):
-            version = parse_version(version)
+        version = str_to_version(version)
 
-        if migrations:
-            version = max(version, max(map(lambda x: x[0], migrations)))
+        if migrations and max(str_to_version(x[0]) for x in migrations) > version:
+            raise ValueError("class version lower than in migrations")
 
         def _register(cls_):
             base_path = class_to_str(cls_)
