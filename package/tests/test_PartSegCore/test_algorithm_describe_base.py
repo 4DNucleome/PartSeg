@@ -241,3 +241,73 @@ def test_base_model_to_algorithm_property_position():
     assert property_list[0].name == "field1"
     assert property_list[1].name == "field3"
     assert property_list[2].name == "field2"
+
+
+class TestAlgorithmDescribeBase:
+    def test_old_style_algorithm(self):
+        class SampleAlgorithm(AlgorithmDescribeBase):
+            @classmethod
+            def get_name(cls) -> str:
+                return "sample"
+
+            @classmethod
+            def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+                return ["aaaa", AlgorithmProperty("name", "Name", 1, options_range=(1, 10), help_text="ceeeec")]
+
+        assert SampleAlgorithm.get_name() == "sample"
+        assert len(SampleAlgorithm.get_fields()) == 2
+        assert "ceeeec" in SampleAlgorithm.get_doc_from_fields()
+        assert "(default values: 1)" in SampleAlgorithm.get_doc_from_fields()
+        assert len(SampleAlgorithm.get_fields_dict()) == 1
+        assert SampleAlgorithm.get_default_values() == {"name": 1}
+
+    def test_new_style_algorithm(self):
+        class DataModel(BaseModel):
+            name: int = Field(1, ge=1, le=10, description="ceeeec", prefix="aaaa")
+
+        class SampleAlgorithm(AlgorithmDescribeBase):
+            __argument_class__ = DataModel
+
+            @classmethod
+            def get_name(cls) -> str:
+                return "sample"
+
+        assert SampleAlgorithm.get_name() == "sample"
+        with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
+            assert len(SampleAlgorithm.get_fields()) == 2
+        assert "ceeeec" in SampleAlgorithm.get_doc_from_fields()
+        assert "(default values: 1)" in SampleAlgorithm.get_doc_from_fields()
+        assert len(SampleAlgorithm.get_fields_dict()) == 1
+        assert SampleAlgorithm.get_default_values() == {"name": 1}
+
+    def test_new_style_algorithm_with_old_style_subclass(self):
+        class DataModel(BaseModel):
+            name: int = Field(1, ge=1, le=10, description="ceeeec", prefix="aaaa")
+
+        class SampleAlgorithm(AlgorithmDescribeBase):
+            __argument_class__ = DataModel
+
+            @classmethod
+            def get_name(cls) -> str:
+                return "sample"
+
+        class SampleSubAlgorithm(SampleAlgorithm):
+            @classmethod
+            def get_name(cls) -> str:
+                return "sample2"
+
+            @classmethod
+            def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+                return super().get_fields() + [
+                    AlgorithmProperty("name2", "Name 2", 3.0, options_range=(1, 10), help_text="deeeed")
+                ]
+
+        assert SampleSubAlgorithm.get_name() == "sample2"
+        with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
+            assert len(SampleSubAlgorithm.get_fields()) == 3
+        assert "ceeeec" in SampleSubAlgorithm.get_doc_from_fields()
+        assert "deeeed" in SampleSubAlgorithm.get_doc_from_fields()
+        assert "(default values: 1)" in SampleSubAlgorithm.get_doc_from_fields()
+        assert "(default values: 3.0)" in SampleSubAlgorithm.get_doc_from_fields()
+        assert len(SampleSubAlgorithm.get_fields_dict()) == 2
+        assert SampleSubAlgorithm.get_default_values() == {"name": 1, "name2": 3.0}

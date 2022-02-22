@@ -2,7 +2,7 @@ import inspect
 import textwrap
 import typing
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
 
 from pydantic import BaseModel, Extra, create_model, validator
@@ -107,7 +107,25 @@ class _GetDescriptionClass:
         return model
 
 
-class AlgorithmDescribeBase(ABC):
+def _partial_abstractmethod(funcobj):
+    funcobj.__is_partial_abstractmethod__ = True
+    return funcobj
+
+
+class AlgorithmDescribeBaseMeta(ABCMeta):
+    def __new__(cls, name, bases, attrs, **kwargs):
+        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+        if (
+            not inspect.isabstract(cls2)
+            and hasattr(cls2.get_fields, "__is_partial_abstractmethod__")
+            and cls2.__argument_class__ is None
+        ):
+            raise RuntimeError("class need to have __argument_class__ set or get_fields functions defined")
+        cls2.__new_style__ = getattr(cls2.get_fields, "__is_partial_abstractmethod__", False)
+        return cls2
+
+
+class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     """
     This is abstract class for all algorithm exported to user interface.
     Based on get_name and get_fields methods the interface will be generated
@@ -115,11 +133,12 @@ class AlgorithmDescribeBase(ABC):
     """
 
     __argument_class__: typing.Optional[typing.Type[BaseModel]] = None
+    __new_style__: bool
 
     @classmethod
     def get_doc_from_fields(cls):
         resp = "{\n"
-        for el in cls.get_fields():
+        for el in cls._get_fields():
             if isinstance(el, AlgorithmProperty):
                 resp += f"  {el.name}: {el.value_type} - "
                 if el.help_text:
@@ -140,6 +159,7 @@ class AlgorithmDescribeBase(ABC):
         raise NotImplementedError()
 
     @classmethod
+    @_partial_abstractmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         """
         This function return list of parameters needed by algorithm. It is used for generate form in User Interface
@@ -156,16 +176,16 @@ class AlgorithmDescribeBase(ABC):
         raise NotImplementedError()
 
     @classmethod
+    def _get_fields(cls):
+        return base_model_to_algorithm_property(cls.__argument_class__) if cls.__new_style__ else cls.get_fields()
+
+    @classmethod
     def get_fields_dict(cls) -> typing.Dict[str, AlgorithmProperty]:
-        if hasattr(cls, "__argument_class__") and cls.__argument_class__ is not None:
-            fields = base_model_to_algorithm_property(cls.__argument_class__)
-        else:
-            fields = cls.get_fields()
-        return {v.name: v for v in fields if isinstance(v, AlgorithmProperty)}
+        return {v.name: v for v in cls._get_fields() if isinstance(v, AlgorithmProperty)}
 
     @classmethod
     def get_default_values(cls):
-        if cls.__argument_class__ is not None:
+        if cls.__new_style__:
             return cls.__argument_class__()
         return {
             el.name: {
