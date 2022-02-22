@@ -111,7 +111,7 @@ def mask_prop():
     return MaskProperty.simple_mask()
 
 
-class TestEnumClass(Enum):
+class SampleEnumClass(Enum):
     test0 = 0
     test1 = 1
     test2 = 2
@@ -272,8 +272,8 @@ class TestJsonLoad:
         assert re.search('"value":[^,}]+[,}]', data_string) is not None
 
     def test_json_load(self):
-        test_json = json.dumps(TestEnumClass.test0, cls=PartSegEncoder)
-        assert isinstance(json.loads(test_json, object_hook=partseg_object_hook), TestEnumClass)
+        test_json = json.dumps(SampleEnumClass.test0, cls=PartSegEncoder)
+        assert isinstance(json.loads(test_json, object_hook=partseg_object_hook), SampleEnumClass)
 
     def test_modernize_0_9_2_3(self, bundle_test_dir):
         file_path = os.path.join(bundle_test_dir, "segment_profile_0.9.2.3.json")

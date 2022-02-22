@@ -11,7 +11,7 @@ from PartSeg._roi_mask.main_window import ChosenComponents
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSeg.common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis import analysis_algorithm_dict
+from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.io_utils import MaskInfo, create_history_element_from_project
 from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.save_functions import SaveProject
@@ -354,7 +354,7 @@ class TestPartSettings:
         settings = PartSettings(tmp_path)
         settings.image = image
         settings.last_executed_algorithm = algorithm_parameters["algorithm_name"]
-        algorithm = analysis_algorithm_dict[algorithm_parameters["algorithm_name"]]()
+        algorithm = AnalysisAlgorithmSelection[algorithm_parameters["algorithm_name"]]()
         algorithm.set_image(settings.image)
         algorithm.set_parameters(**algorithm_parameters["values"])
         result = algorithm.calculation_run(lambda x, y: None)
