@@ -15,7 +15,6 @@ The documentation is incomplete. Many utilities are undocumented.
    PartSegCore/index
    common_gui/index
    common_backend/index
-   custom_application
    PartSegImage
    interface-overview/interface-overview
 
