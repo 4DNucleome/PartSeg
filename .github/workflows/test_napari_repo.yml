@@ -10,7 +10,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  test_napar:
+  download_data:
+    name: Download test data
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - shell: bash
+        run: bash build_utils/download_data.sh
+      - name: Upload test data
+        uses: actions/upload-artifact@v1
+        with:
+          name: test_data
+          path: test_data
+
+  test_napari:
     name: ${{ matrix.napari_version }} py${{ matrix.python }}
     runs-on: ${{ matrix.platform }}
     strategy:
@@ -43,6 +56,11 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install setuptools tox tox-gh-actions
+
+      - name: Download test data
+        uses: actions/download-artifact@v1
+        with:
+          name: test_data
 
       - name: Test with tox
         # run tests using pip install --pre

@@ -15,7 +15,7 @@ on:
       - '**'
 
 jobs:
-  test_napar:
+  test_napari:
     name: ${{ matrix.napari_version }} py${{ matrix.python }}
     runs-on: ${{ matrix.platform }}
     strategy:
