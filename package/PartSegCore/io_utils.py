@@ -15,12 +15,13 @@ import pandas as pd
 import tifffile
 from napari.utils import Colormap
 
-from PartSegCore.json_hooks import ProfileDict, partseg_object_hook
+from PartSegCore.json_hooks import partseg_object_hook
 from PartSegImage import ImageWriter
 from PartSegImage.image import minimal_dtype
 
 from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from .project_info import ProjectInfoBase
+from .utils import ProfileDict
 
 
 class SegmentationType(Enum):

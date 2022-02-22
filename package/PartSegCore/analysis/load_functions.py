@@ -31,11 +31,11 @@ from ..io_utils import (
     proxy_callback,
     tar_to_buff,
 )
-from ..json_hooks import ProfileDict, check_loaded_dict
 from ..mask.io_functions import LoadROIImage
 from ..project_info import HistoryElement
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
+from ..utils import ProfileDict, check_loaded_dict
 from .algorithm_description import AnalysisAlgorithmSelection
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from .calculation_plan import CalculationPlan, CalculationTree, MeasurementCalculate

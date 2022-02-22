@@ -112,7 +112,7 @@ def profile_hook(dkt):
             dkt["__class__"] = f"{module_name}.{class_name}"
             dkt["__error__"] = e
     if "__ProfileDict__" in dkt:
-        from PartSegCore.json_hooks import ProfileDict
+        from PartSegCore.utils import ProfileDict
 
         del dkt["__ProfileDict__"]
         res = ProfileDict(**dkt)

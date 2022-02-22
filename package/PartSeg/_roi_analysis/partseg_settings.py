@@ -11,9 +11,10 @@ from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple
 from PartSegCore.analysis.load_functions import load_metadata
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.io_utils import PointsInfo
-from PartSegCore.json_hooks import EventedDict, PartSegEncoder, ProfileDict
+from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
+from PartSegCore.utils import EventedDict, ProfileDict
 
 from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
 
