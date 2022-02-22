@@ -26,6 +26,7 @@ jobs:
   test_napari:
     name: ${{ matrix.napari_version }} py${{ matrix.python }}
     runs-on: ${{ matrix.platform }}
+    needs: download_data
     strategy:
       fail-fast: false
       matrix:
