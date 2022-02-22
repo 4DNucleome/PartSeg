@@ -1,5 +1,5 @@
 """
-This module contains utility for class registration, to provide migration information.
+This module contains utility for registration migration information for class.
 """
 import importlib
 import inspect
@@ -38,6 +38,8 @@ MigrationInfo = Tuple[Version, MigrationCallable]
 """Type describing single migration entry. For given class Version number should be unique."""
 MigrationStartInfo = Tuple[Union[str, Version], MigrationCallable]
 
+RegisterReturnType = Union[Type, Callable[[Type], Type]]
+
 
 @dataclass(frozen=True)
 class TypeInfo:
@@ -74,7 +76,7 @@ class MigrationRegistration:
         migrations: List[MigrationStartInfo] = None,
         old_paths: List[str] = None,
         use_parent_migrations: bool = True,
-    ):
+    ) -> RegisterReturnType:
         """
         Register class instance for storage information needed for deserialization of object from older version.
 
@@ -147,9 +149,16 @@ class MigrationRegistration:
         return self._data_dkt[class_str].type_
 
     def migrate_data(
-        self, class_str, class_str_to_version_dkt: Dict[str, Union[str, Version]], data: Dict[str, Any]
+        self, class_str: str, class_str_to_version_dkt: Dict[str, Union[str, Version]], data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Apply migrations to"""
+        """
+        Apply migrations base on register state. Current implementation does not support multiple inheritance.
+
+        :param class_str: fully qualified class path
+        :param class_str_to_version_dkt: for each parent class information about version during serialization.
+            If class is absent from this dict then assumed version is "0.0.0"
+        :param data: dict of kwargs to constructor of class
+        """
         if self.use_parent_migrations(class_str):
             super_klass = get_super_class(self.get_class(class_str))
             if super_klass is not None:
@@ -262,7 +271,7 @@ def register_class(
     migrations: List[MigrationStartInfo] = None,
     old_paths: List[str] = None,
     use_parent_migrations: bool = True,
-):
+) -> RegisterReturnType:
     """
     This is wrapper for call :py:meth:`MigrationRegistration.register` of default register instance.
     Please see its documentation for details.
