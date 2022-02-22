@@ -354,7 +354,7 @@ def partseg_object_hook(dkt: dict):
         cls_str = dkt.pop("__class__")
         version_dkt = dkt.pop("__class_version_dkt__") if "__class_version_dkt__" in dkt else {cls_str: "0.0.0"}
         try:
-            dkt_migrated = REGISTER.migrate_data(version_dkt, dkt)
+            dkt_migrated = REGISTER.migrate_data(cls_str, version_dkt, dkt)
             cls = REGISTER.get_class(cls_str)
             return cls(**dkt_migrated)
         except Exception as e:  # pylint: disable=W0703
@@ -370,7 +370,7 @@ def partseg_object_hook(dkt: dict):
         cls_str = dkt["__subtype__"]
         del dkt["__subtype__"]
         try:
-            dkt_migrated = REGISTER.migrate_data({cls_str: "0.0.0"}, dkt)
+            dkt_migrated = REGISTER.migrate_data(cls_str, {}, dkt)
             cls = REGISTER.get_class(cls_str)
             return cls(**dkt_migrated)
         except Exception:  # pylint: disable=W0703

@@ -19,6 +19,15 @@ def class_to_str(cls) -> str:
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
+def get_super_class(cls: Type) -> Optional[Type]:
+    """Get parent class for a given class"""
+    if len(cls.__mro__) < 2:
+        return None
+    if cls.__module__.startswith("pydantic.dataclass"):
+        return get_super_class(cls.__mro__[1])
+    return cls.__mro__[1]
+
+
 def str_to_version(version: Union[str, Version]) -> Version:
     """If version passed as sting then convert it to Version object, otherwise return untouched."""
     return parse_version(version) if isinstance(version, str) else version
@@ -138,24 +147,21 @@ class MigrationRegistration:
         return self._data_dkt[class_str].type_
 
     def migrate_data(
-        self, class_str_to_version_dkt: Dict[str, Union[str, Version]], data: Dict[str, Any]
+        self, class_str, class_str_to_version_dkt: Dict[str, Union[str, Version]], data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        for class_str, version in class_str_to_version_dkt.items():
-            try:
-                self._register_missed(class_str=class_str)
-            except ValueError:
-                continue
-            if isinstance(version, str):
-                version = parse_version(version)
-            for version_, migration in self._data_dkt[class_str].migrations:
-                if version < version_:
-                    data = migration(data)
-            if not self.use_parent_migrations(class_str):
-                break
-
+        """Apply migrations to"""
+        if self.use_parent_migrations(class_str):
+            super_klass = get_super_class(self.get_class(class_str))
+            if super_klass is not None:
+                data = self.migrate_data(class_to_str(super_klass), class_str_to_version_dkt, data)
+        version = str_to_version(class_str_to_version_dkt.get(class_str, "0.0.0"))
+        for version_, migration in self._data_dkt[class_str].migrations:
+            if version < version_:
+                data = migration(data)
         return data
 
     def _register_missed(self, class_str):
+        """Register class if missed from register"""
         if class_str in self._data_dkt:
             return
         module_name, class_name = class_str.rsplit(".", maxsplit=1)
@@ -175,6 +181,8 @@ class MigrationRegistration:
         self.register(class_)
 
 
+# THe global instance of register is use because registration is performed on import time.
+# There should no information storage for objects.
 REGISTER = MigrationRegistration()
 """Default register to storage class information"""
 
@@ -235,13 +243,11 @@ def update_argument(argument_name):
             if args and hasattr(args[0], "__argument_class__") and args[0].__argument_class__ is not None:
                 if argument_name in kwargs and isinstance(kwargs[argument_name], dict):
                     kwargs = kwargs.copy()
-                    kw = REGISTER.migrate_data(
-                        {class_to_str(args[0].__argument_class__): "0.0.0"}, kwargs[argument_name]
-                    )
+                    kw = REGISTER.migrate_data(class_to_str(args[0].__argument_class__), {}, kwargs[argument_name])
                     kwargs[argument_name] = args[0].__argument_class__(**kw)
                 elif len(args) > arg_index and isinstance(args[arg_index], dict):
                     args = list(args)
-                    kw = REGISTER.migrate_data({class_to_str(args[0].__argument_class__): "0.0.0"}, args[arg_index])
+                    kw = REGISTER.migrate_data(class_to_str(args[0].__argument_class__), {}, args[arg_index])
                     args[arg_index] = args[0].__argument_class__(**kw)
             return func(*args, **kwargs)
 

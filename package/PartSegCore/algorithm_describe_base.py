@@ -371,7 +371,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta, extra=Extra.forbi
             return v
         from .json_hooks import REGISTER
 
-        dkt_migrated = REGISTER.migrate_data({class_to_str(klass.__argument_class__): "0.0.0"}, v)
+        dkt_migrated = REGISTER.migrate_data(class_to_str(klass.__argument_class__), {}, v)
         return klass.__argument_class__(**dkt_migrated)
 
     @classmethod
