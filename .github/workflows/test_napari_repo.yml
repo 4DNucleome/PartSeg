@@ -1,6 +1,9 @@
 name: napari repo
 
 on:
+  push:
+    branches:
+      - feature/napari_repository_test
   schedule:
     - cron: '0 10 * * 1,3,5'  # every 24 hours
   # Allows you to run this workflow manually from the Actions tab
