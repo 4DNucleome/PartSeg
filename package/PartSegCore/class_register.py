@@ -5,37 +5,55 @@ import importlib
 import inspect
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable, Dict, List, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from packaging.version import Version
 from packaging.version import parse as parse_version
 
 
 def class_to_str(cls) -> str:
+    """Get full qualified name for e given class."""
     if cls.__module__.startswith("pydantic.dataclass"):
         cls = cls.__mro__[1]
         return class_to_str(cls)
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
-def str_to_version(version):
+def str_to_version(version: Union[str, Version]) -> Version:
+    """If version passed as sting then convert it to Version object, otherwise return untouched."""
     return parse_version(version) if isinstance(version, str) else version
 
 
 MigrationCallable = Callable[[Dict[str, Any]], Dict[str, Any]]
 MigrationInfo = Tuple[Version, MigrationCallable]
+"""Type describing single migration entry. For given class Version number should be unique."""
 MigrationStartInfo = Tuple[Union[str, Version], MigrationCallable]
 
 
 @dataclass(frozen=True)
 class TypeInfo:
+    """
+    Class for storing information in :py:class:`~.MigrationRegistration`
+
+    :ivar str base_path: full qualified path to current class module and name
+    :ivar typing.Type type_: class itself
+    :ivar packaging.version.Version version: current clas version
+    :ivar typing.List[~.MigrationInfo] migrations: list of migrations for deserialize old version
+    :ivar bool use_parent_migrations: if migrations from parent class should be applied when deserialized object.
+    """
+
     base_path: str
     type_: Type
     version: Version
     migrations: List[MigrationInfo]
+    use_parent_migrations: bool
 
 
 class MigrationRegistration:
+    """
+    Implementation of class register to storage information needed for migration from previous version.
+    """
+
     def __init__(self):
         self._data_dkt: Dict[str, TypeInfo] = {}
         self._parent_migrations: Dict[str, bool] = {}
@@ -48,10 +66,21 @@ class MigrationRegistration:
         old_paths: List[str] = None,
         use_parent_migrations: bool = True,
     ):
+        """
+        Register class instance for storage information needed for deserialization of object from older version.
+
+
+        :param cls: class to be registered
+        :param version: current version of class
+        :param  typing.List[MigrationInfo] migrations: list of migrations for deserialize old version
+        :param old_paths: old name of class with modules
+        :param use_parent_migrations: if migrations from parent class should be applied when deserialized object
+        :return: class itself if cls parameter is provided. Otherwise,
+            one argument function which will consume Type to be registered.
+        """
         if migrations is None:
             migrations = []
         else:
-
             migrations = list(sorted((str_to_version(x), y) for x, y in migrations))
         if old_paths is None:
             old_paths = []
@@ -62,32 +91,49 @@ class MigrationRegistration:
 
         def _register(cls_):
             base_path = class_to_str(cls_)
-            type_info = TypeInfo(base_path=base_path, type_=cls_, version=version, migrations=migrations)
+            type_info = TypeInfo(
+                base_path=base_path,
+                type_=cls_,
+                version=version,
+                migrations=migrations,
+                use_parent_migrations=use_parent_migrations,
+            )
             if base_path in self._data_dkt:
                 raise RuntimeError(f"Class name {base_path} already taken by {self._data_dkt[base_path].base_path}")
             self._data_dkt[base_path] = type_info
-            self._parent_migrations[base_path] = use_parent_migrations
             for name in old_paths:
                 if name in self._data_dkt and self._data_dkt[name].base_path != base_path:
                     raise RuntimeError(f"Class name {name} already taken by {self._data_dkt[name].base_path}")
                 self._data_dkt[name] = type_info
-                self._parent_migrations[name] = use_parent_migrations
             return cls_
 
         if cls is None:
             return _register
         return _register(cls)
 
-    def if_use_parent_migrations(self, name: str) -> bool:
+    def use_parent_migrations(self, name: str) -> bool:
+        """
+        Check if parent migrations should be used.
+
+        :param name: full qualified path to class
+        :return: information if parent class migrations should be applied.
+        """
         self._register_missed(class_str=name)
-        return self._parent_migrations[name]
+        return self._data_dkt[name].use_parent_migrations
 
     def get_version(self, cls: Type) -> Version:
+        """For a given class return version with which given class was registered using :py:meth:`register`"""
         class_str = class_to_str(cls)
         self._register_missed(class_str=class_str)
         return self._data_dkt[class_str].version
 
     def get_class(self, class_str: str) -> Type:
+        """
+        Get class base of qualified name. Could be done using current or old path.
+
+        Qualified name is determined using :py:func:`class_to_str` and old path comes from the ``old_paths`` argument
+        of :py:meth:`register` method.
+        """
         self._register_missed(class_str=class_str)
         return self._data_dkt[class_str].type_
 
@@ -104,7 +150,7 @@ class MigrationRegistration:
             for version_, migration in self._data_dkt[class_str].migrations:
                 if version < version_:
                     data = migration(data)
-            if not self.if_use_parent_migrations(class_str):
+            if not self.use_parent_migrations(class_str):
                 break
 
         return data
@@ -130,6 +176,7 @@ class MigrationRegistration:
 
 
 REGISTER = MigrationRegistration()
+"""Default register to storage class information"""
 
 
 def rename_key(from_key: str, to_key: str, optional=False) -> MigrationCallable:
@@ -153,6 +200,30 @@ def rename_key(from_key: str, to_key: str, optional=False) -> MigrationCallable:
 
 
 def update_argument(argument_name):
+    """
+    This is decorator for move conversion of dict to class outside function code.
+    It first inspects function signature to determine type th which argument should be converted.
+    Then, if argument is passed as dict then all migrations from :py:attr:`REGISTER` all applied,
+    then object is constructed and replace base one.
+
+    :param argument_name: name of argument which should be converted
+
+    Example::
+
+        @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("value", "value1"))])
+        class DataClass:
+            def __init__(value1, value2)
+                self.value1 = value1
+                self.value2 = value2
+
+        @update_argument("arg")
+        def some_func(arg: DataClass):
+            print(arg.value1)
+
+        some_func({"value": 1, "value2": 5})
+
+    """
+
     def _wrapper(func):
         signature = inspect.signature(func)
         if argument_name not in signature.parameters:
@@ -180,10 +251,41 @@ def update_argument(argument_name):
 
 
 def register_class(
-    cls: Type = None,
+    cls: Optional[Type] = None,
     version: Union[str, Version] = "0.0.0",
     migrations: List[MigrationStartInfo] = None,
     old_paths: List[str] = None,
     use_parent_migrations: bool = True,
 ):
+    """
+    This is wrapper for call :py:meth:`MigrationRegistration.register` of default register instance.
+    Please see its documentation for details.
+
+    :param cls: class to be registered
+    :param version: current version of class
+    :param  typing.List[MigrationInfo] migrations: list of migrations for deserialize old version
+    :param old_paths: old name of class with modules
+    :param use_parent_migrations: if migrations from parent class should be applied when deserialized object
+    :return: class itself if cls parameter is provided. Otherwise,
+        one argument function which will consume Type to be registered.
+
+    Examples::
+
+        @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("value", "value1"))])
+        class DataClass:
+            def __init__(value1, value2)
+                self.value1 = value1
+                self.value2 = value2
+
+    or::
+
+
+        class DataClass2:
+            def __init__(value1, value2)
+                self.value1 = value1
+                self.value2 = value2
+
+        register_class(DataClass2, version="0.0.1", migrations=[("0.0.1", rename_key("value", "value1"))])
+
+    """
     return REGISTER.register(cls, version, migrations, old_paths, use_parent_migrations)

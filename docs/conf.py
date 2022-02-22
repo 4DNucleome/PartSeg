@@ -67,6 +67,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "PyQt5": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
     "Numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "packaging": ("https://packaging.pypa.io/en/latest/", None),
 }
 
 qt_documentation = "Qt5"
