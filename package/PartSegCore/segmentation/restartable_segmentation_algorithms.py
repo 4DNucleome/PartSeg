@@ -25,6 +25,8 @@ from .noise_filtering import NoiseFilterSelection
 from .threshold import BaseThreshold, DoubleThresholdSelection, ThresholdSelection
 from .watershed import BaseWatershed, FlowMethodSelection, calculate_distances_array, get_neigh
 
+REQUIRE_MASK_STR = "Need mask"
+
 
 def blank_operator(_x, _y):
     raise NotImplementedError()
@@ -70,7 +72,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
 class BorderRimParameters(BorderRimBase.__argument_class__):
     @staticmethod
     def header():
-        return "Need mask"
+        return REQUIRE_MASK_STR
 
 
 class BorderRim(RestartableAlgorithm):
@@ -91,7 +93,7 @@ class BorderRim(RestartableAlgorithm):
         self.units = Units.nm
 
     def get_info_text(self):
-        return "Need mask" if self.mask is None else ""
+        return REQUIRE_MASK_STR if self.mask is None else ""
 
     def calculation_run(self, _report_fun) -> ROIExtractionResult:
         if self.mask is not None:
@@ -105,7 +107,7 @@ class BorderRim(RestartableAlgorithm):
 class MaskDistanceSplitParameters(MaskDistanceSplitBase.__argument_class__):
     @staticmethod
     def header():
-        return "Need mask"
+        return REQUIRE_MASK_STR
 
 
 class MaskDistanceSplit(RestartableAlgorithm):
@@ -214,6 +216,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
         :param report_fun: function used to trace progress
         """
+        # TODO Refactor
         self.old_threshold_info = self.threshold_info
         restarted = False
         if self.channel is None or self.parameters["channel"] != self.new_parameters.channel:
@@ -272,7 +275,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     def clean(self):
         super().clean()
-        self.parameters = defaultdict(lambda: None)
+        self.parameters: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
         self.cleaned_image = None
         self.mask = None
 
@@ -571,7 +574,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
         super().__init__()
         self.finally_segment = None
         self.final_sizes = []
-        self.threshold_info = [None, None]
+        self.threshold_info = [float("nan"), float("nan")]
         self.steps = 0
         self.mso = PyMSO()
         self.mso.set_use_background(True)
@@ -584,7 +587,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
 
     def set_image(self, image):
         super().set_image(image)
-        self.threshold_info = [None, None]
+        self.threshold_info = [float("nan"), float("nan")]
 
     def calculation_run(self, report_fun) -> ROIExtractionResult:
         if self.new_parameters.side_connection != self.parameters["side_connection"]:
@@ -666,8 +669,7 @@ final_algorithm_list = [
     UpperThresholdAlgorithm,
     RangeThresholdAlgorithm,
     LowerThresholdFlowAlgorithm,
-    UpperThresholdFlowAlgorithm,  # LowerThresholdMultiScaleOpening,
-    # UpperThresholdMultiScaleOpening,
+    UpperThresholdFlowAlgorithm,
     OtsuSegment,
     BorderRim,
     MaskDistanceSplit,
