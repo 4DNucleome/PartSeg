@@ -11,7 +11,7 @@ from magicgui.widgets import ComboBox, Widget, create_widget
 from napari.layers.base import Layer
 from packaging.version import parse as parse_version
 from pydantic import BaseModel
-from qtpy.QtCore import Signal
+from qtpy.QtCore import QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
     QAbstractSpinBox,
@@ -186,6 +186,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(ap.value_type, list):
             res = QComboBox()
             res.addItems(list(map(str, ap.possible_values)))
+        elif issubclass(ap.value_type, BaseModel):
+            res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
         else:
             res = create_widget(annotation=ap.value_type, options={})
         return res
@@ -229,6 +231,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return widget.values_changed
         if isinstance(widget, ListInput):
             return widget.change_signal
+        if isinstance(widget, FieldsList):
+            return widget.changed
         if hasattr(widget, "values_changed"):
             return widget.values_changed
         raise ValueError(f"Unsupported type: {type(widget)}")
@@ -275,6 +279,35 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if hasattr(widget, "get_value") and hasattr(widget, "set_value"):
             return widget.__class__.get_value, widget.__class__.set_value
         raise ValueError(f"Unsupported type: {type(widget)}")
+
+
+class FieldsList(QObject):
+    changed = Signal()
+
+    def __init__(self, field_list: typing.List[QtAlgorithmProperty]):
+        super().__init__()
+        self.field_list = field_list
+        for el in field_list:
+            el.change_fun.connect(self.changed.emit)
+
+    def get_value(self):
+        return {el.name: el.get_value() for el in self.field_list}
+
+    def set_value(self, val):
+        if isinstance(val, dict):
+            self._set_value_dkt(val)
+        else:
+            self._set_value_base_model(val)
+
+    def _set_value_base_model(self, val):
+        for el in self.field_list:
+            if hasattr(val, el.name):
+                el.set_value(getattr(val, el.name))
+
+    def _set_value_dkt(self, val: dict):
+        for el in self.field_list:
+            if el.name in val:
+                el.set_value(val[el.name])
 
 
 class ListInput(QWidget):
@@ -359,6 +392,11 @@ class FormWidget(QWidget):
             return
         if isinstance(ap.get_field(), Widget):
             layout.addRow(label, ap.get_field().native)
+            return
+        if isinstance(ap.get_field(), FieldsList):
+            layout.addRow(label)
+            for el in ap.get_field().field_list:
+                self._add_to_layout(layout, el, start_values.get(ap.name, {}), settings)
             return
         layout.addRow(label, ap.get_field())
         # noinspection PyUnresolvedReferences
