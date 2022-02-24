@@ -312,7 +312,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             raise ValueError(f"Function get_name of class {value} need return string not {type(val)}")
         if key != val:
             raise ValueError("Object need to be registered under name returned by gey_name function")
-        if not (hasattr(value, "__argument_class__") and value.__argument_class__ is not None):
+        if not value.__new_style__:
             try:
                 val = value.get_fields()
                 if not isinstance(val, list):
@@ -387,9 +387,9 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta, extra=Extra.forbi
         if "name" not in values or not isinstance(v, dict):
             return v
         klass = cls.__register__[values["name"]]
-        if not (hasattr(klass, "__argument_class__") and klass.__argument_class__ is not None):
+        if not klass.__new_style__:
             return v
-        from .json_hooks import REGISTER
+        from .class_register import REGISTER
 
         dkt_migrated = REGISTER.migrate_data(class_to_str(klass.__argument_class__), {}, v)
         return klass.__argument_class__(**dkt_migrated)

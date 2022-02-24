@@ -90,7 +90,7 @@ def test_update_argument(clean_register):
 
         @classmethod
         @update_argument("arg")
-        def call_func(cls, aa, arg):
+        def call_func(cls, aa, arg: MigrateClass):
             print(aa, arg.a)
 
     ClassToCall.call_func(aa=1, arg={"a": 1, "b": 2})

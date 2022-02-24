@@ -8,7 +8,7 @@ from pydantic import BaseModel, Extra, Field
 
 from PartSegCore.class_register import register_class, rename_key, update_argument
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, AlgorithmSelection
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
 from .algorithm_base import SegmentationLimitException
 
 
@@ -297,13 +297,6 @@ class DoubleOtsu(BaseThreshold):
     @classmethod
     def get_name(cls):
         return "Double Otsu"
-
-    @classmethod
-    def get_fields(cls):
-        return [  # AlgorithmProperty("mask", "Use mask in calculation", True),
-            AlgorithmProperty("valley", "Valley emphasis", True),
-            AlgorithmProperty("hist_num", "Histogram bins", 128, (8, 2**16)),
-        ]
 
     @classmethod
     @update_argument("arguments")

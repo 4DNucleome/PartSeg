@@ -323,11 +323,7 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
         with suppress(Exception):
             algorithm = AnalysisAlgorithmSelection[profile_data.algorithm]
-            if (
-                hasattr(algorithm, "__argument_class__")
-                and algorithm.__argument_class__ is not None
-                and isinstance(profile_data.values, dict)
-            ):
+            if algorithm.__new_style__ and isinstance(profile_data.values, dict):
                 dkt_migrated = REGISTER.migrate_data(
                     class_to_str(algorithm.__argument_class__), {}, profile_data.values
                 )

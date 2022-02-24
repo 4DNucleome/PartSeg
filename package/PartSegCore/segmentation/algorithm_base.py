@@ -226,7 +226,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
                 _params = self.__argument_class__(**_params)
             self.new_parameters = _params
             return
-        if hasattr(self, "__argument_class__") and self.__argument_class__ is not None:
+        if self.__new_style__:
             kwargs = REGISTER.migrate_data(class_to_str(self.__argument_class__), {}, kwargs)
             self.new_parameters = self.__argument_class__(**kwargs)
             return
@@ -248,7 +248,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_channel_parameter_name(cls):
-        if hasattr(cls, "__argument_class__") and cls.__argument_class__ is not None:
+        if cls.__new_style__:
             fields = base_model_to_algorithm_property(cls.__argument_class__)
         else:
             fields = cls.get_fields()

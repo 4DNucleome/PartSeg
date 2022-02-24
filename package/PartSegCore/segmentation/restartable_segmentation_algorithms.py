@@ -44,7 +44,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
     def __init__(self, **kwargs):
         super().__init__()
         self.parameters: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
-        self.new_parameters = {} if self.__argument_class__ is None else self.__argument_class__()
+        self.new_parameters = {} if not self.__new_style__ else self.__argument_class__()
 
     def set_image(self, image):
         self.parameters = defaultdict(lambda: None)

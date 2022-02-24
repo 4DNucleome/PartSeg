@@ -493,7 +493,7 @@ class SubAlgorithmWidget(QWidget):
     @staticmethod
     def _get_form_widget(algorithm_property, start_values=None):
         calc_class = algorithm_property.possible_values[algorithm_property.default_value]
-        if hasattr(calc_class, "__argument_class__") and calc_class.__argument_class__ is not None:
+        if calc_class.__new_style__:
             widget = FormWidget(calc_class.__argument_class__, start_values=start_values)
         else:
             widget = FormWidget(

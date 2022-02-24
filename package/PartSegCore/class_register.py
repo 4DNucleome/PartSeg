@@ -246,18 +246,20 @@ def update_argument(argument_name):
         if argument_name not in signature.parameters:
             raise RuntimeError("Argument should be accessible using inspect module.")
         arg_index = list(signature.parameters).index(argument_name)
+        klass = signature.parameters[argument_name].annotation
+        if not inspect.isclass(klass):
+            raise ValueError(f"Annotation {klass} of {argument_name} parameter is not a class")
 
         @wraps(func)
         def _update_from_dict(*args, **kwargs):
-            if args and hasattr(args[0], "__argument_class__") and args[0].__argument_class__ is not None:
-                if argument_name in kwargs and isinstance(kwargs[argument_name], dict):
-                    kwargs = kwargs.copy()
-                    kw = REGISTER.migrate_data(class_to_str(args[0].__argument_class__), {}, kwargs[argument_name])
-                    kwargs[argument_name] = args[0].__argument_class__(**kw)
-                elif len(args) > arg_index and isinstance(args[arg_index], dict):
-                    args = list(args)
-                    kw = REGISTER.migrate_data(class_to_str(args[0].__argument_class__), {}, args[arg_index])
-                    args[arg_index] = args[0].__argument_class__(**kw)
+            if argument_name in kwargs and isinstance(kwargs[argument_name], dict):
+                kwargs = kwargs.copy()
+                kw = REGISTER.migrate_data(class_to_str(klass), {}, kwargs[argument_name])
+                kwargs[argument_name] = klass(**kw)
+            elif len(args) > arg_index and isinstance(args[arg_index], dict):
+                args = list(args)
+                kw = REGISTER.migrate_data(class_to_str(klass), {}, args[arg_index])
+                args[arg_index] = klass(**kw)
             return func(*args, **kwargs)
 
         return _update_from_dict

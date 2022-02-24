@@ -245,10 +245,7 @@ class CalculationProcess:
         segmentation_algorithm: RestartableAlgorithm = segmentation_class()
         segmentation_algorithm.set_image(self.image)
         segmentation_algorithm.set_mask(self.mask)
-        if (
-            hasattr(segmentation_algorithm, "__argument_class__")
-            and segmentation_algorithm.__argument_class__ is not None
-        ):
+        if segmentation_algorithm.__new_style__:
             segmentation_algorithm.set_parameters(operation.values)
         else:
             segmentation_algorithm.set_parameters(**operation.values)

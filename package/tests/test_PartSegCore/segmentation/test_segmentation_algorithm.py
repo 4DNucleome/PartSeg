@@ -49,7 +49,7 @@ def test_segmentation_algorithm(image, algorithm: Type[ROIExtractionAlgorithm], 
     instance.set_image(image)
     if masking:
         instance.set_mask(image.get_channel(0) > 0)
-    if hasattr(instance, "__argument_class__") and instance.__argument_class__ is not None:
+    if instance.__new_style__:
         # FIXME when migrate whole code
         instance.set_parameters(instance.get_default_values())
     else:
