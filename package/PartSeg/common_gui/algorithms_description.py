@@ -288,10 +288,13 @@ class FieldsList(QObject):
         super().__init__()
         self.field_list = field_list
         for el in field_list:
-            el.change_fun.connect(self.changed.emit)
+            el.change_fun.connect(self._changed_wrap)
 
     def get_value(self):
         return {el.name: el.get_value() for el in self.field_list}
+
+    def _changed_wrap(self, val=None):
+        self.changed.emit()
 
     def set_value(self, val):
         if isinstance(val, dict):
