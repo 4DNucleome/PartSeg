@@ -53,7 +53,10 @@ SELECT_TEXT = "<select>"
 class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidget):
     @staticmethod
     def _form_widget(algorithm, start_values) -> FormWidget:
-        return NapariFormWidgetWithMask(algorithm.get_fields(), start_values=start_values)
+        return NapariFormWidgetWithMask(
+            algorithm.__argument_class__ if algorithm.__new_style__ else algorithm.get_fields(),
+            start_values=start_values,
+        )
 
     def reset_choices(self, event=None):
         self.form_widget.reset_choices(event)
@@ -62,14 +65,20 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
         return [x.name for x in self.get_layers().values()]
 
     def get_values(self):
+        values = self.form_widget.get_values()
+        if not isinstance(values, dict):
+            values = dict(values)
         return {
             k: v.name if isinstance(v, NapariImage) else v
-            for k, v in self.form_widget.get_values().items()
+            for k, v in values.items()
             if not isinstance(v, Labels) and k != "mask"
         }
 
     def get_layers(self) -> typing.Dict[str, Layer]:
-        return {k: v for k, v in self.form_widget.get_values().items() if isinstance(v, Layer)}
+        values = self.form_widget.get_values()
+        if not isinstance(values, dict):
+            values = dict(values)
+        return {k: v for k, v in values.items() if isinstance(v, Layer)}
 
 
 class NapariAlgorithmChoose(AlgorithmChooseBase):

@@ -462,7 +462,7 @@ class ROIExtractionProfile(BaseModel):
                 continue
             desc = translate_dict[k]
             res += " " * indent + desc.user_name + ": "
-            if issubclass(desc.value_type, Channel):
+            if desc.value_type is Channel:
                 res += str(Channel(v))
             elif issubclass(desc.value_type, AlgorithmDescribeBase):
                 if isinstance(v, AlgorithmSelection):
@@ -521,15 +521,16 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     help_text = field.field_info.description
     if user_name is None:
         user_name = name.replace("_", " ").capitalize()
-    if issubclass(field.type_, (int, float)):
-        value_range = (
-            field.field_info.ge or field.field_info.gt or 0,
-            field.field_info.le or field.field_info.lt or 1000,
-        )
-    if issubclass(field.type_, AlgorithmSelection):
-        value_type = AlgorithmDescribeBase
-        default_value = field.field_info.default.name
-        possible_values = field.type_.__register__
+    if not hasattr(field.type_, "__origin__"):
+        if issubclass(field.type_, (int, float)):
+            value_range = (
+                field.field_info.ge or field.field_info.gt or 0,
+                field.field_info.le or field.field_info.lt or 1000,
+            )
+        if issubclass(field.type_, AlgorithmSelection):
+            value_type = AlgorithmDescribeBase
+            default_value = field.field_info.default.name
+            possible_values = field.type_.__register__
 
     return AlgorithmProperty(
         name=name,

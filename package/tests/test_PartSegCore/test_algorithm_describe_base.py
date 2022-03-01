@@ -305,9 +305,13 @@ class TestAlgorithmDescribeBase:
         assert SampleSubAlgorithm.get_name() == "sample2"
         with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
             assert len(SampleSubAlgorithm.get_fields()) == 3
-        assert "ceeeec" in SampleSubAlgorithm.get_doc_from_fields()
-        assert "deeeed" in SampleSubAlgorithm.get_doc_from_fields()
-        assert "(default values: 1)" in SampleSubAlgorithm.get_doc_from_fields()
-        assert "(default values: 3.0)" in SampleSubAlgorithm.get_doc_from_fields()
-        assert len(SampleSubAlgorithm.get_fields_dict()) == 2
-        assert SampleSubAlgorithm.get_default_values() == {"name": 1, "name2": 3.0}
+        with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
+            doc_text = SampleSubAlgorithm.get_doc_from_fields()
+        assert "ceeeec" in doc_text
+        assert "deeeed" in doc_text
+        assert "(default values: 1)" in doc_text
+        assert "(default values: 3.0)" in doc_text
+        with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
+            assert len(SampleSubAlgorithm.get_fields_dict()) == 2
+        with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
+            assert SampleSubAlgorithm.get_default_values() == {"name": 1, "name2": 3.0}

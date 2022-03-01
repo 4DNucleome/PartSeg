@@ -1,3 +1,6 @@
+from typing import Union
+
+
 class Channel(int):
     """
     This class is introduced to distinguish numerical algorithm parameter from choose chanel.
@@ -6,3 +9,6 @@ class Channel(int):
 
     def __str__(self):
         return str(self + 1)
+
+
+Channel = Union[Channel, str]

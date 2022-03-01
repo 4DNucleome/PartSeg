@@ -9,7 +9,7 @@ from sympy import Symbol, symbols
 
 from PartSegImage.image import Spacing
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, base_model_to_algorithm_property
 from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..class_register import register_class
@@ -100,10 +100,14 @@ class Leaf(BaseModel):
             resp.add(self.channel)
         try:
             measurement_method = measurement_dict[self.name]
-            for el in measurement_method.get_fields():
+            if measurement_method.__new_style__:
+                fields = base_model_to_algorithm_property(measurement_method.__argument_class__)
+            else:
+                fields = measurement_method.get_fields()
+            for el in fields:
                 if isinstance(el, str):
                     continue
-                if issubclass(el.value_type, Channel):
+                if el.value_type is Channel:
                     if isinstance(self.parameter_dict, dict):
                         if el.name in self.parameter_dict:
                             resp.add(self.parameter_dict[el.name])

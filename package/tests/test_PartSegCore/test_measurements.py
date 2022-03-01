@@ -10,9 +10,10 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from pydantic import BaseModel
 from sympy import symbols
 
-from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
@@ -111,19 +112,20 @@ def get_two_component_mask():
 
 class TestLeaf:
     def test_channel_calc(self, monkeypatch):
+        class SampleModel(BaseModel):
+            value: int = 1
+            ch: Channel = 1
+
         mock = MagicMock()
+        mock.__new_style__ = True
+        mock.__argument_class__ = BaseModel
         mock.get_fields = MagicMock(return_value=[])
         leaf = Leaf(name="aa")
         assert leaf.get_channel_num({"aa": mock}) == set()
         leaf = Leaf(name="aa", channel=Channel(1))
         assert leaf.get_channel_num({"aa": mock}) == {1}
-        mock.get_fields = MagicMock(
-            return_value=[
-                "eee",
-                AlgorithmProperty("value", "Value", 1),
-                AlgorithmProperty("ch", "Ch", 1, value_type=Channel),
-            ]
-        )
+
+        mock.__argument_class__ = SampleModel
         leaf = Leaf(name="aa", parameter_dict={"value": 15, "ch": 3})
         assert leaf.get_channel_num({"aa": mock}) == {3}
         leaf = Leaf(name="aa", parameter_dict={"value": 15, "ch": 3}, channel=Channel(1))

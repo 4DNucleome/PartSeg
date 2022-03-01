@@ -167,7 +167,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
 
     @classmethod
     def _get_field_from_value_type(cls, ap: AlgorithmProperty):
-        if issubclass(ap.value_type, Channel):
+        if ap.value_type is Channel:
             res = ChannelComboBox()
             res.change_channels_num(10)
         elif issubclass(ap.value_type, AlgorithmDescribeBase):
@@ -403,7 +403,7 @@ class FormWidget(QWidget):
             return
         layout.addRow(label, ap.get_field())
         # noinspection PyUnresolvedReferences
-        if issubclass(ap.value_type, Channel):
+        if ap.value_type is Channel:
             # noinspection PyTypeChecker
             self.channels_chose.append(ap.get_field())
         if issubclass(ap.value_type, ROIExtractionProfile):
@@ -593,7 +593,10 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     @staticmethod
     def _form_widget(algorithm, start_values) -> FormWidget:
-        return FormWidget(algorithm.get_fields(), start_values=start_values)
+        return FormWidget(
+            algorithm.__argument_class__ if algorithm.__new_style__ else algorithm.get_fields(),
+            start_values=start_values,
+        )
 
     @staticmethod
     def exception_occurred(exc: Exception):

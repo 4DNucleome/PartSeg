@@ -3,6 +3,7 @@ from typing import Type
 import numpy as np
 import pytest
 
+from PartSegCore.algorithm_describe_base import base_model_to_algorithm_property
 from PartSegCore.segmentation import ROIExtractionAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult, SegmentationLimitException
 from PartSegCore.segmentation.restartable_segmentation_algorithms import final_algorithm_list as restartable_list
@@ -54,7 +55,7 @@ def test_segmentation_algorithm(image, algorithm: Type[ROIExtractionAlgorithm], 
         instance.set_parameters(instance.get_default_values())
     else:
         instance.set_parameters(**instance.get_default_values())
-    if not masking and "Need mask" in algorithm.get_fields():
+    if not masking and "Need mask" in base_model_to_algorithm_property(instance.__argument_class__):
         with pytest.raises(SegmentationLimitException):
             instance.calculation_run(empty)
     else:

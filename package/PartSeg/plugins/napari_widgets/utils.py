@@ -19,7 +19,7 @@ from PartSegImage import Image
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
     @classmethod
     def _get_field_from_value_type(cls, ap: AlgorithmProperty) -> typing.Union[QWidget, Widget]:
-        if inspect.isclass(ap.value_type) and issubclass(ap.value_type, Channel):
+        if inspect.isclass(ap.value_type) and ap.value_type is Channel:
             return create_widget(annotation=NapariImage, label="Image", options={})
         return super()._get_field_from_value_type(ap)
 
@@ -39,6 +39,12 @@ class NapariFormWidgetWithMask(NapariFormWidget):
     def _element_list(self, fields) -> typing.Iterable[QtAlgorithmProperty]:
         mask = AlgorithmProperty("mask", "Mask", None, value_type=typing.Optional[Labels])
         return super()._element_list(itertools.chain([mask], fields))
+
+    def get_values(self):
+        res = {name: el.get_value() for name, el in self.widgets_dict.items() if name != "mask"}
+        if self._model_class is not None:
+            return self._model_class(**res)
+        return res
 
 
 class NapariFormDialog(FormDialog):
