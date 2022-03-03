@@ -51,7 +51,7 @@ jobs:
       - name: local install
         run: |
           pip install -e napari
-          pip install -e .[pyqt]
+          pip install -e .[pyqt,test]
 
       - name: Test with tox linux
         # run tests using pip install --pre
