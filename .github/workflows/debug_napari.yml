@@ -8,7 +8,6 @@ jobs:
   test:
     name: ${{ matrix.platform }} py${{ matrix.python }} napari
     runs-on: ${{ matrix.platform }}
-    needs: download_data
     timeout-minutes: 180
     strategy:
       fail-fast: false
