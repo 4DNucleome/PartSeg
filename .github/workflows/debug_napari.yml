@@ -60,6 +60,9 @@ jobs:
         with:
           run: |
             cd napari
+            pwd
+            git status
+            git tag
             git bisect start
             git bisect bad
             git bisect good v0.4.14
