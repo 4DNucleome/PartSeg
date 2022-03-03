@@ -56,19 +56,9 @@ jobs:
       - name: Test with tox linux
         # run tests using pip install --pre
         uses: GabrielBB/xvfb-action@v1
-        timeout-minutes: 60
+        timeout-minutes: 180
         with:
-          run: |
-            cd napari
-            pwd
-            git status
-            git tag
-            git bisect start
-            git bisect bad
-            git bisect good v0.4.14
-            git bisect
-            git bisect run bash ../test_napari.sh
-            git status
+          run: bash test_wrap.sh
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
