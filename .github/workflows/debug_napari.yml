@@ -20,6 +20,7 @@ jobs:
         with:
           repository: napari/napari
           path: napari
+          fetch-depth: 0
 
 
       - name: Set up Python ${{ matrix.python }}
