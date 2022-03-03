@@ -10,6 +10,7 @@ on:
       - 'sourcery/**'
       - update_requirements
       - pre-commit-ci-update-config
+      - napari_debug_version
   pull_request:
     branches:
       - '**'
