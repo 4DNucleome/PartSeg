@@ -229,7 +229,7 @@ pygments==2.11.2
     #   ipython
     #   qtconsole
     #   sphinx
-pyinstaller==4.8
+pyinstaller==4.10
     # via -r requirements_pyinstaller.in
 pyinstaller-hooks-contrib==2021.5
     # via pyinstaller
@@ -374,7 +374,7 @@ wrapt==1.13.3
     # via napari
 xlrd==2.0.1
     # via -r requirements_pyinstaller.in
-xlsxwriter==3.0.2
+xlsxwriter==3.0.3
     # via -r requirements_pyinstaller.in
 zipp==3.7.0
     # via
