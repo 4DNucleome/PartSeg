@@ -307,7 +307,7 @@ class ProfilePreviewDialog(QDialog):
     def __init__(
         self,
         profile_dict: typing.Dict[str, ROIExtractionProfile],
-        algorithm_selection: AlgorithmSelection,
+        algorithm_selection: typing.Type[AlgorithmSelection],
         settings: BaseSettings,
         parent=None,
     ):
