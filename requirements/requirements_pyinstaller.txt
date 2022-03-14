@@ -117,7 +117,7 @@ locket==0.2.1
     # via partd
 lxml==4.7.1
     # via -r requirements_pyinstaller.in
-magicgui==0.3.4
+magicgui==0.3.7
     # via
     #   napari
     #   npe2
@@ -133,7 +133,7 @@ mpmath==1.2.1
     # via sympy
 mypy-extensions==0.4.3
     # via black
-napari==0.4.13
+napari==0.4.15
     # via -r requirements_pyinstaller.in
 napari-console==0.0.4
     # via napari
@@ -211,7 +211,7 @@ prompt-toolkit==3.0.24
     # via ipython
 psutil==5.9.0
     # via napari
-psygnal==0.2.0
+psygnal==0.3.3
     # via
     #   magicgui
     #   npe2
@@ -363,7 +363,7 @@ urllib3==1.26.8
     # via
     #   requests
     #   sentry-sdk
-vispy==0.9.4
+vispy==0.9.6
     # via
     #   -r requirements_pyinstaller.in
     #   napari
