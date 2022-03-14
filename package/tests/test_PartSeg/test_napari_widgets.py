@@ -9,6 +9,7 @@ from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
 from PartSeg.common_gui.napari_image_view import SearchType
 from PartSeg.plugins.napari_widgets import MaskCreate, ROIAnalysisExtraction, ROIMaskExtraction, SearchLabel, _settings
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
+from PartSeg.plugins.napari_widgets.search_label_widget import HIGHLIGHT_LABEL_NAME
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
@@ -30,7 +31,6 @@ napari_4_11_skip = pytest.mark.skipif(
 def clean_settings(tmp_path):
     old_settings = _settings._settings
     _settings._settings = None
-    # _settings._settings = BaseSettings(tmp_path)
     yield
     _settings._settings = old_settings
 
@@ -220,15 +220,15 @@ def test_search_labels(make_napari_viewer, qtbot):
 
     search.search_type.value = SearchType.Highlight
     search.component_selector.value = 1
-    assert ".Highlight" in viewer.layers
+    assert HIGHLIGHT_LABEL_NAME in viewer.layers
     qtbot.wait(500)
-    assert ".Highlight" in viewer.layers
+    assert HIGHLIGHT_LABEL_NAME in viewer.layers
     search._stop()
-    assert ".Highlight" not in viewer.layers
+    assert HIGHLIGHT_LABEL_NAME not in viewer.layers
     search.search_type.value = SearchType.Zoom_in
     search.search_type.value = SearchType.Highlight
-    assert ".Highlight" in viewer.layers
+    assert HIGHLIGHT_LABEL_NAME in viewer.layers
     search.search_type.value = SearchType.Zoom_in
-    assert ".Highlight" not in viewer.layers
+    assert HIGHLIGHT_LABEL_NAME not in viewer.layers
     search.search_type.value = SearchType.Highlight
     search.component_selector.value = 2

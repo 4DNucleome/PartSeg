@@ -11,6 +11,8 @@ from vispy.geometry import Rect
 from PartSeg.common_gui.napari_image_view import SearchType
 from PartSegCore.roi_info import ROIInfo
 
+HIGHLIGHT_LABEL_NAME = ".Highlight"
+
 
 class SearchLabel(Container):
     def __init__(self, napari_viewer: Viewer):
@@ -51,9 +53,9 @@ class SearchLabel(Container):
         self._component_num_changed()
 
     def _stop(self):
-        if ".Highlight" in self.napari_viewer.layers:
-            self.napari_viewer.layers[".Highlight"].metadata["timer"].stop()
-            del self.napari_viewer.layers[".Highlight"]
+        if HIGHLIGHT_LABEL_NAME in self.napari_viewer.layers:
+            self.napari_viewer.layers[HIGHLIGHT_LABEL_NAME].metadata["timer"].stop()
+            del self.napari_viewer.layers[HIGHLIGHT_LABEL_NAME]
 
     def _highlight(self):
         num = self.component_selector.value
@@ -65,12 +67,12 @@ class SearchLabel(Container):
         slices = bound_info.get_slices()
         component_mark = self.roi_info.roi[tuple(slices)] == num
         translate_grid = labels.translate + bound_info.lower * labels.scale
-        if ".Highlight" in self.napari_viewer.layers:
-            self.napari_viewer.layers[".Highlight"].data = component_mark
+        if HIGHLIGHT_LABEL_NAME in self.napari_viewer.layers:
+            self.napari_viewer.layers[HIGHLIGHT_LABEL_NAME].data = component_mark
         else:
             layer = self.napari_viewer.add_labels(
                 component_mark,
-                name=".Highlight",
+                name=HIGHLIGHT_LABEL_NAME,
                 scale=labels.scale,
                 blending="translucent",
                 color={0: (0, 0, 0, 0), 1: "white"},
@@ -89,7 +91,7 @@ class SearchLabel(Container):
             timer.start()
             layer.metadata["timer"] = timer
 
-        self.napari_viewer.layers[".Highlight"].translate = translate_grid
+        self.napari_viewer.layers[HIGHLIGHT_LABEL_NAME].translate = translate_grid
         self._shift_if_need(labels, bound_info)
 
     def _shift_if_need(self, labels, bound_info):
