@@ -86,7 +86,7 @@ class Image:
     """
 
     _image_spacing: Spacing
-    axis_order = "TZYXC"
+    axis_order = "CTZYX"
 
     def __new__(cls, *args, **kwargs):
         if hasattr(cls, "return_order"):  # pragma: no cover
@@ -151,7 +151,7 @@ class Image:
             with suppress(ValueError):
                 data_shape.pop(axes_order.index("C"))
             mask = self._fit_array_to_image(data_shape, mask)
-            mask = np.take(self.reorder_axes(mask, axes_order.replace("C", "")), 0, self.channel_pos)
+            mask = np.take(self.reorder_axes(mask, axes_order.replace("C", "")), 0, self.axis_order.index("C"))
             self._mask_array = self.fit_mask_to_image(mask)
         else:
             self._mask_array = None

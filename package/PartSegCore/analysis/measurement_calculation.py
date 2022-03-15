@@ -520,7 +520,9 @@ class MeasurementProfile:
     def get_segmentation_mask_map(self, image: Image, roi: Union[np.ndarray, ROIInfo], time: int = 0) -> ComponentsInfo:
         def get_time(array: np.ndarray):
             if array is not None and array.ndim == 4:
-                return array.take(time, axis=image.time_pos)
+                return array.take(
+                    time, axis=image.time_pos if image.time_pos < image.channel_pos else image.time_pos - 1
+                )
             return array
 
         return self.get_segmentation_to_mask_component(
@@ -590,7 +592,9 @@ class MeasurementProfile:
 
         def get_time(array: np.ndarray):
             if array is not None and array.ndim == 4:
-                return array.take(time, axis=image.time_pos)
+                return array.take(
+                    time, axis=image.time_pos if image.time_pos < image.channel_pos else image.time_pos - 1
+                )
             return array
 
         if self._need_mask and image.mask is None:
@@ -609,7 +613,10 @@ class MeasurementProfile:
             "segmentation": get_time(roi.roi),
             "roi": get_time(roi.roi),
             "bounds_info": {
-                k: v.del_dim(image.time_pos) if len(v.lower) == 4 else v for k, v in roi.bound_info.items()
+                k: v.del_dim(image.time_pos if image.time_pos < image.channel_pos else image.time_pos - 1)
+                if len(v.lower) == 4
+                else v
+                for k, v in roi.bound_info.items()
             },
             "mask": get_time(image.mask),
             "voxel_size": image.spacing,

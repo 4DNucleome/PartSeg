@@ -50,7 +50,7 @@ class TestImageClass:
     def test_lsm_read(self, data_test_dir):
         image1 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm.lsm"))
         image2 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm.tif"))
-        data = np.load(os.path.join(data_test_dir, "test_lsm.npy"))
+        data = np.moveaxis(np.load(os.path.join(data_test_dir, "test_lsm.npy")), -1, 0)
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())
@@ -58,7 +58,7 @@ class TestImageClass:
     def test_ome_read(self, data_test_dir):  # error in tifffile
         image1 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm2.tif"))
         image2 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm.tif"))
-        data = np.load(os.path.join(data_test_dir, "test_lsm.npy"))
+        data = np.moveaxis(np.load(os.path.join(data_test_dir, "test_lsm.npy")), -1, 0)
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())

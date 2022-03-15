@@ -220,7 +220,12 @@ class CalculationProcess:
             raise OSError(f"Mask file {mask_path} does not exists")
         with tifffile.TiffFile(mask_path) as mask_file:
             mask = mask_file.asarray()
-            mask = TiffImageReader.update_array_shape(mask, mask_file.series[0].axes)[..., 0]
+            mask = TiffImageReader.update_array_shape(mask, mask_file.series[0].axes)
+            if "C" in TiffImageReader.image_class.axis_order:
+                pos: List[Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]
+                pos[TiffImageReader.image_class.axis_order.index("C")] = 0
+                mask = mask[tuple(pos)]
+
         mask = (mask > 0).astype(np.uint8)
         try:
             mask = self.image.fit_array_to_image(mask)[0]

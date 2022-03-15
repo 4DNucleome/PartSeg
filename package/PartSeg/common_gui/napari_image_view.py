@@ -627,10 +627,12 @@ class ImageView(QWidget):
             else:
                 self.viewer.layers[-1].selected = True
 
+        j = 0
         for i, axis in enumerate(image.axis_order):
             if axis == "C":
                 continue
-            self.viewer.dims.set_point(i, image.shape[i] * image.normalized_scaling()[i] // 2)
+            self.viewer.dims.set_point(j, image.shape[i] * image.normalized_scaling()[j] // 2)
+            j += 1
         if self.image_info[image.file_path].roi is not None:
             self.set_roi()
         if image_info.image.mask is not None:

@@ -329,7 +329,12 @@ class TiffImageReader(BaseImageReader):
                     self.verify_mask(mask_file, image_file)
                     mask_file.report_func = report_func
                     mask_data = mask_file.asarray()
-                    mask_data = self.update_array_shape(mask_data, mask_file.series[0].axes)[..., 0]
+                    mask_data = self.update_array_shape(mask_data, mask_file.series[0].axes)
+                    if "C" in self.return_order():
+                        pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(mask_data.ndim)]
+                        pos[self.return_order().index("C")] = 0
+                        mask_data = mask_data[tuple(pos)]
+
             else:
                 mask_data = None
                 self.callback_function("max", total_pages_num)

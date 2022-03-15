@@ -302,7 +302,7 @@ class TestBaseSettings:
         settings = BaseSettings(tmp_path)
         assert settings.image_shape == ()
         settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC")
-        assert settings.image_shape == (1, 1, 10, 10, 2)
+        assert settings.image_shape == (2, 1, 1, 10, 10)
 
     def test_verify_image(self):
         assert BaseSettings.verify_image(Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC"))
