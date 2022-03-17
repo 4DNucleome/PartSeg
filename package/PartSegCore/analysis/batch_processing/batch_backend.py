@@ -668,7 +668,8 @@ class FileData:
                 local_header.append(("Mask component", "num"))
             if any(x[1] for x in el):
                 sheet_list.append(
-                    f"{calculation.sheet_name}{FileData.component_str}{num} - {measurement[i].name_prefix + measurement[i].name}"
+                    f"{calculation.sheet_name}{FileData.component_str}{num} - "
+                    f"{measurement[i].name_prefix + measurement[i].name}"
                 )
 
                 num += 1
