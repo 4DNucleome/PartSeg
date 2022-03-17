@@ -690,7 +690,7 @@ class TestBaseSettings:
             settings.add_path_history(str(i))
         assert len(settings.get_path_history()) == 11
         assert len(settings.get_last_files()) == 0
-        file_list = [[[str(tmp_path / (str(i) + ".txt"))], "aaa"] for i in range(50)]
+        file_list = [[[str(tmp_path / f'{str(i)}.txt')], "aaa"] for i in range(50)]
         for paths, method in file_list:
             settings.add_last_files(paths, method)
         assert len(settings.get_last_files()) == 10

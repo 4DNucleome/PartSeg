@@ -546,9 +546,7 @@ class Image:
     @property
     def spacing(self) -> Spacing:
         """image spacing"""
-        if self.is_2d:
-            return tuple(self._image_spacing[1:])
-        return self._image_spacing
+        return tuple(self._image_spacing[1:]) if self.is_2d else self._image_spacing
 
     def normalized_scaling(self, factor=DEFAULT_SCALE_FACTOR) -> Spacing:
         if self.is_2d:
@@ -557,9 +555,7 @@ class Image:
 
     @property
     def shift(self):
-        if self.is_2d:
-            return self._shift[1:]
-        return self._shift
+        return self._shift[1:] if self.is_2d else self._shift
 
     @property
     def voxel_size(self) -> Spacing:
