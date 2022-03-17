@@ -902,7 +902,7 @@ class TestDistanceMaskSegmentation:
     )
     def test_two_components_center(self, comp1, comp2, two_comp_img, area_gen):
         channel = two_comp_img.get_channel(0)
-        mask = np.zeros(two_comp_img.shape[2:], dtype=np.uint8)
+        mask = np.zeros(two_comp_img.shape[1:], dtype=np.uint8)
         mask[2:-2, 2:-2, 2:-2] = 1
         area_array = area_gen(two_comp_img.get_channel(0)[0])
         if comp1 == DistancePoint.Geometrical_center:
@@ -927,7 +927,7 @@ class TestDistanceMaskSegmentation:
         )
 
     def test_two_components_border(self, two_comp_img):
-        mask = np.zeros(two_comp_img.shape[2:], dtype=np.uint8)
+        mask = np.zeros(two_comp_img.shape[1:], dtype=np.uint8)
         mask[2:-2, 2:-2, 2:-2] = 1
 
         assert (

@@ -590,7 +590,7 @@ class TestSaveFunctions:
         parameters = {"squeeze": False}
         SaveAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project, parameters)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
-        assert array.shape == analysis_project.image.shape
+        assert array.shape == (1,) + analysis_project.image.shape
         assert np.all(array == analysis_project.image.get_data())
         parameters = {"squeeze": True}
         SaveAsNumpy.save(os.path.join(tmpdir, "test2.npy"), analysis_project, parameters)

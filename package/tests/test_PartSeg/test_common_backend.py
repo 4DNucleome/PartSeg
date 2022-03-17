@@ -452,7 +452,7 @@ class TestBaseSettings:
         settings.image = image
         assert settings.image_spacing == image.spacing
         assert settings.image_path == str(tmp_path / "test.tiff")
-        assert settings.image_shape == (2, 1, 1, 10, 10)
+        assert settings.image_shape == (1, 1, 10, 10)
         with qtbot.waitSignal(settings.image_spacing_changed):
             settings.image_spacing = (7, 7)
         assert image.spacing == (7, 7)

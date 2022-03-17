@@ -87,16 +87,18 @@ class Image:
 
     _image_spacing: Spacing
     axis_order = "CTZYX"
+    array_axis_order: str
 
     def __new__(cls, *args, **kwargs):
         if hasattr(cls, "return_order"):  # pragma: no cover
             warnings.warn("Using return_order is deprecated since PartSeg 0.11.0", DeprecationWarning)
             cls.axis_order = cls.return_order
+        cls.array_axis_order = cls.axis_order.replace("C", "")
         return super().__new__(cls)
 
     def __init__(
         self,
-        data: np.ndarray,
+        data: typing.Union[np.ndarray, typing.List[np.ndarray]],
         image_spacing: Spacing,
         file_path=None,
         mask: typing.Union[None, np.ndarray] = None,
@@ -110,14 +112,20 @@ class Image:
         # TODO add time distance to image spacing
         if axes_order is None:
             axes_order = self.axis_order
-        if data.ndim != len(axes_order):
+        if (isinstance(data, list) and any(x.ndim + 1 != len(axes_order) for x in data)) or (
+            not isinstance(data, list) and data.ndim != len(axes_order)
+        ):
+            if isinstance(data, list):
+                ndim = ", ".join([f"{x.ndim} + 1" for x in data])
+            else:
+                ndim = data.ndim
             raise ValueError(
                 "Data should have same number of dimensions "
-                f"like length of axes_order (axis :{len(axes_order)}, ndim: {data.ndim}"
+                f"like length of axes_order (axis :{len(axes_order)}, ndim: {ndim}"
             )
         if not isinstance(image_spacing, tuple):
             image_spacing = tuple(image_spacing)
-        self._image_array = self.reorder_axes(data, axes_order)
+        self._channel_arrays = self._split_data_on_channels(data, axes_order)
         self._image_spacing = (1.0,) * (3 - len(image_spacing)) + image_spacing
         self._image_spacing = tuple(el if el > 0 else 10**-6 for el in self._image_spacing)
 
@@ -143,18 +151,46 @@ class Image:
             axis = list(range(len(self.axis_order)))
             axis.remove(self.axis_order.index("C"))
             axis = tuple(axis)
-            self.ranges = list(zip(np.min(self._image_array, axis=axis), np.max(self._image_array, axis=axis)))
+            self.ranges = list(
+                zip((np.min(c) for c in self._channel_arrays), (np.max(c) for c in self._channel_arrays))
+            )
         else:
             self.ranges = ranges
         if mask is not None:
-            data_shape = list(data.shape)
-            with suppress(ValueError):
-                data_shape.pop(axes_order.index("C"))
+            if isinstance(data, list):
+                data_shape = data[0].shape
+            else:
+                data_shape = list(data.shape)
+                with suppress(ValueError):
+                    data_shape.pop(axes_order.index("C"))
+
             mask = self._fit_array_to_image(data_shape, mask)
-            mask = np.take(self.reorder_axes(mask, axes_order.replace("C", "")), 0, self.axis_order.index("C"))
+            mask = self.reorder_axes(mask, axes_order.replace("C", ""))
+
             self._mask_array = self.fit_mask_to_image(mask)
         else:
             self._mask_array = None
+
+    @classmethod
+    def _split_data_on_channels(
+        cls, data: typing.Union[np.ndarray, typing.List[np.ndarray]], axes_order: str
+    ) -> typing.List[np.ndarray]:
+        if isinstance(data, list) and not axes_order.startswith("C"):
+            raise ValueError("When passing data as list of numpy arrays then Channel must be first axis.")
+        if "C" not in axes_order:
+            return [cls.reorder_axes(data, axes_order)]
+        if axes_order.startswith("C"):
+            if isinstance(data, list):
+                dtype = np.result_type(*data)
+                return [cls.reorder_axes(x, axes_order[1:]).astype(dtype) for x in data]
+            return [cls.reorder_axes(x, axes_order[1:]) for x in data]
+        pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(data.ndim)]
+        c_pos = axes_order.index("C")
+        res = []
+        for i in range(data.shape[c_pos]):
+            pos[c_pos] = i
+            res.append(cls.reorder_axes(data[pos], axes_order.replace("C", "")))
+        return res
 
     def merge(self, image: "Image", axis: typing.Union[str, int]) -> "Image":
         """
@@ -168,8 +204,9 @@ class Image:
         """
         if isinstance(axis, str):
             axis = self.axis_order.index(axis)
-        data = self.reorder_axes(image.get_data(), image.axis_order)
-        data = np.concatenate((self.get_data(), data), axis=axis)
+        data = self._image_data_normalize(
+            self._channel_arrays + [self.reorder_axes(x, image.array_axis_order) for x in image._channel_arrays]
+        )
         channel_names = self.channel_names
         reg = re.compile(r"channel \d+")
         for name in image.channel_names:
@@ -199,35 +236,33 @@ class Image:
 
     @property
     def x_pos(self):
-        return self.axis_order.index("X")
+        return self.array_axis_order.index("X")
 
     @property
     def y_pos(self):
-        return self.axis_order.index("Y")
+        return self.array_axis_order.index("Y")
 
     @property
     def time_pos(self):
         """Time axis. Need to have 'T' in :py:attr:`axis_order`"""
-        return self.axis_order.index("T")
+        return self.array_axis_order.index("T")
 
     @property
     def stack_pos(self) -> int:
         """Stack axis. Need to have 'Z' in :py:attr:`axis_order`"""
-        return self.axis_order.index("Z")
-
-    @property
-    def array_axis_order(self):
-        return self.axis_order.replace("C", "")
+        return self.array_axis_order.index("Z")
 
     @property
     def dtype(self) -> np.dtype:
         """dtype of image array"""
-        return self._image_array.dtype
+        return self._channel_arrays[0].dtype
 
     @staticmethod
     def _reorder_axes(array: np.ndarray, input_axes: str, return_axes) -> np.ndarray:
         if array.ndim != len(input_axes):
             raise ValueError(f"array.ndim ({array.ndim}) need to be equal to length of axes ('{input_axes}')")
+        if input_axes == return_axes:
+            return array
         mapping_dict = {v: i for i, v in enumerate(return_axes)}
         if array.ndim < len(return_axes):
             array = array.reshape(array.shape + (1,) * (len(return_axes) - array.ndim))
@@ -244,17 +279,17 @@ class Image:
         :param str axes: axes order
         :return: array with correct order of axes
         """
-        return cls._reorder_axes(array, axes, cls.axis_order)
+        return cls._reorder_axes(array, axes, cls.array_axis_order)
 
     def get_dimension_number(self) -> int:
         """return number of nontrivial dimensions"""
-        return np.squeeze(self._image_array).ndim
+        return np.squeeze(self._channel_arrays[0]).ndim
 
     def get_dimension_letters(self) -> str:
         """
         :return: letters which indicates non trivial dimensions
         """
-        return "".join(key for val, key in zip(self._image_array.shape, self.axis_order) if val > 1)
+        return "".join(key for val, key in zip(self._channel_arrays[0].shape, self.array_axis_order) if val > 1)
 
     def substitute(
         self,
@@ -267,7 +302,7 @@ class Image:
         channel_names=None,
     ) -> "Image":
         """Create copy of image with substitution of not None elements"""
-        data = self._image_array if data is None else data
+        data = self._channel_arrays if data is None else data
         image_spacing = self._image_spacing if image_spacing is None else image_spacing
         file_path = self.file_path if file_path is None else file_path
         mask = self._mask_array if mask is _DEF else mask
@@ -295,12 +330,14 @@ class Image:
         if mask is None:
             self._mask_array = None
         elif axes is not None:
-            self._mask_array = self.fit_mask_to_image(np.take(self.reorder_axes(mask, axes), 0, self.channel_pos))
+            self._mask_array = self.fit_mask_to_image(self.reorder_axes(mask, axes))
         else:
             self._mask_array = self.fit_mask_to_image(mask)
 
     def get_data(self) -> np.ndarray:
-        return self._image_array[:]
+        if "C" in self.axis_order:
+            return np.stack(self._channel_arrays, axis=self.axis_order.index("C"))
+        return self._channel_arrays[0]
 
     @property
     def mask(self) -> typing.Optional[np.ndarray]:
@@ -329,9 +366,7 @@ class Image:
 
         :raises ValueError: if cannot fit array
         """
-        base_shape = list(self._image_array.shape)
-        base_shape.pop(self.channel_pos)
-        return self._fit_array_to_image(base_shape, array)
+        return self._fit_array_to_image(self._channel_arrays[0].shape, array)
 
     # noinspection DuplicatedCode
     def fit_mask_to_image(self, array: np.ndarray) -> np.ndarray:
@@ -355,7 +390,7 @@ class Image:
         """
         :return: numpy array in imagej tiff order axes
         """
-        return self._reorder_axes(self._image_array, self.axis_order, "TZCYX")
+        return self._reorder_axes(np.stack(self._channel_arrays, axis=self.channel_pos), self.axis_order, "TZCYX")
 
     def get_mask_for_save(self) -> typing.Optional[np.ndarray]:
         """
@@ -363,9 +398,7 @@ class Image:
         """
         if not self.has_mask:
             return None
-        axes_order = list(self.axis_order)
-        axes_order.pop(self.channel_pos)
-        return self._reorder_axes(self._mask_array, "".join(axes_order), "TZCYX")
+        return self._reorder_axes(self._mask_array, "".join(self.array_axis_order), "TZCYX")
 
     @property
     def has_mask(self) -> bool:
@@ -385,37 +418,35 @@ class Image:
     @property
     def channels(self) -> int:
         """number of image channels"""
-        return self._image_array.shape[self.channel_pos]
+        return len(self._channel_arrays)
 
     @property
     def layers(self) -> int:
         """z-dim of image"""
-        return self._image_array.shape[self.stack_pos]
+        return self._channel_arrays[0].shape[self.stack_pos]
 
     @property
     def times(self) -> int:
         """number of time frames"""
-        return self._image_array.shape[self.time_pos]
+        return self._channel_arrays[0].shape[self.time_pos]
 
     @property
     def plane_shape(self) -> (int, int):
         """y,x size of image"""
-        x_index = self.axis_order.index("X")
-        y_index = self.axis_order.index("Y")
-        return self._image_array.shape[y_index], self._image_array.shape[x_index]
+        return self._channel_arrays[0].shape[self.y_pos], self._channel_arrays[0].shape[self.x_pos]
 
     @property
     def shape(self):
         """Whole image shape. order of axes my change. Current order is in :py:attr:`return_order`"""
-        return self._image_array.shape
+        return self._channel_arrays[0].shape
 
     def swap_time_and_stack(self):
         """
         Swap time and stack axes.
         For example my be used to convert time image in 3d image.
         """
-        image_array = np.swapaxes(self._image_array, self.time_pos, self.stack_pos)
-        return self.substitute(data=image_array)
+        image_array_list = [np.swapaxes(x, self.time_pos, self.stack_pos) for x in self._channel_arrays]
+        return self.substitute(data=self._image_data_normalize(image_array_list))
 
     @classmethod
     def get_axis_positions(cls) -> typing.Dict[str, int]:
@@ -431,7 +462,7 @@ class Image:
         :return: dict with mapping axis to its position for array fitted to image
         :rtype: dict
         """
-        return {l: i for i, l in enumerate(cls.axis_order.replace("C", ""))}
+        return {l: i for i, l in enumerate(cls.array_axis_order)}
 
     def get_data_by_axis(self, **kwargs) -> np.ndarray:
         """
@@ -441,16 +472,29 @@ class Image:
         :return:
         :rtype:
         """
-        slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.axis_order))]
-        axis_pos = self.get_axis_positions()
-        if "c" in kwargs and isinstance(kwargs["c"], str):
-            kwargs["c"] = self.channel_names.index(kwargs["c"])
+        slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.array_axis_order))]
+        axis_pos = self.get_array_axis_positions()
         if "C" in kwargs and isinstance(kwargs["C"], str):
             kwargs["C"] = self.channel_names.index(kwargs["C"])
-        for name in kwargs:
+        if "c" in kwargs:
+            if isinstance(kwargs["c"], str):
+                kwargs["C"] = self.channel_names.index(kwargs.pop("c"))
+            else:
+                kwargs["C"] = kwargs.pop("c")
+
+        channel = kwargs.pop("C", slice(None) if "C" in self.axis_order else 0)
+
+        axis_order = self.axis_order
+        for name, value in kwargs.items():
             if name.upper() in axis_pos:
-                slices[axis_pos[name.upper()]] = kwargs[name]
-        return self._image_array[tuple(slices)]
+                slices[axis_pos[name.upper()]] = value
+                if isinstance(value, int):
+                    axis_order = axis_order.replace(name.upper(), "")
+
+        slices_t = tuple(slices)
+        if isinstance(channel, int):
+            return self._channel_arrays[channel][slices_t]
+        return np.stack([x[slices_t] for x in self._channel_arrays[channel]], axis=axis_order.index("C"))
 
     def clip_array(self, array, **kwargs):
         """
@@ -485,16 +529,10 @@ class Image:
         :param stack: "z coordinate. For time data use 0.
         :return:
         """
-        elem_num = max(self.stack_pos, self.time_pos) + 1
-        indices: typing.List[typing.Union[int, slice]] = [0] * elem_num
-        for i in range(elem_num):
-            if i == self.time_pos:
-                indices[i] = time
-            elif i == self.stack_pos:
-                indices[i] = stack
-            else:
-                indices[i] = slice(None)
-        return self._image_array[tuple(indices)]
+        warnings.warn(
+            "Image.get_layer is deprecated. Use get_data_by_axis instead", category=DeprecationWarning, stacklevel=2
+        )
+        return self.get_data_by_axis(T=time, Z=stack)
 
     @property
     def is_2d(self) -> bool:
@@ -576,12 +614,12 @@ class Image:
             )
         return cut_area
 
-    def _cut_image_slices(self, cut_area: typing.Iterable[slice], frame: int):
+    def _cut_image_slices(
+        self, cut_area: typing.Iterable[slice], frame: int
+    ) -> typing.Tuple[typing.List[np.ndarray], np.ndarray]:
         new_mask = None
         cut_area = self._frame_cut_area(cut_area, frame)
-        cut_area2 = cut_area[:]
-        cut_area2.insert(self.channel_pos, slice(None))
-        new_image = self._image_array[tuple(cut_area2)]
+        new_image = [x[tuple(cut_area)] for x in self._channel_arrays]
         if self._mask_array is not None:
             new_mask = self._mask_array[tuple(cut_area)]
         return new_image, new_mask
@@ -598,21 +636,20 @@ class Image:
         cut_area = self.fit_array_to_image(cut_area)
         new_cut = self._roi_to_slices(cut_area)
         catted_cut_area = cut_area[tuple(new_cut)]
-        image_cut = new_cut[:]
-        image_cut.insert(self.channel_pos, slice(None))
-        new_image = np.copy(self._image_array[tuple(image_cut)])
-        if self.channel_pos == len(self.axis_order) - 1:
-            new_image[catted_cut_area == 0] = 0
-        else:
-            for i in range(self.channels):
-                np.take(new_image, i, self.channel_pos)[catted_cut_area == 0] = 0
+        new_image = [x[new_cut] for x in self._channel_arrays]
+        for el in new_image:
+            el[catted_cut_area == 0] = 0
         if replace_mask:
             new_mask = catted_cut_area
         elif self._mask_array is not None:
             new_mask = self._mask_array[tuple(new_cut)]
             new_mask[catted_cut_area == 0] = 0
         important_axis = "XY" if self.is_2d else "XYZ"
-        new_image = self._frame_array(new_image, self.calc_index_to_frame(self.axis_order, important_axis), frame)
+        new_image = [
+            self._frame_array(x, self.calc_index_to_frame(self.array_axis_order, important_axis), frame)
+            for x in new_image
+        ]
+
         new_mask = self._frame_array(new_mask, self.calc_index_to_frame(self.array_axis_order, important_axis), frame)
         return new_image, new_mask
 
@@ -644,7 +681,7 @@ class Image:
             new_image, new_mask = self._cut_image_slices(cut_area, frame)
 
         return self.__class__(
-            data=new_image,
+            data=self._image_data_normalize(new_image),
             image_spacing=self._image_spacing,
             file_path=None,
             mask=new_mask,
@@ -705,13 +742,28 @@ class Image:
 
     def __str__(self):
         return (
-            f"{self.__class__} Shape {self._image_array.shape}, dtype: {self._image_array.dtype}, "
+            f"{self.__class__} Shape {self._channel_arrays[0].shape}, dtype: {self._channel_arrays[0].dtype}, "
             f"labels: {self.channel_names}, coloring: {self.get_colors()} mask: {self.has_mask}"
         )
 
     def __repr__(self):
         mask_info = f"mask=True, mask_dtype={self._mask_array.dtype}" if self.mask is not None else "mask=False"
         return (
-            f"Image(shape={self._image_array.shape} dtype={self._image_array.dtype}, spacing={self.spacing}, "
-            f"labels={self.channel_names}, channels={self.channels}, axes={repr(self.axis_order)}, {mask_info})"
+            f"Image(shape={self._channel_arrays[0].shape} dtype={self._channel_arrays[0].dtype}, spacing={self.spacing}"
+            f", labels={self.channel_names}, channels={self.channels}, axes={repr(self.axis_order)}, {mask_info})"
         )
+
+    @classmethod
+    def _image_data_normalize(
+        cls, data: typing.Union[typing.List[np.ndarray], np.ndarray]
+    ) -> typing.Union[typing.List[np.ndarray], np.ndarray]:
+        if isinstance(data, np.ndarray):
+            return data
+        if cls.axis_order.startswith("C"):
+            shape = data[0].shape
+            if any(x.shape != shape for x in data):
+                raise ValueError(f"Shape of arrays are different {[x.shape for x in data]}")
+            return data
+        if "C" not in cls.axis_order:
+            return data[0]
+        return np.stack(data, axis=cls.axis_order.index("C"))

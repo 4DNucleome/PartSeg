@@ -121,8 +121,7 @@ def test_change_class(data_test_dir):
     assert img.plane_shape == (1024, 1024)
     assert img.layers == 6
     assert img.channels == 3
-    assert img.channel_pos == 1
-    assert img.stack_pos == 4
+    assert img.stack_pos == 3
 
 
 def test_xml2dict():

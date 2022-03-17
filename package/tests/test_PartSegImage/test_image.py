@@ -12,16 +12,24 @@ class TestImageBase:
     image_class = Image
 
     def needed_shape(self, shape, axes: str, drop: str):
+        new_axes = self.image_class.array_axis_order
+        return self._needed_shape(shape, axes, drop, new_axes)
+
+    def needed_layer_shape(self, shape, axes: str, drop: str):
         new_axes = self.image_class.axis_order
+        return self._needed_shape(shape, axes, drop, new_axes)
+
+    def _needed_shape(self, shape, axes: str, drop: str, new_axes):
         for el in drop:
             new_axes = new_axes.replace(el, "")
+            axes = axes.replace(el, "")
         res_shape = [1] * len(new_axes)
         for size, name in zip(shape, axes):
             res_shape[new_axes.index(name)] = size
         return tuple(res_shape)
 
     def image_shape(self, shape, axes):
-        return self.needed_shape(shape, axes, "")
+        return self.needed_shape(shape, axes, "C")
 
     def mask_shape(self, shape, axes):
         return self.needed_shape(shape, axes, "C")
@@ -130,11 +138,6 @@ class TestImageBase:
             self.image_class(np.zeros((10, 20)), (1, 1, 1), axes_order="XYZ")
         assert "Data should" in str(exception_info.value)
 
-    def test_channel_pos(self):
-        initial_shape = self.prepare_image_initial_shape([1, 10, 20, 20], 1)
-        image = self.image_class(np.zeros(initial_shape), (1, 1, 1), "")
-        assert image.channel_pos == image.axis_order.index("C")
-
     def test_get_dimension_number(self):
         assert (
             self.image_class(
@@ -158,19 +161,19 @@ class TestImageBase:
             self.image_class(
                 np.zeros((1, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
             ).get_dimension_number()
-            == 3
+            == 2
         )
         assert (
             self.image_class(
                 np.zeros((10, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
             ).get_dimension_number()
-            == 4
+            == 3
         )
         assert (
             self.image_class(
                 np.zeros((10, 3, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
             ).get_dimension_number()
-            == 5
+            == 4
         )
 
     def test_get_dimension_letters(self):
@@ -185,13 +188,13 @@ class TestImageBase:
         ).get_dimension_letters() == self.reorder_axes_letter("TYX")
         assert self.image_class(
             np.zeros((1, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
-        ).get_dimension_letters() == self.reorder_axes_letter("YXC")
+        ).get_dimension_letters() == self.reorder_axes_letter("YX")
         assert self.image_class(
             np.zeros((10, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
-        ).get_dimension_letters() == self.reorder_axes_letter("TYXC")
+        ).get_dimension_letters() == self.reorder_axes_letter("TYX")
         assert self.image_class(
             np.zeros((10, 3, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
-        ).get_dimension_letters() == self.reorder_axes_letter("TZYXC")
+        ).get_dimension_letters() == self.reorder_axes_letter("TZYX")
 
     def test_set_mask(self):
         initial_shape = self.prepare_image_initial_shape([1, 10, 20, 30], 1)
@@ -263,7 +266,7 @@ class TestImageBase:
     def test_get_layer(self):
         image = self.image_class(np.zeros((1, 10, 20, 30, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC")
         layer = image.get_layer(0, 5)
-        assert layer.shape == self.needed_shape((20, 30, 3), "YXC", "TZ")
+        assert layer.shape == self.needed_layer_shape((20, 30, 3), "YXC", "TZ")
 
     def test_spacing(self):
         image = self.image_class(np.zeros((1, 10, 20, 30, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC")
@@ -317,7 +320,6 @@ class TestImageBase:
         cut_list = [slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)]
         res = image.cut_image(cut_list)
         shape = [y - x + +1 for x, y in zip(lower_bound, upper_bound)]
-        shape.insert(image.channel_pos, 3)
         shape[image.x_pos] += 2 * FRAME_THICKNESS
         shape[image.y_pos] += 2 * FRAME_THICKNESS
         shape[image.stack_pos] += 2 * FRAME_THICKNESS
@@ -363,11 +365,10 @@ class TestImageBase:
     def test_axes_pos(self):
         data = np.zeros((10, 10), np.uint8)
         image = self.image_class(data, (1, 1), axes_order="XY")
-        assert image.x_pos == image.axis_order.index("X")
-        assert image.y_pos == image.axis_order.index("Y")
-        assert image.time_pos == image.axis_order.index("T")
-        assert image.stack_pos == image.axis_order.index("Z")
-        assert image.channel_pos == image.axis_order.index("C")
+        assert image.x_pos == image.array_axis_order.index("X")
+        assert image.y_pos == image.array_axis_order.index("Y")
+        assert image.time_pos == image.array_axis_order.index("T")
+        assert image.stack_pos == image.array_axis_order.index("Z")
 
 
 class ChangeChannelPosImage(Image):
