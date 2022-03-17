@@ -7,6 +7,11 @@ repos:
     hooks:
     - id: black
       pass_filenames: true
+-   repo: https://github.com/myint/autoflake
+    rev: 'v1.4'  # Use the revision sha / tag you want to point at
+    hooks:
+    -   id: autoflake
+        args: ["--remove-all-unused-imports", "-i"]
 -   repo: https://github.com/PyCQA/flake8
     rev: 4.0.1
     hooks:
@@ -45,12 +50,6 @@ repos:
     rev: '5.10.1'  # Use the revision sha / tag you want to point at
     hooks:
     -   id: isort
-
--   repo: https://github.com/myint/autoflake
-    rev: 'v1.4'  # Use the revision sha / tag you want to point at
-    hooks:
-    -   id: autoflake
-        args: ["--remove-all-unused-imports", "-i"]
 
 -   repo: https://github.com/markdownlint/markdownlint
     rev: v0.11.0  # Use the ref you want to point at
