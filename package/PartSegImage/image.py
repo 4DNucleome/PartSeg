@@ -8,6 +8,7 @@ from itertools import zip_longest
 import numpy as np
 
 Spacing = typing.Tuple[typing.Union[float, int], ...]
+_IMAGE_DATA = typing.Union[typing.List[np.ndarray], np.ndarray]
 
 _DEF = object()
 FRAME_THICKNESS = 2
@@ -32,7 +33,7 @@ def minimal_dtype(val: int):
 
 def reduce_array(
     array: np.ndarray,
-    components: typing.Optional[typing.Iterable[int]] = None,
+    components: typing.Optional[typing.Collection[int]] = None,
     max_val: typing.Optional[int] = None,
     dtype=None,
 ) -> np.ndarray:
@@ -118,7 +119,7 @@ class Image:
             if isinstance(data, list):
                 ndim = ", ".join([f"{x.ndim} + 1" for x in data])
             else:
-                ndim = data.ndim
+                ndim = str(data.ndim)
             raise ValueError(
                 "Data should have same number of dimensions "
                 f"like length of axes_order (axis :{len(axes_order)}, ndim: {ndim}"
@@ -148,9 +149,6 @@ class Image:
             self._channel_names = default_channel_names
         self._channel_names = self._channel_names[: self.channels]
         if ranges is None:
-            axis = list(range(len(self.axis_order)))
-            axis.remove(self.axis_order.index("C"))
-            axis = tuple(axis)
             self.ranges = list(
                 zip((np.min(c) for c in self._channel_arrays), (np.max(c) for c in self._channel_arrays))
             )
@@ -158,7 +156,7 @@ class Image:
             self.ranges = ranges
         if mask is not None:
             if isinstance(data, list):
-                data_shape = data[0].shape
+                data_shape = list(data[0].shape)
             else:
                 data_shape = list(data.shape)
                 with suppress(ValueError):
@@ -167,7 +165,7 @@ class Image:
             mask = self._fit_array_to_image(data_shape, mask)
             mask = self.reorder_axes(mask, axes_order.replace("C", ""))
 
-            self._mask_array = self.fit_mask_to_image(mask)
+            self._mask_array: typing.Optional[np.ndarray] = self.fit_mask_to_image(mask)
         else:
             self._mask_array = None
 
@@ -178,12 +176,14 @@ class Image:
         if isinstance(data, list) and not axes_order.startswith("C"):
             raise ValueError("When passing data as list of numpy arrays then Channel must be first axis.")
         if "C" not in axes_order:
+            assert isinstance(data, np.ndarray)
             return [cls.reorder_axes(data, axes_order)]
         if axes_order.startswith("C"):
             if isinstance(data, list):
                 dtype = np.result_type(*data)
                 return [cls.reorder_axes(x, axes_order[1:]).astype(dtype) for x in data]
             return [cls.reorder_axes(x, axes_order[1:]) for x in data]
+        assert isinstance(data, np.ndarray)
         pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(data.ndim)]
         c_pos = axes_order.index("C")
         res = []
@@ -341,7 +341,7 @@ class Image:
 
     @property
     def mask(self) -> typing.Optional[np.ndarray]:
-        return self._mask_array[:] if self.has_mask else None
+        return self._mask_array[:] if self._mask_array is not None else None
 
     @staticmethod
     def _fit_array_to_image(base_shape, array: np.ndarray) -> np.ndarray:
@@ -396,7 +396,7 @@ class Image:
         """
         :return: if image has mask then return mask with axes in proper order
         """
-        if not self.has_mask:
+        if self._mask_array is None:
             return None
         return self._reorder_axes(self._mask_array, "".join(self.array_axis_order), "TZCYX")
 
@@ -431,7 +431,7 @@ class Image:
         return self._channel_arrays[0].shape[self.time_pos]
 
     @property
-    def plane_shape(self) -> (int, int):
+    def plane_shape(self) -> typing.Tuple[int, int]:
         """y,x size of image"""
         return self._channel_arrays[0].shape[self.y_pos], self._channel_arrays[0].shape[self.x_pos]
 
@@ -616,7 +616,7 @@ class Image:
 
     def _cut_image_slices(
         self, cut_area: typing.Iterable[slice], frame: int
-    ) -> typing.Tuple[typing.List[np.ndarray], np.ndarray]:
+    ) -> typing.Tuple[typing.List[np.ndarray], typing.Optional[np.ndarray]]:
         new_mask = None
         cut_area = self._frame_cut_area(cut_area, frame)
         new_image = [x[tuple(cut_area)] for x in self._channel_arrays]
@@ -754,9 +754,7 @@ class Image:
         )
 
     @classmethod
-    def _image_data_normalize(
-        cls, data: typing.Union[typing.List[np.ndarray], np.ndarray]
-    ) -> typing.Union[typing.List[np.ndarray], np.ndarray]:
+    def _image_data_normalize(cls, data: _IMAGE_DATA) -> _IMAGE_DATA:
         if isinstance(data, np.ndarray):
             return data
         if cls.axis_order.startswith("C"):

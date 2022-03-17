@@ -1,6 +1,5 @@
 import os.path
 import typing
-import warnings
 from abc import abstractmethod
 from contextlib import suppress
 from io import BytesIO
@@ -39,11 +38,6 @@ class BaseImageReader:
         Order to which image axes should be rearranged before pass to :py:attr:`image_class` constructor.
         Default is :py:attr:`image_class.return_order`
         """
-        if hasattr(cls.image_class, "return_order"):  # pragma: no cover
-            warnings.warn(
-                "Using return_order is deprecated since PartSeg 0.12.0. Please fix your image_class", DeprecationWarning
-            )
-            return cls.image_class.return_order
         return cls.image_class.axis_order
 
     def __init__(self, callback_function=None):
@@ -107,28 +101,28 @@ class BaseImageReader:
         Rearrange order of array axes to get proper internal axes order
 
         :param array: array to reorder
-        :param axes: current order of array axes as string like "TZYXC"
+        :param axes_li: current order of array axes as string like "TZYXC"
         """
         try:
             final_mapping_dict = {l: i for i, l in enumerate(cls.return_order())}
             for let1, let2 in [("Z", "I"), ("Z", "Q"), ("C", "S")]:
                 if let1 in final_mapping_dict and let2 not in final_mapping_dict:
                     final_mapping_dict[let2] = final_mapping_dict[let1]
-            axes = list(axes)
+            axes_li = list(axes)
             # Fixme; workaround for old saved segmentation
-            if axes[0] == "Q" and axes[1] == "Q":
-                axes[0] = "T"
-                axes[1] = "Z"
+            if axes_li[0] == "Q" and axes_li[1] == "Q":
+                axes_li[0] = "T"
+                axes_li[1] = "Z"
             i = 0
-            while i < len(axes):
-                name = axes[i]
+            while i < len(axes_li):
+                name = axes_li[i]
                 if name not in final_mapping_dict and array.shape[i] == 1:
                     array = array.take(0, i)
-                    axes.pop(i)
+                    axes_li.pop(i)
                 else:
                     i += 1
 
-            final_mapping = [final_mapping_dict[letter] for letter in axes]
+            final_mapping = [final_mapping_dict[letter] for letter in axes_li]
         except KeyError as e:  # pragma: no cover
             raise NotImplementedError(
                 f"Data type not supported ({e.args[0]}). Please contact with author for update code"
@@ -138,7 +132,7 @@ class BaseImageReader:
         if len(array.shape) < len(cls.return_order()):
             array = np.reshape(array, array.shape + (1,) * (len(cls.return_order()) - len(array.shape)))
 
-        array = np.moveaxis(array, list(range(len(axes))), final_mapping)
+        array = np.moveaxis(array, list(range(len(axes_li))), final_mapping)
         return array
 
 
@@ -187,6 +181,8 @@ class OifImagReader(BaseImageReader):
 
                 self.spacing = z_scale, x_scale, y_scale
             # TODO add mask reading
+        if isinstance(image_path, BytesIO):
+            image_path = ""
         return self.image_class(
             image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
         )
@@ -211,6 +207,8 @@ class CziImageReader(BaseImageReader):
                 scale_info.get("X", self.default_spacing[2]),
             )
         # TODO add mask reading
+        if isinstance(image_path, BytesIO):
+            image_path = ""
         return self.image_class(
             image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
         )
@@ -234,6 +232,8 @@ class CziImageReader(BaseImageReader):
 
 class ObsepImageReader(BaseImageReader):
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+        if isinstance(image_path, BytesIO):
+            raise ValueError("ObsepImageReader does not support reading from BytesIO stream")
         directory = Path(os.path.dirname(image_path))
         xml_doc = ElementTree.parse(image_path).getroot()
         channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
