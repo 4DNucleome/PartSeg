@@ -59,7 +59,7 @@ repos:
       exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: ''  # Use the sha / tag you want to point at
+    rev: 'v0.941'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
         files: package/PartSegImage
