@@ -176,14 +176,14 @@ class Image:
         if isinstance(data, list) and not axes_order.startswith("C"):
             raise ValueError("When passing data as list of numpy arrays then Channel must be first axis.")
         if "C" not in axes_order:
-            assert isinstance(data, np.ndarray)
+            assert isinstance(data, np.ndarray)  # nosec
             return [cls.reorder_axes(data, axes_order)]
         if axes_order.startswith("C"):
             if isinstance(data, list):
                 dtype = np.result_type(*data)
                 return [cls.reorder_axes(x, axes_order[1:]).astype(dtype) for x in data]
             return [cls.reorder_axes(x, axes_order[1:]) for x in data]
-        assert isinstance(data, np.ndarray)
+        assert isinstance(data, np.ndarray)  # nosec
         pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(data.ndim)]
         c_pos = axes_order.index("C")
         res = []
