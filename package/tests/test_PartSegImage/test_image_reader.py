@@ -1,3 +1,4 @@
+# pylint: disable=R0201
 import math
 import os.path
 import shutil

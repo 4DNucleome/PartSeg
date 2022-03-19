@@ -189,10 +189,10 @@ class GenericImageReader(BaseImageReaderBuffer):
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
-            assert not isinstance(image_path, BytesIO)
+            assert not isinstance(image_path, BytesIO)  # nosec
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext == ".obsep":
-            assert not isinstance(image_path, BytesIO)
+            assert not isinstance(image_path, BytesIO)  # nosec
             return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
