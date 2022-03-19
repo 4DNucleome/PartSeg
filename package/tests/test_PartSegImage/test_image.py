@@ -138,6 +138,10 @@ class TestImageBase:
             self.image_class(np.zeros((10, 20)), (1, 1, 1), axes_order="XYZ")
         assert "Data should" in str(exception_info.value)
 
+        with pytest.raises(ValueError) as exception_info:
+            self.image_class([np.zeros((10, 20)), np.zeros((10,))], (1, 1, 1), axes_order="XYZ")
+        assert "Data should" in str(exception_info.value)
+
     def test_get_dimension_number(self):
         assert (
             self.image_class(

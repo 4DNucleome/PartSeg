@@ -58,7 +58,7 @@ class BaseImageReader:
         self.default_spacing = spacing
 
     @abstractmethod
-    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         """
         Main function to read image. If ext is not set then it may be deduced from path to file.
         If BytesIO is given and non default data file type is needed then ext need to be set
@@ -74,7 +74,7 @@ class BaseImageReader:
     @classmethod
     def read_image(
         cls,
-        image_path: typing.Union[str, BytesIO, Path],
+        image_path: typing.Union[str, Path],
         mask_path=None,
         callback_function: typing.Optional[typing.Callable] = None,
         default_spacing: typing.Tuple[float, float, float] = None,
@@ -136,7 +136,47 @@ class BaseImageReader:
         return array
 
 
-class GenericImageReader(BaseImageReader):
+class BaseImageReaderBuffer(BaseImageReader):
+    @abstractmethod
+    def read(self, image_path: typing.Union[str, Path, BytesIO], mask_path=None, ext=None) -> Image:
+        """
+        Main function to read image. If ext is not set then it may be deduced from path to file.
+        If BytesIO is given and non default data file type is needed then ext need to be set
+
+        :param image_path: path to image or buffer
+        :param mask_path: path to mask or buffer
+        :param ext: extension if need to decide algorithm, if absent and image_path is path then
+            should be deduced from path
+        :return: image structure
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def read_image(
+        cls,
+        image_path: typing.Union[str, Path, BytesIO],
+        mask_path=None,
+        callback_function: typing.Optional[typing.Callable] = None,
+        default_spacing: typing.Tuple[float, float, float] = None,
+    ) -> Image:
+        """
+        read image file with optional mask file
+
+        :param image_path: path or opened file contains image
+        :param mask_path:
+        :param callback_function: function for provide information about progress in reading file (for progressbar)
+        :param default_spacing: used if file do not contains information about spacing
+            (or metadata format is not supported)
+        :return: image
+        """
+        # TODO add generic description of callback function
+        instance = cls(callback_function)
+        if default_spacing is not None:
+            instance.set_default_spacing(default_spacing)
+        return instance.read(image_path, mask_path)
+
+
+class GenericImageReader(BaseImageReaderBuffer):
     """This class try to decide which method use base on path"""
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
@@ -149,14 +189,16 @@ class GenericImageReader(BaseImageReader):
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
+            assert not isinstance(image_path, BytesIO)
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext == ".obsep":
+            assert not isinstance(image_path, BytesIO)
             return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
 
 class OifImagReader(BaseImageReader):
-    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         with OifFile(image_path) as image_file:
             tiffs = natural_sorted(image_file.glob("*.tif"))
             with TiffFile(image_file.open_file(tiffs[0]), name=tiffs[0]) as tif_file:
@@ -181,14 +223,12 @@ class OifImagReader(BaseImageReader):
 
                 self.spacing = z_scale, x_scale, y_scale
             # TODO add mask reading
-        if isinstance(image_path, BytesIO):
-            image_path = ""
         return self.image_class(
             image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
         )
 
 
-class CziImageReader(BaseImageReader):
+class CziImageReader(BaseImageReaderBuffer):
     """
     This class is to read data from czi files. Masks will be treated as TIFF.
     """
@@ -231,9 +271,7 @@ class CziImageReader(BaseImageReader):
 
 
 class ObsepImageReader(BaseImageReader):
-    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
-        if isinstance(image_path, BytesIO):
-            raise ValueError("ObsepImageReader does not support reading from BytesIO stream")
+    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         directory = Path(os.path.dirname(image_path))
         xml_doc = ElementTree.parse(image_path).getroot()
         channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
@@ -278,7 +316,7 @@ class ObsepImageReader(BaseImageReader):
         return image
 
 
-class TiffImageReader(BaseImageReader):
+class TiffImageReader(BaseImageReaderBuffer):
     """
     TIFF/LSM files reader. Base reading with :py:meth:`BaseImageReader.read_image`
 

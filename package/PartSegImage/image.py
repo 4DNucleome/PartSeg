@@ -173,7 +173,7 @@ class Image:
     def _split_data_on_channels(
         cls, data: typing.Union[np.ndarray, typing.List[np.ndarray]], axes_order: str
     ) -> typing.List[np.ndarray]:
-        if isinstance(data, list) and not axes_order.startswith("C"):
+        if isinstance(data, list) and not axes_order.startswith("C"):  # pragma: no cover
             raise ValueError("When passing data as list of numpy arrays then Channel must be first axis.")
         if "C" not in axes_order:
             assert isinstance(data, np.ndarray)  # nosec
