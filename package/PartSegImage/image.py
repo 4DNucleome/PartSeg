@@ -137,37 +137,48 @@ class Image:
         self.default_coloring = default_coloring
         if self.default_coloring is not None:
             self.default_coloring = [np.array(x) for x in default_coloring]
-        default_channel_names = [f"channel {i+1}" for i in range(self.channels)]
-        if isinstance(channel_names, str):
-            channel_names = [channel_names]
-        if isinstance(channel_names, Iterable):
-            self._channel_names = [
-                str(x) if x is not None else y
-                for x, y in zip_longest(channel_names, default_channel_names, fillvalue=None)
-            ]
-        else:
-            self._channel_names = default_channel_names
-        self._channel_names = self._channel_names[: self.channels]
+
+        self._channel_names = self._prepare_channel_names(channel_names, self.channels)
         if ranges is None:
             self.ranges = list(
                 zip((np.min(c) for c in self._channel_arrays), (np.max(c) for c in self._channel_arrays))
             )
         else:
             self.ranges = ranges
-        if mask is not None:
-            if isinstance(data, list):
-                data_shape = list(data[0].shape)
-            else:
-                data_shape = list(data.shape)
-                with suppress(ValueError):
-                    data_shape.pop(axes_order.index("C"))
+        self._mask_array = self._prepare_mask(mask, data, axes_order)
+        if self._mask_array is not None:
+            self._mask_array = self.fit_mask_to_image(self._mask_array)
 
-            mask = self._fit_array_to_image(data_shape, mask)
-            mask = self.reorder_axes(mask, axes_order.replace("C", ""))
+    @classmethod
+    def _prepare_mask(cls, mask, data, axes_order) -> typing.Optional[np.ndarray]:
+        if mask is None:
+            return None
 
-            self._mask_array: typing.Optional[np.ndarray] = self.fit_mask_to_image(mask)
+        if isinstance(data, list):
+            data_shape = list(data[0].shape)
         else:
-            self._mask_array = None
+            data_shape = list(data.shape)
+            with suppress(ValueError):
+                data_shape.pop(axes_order.index("C"))
+
+        mask = cls._fit_array_to_image(data_shape, mask)
+        mask = cls.reorder_axes(mask, axes_order.replace("C", ""))
+
+        return mask
+
+    @staticmethod
+    def _prepare_channel_names(channel_names, channels_num) -> typing.List[str]:
+        default_channel_names = [f"channel {i + 1}" for i in range(channels_num)]
+        if isinstance(channel_names, str):
+            channel_names = [channel_names]
+        if isinstance(channel_names, Iterable):
+            channel_names_list = [
+                str(x) if x is not None else y
+                for x, y in zip_longest(channel_names, default_channel_names, fillvalue=None)
+            ]
+        else:
+            channel_names_list = default_channel_names
+        return channel_names_list[:channels_num]
 
     @classmethod
     def _split_data_on_channels(
