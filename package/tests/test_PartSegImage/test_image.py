@@ -411,12 +411,11 @@ class TestInheritanceAdditionalAxesImage(TestImageBase):
 
 
 class TestMergeImage:
-    @pytest.mark.parametrize("chanel_mark", ["C", Image.axis_order.index("C")])
     @pytest.mark.parametrize("check_dtype", [np.uint8, np.uint16, np.uint32, np.float16, np.float32, np.float64])
-    def test_merge_chanel(self, chanel_mark, check_dtype):
+    def test_merge_chanel(self, check_dtype):
         image1 = Image(data=np.zeros((3, 10, 10), dtype=np.uint8), axes_order="ZXY", image_spacing=(1, 1, 1))
         image2 = Image(data=np.ones((3, 10, 10), dtype=check_dtype), axes_order="ZXY", image_spacing=(1, 1, 1))
-        res_image = image1.merge(image2, chanel_mark)
+        res_image = image1.merge(image2, "C")
         assert res_image.channels == 2
         assert np.all(res_image.get_channel(0) == 0)
         assert np.all(res_image.get_channel(1) == 1)

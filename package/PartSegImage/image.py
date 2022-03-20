@@ -203,8 +203,9 @@ class Image:
             res.append(cls.reorder_axes(data[pos], axes_order.replace("C", "")))
         return res
 
+    @staticmethod
     def _merge_channel_names(
-        self, base_channel_names: typing.List[str], new_channel_names: typing.List[str]
+        base_channel_names: typing.List[str], new_channel_names: typing.List[str]
     ) -> typing.List[str]:
         base_channel_names = base_channel_names[:]
         reg = re.compile(r"channel \d+")
