@@ -152,7 +152,7 @@ class BaseMainWindow(QMainWindow):
         self.title_base = title
         app = QApplication.instance()
         if app is not None:
-            app.setStyleSheet(settings.get_style_sheet)
+            app.setStyleSheet(settings.get_style_sheet())
         self.settings.theme_changed.connect(self.change_theme)
         self.channel_info = ""
         self.multiple_files = None
