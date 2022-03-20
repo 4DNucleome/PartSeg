@@ -200,7 +200,7 @@ class Image:
         res = []
         for i in range(data.shape[c_pos]):
             pos[c_pos] = i
-            res.append(cls.reorder_axes(data[pos], axes_order.replace("C", "")))
+            res.append(cls.reorder_axes(data[tuple(pos)], axes_order.replace("C", "")))
         return res
 
     @staticmethod
@@ -656,15 +656,15 @@ class Image:
     def _cut_with_roi(self, cut_area: np.ndarray, replace_mask: bool, frame: int):
         new_mask = None
         cut_area = self.fit_array_to_image(cut_area)
-        new_cut = self._roi_to_slices(cut_area)
-        catted_cut_area = cut_area[tuple(new_cut)]
+        new_cut = tuple(self._roi_to_slices(cut_area))
+        catted_cut_area = cut_area[new_cut]
         new_image = [x[new_cut] for x in self._channel_arrays]
         for el in new_image:
             el[catted_cut_area == 0] = 0
         if replace_mask:
             new_mask = catted_cut_area
         elif self._mask_array is not None:
-            new_mask = self._mask_array[tuple(new_cut)]
+            new_mask = self._mask_array[new_cut]
             new_mask[catted_cut_area == 0] = 0
         important_axis = "XY" if self.is_2d else "XYZ"
         new_image = [

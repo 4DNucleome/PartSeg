@@ -269,7 +269,8 @@ class TestImageBase:
 
     def test_get_layer(self):
         image = self.image_class(np.zeros((1, 10, 20, 30, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC")
-        layer = image.get_layer(0, 5)
+        with pytest.deprecated_call():
+            layer = image.get_layer(0, 5)
         assert layer.shape == self.needed_layer_shape((20, 30, 3), "YXC", "TZ")
 
     def test_spacing(self):
