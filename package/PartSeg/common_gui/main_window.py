@@ -136,7 +136,7 @@ class BaseMainWindow(QMainWindow):
                     " state directory (Help > State directory)"
                 )
                 errors_message.setStandardButtons(QMessageBox.Ok)
-                text = "\n".join("File: " + x[0] + "\n" + str(x[1]) for x in errors)
+                text = "\n".join(f"File: {x[0]}" + "\n" + str(x[1]) for x in errors)
                 errors_message.setDetailedText(text)
                 errors_message.exec_()
 
@@ -152,7 +152,7 @@ class BaseMainWindow(QMainWindow):
         self.title_base = title
         app = QApplication.instance()
         if app is not None:
-            app.setStyleSheet(settings.style_sheet)
+            app.setStyleSheet(settings.get_style_sheet)
         self.settings.theme_changed.connect(self.change_theme)
         self.channel_info = ""
         self.multiple_files = None
