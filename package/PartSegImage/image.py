@@ -203,36 +203,50 @@ class Image:
             res.append(cls.reorder_axes(data[pos], axes_order.replace("C", "")))
         return res
 
-    def merge(self, image: "Image", axis: typing.Union[str, int]) -> "Image":
+    def _merge_channel_names(
+        self, base_channel_names: typing.List[str], new_channel_names: typing.List[str]
+    ) -> typing.List[str]:
+        base_channel_names = base_channel_names[:]
+        reg = re.compile(r"channel \d+")
+        for name in new_channel_names:
+            match = reg.match(name)
+            new_name = name
+            if match and name in base_channel_names:
+                name = "channel"
+                new_name = f"channel {len(base_channel_names) + 1}"
+            i = 1
+            while new_name in base_channel_names:
+                new_name = f"{name} ({i})"
+                i += 1
+                if i > 10000:  # pragma: no cover
+                    raise ValueError("fail when try to fix channel name")
+            base_channel_names.append(new_name)
+        return base_channel_names
+
+    def merge(self, image: "Image", axis: str) -> "Image":
         """
         Produce new image merging image data along given axis. All metadata
         are obtained from self.
 
         :param Image image: Image to be merged
-        :param typing.Union[str, int] axis:
+        :param str axis:
         :return: New image produced from merge
         :rtype: Image
         """
-        if isinstance(axis, str):
-            axis = self.axis_order.index(axis)
-        data = self._image_data_normalize(
-            self._channel_arrays + [self.reorder_axes(x, image.array_axis_order) for x in image._channel_arrays]
-        )
-        channel_names = self.channel_names
-        reg = re.compile(r"channel \d+")
-        for name in image.channel_names:
-            match = reg.match(name)
-            new_name = name
-            if match and name in self.channel_names:
-                name = "channel"
-                new_name = f"channel {len(channel_names) + 1}"
-            i = 1
-            while new_name in channel_names:
-                new_name = f"{name} ({i})"
-                i += 1
-                if i > 10000:  # pragma: no cover
-                    raise ValueError("fail when try to fix channel name")
-            channel_names.append(new_name)
+        if axis == "C":
+            data = self._image_data_normalize(
+                self._channel_arrays + [self.reorder_axes(x, image.array_axis_order) for x in image._channel_arrays]
+            )
+            channel_names = self._merge_channel_names(self.channel_names, image.channel_names)
+        else:
+            index = self.array_axis_order.index(axis)
+            data = self._image_data_normalize(
+                [
+                    np.concatenate((y, self.reorder_axes(y, image.array_axis_order)), axis=index)
+                    for x, y in zip(self._channel_arrays, image._channel_arrays)
+                ]
+            )
+            channel_names = self.channel_names
 
         return self.substitute(data=data, ranges=self.ranges + image.ranges, channel_names=channel_names)
 

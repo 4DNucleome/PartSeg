@@ -428,6 +428,17 @@ class TestMergeImage:
         with pytest.raises(ValueError):
             image1.merge(image2, "C")
 
+    @pytest.mark.parametrize("axis_mark", Image.axis_order)
+    def test_merge_different_axes(self, axis_mark):
+        base_shape = (1, 1, 3, 10, 10)
+        image1 = Image(data=np.zeros(base_shape, dtype=np.uint8), axes_order="CTZXY", image_spacing=(1, 1, 1))
+        image2 = Image(data=np.ones(base_shape, dtype=np.uint8), axes_order="CTZXY", image_spacing=(1, 1, 1))
+        res_image = image1.merge(image2, axis_mark)
+        res_data = res_image.get_data()
+        new_shape_li = list(base_shape)
+        new_shape_li[Image.axis_order.index(axis_mark)] = new_shape_li[Image.axis_order.index(axis_mark)] * 2
+        assert res_data.shape == tuple(new_shape_li)
+
     def test_merge_channel_name(self):
         image1 = Image(
             data=np.zeros((4, 10, 10), dtype=np.uint8),
