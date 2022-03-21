@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from contextlib import suppress
 from types import MethodType
-from typing import MutableMapping
 
 import numpy as np
 
@@ -117,7 +116,7 @@ def get_callback(callback: typing.Union[typing.Callable, MethodType], max_args=N
     return CallbackFun(callback, max_args)
 
 
-class EventedDict(MutableMapping):
+class EventedDict(typing.MutableMapping):
     setted = Signal(str)
     deleted = Signal(str)
 
