@@ -26,8 +26,6 @@ MaskAlgorithmSelection.register(ThresholdAlgorithm)
 MaskAlgorithmSelection.register(ThresholdFlowAlgorithm)
 MaskAlgorithmSelection.register(ThresholdPreview)
 
-mask_algorithm_dict = None
-
 
 def __getattr__(name):
     if name == "mask_algorithm_dict":
