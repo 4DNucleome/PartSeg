@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 import pydantic
 
+from PartSegImage import Channel
+
 from ._old_json_hooks import part_hook
 from .class_register import REGISTER, class_to_str
 
@@ -51,6 +53,8 @@ class PartSegEncoder(json.JSONEncoder):
             return float(o)
         if isinstance(o, Path):
             return str(o)
+        if isinstance(o, Channel):
+            return o.value
         if isinstance(o, dict) and "__error__" in o:
             del o["__error__"]  # different environments without same plugins installed
         return super().default(o)

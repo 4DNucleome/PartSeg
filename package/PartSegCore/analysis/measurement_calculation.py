@@ -29,11 +29,10 @@ from scipy.spatial.distance import cdist
 from sympy import symbols
 
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
-from PartSegImage import Image
+from PartSegImage import Channel, Image
 
 from .. import autofit as af
 from ..algorithm_describe_base import Register, ROIExtractionProfile
-from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..roi_info import ROIInfo

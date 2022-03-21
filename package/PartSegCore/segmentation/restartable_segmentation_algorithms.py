@@ -10,9 +10,9 @@ import SimpleITK
 from pydantic import BaseModel, Extra, Field
 
 from PartSegCore_compiled_backend.multiscale_opening import PyMSO, calculate_mu_mid
+from PartSegImage import Channel
 
 from ..algorithm_describe_base import ROIExtractionProfile
-from ..channel_class import Channel
 from ..class_register import register_class, rename_key
 from ..mask_partition_utils import BorderRim as BorderRimBase
 from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase

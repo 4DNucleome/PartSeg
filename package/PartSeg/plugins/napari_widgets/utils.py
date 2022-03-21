@@ -5,15 +5,14 @@ import typing
 from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
-from napari.layers import Labels
+from napari.layers import Labels, Layer
 from qtpy.QtWidgets import QWidget
 
 from PartSeg.common_gui.algorithms_description import FormWidget, QtAlgorithmProperty
 from PartSeg.common_gui.custom_save_dialog import FormDialog
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
-from PartSegCore.channel_class import Channel
-from PartSegImage import Image
+from PartSegImage import Channel, Image
 
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
@@ -39,6 +38,13 @@ class NapariFormWidgetWithMask(NapariFormWidget):
     def _element_list(self, fields) -> typing.Iterable[QtAlgorithmProperty]:
         mask = AlgorithmProperty("mask", "Mask", None, value_type=typing.Optional[Labels])
         return super()._element_list(itertools.chain([mask], fields))
+
+    def get_layers(self):
+        return {
+            name: el.get_value()
+            for name, el in self.widgets_dict.items()
+            if name != "mask" and isinstance(el.get_value(), Layer)
+        }
 
     def get_values(self):
         res = {name: el.get_value() for name, el in self.widgets_dict.items() if name != "mask"}

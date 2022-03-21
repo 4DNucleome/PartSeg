@@ -469,17 +469,19 @@ class TestCalculationProcess:
             assert os.path.basename(df.name.units[i]) == f"stack1_component{i+1}.tif"
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_error(self, tmp_path_factory, data_test_dir, monkeypatch):
+    def test_full_pipeline_error(self, tmp_path, data_test_dir, monkeypatch):
         plan = self.create_calculation_plan()
-        data_dir = tmp_path_factory.mktemp("data")
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
         file_pattern_copy = os.path.join(data_test_dir, "stack1_components", "stack1_component*.tif")
         file_paths = sorted(glob(file_pattern_copy))
         for el in file_paths:
             shutil.copy(el, data_dir)
-            shutil.copy(data_dir / "stack1_component1.tif", data_dir / "stack1_component10.tif")
+        shutil.copy(data_dir / "stack1_component1.tif", data_dir / "stack1_component10.tif")
         file_pattern = os.path.join(data_dir, "stack1_component*[0-9].tif")
         file_paths = sorted(glob(file_pattern))
-        result_dir = tmp_path_factory.mktemp("result")
+        result_dir = tmp_path / "result"
+        result_dir.mkdir()
 
         assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
         calc = Calculation(

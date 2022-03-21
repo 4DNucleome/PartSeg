@@ -51,11 +51,10 @@ from PartSegCore.analysis.measurement_calculation import (
     Voxels,
 )
 from PartSegCore.autofit import density_mass_center
-from PartSegCore.channel_class import Channel
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.universal_const import UNIT_SCALE, Units
-from PartSegImage import Image
+from PartSegImage import Channel, Image
 
 
 def get_cube_array():
@@ -123,13 +122,13 @@ class TestLeaf:
         leaf = Leaf(name="aa")
         assert leaf.get_channel_num({"aa": mock}) == set()
         leaf = Leaf(name="aa", channel=Channel(1))
-        assert leaf.get_channel_num({"aa": mock}) == {1}
+        assert leaf.get_channel_num({"aa": mock}) == {Channel(1)}
 
         mock.__argument_class__ = SampleModel
         leaf = Leaf(name="aa", parameter_dict={"value": 15, "ch": 3})
-        assert leaf.get_channel_num({"aa": mock}) == {3}
+        assert leaf.get_channel_num({"aa": mock}) == {Channel(3)}
         leaf = Leaf(name="aa", parameter_dict={"value": 15, "ch": 3}, channel=Channel(1))
-        assert leaf.get_channel_num({"aa": mock}) == {1, 3}
+        assert leaf.get_channel_num({"aa": mock}) == {Channel(1), Channel(3)}
 
     def test_pretty_print(self, monkeypatch):
         mock = MagicMock()

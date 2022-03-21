@@ -7,10 +7,9 @@ import numpy as np
 from pydantic import BaseModel, Field
 from sympy import Symbol, symbols
 
-from PartSegImage.image import Spacing
+from PartSegImage.image import Channel, Spacing
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, base_model_to_algorithm_property
-from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..class_register import register_class
 from ..universal_const import Units
@@ -96,7 +95,7 @@ class Leaf(BaseModel):
         :return: set of channels num
         """
         resp = set()
-        if self.channel is not None and self.channel >= 0:
+        if self.channel is not None and self.channel.value != -1:
             resp.add(self.channel)
         try:
             measurement_method = measurement_dict[self.name]
@@ -110,7 +109,7 @@ class Leaf(BaseModel):
                 if el.value_type is Channel:
                     if isinstance(self.parameter_dict, dict):
                         if el.name in self.parameter_dict:
-                            resp.add(self.parameter_dict[el.name])
+                            resp.add(Channel(self.parameter_dict[el.name]))
                     elif hasattr(self.parameter_dict, el.name):
                         resp.add(getattr(self.parameter_dict, el.name))
         except KeyError as e:

@@ -11,8 +11,8 @@ from PartSegCore.algorithm_describe_base import (
     _GetDescriptionClass,
     base_model_to_algorithm_property,
 )
-from PartSegCore.channel_class import Channel
 from PartSegCore.class_register import class_to_str, register_class
+from PartSegImage import Channel
 
 
 def test_get_description_class():

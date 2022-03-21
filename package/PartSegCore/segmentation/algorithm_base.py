@@ -5,8 +5,7 @@ from typing import Any, Callable, Dict, MutableMapping, Optional
 
 import numpy as np
 
-from PartSegCore.channel_class import Channel
-from PartSegImage import Image
+from PartSegImage import Channel, Image
 
 from ..algorithm_describe_base import (
     AlgorithmDescribeBase,

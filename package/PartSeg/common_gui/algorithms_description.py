@@ -37,13 +37,12 @@ from PartSegCore.algorithm_describe_base import (
     ROIExtractionProfile,
     base_model_to_algorithm_property,
 )
-from PartSegCore.channel_class import Channel
 from PartSegCore.segmentation.algorithm_base import (
     ROIExtractionAlgorithm,
     ROIExtractionResult,
     SegmentationLimitException,
 )
-from PartSegImage import Image
+from PartSegImage import Channel, Image
 
 from ..common_backend.base_settings import BaseSettings
 from ..common_backend.segmentation_thread import SegmentationThread
@@ -833,4 +832,6 @@ def _value_set(self, value):
             if el.name == value:
                 self.value = el
                 return
+    if isinstance(value, Channel):
+        self.value = value.value
     self.value = value

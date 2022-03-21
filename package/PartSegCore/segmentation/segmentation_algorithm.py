@@ -6,7 +6,8 @@ import numpy as np
 import SimpleITK as sitk
 from pydantic import BaseModel, Extra, Field
 
-from ..channel_class import Channel
+from PartSegImage import Channel
+
 from ..class_register import register_class, rename_key
 from ..convex_fill import convex_fill
 from ..project_info import AdditionalLayerDescription

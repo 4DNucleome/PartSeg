@@ -10,10 +10,10 @@ import numpy as np
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.save_functions import SaveCmap
-from PartSegCore.channel_class import Channel
 from PartSegCore.io_utils import SaveBase, SaveROIAsNumpy, SaveROIAsTIFF
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.universal_const import Units
+from PartSegImage import Channel
 
 
 class SaveModeling(SaveBase):

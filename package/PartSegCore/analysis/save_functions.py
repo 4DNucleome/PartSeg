@@ -9,10 +9,9 @@ import h5py
 import numpy as np
 import tifffile
 
-from PartSegImage import Image, ImageWriter
+from PartSegImage import Channel, Image, ImageWriter
 
 from ..algorithm_describe_base import AlgorithmProperty, Register
-from ..channel_class import Channel
 from ..io_utils import NotSupportedImage, SaveBase, SaveMaskAsTiff, SaveROIAsNumpy, SaveROIAsTIFF, get_tarinfo
 from ..json_hooks import PartSegEncoder
 from ..project_info import HistoryElement

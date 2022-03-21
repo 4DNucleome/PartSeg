@@ -9,8 +9,8 @@ from pydantic import BaseModel, Extra, create_model, validator
 from pydantic.main import ModelMetaclass
 from typing_extensions import Annotated
 
-from PartSegCore.channel_class import Channel
 from PartSegCore.class_register import class_to_str
+from PartSegImage import Channel
 
 if typing.TYPE_CHECKING:
     from pydantic.typing import ModelField
@@ -414,7 +414,6 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta, extra=Extra.forbi
 
 class ROIExtractionProfile(BaseModel):
     """
-
     :ivar str ~.name: name for segmentation profile
     :ivar str ~.algorithm: Name of algorithm
     :ivar dict ~.values: algorithm parameters
@@ -423,9 +422,6 @@ class ROIExtractionProfile(BaseModel):
     name: str
     algorithm: str
     values: typing.Any
-
-    class Config:
-        smart_union = True
 
     def pretty_print(self, algorithm_dict):
         if isinstance(algorithm_dict, AlgorithmSelection):
@@ -462,7 +458,7 @@ class ROIExtractionProfile(BaseModel):
                 continue
             desc = translate_dict[k]
             res += " " * indent + desc.user_name + ": "
-            if desc.value_type is Channel:
+            if desc.value_type is Channel and not isinstance(v, Channel):
                 res += str(Channel(v))
             elif issubclass(desc.value_type, AlgorithmDescribeBase):
                 if isinstance(v, AlgorithmSelection):
