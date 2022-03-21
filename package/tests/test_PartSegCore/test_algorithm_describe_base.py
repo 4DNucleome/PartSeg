@@ -1,3 +1,4 @@
+# pylint: disable=R0201
 import typing
 from enum import Enum
 
