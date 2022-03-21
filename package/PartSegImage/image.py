@@ -99,7 +99,7 @@ class Image:
 
     def __init__(
         self,
-        data: typing.Union[np.ndarray, typing.List[np.ndarray]],
+        data: _IMAGE_DATA,
         image_spacing: Spacing,
         file_path=None,
         mask: typing.Union[None, np.ndarray] = None,
@@ -263,6 +263,9 @@ class Image:
     @property
     def channel_pos(self) -> int:
         """Channel axis. Need to have 'C' in :py:attr:`axis_order`"""
+        warnings.warn(
+            "channel_pos is deprecated and code its using may not work properly", category=FutureWarning, stacklevel=2
+        )
         return self.axis_order.index("C")
 
     @property
@@ -422,7 +425,9 @@ class Image:
         """
         :return: numpy array in imagej tiff order axes
         """
-        return self._reorder_axes(np.stack(self._channel_arrays, axis=self.channel_pos), self.axis_order, "TZCYX")
+        return self._reorder_axes(
+            np.stack(self._channel_arrays, axis=self.axis_order.index("C")), self.axis_order, "TZCYX"
+        )
 
     def get_mask_for_save(self) -> typing.Optional[np.ndarray]:
         """
