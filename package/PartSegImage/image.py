@@ -112,6 +112,11 @@ class Image:
     ):
         # TODO add time distance to image spacing
         if axes_order is None:
+            warnings.warn(
+                f"axes_order should be provided, Currently it uses {self.__class__}.axis_order",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
             axes_order = self.axis_order
         if (isinstance(data, list) and any(x.ndim + 1 != len(axes_order) for x in data)) or (
             not isinstance(data, list) and data.ndim != len(axes_order)
@@ -343,6 +348,7 @@ class Image:
             default_coloring=default_coloring,
             ranges=ranges,
             channel_names=channel_names,
+            axes_order=self.axis_order,
         )
 
     def set_mask(self, mask: typing.Optional[np.ndarray], axes: typing.Optional[str] = None):
@@ -710,6 +716,7 @@ class Image:
             default_coloring=self.default_coloring,
             ranges=self.ranges,
             channel_names=self.channel_names,
+            axes_order=self.axis_order,
         )
 
     def get_imagej_colors(self):

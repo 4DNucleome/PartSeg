@@ -58,7 +58,7 @@ class TestImageBase:
     def test_fit_mask_simple(self):
         initial_shape = self.prepare_image_initial_shape([1, 10, 20, 20], 1)
         data = np.zeros(initial_shape, np.uint8)
-        image = self.image_class(data, (1, 1, 1), "")
+        image = self.image_class(data, (1, 1, 1), "", axes_order=self.image_class.axis_order)
         mask = np.zeros((1, 10, 20, 20), np.uint8)
         mask[0, 2:-2, 4:-4, 4:-4] = 5
         image.fit_mask_to_image(mask)
@@ -66,7 +66,7 @@ class TestImageBase:
     def test_fit_mask_mapping_val(self):
         initial_shape = self.prepare_image_initial_shape([1, 10, 20, 20], 1)
         data = np.zeros(initial_shape, np.uint8)
-        image = self.image_class(data, (1, 1, 1), "")
+        image = self.image_class(data, (1, 1, 1), "", axes_order=self.image_class.axis_order)
         mask = np.zeros((1, 10, 20, 20), np.uint16)
         mask[0, 2:-2, 4:-4, 4:10] = 5
         mask[0, 2:-2, 4:-4, 11:-4] = 7
@@ -80,7 +80,7 @@ class TestImageBase:
     def test_fit_mask_to_image_change_type(self):
         initial_shape = self.prepare_image_initial_shape([1, 30, 50, 50], 1)
         data = np.zeros(initial_shape, np.uint8)
-        image = self.image_class(data, (1, 1, 1), "")
+        image = self.image_class(data, (1, 1, 1), "", axes_order=self.image_class.axis_order)
         mask_base = np.zeros(30 * 50 * 50, dtype=np.uint32)
         mask_base[:50] = np.arange(50, dtype=np.uint32)
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
@@ -108,15 +108,29 @@ class TestImageBase:
 
     def test_image_mask(self):
         initial_shape = self.prepare_image_initial_shape([1, 10, 50, 50], 4)
-        self.image_class(np.zeros(initial_shape), (5, 5, 5), mask=np.zeros((10, 50, 50)))
-        self.image_class(np.zeros(initial_shape), (5, 5, 5), mask=np.zeros((1, 10, 50, 50)))
+        self.image_class(
+            np.zeros(initial_shape), (5, 5, 5), mask=np.zeros((10, 50, 50)), axes_order=self.image_class.axis_order
+        )
+        self.image_class(
+            np.zeros(initial_shape), (5, 5, 5), mask=np.zeros((1, 10, 50, 50)), axes_order=self.image_class.axis_order
+        )
         with pytest.raises(ValueError):
-            self.image_class(np.zeros((1, 10, 50, 50, 4)), (5, 5, 5), mask=np.zeros((1, 10, 50, 40)))
+            self.image_class(
+                np.zeros((1, 10, 50, 50, 4)),
+                (5, 5, 5),
+                mask=np.zeros((1, 10, 50, 40)),
+                axes_order=self.image_class.axis_order,
+            )
         with pytest.raises(ValueError):
-            self.image_class(np.zeros((1, 10, 50, 50, 4)), (5, 5, 5), mask=np.zeros((1, 10, 50, 50, 4)))
+            self.image_class(
+                np.zeros((1, 10, 50, 50, 4)),
+                (5, 5, 5),
+                mask=np.zeros((1, 10, 50, 50, 4)),
+                axes_order=self.image_class.axis_order,
+            )
         mask = np.zeros((1, 10, 50, 50))
         mask[0, 2:-2] = 1
-        im = self.image_class(np.zeros(initial_shape), (5, 5, 5), mask=mask)
+        im = self.image_class(np.zeros(initial_shape), (5, 5, 5), mask=mask, axes_order=self.image_class.axis_order)
         assert np.all(im.mask == mask)
 
     def test_reorder_axes(self):
@@ -202,7 +216,9 @@ class TestImageBase:
 
     def test_set_mask(self):
         initial_shape = self.prepare_image_initial_shape([1, 10, 20, 30], 1)
-        image = self.image_class(np.zeros(initial_shape, np.uint8), (1, 1, 1), "")
+        image = self.image_class(
+            np.zeros(initial_shape, np.uint8), (1, 1, 1), "", axes_order=self.image_class.axis_order
+        )
         assert image.mask is None
         assert not image.has_mask
         image.set_mask(np.ones((10, 20, 30), np.uint8))

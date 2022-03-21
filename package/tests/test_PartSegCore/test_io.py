@@ -60,7 +60,10 @@ def analysis_project() -> ProjectTuple:
     data[0, 0, 15:35, 55:85, 15:85] = 60
     data[0, 0, 10:40, 40:50, 10:90] = 40
     image = Image(
-        data, (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]), ""
+        data,
+        (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
+        "",
+        axes_order="CTZYX",
     )
     mask = data[0, 0] > 0
     roi = np.zeros(data.shape, dtype=np.uint8)
@@ -102,7 +105,10 @@ def analysis_project_reversed() -> ProjectTuple:
 
     data = 100 - data
     image = Image(
-        data, (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]), ""
+        data,
+        (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
+        "",
+        axes_order="CTZYX",
     )
     roi_info = ROIInfo(roi.squeeze()).fit_to_image(image)
     return ProjectTuple("test_data.tiff", image, roi_info=roi_info, mask=mask)
