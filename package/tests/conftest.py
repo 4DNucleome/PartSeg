@@ -192,7 +192,9 @@ def measurement_profiles():
             calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
         ),
     ]
-    return MeasurementProfile("statistic1", statistics), MeasurementProfile("statistic2", statistics + statistics2)
+    return MeasurementProfile(name="statistic1", chosen_fields=statistics), MeasurementProfile(
+        name="statistic2", chosen_fields=statistics + statistics2
+    )
 
 
 @pytest.fixture

@@ -141,10 +141,6 @@ class MeasurementCalculate(BaseModel):
     units: Units
     measurement_profile: MeasurementProfile
     name_prefix: str
-    # TODO rename statistic_profile to measurement_profile
-
-    class Config:
-        arbitrary_types_allowed = True
 
     @property
     def name(self):

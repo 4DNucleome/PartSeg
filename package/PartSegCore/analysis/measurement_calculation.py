@@ -262,19 +262,14 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         return res
 
 
-class MeasurementProfile:
-    PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
+class MeasurementProfile(BaseModel):
+    name: str
+    chosen_fields: List[MeasurementEntry]
+    name_prefix: str = ""
 
-    def __init__(self, name, chosen_fields: List[MeasurementEntry], name_prefix=""):
-        self.name = name
-        self.chosen_fields: List[MeasurementEntry] = chosen_fields
-        self._need_mask = False
-        for cf_val in chosen_fields:
-            self._need_mask = self._need_mask or cf_val.calculation_tree.need_mask()
-        self.name_prefix = name_prefix
-
-    def as_dict(self):
-        return {"name": self.name, "chosen_fields": self.chosen_fields, "name_prefix": self.name_prefix}
+    @property
+    def _need_mask(self):
+        return any(cf_val.calculation_tree.need_mask() for cf_val in self.chosen_fields)
 
     def to_dict(self):
         warnings.warn(
@@ -282,12 +277,7 @@ class MeasurementProfile:
             category=FutureWarning,
             stacklevel=2,
         )
-        return self.as_dict()
-
-    @staticmethod
-    def need_mask(tree: Union[Leaf, Node]):
-        warnings.warn("need_mask is deprecated", stacklevel=2, category=FutureWarning)
-        return tree.need_mask()
+        return dict(self)
 
     def _need_mask_without_segmentation(self, tree):
         if isinstance(tree, Leaf):

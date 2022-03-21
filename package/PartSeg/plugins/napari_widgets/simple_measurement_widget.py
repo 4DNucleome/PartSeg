@@ -68,7 +68,9 @@ class SimpleMeasurement(Container):
             warnings.warn("No measurement. Select at least one measurement")
             return
 
-        profile = MeasurementProfile("", [MeasurementEntry(name=x.name, calculation_tree=x) for x in to_calculate])
+        profile = MeasurementProfile(
+            name="", chosen_fields=[MeasurementEntry(name=x.name, calculation_tree=x) for x in to_calculate]
+        )
 
         data_layer = self.image_choice.value or self.labels_choice.value
 

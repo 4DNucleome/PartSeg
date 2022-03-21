@@ -1534,7 +1534,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1567,7 +1567,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1604,7 +1604,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1638,7 +1638,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1720,7 +1720,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1766,7 +1766,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1843,7 +1843,7 @@ class TestStatisticProfile:
             ),
         ]
 
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1918,7 +1918,7 @@ class TestStatisticProfile:
             ),
             MeasurementEntry(name="Density per component", calculation_tree=Node(left=leaf4, op="/", right=leaf1)),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -2318,7 +2318,7 @@ def test_per_component(method, area):
             ),
         ),
     ]
-    profile = MeasurementProfile("statistic", statistics)
+    profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
     result = profile.calculate(
         image,
         0,

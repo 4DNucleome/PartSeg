@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -698,9 +698,9 @@ class MeasurementSettings(QWidget):
                 return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
-            element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
-            selected_values.append(MeasurementEntry(element.text(), element.stat))
-        stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
+            element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+            selected_values.append(MeasurementEntry(name=element.text(), calculation_tree=element.stat))
+        stat_prof = MeasurementProfile(name=self.profile_name.text(), chosen_fields=selected_values)
         self.settings.measurement_profiles[stat_prof.name] = stat_prof
         self.settings.dump()
         self.export_profiles_butt.setEnabled(True)
@@ -723,9 +723,11 @@ class MeasurementSettings(QWidget):
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
-                element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
-                selected_values.append(MeasurementEntry(val_dialog.result[element.text()], element.stat))
-            stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
+                element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+                selected_values.append(
+                    MeasurementEntry(name=val_dialog.result[element.text()], calculation_tree=element.stat)
+                )
+            stat_prof = MeasurementProfile(name=self.profile_name.text(), chosen_fields=selected_values)
             self.settings.measurement_profiles[stat_prof.name] = stat_prof
             self.export_profiles_butt.setEnabled(True)
 

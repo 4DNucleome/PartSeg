@@ -85,7 +85,9 @@ class SimpleMeasurements(QWidget):
             QMessageBox.warning(self, "No measurement", "Select at least one measurement")
             return
 
-        profile = MeasurementProfile("", [MeasurementEntry(name=x.name, calculation_tree=x) for x in to_calculate])
+        profile = MeasurementProfile(
+            name="", chosen_fields=[MeasurementEntry(name=x.name, calculation_tree=x) for x in to_calculate]
+        )
 
         dial = ExecuteFunctionDialog(
             profile.calculate,
