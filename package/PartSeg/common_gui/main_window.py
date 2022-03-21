@@ -127,7 +127,7 @@ class BaseMainWindow(QMainWindow):
                 import_config()
             settings: BaseSettings = self.get_setting_class()(config_folder)
             errors = settings.load()
-            if errors:
+            if errors:  # pragma: no cover
                 errors_message = QMessageBox()
                 errors_message.setText("There are errors during start")
                 errors_message.setInformativeText(
