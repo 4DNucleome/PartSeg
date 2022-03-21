@@ -51,16 +51,19 @@ from PartSegImage import Image
 
 @pytest.fixture(scope="module")
 def analysis_project() -> ProjectTuple:
-    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
-    data[0, 10:40, 10:40, 10:90] = 50
-    data[0, 10:40, 50:90, 10:90] = 50
-    data[0, 15:35, 15:35, 15:85] = 70
-    data[0, 15:35, 55:85, 15:85] = 60
-    data[0, 10:40, 40:50, 10:90] = 40
+    data = np.zeros((1, 1, 50, 100, 100), dtype=np.uint16)
+    data[0, 0, 10:40, 10:40, 10:90] = 50
+    data[0, 0, 10:40, 50:90, 10:90] = 50
+    data[0, 0, 15:35, 15:35, 15:85] = 70
+    data[0, 0, 15:35, 55:85, 15:85] = 60
+    data[0, 0, 10:40, 40:50, 10:90] = 40
     image = Image(
-        data, (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]), ""
+        data,
+        (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
+        "",
+        axes_order="CTZYX",
     )
-    mask = data[0, ..., 0] > 0
+    mask = data[0, 0] > 0
     roi = np.zeros(data.shape, dtype=np.uint8)
     roi[data == 70] = 1
     roi[data == 60] = 2
@@ -87,20 +90,23 @@ def analysis_project() -> ProjectTuple:
 
 @pytest.fixture(scope="module")
 def analysis_project_reversed() -> ProjectTuple:
-    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
-    data[0, 10:40, 10:40, 10:90] = 50
-    data[0, 10:40, 50:90, 10:90] = 50
-    data[0, 15:35, 15:35, 15:85] = 70
-    data[0, 15:35, 55:85, 15:85] = 60
-    data[0, 10:40, 40:50, 10:90] = 40
-    mask = data[0] > 0
+    data = np.zeros((1, 1, 50, 100, 100), dtype=np.uint16)
+    data[0, 0, 10:40, 10:40, 10:90] = 50
+    data[0, 0, 10:40, 50:90, 10:90] = 50
+    data[0, 0, 15:35, 15:35, 15:85] = 70
+    data[0, 0, 15:35, 55:85, 15:85] = 60
+    data[0, 0, 10:40, 40:50, 10:90] = 40
+    mask = data[0, 0] > 0
     roi = np.zeros(data.shape, dtype=np.uint8)
     roi[data == 70] = 1
     roi[data == 60] = 2
 
     data = 100 - data
     image = Image(
-        data, (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]), ""
+        data,
+        (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
+        "",
+        axes_order="CTZYX",
     )
     roi_info = ROIInfo(roi.squeeze()).fit_to_image(image)
     return ProjectTuple("test_data.tiff", image, roi_info=roi_info, mask=mask)
@@ -583,7 +589,7 @@ class TestSaveFunctions:
         parameters = {"squeeze": False}
         SaveAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project, parameters)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
-        assert array.shape == analysis_project.image.shape
+        assert array.shape == (1,) + analysis_project.image.shape
         assert np.all(array == analysis_project.image.get_data())
         parameters = {"squeeze": True}
         SaveAsNumpy.save(os.path.join(tmpdir, "test2.npy"), analysis_project, parameters)

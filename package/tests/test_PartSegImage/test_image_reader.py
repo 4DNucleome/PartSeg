@@ -1,7 +1,9 @@
+# pylint: disable=R0201
 import math
 import os.path
 import shutil
 from glob import glob
+from io import BytesIO
 
 import numpy as np
 import pytest
@@ -15,11 +17,32 @@ class TestImageClass:
     def test_tiff_image_read(self):
         image = TiffImageReader.read_image(PartSegData.segmentation_mask_default_image)
         assert isinstance(image, Image)
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
+
+    def test_tiff_image_read_buffer(self):
+        with open(PartSegData.segmentation_mask_default_image, "rb") as f_p:
+            buffer = BytesIO(f_p.read())
+        image = TiffImageReader.read_image(buffer)
+        assert isinstance(image, Image)
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
 
     def test_czi_file_read(self, data_test_dir):
         image = CziImageReader.read_image(os.path.join(data_test_dir, "test_czi.czi"))
         assert image.channels == 4
         assert image.layers == 1
+
+        assert image.file_path == os.path.join(data_test_dir, "test_czi.czi")
+
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
+
+    def test_czi_file_read_buffer(self, data_test_dir):
+        with open(os.path.join(data_test_dir, "test_czi.czi"), "rb") as f_p:
+            buffer = BytesIO(f_p.read())
+
+        image = CziImageReader.read_image(buffer)
+        assert image.channels == 4
+        assert image.layers == 1
+        assert image.file_path == ""
 
         assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
 
@@ -50,7 +73,7 @@ class TestImageClass:
     def test_lsm_read(self, data_test_dir):
         image1 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm.lsm"))
         image2 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm.tif"))
-        data = np.load(os.path.join(data_test_dir, "test_lsm.npy"))
+        data = np.moveaxis(np.load(os.path.join(data_test_dir, "test_lsm.npy")), -1, 0)
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())
@@ -58,7 +81,7 @@ class TestImageClass:
     def test_ome_read(self, data_test_dir):  # error in tifffile
         image1 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm2.tif"))
         image2 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm.tif"))
-        data = np.load(os.path.join(data_test_dir, "test_lsm.npy"))
+        data = np.moveaxis(np.load(os.path.join(data_test_dir, "test_lsm.npy")), -1, 0)
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())
@@ -121,8 +144,7 @@ def test_change_class(data_test_dir):
     assert img.plane_shape == (1024, 1024)
     assert img.layers == 6
     assert img.channels == 3
-    assert img.channel_pos == 1
-    assert img.stack_pos == 4
+    assert img.stack_pos == 3
 
 
 def test_xml2dict():

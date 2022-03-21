@@ -7,27 +7,27 @@ from PartSegImage import Image
 
 
 def get_flat_image():
-    data = np.zeros((1, 1, 10, 10, 1), dtype=np.uint8)
+    data = np.zeros((1, 1, 10, 10), dtype=np.uint8)
     data[:, :, 2:-2, 2:-2] = 5
-    return Image(data, (5, 5))
+    return Image(data, (5, 5), axes_order="TZYX")
 
 
 def get_cube_image():
-    data = np.zeros((1, 10, 10, 10, 1), dtype=np.uint8)
+    data = np.zeros((1, 10, 10, 10), dtype=np.uint8)
     data[:, 2:-2, 2:-2, 2:-2] = 5
-    return Image(data, (10, 5, 5))
+    return Image(data, (10, 5, 5), axes_order="TZYX")
 
 
 def get_flat_image_up():
-    data = np.ones((1, 1, 10, 10, 1), dtype=np.uint8) * 30
+    data = np.ones((1, 1, 10, 10), dtype=np.uint8) * 30
     data[:, :, 2:-2, 2:-2] = 10
-    return Image(data, (5, 5))
+    return Image(data, (5, 5), axes_order="TZYX")
 
 
 def get_cube_image_up():
-    data = np.ones((1, 10, 10, 10, 1), dtype=np.uint8) * 30
+    data = np.ones((1, 10, 10, 10), dtype=np.uint8) * 30
     data[:, 2:-2, 2:-2, 2:-2] = 10
-    return Image(data, (10, 5, 5))
+    return Image(data, (10, 5, 5), axes_order="TZYX")
 
 
 class TestInterpolateImage:
@@ -53,14 +53,14 @@ class TestInterpolateImage:
         image = get_flat_image()
         image_res = InterpolateImage.transform(image, InterpolateImage.calculate_initial(image))
         assert image_res.spacing == (5, 5)
-        assert image_res.get_data().shape == (1, 1, 10, 10, 1)
+        assert image_res.get_data().shape == (1, 1, 1, 10, 10)
         image = get_cube_image()
         image_res = InterpolateImage.transform(image, InterpolateImage.calculate_initial(image))
         assert image_res.spacing == (5, 5, 5)
-        assert image_res.get_data().shape == (1, 20, 10, 10, 1)
+        assert image_res.get_data().shape == (1, 1, 20, 10, 10)
 
     def test_multiple_interpolate(self):
         image = get_cube_image()
         image_res = InterpolateImage.transform(image, {"scale_x": 2, "scale_y": 3, "scale_z": 4})
         assert image_res.spacing == (2.5, 5 / 3, 2.5)
-        assert image_res.get_data().shape == (1, 40, 30, 20, 1)
+        assert image_res.get_data().shape == (1, 1, 40, 30, 20)

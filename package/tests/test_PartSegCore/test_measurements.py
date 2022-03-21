@@ -59,14 +59,14 @@ from PartSegImage import Image
 
 
 def get_cube_array():
-    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
+    data = np.zeros((1, 50, 100, 100), dtype=np.uint16)
     data[0, 10:40, 20:80, 20:80] = 50
     data[0, 15:35, 30:70, 30:70] = 70
     return data
 
 
 def get_cube_image():
-    return Image(get_cube_array(), (100, 50, 50), "")
+    return Image(get_cube_array(), (100, 50, 50), "", axes_order="TZYX")
 
 
 @pytest.fixture(name="cube_image")
@@ -85,7 +85,7 @@ def cube_mask_60(cube_image):
 
 
 def get_square_image():
-    return Image(get_cube_array()[:, 25:26], (100, 50, 50), "")
+    return Image(get_cube_array()[:, 25:26], (100, 50, 50), "", axes_order="TZYX")
 
 
 @pytest.fixture(name="square_image")
@@ -94,14 +94,14 @@ def square_image_fixture():
 
 
 def get_two_components_array():
-    data = np.zeros((1, 20, 30, 60, 1), dtype=np.uint16)
+    data = np.zeros((1, 20, 30, 60), dtype=np.uint16)
     data[0, 3:-3, 2:-2, 2:19] = 60
     data[0, 3:-3, 2:-2, 22:-2] = 50
     return data
 
 
 def get_two_components_image():
-    return Image(get_two_components_array(), (100, 50, 50), "")
+    return Image(get_two_components_array(), (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_two_component_mask():
@@ -904,7 +904,7 @@ class TestDistanceMaskSegmentation:
     )
     def test_two_components_center(self, comp1, comp2, two_comp_img, area_gen):
         channel = two_comp_img.get_channel(0)
-        mask = np.zeros(two_comp_img.shape[1:-1], dtype=np.uint8)
+        mask = np.zeros(two_comp_img.shape[1:], dtype=np.uint8)
         mask[2:-2, 2:-2, 2:-2] = 1
         area_array = area_gen(two_comp_img.get_channel(0)[0])
         if comp1 == DistancePoint.Geometrical_center:
@@ -929,7 +929,7 @@ class TestDistanceMaskSegmentation:
         )
 
     def test_two_components_border(self, two_comp_img):
-        mask = np.zeros(two_comp_img.shape[1:-1], dtype=np.uint8)
+        mask = np.zeros(two_comp_img.shape[1:], dtype=np.uint8)
         mask[2:-2, 2:-2, 2:-2] = 1
 
         assert (
@@ -1458,10 +1458,10 @@ class TestSplitOnPartPixelBrightnessSum:
         ],
     )
     def test_cube_equal_volume(self, nr, sum_val, diff_array):
-        data = np.zeros((1, 60, 100, 100, 1), dtype=np.uint16)
+        data = np.zeros((1, 60, 100, 100), dtype=np.uint16)
         data[0, 10:50, 20:80, 20:80] = 50
         data[0, 15:45, 30:70, 30:70] = 70
-        image = Image(data, (100, 50, 50), "")
+        image = Image(data, (100, 50, 50), "", axes_order="TZYX")
         image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60

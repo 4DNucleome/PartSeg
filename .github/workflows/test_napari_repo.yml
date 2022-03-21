@@ -1,29 +1,35 @@
-name: napari widgets
+name: napari repo
 
 on:
-  push:
-    branches-ignore:
-      - 'release/**'
-      - 'dependabot/**'
-      - 'hotfix/**'
-      - 'bugfix/**'
-      - 'sourcery/**'
-      - update_requirements
-      - pre-commit-ci-update-config
-  pull_request:
-    branches:
-      - '**'
+  schedule:
+    - cron: '0 10 * * 1,3,5'  # every 24 hours
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
+  download_data:
+    name: Download test data
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - shell: bash
+        run: bash build_utils/download_data.sh
+      - name: Upload test data
+        uses: actions/upload-artifact@v1
+        with:
+          name: test_data
+          path: test_data
+
   test_napari:
     name: ${{ matrix.napari_version }} py${{ matrix.python }}
     runs-on: ${{ matrix.platform }}
+    needs: download_data
     strategy:
       fail-fast: false
       matrix:
         platform: [ ubuntu-20.04 ]
         python: [ 3.8, 3.9 ]
-        napari_version: [napari410, napari411, napari412, napari413, napari414]
+        napari_version: [repo]
     steps:
       - uses: actions/checkout@v2
 
@@ -49,6 +55,11 @@ jobs:
           pip install --upgrade pip
           pip install setuptools tox tox-gh-actions
 
+      - name: Download test data
+        uses: actions/download-artifact@v1
+        with:
+          name: test_data
+
       - name: Test with tox
         # run tests using pip install --pre
         uses: GabrielBB/xvfb-action@v1
@@ -59,3 +70,16 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
           NAPARI: ${{ matrix.napari_version }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+
+      - name: Report Failures
+        if: ${{ failure() }}
+        uses: JasonEtco/create-an-issue@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PLATFORM: ${{ matrix.platform }}
+          PYTHON: ${{ matrix.python }}
+          RUN_ID: ${{ github.run_id }}
+          TITLE: '[test-bot] napari repos test fail'
+        with:
+          filename: .github/TEST_FAIL_TEMPLATE.md
+          update_existing: true

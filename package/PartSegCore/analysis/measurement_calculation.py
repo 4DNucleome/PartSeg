@@ -388,10 +388,8 @@ class MeasurementProfile:
         kw2["area_array"] = kw["area_array"][bounds] == component_index
         im_bounds = list(bounds)
         image: Image = kw["image"]
-        im_bounds.insert(image.time_pos if image.time_pos < image.channel_pos else image.time_pos - 1, slice(None))
-        im_mask = image.mask[tuple(im_bounds)] if image.mask is not None else None
-        im_bounds.insert(image.channel_pos, slice(None))
-        kw2["image"] = kw["image"].substitute(data=image.get_data()[tuple(im_bounds)], mask=im_mask)
+        im_bounds.insert(image.time_pos, slice(None))
+        kw2["image"] = image.cut_image(tuple(im_bounds))
         for name in ["channel", "segmentation", "roi", "mask"] + [f"channel_{num}" for num in self.get_channels_num()]:
             if kw[name] is not None:
                 kw2[name] = kw[name][bounds]

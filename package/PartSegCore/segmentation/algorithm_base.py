@@ -201,7 +201,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
     def get_channel(self, channel_idx):
         if self.support_time():
             return self.image.get_data_by_axis(c=channel_idx)
-        if self.image.shape[self.image.time_pos] != 1:
+        if self.image.is_time:
             raise ValueError("This algorithm do not support time data")
         if isinstance(channel_idx, int) and self.image.channels <= channel_idx:
             raise SegmentationException(

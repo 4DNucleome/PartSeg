@@ -308,6 +308,9 @@ class ViewSettings(ImageSettings):
 
     @property
     def style_sheet(self):
+        return self.get_style_sheet()
+
+    def get_style_sheet(self):
         """QSS style sheet for current theme."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)

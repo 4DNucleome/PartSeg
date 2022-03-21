@@ -452,7 +452,7 @@ class TestBaseSettings:
         settings.image = image
         assert settings.image_spacing == image.spacing
         assert settings.image_path == str(tmp_path / "test.tiff")
-        assert settings.image_shape == (1, 1, 10, 10, 2)
+        assert settings.image_shape == (1, 1, 10, 10)
         with qtbot.waitSignal(settings.image_spacing_changed):
             settings.image_spacing = (7, 7)
         assert image.spacing == (7, 7)
@@ -695,7 +695,7 @@ class TestBaseSettings:
             settings.add_path_history(str(i))
         assert len(settings.get_path_history()) == 11
         assert len(settings.get_last_files()) == 0
-        file_list = [[[str(tmp_path / f"{str(i)}.txt")], "aaa"] for i in range(50)]
+        file_list = [[[str(tmp_path / f"{i}.txt")], "aaa"] for i in range(50)]
         for paths, method in file_list:
             settings.add_last_files(paths, method)
         assert len(settings.get_last_files()) == 10

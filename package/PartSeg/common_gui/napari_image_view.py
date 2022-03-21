@@ -627,7 +627,7 @@ class ImageView(QWidget):
             else:
                 self.viewer.layers[-1].selected = True
 
-        for i, axis in enumerate(image.axis_order):
+        for i, axis in enumerate(image.array_axis_order):
             if axis == "C":
                 continue
             self.viewer.dims.set_point(i, image.shape[i] * image.normalized_scaling()[i] // 2)
