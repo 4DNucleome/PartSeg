@@ -1,6 +1,5 @@
 import os.path
 import typing
-import warnings
 from abc import abstractmethod
 from contextlib import suppress
 from io import BytesIO
@@ -39,11 +38,6 @@ class BaseImageReader:
         Order to which image axes should be rearranged before pass to :py:attr:`image_class` constructor.
         Default is :py:attr:`image_class.return_order`
         """
-        if hasattr(cls.image_class, "return_order"):  # pragma: no cover
-            warnings.warn(
-                "Using return_order is deprecated since PartSeg 0.12.0. Please fix your image_class", DeprecationWarning
-            )
-            return cls.image_class.return_order
         return cls.image_class.axis_order
 
     def __init__(self, callback_function=None):
@@ -64,7 +58,7 @@ class BaseImageReader:
         self.default_spacing = spacing
 
     @abstractmethod
-    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         """
         Main function to read image. If ext is not set then it may be deduced from path to file.
         If BytesIO is given and non default data file type is needed then ext need to be set
@@ -80,7 +74,7 @@ class BaseImageReader:
     @classmethod
     def read_image(
         cls,
-        image_path: typing.Union[str, BytesIO, Path],
+        image_path: typing.Union[str, Path],
         mask_path=None,
         callback_function: typing.Optional[typing.Callable] = None,
         default_spacing: typing.Tuple[float, float, float] = None,
@@ -107,28 +101,28 @@ class BaseImageReader:
         Rearrange order of array axes to get proper internal axes order
 
         :param array: array to reorder
-        :param axes: current order of array axes as string like "TZYXC"
+        :param axes_li: current order of array axes as string like "TZYXC"
         """
         try:
             final_mapping_dict = {l: i for i, l in enumerate(cls.return_order())}
             for let1, let2 in [("Z", "I"), ("Z", "Q"), ("C", "S")]:
                 if let1 in final_mapping_dict and let2 not in final_mapping_dict:
                     final_mapping_dict[let2] = final_mapping_dict[let1]
-            axes = list(axes)
+            axes_li = list(axes)
             # Fixme; workaround for old saved segmentation
-            if axes[0] == "Q" and axes[1] == "Q":
-                axes[0] = "T"
-                axes[1] = "Z"
+            if axes_li[0] == "Q" and axes_li[1] == "Q":
+                axes_li[0] = "T"
+                axes_li[1] = "Z"
             i = 0
-            while i < len(axes):
-                name = axes[i]
+            while i < len(axes_li):
+                name = axes_li[i]
                 if name not in final_mapping_dict and array.shape[i] == 1:
                     array = array.take(0, i)
-                    axes.pop(i)
+                    axes_li.pop(i)
                 else:
                     i += 1
 
-            final_mapping = [final_mapping_dict[letter] for letter in axes]
+            final_mapping = [final_mapping_dict[letter] for letter in axes_li]
         except KeyError as e:  # pragma: no cover
             raise NotImplementedError(
                 f"Data type not supported ({e.args[0]}). Please contact with author for update code"
@@ -138,11 +132,51 @@ class BaseImageReader:
         if len(array.shape) < len(cls.return_order()):
             array = np.reshape(array, array.shape + (1,) * (len(cls.return_order()) - len(array.shape)))
 
-        array = np.moveaxis(array, list(range(len(axes))), final_mapping)
+        array = np.moveaxis(array, list(range(len(axes_li))), final_mapping)
         return array
 
 
-class GenericImageReader(BaseImageReader):
+class BaseImageReaderBuffer(BaseImageReader):
+    @abstractmethod
+    def read(self, image_path: typing.Union[str, Path, BytesIO], mask_path=None, ext=None) -> Image:
+        """
+        Main function to read image. If ext is not set then it may be deduced from path to file.
+        If BytesIO is given and non default data file type is needed then ext need to be set
+
+        :param image_path: path to image or buffer
+        :param mask_path: path to mask or buffer
+        :param ext: extension if need to decide algorithm, if absent and image_path is path then
+            should be deduced from path
+        :return: image structure
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def read_image(
+        cls,
+        image_path: typing.Union[str, Path, BytesIO],
+        mask_path=None,
+        callback_function: typing.Optional[typing.Callable] = None,
+        default_spacing: typing.Tuple[float, float, float] = None,
+    ) -> Image:
+        """
+        read image file with optional mask file
+
+        :param image_path: path or opened file contains image
+        :param mask_path:
+        :param callback_function: function for provide information about progress in reading file (for progressbar)
+        :param default_spacing: used if file do not contains information about spacing
+            (or metadata format is not supported)
+        :return: image
+        """
+        # TODO add generic description of callback function
+        instance = cls(callback_function)
+        if default_spacing is not None:
+            instance.set_default_spacing(default_spacing)
+        return instance.read(image_path, mask_path)
+
+
+class GenericImageReader(BaseImageReaderBuffer):
     """This class try to decide which method use base on path"""
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
@@ -155,14 +189,16 @@ class GenericImageReader(BaseImageReader):
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
+            assert not isinstance(image_path, BytesIO)  # nosec
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext == ".obsep":
+            assert not isinstance(image_path, BytesIO)  # nosec
             return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
 
 class OifImagReader(BaseImageReader):
-    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         with OifFile(image_path) as image_file:
             tiffs = natural_sorted(image_file.glob("*.tif"))
             with TiffFile(image_file.open_file(tiffs[0]), name=tiffs[0]) as tif_file:
@@ -192,7 +228,7 @@ class OifImagReader(BaseImageReader):
         )
 
 
-class CziImageReader(BaseImageReader):
+class CziImageReader(BaseImageReaderBuffer):
     """
     This class is to read data from czi files. Masks will be treated as TIFF.
     """
@@ -211,9 +247,9 @@ class CziImageReader(BaseImageReader):
                 scale_info.get("X", self.default_spacing[2]),
             )
         # TODO add mask reading
-        return self.image_class(
-            image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
-        )
+        if isinstance(image_path, BytesIO):
+            image_path = ""
+        return self.image_class(image_data, self.spacing, file_path=image_path, axes_order=self.return_order())
 
     @classmethod
     def update_array_shape(cls, array: np.ndarray, axes: str):
@@ -233,7 +269,7 @@ class CziImageReader(BaseImageReader):
 
 
 class ObsepImageReader(BaseImageReader):
-    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         directory = Path(os.path.dirname(image_path))
         xml_doc = ElementTree.parse(image_path).getroot()
         channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
@@ -278,7 +314,7 @@ class ObsepImageReader(BaseImageReader):
         return image
 
 
-class TiffImageReader(BaseImageReader):
+class TiffImageReader(BaseImageReaderBuffer):
     """
     TIFF/LSM files reader. Base reading with :py:meth:`BaseImageReader.read_image`
 
@@ -329,7 +365,12 @@ class TiffImageReader(BaseImageReader):
                     self.verify_mask(mask_file, image_file)
                     mask_file.report_func = report_func
                     mask_data = mask_file.asarray()
-                    mask_data = self.update_array_shape(mask_data, mask_file.series[0].axes)[..., 0]
+                    mask_data = self.update_array_shape(mask_data, mask_file.series[0].axes)
+                    if "C" in self.return_order():
+                        pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(mask_data.ndim)]
+                        pos[self.return_order().index("C")] = 0
+                        mask_data = mask_data[tuple(pos)]
+
             else:
                 mask_data = None
                 self.callback_function("max", total_pages_num)

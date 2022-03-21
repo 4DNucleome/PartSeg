@@ -61,7 +61,7 @@ class LoadPartSegOld(LoadBase):
         algorithm_str = tar_file.extractfile("data.json").read()
         algorithm_dict = json.loads(algorithm_str)
         spacing = np.array(algorithm_dict["spacing"][::-1]) / UNIT_SCALE[Units.nm.value]
-        image = Image(image_arr.reshape((1,) + image_arr.shape + (1,)), spacing, file_path)
+        image = Image(image_arr.reshape((1,) + image_arr.shape + (1,)), spacing, file_path, axes_order="TZYXC")
         values = {
             "channel": 0,
             "minimum_size": algorithm_dict["minimum_size"],

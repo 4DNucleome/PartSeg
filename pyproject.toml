@@ -40,3 +40,20 @@ src_paths=["package"]
 
 [tool.check-manifest]
 ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]
+
+
+[[tool.mypy.overrides]]
+module = "tifffile.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "defusedxml"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "czifile.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "oiffile"
+ignore_missing_imports = true

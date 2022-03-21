@@ -24,7 +24,7 @@ from PartSegImage import Image
 
 
 def get_two_parts_array():
-    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
+    data = np.zeros((1, 50, 100, 100), dtype=np.uint16)
     data[0, 10:40, 10:40, 10:90] = 50
     data[0, 10:40, 50:90, 10:90] = 50
     data[0, 15:35, 15:35, 15:85] = 70
@@ -34,17 +34,17 @@ def get_two_parts_array():
 
 
 def get_two_parts():
-    return Image(get_two_parts_array(), (100, 50, 50), "")
+    return Image(get_two_parts_array(), (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_two_parts_reversed():
     data = get_two_parts_array()
     data = 100 - data
-    return Image(data, (100, 50, 50), "")
+    return Image(data, (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_multiple_part_array(part_num):
-    data = np.zeros((1, 20, 40, 40 * part_num, 1), dtype=np.uint8)
+    data = np.zeros((1, 20, 40, 40 * part_num), dtype=np.uint8)
     data[0, 4:16, 8:32, 8 : 40 * part_num - 8] = 40
     for i in range(part_num):
         data[0, 5:15, 10:30, 40 * i + 10 : 40 * i + 30] = 50
@@ -53,19 +53,19 @@ def get_multiple_part_array(part_num):
 
 
 def get_multiple_part(part_num):
-    return Image(get_multiple_part_array(part_num), (100, 50, 50), "")
+    return Image(get_multiple_part_array(part_num), (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_multiple_part_reversed(part_num):
     data = 100 - get_multiple_part_array(part_num)
-    return Image(data, (100, 50, 50), "")
+    return Image(data, (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_two_parts_side():
     data = get_two_parts_array()
     data[0, 25, 40:45, 50] = 49
     data[0, 25, 45:50, 51] = 49
-    return Image(data, (100, 50, 50), "")
+    return Image(data, (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_two_parts_side_reversed():
@@ -73,7 +73,7 @@ def get_two_parts_side_reversed():
     data[0, 25, 40:45, 50] = 49
     data[0, 25, 45:50, 51] = 49
     data = 100 - data
-    return Image(data, (100, 50, 50), "")
+    return Image(data, (100, 50, 50), "", axes_order="TZYX")
 
 
 def empty(_s: str, _i: int):
@@ -623,7 +623,7 @@ class TestPipeline:
         data = np.zeros((1, 50, 100, 100, 2), dtype=np.uint16)
         data[0, 10:40, 20:80, 20:60, 0] = 10
         data[0, 10:40, 20:80, 40:80, 1] = 10
-        return Image(data, (100, 50, 50), "")
+        return Image(data, (100, 50, 50), "", axes_order="TZYXC")
 
     @pytest.mark.parametrize("use_mask", [True, False])
     def test_pipeline_simple(self, use_mask):
