@@ -185,7 +185,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     def get_default_values(cls):
-        if cls.__new_style__:
+        if cls.__new_style__ and cls.__argument_class__ is not None:
             return cls.__argument_class__()
         return {
             el.name: {
@@ -356,7 +356,7 @@ class AddRegisterMeta(ModelMetaclass):
         return self.__register__.get(item, default)
 
 
-class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta, extra=Extra.forbid):
+class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta, extra=Extra.forbid):  # pylint: disable=E1139
     """
     Base class for algorithm selection.
     For given algorithm there should be Register instance set __register__ class variable.
