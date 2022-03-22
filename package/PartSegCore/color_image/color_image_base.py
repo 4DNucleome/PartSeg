@@ -84,6 +84,8 @@ def color_image_fun(
     :param min_max: bounds for each channel separately
     :return: colored image (array of size (width, height, 3) as RGB image
     """
+    if image.shape[0] < 10 and image.shape[2] > 10:
+        image = np.moveaxis(image, 0, 2)
     new_shape = image.shape[:-1] + (3,)
 
     result_images = []  # = np.zeros(new_shape, dtype=np.uint8)
