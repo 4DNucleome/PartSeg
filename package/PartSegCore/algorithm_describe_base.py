@@ -185,8 +185,8 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     def get_default_values(cls):
-        if cls.__new_style__ and cls.__argument_class__ is not None:
-            return cls.__argument_class__()
+        if cls.__new_style__:
+            return cls.__argument_class__()  # pylint: disable=E1102
         return {
             el.name: {
                 "name": el.default_value,
