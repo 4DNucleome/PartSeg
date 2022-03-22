@@ -262,7 +262,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         return res
 
 
-class MeasurementProfile(BaseModel, extra=False):
+class MeasurementProfile(BaseModel, extra=Extra.forbid):
     name: str
     chosen_fields: List[MeasurementEntry]
     name_prefix: str = ""
