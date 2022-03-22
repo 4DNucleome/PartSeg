@@ -1,13 +1,14 @@
 import sys
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, Optional, Set, Union
+from typing import Any, Dict, ForwardRef, Optional, Set, Union
 
 import numpy as np
 from pydantic import BaseModel, Field
 from sympy import Symbol, symbols
 
-from PartSegImage.image import Channel, Spacing
+from PartSegImage import Channel
+from PartSegImage.image import Spacing
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, base_model_to_algorithm_property
 from ..class_generator import enum_register
@@ -16,6 +17,8 @@ from ..universal_const import Units
 
 
 class PerComponent(Enum):
+    """How measurement should be calculated"""
+
     No = 1
     Yes = 2
     Mean = 3
@@ -25,6 +28,8 @@ class PerComponent(Enum):
 
 
 class AreaType(Enum):
+    """On which area type measurement should be calculated"""
+
     ROI = 1
     Mask = 2
     Mask_without_ROI = 3
@@ -71,13 +76,6 @@ def _migrate_leaf_dict(dkt):
 class Leaf(BaseModel):
     """
     Class for describe calculation of basic measurement
-
-    :ivar str name: node name of method used to calculate
-    :ivar dict parameter_dict: additional parameters of method
-    :ivar float power: power to be applied to result of calculation methods
-    :ivar AreaType area: which type of ROI should be used for calculation
-    :ivar PerComponent per_component: if value should be calculated per component or for whole roi set
-    :ivar Channel channel: probably not used TODO Check
     """
 
     name: str
@@ -144,6 +142,13 @@ class Leaf(BaseModel):
         return ""
 
     def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
+        """
+        Pretty print for presentation in user interface.
+
+        :param measurement_dict: dict with additional information used for more detailed description
+        :return: string with indentation
+        """
+
         resp = self.name
         if self.area is not None:
             resp = f"{self.area} {resp}"
@@ -161,7 +166,12 @@ class Leaf(BaseModel):
     def __str__(self):  # pragma: no cover
         return self.pretty_print({})
 
-    def get_unit(self, ndim) -> Symbol:
+    def get_unit(self, ndim: int) -> Symbol:
+        """
+        Return unit of selected measurement reflecting dimensionality.
+
+        :param ndim: data dimensionality
+        """
         from PartSegCore.analysis import MEASUREMENT_DICT
 
         method = MEASUREMENT_DICT[self.name]
@@ -170,9 +180,11 @@ class Leaf(BaseModel):
         return method.get_units(ndim)
 
     def is_per_component(self) -> bool:
+        """If measurement return list of result or single value."""
         return self.per_component == PerComponent.Yes
 
-    def need_mask(self):
+    def need_mask(self) -> bool:
+        """If this measurement need mast for proper calculation."""
         return self.area in [AreaType.Mask, AreaType.Mask_without_ROI]
 
 
@@ -190,6 +202,8 @@ def replace(self, **kwargs) -> Leaf:
 
 Leaf.replace_ = replace
 
+Node = ForwardRef("Node")
+
 
 @register_class(
     old_paths=[
@@ -199,9 +213,15 @@ Leaf.replace_ = replace
     ]
 )
 class Node(BaseModel):
-    left: Union["Node", Leaf]
-    op: str
-    right: Union["Node", Leaf]
+    """
+    Class for describe operation between two measurements
+    """
+
+    left: Union[Node, Leaf]
+    op: str = Field(
+        description="Operation to perform between left and right child. Currently only division (`/`) supported"
+    )
+    right: Union[Node, Leaf]
 
     def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
@@ -251,6 +271,8 @@ Node.update_forward_refs()
     ]
 )
 class MeasurementEntry(BaseModel):
+    """Describe single measurement in measurement set"""
+
     name: str
     calculation_tree: Union[Node, Leaf]
 
@@ -282,6 +304,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_name(cls) -> str:
+        """Name of measurement"""
         return str(cls.get_starting_leaf().name)
 
     @classmethod

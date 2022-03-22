@@ -13,7 +13,7 @@ from PartSegCore.class_register import class_to_str
 from PartSegImage import Channel
 
 if typing.TYPE_CHECKING:
-    from pydantic.typing import ModelField
+    from pydantic.fields import ModelField
 
 
 class AlgorithmDescribeNotFound(Exception):

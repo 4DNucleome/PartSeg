@@ -14,16 +14,13 @@ from PartSegCore.class_generator import extract_type_info, extract_type_name
 # noinspection PyUnusedLocal
 def algorithm_parameters_doc(app: Sphinx, what, name: str, obj, options, lines: list):
     if inspect.isclass(obj) and issubclass(obj, AlgorithmDescribeBase) and not inspect.isabstract(obj):
-        fields = [x for x in obj.get_fields() if isinstance(x, AlgorithmProperty)]
+        fields = [x for x in obj._get_fields() if isinstance(x, AlgorithmProperty)]
         if fields:
             lines.extend(["", "This algorithm has following parameters:", ""])
         for el in fields:
             if el.help_text:
-                lines.append(
-                    "- **{}** ({})- {}, {}".format(
-                        el.name, extract_type_name(el.value_type), el.user_name, el.help_text
-                    )
-                )
+                lines.append(f"- **{el.name}** ({extract_type_name(el.value_type)})- {el.user_name}, {el.help_text}")
+
             else:
                 lines.append(f"- **{el.name}** ({extract_type_name(el.value_type)})- {el.user_name}")
 

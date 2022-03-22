@@ -39,3 +39,9 @@ class Channel:
     @classmethod
     def __get_validators__(cls):
         yield check_type
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema["title"] = "Channel"
+        field_schema["type"] = "object"
+        field_schema["properties"] = {"value": {"title": "value", "anyOf": [{"type": "string"}, {"type": "integer"}]}}
