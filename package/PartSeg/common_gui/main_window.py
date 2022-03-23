@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from typing import List, Optional, Type, Union
 
-import sentry_sdk
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
 from qtpy.QtWidgets import QAction, QApplication, QDockWidget, QMainWindow, QMenu, QMessageBox, QWidget
@@ -137,8 +136,6 @@ class BaseMainWindow(QMainWindow):
                     " state directory (Help > State directory)"
                 )
                 errors_message.setStandardButtons(QMessageBox.Ok)
-                for error in errors:
-                    sentry_sdk.capture_exception(error[1])
                 text = "\n".join(f"File: {x[0]}" + "\n" + str(x[1]) for x in errors)
                 errors_message.setDetailedText(text)
                 errors_message.exec_()

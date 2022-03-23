@@ -3,6 +3,7 @@ This module contains utility for registration migration information for class.
 """
 import importlib
 import inspect
+import typing
 from dataclasses import dataclass
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
@@ -38,7 +39,9 @@ MigrationInfo = Tuple[Version, MigrationCallable]
 """Type describing single migration entry. For given class Version number should be unique."""
 MigrationStartInfo = Tuple[Union[str, Version], MigrationCallable]
 
-RegisterReturnType = Union[Type, Callable[[Type], Type]]
+T = typing.TypeVar("T")
+
+RegisterReturnType = Union[Type[T], Callable[[Type[T]], Type[T]]]
 
 
 @dataclass(frozen=True)
@@ -268,7 +271,7 @@ def update_argument(argument_name):
 
 
 def register_class(
-    cls: Optional[Type] = None,
+    cls: Optional[Type[T]] = None,
     version: Union[str, Version] = "0.0.0",
     migrations: List[MigrationStartInfo] = None,
     old_paths: List[str] = None,

@@ -166,7 +166,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
 
     @classmethod
     def _get_field_from_value_type(cls, ap: AlgorithmProperty):
-        if ap.value_type is Channel:
+        if issubclass(ap.value_type, Channel):
             res = ChannelComboBox()
             res.change_channels_num(10)
         elif issubclass(ap.value_type, AlgorithmDescribeBase):
@@ -402,7 +402,7 @@ class FormWidget(QWidget):
             return
         layout.addRow(label, ap.get_field())
         # noinspection PyUnresolvedReferences
-        if ap.value_type is Channel:
+        if issubclass(ap.value_type, Channel):
             # noinspection PyTypeChecker
             self.channels_chose.append(ap.get_field())
         if issubclass(ap.value_type, ROIExtractionProfile):

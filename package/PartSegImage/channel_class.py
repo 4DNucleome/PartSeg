@@ -24,7 +24,8 @@ class Channel:
         self._value: Union[str, int] = value
 
     @property
-    def value(self):
+    def value(self) -> Union[str, int]:
+        """Value stored in this class"""
         return self._value
 
     def __str__(self):

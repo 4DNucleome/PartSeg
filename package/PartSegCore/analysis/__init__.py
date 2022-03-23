@@ -16,7 +16,7 @@ __all__ = (
 )
 
 
-def __getattr__(name):
+def __getattr__(name):  # pragma: no cover
     if name == "analysis_algorithm_dict":
         warnings.warn(
             "analysis_algorithm_dict is deprecated. Please use AnalysisAlgorithmSelection instead",

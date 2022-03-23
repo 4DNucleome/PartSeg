@@ -271,7 +271,7 @@ class MeasurementProfile(BaseModel, extra=Extra.forbid):
     def _need_mask(self):
         return any(cf_val.calculation_tree.need_mask() for cf_val in self.chosen_fields)
 
-    def to_dict(self):
+    def to_dict(self):  # pragma: no cover
         warnings.warn(
             f"{self.__class__.__name__}.to_dict is deprecated. Use as_dict instead",
             category=FutureWarning,
