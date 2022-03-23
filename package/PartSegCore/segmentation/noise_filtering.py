@@ -7,7 +7,6 @@ import numpy as np
 from pydantic import BaseModel, Extra, Field
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
-from ..class_generator import enum_register
 from ..class_register import update_argument
 from ..image_operations import bilateral, gaussian, median
 from .algorithm_base import calculate_operation_radius as _calculate_operation_radius
@@ -19,14 +18,6 @@ class DimensionType(Enum):
 
     def __str__(self):
         return self.name.replace("_", " ")
-
-
-try:
-    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
-    reloading
-except NameError:
-    reloading = False  # means the module is being imported
-    enum_register.register_class(DimensionType, old_name="GaussType")
 
 
 class NoiseFilteringBase(AlgorithmDescribeBase, ABC):

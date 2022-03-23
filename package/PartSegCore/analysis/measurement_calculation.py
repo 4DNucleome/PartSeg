@@ -33,7 +33,6 @@ from PartSegImage import Channel, Image
 
 from .. import autofit as af
 from ..algorithm_describe_base import Register, ROIExtractionProfile
-from ..class_generator import enum_register
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
@@ -1215,14 +1214,6 @@ class DistancePoint(Enum):
 
     def __str__(self):
         return self.name.replace("_", " ")
-
-
-try:
-    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
-    reloading
-except NameError:
-    reloading = False
-    enum_register.register_class(DistancePoint)
 
 
 class DistanceMaskROIParameters(BaseModel, extra=Extra.forbid):

@@ -11,7 +11,6 @@ from enum import Enum
 from pydantic import BaseModel
 
 from ..algorithm_describe_base import ROIExtractionProfile
-from ..class_generator import enum_register
 from ..class_register import register_class
 from ..mask_create import MaskProperty
 from ..universal_const import Units
@@ -41,9 +40,6 @@ class RootType(Enum):
 
     def __str__(self):
         return self.name.replace("_", " ")
-
-
-enum_register.register_class(RootType)
 
 
 @register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskCreate"])

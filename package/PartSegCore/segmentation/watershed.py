@@ -9,7 +9,6 @@ from typing import Any, Callable
 import numpy as np
 from pydantic import BaseModel, Extra, Field
 
-from PartSegCore.class_generator import enum_register
 from PartSegCore_compiled_backend.multiscale_opening import MuType, PyMSO, calculate_mu
 from PartSegCore_compiled_backend.sprawl_utils.find_split import (
     euclidean_sprawl,
@@ -276,14 +275,6 @@ class NeighType(Enum):
 
     def __str__(self):
         return self.name
-
-
-try:
-    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
-    reloading
-except NameError:
-    reloading = False  # means the module is being imported firs time
-    enum_register.register_class(NeighType)
 
 
 def calculate_distances_array(spacing, neigh_type: NeighType):

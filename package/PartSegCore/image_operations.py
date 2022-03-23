@@ -4,7 +4,6 @@ from typing import Iterable, List, Union
 import numpy as np
 import SimpleITK as sitk
 
-from .class_generator import enum_register
 from .class_register import register_class
 
 
@@ -31,10 +30,6 @@ class NoiseFilterType(Enum):
 
     def __str__(self):
         return self.name
-
-
-enum_register.register_class(RadiusType)
-enum_register.register_class(NoiseFilterType)
 
 
 def _generic_image_operation(image, radius, fun, layer):
