@@ -93,7 +93,7 @@ MuMidSelection.register(MedianPixelValue)
 MuMidSelection.register(QuantilePixelValue)
 
 
-def __getattr__(name):
+def __getattr__(name):  # pragma: no cover
     if name == "mu_mid_dict":
         warnings.warn(
             "mu_mid_dict is deprecated. Please use MuMidSelection instead", category=FutureWarning, stacklevel=2

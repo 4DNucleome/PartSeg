@@ -124,7 +124,7 @@ SmoothAlgorithmSelection.register(VoteSmoothing)
 SmoothAlgorithmSelection.register(IterativeVoteSmoothing)
 
 
-def __getattr__(name):
+def __getattr__(name):  # pragma: no cover
     if name == "smooth_dict":
         warnings.warn(
             "threshold_dict is deprecated. Please use SmoothAlgorithmSelection instead",

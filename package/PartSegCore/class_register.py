@@ -246,11 +246,11 @@ def update_argument(argument_name):
 
     def _wrapper(func):
         signature = inspect.signature(func)
-        if argument_name not in signature.parameters:
+        if argument_name not in signature.parameters:  # pragma: no cover
             raise RuntimeError("Argument should be accessible using inspect module.")
         arg_index = list(signature.parameters).index(argument_name)
         klass = signature.parameters[argument_name].annotation
-        if not inspect.isclass(klass):
+        if not inspect.isclass(klass):  # pragma: no cover
             raise ValueError(f"Annotation {klass} of {argument_name} parameter is not a class")
 
         @wraps(func)

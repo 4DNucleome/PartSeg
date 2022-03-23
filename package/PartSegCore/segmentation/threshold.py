@@ -328,7 +328,7 @@ double_threshold_dict = DoubleThresholdSelection.__register__
 threshold_dict = ThresholdSelection.__register__
 
 
-def __getattr__(name):
+def __getattr__(name):  # pragma: no cover
     if name == "threshold_dict":
         warnings.warn(
             "threshold_dict is deprecated. Please use ThresholdSelection instead", category=FutureWarning, stacklevel=2

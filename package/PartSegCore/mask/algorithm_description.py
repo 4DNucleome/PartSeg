@@ -27,7 +27,7 @@ MaskAlgorithmSelection.register(ThresholdFlowAlgorithm)
 MaskAlgorithmSelection.register(ThresholdPreview)
 
 
-def __getattr__(name):
+def __getattr__(name):  # pragma: no cover
     if name == "mask_algorithm_dict":
         warnings.warn(
             "mask_algorithm_dict is deprecated. Please use MaskAlgorithmSelection instead",

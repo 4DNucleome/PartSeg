@@ -128,7 +128,7 @@ NoiseFilterSelection.register(MedianNoiseFiltering)
 NoiseFilterSelection.register(BilateralNoiseFiltering)
 
 
-def __getattr__(name):
+def __getattr__(name):  # pragma: no cover
     if name == "noise_filtering_dict":
         warnings.warn(
             "noise_filtering_dict is deprecated. Please use NoiseFilterSelection instead",

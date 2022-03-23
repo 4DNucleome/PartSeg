@@ -250,7 +250,7 @@ FlowMethodSelection.register(PathDistanceWatershed)
 FlowMethodSelection.register(FDTWatershed)
 
 
-def __getattr__(name):
+def __getattr__(name):  # pragma: no cover
     if name == "flow_dict":
         warnings.warn(
             "flow_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
