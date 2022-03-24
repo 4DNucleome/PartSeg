@@ -50,8 +50,11 @@ class AreaType(Enum):
 
 
 def _migrate_leaf_dict(dkt):
+    from .measurement_calculation import MEASUREMENT_DICT
+
     new_dkt = dkt.copy()
     new_dkt["parameter_dict"] = new_dkt.pop("dict")
+    new_dkt["name"] = MEASUREMENT_DICT[new_dkt["name"]].get_name()
 
     return new_dkt
 
