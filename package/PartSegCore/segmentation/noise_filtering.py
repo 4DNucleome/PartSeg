@@ -7,11 +7,12 @@ import numpy as np
 from pydantic import BaseModel, Extra, Field
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
-from ..class_register import update_argument
+from ..class_register import register_class, update_argument
 from ..image_operations import bilateral, gaussian, median
 from .algorithm_base import calculate_operation_radius as _calculate_operation_radius
 
 
+@register_class(old_paths=["PartSeg.utils.segmentation.noise_filtering.GaussType"])
 class DimensionType(Enum):
     Layer = 1
     Stack = 2

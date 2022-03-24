@@ -15,6 +15,12 @@ from ..class_register import register_class
 from ..universal_const import Units
 
 
+@register_class(
+    old_paths=[
+        "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+        "PartSeg.utils.analysis.measurement_base.PerComponent",
+    ]
+)
 class PerComponent(Enum):
     """How measurement should be calculated"""
 
@@ -26,6 +32,12 @@ class PerComponent(Enum):
         return self.name.replace("_", " ")
 
 
+@register_class(
+    old_paths=[
+        "PartSeg.utils.analysis.statistics_calculation.AreaType",
+        "PartSeg.utils.analysis.measurement_base.AreaType",
+    ]
+)
 class AreaType(Enum):
     """On which area type measurement should be calculated"""
 

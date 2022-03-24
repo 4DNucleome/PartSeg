@@ -1,7 +1,10 @@
 from enum import Enum
 
+from PartSegCore.class_register import register_class
+
 
 # noinspection NonAsciiCharacters
+@register_class(old_paths=["PartSeg.utils.universal_const.Units"])
 class Units(Enum):
     mm = 0
     µm = 1
