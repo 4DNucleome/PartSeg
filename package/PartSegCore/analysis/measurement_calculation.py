@@ -1710,35 +1710,34 @@ def calc_diam(array, voxel_size):  # pragma: no cover
     return np.sqrt(diam)
 
 
-MEASUREMENT_DICT = Register(
-    Volume,
-    Diameter,
-    PixelBrightnessSum,
-    ComponentBoundingBox,
-    GetROIAnnotationType,
-    ComponentsNumber,
-    MaximumPixelBrightness,
-    MinimumPixelBrightness,
-    MeanPixelBrightness,
-    MedianPixelBrightness,
-    StandardDeviationOfPixelBrightness,
-    ColocalizationMeasurement,
-    Moment,
-    FirstPrincipalAxisLength,
-    SecondPrincipalAxisLength,
-    ThirdPrincipalAxisLength,
-    Compactness,
-    Sphericity,
-    Surface,
-    RimVolume,
-    RimPixelBrightnessSum,
-    ROINeighbourhoodROI,
-    DistanceMaskROI,
-    DistanceROIROI,
-    SplitOnPartVolume,
-    SplitOnPartPixelBrightnessSum,
-    Voxels,
-    Haralick,
-    suggested_base_class=MeasurementMethodBase,
-)
+MEASUREMENT_DICT = Register(suggested_base_class=MeasurementMethodBase)
 """Register with all measurements algorithms"""
+
+MEASUREMENT_DICT.register(Volume)
+MEASUREMENT_DICT.register(Diameter)
+MEASUREMENT_DICT.register(PixelBrightnessSum, old_names=["Pixel Brightness Sum"])
+MEASUREMENT_DICT.register(ComponentBoundingBox)
+MEASUREMENT_DICT.register(GetROIAnnotationType)
+MEASUREMENT_DICT.register(ComponentsNumber, old_names=["Components Number"])
+MEASUREMENT_DICT.register(MaximumPixelBrightness)
+MEASUREMENT_DICT.register(MinimumPixelBrightness)
+MEASUREMENT_DICT.register(MeanPixelBrightness)
+MEASUREMENT_DICT.register(MedianPixelBrightness)
+MEASUREMENT_DICT.register(StandardDeviationOfPixelBrightness)
+MEASUREMENT_DICT.register(ColocalizationMeasurement)
+MEASUREMENT_DICT.register(Moment, old_names=["Moment of inertia"])
+MEASUREMENT_DICT.register(FirstPrincipalAxisLength, old_names=["Longest main axis length"])
+MEASUREMENT_DICT.register(SecondPrincipalAxisLength, old_names=["Middle main axis length"])
+MEASUREMENT_DICT.register(ThirdPrincipalAxisLength, old_names=["Shortest main axis length"])
+MEASUREMENT_DICT.register(Compactness)
+MEASUREMENT_DICT.register(Sphericity)
+MEASUREMENT_DICT.register(Surface)
+MEASUREMENT_DICT.register(RimVolume, old_names=["Rim Volume"])
+MEASUREMENT_DICT.register(RimPixelBrightnessSum, old_names=["Rim Pixel Brightness Sum"])
+MEASUREMENT_DICT.register(ROINeighbourhoodROI)
+MEASUREMENT_DICT.register(DistanceMaskROI, old_names=["segmentation distance"])
+MEASUREMENT_DICT.register(DistanceROIROI)
+MEASUREMENT_DICT.register(SplitOnPartVolume, old_names=["split on part volume"])
+MEASUREMENT_DICT.register(SplitOnPartPixelBrightnessSum, old_names=["split on part pixel brightness sum"])
+MEASUREMENT_DICT.register(Voxels)
+MEASUREMENT_DICT.register(Haralick)

@@ -52,21 +52,6 @@ class AreaType(Enum):
 def _migrate_leaf_dict(dkt):
     new_dkt = dkt.copy()
     new_dkt["parameter_dict"] = new_dkt.pop("dict")
-    replace_name_dict = {
-        "Moment of inertia": "Moment",
-        "Components Number": "Components number",
-        "Pixel Brightness Sum": "Pixel brightness sum",
-        "Longest main axis length": "First principal axis length",
-        "Middle main axis length": "Second principal axis length",
-        "Shortest main axis length": "Third principal axis length",
-        "split on part volume": "distance splitting volume",
-        "split on part pixel brightness sum": "distance splitting pixel brightness sum",
-        "Rim Volume": "rim volume",
-        "Rim Pixel Brightness Sum": "rim pixel brightness sum",
-        "segmentation distance": "ROI distance",
-    }
-    if new_dkt["name"] in replace_name_dict:
-        new_dkt["name"] = replace_name_dict[new_dkt["name"]]
 
     return new_dkt
 
