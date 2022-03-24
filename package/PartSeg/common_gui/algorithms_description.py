@@ -5,11 +5,9 @@ from contextlib import suppress
 from copy import deepcopy
 from enum import Enum
 
-import magicgui
 import numpy as np
 from magicgui.widgets import ComboBox, Widget, create_widget
 from napari.layers.base import Layer
-from packaging.version import parse as parse_version
 from pydantic import BaseModel
 from qtpy.QtCore import QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
@@ -335,15 +333,8 @@ class ListInput(QWidget):
 
 
 def _any_arguments(fun):
-    if parse_version(magicgui.__version__) >= parse_version("0.3.0"):
-
-        def _any():
-            fun()
-
-    else:
-
-        def _any(*_):
-            fun()
+    def _any():
+        fun()
 
     return _any
 
@@ -431,7 +422,7 @@ class FormWidget(QWidget):
     def recursive_get_values(self):
         return {name: el.recursive_get_values() for name, el in self.widgets_dict.items()}
 
-    def set_values(self, values: dict):
+    def set_values(self, values: typing.Union[dict, BaseModel]):
         if isinstance(values, BaseModel):
             values = dict(values)
         for name, value in values.items():

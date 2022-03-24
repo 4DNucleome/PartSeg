@@ -1,4 +1,5 @@
 # pylint: disable=R0201
+import datetime
 import os
 import platform
 import sys
@@ -10,9 +11,11 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 import qtpy
+from magicgui.widgets import Widget
 from pydantic import BaseModel, Field
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import QFileDialog, QMainWindow, QWidget
+from qtpy.QtWidgets import QCheckBox, QComboBox, QFileDialog, QLabel, QLineEdit, QMainWindow, QWidget
+from superqt import QEnumComboBox
 
 from PartSeg.common_gui import select_multiple_files
 from PartSeg.common_gui.about_dialog import AboutDialog
@@ -23,7 +26,7 @@ from PartSeg.common_gui.advanced_tabs import (
     AdvancedWindow,
     Appearance,
 )
-from PartSeg.common_gui.algorithms_description import FormWidget
+from PartSeg.common_gui.algorithms_description import FieldsList, FormWidget, ListInput, QtAlgorithmProperty
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, IOMethodMock, LoadProperty, PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
@@ -31,15 +34,21 @@ from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_
 from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
 from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
-from PartSeg.common_gui.universal_gui_part import EnumComboBox
+from PartSeg.common_gui.universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox, EnumComboBox
 from PartSegCore import state_store
-from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, AlgorithmSelection, Register
+from PartSegCore.algorithm_describe_base import (
+    AlgorithmDescribeBase,
+    AlgorithmProperty,
+    AlgorithmSelection,
+    Register,
+    base_model_to_algorithm_property,
+)
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
 from PartSegCore.class_register import register_class
 from PartSegCore.io_utils import SaveBase
-from PartSegImage import Image, ImageWriter
+from PartSegImage import Channel, Image, ImageWriter
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
 IS_MACOS = sys.platform == "darwin"
@@ -668,6 +677,8 @@ class TestFormWidget:
         qtbot.add_widget(form)
         assert form.has_elements()
         assert form.get_values() == {"test": 2}
+        form.set_values({"test": 5})
+        assert form.get_values() == {"test": 5}
 
     def test_single_field_widget_wrong_start_values(self, qtbot):
         form = FormWidget([AlgorithmProperty("test", "Test", 1)], start_values={"test": "aaa"})
@@ -684,6 +695,8 @@ class TestFormWidget:
         assert form.has_elements()
         assert isinstance(form.get_values(), Fields)
         assert form.get_values() == Fields(test=5)
+        form.set_values(Fields(test=8))
+        assert form.get_values() == Fields(test=8)
 
     def test_base_model_nested_create(self, qtbot):
         class SubFields(BaseModel):
@@ -779,3 +792,125 @@ class TestFormWidget:
         assert form.get_values() == SampleModel(
             field1=10, check_selection=SampleSelection(name="1", values=SubModel1(field1=3))
         )
+
+
+class TestFieldsList:
+    def test_simple(self):
+        li = FieldsList([])
+        assert li.get_value() == {}
+
+    def test_setting_values(self, qtbot):
+        class Fields(BaseModel):
+            field1: int = 1
+            field2: float = 3
+
+        ap_li = [QtAlgorithmProperty.from_algorithm_property(x) for x in base_model_to_algorithm_property(Fields)]
+        for el in ap_li:
+            qtbot.add_widget(el.get_field())
+
+        li = FieldsList(ap_li)
+        assert li.get_value() == {"field1": 1, "field2": 3}
+
+        li.set_value(Fields(field1=2, field2=1))
+        assert li.get_value() == {"field1": 2, "field2": 1}
+
+        li.set_value({"field1": 5, "field2": 8})
+        assert li.get_value() == {"field1": 5, "field2": 8}
+
+    def test_signal(self, qtbot):
+        ap = QtAlgorithmProperty(name="test", user_name="Test", default_value=1)
+        qtbot.add_widget(ap.get_field())
+        li = FieldsList([ap])
+        with qtbot.wait_signal(li.changed):
+            ap.set_value(3)
+        assert li.get_value() == {"test": 3}
+
+
+class EnumQtAl(Enum):
+    test1 = 1
+    test2 = 2
+
+
+class ModelQtAl(BaseModel):
+    field1 = 1
+    field2 = 2.0
+
+
+class TestQtAlgorithmProperty:
+    def test_from_algorithm_property(self, qtbot):
+        res = QtAlgorithmProperty.from_algorithm_property("aaaa")
+        assert isinstance(res, QLabel)
+
+        ap = AlgorithmProperty(name="test", user_name="Test", default_value=1)
+        res = QtAlgorithmProperty.from_algorithm_property(ap)
+        assert isinstance(res, QtAlgorithmProperty)
+        qtbot.add_widget(res.get_field())
+
+        with pytest.raises(ValueError):
+            QtAlgorithmProperty.from_algorithm_property(1)
+
+    @pytest.mark.parametrize(
+        "data_type,default_value,expected_type,next_value",
+        [
+            (Channel, Channel(1), ChannelComboBox, Channel(2)),
+            (bool, True, QCheckBox, False),
+            (int, 1, CustomSpinBox, 2),
+            (float, 1, CustomDoubleSpinBox, 3),
+            (EnumQtAl, EnumQtAl.test1, QEnumComboBox, EnumQtAl.test2),
+            (str, "a", QLineEdit, "b"),
+            (ModelQtAl, ModelQtAl(), FieldsList, ModelQtAl(field1=3, field2=4.5)),
+            (datetime.date, datetime.date(2022, 3, 24), Widget, datetime.date(2022, 3, 25)),
+        ],
+    )
+    def test_types(self, qtbot, data_type, default_value, expected_type, next_value):
+        ap = AlgorithmProperty(name="test", user_name="Test", default_value=default_value, value_type=data_type)
+        res = QtAlgorithmProperty.from_algorithm_property(ap)
+        if isinstance(res.get_field(), FieldsList):
+            for el in res.get_field().field_list:
+                qtbot.add_widget(el.get_field())
+        elif isinstance(res.get_field(), QWidget):
+            qtbot.add_widget(res.get_field())
+        assert isinstance(res.get_field(), expected_type)
+        assert res.get_value() == default_value
+        with qtbot.wait_signal(res.change_fun):
+            res.set_value(next_value)
+        assert res.get_value() == next_value
+
+    def test_list_type(self, qtbot):
+        ap = AlgorithmProperty(
+            name="test", user_name="Test", default_value="aaa", value_type=list, possible_values=["aaa", "bbb"]
+        )
+        res = QtAlgorithmProperty.from_algorithm_property(ap)
+        qtbot.add_widget(res.get_field())
+        assert isinstance(res.get_field(), QComboBox)
+        assert res.get_value() == "aaa"
+
+        with qtbot.wait_signal(res.change_fun):
+            res.set_value("bbb")
+        assert res.get_value() == "bbb"
+
+    def test_numeric_type_default_value_error(self):
+        ap = AlgorithmProperty(name="test", user_name="Test", default_value="a", value_type=int)
+        with pytest.raises(ValueError):
+            QtAlgorithmProperty.from_algorithm_property(ap)
+        ap.default_value = 1.0
+        with pytest.raises(ValueError):
+            QtAlgorithmProperty.from_algorithm_property(ap)
+        ap = AlgorithmProperty(name="test", user_name="Test", default_value="a", value_type=float)
+        with pytest.raises(ValueError):
+            QtAlgorithmProperty.from_algorithm_property(ap)
+
+    def test_per_dimension(self, qtbot):
+        ap = AlgorithmProperty(name="test", user_name="Test", default_value=1, per_dimension=True)
+        res = QtAlgorithmProperty.from_algorithm_property(ap)
+        qtbot.add_widget(res.get_field())
+        assert isinstance(res.get_field(), ListInput)
+        assert res.get_value() == [1, 1, 1]
+        with qtbot.wait_signal(res.change_fun):
+            res.set_value([2, 4, 6])
+        assert res.get_value() == [2, 4, 6]
+
+        with qtbot.wait_signal(res.change_fun):
+            res.set_value(1)
+
+        assert res.get_value() == [1, 1, 1]

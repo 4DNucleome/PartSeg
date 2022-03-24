@@ -32,7 +32,7 @@ class Channel:
         return str(self._value + 1) if isinstance(self._value, int) else self._value
 
     def __eq__(self, other):
-        return self._value == other.value
+        return isinstance(other, Channel) and self._value == other.value
 
     def __hash__(self):
         return hash(self._value)
