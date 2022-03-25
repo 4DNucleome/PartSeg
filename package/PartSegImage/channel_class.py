@@ -31,6 +31,9 @@ class Channel:
     def __str__(self):
         return str(self._value + 1) if isinstance(self._value, int) else self._value
 
+    def __repr__(self):
+        return f"<{self.__class__.__module__}.{self.__class__.__name__}(value={self._value})>"
+
     def __eq__(self, other):
         return isinstance(other, Channel) and self._value == other.value
 

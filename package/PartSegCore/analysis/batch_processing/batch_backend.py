@@ -356,7 +356,10 @@ class CalculationProcess:
             )
             if segmentation_class is None:  # pragma: no cover
                 raise ValueError(f"Segmentation class {self.algorithm_parameters['algorithm_name']} do not found")
-            channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
+            if segmentation_class.__new_style__:
+                channel = getattr(self.algorithm_parameters["values"], segmentation_class.get_channel_parameter_name())
+            else:
+                channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
         # FIXME use additional information
         old_mask = self.image.mask

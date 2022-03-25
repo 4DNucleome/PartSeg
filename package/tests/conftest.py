@@ -160,7 +160,7 @@ def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_paramet
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[3:-3, x + 4 : x + 16, y + 4 : y + 16] = i
     data = ROIInfo(stack_image.image.fit_array_to_image(data))
-    mask_segmentation_parameters.values["threshold"]["values"]["threshold"] = 110
+    mask_segmentation_parameters.values.threshold.values.threshold = 110
     parameters = {i: deepcopy(mask_segmentation_parameters) for i in range(1, 5)}
     return dataclasses.replace(
         stack_image, roi_info=data, roi_extraction_parameters=parameters, selected_components=[1, 3]

@@ -7,14 +7,14 @@ from copy import deepcopy
 
 import numpy as np
 import SimpleITK
-from pydantic import Field
+from pydantic import Field, validator
 
 from PartSegCore.utils import BaseModel
 from PartSegCore_compiled_backend.multiscale_opening import PyMSO, calculate_mu_mid
 from PartSegImage import Channel
 
 from ..algorithm_describe_base import ROIExtractionProfile
-from ..class_register import register_class, rename_key
+from ..class_register import REGISTER, class_to_str, register_class, rename_key
 from ..mask_partition_utils import BorderRim as BorderRimBase
 from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
 from ..project_info import AdditionalLayerDescription
@@ -142,6 +142,15 @@ class ThresholdBaseAlgorithmParameters(BaseModel):
         title="Connect only sides",
         description="During calculation of connected components includes only side by side connected pixels",
     )
+
+    @validator("noise_filtering")
+    def _noise_filter_validate(cls, v):
+        if not isinstance(v, dict):
+            return v
+        algorithm = NoiseFilterSelection[v["name"]]
+        if not algorithm.__new_style__:
+            return v
+        return algorithm.__argument_class__(**REGISTER.migrate_data(class_to_str(algorithm.__argument_class__), {}, v))
 
 
 class ThresholdBaseAlgorithmParametersAnnot(ThresholdBaseAlgorithmParameters):

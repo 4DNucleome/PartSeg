@@ -244,11 +244,11 @@ class FlowMethodSelection(AlgorithmSelection, class_methods=["sprawl"], suggeste
     """This register contains algorithms for sprawl area from core object."""
 
 
-FlowMethodSelection.register(MSOWatershed)
-FlowMethodSelection.register(PathWatershed)
-FlowMethodSelection.register(DistanceWatershed)
-FlowMethodSelection.register(PathDistanceWatershed)
-FlowMethodSelection.register(FDTWatershed)
+FlowMethodSelection.register(MSOWatershed, old_names=["MultiScale Opening sprawl"])
+FlowMethodSelection.register(PathWatershed, old_names=["Path sprawl"])
+FlowMethodSelection.register(DistanceWatershed, old_names=["Euclidean sprawl"])
+FlowMethodSelection.register(PathDistanceWatershed, old_names=["Path euclidean sprawl"])
+FlowMethodSelection.register(FDTWatershed, old_names=["Fuzzy distance sprawl"])
 
 
 def __getattr__(name):  # pragma: no cover

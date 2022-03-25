@@ -285,8 +285,8 @@ class TestJsonLoad:
         file_path = os.path.join(bundle_test_dir, "segment_profile_0.9.2.3.json")
         assert os.path.exists(file_path)
         data = UpdateLoadedMetadataBase.load_json_data(file_path)
-        assert "noise_filtering" in data["test_0.9.2.3"].values
-        assert "dimension_type" in data["test_0.9.2.3"].values["noise_filtering"]["values"]
+        assert hasattr(data["test_0.9.2.3"].values, "noise_filtering")
+        assert hasattr(data["test_0.9.2.3"].values.noise_filtering.values, "dimension_type")
         file_path = os.path.join(bundle_test_dir, "calculation_plan_0.9.2.3.json")
         data = UpdateLoadedMetadataAnalysis.load_json_data(file_path)
 

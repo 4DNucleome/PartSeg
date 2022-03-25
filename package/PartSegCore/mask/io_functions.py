@@ -18,7 +18,6 @@ from napari.plugins._builtins import napari_write_points
 from PartSegImage import BaseImageWriter, GenericImageReader, Image, IMAGEJImageWriter, ImageWriter, TiffImageReader
 from PartSegImage.image import FRAME_THICKNESS, reduce_array
 
-from .._old_json_hooks import ProfileEncoder
 from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from ..io_utils import (
     LoadBase,
@@ -657,7 +656,7 @@ class SaveParametersJSON(SaveBase):
         :return:
         """
         with open(save_location, "w", encoding="utf-8") as ff:
-            json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=ProfileEncoder)
+            json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=PartSegEncoder)
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:

@@ -10,7 +10,7 @@ from pydantic import create_model, validator
 from pydantic.main import ModelMetaclass
 from typing_extensions import Annotated
 
-from PartSegCore.class_register import class_to_str
+from PartSegCore.class_register import REGISTER, class_to_str
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 
@@ -354,6 +354,9 @@ class AddRegisterMeta(ModelMetaclass):
     def __getitem__(self, item) -> AlgorithmType:
         return self.__register__[item]
 
+    def __contains__(self, item) -> bool:
+        return self.__register__.__contains__(item)
+
     def get(self, item, default=None):
         return self.__register__.get(item, default)
 
@@ -424,6 +427,26 @@ class ROIExtractionProfile(BaseModel):
     name: str
     algorithm: str
     values: typing.Any
+
+    @validator("values")
+    def validate_values(cls, v, values):
+        if not isinstance(v, dict):
+            return v
+        if "algorithm" not in values:
+            return v
+        from PartSegCore.analysis import AnalysisAlgorithmSelection
+        from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
+
+        name = values["algorithm"]
+        is_analysis = name in AnalysisAlgorithmSelection
+        is_mask = name in MaskAlgorithmSelection
+        if is_analysis == is_mask:
+            return v
+        algorithm = AnalysisAlgorithmSelection[name] if is_analysis else MaskAlgorithmSelection[name]
+        if not algorithm.__new_style__:
+            return v
+        dkt_migrated = REGISTER.migrate_data(class_to_str(algorithm.__argument_class__), {}, v)
+        return algorithm.__argument_class__(**dkt_migrated)
 
     def pretty_print(self, algorithm_dict):
         if isinstance(algorithm_dict, AlgorithmSelection):

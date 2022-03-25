@@ -9,7 +9,7 @@ from pydantic import Field
 from PartSegCore.utils import BaseModel
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
-from ..class_register import register_class, update_argument
+from ..class_register import register_class, rename_key, update_argument
 from ..image_operations import bilateral, gaussian, median
 from .algorithm_base import calculate_operation_radius as _calculate_operation_radius
 
@@ -51,6 +51,7 @@ class NoneNoiseFiltering(NoiseFilteringBase):
         return channel
 
 
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("gauss_type", "dimension_type", optional=True))])
 class GaussNoiseFilteringParams(BaseModel):
     dimension_type: DimensionType = Field(DimensionType.Layer, title="Gauss type")
     radius: float = Field(1.0, title="Gauss radius", ge=0, le=100)
