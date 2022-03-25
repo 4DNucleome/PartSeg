@@ -13,15 +13,13 @@ import imageio
 import numpy as np
 import pandas as pd
 import tifffile
-from napari.utils import Colormap
 
 from PartSegCore.json_hooks import partseg_object_hook
 from PartSegImage import ImageWriter
 from PartSegImage.image import minimal_dtype
 
-from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
+from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from .project_info import ProjectInfoBase
-from .utils import ProfileDict
 
 
 class SegmentationType(Enum):
@@ -191,93 +189,22 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         return False
 
 
-class UpdateLoadedMetadataBase:
-    json_hook = staticmethod(partseg_object_hook)
-
-    @classmethod
-    def load_json_data(cls, data: typing.Union[str, Path, typing.TextIO]):
-        try:
-            if isinstance(data, typing.TextIO):
-                decoded_data = json.load(data, object_hook=cls.json_hook)
-            elif os.path.exists(data):
-                with open(data, encoding="utf-8") as ff:
-                    decoded_data = json.load(ff, object_hook=cls.json_hook)
-            else:
-                decoded_data = json.loads(data, object_hook=cls.json_hook)
-        except ValueError as e:
-            try:
-                decoded_data = json.loads(data, object_hook=cls.json_hook)
-            except Exception:
-                raise e
-
-        return cls.recursive_update(decoded_data)
-
-    @classmethod
-    def recursive_update(cls, data):
-        if isinstance(data, (tuple, list)):
-            return type(data)([cls.recursive_update(x) for x in data])
-        if isinstance(data, ROIExtractionProfile):
-            return cls.update_segmentation_profile(data)
-        if isinstance(data, Enum):
-            return cls.update_enum(data)
-        if isinstance(data, typing.MutableMapping):
-            for key in data.keys():
-                data[key] = cls.recursive_update(data[key])
-                if key == "custom_colormap":
-                    cls.update_colormaps(data[key])
-        if isinstance(data, ProfileDict):
-            data.my_dict = cls.recursive_update(data.my_dict)
-        return data
-
-    @staticmethod
-    def update_colormaps(dkt: dict):
-        for key, val in dkt.items():
-            if isinstance(val, Colormap):
-                val.name = key
-
-    @classmethod
-    def update_enum(cls, enum_data: Enum):
-        return enum_data
-
-    # noinspection PyUnusedLocal
-    @classmethod
-    def update_segmentation_sub_dict(cls, name: str, dkt: typing.MutableMapping) -> typing.MutableMapping:
-
-        if "values" not in dkt:
-            return dkt
-        if name == "sprawl_type" and dkt["name"].endswith(" sprawl"):
-            dkt["name"] = dkt["name"][: -len(" sprawl")]
-        if not isinstance(dkt["values"], typing.MutableMapping):
-            return dkt
-        for key in dkt["values"].keys():
-            item = dkt["values"][key]
-            if isinstance(item, Enum):
-                dkt["values"][key] = cls.update_enum(item)
-            elif isinstance(item, typing.MutableMapping):
-                dkt["values"][key] = cls.update_segmentation_sub_dict(key, item)
-        return dkt
-
-    @classmethod
-    def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
-        if not isinstance(profile_data.values, dict):
-            return profile_data
-        for key in list(profile_data.values.keys()):
-            item = profile_data.values[key]
-            if isinstance(item, Enum):
-                profile_data.values[key] = cls.update_enum(item)
-            elif isinstance(item, typing.MutableMapping):
-                if key == "noise_removal":
-                    del profile_data.values[key]
-                    key = "noise_filtering"
-                if "values" in item and "gauss_type" in item["values"]:
-                    item["values"]["dimension_type"] = item["values"]["gauss_type"]
-                    del item["values"]["gauss_type"]
-                profile_data.values[key] = cls.update_segmentation_sub_dict(key, item)
-        return profile_data
-
-
 def load_metadata_base(data: typing.Union[str, Path]):
-    return UpdateLoadedMetadataBase.load_json_data(data)
+    try:
+        if isinstance(data, typing.TextIO):
+            decoded_data = json.load(data, object_hook=partseg_object_hook)
+        elif os.path.exists(data):
+            with open(data, encoding="utf-8") as ff:
+                decoded_data = json.load(ff, object_hook=partseg_object_hook)
+        else:
+            decoded_data = json.loads(data, object_hook=partseg_object_hook)
+    except ValueError as e:
+        try:
+            decoded_data = json.loads(data, object_hook=partseg_object_hook)
+        except Exception:
+            raise e
+
+    return decoded_data
 
 
 def proxy_callback(

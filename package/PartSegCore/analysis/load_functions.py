@@ -19,14 +19,13 @@ from tifffile import TiffFile
 from PartSegImage import GenericImageReader
 
 from ..algorithm_describe_base import Register, ROIExtractionProfile
-from ..class_register import REGISTER, class_to_str
 from ..io_utils import (
     LoadBase,
     LoadPoints,
     SegmentationType,
-    UpdateLoadedMetadataBase,
     WrongFileTypeException,
     check_segmentation_type,
+    load_metadata_base,
     open_tar_file,
     proxy_callback,
     tar_to_buff,
@@ -36,12 +35,7 @@ from ..project_info import HistoryElement
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
 from ..utils import ProfileDict, check_loaded_dict
-from .algorithm_description import AnalysisAlgorithmSelection
-from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
-from .calculation_plan import CalculationPlan, CalculationTree, MeasurementCalculate
 from .io_utils import MaskInfo, ProjectTuple, project_version_info
-from .measurement_base import Leaf, MeasurementEntry, Node
-from .measurement_calculation import MeasurementProfile
 
 __all__ = [
     "LoadStackImage",
@@ -50,7 +44,6 @@ __all__ = [
     "LoadMask",
     "load_dict",
     "load_metadata",
-    "UpdateLoadedMetadataAnalysis",
     "LoadMaskSegmentation",
 ]
 
@@ -318,85 +311,6 @@ class LoadMaskSegmentation(LoadBase):
         return res
 
 
-class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
-    @classmethod
-    def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
-        with suppress(Exception):
-            algorithm = AnalysisAlgorithmSelection[profile_data.algorithm]
-            if algorithm.__new_style__ and isinstance(profile_data.values, dict):
-                dkt_migrated = REGISTER.migrate_data(
-                    class_to_str(algorithm.__argument_class__), {}, profile_data.values
-                )
-                profile_data.values = algorithm.__argument_class__(**dkt_migrated)
-
-        return super().update_segmentation_profile(profile_data)
-
-    @classmethod
-    def update_calculation_tree(cls, data: CalculationTree) -> CalculationTree:
-        data.operation = cls.recursive_update(data.operation)
-        data.children = [cls.update_calculation_tree(x) for x in data.children]
-        return data
-
-    @classmethod
-    def update_calculation_plan(cls, data: CalculationPlan) -> CalculationPlan:
-        data.execution_tree = cls.update_calculation_tree(data.execution_tree)
-        return data
-
-    @classmethod
-    def update_segmentation_pipeline_element(cls, data: SegmentationPipelineElement) -> SegmentationPipelineElement:
-        return SegmentationPipelineElement(
-            segmentation=cls.update_segmentation_profile(data.segmentation), mask_property=data.mask_property
-        )
-
-    @classmethod
-    def update_segmentation_pipeline(cls, data: SegmentationPipeline) -> SegmentationPipeline:
-        return SegmentationPipeline(
-            name=data.name,
-            segmentation=cls.update_segmentation_profile(data.segmentation),
-            mask_history=[cls.update_segmentation_pipeline_element(x) for x in data.mask_history],
-        )
-
-    @classmethod
-    def update_measurement_profile(cls, data: MeasurementProfile) -> MeasurementProfile:
-        data.chosen_fields = [cls.update_measurement_entry(x) for x in data.chosen_fields]
-        return data
-
-    @classmethod
-    def update_measurement_entry(cls, data: MeasurementEntry) -> MeasurementEntry:
-        return data.copy(update=dict(calculation_tree=cls.update_measurement_calculation_tree(data.calculation_tree)))
-
-    @classmethod
-    def update_measurement_calculation_tree(cls, data: typing.Union[Leaf, Node]) -> typing.Union[Leaf, Node]:
-        if isinstance(data, Leaf):
-            return data
-
-        return data.copy(
-            update=dict(
-                left=cls.update_measurement_calculation_tree(data.left),
-                right=cls.update_measurement_calculation_tree(data.right),
-            )
-        )
-
-    @classmethod
-    def update_measurement_calculate(cls, data: MeasurementCalculate):
-        return data.copy(update=dict(measurement_profile=cls.update_measurement_profile(data.measurement_profile)))
-
-    @classmethod
-    def recursive_update(cls, data):
-        if isinstance(data, CalculationPlan):
-            return cls.update_calculation_plan(data)
-        if isinstance(data, CalculationTree):
-            return cls.update_calculation_tree(data)
-        if isinstance(data, SegmentationPipeline):
-            return cls.update_segmentation_pipeline(data)
-        if isinstance(data, MeasurementProfile):
-            return cls.update_measurement_profile(data)
-        if isinstance(data, MeasurementCalculate):
-            return cls.update_measurement_calculate(data)
-
-        return super().recursive_update(data)
-
-
 class LoadProfileFromJSON(LoadBase):
     @classmethod
     def get_short_name(cls):
@@ -432,7 +346,7 @@ def load_metadata(data: typing.Union[str, Path]):
     :param data: path to json file, string with json, or opened file
     :return: restored structures
     """
-    return UpdateLoadedMetadataAnalysis.load_json_data(data)
+    return load_metadata_base(data)
 
 
 def update_algorithm_dict(dkt):
@@ -442,7 +356,6 @@ def update_algorithm_dict(dkt):
         profile = ROIExtractionProfile(name="", algorithm=dkt["algorithm_name"], values=dkt["values"])
     else:
         return dkt
-    profile = UpdateLoadedMetadataAnalysis.recursive_update(profile)
     res = dict(dkt)
     res.update({"algorithm_name": profile.algorithm, "values": profile.values})
     return res

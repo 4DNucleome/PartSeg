@@ -20,11 +20,11 @@ from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.calculation_plan import CalculationPlan, MaskSuffix, MeasurementCalculate
-from PartSegCore.analysis.load_functions import LoadProject, UpdateLoadedMetadataAnalysis
+from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
-from PartSegCore.io_utils import LoadBase, SaveBase, SaveROIAsNumpy, UpdateLoadedMetadataBase
+from PartSegCore.io_utils import LoadBase, SaveBase, SaveROIAsNumpy, load_metadata_base
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
@@ -284,14 +284,14 @@ class TestJsonLoad:
     def test_modernize_0_9_2_3(self, bundle_test_dir):
         file_path = os.path.join(bundle_test_dir, "segment_profile_0.9.2.3.json")
         assert os.path.exists(file_path)
-        data = UpdateLoadedMetadataBase.load_json_data(file_path)
+        data = load_metadata_base(file_path)
         assert hasattr(data["test_0.9.2.3"].values, "noise_filtering")
         assert hasattr(data["test_0.9.2.3"].values.noise_filtering.values, "dimension_type")
         file_path = os.path.join(bundle_test_dir, "calculation_plan_0.9.2.3.json")
-        data = UpdateLoadedMetadataAnalysis.load_json_data(file_path)
+        data = load_metadata_base(file_path)
 
     def test_update_name(self):
-        data = UpdateLoadedMetadataAnalysis.load_json_data(update_name_json)
+        data = load_metadata_base(update_name_json)
         mp = data["problematic set"]
         assert isinstance(mp, MeasurementProfile)
         assert isinstance(mp.chosen_fields[0], MeasurementEntry)
@@ -300,7 +300,7 @@ class TestJsonLoad:
         assert mp.chosen_fields[1].calculation_tree.name == "Components number"
 
     def test_load_workflow(self, bundle_test_dir):
-        data = UpdateLoadedMetadataAnalysis.load_json_data(os.path.join(bundle_test_dir, "workflow.json"))
+        data = load_metadata_base(os.path.join(bundle_test_dir, "workflow.json"))
         plan = data["workflow"]
         assert isinstance(plan, CalculationPlan)
         mask_step = plan.execution_tree.children[0]

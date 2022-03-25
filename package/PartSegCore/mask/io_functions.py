@@ -27,10 +27,10 @@ from ..io_utils import (
     SaveROIAsNumpy,
     SaveROIAsTIFF,
     SegmentationType,
-    UpdateLoadedMetadataBase,
     WrongFileTypeException,
     check_segmentation_type,
     get_tarinfo,
+    load_metadata_base,
     open_tar_file,
     proxy_callback,
     tar_to_buff,
@@ -704,7 +704,7 @@ def load_metadata(data: typing.Union[str, Path, typing.TextIO]):
     :param data: path to json file, string with json, or opened file
     :return: restored structures
     """
-    return UpdateLoadedMetadataBase.load_json_data(data)
+    return load_metadata_base(data)
 
 
 load_dict = Register(
