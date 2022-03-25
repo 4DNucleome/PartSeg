@@ -318,7 +318,7 @@ class ListInput(QWidget):
         self.input_list = [property_el.from_algorithm_property(property_el) for _ in range(length)]
         layout = QVBoxLayout()
         for el in self.input_list:
-            el.change_fun.connect(self.change_signal.emit)
+            el.change_fun.connect(_any_arguments(self.change_signal.emit))
             layout.addWidget(el.get_field())
         self.setLayout(layout)
 
