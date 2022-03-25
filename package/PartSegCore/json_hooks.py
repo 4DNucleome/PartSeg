@@ -18,7 +18,14 @@ def add_class_info(obj, dkt):
         class_to_str(sup_obj): str(REGISTER.get_version(sup_obj))
         for sup_obj in obj.__class__.__mro__
         if class_to_str(sup_obj)
-        not in {"object", "pydantic.main.BaseModel", "pydantic.utils.Representation", "enum.Enum", "builtins.object"}
+        not in {
+            "object",
+            "pydantic.main.BaseModel",
+            "pydantic.utils.Representation",
+            "enum.Enum",
+            "builtins.object",
+            "PartSegCore.utils.BaseModel",
+        }
     }
     return dkt
 

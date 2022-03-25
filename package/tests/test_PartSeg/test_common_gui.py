@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 import qtpy
 from magicgui.widgets import Widget
-from pydantic import BaseModel, Field
+from pydantic import Field
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import QCheckBox, QComboBox, QFileDialog, QLabel, QLineEdit, QMainWindow, QWidget
 from superqt import QEnumComboBox
@@ -48,6 +48,7 @@ from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, loa
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
 from PartSegCore.class_register import register_class
 from PartSegCore.io_utils import SaveBase
+from PartSegCore.utils import BaseModel
 from PartSegImage import Channel, Image, ImageWriter
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")

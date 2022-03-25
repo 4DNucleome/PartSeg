@@ -4,8 +4,9 @@ from typing import Callable, Optional
 
 import numpy as np
 import SimpleITK as sitk
-from pydantic import BaseModel, Extra, Field
+from pydantic import Field
 
+from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 
 from ..class_register import register_class, rename_key
@@ -38,7 +39,7 @@ class StackAlgorithm(ROIExtractionAlgorithm, ABC):
 
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
-class ThresholdPreviewParameters(BaseModel, extra=Extra.forbid):
+class ThresholdPreviewParameters(BaseModel):
     channel: Channel = 0
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     threshold: int = Field(1000, ge=0, le=10**6)
@@ -101,7 +102,7 @@ def _migrate_smooth_border(dkt: dict):
         ("0.0.2", rename_key("noise_removal", "noise_filtering", optional=True)),
     ],
 )
-class BaseThresholdAlgorithmParameters(BaseModel, extra=Extra.forbid):
+class BaseThresholdAlgorithmParameters(BaseModel):
     channel: Channel = 0
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Threshold")
@@ -419,7 +420,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         return self._threshold_image(image)
 
 
-class CellFromNucleusFlowParameters(BaseModel, extra=Extra.forbid):
+class CellFromNucleusFlowParameters(BaseModel):
     nucleus_channel: Channel = Field(0, title="Nucleus Channel")
     nucleus_noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     nucleus_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Threshold")

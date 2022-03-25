@@ -8,7 +8,9 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel as PydanticBaseModel
+
+from PartSegCore.utils import BaseModel
 
 from ..algorithm_describe_base import ROIExtractionProfile
 from ..class_register import register_class
@@ -306,7 +308,7 @@ class CalculationTree:
 
     def __init__(
         self,
-        operation: typing.Union[BaseModel, ROIExtractionProfile, MeasurementCalculate, RootType],
+        operation: typing.Union[PydanticBaseModel, ROIExtractionProfile, MeasurementCalculate, RootType],
         children: typing.List["CalculationTree"],
     ):
         if operation == "root":

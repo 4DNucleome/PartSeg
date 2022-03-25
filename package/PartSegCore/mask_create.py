@@ -2,8 +2,8 @@ import typing
 
 import numpy as np
 import SimpleITK as sitk
-from pydantic import BaseModel
 
+from PartSegCore.utils import BaseModel
 from PartSegImage.image import minimal_dtype
 
 from .class_register import register_class

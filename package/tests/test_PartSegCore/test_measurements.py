@@ -10,7 +10,6 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-from pydantic import BaseModel
 from sympy import symbols
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -54,6 +53,7 @@ from PartSegCore.autofit import density_mass_center
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegCore.utils import BaseModel
 from PartSegImage import Channel, Image
 
 

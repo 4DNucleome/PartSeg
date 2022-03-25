@@ -7,8 +7,9 @@ from copy import deepcopy
 
 import numpy as np
 import SimpleITK
-from pydantic import BaseModel, Extra, Field
+from pydantic import Field
 
+from PartSegCore.utils import BaseModel
 from PartSegCore_compiled_backend.multiscale_opening import PyMSO, calculate_mu_mid
 from PartSegImage import Channel
 
@@ -132,7 +133,7 @@ class MaskDistanceSplit(RestartableAlgorithm):
 
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
-class ThresholdBaseAlgorithmParameters(BaseModel, extra=Extra.forbid):
+class ThresholdBaseAlgorithmParameters(BaseModel):
     channel: Channel = 0
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     minimum_size: int = Field(8000, title="Minimum size (px)", ge=0, le=10**6)
@@ -327,7 +328,7 @@ class UpperThresholdAlgorithm(OneThresholdAlgorithm):
         return "Upper threshold"
 
 
-class TwoThreshold(BaseModel, extra=Extra.forbid):
+class TwoThreshold(BaseModel):
     lower_threshold: float = Field(1000, ge=0, le=10**6)
     upper_threshold: float = Field(10000, ge=0, le=10**6)
 
@@ -482,7 +483,7 @@ class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
 
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
-class OtsuSegmentParameters(BaseModel, extra=Extra.forbid):
+class OtsuSegmentParameters(BaseModel):
     channel: Channel = 0
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Noise Removal")
     components: int = Field(2, title="Number of Components", ge=0, lt=100)

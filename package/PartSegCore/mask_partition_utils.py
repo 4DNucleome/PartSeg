@@ -12,15 +12,16 @@ import typing
 
 import numpy as np
 import SimpleITK
-from pydantic import BaseModel, Extra, Field
+from pydantic import Field
 from scipy.ndimage import distance_transform_edt
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase
+from PartSegCore.utils import BaseModel
 
 from .universal_const import UNIT_SCALE, Units
 
 
-class BorderRimParameters(BaseModel, extra=Extra.forbid):
+class BorderRimParameters(BaseModel):
     distance: float = Field(500, ge=0, le=10**6)
     units: Units = Units.nm
 
@@ -70,7 +71,7 @@ class BorderRim(AlgorithmDescribeBase):
         return mask
 
 
-class MaskDistanceSplitParameters(BaseModel, extra=Extra.forbid):
+class MaskDistanceSplitParameters(BaseModel):
     num_of_parts: int = Field(2, title="Number of Parts", ge=1, le=1024)
     equal_volume: bool = Field(
         False,

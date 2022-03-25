@@ -4,11 +4,10 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from pydantic import BaseModel
 
 from PartSegCore.mask_create import MaskProperty, calculate_mask
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.utils import numpy_repr
+from PartSegCore.utils import BaseModel, numpy_repr
 from PartSegImage import Image
 
 if sys.version_info.minor < 8:

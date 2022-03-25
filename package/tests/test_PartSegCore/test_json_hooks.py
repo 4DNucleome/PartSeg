@@ -8,13 +8,12 @@ import numpy as np
 import pytest
 from napari.utils import Colormap
 from napari.utils.notifications import NotificationSeverity
-from pydantic import BaseModel
 
 from PartSegCore._old_json_hooks import ProfileEncoder, profile_hook
 from PartSegCore.class_register import class_to_str, register_class, rename_key
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.json_hooks import PartSegEncoder, add_class_info, partseg_object_hook
-from PartSegCore.utils import ProfileDict
+from PartSegCore.utils import BaseModel, ProfileDict
 
 
 @dataclass

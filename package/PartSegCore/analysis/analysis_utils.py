@@ -1,9 +1,8 @@
 import typing
 from textwrap import indent
 
-from pydantic import BaseModel
-
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.utils import BaseModel
 
 from ..mask_create import MaskProperty
 

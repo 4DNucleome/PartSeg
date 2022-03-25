@@ -4,9 +4,10 @@ from enum import Enum
 from typing import Any, Dict, ForwardRef, Optional, Set, Union
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import Field
 from sympy import Symbol, symbols
 
+from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 from PartSegImage.image import Spacing
 

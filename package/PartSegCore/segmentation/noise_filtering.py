@@ -4,7 +4,9 @@ from abc import ABC
 from enum import Enum
 
 import numpy as np
-from pydantic import BaseModel, Extra, Field
+from pydantic import Field
+
+from PartSegCore.utils import BaseModel
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
 from ..class_register import register_class, update_argument
@@ -49,7 +51,7 @@ class NoneNoiseFiltering(NoiseFilteringBase):
         return channel
 
 
-class GaussNoiseFilteringParams(BaseModel, extra=Extra.forbid):
+class GaussNoiseFilteringParams(BaseModel):
     dimension_type: DimensionType = Field(DimensionType.Layer, title="Gauss type")
     radius: float = Field(1.0, title="Gauss radius", ge=0, le=100)
 
@@ -69,7 +71,7 @@ class GaussNoiseFiltering(NoiseFilteringBase):
         return gaussian(channel, gauss_radius, layer=layer)
 
 
-class BilateralNoiseFilteringParams(BaseModel, extra=Extra.forbid):
+class BilateralNoiseFilteringParams(BaseModel):
     dimension_type: DimensionType = Field(DimensionType.Layer, title="Bilateral type")
     radius: float = Field(1.0, title="Bilateral radius", ge=0, le=100)
 
@@ -98,7 +100,7 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     return res
 
 
-class MedianNoiseFilteringParams(BaseModel, extra=Extra.forbid):
+class MedianNoiseFilteringParams(BaseModel):
     dimension_type: DimensionType = Field(DimensionType.Layer, title="Median type")
     radius: int = Field(1, title="Median radius", ge=0, le=100)
 

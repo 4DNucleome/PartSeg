@@ -9,6 +9,7 @@ from contextlib import suppress
 from types import MethodType
 
 import numpy as np
+from pydantic import BaseModel as PydanticBaseModel
 
 __author__ = "Grzegorz Bokota"
 
@@ -398,3 +399,8 @@ def check_loaded_dict(dkt) -> bool:
     if "__error__" in dkt:
         return False
     return all(check_loaded_dict(val) for val in dkt.values())
+
+
+class BaseModel(PydanticBaseModel):
+    class Config:
+        extra = "forbid"

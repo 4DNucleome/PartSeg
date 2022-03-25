@@ -370,11 +370,14 @@ class FormWidget(QWidget):
         self.setLayout(layout)
         self.value_changed.connect(self.update_size)
 
-    def _add_to_layout(self, layout, ap: QtAlgorithmProperty, start_values: typing.MutableMapping, settings):
+    def _add_to_layout(
+        self, layout, ap: QtAlgorithmProperty, start_values: typing.MutableMapping, settings, add_to_widget_dict=True
+    ):
         label = QLabel(ap.user_name)
         if ap.help_text:
             label.setToolTip(ap.help_text)
-        self.widgets_dict[ap.name] = ap
+        if add_to_widget_dict:
+            self.widgets_dict[ap.name] = ap
         ap.change_fun.connect(_any_arguments(self.value_changed.emit))
         if isinstance(ap.get_field(), SubAlgorithmWidget):
             layout.addRow(label, ap.get_field().choose)
@@ -389,7 +392,7 @@ class FormWidget(QWidget):
         if isinstance(ap.get_field(), FieldsList):
             layout.addRow(label)
             for el in ap.get_field().field_list:
-                self._add_to_layout(layout, el, start_values.get(ap.name, {}), settings)
+                self._add_to_layout(layout, el, start_values.get(ap.name, {}), settings, add_to_widget_dict=False)
             return
         layout.addRow(label, ap.get_field())
         # noinspection PyUnresolvedReferences

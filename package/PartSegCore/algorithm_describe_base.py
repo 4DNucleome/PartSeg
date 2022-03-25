@@ -5,11 +5,13 @@ import warnings
 from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
 
-from pydantic import BaseModel, Extra, create_model, validator
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import create_model, validator
 from pydantic.main import ModelMetaclass
 from typing_extensions import Annotated
 
 from PartSegCore.class_register import class_to_str
+from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 
 if typing.TYPE_CHECKING:
@@ -132,7 +134,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     For each group of algorithm base abstract class will add additional methods
     """
 
-    __argument_class__: typing.Optional[typing.Type[BaseModel]] = None
+    __argument_class__: typing.Optional[typing.Type[PydanticBaseModel]] = None
     __new_style__: bool
 
     @classmethod
@@ -356,14 +358,14 @@ class AddRegisterMeta(ModelMetaclass):
         return self.__register__.get(item, default)
 
 
-class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta, extra=Extra.forbid):  # pylint: disable=E1139
+class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disable=E1139
     """
     Base class for algorithm selection.
     For given algorithm there should be Register instance set __register__ class variable.
     """
 
     name: str
-    values: typing.Union[BaseModel, typing.Dict[str, typing.Any]]
+    values: typing.Union[PydanticBaseModel, typing.Dict[str, typing.Any]]
     class_path: str = ""
     if typing.TYPE_CHECKING:
         __register__: Register

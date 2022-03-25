@@ -24,11 +24,12 @@ import numpy as np
 import pandas as pd
 import SimpleITK
 from mahotas.features import haralick
-from pydantic import BaseModel, Extra, Field
+from pydantic import Field
 from scipy.spatial.distance import cdist
 from sympy import symbols
 
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
+from PartSegCore.utils import BaseModel
 from PartSegImage import Channel, Image
 
 from .. import autofit as af
@@ -261,7 +262,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         return res
 
 
-class MeasurementProfile(BaseModel, extra=Extra.forbid):
+class MeasurementProfile(BaseModel):
     name: str
     chosen_fields: List[MeasurementEntry]
     name_prefix: str = ""
@@ -1216,7 +1217,7 @@ class DistancePoint(Enum):
         return self.name.replace("_", " ")
 
 
-class DistanceMaskROIParameters(BaseModel, extra=Extra.forbid):
+class DistanceMaskROIParameters(BaseModel):
     distance_from_mask: DistancePoint = DistancePoint.Border
     distance_to_segmentation: DistancePoint = Field(DistancePoint.Border, title="Distance to ROI")
     # TODO migrate name
@@ -1287,7 +1288,7 @@ class DistanceMaskROI(MeasurementMethodBase):
         return AreaType.ROI
 
 
-class DistanceROIROIParameters(BaseModel, extra=Extra.forbid):
+class DistanceROIROIParameters(BaseModel):
     profile: ROIExtractionProfile = Field(
         ROIExtractionProfile(
             name="default",
@@ -1362,7 +1363,7 @@ class DistanceROIROI(DistanceMaskROI):
         return True
 
 
-class ROINeighbourhoodROIParameters(BaseModel, extra=Extra.forbid):
+class ROINeighbourhoodROIParameters(BaseModel):
     profile: ROIExtractionProfile = Field(
         ROIExtractionProfile(
             name="default",
@@ -1529,7 +1530,7 @@ def _rescale_image(data: np.ndarray):
     return ((data - min_val) / ((max_val - min_val) / 255)).astype(np.uint8)
 
 
-class HaralickParameters(BaseModel, extra=Extra.forbid):
+class HaralickParameters(BaseModel):
     feature: HaralickEnum = HaralickEnum.AngularSecondMoment
     distance: int = Field(1, ge=1, le=10)
 
@@ -1592,7 +1593,7 @@ class ComponentBoundingBox(MeasurementMethodBase):
         return super().get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
 
 
-class GetROIAnnotationTypeParameters(BaseModel, extra=Extra.forbid):
+class GetROIAnnotationTypeParameters(BaseModel):
     name: str = ""
 
 
@@ -1613,7 +1614,7 @@ class GetROIAnnotationType(MeasurementMethodBase):
         return "str"
 
 
-class ColocalizationMeasurementParameters(BaseModel, extra=Extra.forbid):
+class ColocalizationMeasurementParameters(BaseModel):
     channel_fst: Channel = Field(0, title="Channel 1")
     channel_scd: Channel = Field(1, title="Channel 2")
     colocalization: CorrelationEnum = CorrelationEnum.pearson

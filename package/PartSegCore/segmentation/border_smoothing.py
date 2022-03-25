@@ -3,10 +3,11 @@ from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
-from pydantic import BaseModel, Extra, Field
+from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
 from PartSegCore.segmentation.watershed import NeighType, get_neighbourhood
+from PartSegCore.utils import BaseModel
 
 
 class BaseSmoothing(AlgorithmDescribeBase, ABC):
@@ -27,7 +28,7 @@ class NoneSmoothing(BaseSmoothing):
         return segmentation
 
 
-class OpeningSmoothingParams(BaseModel, extra=Extra.forbid):
+class OpeningSmoothingParams(BaseModel):
     smooth_border_radius: int = Field(2, title="Smooth borders radius", ge=1, le=20)
 
 
@@ -46,7 +47,7 @@ class OpeningSmoothing(BaseSmoothing):
         return sitk.GetArrayFromImage(sitk.BinaryMorphologicalOpening(sitk.GetImageFromArray(segmentation), radius))
 
 
-class VoteSmoothingParams(BaseModel, extra=Extra.forbid):
+class VoteSmoothingParams(BaseModel):
     neighbourhood_type: NeighType = Field(
         NeighType.edges, title="Side Neighbourhood", description="use 6, 18 or 26 neighbourhood (5, 8, 8 for 2d data)"
     )

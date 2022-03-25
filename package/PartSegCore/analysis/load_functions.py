@@ -352,7 +352,7 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     def update_segmentation_pipeline(cls, data: SegmentationPipeline) -> SegmentationPipeline:
         return SegmentationPipeline(
             name=data.name,
-            segmentaion=cls.update_segmentation_profile(data.segmentation),
+            segmentation=cls.update_segmentation_profile(data.segmentation),
             mask_history=[cls.update_segmentation_pipeline_element(x) for x in data.mask_history],
         )
 

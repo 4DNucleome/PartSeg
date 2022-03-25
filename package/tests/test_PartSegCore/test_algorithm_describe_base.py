@@ -3,7 +3,8 @@ import typing
 from enum import Enum
 
 import pytest
-from pydantic import BaseModel, Extra, Field, ValidationError
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field, ValidationError
 
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
@@ -13,6 +14,7 @@ from PartSegCore.algorithm_describe_base import (
     base_model_to_algorithm_property,
 )
 from PartSegCore.class_register import class_to_str, register_class
+from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 
 
@@ -27,7 +29,7 @@ def test_get_description_class():
     val = SampleClass.__test_class__
     assert val.__name__ == "__test_class__"
     assert val.__qualname__.endswith("SampleClass.__test_class__")
-    assert issubclass(val, BaseModel)
+    assert issubclass(val, PydanticBaseModel)
     assert val.__fields__.keys() == {"test1", "test2"}
 
 
@@ -78,11 +80,11 @@ def test_algorithm_selection_convert_subclass(clean_register):
         pass
 
     @register_class
-    class TestModel1(BaseModel, extra=Extra.forbid):
+    class TestModel1(BaseModel):
         field1: int = 0
 
     @register_class(version="0.0.1", migrations=[("0.0.1", lambda x: {"field2": x["field"]})])
-    class TestModel2(BaseModel, extra=Extra.forbid):
+    class TestModel2(BaseModel):
         field2: int = 7
 
     class Class1(AlgorithmDescribeBase):
@@ -116,7 +118,7 @@ def test_algorithm_selection_register_old(clean_register):
         pass
 
     @register_class
-    class TestModel1(BaseModel, extra=Extra.forbid):
+    class TestModel1(BaseModel):
         field1: int = 0
 
     class Class1(AlgorithmDescribeBase):
@@ -141,7 +143,7 @@ def test_base_model_to_algorithm_property_base():
         a = 1
         b = 2
 
-    class Sample(BaseModel, extra=Extra.forbid):
+    class Sample(BaseModel):
         field1: int = Field(0, le=100, ge=0, title="Field 1")
         field2: SampleEnum = SampleEnum.a
         field_3: float = Field(0, le=55, ge=-7)
@@ -214,7 +216,7 @@ def test_base_model_to_algorithm_property_algorithm_describe_empty():
 
 
 def test_text_addition_model_to_algorithm_property():
-    class ModelWithText(BaseModel, extra=Extra.forbid):
+    class ModelWithText(BaseModel):
         field1: int = 1
         field2: int = Field(1, prefix="aaaa")
         field3: int = Field(1, suffix="bbbb")
@@ -231,7 +233,7 @@ def test_text_addition_model_to_algorithm_property():
 
 
 def test_base_model_to_algorithm_property_position():
-    class BBaseModel(BaseModel, extra=Extra.forbid):
+    class BBaseModel(BaseModel):
         field1: int = 1
         field2: int = 1
 
