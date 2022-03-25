@@ -14,7 +14,7 @@ from PartSegCore.class_generator import extract_type_info, extract_type_name
 # noinspection PyUnusedLocal
 def algorithm_parameters_doc(app: Sphinx, what, name: str, obj, options, lines: list):
     if inspect.isclass(obj) and issubclass(obj, AlgorithmDescribeBase) and not inspect.isabstract(obj):
-        fields = [x for x in obj._get_fields() if isinstance(x, AlgorithmProperty)]
+        fields = [x for x in obj._get_fields() if isinstance(x, AlgorithmProperty)]  # pylint: disable=W0212
         if fields:
             lines.extend(["", "This algorithm has following parameters:", ""])
         for el in fields:
@@ -44,7 +44,7 @@ class RegisterDocumenter(ModuleLevelDocumenter):
         k = 0
         if self.object.methods:
             self.add_line(
-                "Need methods: {}".format(", ".join("``" + x + "``" for x in self.object.methods)),
+                f'Need methods: {", ".join(f"``{x}``" for x in self.object.methods)}',
                 source,
                 k,
             )
@@ -53,7 +53,7 @@ class RegisterDocumenter(ModuleLevelDocumenter):
             k += 2
         if self.object.class_methods:
             self.add_line(
-                "Need class methods: {}".format(", ".join("``" + x + "``" for x in self.object.class_methods)),
+                f'Need class methods: {", ".join(f"``{x}``" for x in self.object.class_methods)}',
                 source,
                 k,
             )

@@ -394,7 +394,6 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         klass = cls.__register__[values["name"]]
         if not klass.__new_style__:
             return v
-        from .class_register import REGISTER
 
         dkt_migrated = REGISTER.migrate_data(class_to_str(klass.__argument_class__), {}, v)
         return klass.__argument_class__(**dkt_migrated)
