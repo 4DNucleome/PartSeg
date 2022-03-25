@@ -8,6 +8,7 @@ import tarfile
 from copy import deepcopy
 from enum import Enum
 from glob import glob
+from pathlib import Path
 from typing import Type
 
 import h5py
@@ -607,6 +608,11 @@ def test_json_parameters_mask(stack_segmentation1, tmp_path):
     SaveParametersJSON.save(tmp_path / "test.json", stack_segmentation1)
     load_param = LoadROIParameters.load([tmp_path / "test.json"])
     assert len(load_param.roi_extraction_parameters) == 4
+
+
+@pytest.mark.parametrize("file_path", (Path(__file__).parent.parent / "test_data" / "notebook").glob("*.json"))
+def test_load_notebook_json(file_path):
+    load_metadata_base(file_path)
 
 
 update_name_json = """

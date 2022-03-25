@@ -20,6 +20,7 @@ from ..universal_const import Units
     old_paths=[
         "PartSeg.utils.analysis.statistics_calculation.PerComponent",
         "PartSeg.utils.analysis.measurement_base.PerComponent",
+        "segmentation_analysis.statistics_calculation.PerComponent",
     ]
 )
 class PerComponent(Enum):
@@ -37,6 +38,7 @@ class PerComponent(Enum):
     old_paths=[
         "PartSeg.utils.analysis.statistics_calculation.AreaType",
         "PartSeg.utils.analysis.measurement_base.AreaType",
+        "segmentation_analysis.statistics_calculation.AreaType",
     ]
 )
 class AreaType(Enum):

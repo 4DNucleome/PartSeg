@@ -1,0 +1,75 @@
+{
+  "neuron_types": {
+    "__StatisticProfile__": true,
+    "name": "neuron_types",
+    "chosen_fields": [
+      {
+        "__ReadOnly__": true,
+        "__subtype__": "segmentation_analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Volume",
+        "calculation_tree": {
+          "__ReadOnly__": true,
+          "__subtype__": "segmentation_analysis.statistics_calculation.Leaf",
+          "name": "Volume",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "segmentation_analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "segmentation_analysis.statistics_calculation.PerComponent",
+            "value": 1
+          }
+        }
+      },
+      {
+        "__ReadOnly__": true,
+        "__subtype__": "segmentation_analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Volume/Mask Volume",
+        "calculation_tree": {
+          "__ReadOnly__": true,
+          "__subtype__": "segmentation_analysis.statistics_calculation.Node",
+          "left": {
+            "__ReadOnly__": true,
+            "__subtype__": "segmentation_analysis.statistics_calculation.Leaf",
+            "name": "Volume",
+            "dict": {},
+            "power": 1.0,
+            "area": {
+              "__Enum__": true,
+              "__subtype__": "segmentation_analysis.statistics_calculation.AreaType",
+              "value": 1
+            },
+            "per_component": {
+              "__Enum__": true,
+              "__subtype__": "segmentation_analysis.statistics_calculation.PerComponent",
+              "value": 1
+            }
+          },
+          "op": "/",
+          "right": {
+            "__ReadOnly__": true,
+            "__subtype__": "segmentation_analysis.statistics_calculation.Leaf",
+            "name": "Volume",
+            "dict": {},
+            "power": 1.0,
+            "area": {
+              "__Enum__": true,
+              "__subtype__": "segmentation_analysis.statistics_calculation.AreaType",
+              "value": 2
+            },
+            "per_component": {
+              "__Enum__": true,
+              "__subtype__": "segmentation_analysis.statistics_calculation.PerComponent",
+              "value": 1
+            }
+          }
+        }
+      }
+    ],
+    "name_prefix": ""
+  }
+}

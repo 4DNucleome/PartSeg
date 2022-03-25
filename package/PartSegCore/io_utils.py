@@ -200,7 +200,7 @@ def load_metadata_base(data: typing.Union[str, Path]):
             decoded_data = json.loads(data, object_hook=partseg_object_hook)
     except ValueError as e:
         try:
-            decoded_data = json.loads(data, object_hook=partseg_object_hook)
+            decoded_data = json.loads(str(data), object_hook=partseg_object_hook)
         except Exception:
             raise e
 
