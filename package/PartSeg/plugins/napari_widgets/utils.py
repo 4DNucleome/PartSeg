@@ -18,7 +18,7 @@ from PartSegImage import Channel, Image
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
     @classmethod
     def _get_field_from_value_type(cls, ap: AlgorithmProperty) -> typing.Union[QWidget, Widget]:
-        if inspect.isclass(ap.value_type) and ap.value_type is Channel:
+        if inspect.isclass(ap.value_type) and issubclass(ap.value_type, Channel):
             return create_widget(annotation=NapariImage, label="Image", options={})
         return super()._get_field_from_value_type(ap)
 
