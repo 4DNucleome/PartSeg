@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from PartSegCore._old_json_hooks import ProfileEncoder, profile_hook
+from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.utils import CallbackFun, CallbackMethod, EventedDict, ProfileDict, get_callback, recursive_update_dict
 
 
@@ -128,10 +128,10 @@ class TestEventedDict:
             **{"a": {"b": {"c": 1, "d": 2, "e": 3}, "f": 1}, "g": {"h": {"i": 1, "j": 2}, "k": [6, 7, 8]}}
         )
         with (tmp_path / "test_dict.json").open("w") as f_p:
-            json.dump(dkt, f_p, cls=ProfileEncoder)
+            json.dump(dkt, f_p, cls=PartSegEncoder)
 
         with (tmp_path / "test_dict.json").open("r") as f_p:
-            dkt2 = json.load(f_p, object_hook=profile_hook)
+            dkt2 = json.load(f_p, object_hook=partseg_object_hook)
 
         assert isinstance(dkt2, EventedDict)
         assert isinstance(dkt2["a"], EventedDict)
@@ -215,9 +215,9 @@ class TestProfileDict:
         dkt.set("a.b.c", 1)
         dkt.set("a.b.a", 2)
         with open(tmp_path / "test.json", "w") as f_p:
-            json.dump(dkt, f_p, cls=ProfileEncoder)
+            json.dump(dkt, f_p, cls=PartSegEncoder)
         with open(tmp_path / "test.json") as f_p:
-            dkt2 = json.load(f_p, object_hook=profile_hook)
+            dkt2 = json.load(f_p, object_hook=partseg_object_hook)
 
         assert dkt.my_dict == dkt2.my_dict
 
