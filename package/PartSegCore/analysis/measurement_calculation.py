@@ -1218,7 +1218,7 @@ class DistancePoint(Enum):
         return self.name.replace("_", " ")
 
 
-@register_class(version="0.0.1", migrations=[("0.0.0", rename_key("distance_to_segmentation", "distance_to_ROI"))])
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("distance_to_segmentation", "distance_to_ROI"))])
 class DistanceMaskROIParameters(BaseModel):
     distance_from_mask: DistancePoint = DistancePoint.Border
     distance_to_roi: DistancePoint = Field(DistancePoint.Border, title="Distance to ROI")
