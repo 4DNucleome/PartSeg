@@ -84,7 +84,7 @@ class Leaf(BaseModel):
     channel: Optional[Channel] = None
 
     @validator("parameters")
-    def _validate_parameters(cls, v, values):
+    def _validate_parameters(cls, v, values):  # pylint: disable=R0201
         if not isinstance(v, dict) or "name" not in values:
             return v
         from .measurement_calculation import MEASUREMENT_DICT
