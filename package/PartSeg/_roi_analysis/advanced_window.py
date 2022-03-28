@@ -638,7 +638,7 @@ class MeasurementSettings(QWidget):
             node = node.replace_(per_component=component)
         with suppress(KeyError):
             arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
-            if len(arguments) > 0 and len(node.parameter_dict) == 0:
+            if len(arguments) > 0 and len(dict(node.parameters)) == 0:
                 dial = self.form_dialog(arguments)
                 if dial.exec_():
                     node = node._replace(dict=dial.get_values())

@@ -125,9 +125,9 @@ class TestLeaf:
         assert leaf.get_channel_num({"aa": mock}) == {Channel(1)}
 
         mock.__argument_class__ = SampleModel
-        leaf = Leaf(name="aa", parameter_dict={"value": 15, "ch": 3})
+        leaf = Leaf(name="aa", parameters={"value": 15, "ch": 3})
         assert leaf.get_channel_num({"aa": mock}) == {Channel(3)}
-        leaf = Leaf(name="aa", parameter_dict={"value": 15, "ch": 3}, channel=Channel(1))
+        leaf = Leaf(name="aa", parameters={"value": 15, "ch": 3}, channel=Channel(1))
         assert leaf.get_channel_num({"aa": mock}) == {Channel(1), Channel(3)}
 
     def test_pretty_print(self, monkeypatch):
@@ -865,7 +865,7 @@ class TestDistanceMaskSegmentation:
                 voxel_size=cube_image.voxel_size,
                 result_scalar=1,
                 distance_from_mask=d_mask,
-                distance_to_segmentation=d_seg,
+                distance_to_roi=d_seg,
             )
             == 0
         )
@@ -890,7 +890,7 @@ class TestDistanceMaskSegmentation:
                 voxel_size=cube_image.voxel_size,
                 result_scalar=1,
                 distance_from_mask=d_mask,
-                distance_to_segmentation=d_seg,
+                distance_to_roi=d_seg,
             )
             == dist
         )
@@ -922,7 +922,7 @@ class TestDistanceMaskSegmentation:
                 voxel_size=two_comp_img.voxel_size,
                 result_scalar=1,
                 distance_from_mask=comp1,
-                distance_to_segmentation=comp2,
+                distance_to_roi=comp2,
             ),
             np.sqrt(np.sum(((mask_mid - area_mid) * (100, 50, 50)) ** 2)),
         )
@@ -2308,13 +2308,13 @@ def test_per_component(method, area):
         MeasurementEntry(
             name="Measurement",
             calculation_tree=method.get_starting_leaf().replace_(
-                per_component=PerComponent.No, area=area, parameter_dict=method.get_default_values()
+                per_component=PerComponent.No, area=area, parameters=method.get_default_values()
             ),
         ),
         MeasurementEntry(
             name="Measurement per component",
             calculation_tree=method.get_starting_leaf().replace_(
-                per_component=PerComponent.Yes, area=area, parameter_dict=method.get_default_values()
+                per_component=PerComponent.Yes, area=area, parameters=method.get_default_values()
             ),
         ),
     ]

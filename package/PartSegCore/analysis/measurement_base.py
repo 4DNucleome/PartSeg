@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any, Dict, ForwardRef, Optional, Set, Union
 
 import numpy as np
-from pydantic import Field
+from pydantic import Field, validator
 from sympy import Symbol, symbols
 
 from PartSegCore.utils import BaseModel
@@ -12,7 +12,7 @@ from PartSegImage import Channel
 from PartSegImage.image import Spacing
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, base_model_to_algorithm_property
-from ..class_register import register_class
+from ..class_register import REGISTER, class_to_str, register_class, rename_key
 from ..universal_const import Units
 
 
@@ -63,13 +63,13 @@ def _migrate_leaf_dict(dkt):
 
 
 @register_class(
-    version="0.0.1",
+    version="0.0.2",
     old_paths=[
         "PartSeg.utils.analysis.statistics_calculation.Leaf",
         "PartSeg.utils.analysis.measurement_base.Leaf",
         "segmentation_analysis.statistics_calculation.Leaf",
     ],
-    migrations=[("0.0.1", _migrate_leaf_dict)],
+    migrations=[("0.0.1", _migrate_leaf_dict), ("0.0.2", rename_key("parameter_dict", "parameters"))],
 )
 class Leaf(BaseModel):
     """
@@ -77,11 +77,27 @@ class Leaf(BaseModel):
     """
 
     name: str
-    parameter_dict: Any = Field(default_factory=dict)
+    parameters: Any = Field(default_factory=dict)
     power: float = 1.0
     area: Optional[AreaType] = None
     per_component: Optional[PerComponent] = None
     channel: Optional[Channel] = None
+
+    @validator("parameters")
+    def _validate_parameters(cls, v, values):
+        if not isinstance(v, dict) or "name" not in values:
+            return v
+        from .measurement_calculation import MEASUREMENT_DICT
+
+        if values["name"] not in MEASUREMENT_DICT:
+            return v
+
+        method = MEASUREMENT_DICT[values["name"]]
+        if not method.__new_style__ or not method.__argument_class__.__fields__:
+            return v
+
+        v = REGISTER.migrate_data(class_to_str(method.__argument_class__), {}, v)
+        return method.__argument_class__(**v)
 
     def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
         """
@@ -103,27 +119,28 @@ class Leaf(BaseModel):
                 if isinstance(el, str):
                     continue
                 if el.value_type is Channel:
-                    if isinstance(self.parameter_dict, dict):
-                        if el.name in self.parameter_dict:
-                            resp.add(Channel(self.parameter_dict[el.name]))
-                    elif hasattr(self.parameter_dict, el.name):
-                        resp.add(getattr(self.parameter_dict, el.name))
+                    if isinstance(self.parameters, dict):
+                        if el.name in self.parameters:
+                            resp.add(Channel(self.parameters[el.name]))
+                    elif hasattr(self.parameters, el.name):
+                        resp.add(getattr(self.parameters, el.name))
         except KeyError as e:
             raise AlgorithmDescribeNotFound(self.name) from e
         return resp
 
     def _parameters_string(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
-        if len(self.parameter_dict) == 0 and self.channel is None:
+        parameters = dict(self.parameters)
+        if not parameters and self.channel is None:
             return ""
         arr = []
-        if self.channel is not None and self.channel >= 0:
-            arr.append(f"channel={self.channel+1}")
+        if self.channel is not None and self.channel.value != -1:
+            arr.append(f"channel={self.channel}")
         if self.name in measurement_dict:
             measurement_method = measurement_dict[self.name]
             fields_dict = measurement_method.get_fields_dict()
-            arr.extend(f"{fields_dict[k].user_name}={v}" for k, v in self.parameter_dict.items())
+            arr.extend(f"{fields_dict[k].user_name}={v}" for k, v in parameters.items())
         else:
-            arr.extend(f"{k.replace('_', ' ')}={v}" for k, v in self.parameter_dict.items())
+            arr.extend(f"{k.replace('_', ' ')}={v}" for k, v in parameters.items())
         return "[" + ", ".join(arr) + "]"
 
     def _plugin_info(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
@@ -192,7 +209,7 @@ def replace(self, **kwargs) -> Leaf:
             continue
         if not hasattr(self, key):
             raise ValueError(f"Unknown parameter {key}")
-        if getattr(self, key) is not None and (key != "parameter_dict" or self.parameter_dict):
+        if getattr(self, key) is not None and (key != "parameters" or dict(self.parameters)):
             del kwargs[key]
 
     return self.copy(update=kwargs)

@@ -148,7 +148,7 @@ class ThresholdBaseAlgorithmParameters(BaseModel):
         if not isinstance(v, dict):
             return v
         algorithm = NoiseFilterSelection[v["name"]]
-        if not algorithm.__new_style__:
+        if not algorithm.__new_style__ or not algorithm.__argument_class__.__fields__:
             return v
         return algorithm.__argument_class__(**REGISTER.migrate_data(class_to_str(algorithm.__argument_class__), {}, v))
 

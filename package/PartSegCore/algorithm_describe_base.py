@@ -392,7 +392,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         if "name" not in values or not isinstance(v, dict):
             return v
         klass = cls.__register__[values["name"]]
-        if not klass.__new_style__:
+        if not klass.__new_style__ or not klass.__argument_class__.__fields__:
             return v
 
         dkt_migrated = REGISTER.migrate_data(class_to_str(klass.__argument_class__), {}, v)

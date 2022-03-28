@@ -353,7 +353,7 @@ class MeasurementProfile(BaseModel):
             AreaType.ROI: "segmentation",
         }
         kw = dict(kwargs)
-        kw.update(node.parameter_dict)
+        kw.update(dict(node.parameters))
 
         if node.channel is not None:
             kw["channel"] = kw[f"channel_{node.channel}"]
@@ -417,7 +417,7 @@ class MeasurementProfile(BaseModel):
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
 
         hash_str = hash_fun_call_name(
-            method, node.parameter_dict, node.area, node.per_component, node.channel, NO_COMPONENT
+            method, node.parameters, node.area, node.per_component, node.channel, NO_COMPONENT
         )
         area_type = method.area_type(node.area)
         if hash_str in help_dict:
@@ -1209,6 +1209,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
         return AreaType.ROI
 
 
+@register_class(old_paths=["PartSeg.utils.analysis.statistics_calculation.DistancePoint"])
 class DistancePoint(Enum):
     Border = 1
     Mass_center = 2
@@ -1218,7 +1219,7 @@ class DistancePoint(Enum):
         return self.name.replace("_", " ")
 
 
-@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("distance_to_segmentation", "distance_to_ROI"))])
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("distance_to_segmentation", "distance_to_roi"))])
 class DistanceMaskROIParameters(BaseModel):
     distance_from_mask: DistancePoint = DistancePoint.Border
     distance_to_roi: DistancePoint = Field(DistancePoint.Border, title="Distance to ROI")
@@ -1356,7 +1357,7 @@ class DistanceROIROI(DistanceMaskROI):
             tuple(voxel_size),
             result_scalar,
             distance_from_mask=distance_from_new_roi,
-            distance_to_segmentation=distance_to_roi,
+            distance_to_roi=distance_to_roi,
         )
 
     @staticmethod
