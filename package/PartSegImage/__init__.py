@@ -2,6 +2,7 @@ import os
 import sys
 
 from . import tifffile_fixes  # noqa: F401
+from .channel_class import Channel
 from .image import Image
 from .image_reader import (
     CziImageReader,
@@ -15,6 +16,7 @@ from .image_writer import BaseImageWriter, IMAGEJImageWriter, ImageWriter
 
 __all__ = (
     "BaseImageWriter",
+    "Channel",
     "Image",
     "TiffImageReader",
     "IMAGEJImageWriter",

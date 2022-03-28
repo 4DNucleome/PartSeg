@@ -1,6 +1,38 @@
-from ..algorithm_describe_base import Register
-from ..segmentation.segmentation_algorithm import final_algorithm_list
+import warnings
 
-mask_algorithm_dict = Register()
-for el in final_algorithm_list:
-    mask_algorithm_dict.register(el)
+from ..algorithm_describe_base import AlgorithmSelection
+from ..segmentation.segmentation_algorithm import (
+    AutoThresholdAlgorithm,
+    CellFromNucleusFlow,
+    MorphologicalWatershed,
+    ThresholdAlgorithm,
+    ThresholdFlowAlgorithm,
+    ThresholdPreview,
+)
+
+
+class MaskAlgorithmSelection(
+    AlgorithmSelection,
+    class_methods=["support_time", "support_z"],
+    methods=["set_image", "set_mask", "get_info_text", "calculation_run"],
+):
+    """Register for segmentation method visible in PartSeg ROI Mask."""
+
+
+MaskAlgorithmSelection.register(AutoThresholdAlgorithm)
+MaskAlgorithmSelection.register(CellFromNucleusFlow)
+MaskAlgorithmSelection.register(MorphologicalWatershed)
+MaskAlgorithmSelection.register(ThresholdAlgorithm)
+MaskAlgorithmSelection.register(ThresholdFlowAlgorithm)
+MaskAlgorithmSelection.register(ThresholdPreview)
+
+
+def __getattr__(name):  # pragma: no cover
+    if name == "mask_algorithm_dict":
+        warnings.warn(
+            "mask_algorithm_dict is deprecated. Please use MaskAlgorithmSelection instead",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+        return MaskAlgorithmSelection.__register__
+    raise AttributeError(f"module {__name__} has no attribute {name}")

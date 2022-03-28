@@ -5,10 +5,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from PartSegCore.class_generator import BaseSerializableClass
 from PartSegCore.mask_create import MaskProperty, calculate_mask
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.utils import numpy_repr
+from PartSegCore.utils import BaseModel, numpy_repr
 from PartSegImage import Image
 
 if sys.version_info.minor < 8:
@@ -38,11 +37,14 @@ class AdditionalLayerDescription:
         )
 
 
-class HistoryElement(BaseSerializableClass):
+class HistoryElement(BaseModel):
     roi_extraction_parameters: Dict[str, Any]
     annotations: Optional[Dict[int, Any]]
     mask_property: MaskProperty
     arrays: BytesIO
+
+    class Config:
+        arbitrary_types_allowed = True
 
     @classmethod
     def create(

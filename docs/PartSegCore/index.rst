@@ -8,6 +8,7 @@ This package contains calculation backend of PartSeg
    :caption: Contents:
 
    base
+   class_register
    color_image
    segmentation
    analysis/base

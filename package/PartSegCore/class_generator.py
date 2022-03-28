@@ -71,6 +71,10 @@ class {typename}({base_classes}):
         'Return a new OrderedDict which maps field names to their values.'
         return OrderedDict(zip(self._fields, _attrgetter(*self.__slots__)(self)))
 
+    def as_dict(self):
+        'Return a new OrderedDict which maps field names to their values.'
+        return dict(zip(self._fields, _attrgetter(*self.__slots__)(self)))
+
     def as_tuple(self):
         return {tuple_fields}
 
@@ -188,7 +192,7 @@ def add_classes(types_list, translate_dict, global_state):
                     if type_._name is None:  # pylint: disable=W0212
                         type_str = str(type_.__origin__)
                     else:
-                        type_str = "typing." + str(type_._name)  # pylint: disable=W0212
+                        type_str = f"typing.{str(type_._name)}"  # pylint: disable=W0212
                     type_str += "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
                     translate_dict[type_] = type_str
                     continue

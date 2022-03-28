@@ -291,7 +291,7 @@ class TestCalculateMask:
             save_components=True,
             clip_to_mask=True,
         )
-        mp2 = mp.replace_(fill_holes=RadiusType.R3D)
+        mp2 = mp.copy(update=dict(fill_holes=RadiusType.R3D))
         mask1 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
         mask1 = calculate_mask(mp2, mask2, None, (1, 1, 1))
@@ -376,7 +376,7 @@ class TestCalculateMask:
         mask2[:] = 0
         mask2[4:6, 4:6, 4:6] = 1
         mask3 = calculate_mask(
-            mp.replace_(**{"dilate": RadiusType.NO, "dilate_radius": 0, "reversed_mask": True}), mask2, mask, (1, 1, 1)
+            mp.copy(update={"dilate": RadiusType.NO, "dilate_radius": 0, "reversed_mask": True}), mask2, mask, (1, 1, 1)
         )
         mask[mask2 == 1] = 0
         assert np.all(mask3 == mask)

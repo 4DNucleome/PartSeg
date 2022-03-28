@@ -9,7 +9,7 @@ from qtpy.QtCore import QThread, Signal
 
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.mask.io_functions import LoadROIImage, LoadStackImage, MaskProjectTuple, SaveROI
 from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
@@ -66,7 +66,7 @@ class BatchProceed(QThread):
             try:
                 name = path.basename(file_path)
                 blank = get_mask(project_tuple.roi, project_tuple.mask, project_tuple.selected_components)
-                algorithm: StackAlgorithm = mask_algorithm_dict[task.parameters.algorithm]()
+                algorithm: StackAlgorithm = MaskAlgorithmSelection[task.parameters.algorithm]()
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
                 algorithm.set_parameters(**task.parameters.values)
@@ -81,7 +81,7 @@ class BatchProceed(QThread):
                 )
                 if isinstance(task.save_prefix, tuple):
                     self.progress_info(name, "saving", algorithm.get_steps_num())
-                    name = path.splitext(path.basename(file_path))[0] + ".seg"
+                    name = f"{path.splitext(path.basename(file_path))[0]}.seg"
                     re_end = re.compile(r"(.*_version)(\d+)\.seg$")
                     while path.exists(path.join(task.save_prefix[0], name)):
                         match = re_end.match(name)

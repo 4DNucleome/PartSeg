@@ -36,10 +36,11 @@ from PartSegCore import register
 from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import load_metadata_base
-from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
+from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
+from PartSegCore.utils import ProfileDict, check_loaded_dict
 from PartSegImage import Image
 
 if hasattr(napari.utils.theme, "get_theme"):
@@ -472,7 +473,7 @@ class BaseSettings(ViewSettings):
     points_changed = Signal()
     request_load_files = Signal(list)
     """:py:class:`~.Signal` mask changed signal"""
-    json_encoder_class = ProfileEncoder
+    json_encoder_class = PartSegEncoder
     load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
@@ -753,20 +754,20 @@ class BaseSettings(ViewSettings):
             try:
                 data: ProfileDict = self.load_metadata(file_path)
                 if not data.verify_data():
-                    errors_list.append((file_path, data.filter_data()))
+                    filtered = data.filter_data()
+                    errors_list.append((file_path, filtered))
+                    logger.error(filtered)
                     error = True
                 el.values.update(data)
             except Exception as e:  # pylint: disable=W0703
                 error = True
+                logger.error(e)
                 errors_list.append((file_path, e))
             finally:
                 if error:
                     timestamp = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
-
-        if errors_list:
-            logger.error(errors_list)
         return errors_list
 
     def get_project_info(self) -> ProjectInfoBase:

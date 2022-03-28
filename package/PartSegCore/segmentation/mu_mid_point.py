@@ -1,8 +1,9 @@
+import warnings
 from abc import ABC
 
 import numpy as np
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, AlgorithmSelection
 
 
 class BaseMuMid(AlgorithmDescribeBase, ABC):
@@ -81,4 +82,21 @@ class QuantilePixelValue(BaseMuMid):
         return np.quantile[data[sprawl_area > 0], arguments["quantile"] / 100]
 
 
-mu_mid_dict = Register(MeanBound, PercentBound, MeanPixelValue, MedianPixelValue, QuantilePixelValue)
+class MuMidSelection(AlgorithmSelection, class_methods=["value"], suggested_base_class=BaseMuMid):
+    pass
+
+
+MuMidSelection.register(MeanBound)
+MuMidSelection.register(PercentBound)
+MuMidSelection.register(MeanPixelValue)
+MuMidSelection.register(MedianPixelValue)
+MuMidSelection.register(QuantilePixelValue)
+
+
+def __getattr__(name):  # pragma: no cover
+    if name == "mu_mid_dict":
+        warnings.warn(
+            "mu_mid_dict is deprecated. Please use MuMidSelection instead", category=FutureWarning, stacklevel=2
+        )
+        return MuMidSelection.__register__
+    raise AttributeError(f"module {__name__} has no attribute {name}")

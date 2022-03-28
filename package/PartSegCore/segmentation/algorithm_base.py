@@ -5,12 +5,17 @@ from typing import Any, Callable, Dict, MutableMapping, Optional
 
 import numpy as np
 
-from PartSegCore.channel_class import Channel
-from PartSegImage import Image
+from PartSegImage import Channel, Image
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
+from ..algorithm_describe_base import (
+    AlgorithmDescribeBase,
+    AlgorithmProperty,
+    ROIExtractionProfile,
+    base_model_to_algorithm_property,
+)
+from ..class_register import REGISTER, class_to_str
 from ..image_operations import RadiusType
-from ..project_info import AdditionalLayerDescription, ProjectInfoBase
+from ..project_info import AdditionalLayerDescription
 from ..roi_info import ROIInfo
 from ..utils import numpy_repr
 
@@ -147,11 +152,6 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.channel = None
         self.mask = None
 
-    @staticmethod
-    def single_channel():
-        """Check if algorithm run on single channel"""
-        return True
-
     @property
     def mask(self) -> Optional[np.ndarray]:
         if self._mask is not None and not self.support_time():
@@ -193,21 +193,6 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         raise NotImplementedError()
 
-    @classmethod
-    def segment_project(cls, project: ProjectInfoBase, parameters: dict) -> ROIExtractionResult:
-        """
-
-        :param ProjectInfoBase project:
-        :param dict parameters:
-        :return:
-        :rtype:
-        """
-        instance = cls()
-        instance.set_image(project.image)
-        instance.set_mask(project.mask)
-        instance.set_parameters(**parameters)
-        return instance.calculation_run(report_empty_fun)
-
     @abstractmethod
     def get_info_text(self):
         raise NotImplementedError()
@@ -232,7 +217,19 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.channel = None
         self.mask = None
 
-    def set_parameters(self, **kwargs):
+    def set_parameters(self, _params=None, **kwargs):
+        # FIXME when drop python 3.7 use postional only argument
+        if _params is not None:
+            if isinstance(_params, dict):
+                kwargs = _params
+            else:
+                self.new_parameters = _params
+                return
+        if self.__new_style__:
+            kwargs = REGISTER.migrate_data(class_to_str(self.__argument_class__), {}, kwargs)
+            self.new_parameters = self.__argument_class__(**kwargs)  # pylint: disable=E1102
+            return
+
         base_names = [x.name for x in self.get_fields() if isinstance(x, AlgorithmProperty)]
         if set(base_names) != set(kwargs.keys()):
             missed_arguments = ", ".join(set(base_names).difference(set(kwargs.keys())))
@@ -241,7 +238,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.new_parameters = deepcopy(kwargs)
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
+        return ROIExtractionProfile(name="", algorithm=self.get_name(), values=deepcopy(self.new_parameters))
 
     @staticmethod
     def get_steps_num():
@@ -250,7 +247,11 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_channel_parameter_name(cls):
-        for el in cls.get_fields():
+        if cls.__new_style__:
+            fields = base_model_to_algorithm_property(cls.__argument_class__)
+        else:
+            fields = cls.get_fields()
+        for el in fields:
             if el.value_type == Channel:
                 return el.name
         raise ValueError("No channel defined")

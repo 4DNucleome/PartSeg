@@ -1,0 +1,22 @@
+{
+  "neuron_types": {
+    "__SegmentationProperty__": true,
+    "name": "neuron_types",
+    "algorithm": "Lower threshold",
+    "values": {
+      "threshold": {
+        "name": "Manual",
+        "values": {
+          "threshold": 30000
+        }
+      },
+      "channel": 2,
+      "minimum_size": 255,
+      "noise_removal": {
+        "name": "None",
+        "values": {}
+      },
+      "side_connection": true
+    }
+  }
+}

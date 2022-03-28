@@ -1,13 +1,15 @@
 """
-This module contains PartSeg wrapers for function for :py:mod:`..sprawl_utils.find_split`.
+This module contains PartSeg wrappers for function for :py:mod:`..sprawl_utils.find_split`.
 """
+import warnings
 from abc import ABC
 from enum import Enum
 from typing import Any, Callable
 
 import numpy as np
+from pydantic import Field
 
-from PartSegCore.class_generator import enum_register
+from PartSegCore.utils import BaseModel
 from PartSegCore_compiled_backend.multiscale_opening import MuType, PyMSO, calculate_mu
 from PartSegCore_compiled_backend.sprawl_utils.find_split import (
     euclidean_sprawl,
@@ -16,16 +18,15 @@ from PartSegCore_compiled_backend.sprawl_utils.find_split import (
     path_minimum_sprawl,
 )
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
+from ..class_register import update_argument
 from .algorithm_base import SegmentationLimitException
 
 
 class BaseWatershed(AlgorithmDescribeBase, ABC):
     """base class for all sprawl interface"""
 
-    @classmethod
-    def get_fields(cls):
-        return []
+    __argument_class__ = BaseModel
 
     @classmethod
     def sprawl(
@@ -52,8 +53,8 @@ class BaseWatershed(AlgorithmDescribeBase, ABC):
         :param side_connection:
         :param operator:
         :param arguments: dict with parameters reported by function :py:meth:`get_fields`
-        :param lower_bound: data value lower boud
-        :param upper_bound: data value upper boud
+        :param lower_bound: data value lower bound
+        :param upper_bound: data value upper bound
         :return:
         """
         raise NotImplementedError()
@@ -88,7 +89,7 @@ class PathWatershed(BaseWatershed):
 
 
 class DistanceWatershed(BaseWatershed):
-    """Calculate Euclidean sprawl (watersheed) with respect to image spacing"""
+    """Calculate Euclidean sprawl (watershed) with respect to image spacing"""
 
     @classmethod
     def get_name(cls):
@@ -182,19 +183,20 @@ class PathDistanceWatershed(BaseWatershed):
         )
 
 
+class MSOWatershedParams(BaseModel):
+    step_limits: int = Field(100, ge=1, le=1000, title="Threshold", description="Limits of Steps")
+    reflective: bool = False
+
+
 class MSOWatershed(BaseWatershed):
+    __argument_class__ = MSOWatershedParams
+
     @classmethod
     def get_name(cls):
         return "MultiScale Opening"
 
     @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), value_type=int),
-            AlgorithmProperty("reflective", "Reflective", False, value_type=bool),
-        ]
-
-    @classmethod
+    @update_argument("arguments")
     def sprawl(
         cls,
         sprawl_area: np.ndarray,
@@ -204,7 +206,7 @@ class MSOWatershed(BaseWatershed):
         spacing,
         side_connection: bool,
         operator: Callable[[Any, Any], bool],
-        arguments: dict,
+        arguments: MSOWatershedParams,
         lower_bound,
         upper_bound,
     ):
@@ -222,11 +224,11 @@ class MSOWatershed(BaseWatershed):
             mu_array = calculate_mu(data.copy("C"), lower_bound, upper_bound, MuType.base_mu)
         except OverflowError:
             raise SegmentationLimitException("Wrong range for ")
-        if arguments["reflective"]:
+        if arguments.reflective:
             mu_array[mu_array < 0.5] = 1 - mu_array[mu_array < 0.5]
         mso.set_mu_array(mu_array)
         try:
-            mso.run_MSO(arguments["step_limits"])
+            mso.run_MSO(arguments.step_limits)
         except RuntimeError as e:
             if e.args[0] == "to many steps: constrained dilation":
                 raise SegmentationLimitException(*e.args)
@@ -238,18 +240,33 @@ class MSOWatershed(BaseWatershed):
         return result
 
 
-flow_dict = Register(
-    MSOWatershed, PathWatershed, DistanceWatershed, PathDistanceWatershed, FDTWatershed, class_methods=["sprawl"]
-)
-"""This register contains algorithms for sprawl area from core object."""
+class FlowMethodSelection(AlgorithmSelection, class_methods=["sprawl"], suggested_base_class=BaseWatershed):
+    """This register contains algorithms for sprawl area from core object."""
 
-sprawl_dict = flow_dict
+
+FlowMethodSelection.register(MSOWatershed, old_names=["MultiScale Opening sprawl"])
+FlowMethodSelection.register(PathWatershed, old_names=["Path sprawl"])
+FlowMethodSelection.register(DistanceWatershed, old_names=["Euclidean sprawl"])
+FlowMethodSelection.register(PathDistanceWatershed, old_names=["Path euclidean sprawl"])
+FlowMethodSelection.register(FDTWatershed, old_names=["Fuzzy distance sprawl"])
+
+
+def __getattr__(name):  # pragma: no cover
+    if name == "flow_dict":
+        warnings.warn(
+            "flow_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
+        )
+        return FlowMethodSelection.__register__
+    if name == "sprawl_dict":
+        warnings.warn(
+            "sprawl_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
+        )
+        return FlowMethodSelection.__register__
+    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 def get_neigh(sides):
-    if sides:
-        return NeighType.sides
-    return NeighType.edges
+    return NeighType.sides if sides else NeighType.edges
 
 
 class NeighType(Enum):
@@ -261,18 +278,10 @@ class NeighType(Enum):
         return self.name
 
 
-try:
-    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
-    reloading
-except NameError:
-    reloading = False  # means the module is being imported firs time
-    enum_register.register_class(NeighType)
-
-
 def calculate_distances_array(spacing, neigh_type: NeighType):
     """
     :param spacing: image spacing
-    :param neigh_type: neigbourhood type
+    :param neigh_type: neighbourhood type
     :return: neighbourhood array, distance array
     """
     min_dist = min(spacing)

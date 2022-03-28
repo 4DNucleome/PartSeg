@@ -4,9 +4,10 @@ from typing import Iterable, List, Union
 import numpy as np
 import SimpleITK as sitk
 
-from .class_generator import enum_register
+from .class_register import register_class
 
 
+@register_class
 class RadiusType(Enum):
     """
     If operation should be performed and if on each layer separately on globally
@@ -20,6 +21,7 @@ class RadiusType(Enum):
         return ["No", "2d", "3d"][self.value]
 
 
+@register_class
 class NoiseFilterType(Enum):
     No = 0
     Gauss = 1
@@ -28,10 +30,6 @@ class NoiseFilterType(Enum):
 
     def __str__(self):
         return self.name
-
-
-enum_register.register_class(RadiusType)
-enum_register.register_class(NoiseFilterType)
 
 
 def _generic_image_operation(image, radius, fun, layer):

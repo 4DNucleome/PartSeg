@@ -61,12 +61,12 @@ class RegisterEnum(Enum):
 
 # noinspection DuplicatedCode
 register_dict = {
-    RegisterEnum.flow: watershed.flow_dict,
-    RegisterEnum.sprawl: watershed.flow_dict,
-    RegisterEnum.threshold: threshold.threshold_dict,
-    RegisterEnum.noise_filtering: noise_filtering.noise_filtering_dict,
-    RegisterEnum.analysis_algorithm: analysis_algorithm_description.analysis_algorithm_dict,
-    RegisterEnum.mask_algorithm: mask_algorithm_description.mask_algorithm_dict,
+    RegisterEnum.flow: watershed.FlowMethodSelection.__register__,
+    RegisterEnum.sprawl: watershed.FlowMethodSelection.__register__,
+    RegisterEnum.threshold: threshold.ThresholdSelection.__register__,
+    RegisterEnum.noise_filtering: noise_filtering.NoiseFilterSelection.__register__,
+    RegisterEnum.analysis_algorithm: analysis_algorithm_description.AnalysisAlgorithmSelection.__register__,
+    RegisterEnum.mask_algorithm: mask_algorithm_description.MaskAlgorithmSelection.__register__,
     RegisterEnum.analysis_save: save_functions.save_dict,
     RegisterEnum.analysis_load: load_functions.load_dict,
     RegisterEnum.mask_load: io_functions.load_dict,
@@ -75,8 +75,8 @@ register_dict = {
     RegisterEnum.mask_save_components: io_functions.save_components_dict,
     RegisterEnum.mask_save_segmentation: io_functions.save_segmentation_dict,
     RegisterEnum.analysis_measurement: measurement_calculation.MEASUREMENT_DICT,
-    RegisterEnum.roi_analysis_segmentation_algorithm: analysis_algorithm_description.analysis_algorithm_dict,
-    RegisterEnum.roi_mask_segmentation_algorithm: mask_algorithm_description.mask_algorithm_dict,
+    RegisterEnum.roi_analysis_segmentation_algorithm: analysis_algorithm_description.AnalysisAlgorithmSelection.__register__,  # noqa: E501
+    RegisterEnum.roi_mask_segmentation_algorithm: mask_algorithm_description.MaskAlgorithmSelection.__register__,
 }
 
 # noinspection DuplicatedCode

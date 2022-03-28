@@ -1,7 +1,7 @@
 from PartSeg._roi_analysis.advanced_window import Properties
 from PartSeg._roi_analysis.advanced_window import QInputDialog as advanced_module_input
 from PartSeg._roi_analysis.advanced_window import QMessageBox as advanced_message_box
-from PartSegCore.analysis import analysis_algorithm_dict
+from PartSegCore.analysis import AnalysisAlgorithmSelection
 
 
 class TestProperties:
@@ -33,9 +33,9 @@ class TestProperties:
         with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10**4):
             widget.profile_list.setCurrentRow(1)
         profile = part_settings.roi_profiles[widget.profile_list.item(1).text()]
-        assert widget.info_label.toPlainText() == profile.pretty_print(analysis_algorithm_dict)
+        assert widget.info_label.toPlainText() == profile.pretty_print(AnalysisAlgorithmSelection)
         widget.pipeline_list.setCurrentRow(0)
-        assert widget.info_label.toPlainText() == sample_pipeline.pretty_print(analysis_algorithm_dict)
+        assert widget.info_label.toPlainText() == sample_pipeline.pretty_print(AnalysisAlgorithmSelection)
         widget.hide()
 
     def test_delete_profile(self, qtbot, part_settings, border_rim_profile, lower_threshold_profile):

@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 from sympy import symbols
 
-from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
@@ -50,11 +50,11 @@ from PartSegCore.analysis.measurement_calculation import (
     Voxels,
 )
 from PartSegCore.autofit import density_mass_center
-from PartSegCore.channel_class import Channel
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.universal_const import UNIT_SCALE, Units
-from PartSegImage import Image
+from PartSegCore.utils import BaseModel
+from PartSegImage import Channel, Image
 
 
 def get_cube_array():
@@ -111,45 +111,46 @@ def get_two_component_mask():
 
 class TestLeaf:
     def test_channel_calc(self, monkeypatch):
+        class SampleModel(BaseModel):
+            value: int = 1
+            ch: Channel = 1
+
         mock = MagicMock()
+        mock.__new_style__ = True
+        mock.__argument_class__ = BaseModel
         mock.get_fields = MagicMock(return_value=[])
-        leaf = Leaf(name="aa", dict={})
+        leaf = Leaf(name="aa")
         assert leaf.get_channel_num({"aa": mock}) == set()
-        leaf = Leaf(name="aa", dict={}, channel=Channel(1))
-        assert leaf.get_channel_num({"aa": mock}) == {1}
-        mock.get_fields = MagicMock(
-            return_value=[
-                "eee",
-                AlgorithmProperty("value", "Value", 1),
-                AlgorithmProperty("ch", "Ch", 1, value_type=Channel),
-            ]
-        )
-        leaf = Leaf(name="aa", dict={"value": 15, "ch": 3})
-        assert leaf.get_channel_num({"aa": mock}) == {3}
-        leaf = Leaf(name="aa", dict={"value": 15, "ch": 3}, channel=Channel(1))
-        assert leaf.get_channel_num({"aa": mock}) == {1, 3}
+        leaf = Leaf(name="aa", channel=Channel(1))
+        assert leaf.get_channel_num({"aa": mock}) == {Channel(1)}
+
+        mock.__argument_class__ = SampleModel
+        leaf = Leaf(name="aa", parameters={"value": 15, "ch": 3})
+        assert leaf.get_channel_num({"aa": mock}) == {Channel(3)}
+        leaf = Leaf(name="aa", parameters={"value": 15, "ch": 3}, channel=Channel(1))
+        assert leaf.get_channel_num({"aa": mock}) == {Channel(1), Channel(3)}
 
     def test_pretty_print(self, monkeypatch):
         mock = MagicMock()
         mock.get_fields = MagicMock(return_value=[])
-        leaf = Leaf(name="aa", dict={})
+        leaf = Leaf(name="aa")
         text = leaf.pretty_print({"aa": mock})
         assert "ROI" not in text
         assert "Mask" not in text
         assert "per component" not in text
         assert "mean component" not in text
         assert "to the power" not in text
-        assert "per component" in Leaf(name="aa", dict={}, per_component=PerComponent.Yes).pretty_print({"aa": mock})
-        assert "mean component" in Leaf(name="aa", dict={}, per_component=PerComponent.Mean).pretty_print({"aa": mock})
-        assert "to the power" not in Leaf(name="aa", dict={}, power=1).pretty_print({"aa": mock})
-        assert "to the power 2" in Leaf(name="aa", dict={}, power=2).pretty_print({"aa": mock})
+        assert "per component" in Leaf(name="aa", per_component=PerComponent.Yes).pretty_print({"aa": mock})
+        assert "mean component" in Leaf(name="aa", per_component=PerComponent.Mean).pretty_print({"aa": mock})
+        assert "to the power" not in Leaf(name="aa", power=1).pretty_print({"aa": mock})
+        assert "to the power 2" in Leaf(name="aa", power=2).pretty_print({"aa": mock})
         monkeypatch.setattr(mock, "__module__", "PartSegCore.test")
-        assert Leaf(name="aa", dict={}).pretty_print({"aa": mock})[0] != "["
+        assert Leaf(name="aa").pretty_print({"aa": mock})[0] != "["
         monkeypatch.setattr(mock, "__module__", "PartSegPlugin.submodule")
-        assert Leaf(name="aa", dict={}).pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
+        assert Leaf(name="aa").pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
         monkeypatch.setattr(sys, "frozen", True, raising=False)
         monkeypatch.setattr(mock, "__module__", "plugins.PartSegPlugin.submodule")
-        assert Leaf(name="aa", dict={}).pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
+        assert Leaf(name="aa").pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
 
 
 class TestDiameter:
@@ -864,7 +865,7 @@ class TestDistanceMaskSegmentation:
                 voxel_size=cube_image.voxel_size,
                 result_scalar=1,
                 distance_from_mask=d_mask,
-                distance_to_segmentation=d_seg,
+                distance_to_roi=d_seg,
             )
             == 0
         )
@@ -889,7 +890,7 @@ class TestDistanceMaskSegmentation:
                 voxel_size=cube_image.voxel_size,
                 result_scalar=1,
                 distance_from_mask=d_mask,
-                distance_to_segmentation=d_seg,
+                distance_to_roi=d_seg,
             )
             == dist
         )
@@ -921,7 +922,7 @@ class TestDistanceMaskSegmentation:
                 voxel_size=two_comp_img.voxel_size,
                 result_scalar=1,
                 distance_from_mask=comp1,
-                distance_to_segmentation=comp2,
+                distance_to_roi=comp2,
             ),
             np.sqrt(np.sum(((mask_mid - area_mid) * (100, 50, 50)) ** 2)),
         )
@@ -1533,7 +1534,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1566,7 +1567,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1603,7 +1604,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1637,7 +1638,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1719,7 +1720,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1765,7 +1766,7 @@ class TestStatisticProfile:
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1842,7 +1843,7 @@ class TestStatisticProfile:
             ),
         ]
 
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1917,7 +1918,7 @@ class TestStatisticProfile:
             ),
             MeasurementEntry(name="Density per component", calculation_tree=Node(left=leaf4, op="/", right=leaf1)),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -2139,9 +2140,9 @@ class TestHaralick:
 @pytest.fixture
 def roi_to_roi_extract():
     parameters = LowerThresholdAlgorithm.get_default_values()
-    parameters["threshold"]["values"]["threshold"] = 1
-    parameters["minimum_size"] = 1
-    parameters["channel"] = 1
+    parameters.threshold.values.threshold = 1
+    parameters.minimum_size = 1
+    parameters.channel = 1
     return ROIExtractionProfile(name="default", algorithm=LowerThresholdAlgorithm.get_name(), values=parameters)
 
 
@@ -2283,7 +2284,7 @@ def test_all_methods(method, dtype):
         roi_annotation={},
         bounds_info=roi_info.bound_info,
         _component_num=1,
-        **method.get_default_values(),
+        **dict(method.get_default_values()),
     )
     if method.get_units(3) != "str":
         float(res)
@@ -2307,17 +2308,17 @@ def test_per_component(method, area):
         MeasurementEntry(
             name="Measurement",
             calculation_tree=method.get_starting_leaf().replace_(
-                per_component=PerComponent.No, area=area, dict=method.get_default_values()
+                per_component=PerComponent.No, area=area, parameters=method.get_default_values()
             ),
         ),
         MeasurementEntry(
             name="Measurement per component",
             calculation_tree=method.get_starting_leaf().replace_(
-                per_component=PerComponent.Yes, area=area, dict=method.get_default_values()
+                per_component=PerComponent.Yes, area=area, parameters=method.get_default_values()
             ),
         ),
     ]
-    profile = MeasurementProfile("statistic", statistics)
+    profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
     result = profile.calculate(
         image,
         0,

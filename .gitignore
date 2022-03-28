@@ -479,7 +479,6 @@ test_data/
 /PartSegCore/segmentation/multiscale_opening/*.gch
 package/PartSegCore/multiscale_opening/\.vscode/
 
-package/PartSegCore/multiscale_opening/\.vscode/
 /tutorials/tutorial-chromosome-1/tutorial-chromosome1.pdf
 !/package/tests/test_data/measurements_profile.json
 
@@ -489,3 +488,6 @@ package/PartSegCore/multiscale_opening/\.vscode/
 *.e6t
 
 !docs/Makefile
+
+!package/tests/test_data/old_saves/*.[0-9]
+!package/tests/test_data/old_saves/*.[0-9][0-9]

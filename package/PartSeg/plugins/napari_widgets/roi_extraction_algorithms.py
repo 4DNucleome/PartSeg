@@ -24,11 +24,11 @@ from qtpy.QtWidgets import (
 
 from PartSeg import plugins
 from PartSegCore import UNIT_SCALE, Units
-from PartSegCore.algorithm_describe_base import Register, ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.algorithm_describe_base import AlgorithmSelection, ROIExtractionProfile
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
 from PartSegCore.analysis.save_functions import SaveProfilesToJSON
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.segmentation import ROIExtractionResult
 
 from ..._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
@@ -51,9 +51,14 @@ SELECT_TEXT = "<select>"
 
 
 class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidget):
+    form_widget: NapariFormWidgetWithMask
+
     @staticmethod
     def _form_widget(algorithm, start_values) -> FormWidget:
-        return NapariFormWidgetWithMask(algorithm.get_fields(), start_values=start_values)
+        return NapariFormWidgetWithMask(
+            algorithm.__argument_class__ if algorithm.__new_style__ else algorithm.get_fields(),
+            start_values=start_values,
+        )
 
     def reset_choices(self, event=None):
         self.form_widget.reset_choices(event)
@@ -62,14 +67,18 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
         return [x.name for x in self.get_layers().values()]
 
     def get_values(self):
+        values = self.form_widget.get_values()
+        if not isinstance(values, dict):
+            values = dict(values)
         return {
             k: v.name if isinstance(v, NapariImage) else v
-            for k, v in self.form_widget.get_values().items()
+            for k, v in values.items()
             if not isinstance(v, Labels) and k != "mask"
         }
 
     def get_layers(self) -> typing.Dict[str, Layer]:
-        return {k: v for k, v in self.form_widget.get_values().items() if isinstance(v, Layer)}
+        values = self.form_widget.get_layers()
+        return {k: v for k, v in values.items() if isinstance(v, Layer)}
 
 
 class NapariAlgorithmChoose(AlgorithmChooseBase):
@@ -84,7 +93,7 @@ class NapariAlgorithmChoose(AlgorithmChooseBase):
 
 class ROIExtractionAlgorithms(QWidget):
     @staticmethod
-    def get_method_dict():  # pragma: no cover
+    def get_method_dict() -> AlgorithmSelection:  # pragma: no cover
         raise NotImplementedError
 
     @staticmethod
@@ -277,7 +286,7 @@ class ROIExtractionAlgorithms(QWidget):
 class ROIAnalysisExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def get_method_dict():
-        return analysis_algorithm_dict
+        return AnalysisAlgorithmSelection
 
     @staticmethod
     def prefix() -> str:
@@ -287,7 +296,7 @@ class ROIAnalysisExtraction(ROIExtractionAlgorithms):
 class ROIMaskExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def get_method_dict():
-        return mask_algorithm_dict
+        return MaskAlgorithmSelection
 
     @staticmethod
     def prefix() -> str:
@@ -298,13 +307,13 @@ class ProfilePreviewDialog(QDialog):
     def __init__(
         self,
         profile_dict: typing.Dict[str, ROIExtractionProfile],
-        algorithm_dict: Register,
+        algorithm_selection: typing.Type[AlgorithmSelection],
         settings: BaseSettings,
         parent=None,
     ):
         super().__init__(parent=parent)
         self.profile_dict = profile_dict
-        self.algorithm_dict = algorithm_dict
+        self.algorithm_selection = algorithm_selection
         self.settings = settings
 
         self.profile_list = SearchableListWidget()

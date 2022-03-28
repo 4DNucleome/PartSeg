@@ -1,11 +1,32 @@
 import typing
+import warnings
 from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
+from pydantic import Field
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from PartSegCore.class_register import register_class, rename_key, update_argument
+from PartSegCore.utils import BaseModel
+
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
 from .algorithm_base import SegmentationLimitException
+
+
+class SingleThresholdParams(BaseModel):
+    threshold: float = Field(8000.0, ge=-100000, le=100000, title="Threshold", description="Threshold values")
+
+
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("masked", "apply_mask"))])
+class SimpleITKThresholdParams128(BaseModel):
+    apply_mask: bool = Field(True, description="If apply mask before calculate threshold")
+    bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
+
+
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("masked", "apply_mask"))])
+class SimpleITKThresholdParams256(BaseModel):
+    apply_mask: bool = Field(True, description="If apply mask before calculate threshold")
+    bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
 
 
 class BaseThreshold(AlgorithmDescribeBase, ABC):
@@ -14,50 +35,47 @@ class BaseThreshold(AlgorithmDescribeBase, ABC):
         cls,
         data: np.ndarray,
         mask: typing.Optional[np.ndarray],
-        arguments: dict,
+        arguments: BaseModel,
         operator: typing.Callable[[object, object], bool],
     ):
         raise NotImplementedError()
 
 
 class ManualThreshold(BaseThreshold):
+    __argument_class__ = SingleThresholdParams
+
     @classmethod
     def get_name(cls):
         return "Manual"
 
     @classmethod
-    def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", 8000.0, (-100000, 100000))]
-
-    @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
-        result = np.array(operator(data, arguments["threshold"])).astype(np.uint8)
+    @update_argument("arguments")
+    def calculate_mask(
+        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SingleThresholdParams, operator
+    ):
+        result = np.array(operator(data, arguments.threshold)).astype(np.uint8)
         if mask is not None:
             result[mask == 0] = 0
-        return result, arguments["threshold"]
+        return result, arguments.threshold
 
 
 class SitkThreshold(BaseThreshold, ABC):
-    bins_num = 128
+    __argument_class__ = SimpleITKThresholdParams128
 
     @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("masked", "Apply mask", True),
-            AlgorithmProperty("bins", "histogram bins", cls.bins_num, (8, 2**16)),
-        ]
-
-    @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
+    @update_argument("arguments")
+    def calculate_mask(
+        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SimpleITKThresholdParams128, operator
+    ):
         if mask is not None and mask.dtype != np.uint8:
             mask = (mask > 0).astype(np.uint8)
         ob, bg, th_op = (0, 1, np.min) if operator(1, 0) else (1, 0, np.max)
         image_sitk = sitk.GetImageFromArray(data)
-        if arguments["masked"] and mask is not None:
+        if arguments.apply_mask and mask is not None:
             mask_sitk = sitk.GetImageFromArray(mask)
-            calculated = cls.calculate_threshold(image_sitk, mask_sitk, ob, bg, arguments["bins"], True, 1)
+            calculated = cls.calculate_threshold(image_sitk, mask_sitk, ob, bg, arguments.bins, True, 1)
         else:
-            calculated = cls.calculate_threshold(image_sitk, ob, bg, arguments["bins"])
+            calculated = cls.calculate_threshold(image_sitk, ob, bg, arguments.bins)
         result = sitk.GetArrayFromImage(calculated)
         if mask is not None:
             result[mask == 0] = 0
@@ -80,7 +98,7 @@ class OtsuThreshold(SitkThreshold):
 
 
 class LiThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -92,7 +110,7 @@ class LiThreshold(SitkThreshold):
 
 
 class MaximumEntropyThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -104,7 +122,7 @@ class MaximumEntropyThreshold(SitkThreshold):
 
 
 class RenyiEntropyThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -116,7 +134,7 @@ class RenyiEntropyThreshold(SitkThreshold):
 
 
 class ShanbhagThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -128,7 +146,7 @@ class ShanbhagThreshold(SitkThreshold):
 
 
 class TriangleThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -140,7 +158,7 @@ class TriangleThreshold(SitkThreshold):
 
 
 class YenThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -152,7 +170,7 @@ class YenThreshold(SitkThreshold):
 
 
 class HuangThreshold(SitkThreshold):
-    bins_num = 128
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -164,7 +182,7 @@ class HuangThreshold(SitkThreshold):
 
 
 class IntermodesThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -181,7 +199,7 @@ class IntermodesThreshold(SitkThreshold):
 
 
 class IsoDataThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -193,7 +211,7 @@ class IsoDataThreshold(SitkThreshold):
 
 
 class KittlerIllingworthThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -210,7 +228,7 @@ class KittlerIllingworthThreshold(SitkThreshold):
 
 
 class MomentsThreshold(SitkThreshold):
-    bins_num = 256
+    __argument_class__ = SimpleITKThresholdParams256
 
     @classmethod
     def get_name(cls):
@@ -221,88 +239,109 @@ class MomentsThreshold(SitkThreshold):
         return sitk.MomentsThreshold(*args)
 
 
-threshold_dict = Register()
-threshold_dict.register(ManualThreshold)
-threshold_dict.register(OtsuThreshold)
-threshold_dict.register(LiThreshold)
-threshold_dict.register(RenyiEntropyThreshold)
-threshold_dict.register(ShanbhagThreshold)
-threshold_dict.register(TriangleThreshold)
-threshold_dict.register(YenThreshold)
-threshold_dict.register(HuangThreshold)
-threshold_dict.register(IntermodesThreshold)
-threshold_dict.register(IsoDataThreshold)
-threshold_dict.register(KittlerIllingworthThreshold)
-threshold_dict.register(MomentsThreshold)
-threshold_dict.register(MaximumEntropyThreshold)
+class ThresholdSelection(AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold):
+    pass
+
+
+ThresholdSelection.register(ManualThreshold)
+ThresholdSelection.register(OtsuThreshold)
+ThresholdSelection.register(LiThreshold)
+ThresholdSelection.register(RenyiEntropyThreshold)
+ThresholdSelection.register(ShanbhagThreshold)
+ThresholdSelection.register(TriangleThreshold)
+ThresholdSelection.register(YenThreshold)
+ThresholdSelection.register(HuangThreshold)
+ThresholdSelection.register(IntermodesThreshold)
+ThresholdSelection.register(IsoDataThreshold)
+ThresholdSelection.register(KittlerIllingworthThreshold)
+ThresholdSelection.register(MomentsThreshold)
+ThresholdSelection.register(MaximumEntropyThreshold)
+
+
+class DoubleThresholdParams(BaseModel):
+    core_threshold: ThresholdSelection = ThresholdSelection.get_default()
+    base_threshold: ThresholdSelection = ThresholdSelection.get_default()
 
 
 class DoubleThreshold(BaseThreshold):
+    __argument_class__ = DoubleThresholdParams
+
     @classmethod
     def get_name(cls):
         # return "Double Choose"
         return "Base/Core"
 
     @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "core_threshold",
-                "Core threshold",
-                threshold_dict.get_default(),
-                possible_values=threshold_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty(
-                "base_threshold",
-                "Base threshold",
-                threshold_dict.get_default(),
-                possible_values=threshold_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-        ]
+    @update_argument("arguments")
+    def calculate_mask(
+        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: DoubleThresholdParams, operator
+    ):
+        thr: BaseThreshold = threshold_dict[arguments.core_threshold.name]
+        mask1, thr_val1 = thr.calculate_mask(data, mask, arguments.core_threshold.values, operator)
 
-    @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
-        thr: BaseThreshold = threshold_dict[arguments["core_threshold"]["name"]]
-        mask1, thr_val1 = thr.calculate_mask(data, mask, arguments["core_threshold"]["values"], operator)
-
-        thr: BaseThreshold = threshold_dict[arguments["base_threshold"]["name"]]
-        mask2, thr_val2 = thr.calculate_mask(data, mask, arguments["base_threshold"]["values"], operator)
+        thr: BaseThreshold = threshold_dict[arguments.base_threshold.name]
+        mask2, thr_val2 = thr.calculate_mask(data, mask, arguments.base_threshold.values, operator)
         mask2[mask2 > 0] = 1
         mask2[mask1 > 0] = 2
         return mask2, (thr_val1, thr_val2)
 
 
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("hist_num", "bins"))])
+class DoubleOtsuParams(BaseModel):
+    valley: bool = Field(True, title="Valley emphasis")
+    bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
+
+
 class DoubleOtsu(BaseThreshold):
+    __argument_class__ = DoubleOtsuParams
+
     @classmethod
     def get_name(cls):
         return "Double Otsu"
 
     @classmethod
-    def get_fields(cls):
-        return [  # AlgorithmProperty("mask", "Use mask in calculation", True),
-            AlgorithmProperty("valley", "Valley emphasis", True),
-            AlgorithmProperty("hist_num", "Histogram bins", 128, (8, 2**16)),
-        ]
-
-    @classmethod
+    @update_argument("arguments")
     def calculate_mask(
         cls,
         data: np.ndarray,
         mask: typing.Optional[np.ndarray],
-        arguments: dict,
+        arguments: DoubleOtsuParams,
         operator: typing.Callable[[object, object], bool],
     ):
         cleaned_image_sitk = sitk.GetImageFromArray(data)
-        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, 2, 0, arguments["hist_num"], arguments["valley"])
+        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, 2, 0, arguments.bins, arguments.valley)
         res = sitk.GetArrayFromImage(res)
         thr1 = data[res == 2].min()
         thr2 = data[res == 1].min()
         return res, (thr1, thr2)
 
 
-double_threshold_dict = Register()
+class DoubleThresholdSelection(
+    AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold
+):
+    pass
 
-double_threshold_dict.register(DoubleThreshold)
-double_threshold_dict.register(DoubleOtsu)
+
+DoubleThresholdSelection.register(DoubleThreshold)
+DoubleThresholdSelection.register(DoubleOtsu)
+
+double_threshold_dict = DoubleThresholdSelection.__register__
+threshold_dict = ThresholdSelection.__register__
+
+
+def __getattr__(name):  # pragma: no cover
+    if name == "threshold_dict":
+        warnings.warn(
+            "threshold_dict is deprecated. Please use ThresholdSelection instead", category=FutureWarning, stacklevel=2
+        )
+        return ThresholdSelection.__register__
+
+    if name == "double_threshold_dict":
+        warnings.warn(
+            "double_threshold_dict is deprecated. Please use DoubleThresholdSelection instead",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+        return DoubleThresholdSelection.__register__
+
+    raise AttributeError(f"module {__name__} has no attribute {name}")

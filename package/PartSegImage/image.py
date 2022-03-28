@@ -7,6 +7,8 @@ from itertools import zip_longest
 
 import numpy as np
 
+from PartSegImage import Channel
+
 Spacing = typing.Tuple[typing.Union[float, int], ...]
 _IMAGE_DATA = typing.Union[typing.List[np.ndarray], np.ndarray]
 
@@ -520,6 +522,8 @@ class Image:
                 kwargs["C"] = kwargs.pop("c")
 
         channel = kwargs.pop("C", slice(None) if "C" in self.axis_order else 0)
+        if isinstance(channel, Channel):
+            channel = channel.value
 
         axis_order = self.axis_order
         for name, value in kwargs.items():
@@ -529,6 +533,8 @@ class Image:
                     axis_order = axis_order.replace(name.upper(), "")
 
         slices_t = tuple(slices)
+        if isinstance(channel, str):
+            channel = self._channel_names.index(channel)
         if isinstance(channel, int):
             return self._channel_arrays[channel][slices_t]
         return np.stack([x[slices_t] for x in self._channel_arrays[channel]], axis=axis_order.index("C"))

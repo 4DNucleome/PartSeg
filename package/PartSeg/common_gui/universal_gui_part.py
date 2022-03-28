@@ -27,6 +27,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegImage import Channel
 
 enum_type = Enum if PYQT5 else object
 
@@ -34,13 +35,15 @@ enum_type = Enum if PYQT5 else object
 class ChannelComboBox(QComboBox):
     """Combobox for selecting channel index. Channel numeration starts from 1 for user and from 0 for developer"""
 
-    def get_value(self) -> int:
+    def get_value(self) -> Channel:
         """Return current channel. Starting from 0"""
-        return self.currentIndex()
+        return Channel(self.currentIndex())
 
-    def set_value(self, val: int):
+    def set_value(self, val: typing.Union[Channel, int]):
         """Set current channel . Starting from 0"""
-        self.setCurrentIndex(int(val))
+        if isinstance(val, Channel):
+            self.setCurrentIndex(val.value)
+        self.setCurrentIndex(val)
 
     def change_channels_num(self, num: int):
         """Change number of channels"""

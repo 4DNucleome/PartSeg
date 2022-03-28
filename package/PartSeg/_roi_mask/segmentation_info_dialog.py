@@ -4,7 +4,7 @@ from qtpy.QtCore import QEvent
 from qtpy.QtWidgets import QGridLayout, QLabel, QListWidget, QPlainTextEdit, QPushButton, QWidget
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 
 from .stack_settings import StackSettings
 
@@ -53,9 +53,7 @@ class SegmentationInfoDialog(QWidget):
 
     @property
     def get_parameters(self):
-        if self.parameters_dict:
-            return self.parameters_dict
-        return self.settings.components_parameters_dict
+        return self.parameters_dict or self.settings.components_parameters_dict
 
     def change_component_info(self):
         if self.components.currentItem() is None:
@@ -65,7 +63,7 @@ class SegmentationInfoDialog(QWidget):
         if parameters is None:
             self.description.setPlainText("None")
         else:
-            self.description.setPlainText(f"Component {text}\n" + parameters.pretty_print(mask_algorithm_dict))
+            self.description.setPlainText(f"Component {text}\n" + parameters.pretty_print(MaskAlgorithmSelection))
 
     def set_parameter_action(self):
         if self.components.currentItem() is None:

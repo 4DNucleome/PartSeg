@@ -39,6 +39,7 @@ from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.segmentation.noise_filtering import DimensionType
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdFlowAlgorithm
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Image, ImageWriter, TiffImageReader
 
@@ -75,20 +76,22 @@ def create_test_data(tmpdir):
 class TestCalculationProcess:
     @staticmethod
     def create_calculation_plan():
-        parameters = {
-            "channel": 1,
-            "minimum_size": 200,
-            "threshold": {
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
+        parameters = LowerThresholdFlowAlgorithm.__argument_class__(
+            **{
+                "channel": 1,
+                "minimum_size": 200,
+                "threshold": {
+                    "name": "Base/Core",
+                    "values": {
+                        "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
+                        "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
+                    },
                 },
-            },
-            "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-            "side_connection": False,
-            "sprawl_type": {"name": "Euclidean", "values": {}},
-        }
+                "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+                "side_connection": False,
+                "flow_type": {"name": "Euclidean", "values": {}},
+            }
+        )
 
         segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
         mask_suffix = MaskSuffix(name="", suffix="_mask")
@@ -122,20 +125,22 @@ class TestCalculationProcess:
 
     @staticmethod
     def create_calculation_plan2():
-        parameters = {
-            "channel": 0,
-            "minimum_size": 200,
-            "threshold": {
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
+        parameters = LowerThresholdFlowAlgorithm.__argument_class__(
+            **{
+                "channel": 0,
+                "minimum_size": 200,
+                "threshold": {
+                    "name": "Base/Core",
+                    "values": {
+                        "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
+                        "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
+                    },
                 },
-            },
-            "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-            "side_connection": False,
-            "sprawl_type": {"name": "Euclidean", "values": {}},
-        }
+                "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+                "side_connection": False,
+                "flow_type": {"name": "Euclidean", "values": {}},
+            }
+        )
 
         segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
         chosen_fields = [
@@ -193,20 +198,22 @@ class TestCalculationProcess:
 
     @staticmethod
     def create_calculation_plan3():
-        parameters = {
-            "channel": 1,
-            "minimum_size": 200,
-            "threshold": {
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
+        parameters = LowerThresholdFlowAlgorithm.__argument_class__(
+            **{
+                "channel": 1,
+                "minimum_size": 200,
+                "threshold": {
+                    "name": "Base/Core",
+                    "values": {
+                        "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
+                        "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
+                    },
                 },
-            },
-            "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-            "side_connection": False,
-            "sprawl_type": {"name": "Euclidean", "values": {}},
-        }
+                "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+                "side_connection": False,
+                "flow_type": {"name": "Euclidean", "values": {}},
+            }
+        )
 
         segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
         mask_suffix = MaskSuffix(name="", suffix="_mask")
@@ -462,17 +469,19 @@ class TestCalculationProcess:
             assert os.path.basename(df.name.units[i]) == f"stack1_component{i+1}.tif"
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_error(self, tmp_path_factory, data_test_dir, monkeypatch):
+    def test_full_pipeline_error(self, tmp_path, data_test_dir, monkeypatch):
         plan = self.create_calculation_plan()
-        data_dir = tmp_path_factory.mktemp("data")
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
         file_pattern_copy = os.path.join(data_test_dir, "stack1_components", "stack1_component*.tif")
         file_paths = sorted(glob(file_pattern_copy))
         for el in file_paths:
             shutil.copy(el, data_dir)
-            shutil.copy(data_dir / "stack1_component1.tif", data_dir / "stack1_component10.tif")
+        shutil.copy(data_dir / "stack1_component1.tif", data_dir / "stack1_component10.tif")
         file_pattern = os.path.join(data_dir, "stack1_component*[0-9].tif")
         file_paths = sorted(glob(file_pattern))
-        result_dir = tmp_path_factory.mktemp("result")
+        result_dir = tmp_path / "result"
+        result_dir.mkdir()
 
         assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
         calc = Calculation(

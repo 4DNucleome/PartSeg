@@ -40,7 +40,7 @@ import tifffile
 import xlsxwriter
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.calculation_plan import (
     BaseCalculation,
     Calculation,
@@ -68,10 +68,10 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, repo
 from PartSegImage import Image, TiffImageReader
 
 from ...io_utils import WrongFileTypeException
+from ...json_hooks import PartSegEncoder
 from ...project_info import AdditionalLayerDescription, HistoryElement
 from ...roi_info import ROIInfo
 from ...segmentation import RestartableAlgorithm
-from .. import PartEncoder
 from .parallel_backend import BatchManager, SubprocessOrder
 
 
@@ -244,13 +244,16 @@ class CalculationProcess:
         :param ROIExtractionProfile operation: Specification of segmentation operation
         :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
-        segmentation_class = analysis_algorithm_dict.get(operation.algorithm, None)
+        segmentation_class = AnalysisAlgorithmSelection.get(operation.algorithm)
         if segmentation_class is None:  # pragma: no cover
             raise ValueError(f"Segmentation class {operation.algorithm} do not found")
         segmentation_algorithm: RestartableAlgorithm = segmentation_class()
         segmentation_algorithm.set_image(self.image)
         segmentation_algorithm.set_mask(self.mask)
-        segmentation_algorithm.set_parameters(**operation.values)
+        if segmentation_algorithm.__new_style__:
+            segmentation_algorithm.set_parameters(operation.values)
+        else:
+            segmentation_algorithm.set_parameters(**operation.values)
         result = segmentation_algorithm.calculation_run(report_empty_fun)
         backup_data = self.roi_info, self.additional_layers, self.algorithm_parameters
         self.roi_info = ROIInfo(result.roi, result.roi_annotation, result.alternative_representation)
@@ -348,12 +351,15 @@ class CalculationProcess:
         """
         channel = operation.channel
         if channel == -1:
-            segmentation_class: Type[ROIExtractionAlgorithm] = analysis_algorithm_dict.get(
-                self.algorithm_parameters["algorithm_name"], None
+            segmentation_class: Type[ROIExtractionAlgorithm] = AnalysisAlgorithmSelection.get(
+                self.algorithm_parameters["algorithm_name"]
             )
             if segmentation_class is None:  # pragma: no cover
                 raise ValueError(f"Segmentation class {self.algorithm_parameters['algorithm_name']} do not found")
-            channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
+            if segmentation_class.__new_style__:
+                channel = getattr(self.algorithm_parameters["values"], segmentation_class.get_channel_parameter_name())
+            else:
+                channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
         # FIXME use additional information
         old_mask = self.image.mask
@@ -584,7 +590,9 @@ class FileData:
             self.file_type = FileType.text_file
         self.writing = False
         data = SheetData("calculation_info", [("Description", "str"), ("JSON", "str")], raw=True)
-        data.add_data([str(calculation.calculation_plan), json.dumps(calculation.calculation_plan, cls=PartEncoder)], 0)
+        data.add_data(
+            [str(calculation.calculation_plan), json.dumps(calculation.calculation_plan, cls=PartSegEncoder)], 0
+        )
         self.sheet_dict = {}
         self.calculation_info = {}
         self.sheet_set = {"Errors"}
@@ -811,7 +819,7 @@ class FileData:
         sheet.set_row(1, description.count("\n") * 12 + 10)
         sheet.set_column(0, 0, max(map(len, description.split("\n"))))
         sheet.set_column(1, 1, 15)
-        sheet.write("B2", json.dumps(calculation_plan, cls=PartEncoder, indent=2))
+        sheet.write("B2", json.dumps(calculation_plan, cls=PartSegEncoder, indent=2))
 
     def get_errors(self) -> List[ErrorInfo]:
         """

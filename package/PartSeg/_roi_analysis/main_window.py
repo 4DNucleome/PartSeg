@@ -104,7 +104,7 @@ class Options(QWidget):
         self.choose_profile.textActivated.connect(self.change_profile)
         self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)
         self.interactive_use.stateChanged.connect(self.interactive_change)
-        self.algorithm_choose_widget = AlgorithmChoose(settings, algorithm_description.analysis_algorithm_dict)
+        self.algorithm_choose_widget = AlgorithmChoose(settings, algorithm_description.AnalysisAlgorithmSelection)
         self.algorithm_choose_widget.result.connect(self.execution_done)
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
@@ -627,7 +627,7 @@ class MainWindow(BaseMainWindow):
         self.options_panel.interactive_algorithm_execute()
 
     def reload(self):
-        self.options_panel.algorithm_choose_widget.reload(algorithm_description.analysis_algorithm_dict)
+        self.options_panel.algorithm_choose_widget.reload(algorithm_description.AnalysisAlgorithmSelection)
 
     def closeEvent(self, event):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))

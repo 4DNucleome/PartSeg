@@ -3,13 +3,15 @@ import typing
 import numpy as np
 import SimpleITK as sitk
 
+from PartSegCore.utils import BaseModel
 from PartSegImage.image import minimal_dtype
 
-from .class_generator import BaseSerializableClass
+from .class_register import register_class
 from .image_operations import RadiusType, dilate, erode
 
 
-class MaskProperty(BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.mask_create.MaskProperty"])
+class MaskProperty(BaseModel):
     """
     Description of creation mask from segmentation
 
@@ -69,7 +71,14 @@ class MaskProperty(BaseSerializableClass):
 
         :rtype: MaskProperty
         """
-        return cls(RadiusType.NO, 0, RadiusType.NO, 0, False, False)
+        return cls(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+        )
 
 
 def mp_eq(self: MaskProperty, other: MaskProperty):
@@ -192,7 +201,7 @@ def _fill_holes(mask_description: MaskProperty, mask: np.ndarray) -> np.ndarray:
     if mask_description.save_components:
         border = 1
         res_slice = tuple(slice(border, -border) for _ in range(mask.ndim))
-        mask_description_copy = mask_description.replace_(save_components=False)
+        mask_description_copy = mask_description.copy(update={"save_components": False})
         mask_prohibited = mask > 0
         for component, slice_arr, cmp_num in _cut_components(mask, mask, border):
             mask_prohibited_component = mask_prohibited[slice_arr]

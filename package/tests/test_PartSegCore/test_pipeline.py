@@ -8,10 +8,10 @@ import pytest
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import (
+    AnalysisAlgorithmSelection,
     ProjectTuple,
     SegmentationPipeline,
     SegmentationPipelineElement,
-    analysis_algorithm_dict,
 )
 from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
 from PartSegCore.analysis.load_functions import LoadProject
@@ -22,7 +22,7 @@ from PartSegCore.mask_create import calculate_mask
 @pytest.mark.parametrize("channel", [0, 1])
 def test_simple(image, algorithm_parameters, channel):
     algorithm_parameters["values"]["channel"] = channel
-    algorithm = analysis_algorithm_dict[algorithm_parameters["algorithm_name"]]()
+    algorithm = AnalysisAlgorithmSelection[algorithm_parameters["algorithm_name"]]()
     algorithm.set_image(image)
     algorithm.set_parameters(**algorithm_parameters["values"])
     result = algorithm.calculation_run(lambda x, y: None)
@@ -30,7 +30,7 @@ def test_simple(image, algorithm_parameters, channel):
 
 
 def test_pipeline_manual(image, algorithm_parameters, mask_property):
-    algorithm = analysis_algorithm_dict[algorithm_parameters["algorithm_name"]]()
+    algorithm = AnalysisAlgorithmSelection[algorithm_parameters["algorithm_name"]]()
     algorithm.set_image(image)
     algorithm.set_parameters(**algorithm_parameters["values"])
     result = algorithm.calculation_run(lambda x, y: None)

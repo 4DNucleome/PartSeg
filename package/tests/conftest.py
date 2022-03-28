@@ -14,7 +14,6 @@ from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import ComponentsNumber, MeasurementProfile, Volume
-from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.roi_info import ROIInfo
@@ -161,7 +160,7 @@ def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_paramet
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[3:-3, x + 4 : x + 16, y + 4 : y + 16] = i
     data = ROIInfo(stack_image.image.fit_array_to_image(data))
-    mask_segmentation_parameters.values["threshold"]["values"]["threshold"] = 110
+    mask_segmentation_parameters.values.threshold.values.threshold = 110
     parameters = {i: deepcopy(mask_segmentation_parameters) for i in range(1, 5)}
     return dataclasses.replace(
         stack_image, roi_info=data, roi_extraction_parameters=parameters, selected_components=[1, 3]
@@ -170,27 +169,42 @@ def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_paramet
 
 @pytest.fixture
 def mask_property():
-    return MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, False, False, False)
+    return MaskProperty.simple_mask()
 
 
 @pytest.fixture
 def measurement_profiles():
     statistics = [
         MeasurementEntry(
-            "Segmentation Volume",
-            Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+            name="Segmentation Volume",
+            calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
         ),
         MeasurementEntry(
-            "ROI Components Number",
-            ComponentsNumber.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+            name="ROI Components Number",
+            calculation_tree=ComponentsNumber.get_starting_leaf().replace_(
+                area=AreaType.ROI, per_component=PerComponent.No
+            ),
         ),
     ]
     statistics2 = [
         MeasurementEntry(
-            "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+            name="Mask Volume",
+            calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
         ),
     ]
-    return MeasurementProfile("statistic1", statistics), MeasurementProfile("statistic2", statistics + statistics2)
+    return MeasurementProfile(name="statistic1", chosen_fields=statistics), MeasurementProfile(
+        name="statistic2", chosen_fields=statistics + statistics2
+    )
+
+
+@pytest.fixture
+def clean_register():
+    from PartSegCore.json_hooks import REGISTER
+
+    old_dict = REGISTER._data_dkt
+    REGISTER._data_dkt = {}
+    yield
+    REGISTER._data_dkt = old_dict
 
 
 def pytest_collection_modifyitems(session, config, items):

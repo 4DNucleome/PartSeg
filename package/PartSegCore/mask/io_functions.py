@@ -27,15 +27,15 @@ from ..io_utils import (
     SaveROIAsNumpy,
     SaveROIAsTIFF,
     SegmentationType,
-    UpdateLoadedMetadataBase,
     WrongFileTypeException,
     check_segmentation_type,
     get_tarinfo,
+    load_metadata_base,
     open_tar_file,
     proxy_callback,
     tar_to_buff,
 )
-from ..json_hooks import ProfileEncoder
+from ..json_hooks import PartSegEncoder
 from ..project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from ..roi_info import ROIInfo
 
@@ -144,7 +144,7 @@ def save_stack_segmentation(
                 metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
             else:
                 metadata["base_file"] = file_path
-        metadata_buff = BytesIO(json.dumps(metadata, cls=ProfileEncoder).encode("utf-8"))
+        metadata_buff = BytesIO(json.dumps(metadata, cls=PartSegEncoder).encode("utf-8"))
         metadata_tar = get_tarinfo("metadata.json", metadata_buff)
         tar_file.addfile(metadata_tar, metadata_buff)
         step_changed(4)
@@ -177,7 +177,7 @@ def save_stack_segmentation(
             hist.arrays.seek(0)
             tar_file.addfile(hist_info, hist.arrays)
         if el_info:
-            hist_str = json.dumps(el_info, cls=ProfileEncoder)
+            hist_str = json.dumps(el_info, cls=PartSegEncoder)
             hist_buff = BytesIO(hist_str.encode("utf-8"))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
             tar_file.addfile(tar_algorithm, hist_buff)
@@ -284,21 +284,6 @@ class LoadROI(LoadBase):
     def get_short_name(cls):
         return "seg"
 
-    @staticmethod
-    def fix_parameters(profile: ROIExtractionProfile):
-        if profile is None:
-            return
-        if (profile.algorithm in {"Threshold", "Auto Threshold"}) and isinstance(profile.values["smooth_border"], bool):
-            if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
-                profile.values["smooth_border"] = {
-                    "name": "Opening",
-                    "values": {"smooth_border_radius": profile.values["smooth_border_radius"]},
-                }
-                del profile.values["smooth_border_radius"]
-            else:
-                profile.values["smooth_border"] = {"name": "None", "values": {}}
-        return profile
-
     @classmethod
     def load(
         cls,
@@ -315,7 +300,7 @@ class LoadROI(LoadBase):
         else:
             parameters = defaultdict(
                 lambda: None,
-                [(int(k), cls.fix_parameters(v)) for k, v in segmentation_tuple.roi_extraction_parameters.items()],
+                [(int(k), v) for k, v in segmentation_tuple.roi_extraction_parameters.items()],
             )
         return dataclasses.replace(segmentation_tuple, roi_extraction_parameters=parameters)
 
@@ -356,7 +341,7 @@ class LoadROIParameters(LoadBase):
                 else:
                     parameters = defaultdict(
                         lambda: None,
-                        [(int(k), LoadROI.fix_parameters(v)) for k, v in project_metadata["parameters"].items()],
+                        [(int(k), v) for k, v in project_metadata["parameters"].items()],
                     )
                 return MaskProjectTuple(file_path=file_data, image=None, roi_extraction_parameters=parameters)
 
@@ -365,7 +350,7 @@ class LoadROIParameters(LoadBase):
             project_metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
             parameters = defaultdict(
                 lambda: None,
-                [(int(k), LoadROI.fix_parameters(v)) for k, v in project_metadata["parameters"].items()],
+                [(int(k), v) for k, v in project_metadata["parameters"].items()],
             )
         finally:
             if isinstance(file_data, (str, Path)):
@@ -464,7 +449,7 @@ class LoadStackImageWithMask(LoadBase):
     @classmethod
     def get_next_file(cls, file_paths: typing.List[str]):
         base, ext = os.path.splitext(file_paths[0])
-        return base + "_mask" + ext
+        return f"{base}_mask{ext}"
 
     @classmethod
     def number_of_files(cls):
@@ -671,7 +656,7 @@ class SaveParametersJSON(SaveBase):
         :return:
         """
         with open(save_location, "w", encoding="utf-8") as ff:
-            json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=ProfileEncoder)
+            json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=PartSegEncoder)
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
@@ -719,28 +704,7 @@ def load_metadata(data: typing.Union[str, Path, typing.TextIO]):
     :param data: path to json file, string with json, or opened file
     :return: restored structures
     """
-    return UpdateLoadedMetadataMask.load_json_data(data)
-
-
-class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
-    @classmethod
-    def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
-        profile_data = super().update_segmentation_profile(profile_data)
-        if profile_data.algorithm in {"Threshold", "Auto Threshold"}:
-            if isinstance(profile_data.values["smooth_border"], bool):
-                if profile_data.values["smooth_border"]:
-                    profile_data.values["smooth_border"] = {
-                        "name": "Opening",
-                        "values": {"smooth_border_radius": profile_data.values["smooth_border_radius"]},
-                    }
-                else:
-                    profile_data.values["smooth_border"] = {"name": "None", "values": {}}
-                if "smooth_border_radius" in profile_data.values:
-                    del profile_data.values["smooth_border_radius"]
-            if "noise_removal" in profile_data.values:
-                profile_data.values["noise_filtering"] = profile_data.values["noise_removal"]
-                del profile_data.values["noise_removal"]
-        return profile_data
+    return load_metadata_base(data)
 
 
 load_dict = Register(

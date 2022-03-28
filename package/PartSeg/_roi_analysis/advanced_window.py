@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -31,7 +31,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox, ensure_main_thread
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.universal_const import UNIT_SCALE, Units
@@ -108,7 +108,7 @@ class Properties(QWidget):
         spacing_layout = QHBoxLayout()
         spacing_layout.addWidget(self.lock_spacing)
         for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
-            spacing_layout.addWidget(QLabel(txt + ":"))
+            spacing_layout.addWidget(QLabel(f"{txt}:"))
             spacing_layout.addWidget(el)
         spacing_layout.addWidget(self.units)
         spacing_layout.addStretch(1)
@@ -167,14 +167,15 @@ class Properties(QWidget):
         # TODO update with knowledge from profile dict
         self.delete_btn.setEnabled(True)
         self.rename_btn.setEnabled(True)
-        self.info_label.setPlainText(profile.pretty_print(analysis_algorithm_dict))
+        self.info_label.setPlainText(profile.pretty_print(AnalysisAlgorithmSelection.__register__))
 
     def synchronize_spacing(self):
         if self.lock_spacing.isChecked():
             self.spacing[1].setValue(self.spacing[2].value())
 
     def image_spacing_change(self):
-        spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing)]
+        spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for el in self.spacing]
+
         if not self.spacing[0].isEnabled():
             spacing = spacing[1:]
         self._settings.image_spacing = spacing
@@ -637,7 +638,7 @@ class MeasurementSettings(QWidget):
             node = node.replace_(per_component=component)
         with suppress(KeyError):
             arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
-            if len(arguments) > 0 and len(node.dict) == 0:
+            if len(arguments) > 0 and len(dict(node.parameters)) == 0:
                 dial = self.form_dialog(arguments)
                 if dial.exec_():
                     node = node._replace(dict=dial.get_values())
@@ -697,9 +698,9 @@ class MeasurementSettings(QWidget):
                 return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
-            element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
-            selected_values.append(MeasurementEntry(element.text(), element.stat))
-        stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
+            element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+            selected_values.append(MeasurementEntry(name=element.text(), calculation_tree=element.stat))
+        stat_prof = MeasurementProfile(name=self.profile_name.text(), chosen_fields=selected_values)
         self.settings.measurement_profiles[stat_prof.name] = stat_prof
         self.settings.dump()
         self.export_profiles_butt.setEnabled(True)
@@ -722,9 +723,11 @@ class MeasurementSettings(QWidget):
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
-                element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
-                selected_values.append(MeasurementEntry(val_dialog.result[element.text()], element.stat))
-            stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
+                element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+                selected_values.append(
+                    MeasurementEntry(name=val_dialog.result[element.text()], calculation_tree=element.stat)
+                )
+            stat_prof = MeasurementProfile(name=self.profile_name.text(), chosen_fields=selected_values)
             self.settings.measurement_profiles[stat_prof.name] = stat_prof
             self.export_profiles_butt.setEnabled(True)
 

@@ -1,17 +1,27 @@
-from .algorithm_description import analysis_algorithm_dict
+import warnings
+
+from .algorithm_description import AnalysisAlgorithmSelection
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from .io_utils import ProjectTuple
 from .load_functions import load_metadata
 from .measurement_calculation import MEASUREMENT_DICT
-from .save_hooks import PartEncoder, part_hook
 
 __all__ = (
+    "AnalysisAlgorithmSelection",
     "ProjectTuple",
-    "analysis_algorithm_dict",
     "SegmentationPipeline",
     "SegmentationPipelineElement",
-    "part_hook",
-    "PartEncoder",
     "MEASUREMENT_DICT",
     "load_metadata",
 )
+
+
+def __getattr__(name):  # pragma: no cover
+    if name == "analysis_algorithm_dict":
+        warnings.warn(
+            "analysis_algorithm_dict is deprecated. Please use AnalysisAlgorithmSelection instead",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+        return AnalysisAlgorithmSelection.__register__
+    raise AttributeError(f"module {__name__} has no attribute {name}")

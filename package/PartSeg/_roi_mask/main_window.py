@@ -30,7 +30,7 @@ import PartSegData
 from PartSegCore import UNIT_SCALE, Units, state_store
 from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.mask import io_functions
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import LoadROI, LoadROIFromTIFF, LoadROIParameters, MaskProjectTuple, SaveROI
 from PartSegCore.project_info import HistoryElement, HistoryProblem, calculate_mask_from_project
@@ -168,7 +168,7 @@ class MainMenu(BaseMainMenu):
         self.advanced_window.show()
 
     def reload(self):
-        self.parent().parent().options_panel.algorithm_options.algorithm_choose_widget.reload(mask_algorithm_dict)
+        self.parent().parent().options_panel.algorithm_options.algorithm_choose_widget.reload(MaskAlgorithmSelection)
 
     def load_image(self):
         # TODO move segmentation with image load to load_segmentaion
@@ -467,8 +467,7 @@ class ChosenComponents(QWidget):
 
     def get_mask(self):
         res = [0]
-        for _, check in sorted(self.check_box.items()):
-            res.append(check.isChecked())
+        res.extend(check.isChecked() for _, check in sorted(self.check_box.items()))
         return np.array(res, dtype=np.uint8)
 
 
@@ -500,7 +499,7 @@ class AlgorithmOptions(QWidget):
         self.execute_all_btn.setDisabled(True)
         self.save_parameters_btn = QPushButton("Save parameters")
         self.block_execute_all_btn = False
-        self.algorithm_choose_widget = AlgorithmChoose(settings, mask_algorithm_dict)
+        self.algorithm_choose_widget = AlgorithmChoose(settings, MaskAlgorithmSelection)
         self.algorithm_choose_widget.result.connect(self.execution_result_set)
         self.algorithm_choose_widget.finished.connect(self.execution_finished)
         self.algorithm_choose_widget.progress_signal.connect(self.progress_info)
@@ -828,9 +827,7 @@ class ImageInformation(QWidget):
         self.update_spacing()
 
     def image_spacing_change(self):
-        self._settings.image_spacing = [
-            el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing[::-1])
-        ]
+        self._settings.image_spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for el in self.spacing[::-1]]
 
     def showEvent(self, _a0):
         units_value = self._settings.get("units_value", Units.nm)

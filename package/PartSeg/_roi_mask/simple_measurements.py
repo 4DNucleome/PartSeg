@@ -20,6 +20,7 @@ from PartSeg._roi_mask.stack_settings import StackSettings
 from PartSeg.common_gui.universal_gui_part import ChannelComboBox
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore import Units
+from PartSegCore.algorithm_describe_base import base_model_to_algorithm_property
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile, MeasurementResult
 
@@ -84,7 +85,9 @@ class SimpleMeasurements(QWidget):
             QMessageBox.warning(self, "No measurement", "Select at least one measurement")
             return
 
-        profile = MeasurementProfile("", [MeasurementEntry(name=x.name, calculation_tree=x) for x in to_calculate])
+        profile = MeasurementProfile(
+            name="", chosen_fields=[MeasurementEntry(name=x.name, calculation_tree=x) for x in to_calculate]
+        )
 
         dial = ExecuteFunctionDialog(
             profile.calculate,
@@ -124,7 +127,9 @@ class SimpleMeasurements(QWidget):
             area = val.get_starting_leaf().area
             pc = val.get_starting_leaf().per_component
             if (
-                val.get_fields()
+                base_model_to_algorithm_property(val.__argument_class__)
+                if val.__new_style__
+                else val.get_fields()
                 or (area is not None and area != AreaType.ROI)
                 or (pc is not None and pc != PerComponent.Yes)
             ):
