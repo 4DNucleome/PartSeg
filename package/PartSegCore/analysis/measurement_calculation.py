@@ -34,6 +34,7 @@ from PartSegImage import Channel, Image
 
 from .. import autofit as af
 from ..algorithm_describe_base import Register, ROIExtractionProfile
+from ..class_register import register_class, rename_key
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
@@ -1217,10 +1218,10 @@ class DistancePoint(Enum):
         return self.name.replace("_", " ")
 
 
+@register_class(version="0.0.1", migrations=[("0.0.0", rename_key("distance_to_segmentation", "distance_to_ROI"))])
 class DistanceMaskROIParameters(BaseModel):
     distance_from_mask: DistancePoint = DistancePoint.Border
-    distance_to_segmentation: DistancePoint = Field(DistancePoint.Border, title="Distance to ROI")
-    # TODO migrate name
+    distance_to_roi: DistancePoint = Field(DistancePoint.Border, title="Distance to ROI")
 
 
 class DistanceMaskROI(MeasurementMethodBase):
@@ -1251,7 +1252,7 @@ class DistanceMaskROI(MeasurementMethodBase):
         voxel_size,
         result_scalar,
         distance_from_mask: DistancePoint,
-        distance_to_segmentation: DistancePoint,
+        distance_to_roi: DistancePoint,
         *args,
         **kwargs,
     ):  # pylint: disable=W0221
@@ -1262,7 +1263,7 @@ class DistanceMaskROI(MeasurementMethodBase):
         if not (np.any(mask) and np.any(area_array)):
             return 0
         mask_pos = cls.calculate_points(channel, mask, voxel_size, result_scalar, distance_from_mask)
-        seg_pos = cls.calculate_points(channel, area_array, voxel_size, result_scalar, distance_to_segmentation)
+        seg_pos = cls.calculate_points(channel, area_array, voxel_size, result_scalar, distance_to_roi)
         if 1 in {mask_pos.shape[0], seg_pos.shape[0]}:
             return np.min(cdist(mask_pos, seg_pos))
 
