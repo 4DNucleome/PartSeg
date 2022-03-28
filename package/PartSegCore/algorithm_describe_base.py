@@ -428,7 +428,7 @@ class ROIExtractionProfile(BaseModel):
     values: typing.Any
 
     @validator("values")
-    def validate_values(cls, v, values):
+    def validate_values(cls, v, values):  # pylint: disable=R0201
         if not isinstance(v, dict):
             return v
         if "algorithm" not in values:
