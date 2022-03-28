@@ -30,8 +30,6 @@ class MaskBase(BaseModel):
     name: str
 
 
-
-
 class RootType(Enum):
     """Defines root type which changes of data available on begin of calculation"""
 

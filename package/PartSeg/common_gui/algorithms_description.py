@@ -714,7 +714,6 @@ class AlgorithmChooseBase(QWidget):
         self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
         self.add_widgets_to_algorithm()
 
-
         self.setContentsMargins(0, 0, 0, 0)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -810,8 +809,6 @@ class AlgorithmChoose(AlgorithmChooseBase):
         current_widget.image_changed(self.settings.image)
         if hasattr(self.settings, "mask") and hasattr(current_widget, "change_mask"):
             current_widget.change_mask()
-
-
 
 
 def _value_get(self):
