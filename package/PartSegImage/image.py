@@ -533,6 +533,8 @@ class Image:
                     axis_order = axis_order.replace(name.upper(), "")
 
         slices_t = tuple(slices)
+        if isinstance(channel, str):
+            channel = self._channel_names.index(channel)
         if isinstance(channel, int):
             return self._channel_arrays[channel][slices_t]
         return np.stack([x[slices_t] for x in self._channel_arrays[channel]], axis=axis_order.index("C"))
