@@ -3,6 +3,7 @@ global-include *.pxd
 include package/tests/test_data/ome.xsd.xml
 include package/tests/test_data/napari_measurements_profile.json
 include package/tests/test_data/notebook/*.json
+include package/tests/test_data/old_saves/*/*/*.json
 include Readme.md
 include changelog.md
 include pyproject.toml
