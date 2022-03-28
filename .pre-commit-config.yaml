@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/psf/black
-    rev: 22.1.0
+    rev: 22.3.0
     hooks:
     - id: black
       pass_filenames: true
@@ -58,7 +58,7 @@ repos:
       exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v0.940'  # Use the sha / tag you want to point at
+    rev: 'v0.942'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
         files: ^package[\\/]PartSegImage[\\/].+\.py
