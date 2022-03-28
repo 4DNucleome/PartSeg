@@ -402,7 +402,6 @@ class TextShow(QTextEdit):
         super().__init__(text, parent)
         self.lines = lines
         self.setReadOnly(True)
-        # self.setTextBackgroundColor()
         p: QPalette = self.palette()
         p.setColor(QPalette.Base, p.color(self.backgroundRole()))
         self.setPalette(p)

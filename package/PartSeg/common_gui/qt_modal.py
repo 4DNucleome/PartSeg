@@ -106,7 +106,6 @@ class QtPopup(QDialog):
             else:
                 raise ValueError('position must be one of ["top", "left", "bottom", "right"]')
         elif isinstance(position, (tuple, list)):
-            # assert len(position) == 4, "`position` argument must have length 4"
             left, top, width, height = position
         else:
             raise ValueError(f"Wrong type of position {position}")

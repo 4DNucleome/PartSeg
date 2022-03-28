@@ -80,7 +80,6 @@ class PathWatershed(BaseWatershed):
         upper_bound,
     ):
         path_sprawl = path_maximum_sprawl if operator(1, 0) else path_minimum_sprawl
-        # print(path_sprawl)
         image = data.astype(np.float64)
         image[sprawl_area == 0] = 0
         neigh = get_neighbourhood(spacing, get_neigh(side_connection))
@@ -234,7 +233,6 @@ class MSOWatershed(BaseWatershed):
                 raise SegmentationLimitException(*e.args)
             raise
 
-        # print("Steps: ", mso.steps_done(), file=sys.stderr)
         result = mso.get_result_catted()
         result[result > 0] -= 1
         return result

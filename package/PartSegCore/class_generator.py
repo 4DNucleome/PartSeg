@@ -291,7 +291,6 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
 
 class BaseMeta(type):
     def __new__(mcs, name, bases, attrs):
-        # print("BaseMeta.__new__", mcs, name, bases, attrs)
         if attrs.get("_root", False):
             return super().__new__(mcs, name, bases, attrs)
         types = attrs.get("__annotations__", {})
@@ -324,9 +323,6 @@ class BaseMeta(type):
             old_names = ()
 
         result = _make_class(name, types, defaults_dict, list(bases), readonly)
-        # nm_tpl.__new__.__annotations__ = collections.OrderedDict(types)
-        # nm_tpl.__new__.__defaults__ = tuple(defaults)
-        # nm_tpl._field_defaults = defaults_dict
         module = attrs.get("__module__", None)
         if module is None:
             with suppress(AttributeError, ValueError):
@@ -348,7 +344,6 @@ class BaseMeta(type):
 
 class BaseSerializableClass(metaclass=BaseMeta):
     _root = True
-    # __signature__ = ()
     __readonly__ = True
     __old_names__ = ()
 

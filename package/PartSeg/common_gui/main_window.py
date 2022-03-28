@@ -166,7 +166,6 @@ class BaseMainWindow(QMainWindow):
         self.console = None
         self.console_dock = QDockWidget("console", self)
         self.console_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.BottomDockWidgetArea)
-        # self.console_dock.setWidget(self.console)
         self.console_dock.hide()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.console_dock)
 

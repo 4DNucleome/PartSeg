@@ -46,7 +46,6 @@ class AboutDialog(QDialog):
             self.cite_as.setMarkdown(cite_as_text)
         ok_but = QPushButton("Ok")
         ok_but.clicked.connect(self.accept)
-        # text_label.setWordWrap(True)
         text_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout = QGridLayout()
         layout.addWidget(text_label, 0, 0, 1, 3)

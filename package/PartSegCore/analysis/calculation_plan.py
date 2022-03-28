@@ -30,7 +30,6 @@ class MaskBase(BaseModel):
     name: str
 
 
-# MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 
 
 class RootType(Enum):
@@ -283,7 +282,6 @@ class Operations(Enum):
     """Global operations"""
 
     reset_to_base = 1
-    # leave_the_biggest = 2
 
 
 class PlanChanges(Enum):
@@ -595,7 +593,6 @@ class CalculationPlan:
             return NodeType.none
         if not self.current_pos:
             return NodeType.root
-        # print("Pos {}".format(self.current_pos))
         node = self.get_node()
         if isinstance(node.operation, (MaskMapper, MaskIntersection, MaskSum)):
             return NodeType.file_mask

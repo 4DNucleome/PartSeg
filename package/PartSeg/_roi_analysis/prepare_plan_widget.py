@@ -335,8 +335,6 @@ class CreatePlan(QWidget):
         self.get_big_btn.clicked.connect(self.add_leave_biggest)
         self.add_calculation_btn.clicked.connect(self.add_measurement)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
-        # self.forgot_mask_btn.clicked.connect(self.forgot_mask)
-        # self.cmap_save_btn.clicked.connect(self.save_to_cmap)
         self.save_btn.clicked.connect(self.add_save_to_project)
         self.update_element_chk.stateChanged.connect(self.mask_text_changed)
         self.update_element_chk.stateChanged.connect(self.show_measurement)
@@ -429,9 +427,6 @@ class CreatePlan(QWidget):
         fst_col.addWidget(plan_box, 1)
         fst_col.addWidget(mask_box)
         layout.addWidget(plan_box, 0, 0, 5, 1)
-        # layout.addWidget(plan_box, 0, 0, 3, 1)
-        # layout.addWidget(mask_box, 3, 0, 2, 1)
-        # layout.addWidget(segmentation_mask_box, 1, 1)
         layout.addWidget(mask_box, 0, 2, 1, 2)
         layout.addWidget(other_box, 0, 1)
         layout.addWidget(segment_box, 1, 1, 1, 2)
@@ -517,7 +512,6 @@ class CreatePlan(QWidget):
             self.generate_mask_btn.setText("Generate mask")
 
     def node_type_changed(self):
-        # self.cmap_save_btn.setDisabled(True)
         self.save_btn.setDisabled(True)
         self.node_name = ""
         if self.plan.currentItem() is None:
@@ -544,7 +538,6 @@ class CreatePlan(QWidget):
             self.segment_allow = False
             self.file_mask_allow = False
             self.save_btn.setEnabled(True)
-            # self.cmap_save_btn.setEnabled(True)
         elif node_type == NodeType.root:
             self.mask_allow = False
             self.segment_allow = True

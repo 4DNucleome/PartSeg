@@ -139,7 +139,6 @@ class ImportDialog(QDialog):
         self.import_dict = import_dict
         self.local_dict = local_dict
         conflicts = set(local_dict.keys()) & set(import_dict.keys())
-        # print(conflicts)
 
         self.list_view = QTreeWidget()
         self.list_view.setColumnCount(4)
@@ -221,7 +220,6 @@ class ImportDialog(QDialog):
         v1_lay.addWidget(QLabel("Import:"))
         v1_lay.addWidget(self.viewer)
         info_layout.addLayout(v1_lay, 1)
-        # info_layout.addWidget(self.local_viewer, 1)
         v2_lay = QVBoxLayout()
         v2_lay.addWidget(QLabel("Local:"))
         v2_lay.addWidget(self.local_viewer)
