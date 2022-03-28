@@ -46,7 +46,7 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
-from PartSegCore.utils import check_loaded_dict
+from PartSegCore.utils import ProfileDict, check_loaded_dict
 from PartSegImage import Image
 
 
@@ -613,6 +613,14 @@ def test_json_parameters_mask(stack_segmentation1, tmp_path):
 @pytest.mark.parametrize("file_path", (Path(__file__).parent.parent / "test_data" / "notebook").glob("*.json"))
 def test_load_notebook_json(file_path):
     load_metadata_base(file_path)
+
+
+@pytest.mark.parametrize(
+    "file_path", list((Path(__file__).parent.parent / "test_data" / "old_saves").glob(os.path.join("*", "*", "*.json")))
+)
+def test_old_saves_load(file_path):
+    data: ProfileDict = load_metadata_base(file_path)
+    assert data.verify_data(), data.filter_data()
 
 
 update_name_json = """

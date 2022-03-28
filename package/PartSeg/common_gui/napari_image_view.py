@@ -24,6 +24,7 @@ from vispy.color import Color, Colormap
 from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
+from PartSegCore.class_register import register_class
 from PartSegCore.image_operations import NoiseFilterType, bilateral, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
@@ -109,6 +110,7 @@ class ImageInfo:
         return np.subtract(coords, fst_layer.translate).astype(int)
 
 
+@register_class(old_paths=["PartSeg.common_gui.stack_image_view.LabelEnum"])
 class LabelEnum(Enum):
     Not_show = 0
     Show_results = 1

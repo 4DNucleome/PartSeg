@@ -15,6 +15,8 @@ __author__ = "Grzegorz Bokota"
 
 from psygnal import Signal
 
+from PartSegCore.class_register import register_class
+
 
 def bisect(arr, val, comp):
     left = -1
@@ -117,6 +119,7 @@ def get_callback(callback: typing.Union[typing.Callable, MethodType], max_args=N
     return CallbackFun(callback, max_args)
 
 
+@register_class(old_paths=["PartSegCore.json_hooks.EventedDict"])
 class EventedDict(typing.MutableMapping):
     setted = Signal(str)
     deleted = Signal(str)
@@ -226,6 +229,7 @@ def recursive_update_dict(main_dict: typing.Union[dict, EventedDict], other_dict
             main_dict[key] = val
 
 
+@register_class(old_paths=["PartSegCore.json_hooks.ProfileDict"])
 class ProfileDict:
     """
     Dict for storing recursive data. The path are dot separated.
