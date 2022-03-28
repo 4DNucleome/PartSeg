@@ -151,7 +151,8 @@ class BaseMainWindow(QMainWindow):
         self.setWindowTitle(title)
         self.title_base = title
         app = QApplication.instance()
-        if app is not None:
+        if app is not None and "PYTEST_CURRENT_TEST" not in os.environ:
+            # FIXME the PYTEST_CURRENT_TEST is used to prevent pytest session fail on CI.
             app.setStyleSheet(settings.get_style_sheet())
         self.settings.theme_changed.connect(self.change_theme)
         self.channel_info = ""
