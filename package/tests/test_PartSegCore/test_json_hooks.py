@@ -9,7 +9,6 @@ import pytest
 from napari.utils import Colormap
 from napari.utils.notifications import NotificationSeverity
 
-from PartSegCore._old_json_hooks import ProfileEncoder, profile_hook
 from PartSegCore.class_register import class_to_str, register_class, rename_key
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.json_hooks import PartSegEncoder, add_class_info, partseg_object_hook
@@ -39,16 +38,16 @@ class SampleAsDict:
 
 def test_profile_hook_colormap_load(bundle_test_dir):
     with open(bundle_test_dir / "view_settings_v0.12.6.json") as f_p:
-        json.load(f_p, object_hook=profile_hook)
+        json.load(f_p, object_hook=partseg_object_hook)
 
 
 def test_colormap_dump(tmp_path):
     cmap_list = [Colormap([(0, 0, 0), (1, 1, 1)]), Colormap([(0, 0, 0), (1, 1, 1)], controls=[0, 1])]
     with open(tmp_path / "test.json", "w") as f_p:
-        json.dump(cmap_list, f_p, cls=ProfileEncoder)
+        json.dump(cmap_list, f_p, cls=PartSegEncoder)
 
     with open(tmp_path / "test.json") as f_p:
-        cmap_list2 = json.load(f_p, object_hook=profile_hook)
+        cmap_list2 = json.load(f_p, object_hook=partseg_object_hook)
 
     assert np.array_equal(cmap_list[0].colors, cmap_list2[0].colors)
     assert np.array_equal(cmap_list[0].controls, cmap_list2[0].controls)
@@ -60,10 +59,10 @@ def test_colormap_dump(tmp_path):
         Colormap([(0, 0, 0), (0, 0, 0), (1, 1, 1), (1, 1, 1)], controls=[0, 0.1, 0.8, 1]),
     ]
     with open(tmp_path / "test2.json", "w") as f_p:
-        json.dump(cmap_list, f_p, cls=ProfileEncoder)
+        json.dump(cmap_list, f_p, cls=PartSegEncoder)
 
     with open(tmp_path / "test2.json") as f_p:
-        cmap_list2 = json.load(f_p, object_hook=profile_hook)
+        cmap_list2 = json.load(f_p, object_hook=partseg_object_hook)
 
     assert np.array_equal(cmap_list[0].colors, cmap_list2[0].colors)
     assert np.array_equal(cmap_list[0].controls, cmap_list2[0].controls)
@@ -79,7 +78,7 @@ class TestProfileEncoder:
     @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32, np.float32, np.float64])
     def test_dump_numpy_types(self, dtype):
         data = {"a": dtype(2)}
-        text = json.dumps(data, cls=ProfileEncoder)
+        text = json.dumps(data, cls=PartSegEncoder)
         loaded = json.loads(text)
         assert loaded["a"] == 2
 
@@ -87,8 +86,8 @@ class TestProfileEncoder:
         prof_dict = ProfileDict()
         prof_dict.set("a.b.c", 1)
         data = {"a": RadiusType.R2D, "b": prof_dict}
-        text = json.dumps(data, cls=ProfileEncoder)
-        loaded = json.loads(text, object_hook=profile_hook)
+        text = json.dumps(data, cls=PartSegEncoder)
+        loaded = json.loads(text, object_hook=partseg_object_hook)
         assert loaded["a"] == RadiusType.R2D
         assert loaded["b"].get("a.b.c") == 1
 
