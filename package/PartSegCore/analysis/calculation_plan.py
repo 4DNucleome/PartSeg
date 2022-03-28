@@ -13,7 +13,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from PartSegCore.utils import BaseModel
 
 from ..algorithm_describe_base import ROIExtractionProfile
-from ..class_register import register_class
+from ..class_register import register_class, rename_key
 from ..mask_create import MaskProperty
 from ..universal_const import Units
 from . import AnalysisAlgorithmSelection
@@ -114,15 +114,9 @@ class Save(BaseModel):
     values: dict
 
 
-def _update_measurement_dict(dkt: dict):
-    new_dict = dkt.copy()
-    new_dict["measurement_profile"] = new_dict.pop("statistic_profile")
-    return new_dict
-
-
 @register_class(
     version="0.0.1",
-    migrations=[("0.0.1", _update_measurement_dict)],
+    migrations=[("0.0.1", rename_key("statistic_profile", "measurement_profile", optional=True))],
     old_paths=["PartSeg.utils.analysis.calculation_plan.StatisticCalculate"],
 )
 class MeasurementCalculate(BaseModel):

@@ -70,6 +70,8 @@ class PartSegEncoder(json.JSONEncoder):
 
 
 def partseg_object_hook(dkt: dict):
+    if "__error__" in dkt:
+        dkt.pop("__error__")  # different environments without same plugins installed
     if "__class__" in dkt:
         # the migration code should be called here
         cls_str = dkt.pop("__class__")
@@ -81,7 +83,7 @@ def partseg_object_hook(dkt: dict):
         except Exception as e:  # pylint: disable=W0703
             dkt["__class__"] = cls_str
             dkt["__class_version_dkt__"] = version_dkt
-            dkt["__error__"] = e
+            dkt["__error__"] = str(e)
 
     if "__ReadOnly__" in dkt or "__Serializable__" in dkt or "__Enum__" in dkt:
         is_enum = "__Enum__" in dkt
