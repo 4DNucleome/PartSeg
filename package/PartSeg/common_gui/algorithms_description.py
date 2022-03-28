@@ -485,7 +485,10 @@ class SubAlgorithmWidget(QWidget):
 
     @staticmethod
     def _get_form_widget(algorithm_property, start_values=None):
-        calc_class = algorithm_property.possible_values[algorithm_property.default_value]
+        if isinstance(algorithm_property, AlgorithmProperty):
+            calc_class = algorithm_property.possible_values[algorithm_property.default_value]
+        else:
+            calc_class = algorithm_property
         if calc_class.__new_style__:
             widget = FormWidget(calc_class.__argument_class__, start_values=start_values)
         else:
@@ -638,7 +641,10 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     def execute(self, exclude_mask=None):
         values = self.get_values()
         self.settings.set(f"algorithms.{self.name}", deepcopy(values))
-        self.algorithm_thread.set_parameters(**values)
+        if isinstance(values, dict):
+            self.algorithm_thread.set_parameters(**values)
+        else:
+            self.algorithm_thread.set_parameters(values)
         self.algorithm_thread.start()
 
     def hideEvent(self, a0: QHideEvent):

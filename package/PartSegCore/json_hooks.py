@@ -25,7 +25,9 @@ def add_class_info(obj, dkt):
             "enum.Enum",
             "builtins.object",
             "PartSegCore.utils.BaseModel",
+            "typing.Generic",
         }
+        and not class_to_str(sup_obj).startswith("collections.abc")
     }
     return dkt
 

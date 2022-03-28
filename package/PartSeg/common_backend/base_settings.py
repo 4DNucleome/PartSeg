@@ -754,20 +754,20 @@ class BaseSettings(ViewSettings):
             try:
                 data: ProfileDict = self.load_metadata(file_path)
                 if not data.verify_data():
-                    errors_list.append((file_path, data.filter_data()))
+                    filtered = data.filter_data()
+                    errors_list.append((file_path, filtered))
+                    logger.error(filtered)
                     error = True
                 el.values.update(data)
             except Exception as e:  # pylint: disable=W0703
                 error = True
+                logger.error(e)
                 errors_list.append((file_path, e))
             finally:
                 if error:
                     timestamp = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
-
-        if errors_list:
-            logger.error(errors_list)
         return errors_list
 
     def get_project_info(self) -> ProjectInfoBase:
