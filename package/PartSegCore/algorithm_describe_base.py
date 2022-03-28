@@ -482,7 +482,7 @@ class ROIExtractionProfile(BaseModel):
                 continue
             desc = translate_dict[k]
             res += " " * indent + desc.user_name + ": "
-            if desc.value_type is Channel and not isinstance(v, Channel):
+            if issubclass(desc.value_type, Channel) and not isinstance(v, Channel):
                 res += str(Channel(v))
             elif issubclass(desc.value_type, AlgorithmDescribeBase):
                 if isinstance(v, AlgorithmSelection):
