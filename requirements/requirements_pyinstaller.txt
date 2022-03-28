@@ -287,7 +287,7 @@ six==1.16.0
     #   python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==4.4.0
+sphinx==4.5.0
     # via
     #   -r requirements_pyinstaller.in
     #   numpydoc
@@ -311,7 +311,7 @@ superqt==0.3.1
     #   napari
 sympy==1.10
     # via -r requirements_pyinstaller.in
-tifffile==2022.2.9
+tifffile==2022.3.25
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
