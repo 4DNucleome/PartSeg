@@ -5,7 +5,15 @@ from unittest.mock import MagicMock
 import pytest
 
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
-from PartSegCore.utils import CallbackFun, CallbackMethod, EventedDict, ProfileDict, get_callback, recursive_update_dict
+from PartSegCore.utils import (
+    CallbackFun,
+    CallbackMethod,
+    EventedDict,
+    ProfileDict,
+    get_callback,
+    iterate_names,
+    recursive_update_dict,
+)
 
 
 def test_callback_fun():
@@ -251,3 +259,21 @@ class TestProfileDict:
         receiver.dc.assert_called_once()
         dkt.set("test.a", 2)
         assert receiver.empty.call_count == 5
+
+
+def test_iterate_names():
+    assert iterate_names("aaaa", {}) == "aaaa"
+    assert iterate_names("aaaa", {"aaaa"}) == "aaaa (1)"
+    assert iterate_names("aaaa", {"aaaa", "aaaa (1)", "aaaa (3)"}) == "aaaa (2)"
+
+    assert iterate_names("a" * 10, {}, 10) == "a" * 10
+    assert iterate_names("a" * 11, {}, 10) == "a" * 10
+    assert iterate_names("a" * 9, {"a" * 9}, 10) == "a" * 5 + " (1)"
+
+    input_set = {"aaaaa"}
+    for _ in range(15):
+        input_set.add(iterate_names("a" * 5, input_set))
+    assert iterate_names("a" * 5, input_set) == "a" * 5 + " (16)"
+    for _ in range(85):
+        input_set.add(iterate_names("a" * 5, input_set))
+    assert iterate_names("a" * 5, input_set) is None

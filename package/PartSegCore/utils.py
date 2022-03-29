@@ -408,3 +408,15 @@ def check_loaded_dict(dkt) -> bool:
 class BaseModel(PydanticBaseModel):
     class Config:
         extra = "forbid"
+
+
+def iterate_names(base_name: str, data_dict, max_length=None) -> typing.Optional[str]:
+    if base_name not in data_dict:
+        return base_name[:max_length]
+    if max_length is not None:
+        max_length -= 5
+    for i in range(1, 100):
+        res_name = f"{base_name[:max_length]} ({i})"
+        if res_name not in data_dict:
+            return res_name
+    return None

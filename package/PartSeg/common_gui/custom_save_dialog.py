@@ -151,7 +151,7 @@ class CustomSaveDialog(LoadRegisterFileDialog):
 class PSaveDialog(CustomSaveDialog):
     def __init__(
         self,
-        save_register: typing.Union[typing.Dict[str, type(SaveBase)], type(SaveBase)],
+        save_register: IORegister,
         *,
         settings: "BaseSettings",
         path: str,
