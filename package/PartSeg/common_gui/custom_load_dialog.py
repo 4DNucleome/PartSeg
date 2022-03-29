@@ -111,7 +111,7 @@ class CustomLoadDialog(LoadRegisterFileDialog):
         else:
             super().accept()
 
-    def get_result(self):
+    def get_result(self) -> LoadProperty:
         chosen_class: typing.Type[LoadBase] = self.io_register[self.selectedNameFilter()]
         return LoadProperty(self.files_list, self.selectedNameFilter(), chosen_class)
 

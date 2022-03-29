@@ -53,7 +53,7 @@ from PartSegCore.analysis.calculation_plan import (
     Save,
 )
 from PartSegCore.analysis.save_functions import save_dict
-from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase, load_matadata_part
+from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.universal_const import Units
 
 from ..common_gui.custom_load_dialog import PLoadDialog
@@ -1108,10 +1108,10 @@ class CalculateInfo(QWidget):
             caption="Import calculation plans",
         )
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            plans, err = load_matadata_part(file_path)
+            res = dial.get_result()
+            plans, err = res.load_class.load(res.load_location)
             if err:
-                QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
+                QMessageBox.warning(self, "Import error", f"error during importing, part of data were filtered. {err}")
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview)
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():
