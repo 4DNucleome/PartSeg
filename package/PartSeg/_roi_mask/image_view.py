@@ -1,7 +1,8 @@
 from vispy.app import MouseEvent
 
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.napari_image_view import ImageView, LabelEnum
+from ..common_gui.napari_image_view import ImageInfo, ImageView, LabelEnum
+from .stack_settings import StackSettings
 
 
 class StackImageView(ImageView):
@@ -9,7 +10,9 @@ class StackImageView(ImageView):
     :cvar settings: StackSettings
     """
 
-    def __init__(self, settings, channel_property: ChannelProperty, name: str):
+    settings: StackSettings
+
+    def __init__(self, settings: StackSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
         self.viewer_widget.canvas.events.mouse_press.connect(self.component_click)
 
@@ -33,6 +36,21 @@ class StackImageView(ImageView):
             component = image_info.roi_info.roi[tuple(moved_coords)]
             if component:
                 self.component_clicked.emit(component)
+
+    def get_roi_view_parameters(self, image_info: ImageInfo):
+        res = super().get_roi_view_parameters(image_info=image_info)
+
+        if (
+            self.settings.get_from_profile(f"{self.name}.image_state.show_label", LabelEnum.Show_results)
+            != LabelEnum.Show_selected
+        ):
+            return res
+
+        selected_components = set(self.settings.chosen_components())
+        for num in list(res):
+            if num not in selected_components:
+                res[num] = [0, 0, 0, 0]
+        return res
 
     def get_tool_tip_text(self) -> str:
         text = super().get_tool_tip_text()

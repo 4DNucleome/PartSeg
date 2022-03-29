@@ -78,8 +78,13 @@ class StackSettings(BaseSettings):
         file_name = self.file_save_name()
         res = []
         for i in components:
-            res.append(path.join(dir_path, f"{file_name}_component{i}.tif"))
-            res.append(path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
+            res.extend(
+                (
+                    path.join(dir_path, f"{file_name}_component{i}.tif"),
+                    path.join(dir_path, f"{file_name}_component{i}_mask.tif"),
+                )
+            )
+
         return res
 
     def chosen_components(self) -> typing.List[int]:
