@@ -113,7 +113,7 @@ stages:
       steps:
         - template: .azure-pipelines/tests.yaml
     - job: test_linux
-      pool: { vmImage: 'ubuntu-18.04' }
+      pool: { vmImage: 'ubuntu-20.04' }
       variables:
         AZURE_PIPELINES: 1
         DISPLAY: ':99.0'
@@ -126,11 +126,6 @@ stages:
 
   - stage: Builds
     dependsOn: Tests
-    variables:
-      CIBW_BEFORE_BUILD: pip install numpy cython
-      CIBW_TEST_EXTRAS: pyqt,test
-      CIBW_BUILD: cp3[6-8]*64
-      CIBW_TEST_COMMAND: pytest {project}/package/tests
     jobs:
       - job: sdist
         pool: {vmImage: 'Ubuntu-18.04'}
