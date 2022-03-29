@@ -356,7 +356,6 @@ class FormWidget(QWidget):
         self.channels_chose: typing.List[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
         layout = QFormLayout()
         layout.setContentsMargins(10, 0, 10, 0)
-        # layout.setVerticalSpacing(0)
         self._model_class = None
         if not isinstance(fields, list):
             self._model_class = fields
@@ -470,7 +469,6 @@ class SubAlgorithmWidget(QWidget):
         self.choose.setCurrentText(algorithm_property.default_value)
 
         self.choose.currentTextChanged.connect(self.algorithm_choose)
-        # self.setStyleSheet("border: 1px solid red")
         layout = QVBoxLayout()
         layout.setContentsMargins(4, 4, 4, 4)
         layout.addWidget(widget)
@@ -478,7 +476,6 @@ class SubAlgorithmWidget(QWidget):
             widget.hide()
             self.hide()
         tmp_widget = QWidget(self)
-        # tmp_widget.setMinimumHeight(5000)
         layout.addWidget(tmp_widget)
         self.tmp_widget = tmp_widget
         self.setLayout(layout)
@@ -501,7 +498,6 @@ class SubAlgorithmWidget(QWidget):
 
     def set_starting(self, starting_values):
         self.starting_values = starting_values
-        # self.set_values(starting_values)
 
     def set_values(self, val: typing.Mapping):
         if not isinstance(val, typing.Mapping):
@@ -578,11 +574,9 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         start_values = settings.get(f"algorithm_widget_state.{name}", {})
         self.form_widget = self._form_widget(algorithm, start_values=start_values)
         self.form_widget.value_changed.connect(self.values_changed.emit)
-        # self.form_widget.setMinimumHeight(1500)
         self.setWidget(self.form_widget)
         value_dict = self.settings.get(f"algorithms.{self.name}", {})
         self.set_values(value_dict)
-        # self.settings.image_changed[Image].connect(self.image_changed)
         self.algorithm_thread = SegmentationThread(algorithm())
         self.algorithm_thread.info_signal.connect(self.show_info)
         self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
@@ -720,8 +714,6 @@ class AlgorithmChooseBase(QWidget):
         self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
         self.add_widgets_to_algorithm()
 
-        # self.setMinimumWidth(370)
-
         self.setContentsMargins(0, 0, 0, 0)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -817,9 +809,6 @@ class AlgorithmChoose(AlgorithmChooseBase):
         current_widget.image_changed(self.settings.image)
         if hasattr(self.settings, "mask") and hasattr(current_widget, "change_mask"):
             current_widget.change_mask()
-
-
-# AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)
 
 
 def _value_get(self):

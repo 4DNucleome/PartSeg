@@ -137,7 +137,6 @@ class MainMenu(BaseMainMenu):
         self.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        # layout.setSpacing(0)
         layout.addWidget(self.load_image_btn)
         layout.addWidget(self.load_segmentation_btn)
         layout.addWidget(self.save_catted_parts)
@@ -393,7 +392,6 @@ class ChosenComponents(QWidget):
 
     def __init__(self):
         super().__init__()
-        # self.setLayout(FlowLayout())
         self.check_box = {}
         self.check_all_btn = QPushButton("Select all")
         self.check_all_btn.clicked.connect(self.check_all)
@@ -504,7 +502,6 @@ class AlgorithmOptions(QWidget):
         self.algorithm_choose_widget.finished.connect(self.execution_finished)
         self.algorithm_choose_widget.progress_signal.connect(self.progress_info)
 
-        # self.stack_layout = QStackedLayout()
         self.keep_chosen_components_chk = QCheckBox("Save selected components")
         self.keep_chosen_components_chk.setToolTip(
             "Save chosen components when loading segmentation form file\n or from multiple file widget."
@@ -540,7 +537,6 @@ class AlgorithmOptions(QWidget):
 
         self.setContentsMargins(0, 0, 0, 0)
         main_layout = QVBoxLayout()
-        # main_layout.setSpacing(0)
         opt_layout = QHBoxLayout()
         opt_layout.setContentsMargins(0, 0, 0, 0)
         opt_layout.addWidget(self.show_result)
@@ -564,8 +560,6 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.progress_info_lab)
         main_layout.addWidget(self.algorithm_choose_widget, 1)
-        # main_layout.addWidget(self.algorithm_choose)
-        # main_layout.addLayout(self.stack_layout, 1)
         main_layout.addWidget(self.choose_components)
         down_layout = QHBoxLayout()
         down_layout.addWidget(self.keep_chosen_components_chk)
@@ -573,7 +567,6 @@ class AlgorithmOptions(QWidget):
         main_layout.addLayout(down_layout)
         main_layout.addStretch()
         main_layout.setContentsMargins(0, 0, 0, 0)
-        # main_layout.setSpacing(0)
         self.setLayout(main_layout)
 
         # noinspection PyUnresolvedReferences
@@ -817,7 +810,6 @@ class ImageInformation(QWidget):
             el.setValue(val * UNIT_SCALE[units_value.value])
             el.blockSignals(False)
         if self._settings.is_image_2d():
-            # self.spacing[2].setValue(0)
             self.spacing[2].setDisabled(True)
         else:
             self.spacing[2].setDisabled(False)

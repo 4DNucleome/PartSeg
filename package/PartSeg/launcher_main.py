@@ -77,7 +77,6 @@ def main():
     sp_s.add_argument("image", nargs="?", help="image to read on begin", default="")
     argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
     args = parser.parse_args(argv)
-    # print(args)
 
     logging.basicConfig(level=logging.INFO)
     if platform.system() == "Darwin":

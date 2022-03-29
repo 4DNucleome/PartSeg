@@ -23,7 +23,6 @@ max_step = log(1.2, step)
 
 def create_tool_button(text, icon):
     res = QToolButton()
-    # res.setIconSize(canvas_icon_size)
     if icon is None:
         res.setText(text)
     else:
@@ -68,7 +67,6 @@ class ColorBar(QLabel):
             self.round_range = self.round_range[0] + round_factor, self.round_range[1]
         if self.round_range[1] > self.range[1]:
             self.round_range = self.round_range[0], self.round_range[1] - round_factor
-        # print(self.range, self.round_range)
         data = np.linspace(0, 1, 512)
         interpolated = cmap.map(data)
         data = data**gamma
@@ -122,4 +120,3 @@ class ColorBar(QLabel):
         ):
             painter.drawText(bar_width + 5, int(pos), f"{val}")
         painter.setFont(old_font)
-        # print(self.image.shape)

@@ -12,7 +12,6 @@ class StackImageView(ImageView):
     def __init__(self, settings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
         self.viewer_widget.canvas.events.mouse_press.connect(self.component_click)
-        # self.image_area.pixmap.click_signal.connect(self.component_click)
 
     def refresh_selected(self):
         if (

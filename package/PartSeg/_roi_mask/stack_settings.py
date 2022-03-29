@@ -149,7 +149,6 @@ class StackSettings(BaseSettings):
         ):
             # This line clean segmentation also
             self.image = data.image
-        # self.blockSignals(signals)
         state = self.get_project_info()
         # TODO Remove repetition this and set_segmentation code
 

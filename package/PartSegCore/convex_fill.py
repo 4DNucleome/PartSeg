@@ -68,7 +68,6 @@ def convex_fill(array: np.ndarray):
     array = np.squeeze(array)
     if array.ndim not in [2, 3]:
         raise ValueError("Convex hull support only 2 and 3 dimension images")
-    #  res = np.zeros(array.shape, array.dtype)
     components = np.bincount(array.flat)
     for i in range(1, components.size):
         if components[i] == 0:

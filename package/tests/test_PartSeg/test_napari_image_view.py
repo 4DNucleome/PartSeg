@@ -148,7 +148,6 @@ class TestImageView:
             base_settings.mask = np.ones(base_settings.image.get_channel(0).shape, dtype=np.uint8)
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.data == 0)
         base_settings.set_in_profile("mask_presentation_opacity", 0.5)
-        # view.update_mask_parameters()
         assert image_view.image_info[str(tmp_path / "test2.tiff")].mask.opacity == 0.5
         base_settings.set_in_profile("mask_presentation_color", (255, 0, 0))
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.color[1] == (1, 0, 0, 1))

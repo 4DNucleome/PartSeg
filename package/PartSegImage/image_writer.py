@@ -69,7 +69,6 @@ class ImageWriter(BaseImageWriter):
         :param image: image for save
         :param save_path: save location
         """
-        # print(f"[save] {save_path}")
         data = image.get_image_for_save()
 
         metadata = cls.prepare_metadata(image, image.channels)
@@ -123,7 +122,6 @@ class IMAGEJImageWriter(BaseImageWriter):
         :param image: image for save
         :param save_path: save location
         """
-        # print(f"[save] {save_path}")
         data = image.get_image_for_save()
         spacing = image.get_um_spacing()
         metadata: typing.Dict[str, typing.Any] = {"mode": "color", "unit": "\\u00B5m"}
@@ -136,7 +134,6 @@ class IMAGEJImageWriter(BaseImageWriter):
             metadata["LUTs"] = coloring
         ranges_li = image.get_ranges()
         metadata["Ranges"] = np.array(ranges_li).reshape(len(ranges_li) * 2)
-        # print(ranges)
 
         resolution = [1 / x for x in spacing[-2:]]
         cls._save(data, save_path, resolution, metadata)

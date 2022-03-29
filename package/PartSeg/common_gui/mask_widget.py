@@ -25,7 +25,6 @@ class MaskWidget(QWidget):
         self.settings = settings
         self.dilate_radius = QSpinBox()
         self.dilate_radius.setRange(-100, 100)
-        # self.dilate_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.dilate_radius.setSingleStep(1)
         self.dilate_radius.setDisabled(True)
         self.dilate_dim = QEnumComboBox(enum_class=RadiusType)

@@ -81,7 +81,6 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         update_properties(df, self.roi_chose.value, self.overwrite.isChecked())
         if stat is None:
             return
-        # stat.set_filename(self.settings.image_path)
         self.measurements_storage.add_measurements(stat)
         self.previous_profile = compute_class.name
         self.refresh_view()

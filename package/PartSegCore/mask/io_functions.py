@@ -553,7 +553,6 @@ def save_components(
                 os.path.join(dir_path, f"{file_name}_component{i}.csv"), filtered_points - lower_bound, {}
             )
 
-        # print(f"[run] {im}")
         writer_class.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
         step_changed(2 * i + 1)
         writer_class.save_mask(im, os.path.join(dir_path, f"{file_name}_component{i}_mask.tif"))

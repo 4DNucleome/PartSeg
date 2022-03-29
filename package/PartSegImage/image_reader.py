@@ -338,7 +338,6 @@ class TiffImageReader(BaseImageReaderBuffer):
         with TiffFile(image_path) as image_file:
             total_pages_num = len(image_file.series[0])
 
-            # shape = self.image_file.series[0].shape
             axes = image_file.series[0].axes
 
             if image_file.is_lsm:

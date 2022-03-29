@@ -84,7 +84,6 @@ class Options(QWidget):
         self.save_pipe_btn.setToolTip("Save current pipeline. Last element is last executed algorithm")
         self.choose_pipe = SearchComboBox()
         self.choose_pipe.addItem("<none>")
-        # self.choose_pipe.addItems(list(self._settings.roi_pipelines.keys()))
         self.choose_pipe.textActivated.connect(self.choose_pipeline)
         self.choose_pipe.setToolTip("Execute chosen pipeline")
         self.save_profile_btn = QPushButton("Save profile")
@@ -92,7 +91,6 @@ class Options(QWidget):
         self.save_profile_btn.clicked.connect(self.save_profile)
         self.choose_profile = SearchComboBox()
         self.choose_profile.addItem("<none>")
-        # self.choose_profile.addItems(list(self._settings.roi_profiles.keys()))
         self.choose_profile.setToolTip("Select profile to restore its settings. Execute if interactive is checked")
         # image state
         self.compare_btn = QPushButton("Compare")
@@ -137,14 +135,11 @@ class Options(QWidget):
         layout.addLayout(layout4)
         layout.addLayout(layout3)
         layout.addWidget(self.algorithm_choose_widget, 1)
-        # layout.addLayout(self.stack_layout)
         layout.addWidget(self.label)
-        # layout.addStretch(1)
         layout2.addWidget(self.hide_left_panel_chk)
         layout2.addWidget(self.synchronize_checkbox)
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
-        # layout.setSpacing(0)
         self.setLayout(layout)
 
     @ensure_main_thread
@@ -366,7 +361,6 @@ class MainMenu(BaseMainMenu):
         self.batch_processing_btn = QPushButton("Batch Processing")
 
         layout = QHBoxLayout()
-        # layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 4, 4)
         layout.addWidget(self.open_btn)
         layout.addWidget(self.save_btn)
@@ -381,7 +375,6 @@ class MainMenu(BaseMainMenu):
         self.mask_manager_btn.clicked.connect(self.mask_manager)
         self.batch_processing_btn.clicked.connect(self.batch_window)
         self.setFocusPolicy(Qt.StrongFocus)
-        # self.test_btn.clicked.connect(self.test_fun)
 
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() < 800:
@@ -549,7 +542,6 @@ class MainWindow(BaseMainWindow):
         self.result_image.text_info_change.connect(self.info_text.setText)
         self.synchronize_tool = SynchronizeView(self.raw_image, self.result_image, self)
         self.options_panel = Options(self.settings, self.channel_control2, self.raw_image, self.synchronize_tool)
-        # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.advanced_window = SegAdvancedWindow(self.settings, reload_list=[self.reload])
         self.batch_window = None  # BatchWindow(self.settings)

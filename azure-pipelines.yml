@@ -11,6 +11,7 @@ trigger:
     - sourcery/*
     - update_requirements
     - pre-commit-ci-update-config
+    - deepsource*
   tags:
     include:
     - v*

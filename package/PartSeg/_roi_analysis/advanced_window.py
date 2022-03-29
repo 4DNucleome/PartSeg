@@ -434,7 +434,6 @@ class MeasurementSettings(QWidget):
         layout.addLayout(profile_layout)
         layout.addLayout(profile_buttons_layout)
         heading_layout = QHBoxLayout()
-        # heading_layout.addWidget(QLabel("Create profile"), 1)
         heading_layout.addWidget(h_line(), 6)
         layout.addLayout(heading_layout)
         name_layout = QHBoxLayout()
@@ -583,7 +582,6 @@ class MeasurementSettings(QWidget):
             self.choose_butt.setDisabled(True)
 
     def create_selection_chosen_changed(self):
-        # print(self.profile_options_chosen.count())
         self.remove_button.setEnabled(True)
         if self.profile_options_chosen.count() == 0:
             self.move_down.setDisabled(True)
@@ -648,7 +646,6 @@ class MeasurementSettings(QWidget):
 
     def choose_option(self):
         selected_item = self.profile_options.currentItem()
-        # selected_row = self.profile_options.currentRow()
         if not isinstance(selected_item, MeasurementListWidgetItem):
             raise ValueError(f"Current item (type: {type(selected_item)} is not instance of MeasurementListWidgetItem")
         node = deepcopy(selected_item.stat)
@@ -664,7 +661,6 @@ class MeasurementSettings(QWidget):
 
     def discard_option(self):
         selected_item: MeasurementListWidgetItem = self.profile_options_chosen.currentItem()
-        #  selected_row = self.profile_options_chosen.currentRow()
         lw = MeasurementListWidgetItem(deepcopy(selected_item.stat))
         lw.setToolTip(selected_item.toolTip())
         self.create_selection_chosen_changed()
@@ -682,7 +678,6 @@ class MeasurementSettings(QWidget):
         self.profile_name.setText(item.text())
         for ch in profile.chosen_fields:
             self.profile_options_chosen.addItem(MeasurementListWidgetItem(ch.calculation_tree))
-        # self.gauss_img.setChecked(profile.use_gauss_image)
         self.save_butt.setEnabled(True)
         self.save_butt_with_name.setEnabled(True)
 
@@ -812,11 +807,9 @@ class SegAdvancedWindow(AdvancedWindow):
 
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = Properties(settings)
-        # self.colormap_settings = ColorSelector(settings, ["result_control"])
         self.measurement = MeasurementWidget(settings)
         self.measurement_settings = MeasurementSettings(settings)
         self.insertTab(0, self.advanced_settings, "Properties")
-        # self.addTab(self.colormap_settings, "Color maps")
         self.addTab(self.measurement_settings, "Measurements settings")
         self.addTab(self.measurement, "Measurements")
         self.setCurrentWidget(self.advanced_settings)

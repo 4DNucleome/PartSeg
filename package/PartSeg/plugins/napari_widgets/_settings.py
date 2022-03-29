@@ -3,8 +3,6 @@ import os
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg.common_backend import napari_get_settings
 
-# from PartSeg.common_backend.base_settings import BaseSettings
-
 _settings = None
 
 

@@ -213,7 +213,6 @@ class ImageView(QWidget):
         settings.connect_to_profile(f"{name}.image_state.show_label", self.update_roi_labeling)
         settings.connect_to_profile("mask_presentation_opacity", self.update_mask_parameters)
         settings.connect_to_profile("mask_presentation_color", self.update_mask_parameters)
-        # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
@@ -243,7 +242,6 @@ class ImageView(QWidget):
     def _set_new_order(self, text: str):
         self._current_order = text
         self.viewer.dims.order = ORDER_DICT[text]
-        # self.update_roi_representation()
 
     def _reset_view(self):
         self._set_new_order("xy")
@@ -408,7 +406,6 @@ class ImageView(QWidget):
 
         image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
 
-        # image_info.roi.color = self.get_roi_view_parameters(image_info)
         self.set_roi_colormap(image_info)
         image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
         image_info.roi.refresh()
@@ -455,7 +452,6 @@ class ImageView(QWidget):
         for image_info in self.image_info.values():
             if image_info.roi is None:
                 continue
-            # image_info.roi.color = self.get_roi_view_parameters(image_info)
             self.set_roi_colormap(image_info)
             image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
 
@@ -489,7 +485,6 @@ class ImageView(QWidget):
     def update_roi_labeling(self):
         for image_info in self.image_info.values():
             if image_info.roi is not None:
-                # image_info.roi.color = self.get_roi_view_parameters(image_info)
                 self.set_roi_colormap(image_info)
 
     def add_roi_layer(self, image_info: ImageInfo):
