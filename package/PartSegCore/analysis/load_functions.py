@@ -158,7 +158,7 @@ class LoadProject(LoadBase):
 class LoadStackImage(LoadBase):
     @classmethod
     def get_name(cls):
-        return "Image (*.tif *.tiff *.lsm *.czi *.oib *.oif)"
+        return "Image (*.tif *.tiff *.lsm *.czi *.oib *.oif *.obsep)"
 
     @classmethod
     def get_short_name(cls):
