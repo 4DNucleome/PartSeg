@@ -41,6 +41,7 @@ class TestMaskMainWindow:
     def test_opening(self, qtbot, tmpdir):
         main_window = mask_main_window.MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
+        qtbot.wait(50)
 
 
 class TestLauncherMainWindow:
@@ -71,7 +72,7 @@ class TestLauncherMainWindow:
     @pyside_skip
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(analysis_main_window, "CONFIG_FOLDER", str(tmp_path))
-        if platform.system() == "Linux" and (GITHUB_ACTIONS or TRAVIS):
+        if platform.system() in {"Darwin", "Linux"} and (GITHUB_ACTIONS or TRAVIS):
             monkeypatch.setattr(analysis_main_window.MainWindow, "show", empty)
         main_window = LauncherMainWindow("Launcher")
         qtbot.addWidget(main_window)
