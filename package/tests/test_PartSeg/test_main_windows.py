@@ -32,6 +32,7 @@ class TestAnalysisMainWindow:
         main_window.main_menu.advanced_btn.click()
         main_window.advanced_window.close()
         main_window.advanced_window.close()
+        qtbot.wait(50)
 
 
 class TestMaskMainWindow:
@@ -62,6 +63,7 @@ class TestLauncherMainWindow:
             main_window.prepare.start()
         QCoreApplication.processEvents()
         main_window.wind.hide()
+        qtbot.wait(50)
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.enablethread
@@ -78,3 +80,4 @@ class TestLauncherMainWindow:
             main_window.prepare.start()
         QCoreApplication.processEvents()
         main_window.wind.hide()
+        qtbot.wait(50)
