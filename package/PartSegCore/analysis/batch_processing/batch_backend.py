@@ -802,7 +802,7 @@ class FileData:
     def write_calculation_plan(writer: pd.ExcelWriter, calculation_plan: CalculationPlan):
         book: xlsxwriter.Workbook = writer.book
         sheet_name = iterate_names(f"info {calculation_plan.name}"[:30], book.sheetnames, 30)
-        if sheet_name is None:
+        if sheet_name is None:  # pragma: no cover
             raise ValueError(
                 "Name collision in sheets with information about calculation "
                 f"plan: {f'info {calculation_plan.name}'[:30]}"

@@ -452,14 +452,14 @@ class LoadPlanExcel(LoadBase):
                         data, err = load_matadata_part(data)
                         data_list.append(data)
                         error_list.extend(err)
-                    except ValueError:
+                    except ValueError:  # pragma: no cover
                         error_list.append(f"Cannot load data from: {sheet_name}")
         finally:
             xlsx.close()
         data_dict = {}
         for calc_plan in data_list:
             new_name = iterate_names(calc_plan.name, data_dict)
-            if new_name is None:
+            if new_name is None:  # pragma: no cover
                 error_list.append(f"Cannot determine proper name for {calc_plan.name}")
             calc_plan.name = new_name
             data_dict[new_name] = calc_plan

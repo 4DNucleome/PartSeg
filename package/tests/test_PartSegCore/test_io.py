@@ -25,7 +25,7 @@ from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
-from PartSegCore.io_utils import LoadBase, LoadPlanExcel, SaveBase, SaveROIAsNumpy, load_metadata_base
+from PartSegCore.io_utils import LoadBase, LoadPlanExcel, LoadPlanJson, SaveBase, SaveROIAsNumpy, load_metadata_base
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
@@ -630,6 +630,16 @@ def test_load_plan_form_excel(bundle_test_dir):
     assert isinstance(data["test3"], CalculationPlan)
     assert isinstance(data["test4"], CalculationPlan)
     assert isinstance(data["test3 (1)"], CalculationPlan)
+    assert LoadPlanExcel.get_name_with_suffix().endswith("(*.xlsx)")
+    assert LoadPlanExcel.get_short_name() == "plan_excel"
+
+
+def test_load_json_plan(bundle_test_dir):
+    data, err = LoadPlanJson.load([bundle_test_dir / "measurements_profile.json"])
+    assert err == []
+    assert len(data) == 1
+    assert LoadPlanJson.get_name_with_suffix().endswith("(*.json)")
+    assert LoadPlanJson.get_short_name() == "plan_json"
 
 
 update_name_json = """
