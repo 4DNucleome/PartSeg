@@ -79,5 +79,6 @@ class TestLauncherMainWindow:
         with qtbot.waitSignal(main_window.prepare.finished):
             main_window.prepare.start()
         QCoreApplication.processEvents()
+        qtbot.wait(50)
         main_window.wind.hide()
         qtbot.wait(50)
