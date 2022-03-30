@@ -80,5 +80,6 @@ class TestLauncherMainWindow:
             main_window.prepare.start()
         QCoreApplication.processEvents()
         qtbot.wait(50)
+        qtbot.addWidget(main_window.wind)
         main_window.wind.hide()
         qtbot.wait(50)
