@@ -8,6 +8,7 @@ from enum import Enum
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
+    QAction,
     QCheckBox,
     QComboBox,
     QCompleter,
@@ -20,6 +21,7 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QMenu,
     QMessageBox,
     QPushButton,
     QSpinBox,
@@ -52,6 +54,7 @@ from PartSegCore.analysis.calculation_plan import (
     RootType,
     Save,
 )
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.universal_const import Units
@@ -903,6 +906,7 @@ class PlanPreview(QTreeWidget):
         self.calculation_plan = calculation_plan
         self.header().close()
         self.itemSelectionChanged.connect(self.set_path)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
 
     def restore_path(self, widget, path):
         """
@@ -952,6 +956,8 @@ class PlanPreview(QTreeWidget):
         widget = QTreeWidgetItem(up_widget)
         widget.setText(0, CalculationPlan.get_el_name(node_plan.operation))
         self.setCurrentItem(widget)
+        if isinstance(node_plan.operation, (MeasurementCalculate, ROIExtractionProfile)):
+            widget.setData(0, Qt.UserRole, node_plan.operation)
         if isinstance(node_plan.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
@@ -1065,6 +1071,45 @@ class CalculateInfo(QWidget):
         self.export_plans_btn.clicked.connect(self.export_plans)
         self.import_plans_btn.clicked.connect(self.import_plans)
         self.settings.batch_plans_changed.connect(self.update_plan_list)
+        self.plan_view.customContextMenuRequested.connect(self._context_menu)
+
+    def _context_menu(self, point):
+        item = self.plan_view.itemAt(point)
+        data = item.data(0, Qt.UserRole)
+        if data is None:
+            return
+
+        menu = QMenu(self)
+        if isinstance(data, ROIExtractionProfile):
+            action = QAction("Save ROI extraction Profile")
+            action.triggered.connect(lambda _: self._save_roi_profile(data))
+        elif isinstance(data, MeasurementCalculate):
+            action = QAction("Save Measurement profile")
+            action.triggered.connect(lambda _: self._save_measurement_profile(data.measurement_profile))
+        else:
+            raise ValueError(f"Not supported data type {type(data)} for {data}")
+        menu.addAction(action)
+        menu.exec_(self.plan_view.mapToGlobal(point))
+
+    def _save_roi_profile(self, data: ROIExtractionProfile):
+        if data.name in self.settings.roi_profiles:
+            text, ok = QInputDialog.getText(
+                self, "Name collision", "Profile with this name exists, please provide a new name.", text=data.name
+            )
+            if not ok:
+                return
+            return self._save_roi_profile(data.copy(update={"name": text}))
+        self.settings.roi_profiles[data.name] = data
+
+    def _save_measurement_profile(self, data: MeasurementProfile):
+        if data.name in self.settings.measurement_profiles:
+            text, ok = QInputDialog.getText(
+                self, "Name collision", "Profile with this name exists, please provide a new name.", text=data.name
+            )
+            if not ok:
+                return
+            return self._save_measurement_profile(data.copy(update={"name": text}))
+        self.settings.measurement_profiles[data.name] = data
 
     def update_plan_list(self):
         new_plan_list = list(sorted(self.settings.batch_plans.keys()))
