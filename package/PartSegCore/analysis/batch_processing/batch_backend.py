@@ -72,6 +72,7 @@ from ...json_hooks import PartSegEncoder
 from ...project_info import AdditionalLayerDescription, HistoryElement
 from ...roi_info import ROIInfo
 from ...segmentation import RestartableAlgorithm
+from ...utils import iterate_names
 from .parallel_backend import BatchManager, SubprocessOrder
 
 
@@ -800,15 +801,12 @@ class FileData:
     @staticmethod
     def write_calculation_plan(writer: pd.ExcelWriter, calculation_plan: CalculationPlan):
         book: xlsxwriter.Workbook = writer.book
-        sheet_base_name = f"info {calculation_plan.name}"[:30]
-        sheet_name = sheet_base_name
-        if sheet_name in book.sheetnames:  # pragma: no cover
-            for i in range(100):
-                sheet_name = f"{sheet_base_name[:26]} ({i})"
-                if sheet_name not in book.sheetnames:
-                    break
-            else:
-                raise ValueError(f"Name collision in sheets with information about calculation plan: {sheet_name}")
+        sheet_name = iterate_names(f"info {calculation_plan.name}"[:30], book.sheetnames, 30)
+        if sheet_name is None:  # pragma: no cover
+            raise ValueError(
+                "Name collision in sheets with information about calculation "
+                f"plan: {f'info {calculation_plan.name}'[:30]}"
+            )
 
         sheet = book.add_worksheet(sheet_name)
         cell_format = book.add_format({"bold": True})

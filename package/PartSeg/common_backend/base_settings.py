@@ -9,19 +9,7 @@ from argparse import Namespace
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    MutableMapping,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
@@ -35,12 +23,12 @@ from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
 from PartSegCore import register
 from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
-from PartSegCore.io_utils import load_metadata_base
+from PartSegCore.io_utils import load_matadata_part, load_metadata_base
 from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
-from PartSegCore.utils import ProfileDict, check_loaded_dict
+from PartSegCore.utils import ProfileDict
 from PartSegImage import Image
 
 if hasattr(napari.utils.theme, "get_theme"):
@@ -698,16 +686,19 @@ class BaseSettings(ViewSettings):
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 
     @classmethod
-    def load_part(cls, file_path):
-        data = cls.load_metadata(file_path)
-        bad_key = []
-        if isinstance(data, MutableMapping) and not check_loaded_dict(data):
-            bad_key.extend(k for k, v in data.items() if not check_loaded_dict(v))
-            for el in bad_key:
-                del data[el]
-        elif isinstance(data, ProfileDict) and not data.verify_data():
-            bad_key = data.filter_data()
-        return data, bad_key
+    def load_part(cls, data: Union[Path, str]) -> Tuple[dict, List[str]]:  # pragma: no cover
+        """
+        Load serialized data. Get valid entries.
+
+        :param data: path to file or string to be decoded.
+        :return:
+        """
+        warnings.warn(
+            f"{cls.__name__}.load_part is deprecated. Please use PartSegCore.utils.load_matadata_part",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+        return load_matadata_part(data)
 
     def dump(self, folder_path: Union[Path, str, None] = None):
         """

@@ -34,6 +34,7 @@ from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
+from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
 
@@ -257,14 +258,14 @@ class Properties(QWidget):
 
     def import_profiles(self):
         dial = PLoadDialog(
-            "Segment profile (*.json)",
+            LoadPlanJson,
             settings=self._settings,
             path=IO_SAVE_DIRECTORY,
             caption="Import profile segment",
         )
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            profs, err = self._settings.load_part(file_path)
+            res = dial.get_result()
+            profs, err = res.load_class.load(res.load_location)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             profiles_dict = self._settings.roi_profiles
@@ -295,14 +296,14 @@ class Properties(QWidget):
 
     def import_pipeline(self):
         dial = PLoadDialog(
-            "Segment pipeline (*.json)",
+            LoadPlanJson,
             settings=self._settings,
             path=IO_SAVE_DIRECTORY,
             caption="Import pipeline segment",
         )
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            profs, err = self._settings.load_part(file_path)
+            res = dial.get_result()
+            profs, err = res.load_class.load(res.load_location)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             profiles_dict = self._settings.roi_pipelines
@@ -776,15 +777,15 @@ class MeasurementSettings(QWidget):
 
     def import_measurement_profiles(self):
         dial = PLoadDialog(
-            "Measurement profile (*.json)",
+            LoadPlanJson,
             settings=self.settings,
             path="io.export_directory",
             caption="Import settings profiles",
             parent=self,
         )
         if dial.exec_():
-            file_path = str(dial.selectedFiles()[0])
-            stat, err = self.settings.load_part(file_path)
+            res = dial.get_result()
+            stat, err = res.load_class.load(res.load_location)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             measurement_dict = self.settings.measurement_profiles

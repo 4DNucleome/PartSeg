@@ -13,6 +13,7 @@ import imageio
 import numpy as np
 import pandas as pd
 import tifffile
+from openpyxl import load_workbook
 
 from PartSegCore.json_hooks import partseg_object_hook
 from PartSegImage import ImageWriter
@@ -20,6 +21,7 @@ from PartSegImage.image import minimal_dtype
 
 from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from .project_info import ProjectInfoBase
+from .utils import ProfileDict, check_loaded_dict, iterate_names
 
 
 class SegmentationType(Enum):
@@ -207,6 +209,25 @@ def load_metadata_base(data: typing.Union[str, Path]):
     return decoded_data
 
 
+def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[str]]:
+    """
+    Load serialized data. Get valid entries.
+
+    :param data: path to file or string to be decoded.
+    :return:
+    """
+    # TODO extract to function
+    data = load_metadata_base(data)
+    bad_key = []
+    if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
+        bad_key.extend(k for k, v in data.items() if not check_loaded_dict(v))
+        for el in bad_key:
+            del data[el]
+    elif isinstance(data, ProfileDict) and not data.verify_data():
+        bad_key = data.filter_data()
+    return data, bad_key
+
+
 def proxy_callback(
     range_changed: typing.Callable[[int, int], typing.Any],
     step_changed: typing.Callable[[int], typing.Any],
@@ -385,3 +406,65 @@ class LoadPoints(LoadBase):
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         return ["text"]
+
+
+class LoadPlanJson(LoadBase):
+    @classmethod
+    def get_short_name(cls):
+        return "plan_json"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ):
+        return load_matadata_part(load_locations[0])
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Calculation plans (*.json)"
+
+
+class LoadPlanExcel(LoadBase):
+    @classmethod
+    def get_short_name(cls):
+        return "plan_excel"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ):
+        data_list, error_list = [], []
+
+        xlsx = load_workbook(filename=load_locations[0], read_only=True)
+        try:
+            for sheet_name in xlsx.sheetnames:
+                if sheet_name.startswith("info"):
+                    data = xlsx[sheet_name].cell(row=2, column=2).value
+                    try:
+                        data, err = load_matadata_part(data)
+                        data_list.append(data)
+                        error_list.extend(err)
+                    except ValueError:  # pragma: no cover
+                        error_list.append(f"Cannot load data from: {sheet_name}")
+        finally:
+            xlsx.close()
+        data_dict = {}
+        for calc_plan in data_list:
+            new_name = iterate_names(calc_plan.name, data_dict)
+            if new_name is None:  # pragma: no cover
+                error_list.append(f"Cannot determine proper name for {calc_plan.name}")
+            calc_plan.name = new_name
+            data_dict[new_name] = calc_plan
+        return data_dict, error_list
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Calculation plans from result (*.xlsx)"

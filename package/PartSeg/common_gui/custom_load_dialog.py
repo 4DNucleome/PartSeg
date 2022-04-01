@@ -16,7 +16,7 @@ class LoadProperty(typing.NamedTuple):
     load_class: typing.Type[LoadBase]
 
 
-IORegister = typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase), str]
+IORegister = typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase), str, typing.List[type(LoadBase)]]
 
 
 class IOMethodMock:
@@ -66,6 +66,8 @@ class LoadRegisterFileDialog(QFileDialog):
     ):
         if isinstance(io_register, str):
             io_register = {io_register: IOMethodMock(io_register)}
+        if isinstance(io_register, list):
+            io_register = {x.get_name(): x for x in io_register}
         if not isinstance(io_register, typing.MutableMapping):
             io_register = {io_register.get_name(): io_register}
         super().__init__(parent, caption)
@@ -109,8 +111,8 @@ class CustomLoadDialog(LoadRegisterFileDialog):
         else:
             super().accept()
 
-    def get_result(self):
-        chosen_class: LoadBase = self.io_register[self.selectedNameFilter()]
+    def get_result(self) -> LoadProperty:
+        chosen_class: typing.Type[LoadBase] = self.io_register[self.selectedNameFilter()]
         return LoadProperty(self.files_list, self.selectedNameFilter(), chosen_class)
 
 

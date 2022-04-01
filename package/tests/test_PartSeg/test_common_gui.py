@@ -27,7 +27,13 @@ from PartSeg.common_gui.advanced_tabs import (
     Appearance,
 )
 from PartSeg.common_gui.algorithms_description import FieldsList, FormWidget, ListInput, QtAlgorithmProperty
-from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, IOMethodMock, LoadProperty, PLoadDialog
+from PartSeg.common_gui.custom_load_dialog import (
+    CustomLoadDialog,
+    IOMethodMock,
+    LoadProperty,
+    LoadRegisterFileDialog,
+    PLoadDialog,
+)
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
@@ -47,7 +53,7 @@ from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
 from PartSegCore.class_register import register_class
-from PartSegCore.io_utils import SaveBase
+from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel, Image, ImageWriter
 
@@ -290,6 +296,10 @@ def test_create_load_dialog(qtbot):
     assert dialog.acceptMode() == CustomLoadDialog.AcceptOpen
     dialog = CustomLoadDialog(LoadProject, history=["/aaa/"])
     assert dialog.acceptMode() == CustomLoadDialog.AcceptOpen
+    result = dialog.get_result()
+    assert result.load_class is LoadProject
+    assert result.selected_filter == LoadProject.get_name_with_suffix()
+    assert result.load_location == []
 
 
 def test_create_save_dialog(qtbot):
@@ -915,3 +925,33 @@ class TestQtAlgorithmProperty:
             res.set_value(1)
 
         assert res.get_value() == [1, 1, 1]
+
+
+SAMPLE_FILTER = "Sample text (*.txt)"
+HEADER = "Header"
+
+
+class TestLoadRegisterFileDialog:
+    def test_str_register(self):
+        dialog = LoadRegisterFileDialog(SAMPLE_FILTER, HEADER)
+        assert len(dialog.io_register) == 1
+        assert isinstance(dialog.io_register[SAMPLE_FILTER], IOMethodMock)
+
+    def test_single_entry(self):
+        dialog = LoadRegisterFileDialog(LoadPlanJson, HEADER)
+        assert len(dialog.io_register) == 1
+        assert issubclass(dialog.io_register[LoadPlanJson.get_name()], LoadPlanJson)
+
+    def test_list_register(self):
+        dialog = LoadRegisterFileDialog([LoadPlanJson, LoadPlanExcel], HEADER)
+        assert len(dialog.io_register) == 2
+        assert issubclass(dialog.io_register[LoadPlanJson.get_name()], LoadPlanJson)
+        assert issubclass(dialog.io_register[LoadPlanExcel.get_name()], LoadPlanExcel)
+
+    def test_dict_register(self):
+        dialog = LoadRegisterFileDialog(
+            {LoadPlanJson.get_name(): LoadPlanJson, LoadPlanExcel.get_name(): LoadPlanExcel}, HEADER
+        )
+        assert len(dialog.io_register) == 2
+        assert issubclass(dialog.io_register[LoadPlanJson.get_name()], LoadPlanJson)
+        assert issubclass(dialog.io_register[LoadPlanExcel.get_name()], LoadPlanExcel)

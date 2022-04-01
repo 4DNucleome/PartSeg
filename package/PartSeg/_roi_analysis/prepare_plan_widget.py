@@ -56,7 +56,7 @@ from PartSegCore.analysis.calculation_plan import (
 )
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
-from PartSegCore.io_utils import SaveBase
+from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.universal_const import Units
 
 from ..common_gui.custom_load_dialog import PLoadDialog
@@ -1147,16 +1147,16 @@ class CalculateInfo(QWidget):
 
     def import_plans(self):
         dial = PLoadDialog(
-            "Calculation plans (*.json)",
+            [LoadPlanJson, LoadPlanExcel],
             settings=self.settings,
             path="io.batch_plan_directory",
             caption="Import calculation plans",
         )
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            plans, err = self.settings.load_part(file_path)
+            res = dial.get_result()
+            plans, err = res.load_class.load(res.load_location)
             if err:
-                QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
+                QMessageBox.warning(self, "Import error", f"error during importing, part of data were filtered. {err}")
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview)
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():
@@ -1186,9 +1186,9 @@ class CalculateInfo(QWidget):
         if self.protect:
             return
         text = str(text)
-        if text.strip() == "":
+        if not text.strip():
             return
-        plan = self.settings.batch_plans[str(text)]  # type: CalculationPlan
+        plan = self.settings.batch_plans[text]
         self.plan_view.set_plan(plan)
 
 
