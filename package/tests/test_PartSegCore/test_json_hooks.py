@@ -2,16 +2,15 @@
 
 import json
 from dataclasses import dataclass
-from enum import Enum
 
 import numpy as np
 import pytest
 from napari.utils import Colormap
 from napari.utils.notifications import NotificationSeverity
+from nme import register_class, rename_key
 
-from PartSegCore.class_register import class_to_str, register_class, rename_key
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.json_hooks import PartSegEncoder, add_class_info, partseg_object_hook
+from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.utils import BaseModel, ProfileDict
 
 
@@ -154,32 +153,6 @@ class TestPartSegEncoder:
             ob2 = json.load(f_p, object_hook=partseg_object_hook)
         assert ob2.data1 == 1
         assert ob2.data2 == 2
-
-
-def test_add_class_info_pydantic(clean_register):
-    @register_class
-    class SampleClass(BaseModel):
-        field: int = 1
-
-    dkt = {}
-    add_class_info(SampleClass(), dkt)
-    assert "__class__" in dkt
-    assert class_to_str(SampleClass) == dkt["__class__"]
-    assert len(dkt["__class_version_dkt__"]) == 1
-    assert dkt["__class_version_dkt__"][class_to_str(SampleClass)] == "0.0.0"
-
-
-def test_add_class_info_enum(clean_register):
-    @register_class
-    class SampleEnum(Enum):
-        field = 1
-
-    dkt = {}
-    add_class_info(SampleEnum.field, dkt)
-    assert "__class__" in dkt
-    assert class_to_str(SampleEnum) == dkt["__class__"]
-    assert len(dkt["__class_version_dkt__"]) == 1
-    assert dkt["__class_version_dkt__"][class_to_str(SampleEnum)] == "0.0.0"
 
 
 class TestPartSegObjectHook:
