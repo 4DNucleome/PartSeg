@@ -4,12 +4,12 @@ from abc import ABC
 from enum import Enum
 
 import numpy as np
+from nme import register_class, rename_key, update_argument
 from pydantic import Field
 
 from PartSegCore.utils import BaseModel
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
-from ..class_register import register_class, rename_key, update_argument
 from ..image_operations import bilateral, gaussian, median
 from .algorithm_base import calculate_operation_radius as _calculate_operation_radius
 

@@ -40,6 +40,9 @@ class Channel:
     def __hash__(self):
         return hash(self._value)
 
+    def as_dict(self):
+        return {"value": self._value}
+
     @classmethod
     def __get_validators__(cls):
         yield check_type

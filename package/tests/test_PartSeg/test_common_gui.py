@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 import qtpy
 from magicgui.widgets import Widget
+from nme import register_class
 from pydantic import Field
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import QCheckBox, QComboBox, QFileDialog, QLabel, QLineEdit, QMainWindow, QWidget
@@ -52,7 +53,6 @@ from PartSegCore.algorithm_describe_base import (
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
-from PartSegCore.class_register import register_class
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel, Image, ImageWriter

@@ -13,9 +13,8 @@ from pydantic import BaseModel as PydanticBaseModel
 
 __author__ = "Grzegorz Bokota"
 
+from nme import register_class
 from psygnal import Signal
-
-from PartSegCore.class_register import register_class
 
 
 def bisect(arr, val, comp):

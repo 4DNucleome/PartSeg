@@ -197,16 +197,6 @@ def measurement_profiles():
     )
 
 
-@pytest.fixture
-def clean_register():
-    from PartSegCore.json_hooks import REGISTER
-
-    old_dict = REGISTER._data_dkt
-    REGISTER._data_dkt = {}
-    yield
-    REGISTER._data_dkt = old_dict
-
-
 def pytest_collection_modifyitems(session, config, items):
     image_tests = [x for x in items if "PartSegImage" in str(x.fspath)]
     core_tests = [x for x in items if "PartSegCore" in str(x.fspath)]

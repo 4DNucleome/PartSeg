@@ -8,12 +8,12 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
+from nme import register_class, rename_key
 from pydantic import BaseModel as PydanticBaseModel
 
 from PartSegCore.utils import BaseModel
 
 from ..algorithm_describe_base import ROIExtractionProfile
-from ..class_register import register_class, rename_key
 from ..mask_create import MaskProperty
 from ..universal_const import Units
 from . import AnalysisAlgorithmSelection
