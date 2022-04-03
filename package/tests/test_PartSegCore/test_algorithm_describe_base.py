@@ -3,6 +3,7 @@ import typing
 from enum import Enum
 
 import pytest
+from nme import class_to_str, register_class
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, ValidationError
 
@@ -13,7 +14,6 @@ from PartSegCore.algorithm_describe_base import (
     _GetDescriptionClass,
     base_model_to_algorithm_property,
 )
-from PartSegCore.class_register import class_to_str, register_class
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 
@@ -23,7 +23,7 @@ def test_get_description_class():
         __test_class__ = _GetDescriptionClass()
 
         @classmethod
-        def get_fields(self):
+        def get_fields(cls):
             return [AlgorithmProperty("test1", "Test 1", 1), AlgorithmProperty("test2", "Test 2", 2.0)]
 
     val = SampleClass.__test_class__

@@ -2,11 +2,11 @@ import typing
 
 import numpy as np
 import SimpleITK as sitk
+from nme import register_class
 
 from PartSegCore.utils import BaseModel
 from PartSegImage.image import minimal_dtype
 
-from .class_register import register_class
 from .image_operations import RadiusType, dilate, erode
 
 

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from PartSegCore.class_register import register_class
+from nme import register_class
 
 
 # noinspection NonAsciiCharacters

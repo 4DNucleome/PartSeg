@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Any, Dict, ForwardRef, Optional, Set, Union
 
 import numpy as np
+from nme import REGISTER, class_to_str, register_class, rename_key
 from pydantic import Field, validator
 from sympy import Symbol, symbols
 
@@ -12,7 +13,6 @@ from PartSegImage import Channel
 from PartSegImage.image import Spacing
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, base_model_to_algorithm_property
-from ..class_register import REGISTER, class_to_str, register_class, rename_key
 from ..universal_const import Units
 
 

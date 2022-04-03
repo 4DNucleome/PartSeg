@@ -5,12 +5,12 @@ import warnings
 from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
 
+from nme import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
 from pydantic.main import ModelMetaclass
 from typing_extensions import Annotated
 
-from PartSegCore.class_register import REGISTER, class_to_str
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 

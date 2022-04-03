@@ -4,9 +4,9 @@ from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
+from nme import register_class, rename_key, update_argument
 from pydantic import Field
 
-from PartSegCore.class_register import register_class, rename_key, update_argument
 from PartSegCore.utils import BaseModel
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection

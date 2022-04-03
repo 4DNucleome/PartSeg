@@ -7,6 +7,7 @@ from copy import deepcopy
 
 import numpy as np
 import SimpleITK
+from nme import REGISTER, class_to_str, register_class, rename_key
 from pydantic import Field, validator
 
 from PartSegCore.utils import BaseModel
@@ -14,7 +15,6 @@ from PartSegCore_compiled_backend.multiscale_opening import PyMSO, calculate_mu_
 from PartSegImage import Channel
 
 from ..algorithm_describe_base import ROIExtractionProfile
-from ..class_register import REGISTER, class_to_str, register_class, rename_key
 from ..mask_partition_utils import BorderRim as BorderRimBase
 from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
 from ..project_info import AdditionalLayerDescription
