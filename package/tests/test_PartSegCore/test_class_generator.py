@@ -1,5 +1,6 @@
 # pylint: disable=R0201
 
+import sys
 import typing
 from collections import OrderedDict
 
@@ -7,6 +8,10 @@ import pytest
 
 from PartSegCore.algorithm_describe_base import Register
 from PartSegCore.class_generator import BaseSerializableClass, base_serialize_register
+
+pytestmark = pytest.mark.skipif(
+    sys.version_info >= (3, 10), reason="class register is not compatible with python 3.10+"
+)
 
 copy_register = Register()
 
