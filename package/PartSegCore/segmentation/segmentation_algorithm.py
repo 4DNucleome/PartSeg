@@ -4,12 +4,12 @@ from typing import Callable, Optional
 
 import numpy as np
 import SimpleITK as sitk
+from nme import register_class, rename_key
 from pydantic import Field
 
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 
-from ..class_register import register_class, rename_key
 from ..convex_fill import convex_fill
 from ..project_info import AdditionalLayerDescription
 from ..segmentation.algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult

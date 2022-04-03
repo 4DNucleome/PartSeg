@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, MutableMapping, Optional
 
 import numpy as np
+from nme import REGISTER, class_to_str
 
 from PartSegImage import Channel, Image
 
@@ -13,7 +14,6 @@ from ..algorithm_describe_base import (
     ROIExtractionProfile,
     base_model_to_algorithm_property,
 )
-from ..class_register import REGISTER, class_to_str
 from ..image_operations import RadiusType
 from ..project_info import AdditionalLayerDescription
 from ..roi_info import ROIInfo

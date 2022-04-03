@@ -1,8 +1,7 @@
 from typing import Any, Dict
 
 import pytest
-
-from PartSegCore.class_register import REGISTER, class_to_str, register_class, rename_key, update_argument
+from nme import REGISTER, class_to_str, register_class, rename_key, update_argument
 
 
 @register_class
@@ -49,13 +48,6 @@ def test_unregistered_class():
 
 def test_old_paths():
     assert REGISTER.get_class("test.test.BBase") is SampleClass4
-
-
-def test_import_part():
-    obj = REGISTER.get_class("test_PartSegCore.class_register_util.SampleClass5")
-    from .class_register_util import SampleClass5
-
-    assert SampleClass5 is obj
 
 
 def test_old_class_error():

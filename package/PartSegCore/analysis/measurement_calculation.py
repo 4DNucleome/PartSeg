@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 import SimpleITK
 from mahotas.features import haralick
+from nme import register_class, rename_key
 from pydantic import Field
 from scipy.spatial.distance import cdist
 from sympy import symbols
@@ -34,7 +35,6 @@ from PartSegImage import Channel, Image
 
 from .. import autofit as af
 from ..algorithm_describe_base import Register, ROIExtractionProfile
-from ..class_register import register_class, rename_key
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units

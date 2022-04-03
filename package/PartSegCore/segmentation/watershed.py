@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Any, Callable
 
 import numpy as np
+from nme import update_argument
 from pydantic import Field
 
 from PartSegCore.utils import BaseModel
@@ -19,7 +20,6 @@ from PartSegCore_compiled_backend.sprawl_utils.find_split import (
 )
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
-from ..class_register import update_argument
 from .algorithm_base import SegmentationLimitException
 
 
