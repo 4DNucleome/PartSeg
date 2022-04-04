@@ -127,6 +127,10 @@ jobs:
         uses: GabrielBB/xvfb-action@v1
         with:
           run: python -m tox -e py38-PyQt5-all
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+          NAPARI: None
         timeout-minutes: 60
 
   test_coverage:
