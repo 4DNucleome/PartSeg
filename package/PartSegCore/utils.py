@@ -379,15 +379,15 @@ class ProfileDict:
         """
         return check_loaded_dict(self.my_dict)
 
-    def filter_data(self):
+    def filter_data(self) -> typing.List[typing.Tuple[str, dict]]:
         error_list = []
         for group, up_dkt in list(self.my_dict.items()):
             if not isinstance(up_dkt, (dict, EventedDict)):
                 continue
-            for key, dkt in list(up_dkt.items()):
-                if not check_loaded_dict(dkt):
-                    error_list.append(f"{group}.{key}")
-                    del up_dkt[key]
+            error_list.extend(
+                (f"{group}.{key}", up_dkt.pop(key)) for key, dkt in list(up_dkt.items()) if not check_loaded_dict(dkt)
+            )
+
         return error_list
 
 

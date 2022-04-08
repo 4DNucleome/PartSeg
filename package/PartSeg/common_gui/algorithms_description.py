@@ -186,7 +186,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(ap.value_type, BaseModel):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
         else:
-            res = create_widget(annotation=ap.value_type, options={})
+            res = create_widget(value=ap.default_value, annotation=ap.value_type, options={})
         return res
 
     def _get_field(self) -> typing.Union[QWidget, Widget]:
@@ -199,7 +199,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             self.per_dimension = True
             res = ListInput(prop, 3)
         elif not inspect.isclass(self.value_type):
-            res = create_widget(annotation=self.value_type, options={})
+            res = create_widget(value=self.default_value, annotation=self.value_type, options={})
         elif hasattr(self.value_type, "get_object"):
             res = self.value_type.get_object()
         else:

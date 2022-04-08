@@ -25,6 +25,7 @@ from ..io_utils import (
     SegmentationType,
     WrongFileTypeException,
     check_segmentation_type,
+    load_matadata_part,
     load_metadata_base,
     open_tar_file,
     proxy_callback,
@@ -34,7 +35,6 @@ from ..mask.io_functions import LoadROIImage
 from ..project_info import HistoryElement
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
-from ..utils import ProfileDict, check_loaded_dict
 from .io_utils import MaskInfo, ProjectTuple, project_version_info
 
 __all__ = [
@@ -324,15 +324,7 @@ class LoadProfileFromJSON(LoadBase):
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.Tuple[dict, list]:
-        data = load_metadata(load_locations[0])
-        bad_key = []
-        if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
-            bad_key.extend(k for k, v in data.items() if not check_loaded_dict(v))
-            for el in bad_key:
-                del data[el]
-        elif isinstance(data, ProfileDict) and not data.verify_data():
-            bad_key = data.filter_data()
-        return data, bad_key
+        return load_matadata_part(load_locations[0])
 
     @classmethod
     def get_name(cls) -> str:
