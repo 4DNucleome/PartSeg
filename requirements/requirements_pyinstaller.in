@@ -8,6 +8,7 @@ imagecodecs
 lxml
 mahotas
 napari!=0.4.11
+nme
 numpy
 oiffile
 openpyxl
