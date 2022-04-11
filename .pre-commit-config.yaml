@@ -22,7 +22,7 @@ repos:
       additional_dependencies:
       - flake8-tidy-imports
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.2.0
     hooks:
     - id: check-json
     - id: check-yaml
@@ -33,11 +33,11 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.20.0
+    rev: v1.20.1
     hooks:
     - id: setup-cfg-fmt
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.31.1
+    rev: v2.32.0
     hooks:
     - id: pyupgrade
       args: ["--py37-plus"]
