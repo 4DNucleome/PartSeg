@@ -226,7 +226,7 @@ def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any
     return data, bad_key
 
 
-def find_problematic_entries(data: dict) -> typing.List[typing.MutableMapping]:
+def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapping]:
     if not isinstance(data, typing.MutableMapping):
         return []
     if "__error__" in data:

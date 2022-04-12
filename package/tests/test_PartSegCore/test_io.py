@@ -31,6 +31,7 @@ from PartSegCore.io_utils import (
     LoadPlanJson,
     SaveBase,
     SaveROIAsNumpy,
+    find_problematic_entries,
     find_problematic_leafs,
     load_metadata_base,
 )
@@ -671,6 +672,22 @@ def test_find_problematic_leaf_nested_class():
         "__values__": {"ddd": 1, "eee": 2, "Zzzz": {"__error__": True, "aa": 1}},
     }
     assert find_problematic_leafs(data) == [data["__values__"]["Zzzz"]]
+
+
+def test_find_problematic_entries_base():
+    assert find_problematic_entries(1) == []
+    assert find_problematic_entries({"aaa": 1, "bbb": 2}) == []
+    data = {"aaa": 1, "bbb": 2, "__error__": True}
+    assert find_problematic_entries(data) == [data]
+
+
+def test_find_problematic_entries_nested():
+    data = {"aaa": 1, "bbb": 2, "__error__": True, "ccc": {"ddd": 1, "eee": 2, "__error__": True}}
+    assert find_problematic_entries(data) == [data]
+    data = {"aaa": 1, "bbb": 2, "ccc": {"ddd": 1, "eee": 2, "__error__": True}}
+    assert find_problematic_entries(data) == [data["ccc"]]
+    data = {"aaa": 1, "bbb": 2, "ccc": {"ddd": 1, "eee": 2, "__error__": True}, "kkk": {"__error__": True, "a": 1}}
+    assert find_problematic_entries(data) == [data["ccc"], data["kkk"]]
 
 
 update_name_json = """
