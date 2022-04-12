@@ -4,9 +4,9 @@ THis module contains widgets used for error reporting. The report backed is sent
 .. _sentry: https://sentry.io
 """
 import getpass
+import io
 import pprint
 import re
-import sys
 import traceback
 import typing
 
@@ -29,8 +29,10 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 from sentry_sdk.utils import event_from_exception, exc_info_from_error
+from traceback_with_variables import print_exc
 
 from PartSeg import __version__
+from PartSeg.common_backend.python_syntax_highlight import PythonHighlighter
 from PartSegCore import state_store
 from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
@@ -54,11 +56,12 @@ class ErrorDialog(QDialog):
         self.send_report_btn.setDisabled(not state_store.report_errors)
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
+        self._highlight = PythonHighlighter(self.error_description.document())
         self.traceback_summary = additional_info
         if additional_info is None:
-            self.error_description.setText(
-                "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-            )
+            stream = io.StringIO()
+            print_exc(exception, file_=stream)
+            self.error_description.setText(stream.getvalue())
         elif isinstance(additional_info, traceback.StackSummary):
             self.error_description.setText("".join(additional_info.format()))
         elif isinstance(additional_info[1], traceback.StackSummary):
@@ -117,7 +120,7 @@ class ErrorDialog(QDialog):
         """
         # TODO check if this check is needed
         if not state_store.show_error_dialog:
-            sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
+            print_exc(self.exception)
             return False
         super().exec_()
 

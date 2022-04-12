@@ -331,6 +331,8 @@ tornado==6.1
     #   jupyter-client
 tqdm==4.64.0
     # via napari
+traceback-with-variables==2.0.4
+    # via -r requirements_pyinstaller.in
 traitlets==5.1.1
     # via
     #   ipykernel
