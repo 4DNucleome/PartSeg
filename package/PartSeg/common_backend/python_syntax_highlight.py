@@ -4,7 +4,7 @@
 from qtpy import QtCore, QtGui
 
 
-def format(color, style=""):
+def _format(color, style=""):
     """Return a QTextCharFormat with the given attributes."""
     _color = QtGui.QColor()
     _color.setNamedColor(color)
@@ -21,15 +21,15 @@ def format(color, style=""):
 
 # Syntax styles that can be shared by all languages
 STYLES = {
-    "keyword": format("blue"),
-    "operator": format("red"),
-    "brace": format("darkGray"),
-    "defclass": format("black", "bold"),
-    "string": format("magenta"),
-    "string2": format("darkMagenta"),
-    "comment": format("darkGreen", "italic"),
-    "self": format("black", "italic"),
-    "numbers": format("brown"),
+    "keyword": _format("blue"),
+    "operator": _format("red"),
+    "brace": _format("darkGray"),
+    "defclass": _format("black", "bold"),
+    "string": _format("magenta"),
+    "string2": _format("darkMagenta"),
+    "comment": _format("darkGreen", "italic"),
+    "self": _format("black", "italic"),
+    "numbers": _format("brown"),
 }
 
 
@@ -121,6 +121,7 @@ class PythonHighlighter(QtGui.QSyntaxHighlighter):
         # Multi-line strings (expression, flag, style)
         self.tri_single = (QtCore.QRegExp("'''"), 1, STYLES["string2"])
         self.tri_double = (QtCore.QRegExp('"""'), 2, STYLES["string2"])
+        self.tripleQuoutesWithinStrings = []
 
         rules = []
 
@@ -156,7 +157,7 @@ class PythonHighlighter(QtGui.QSyntaxHighlighter):
         """Apply syntax highlighting to the given block of text."""
         self.tripleQuoutesWithinStrings = []
         # Do other syntax formatting
-        for expression, nth, format in self.rules:
+        for expression, nth, format_ in self.rules:
             index = expression.indexIn(text, 0)
             if index >= 0 and expression.pattern() in [r'"[^"\\]*(\\.[^"\\]*)*"', r"'[^'\\]*(\\.[^'\\]*)*'"]:
                 inner_index = self.tri_single[0].indexIn(text, index + 1)
@@ -176,7 +177,7 @@ class PythonHighlighter(QtGui.QSyntaxHighlighter):
                 # We actually want the index of the nth match
                 index = expression.pos(nth)
                 length = len(expression.cap(nth))
-                self.setFormat(index, length, format)
+                self.setFormat(index, length, format_)
                 index = expression.indexIn(text, index + length)
 
         self.setCurrentBlockState(0)
