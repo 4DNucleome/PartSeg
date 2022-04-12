@@ -278,7 +278,6 @@ class Properties(QWidget):
             for original_name, final_name in imp.get_import_list():
                 profiles_dict[final_name] = profs[original_name]
             self._settings.dump()
-            # self.update_profile_list()
 
     def export_pipeline(self):
         exp = ExportDialog(self._settings.roi_pipelines, ProfileDictViewer)
