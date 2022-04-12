@@ -25,7 +25,15 @@ from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
-from PartSegCore.io_utils import LoadBase, LoadPlanExcel, LoadPlanJson, SaveBase, SaveROIAsNumpy, load_metadata_base
+from PartSegCore.io_utils import (
+    LoadBase,
+    LoadPlanExcel,
+    LoadPlanJson,
+    SaveBase,
+    SaveROIAsNumpy,
+    find_problematic_leafs,
+    load_metadata_base,
+)
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
@@ -640,6 +648,29 @@ def test_load_json_plan(bundle_test_dir):
     assert len(data) == 1
     assert LoadPlanJson.get_name_with_suffix().endswith("(*.json)")
     assert LoadPlanJson.get_short_name() == "plan_json"
+
+
+def test_find_problematic_leafs_base():
+    assert find_problematic_leafs(1) == []
+    assert find_problematic_leafs({"aaa": 1, "bbb": 2}) == []
+    data = {"aaa": 1, "bbb": 2, "__error__": True}
+    assert find_problematic_leafs(data) == [data]
+
+
+def test_find_problematic_leaf_nested():
+    data = {"aaa": 1, "bbb": 2, "__error__": True, "ccc": {"ddd": 1, "eee": 2, "__error__": True}}
+    assert find_problematic_leafs(data) == [data["ccc"]]
+
+
+def test_find_problematic_leaf_nested_class():
+    data = {
+        "__class__": "CalculationPlan",
+        "aaa": 1,
+        "bbb": 2,
+        "__error__": True,
+        "__values__": {"ddd": 1, "eee": 2, "Zzzz": {"__error__": True, "aa": 1}},
+    }
+    assert find_problematic_leafs(data) == [data["__values__"]["Zzzz"]]
 
 
 update_name_json = """

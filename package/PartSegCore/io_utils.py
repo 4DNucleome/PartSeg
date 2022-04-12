@@ -237,6 +237,22 @@ def find_problematic_entries(data: dict) -> typing.List[typing.MutableMapping]:
     return res
 
 
+def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMapping]:
+    if not isinstance(data, typing.MutableMapping):
+        return []
+    if "__error__" not in data:
+        return []
+    res = []
+    data_to_check = data
+    if "__class__" in data and "__values__" in data:
+        data_to_check = data["__values__"]
+    for data_ in data_to_check.values():
+        res.extend(find_problematic_leafs(data_))
+    if res:
+        return res
+    return [data]
+
+
 def proxy_callback(
     range_changed: typing.Callable[[int, int], typing.Any],
     step_changed: typing.Callable[[int], typing.Any],

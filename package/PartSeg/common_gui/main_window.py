@@ -17,6 +17,7 @@ from ..common_backend.base_settings import FILE_HISTORY, BaseSettings, SwapTimeS
 from ..common_backend.load_backup import import_config
 from .about_dialog import AboutDialog
 from .custom_save_dialog import PSaveDialog
+from .error_report import DataImportErrorDialog
 from .exception_hooks import load_data_exception_hook
 from .image_adjustment import ImageAdjustmentDialog
 from .napari_image_view import ImageView
@@ -128,17 +129,13 @@ class BaseMainWindow(QMainWindow):
             settings: BaseSettings = self.get_setting_class()(config_folder)
             errors = settings.load()
             if errors:  # pragma: no cover
-                errors_message = QMessageBox()
-                errors_message.setText("There are errors during start")
-                errors_message.setInformativeText(
-                    "During load saved state some of data could not be load properly\n"
+                DataImportErrorDialog(
+                    errors,
+                    self,
+                    text="During load saved state some of data could not be load properly\n"
                     "The files has prepared backup copies in "
-                    " state directory (Help > State directory)"
-                )
-                errors_message.setStandardButtons(QMessageBox.Ok)
-                text = "\n".join(f"File: {x[0]}" + "\n" + str(x[1]) for x in errors)
-                errors_message.setDetailedText(text)
-                errors_message.exec_()
+                    " state directory (Help > State directory)",
+                ).exec_()
 
         super().__init__()
         if signal_fun is not None:

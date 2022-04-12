@@ -736,7 +736,7 @@ class BaseSettings(ViewSettings):
         """
         if folder_path is None:
             folder_path = self.json_folder_path
-        errors_list = []
+        errors_dict = {}
         for el in self.get_save_list():
             file_path = os.path.join(folder_path, el.file_name)
             if not os.path.exists(file_path):
@@ -746,7 +746,7 @@ class BaseSettings(ViewSettings):
                 data: ProfileDict = self.load_metadata(file_path)
                 if not data.verify_data():
                     filtered = data.filter_data()
-                    errors_list.append((file_path, filtered))
+                    errors_dict[file_path] = filtered
                     filtered_base_str = (
                         (k, "\n".join(f"{x}" for x in find_problematic_entries(v))) for k, v in filtered
                     )
@@ -758,13 +758,13 @@ class BaseSettings(ViewSettings):
             except Exception as e:  # pylint: disable=W0703
                 error = True
                 logger.error(e)
-                errors_list.append((file_path, e))
+                errors_dict[file_path] = e
             finally:
                 if error:
                     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
-        return errors_list
+        return errors_dict
 
     def get_project_info(self) -> ProjectInfoBase:
         """Get all information needed to save project"""

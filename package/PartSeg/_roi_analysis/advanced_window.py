@@ -41,6 +41,7 @@ from PartSegData import icons_dir
 from ..common_backend.base_settings import IO_SAVE_DIRECTORY
 from ..common_gui.custom_load_dialog import PLoadDialog
 from ..common_gui.custom_save_dialog import FormDialog, PSaveDialog
+from ..common_gui.error_report import DataImportErrorDialog
 from ..common_gui.lock_checkbox import LockCheckBox
 from ..common_gui.searchable_list_widget import SearchableListWidget
 from .measurement_widget import MeasurementWidget
@@ -267,7 +268,9 @@ class Properties(QWidget):
             res = dial.get_result()
             profs, err = res.load_class.load(res.load_location)
             if err:
-                QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
+                DataImportErrorDialog({res.load_location[0]: err}).exec_()
+            if not profs:
+                return
             profiles_dict = self._settings.roi_profiles
             imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
             if not imp.exec_():
@@ -275,7 +278,7 @@ class Properties(QWidget):
             for original_name, final_name in imp.get_import_list():
                 profiles_dict[final_name] = profs[original_name]
             self._settings.dump()
-            self.update_profile_list()
+            # self.update_profile_list()
 
     def export_pipeline(self):
         exp = ExportDialog(self._settings.roi_pipelines, ProfileDictViewer)
