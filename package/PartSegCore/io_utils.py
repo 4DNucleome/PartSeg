@@ -227,6 +227,13 @@ def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any
 
 
 def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapping]:
+    """
+    Find top nodes with ``"__error__"`` key. If node found
+    then its children is not checked.
+
+    :param data: data to be checked
+    :return:  top level entries with "__error__" key
+    """
     if not isinstance(data, typing.MutableMapping):
         return []
     if "__error__" in data:
@@ -238,6 +245,13 @@ def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapp
 
 
 def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMapping]:
+    """
+    Find bottom nodes with ``"__error__"`` key. If any
+    children has ``"__error__"`` then such node is not returned.
+
+    :param data: data to be checked.
+    :return: bottom level entries with "__error__" key
+    """
     if not isinstance(data, typing.MutableMapping):
         return []
     if "__error__" not in data:
