@@ -439,7 +439,7 @@ class ROIExtractionProfileMeta(ModelMetaclass):
         return cls2
 
 
-class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):
+class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # pylint: disable=E1139
     """
     :ivar str ~.name: name for segmentation profile
     :ivar str ~.algorithm: Name of algorithm
