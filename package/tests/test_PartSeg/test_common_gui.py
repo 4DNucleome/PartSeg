@@ -15,7 +15,7 @@ from magicgui.widgets import Widget
 from nme import register_class
 from pydantic import Field
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import QCheckBox, QComboBox, QFileDialog, QLabel, QLineEdit, QMainWindow, QWidget
+from qtpy.QtWidgets import QApplication, QCheckBox, QComboBox, QFileDialog, QLabel, QLineEdit, QMainWindow, QWidget
 from superqt import QEnumComboBox
 
 from PartSeg.common_gui import select_multiple_files
@@ -37,6 +37,7 @@ from PartSeg.common_gui.custom_load_dialog import (
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
+from PartSeg.common_gui.error_report import DataImportErrorDialog
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
 from PartSeg.common_gui.qt_modal import QtPopup
@@ -955,3 +956,62 @@ class TestLoadRegisterFileDialog:
         assert len(dialog.io_register) == 2
         assert issubclass(dialog.io_register[LoadPlanJson.get_name()], LoadPlanJson)
         assert issubclass(dialog.io_register[LoadPlanExcel.get_name()], LoadPlanExcel)
+
+
+class TestDataImportErrorDialog:
+    def test_base_create(self, qtbot):
+        dial = DataImportErrorDialog({"aaaa": [("bbbb", {"__error__": True, "aa": 1})]})
+        qtbot.add_widget(dial)
+        assert dial.error_view.topLevelItemCount() == 1
+        item = dial.error_view.topLevelItem(0)
+        assert item.text(0) == "aaaa"
+        assert item.childCount() == 1
+        assert item.child(0).text(0) == "bbbb"
+        assert item.child(0).childCount() == 1
+
+    def test_multiple_errors_one_entry(self, qtbot):
+        dial = DataImportErrorDialog(
+            {
+                "aaaa": [
+                    (
+                        "bbbb",
+                        {
+                            "__error__": True,
+                            "aa": 1,
+                            "ee": {"__error__": True, "eee": 2},
+                            "gg": {"__error__": True, "ggg": 3},
+                        },
+                    )
+                ]
+            }
+        )
+        qtbot.addWidget(dial)
+        assert dial.error_view.topLevelItemCount() == 1
+        item = dial.error_view.topLevelItem(0)
+        assert item.childCount() == 1
+        assert item.child(0).childCount() == 2
+
+    def test_multiple_entries(self, qtbot):
+        dial = DataImportErrorDialog(
+            {"aaaa": [("bbbb", {"__error__": True, "aa": 1}), ("cccc", {"__error__": True, "aa": 1})]}
+        )
+        qtbot.addWidget(dial)
+        assert dial.error_view.topLevelItemCount() == 1
+        item = dial.error_view.topLevelItem(0)
+        assert item.childCount() == 2
+
+    def test_exception_entry(self, qtbot):
+        dial = DataImportErrorDialog({"aaaa": ValueError("text")})
+        qtbot.addWidget(dial)
+        assert dial.error_view.topLevelItemCount() == 1
+        item = dial.error_view.topLevelItem(0)
+        assert item.childCount() == 1
+
+    def test_clipboard(self, qtbot):
+        dial = DataImportErrorDialog({"aaaa": [("bbbb", {"__error__": True, "aa": 1})]})
+        qtbot.addWidget(dial)
+        dial._copy_to_clipboard()
+        text = QApplication.clipboard().text()
+        assert text.startswith("aaaa\n")
+        assert "__error__" in text
+        assert "'aa': 1" in text

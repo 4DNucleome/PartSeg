@@ -209,7 +209,7 @@ def load_metadata_base(data: typing.Union[str, Path]):
     return decoded_data
 
 
-def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[str]]:
+def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[typing.Tuple[str, dict]]]:
     """
     Load serialized data. Get valid entries.
 
@@ -220,12 +220,51 @@ def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any
     data = load_metadata_base(data)
     bad_key = []
     if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
-        bad_key.extend(k for k, v in data.items() if not check_loaded_dict(v))
-        for el in bad_key:
-            del data[el]
+        bad_key.extend((k, data.pop(k)) for k, v in list(data.items()) if not check_loaded_dict(v))
     elif isinstance(data, ProfileDict) and not data.verify_data():
         bad_key = data.filter_data()
     return data, bad_key
+
+
+def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapping]:
+    """
+    Find top nodes with ``"__error__"`` key. If node found
+    then its children is not checked.
+
+    :param data: data to be checked
+    :return:  top level entries with "__error__" key
+    """
+    if not isinstance(data, typing.MutableMapping):
+        return []
+    if "__error__" in data:
+        return [data]
+    res = []
+    for v in data.values():
+        res.extend(find_problematic_entries(v))
+    return res
+
+
+def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMapping]:
+    """
+    Find bottom nodes with ``"__error__"`` key. If any
+    children has ``"__error__"`` then such node is not returned.
+
+    :param data: data to be checked.
+    :return: bottom level entries with "__error__" key
+    """
+    if not isinstance(data, typing.MutableMapping):
+        return []
+    if "__error__" not in data:
+        return []
+    res = []
+    data_to_check = data
+    if "__class__" in data and "__values__" in data:
+        data_to_check = data["__values__"]
+    for data_ in data_to_check.values():
+        res.extend(find_problematic_leafs(data_))
+    if res:
+        return res
+    return [data]
 
 
 def proxy_callback(

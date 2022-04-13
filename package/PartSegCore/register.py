@@ -112,7 +112,7 @@ reload_module_list = [
 ]
 
 
-def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False):
+def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False, old_names=None):
     """
     Function for registering new operations in PartSeg inner structures.
 
@@ -123,4 +123,4 @@ def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, rep
     if target_type == RegisterEnum._qss_register:  # pylint: disable=W0212
         qss_list.append(target)
     else:
-        register_dict[target_type].register(target, replace=replace)
+        register_dict[target_type].register(target, replace=replace, old_names=old_names)

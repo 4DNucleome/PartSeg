@@ -8,6 +8,7 @@ imagecodecs
 lxml
 mahotas
 napari!=0.4.11
+nme
 numpy
 oiffile
 openpyxl
@@ -33,3 +34,4 @@ xlsxwriter
 sphinx!=3.5.0
 pydantic!=1.8
 vispy
+traceback-with-variables

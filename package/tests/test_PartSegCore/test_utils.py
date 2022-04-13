@@ -216,7 +216,7 @@ class TestProfileDict:
         assert dkt.filter_data() == []
         dkt.set("e.h.l", {"aaa": 1, "__error__": True})
         assert not dkt.verify_data()
-        assert dkt.filter_data() == ["e.h"]
+        assert dkt.filter_data()[0][0] == "e.h"
 
     def test_serialize(self, tmp_path):
         dkt = ProfileDict()

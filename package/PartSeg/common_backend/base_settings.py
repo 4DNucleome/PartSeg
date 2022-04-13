@@ -23,7 +23,7 @@ from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
 from PartSegCore import register
 from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
-from PartSegCore.io_utils import load_matadata_part, load_metadata_base
+from PartSegCore.io_utils import find_problematic_entries, load_matadata_part, load_metadata_base
 from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
@@ -736,7 +736,7 @@ class BaseSettings(ViewSettings):
         """
         if folder_path is None:
             folder_path = self.json_folder_path
-        errors_list = []
+        errors_dict = {}
         for el in self.get_save_list():
             file_path = os.path.join(folder_path, el.file_name)
             if not os.path.exists(file_path):
@@ -746,20 +746,25 @@ class BaseSettings(ViewSettings):
                 data: ProfileDict = self.load_metadata(file_path)
                 if not data.verify_data():
                     filtered = data.filter_data()
-                    errors_list.append((file_path, filtered))
-                    logger.error(filtered)
+                    errors_dict[file_path] = filtered
+                    filtered_base_str = (
+                        (k, "\n".join(f"{x}" for x in find_problematic_entries(v))) for k, v in filtered
+                    )
+                    filtered_str = "\n".join(f"{k}\n{v}\n" for k, v in filtered_base_str)
+
+                    logger.error(f"error in load data from {file_path} problematic keys are {filtered_str}")
                     error = True
                 el.values.update(data)
             except Exception as e:  # pylint: disable=W0703
                 error = True
                 logger.error(e)
-                errors_list.append((file_path, e))
+                errors_dict[file_path] = e
             finally:
                 if error:
-                    timestamp = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
+                    timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
-        return errors_list
+        return errors_dict
 
     def get_project_info(self) -> ProjectInfoBase:
         """Get all information needed to save project"""

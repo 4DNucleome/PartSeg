@@ -149,12 +149,14 @@ class ProgressView(QWidget):
 
     def task_cancel_remove(self):
         index = self.task_view.selectionModel().currentIndex()
-        task: CalculationProcessItem = self.task_que.item(index.row(), index.column())
+        task: CalculationProcessItem = typing.cast(
+            CalculationProcessItem, self.task_que.item(index.row(), index.column())
+        )
         if task.is_finished():
             self.calculation_manager.remove_calculation(task.calculation)
-            self.task_que.takeRow(index.row())
         else:
             self.calculation_manager.cancel_calculation(task.calculation)
+        self.task_que.takeRow(index.row())
         print(task)
 
     def new_task(self):

@@ -292,11 +292,11 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
 
 class BaseMeta(type):
     def __new__(mcs, name, bases, attrs):
+        if attrs.get("_root", False):
+            return super().__new__(mcs, name, bases, attrs)
         warnings.warn(
             "BaseSerializableClass is deprecated, use pydantic.BaseModel instead", FutureWarning, stacklevel=2
         )
-        if attrs.get("_root", False):
-            return super().__new__(mcs, name, bases, attrs)
         types = attrs.get("__annotations__", {})
         defaults = []
         defaults_dict = {}
