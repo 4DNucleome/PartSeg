@@ -2,6 +2,7 @@ import copy
 import inspect
 import itertools
 import typing
+import warnings
 import weakref
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -407,6 +408,12 @@ def check_loaded_dict(dkt) -> bool:
 class BaseModel(PydanticBaseModel):
     class Config:
         extra = "forbid"
+
+    def __getitem__(self, item):
+        warnings.warn("Access to attribute by [] is deprecated. Use . instead", FutureWarning, stacklevel=2)
+        if item in self.__fields__:
+            return getattr(self, item)
+        raise KeyError(f"{item} not found in {self.__class__.__name__}")
 
 
 def iterate_names(base_name: str, data_dict, max_length=None) -> typing.Optional[str]:
