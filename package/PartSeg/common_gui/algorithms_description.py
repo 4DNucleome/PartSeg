@@ -1,5 +1,6 @@
 import collections
 import inspect
+import logging
 import typing
 from contextlib import suppress
 from copy import deepcopy
@@ -107,8 +108,10 @@ class QtAlgorithmProperty(AlgorithmProperty):
 
     def set_value(self, val):
         """set value of widget"""
-        with suppress(TypeError, ValueError):
+        try:
             return self._setter(self._widget, val)
+        except (TypeError, ValueError) as e:
+            logging.error(f"Error {e} setting value {val} to {self.name}")
 
     def get_field(self) -> QWidget:
         """
@@ -500,6 +503,8 @@ class SubAlgorithmWidget(QWidget):
         self.starting_values = starting_values
 
     def set_values(self, val: typing.Mapping):
+        if isinstance(val, BaseModel):
+            val = dict(val)
         if not isinstance(val, typing.Mapping):
             return
         self.choose.setCurrentText(val["name"])
@@ -772,7 +777,7 @@ class AlgorithmChooseBase(QWidget):
     def change_algorithm(self, name, values: dict = None):
         self.settings.set("current_algorithm", name)
         widget = self.stack_layout.currentWidget()
-        self.blockSignals(True)
+        blocked = self.blockSignals(True)
         if name != widget.name:
             widget = self.algorithm_dict[name]
             self.stack_layout.setCurrentWidget(widget)
@@ -780,12 +785,12 @@ class AlgorithmChooseBase(QWidget):
             if hasattr(widget, "set_mask") and hasattr(self.settings, "mask"):
                 widget.set_mask(self.settings.mask)
         elif values is None:
-            self.blockSignals(False)
+            self.blockSignals(blocked)
             return
         if values is not None:
             widget.set_values(values)
         self.algorithm_choose.setCurrentText(name)
-        self.blockSignals(False)
+        self.blockSignals(blocked)
         self.algorithm_changed.emit(name)
 
     def current_widget(self) -> InteractiveAlgorithmSettingsWidget:

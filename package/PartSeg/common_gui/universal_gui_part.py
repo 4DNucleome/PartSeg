@@ -43,6 +43,7 @@ class ChannelComboBox(QComboBox):
         """Set current channel . Starting from 0"""
         if isinstance(val, Channel):
             self.setCurrentIndex(val.value)
+            return
         self.setCurrentIndex(val)
 
     def change_channels_num(self, num: int):
