@@ -6,6 +6,7 @@ import pytest
 
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.utils import (
+    BaseModel,
     CallbackFun,
     CallbackMethod,
     EventedDict,
@@ -277,3 +278,20 @@ def test_iterate_names():
     for _ in range(85):
         input_set.add(iterate_names("a" * 5, input_set))
     assert iterate_names("a" * 5, input_set) is None
+
+
+def test_base_model_getitem():
+    class SampleModel(BaseModel):
+        a: int = 1
+        b: float = 2.0
+        c: str = "3"
+
+    ob = SampleModel()
+    with pytest.warns(FutureWarning, match=r"Access to attribute by \[\] is deprecated\. Use \. instead"):
+        assert ob["a"] == 1
+    with pytest.warns(FutureWarning, match=r"Access to attribute by \[\] is deprecated\. Use \. instead"):
+        assert ob["b"] == 2.0
+    with pytest.warns(FutureWarning, match=r"Access to attribute by \[\] is deprecated\. Use \. instead"):
+        assert ob["c"] == "3"
+    with pytest.raises(KeyError):
+        ob["d"]  # pylint: disable=pointless-statement

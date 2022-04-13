@@ -4,6 +4,7 @@ import typing
 import warnings
 from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
+from functools import wraps
 
 from nme import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
@@ -416,7 +417,29 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         return cls(name=name, values=cls[name].get_default_values())
 
 
-class ROIExtractionProfile(BaseModel):
+class ROIExtractionProfileMeta(ModelMetaclass):
+    def __new__(cls, name, bases, attrs, **kwargs):
+        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+
+        def allow_positional_args(func):
+            @wraps(func)
+            def _wraps(self, *args, **kwargs):
+                if len(args) > 0:
+                    warnings.warn(
+                        "Positional arguments are deprecated, use keyword arguments instead",
+                        FutureWarning,
+                        stacklevel=2,
+                    )
+                    kwargs.update(dict(zip(self.__fields__, args)))
+                return func(self, **kwargs)
+
+            return _wraps
+
+        cls2.__init__ = allow_positional_args(cls2.__init__)
+        return cls2
+
+
+class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # pylint: disable=E1139
     """
     :ivar str ~.name: name for segmentation profile
     :ivar str ~.algorithm: Name of algorithm

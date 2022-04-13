@@ -11,6 +11,7 @@ from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
     AlgorithmSelection,
+    ROIExtractionProfile,
     _GetDescriptionClass,
     base_model_to_algorithm_property,
 )
@@ -318,3 +319,9 @@ class TestAlgorithmDescribeBase:
             assert len(SampleSubAlgorithm.get_fields_dict()) == 2
         with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
             assert SampleSubAlgorithm.get_default_values() == {"name": 1, "name2": 3.0}
+
+
+def test_roi_extraction_profile():
+    ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
+    with pytest.warns(FutureWarning):
+        ROIExtractionProfile("aaa", "aaa", {})
