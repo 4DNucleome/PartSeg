@@ -155,7 +155,8 @@ class BatchManager:
             self.join_all()
 
     def cancel_work(self, global_parameters):
-        del self.calculation_dict[global_parameters.uuid]
+        with suppress(KeyError):
+            del self.calculation_dict[global_parameters.uuid]
 
     def join_all(self):
         logging.debug(f"Join begin {len(self.process_list)} {self.number_off_process}")
@@ -175,10 +176,10 @@ class BatchManager:
             # FIXME self.number_off_alive_process,  self.number_off_process negative values
             if len(self.process_list) > self.number_off_process and len(self.process_list) > 0:
                 logging.info(
-                    "Wait on process, time {}, {}, {}, {}".format(
-                        time.time(), self.number_off_alive_process, len(self.process_list), self.number_off_process
-                    )
+                    f"Wait on process, time {time.time()}, {self.number_off_alive_process},"
+                    f" {len(self.process_list)}, {self.number_off_process}"
                 )
+
                 Timer(1, self.join_all).start()
 
     @property
