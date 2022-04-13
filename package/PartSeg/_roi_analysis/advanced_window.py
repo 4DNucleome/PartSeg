@@ -629,7 +629,9 @@ class MeasurementSettings(QWidget):
     def form_dialog(self, arguments):
         return FormDialog(arguments, settings=self.settings, parent=self)
 
-    def get_parameters(self, node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float):
+    def get_parameters(
+        self, node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float
+    ) -> Union[Leaf, Node, None]:
         if isinstance(node, Node):
             return node
         node = node.replace_(power=power)
@@ -639,12 +641,12 @@ class MeasurementSettings(QWidget):
             node = node.replace_(per_component=component)
         with suppress(KeyError):
             arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
-            if len(arguments) > 0 and len(dict(node.parameters)) == 0:
+            if len(arguments) > 0 and not dict(node.parameters):
                 dial = self.form_dialog(arguments)
                 if dial.exec_():
-                    node = node._replace(dict=dial.get_values())
+                    node = node.copy(update={"parameters": dial.get_values()})
                 else:
-                    return
+                    return None
         return node
 
     def choose_option(self):
