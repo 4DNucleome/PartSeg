@@ -294,4 +294,4 @@ def test_base_model_getitem():
     with pytest.warns(FutureWarning, match=r"Access to attribute by \[\] is deprecated\. Use \. instead"):
         assert ob["c"] == "3"
     with pytest.raises(KeyError):
-        ob["d"]
+        ob["d"]  # pylint: disable=pointless-statement
