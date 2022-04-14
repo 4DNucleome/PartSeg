@@ -16,6 +16,7 @@
 -   Add option to extract measurement profile or ROI extraction profile from the batch plan (#568)
 -   Allow import calculation plan from batch result excel file (#567)
 -   Improve error reporting when failing to deserialize data (#574)
+-   Launch PartSeg GUI from napari #581
 
 ### Refactor
 
