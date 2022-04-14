@@ -247,6 +247,14 @@ def test_base_model_to_algorithm_property_position():
     assert property_list[2].name == "field2"
 
 
+def test_base_model_to_algorithm_property_magicgui_parameters():
+    class BBaseModel(BaseModel):
+        field1: int = Field(1, options={"a": 1, "b": 2})
+
+    prop = base_model_to_algorithm_property(BBaseModel)[0]
+    assert prop.mgi_options == {"a": 1, "b": 2}
+
+
 class TestAlgorithmDescribeBase:
     def test_old_style_algorithm(self):
         class SampleAlgorithm(AlgorithmDescribeBase):
