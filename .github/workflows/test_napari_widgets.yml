@@ -55,7 +55,7 @@ jobs:
         uses: GabrielBB/xvfb-action@v1
         timeout-minutes: 60
         with:
-          run: tox
+          run: python -m tox
         env:
           PLATFORM: ${{ matrix.platform }}
           NAPARI: ${{ matrix.napari_version }}
