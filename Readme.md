@@ -7,6 +7,7 @@
 [![Documentation Status](https://readthedocs.org/projects/partseg/badge/?version=latest)](https://partseg.readthedocs.io/en/latest/?badge=latest)
 [![Azure Pipelines Build Status](https://dev.azure.com/PartSeg/PartSeg/_apis/build/status/4DNucleome.PartSeg?branchName=develop)](https://dev.azure.com/PartSeg/PartSeg/_build/latest?definitionId=1&branchName=develop)
 [![DOI](https://zenodo.org/badge/166421141.svg)](https://zenodo.org/badge/latestdoi/166421141)
+[![Publication DOI](https://img.shields.io/badge/Publication%20DOI-10.1186%2Fs12859--021--03984--1-blue)](https://doi.org/10.1186/s12859-021-03984-1)
 [![Licence: BSD3](https://img.shields.io/github/license/4DNucleome/PartSeg)](https://github.com/4DNucleome/PartSeg/blob/master/License.txt)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
