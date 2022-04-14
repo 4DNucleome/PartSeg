@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.14.0
+
+### Bug Fixes
+
+-   Fix "Show selected" rendering mode in PartSeg ROI Mask (#565)
+-   Add access by operator `[]` to `pydantic.BaseModel` base structures for keeping backward compatibility (#579)
+
+### Features
+
+-   Allow setting zoom factor from the interface in Search Label napari plugin (#538)
+-   Add controlling of zoom factor of search ROI in main GUI (#540)
+-   Better serialization mechanism allow for declaration data structure migration locally (#462)
+-   Make `*.obsep" file possible to load in PartSeg Analysis (#564)
+-   Add option to extract measurement profile or ROI extraction profile from the batch plan (#568)
+-   Allow import calculation plan from batch result excel file (#567)
+-   Improve error reporting when failing to deserialize data (#574)
+-   Launch PartSeg GUI from napari #581
+
+### Refactor
+
+-   Store PartSegImage.Image channels as separated arrays (#554)
+-   Remove deprecated modules. (#429)
+-   Switch serialization backend to `nme` (#569)
+
+### Testing
+
+-   Add test of creating AboutDialog (#539)
+-   Setup test for python 3.10. Disable `class_generator` test for this python (#570)
+
 ## 0.13.15
 
 ### Bug Fixes
