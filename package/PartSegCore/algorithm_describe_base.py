@@ -46,6 +46,7 @@ class AlgorithmProperty:
         value_type=None,
         help_text="",
         per_dimension=False,
+        mgi_options=None,
         **kwargs,
     ):
         if "property_type" in kwargs:
@@ -68,6 +69,7 @@ class AlgorithmProperty:
         self.possible_values = possible_values
         self.help_text = help_text
         self.per_dimension = per_dimension
+        self.mgi_options = mgi_options if mgi_options is not None else {}
         if self.value_type is list and default_value not in possible_values:
             raise ValueError(f"default_value ({default_value}) should be one of possible values ({possible_values}).")
 
@@ -583,6 +585,7 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
         value_type=value_type,
         possible_values=possible_values,
         help_text=help_text,
+        mgi_options=field.field_info.extra.get("options", {}),
     )
 
 

@@ -3,7 +3,7 @@ import os
 import warnings
 from functools import partial
 
-from qtpy.QtCore import QSize, Qt, QThread
+from qtpy.QtCore import QSize, Qt, QThread, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QProgressBar, QToolButton, QWidget
 
@@ -39,10 +39,11 @@ class Prepare(QThread):
             self.result = partial(main_window, settings=settings, initial_image=im)
 
 
-class MainWindow(QMainWindow):
-    def __init__(self, title):
-        super().__init__()
-        self.setWindowTitle(title)
+class PartSegGUILauncher(QWidget):
+    launched = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.lib_path = ""
         self.final_title = ""
         analysis_icon = QIcon(os.path.join(icons_dir, "icon.png"))
@@ -66,28 +67,10 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.progress, 0, 0, 1, 2)
         layout.addWidget(self.analysis_button, 1, 1)
         layout.addWidget(self.mask_button, 1, 0)
-        widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
-        self.setWindowIcon(analysis_icon)
-        self.prepare = None
-        self.wind = None
-        self._update_theme()
-
-    def _update_theme(self):
-        napari_settings = napari_get_settings(state_store.save_folder)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
-            theme = get_theme(napari_settings.appearance.theme)
-        # TODO understand qss overwrite mechanism
-        self.setStyleSheet(napari_template(get_stylesheet(), **theme))
-
-    def _launch_begin(self):
-        self.progress.setVisible(True)
-        self.progress.setRange(0, 0)
-        self.analysis_button.setDisabled(True)
-        self.mask_button.setDisabled(True)
-        import_config()
+        self.setLayout(layout)
+        self.prepare = Prepare("")
+        self.prepare.finished.connect(self.launch)
+        self.wind = []
 
     def launch_analysis(self):
         self._launch_begin()
@@ -97,8 +80,7 @@ class MainWindow(QMainWindow):
     def _launch_analysis(self):
         self.lib_path = "PartSeg._roi_analysis.main_window"
         self.final_title = f"{APP_NAME} {ANALYSIS_NAME}"
-        self.prepare = Prepare(self.lib_path)
-        self.prepare.finished.connect(self.launch)
+        self.prepare.module = self.lib_path
 
     def launch_mask(self):
         self._launch_begin()
@@ -108,17 +90,26 @@ class MainWindow(QMainWindow):
     def _launch_mask(self):
         self.lib_path = "PartSeg._roi_mask.main_window"
         self.final_title = f"{APP_NAME} {MASK_NAME}"
-        self.prepare = Prepare(self.lib_path)
-        self.prepare.finished.connect(self.launch)
+        self.prepare.module = self.lib_path
+
+    def _launch_begin(self):
+        self.progress.setVisible(True)
+        self.progress.setRange(0, 0)
+        self.analysis_button.setDisabled(True)
+        self.mask_button.setDisabled(True)
+        import_config()
 
     def window_shown(self):
-        self.close()
+        self.progress.setHidden(True)
+        self.analysis_button.setEnabled(True)
+        self.mask_button.setEnabled(True)
+        self.launched.emit()
 
     def launch(self):
-        if self.prepare.result is None:
+        if self.prepare.result is None:  # pragma: no cover
             self.close()
             return
-        if self.prepare.errors:
+        if self.prepare.errors:  # pragma: no cover
             errors_message = QMessageBox()
             errors_message.setText("There are errors during start")
             errors_message.setInformativeText(
@@ -126,10 +117,29 @@ class MainWindow(QMainWindow):
                 "The files has prepared backup copies in  state directory (Help > State directory)"
             )
             errors_message.setStandardButtons(QMessageBox.Ok)
-            text = "\n".join("File: " + x[0] + "\n" + str(x[1]) for x in self.prepare.errors)
+            text = "\n".join(f"File: {x[0]}" + "\n" + str(x[1]) for x in self.prepare.errors)
 
             errors_message.setDetailedText(text)
             errors_message.exec_()
         wind = self.prepare.result(title=self.final_title, signal_fun=self.window_shown)
         wind.show()
-        self.wind = wind
+        self.wind.append(wind)
+
+
+class MainWindow(QMainWindow):
+    def __init__(self, title):
+        super().__init__()
+        self.setWindowTitle(title)
+        widget = PartSegGUILauncher(self)
+        widget.launched.connect(self.close)
+        self.setCentralWidget(widget)
+        self.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))
+        self._update_theme()
+
+    def _update_theme(self):
+        napari_settings = napari_get_settings(state_store.save_folder)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            theme = get_theme(napari_settings.appearance.theme)
+        # TODO understand qss overwrite mechanism
+        self.setStyleSheet(napari_template(get_stylesheet(), **theme))

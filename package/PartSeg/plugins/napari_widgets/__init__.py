@@ -1,5 +1,6 @@
 from napari_plugin_engine import napari_hook_implementation
 
+from PartSeg._launcher.main_window import PartSegGUILauncher
 from PartSeg.plugins.napari_widgets.mask_create_widget import MaskCreate
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ROIAnalysisExtraction, ROIMaskExtraction
 from PartSeg.plugins.napari_widgets.search_label_widget import SearchLabel
@@ -37,3 +38,8 @@ def napari_experimental_provide_dock_widget4():
 @napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
 def napari_experimental_provide_dock_widget5():
     return SearchLabel
+
+
+@napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
+def napari_experimental_provide_dock_widget6():
+    return PartSegGUILauncher
