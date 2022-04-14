@@ -68,7 +68,8 @@ class PartSegGUILauncher(QWidget):
         layout.addWidget(self.analysis_button, 1, 1)
         layout.addWidget(self.mask_button, 1, 0)
         self.setLayout(layout)
-        self.prepare = None
+        self.prepare = Prepare("")
+        self.prepare.finished.connect(self.launch)
         self.wind = []
 
     def launch_analysis(self):
@@ -79,8 +80,7 @@ class PartSegGUILauncher(QWidget):
     def _launch_analysis(self):
         self.lib_path = "PartSeg._roi_analysis.main_window"
         self.final_title = f"{APP_NAME} {ANALYSIS_NAME}"
-        self.prepare = Prepare(self.lib_path)
-        self.prepare.finished.connect(self.launch)
+        self.prepare.module = self.lib_path
 
     def launch_mask(self):
         self._launch_begin()
@@ -90,8 +90,7 @@ class PartSegGUILauncher(QWidget):
     def _launch_mask(self):
         self.lib_path = "PartSeg._roi_mask.main_window"
         self.final_title = f"{APP_NAME} {MASK_NAME}"
-        self.prepare = Prepare(self.lib_path)
-        self.prepare.finished.connect(self.launch)
+        self.prepare.module = self.lib_path
 
     def _launch_begin(self):
         self.progress.setVisible(True)
@@ -107,10 +106,10 @@ class PartSegGUILauncher(QWidget):
         self.launched.emit()
 
     def launch(self):
-        if self.prepare.result is None:
+        if self.prepare.result is None:  # pragma: no cover
             self.close()
             return
-        if self.prepare.errors:
+        if self.prepare.errors:  # pragma: no cover
             errors_message = QMessageBox()
             errors_message.setText("There are errors during start")
             errors_message.setInformativeText(

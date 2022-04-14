@@ -1,5 +1,6 @@
 import platform
 import sys
+from functools import partial
 
 import pytest
 import qtpy
@@ -7,6 +8,7 @@ from qtpy.QtCore import QCoreApplication
 
 from PartSeg._launcher.main_window import MainWindow as LauncherMainWindow
 from PartSeg._launcher.main_window import PartSegGUILauncher
+from PartSeg._launcher.main_window import Prepare as LauncherPrepare
 from PartSeg._roi_analysis import main_window as analysis_main_window
 from PartSeg._roi_mask import main_window as mask_main_window
 
@@ -60,9 +62,8 @@ class TestLauncherMainWindow:
             monkeypatch.setattr(mask_main_window.MainWindow, "show", empty)
         main_window = PartSegGUILauncher()
         qtbot.addWidget(main_window)
-        main_window._launch_mask()
         with qtbot.waitSignal(main_window.prepare.finished, timeout=10**4):
-            main_window.prepare.start()
+            main_window.launch_mask()
         QCoreApplication.processEvents()
         qtbot.add_widget(main_window.wind[0])
         main_window.wind[0].hide()
@@ -78,11 +79,16 @@ class TestLauncherMainWindow:
             monkeypatch.setattr(analysis_main_window.MainWindow, "show", empty)
         main_window = PartSegGUILauncher()
         qtbot.addWidget(main_window)
-        main_window._launch_analysis()
         with qtbot.waitSignal(main_window.prepare.finished):
-            main_window.prepare.start()
+            main_window.launch_analysis()
         QCoreApplication.processEvents()
         qtbot.wait(50)
         qtbot.add_widget(main_window.wind[0])
         main_window.wind[0].hide()
         qtbot.wait(50)
+
+    def test_prepare(self):
+        prepare = LauncherPrepare("PartSeg._roi_analysis.main_window")
+        prepare.run()
+        assert isinstance(prepare.result, partial)
+        assert prepare.result.func is analysis_main_window.MainWindow
