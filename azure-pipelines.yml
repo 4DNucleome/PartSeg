@@ -133,13 +133,11 @@ stages:
           - task: UsePythonVersion@0
           - bash: pip install -r requirements/requirements_dev.txt
             displayName: sdist requirements
-          - bash: python setup.py sdist -d wheelhouse
-            displayName: sdist
-          - bash: python setup.py bdist_wheel -d wheelhouse
-            displayName: wheel
+          - bash: python -m build .
+            displayName: sdist amd wheel
           - task: PublishBuildArtifacts@1
             inputs:
-              pathToPublish: wheelhouse
+              pathToPublish: dist
               artifactName: wheels
 
       - job: pyinstaller_linux
