@@ -144,7 +144,9 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             for label, units in zip(self.get_labels(all_components=all_components), self.get_units(all_components))
         ]
         df = pd.DataFrame(data, columns=columns, index=self.components_info.roi_components)
-        return df.astype({"Segmentation component": int}).set_index("Segmentation component")
+        if "Segmentation component" in df.columns:
+            df = df.astype({"Segmentation component": int}).set_index("Segmentation component")
+        return df
 
     def set_filename(self, path_fo_file: str):
         """
