@@ -116,7 +116,7 @@ class ROIExtractionAlgorithms(QWidget):
 
         self.profile_combo_box = SearchComboBox()
         self.profile_combo_box.addItem(SELECT_TEXT)
-        self.profile_combo_box.addItems(self.profile_dict.keys())
+        self.profile_combo_box.addItems(list(self.profile_dict.keys()))
         self.save_btn = QPushButton("Save parameters")
         self.manage_btn = QPushButton("Manage parameters")
         self.target_layer_name = QLineEdit()
