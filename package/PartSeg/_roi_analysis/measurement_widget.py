@@ -21,7 +21,7 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
+from PartSegCore.analysis.measurement_calculation import FILE_NAME_STR, MeasurementProfile, MeasurementResult
 from PartSegCore.universal_const import Units
 
 from ..common_gui.searchable_combo_box import SearchComboBox
@@ -247,21 +247,9 @@ class MeasurementWidgetBase(QWidget):
         self.previous_profile = ""
         self.append_measurement_result()
 
-    def refresh_view(self):
-        self.measurements_storage.set_expand(self.expand_mode.isChecked())
-        self.measurements_storage.set_show_units(not self.no_units.isChecked())
-        self.info_field.clear()
-        save_orientation = self.horizontal_measurement_present.isChecked()
-        columns, rows = self.measurements_storage.get_size(save_orientation)
-        self.info_field.setColumnCount(columns)
-        self.info_field.setRowCount(rows)
-        self.info_field.setHorizontalHeaderLabels(self.measurements_storage.get_header(save_orientation))
-        self.info_field.setVerticalHeaderLabels(self.measurements_storage.get_rows(save_orientation))
-        for x in range(rows):
-            for y in range(columns):
-                self.info_field.setItem(
-                    x, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation))
-                )
+    def _update_file_info(self, save_orientation, rows, columns):
+        if self.info_field.item(0, 0).text() != FILE_NAME_STR:
+            return
         if self.file_names.currentEnum() == FileNamesEnum.No:
             if save_orientation:
                 self.info_field.removeColumn(0)
@@ -277,6 +265,22 @@ class MeasurementWidgetBase(QWidget):
                     item = self.info_field.item(x, y)
                     item.setText(os.path.basename(item.text()))
 
+    def refresh_view(self):
+        self.measurements_storage.set_expand(self.expand_mode.isChecked())
+        self.measurements_storage.set_show_units(not self.no_units.isChecked())
+        self.info_field.clear()
+        save_orientation = self.horizontal_measurement_present.isChecked()
+        columns, rows = self.measurements_storage.get_size(save_orientation)
+        self.info_field.setColumnCount(columns)
+        self.info_field.setRowCount(rows)
+        self.info_field.setHorizontalHeaderLabels(self.measurements_storage.get_header(save_orientation))
+        self.info_field.setVerticalHeaderLabels(self.measurements_storage.get_rows(save_orientation))
+        for x in range(rows):
+            for y in range(columns):
+                self.info_field.setItem(
+                    x, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation))
+                )
+        self._update_file_info(save_orientation, rows, columns)
         self.info_field.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
     def append_measurement_result(self):  # pragma: no cover
