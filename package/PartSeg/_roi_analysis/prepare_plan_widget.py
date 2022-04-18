@@ -195,11 +195,15 @@ class FileMask(QWidget):
         self.second_label.setHidden(True)
         self.select_file_btn.setHidden(True)
 
-        self.first_text.textChanged.connect(self.value_changed.emit)
-        self.second_text.textChanged.connect(self.value_changed.emit)
-        self.select_type.currentIndexChanged.connect(self.value_changed.emit)
+        self.first_text.textChanged.connect(self._value_change_wrap)
+        self.second_text.textChanged.connect(self._value_change_wrap)
+        self.select_type.currentIndexChanged.connect(self._value_change_wrap)
         self.select_type.currentIndexChanged.connect(self.change_type)
         self.select_file_btn.clicked.connect(self.select_file)
+
+    def _value_change_wrap(self, _val):
+        """Pyside bug workaround"""
+        self.value_changed.emit()
 
     def change_type(self, index):
         if self.state == index:
