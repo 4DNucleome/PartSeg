@@ -84,7 +84,7 @@ class ErrorDialog(QDialog):
         info_text.setWordWrap(True)
         layout.addWidget(info_text)
         layout.addWidget(self.desc)
-        layout.addWidget(self.error_description)
+        layout.addWidget(self.error_description, 1)
         layout.addWidget(QLabel("Contact information"))
         layout.addWidget(self.contact_info)
         layout.addWidget(QLabel("User name"))
