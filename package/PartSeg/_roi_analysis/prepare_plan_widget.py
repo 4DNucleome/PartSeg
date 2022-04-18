@@ -112,9 +112,8 @@ class MaskDialog(QDialog):
 
 
 class TwoMaskDialog(QDialog):
-    def __init__(self, mask_names):
+    def __init__(self, mask_names: typing.Iterable[str]):
         """
-        :type mask_names: set
         :param mask_names: iterable collection of all available mask names
         """
         super().__init__()
@@ -246,11 +245,11 @@ class FileMask(QWidget):
     def get_value(self, name=""):
         mask_type = self.select_type.currentIndex()
         if mask_type == 0:
-            return MaskSuffix(name, self.first_text.text().strip())
+            return MaskSuffix(name=name, suffix=self.first_text.text().strip())
         if mask_type == 1:
-            return MaskSub(name, self.first_text.text().strip(), self.second_text.text().strip())
+            return MaskSub(name=name, base=self.first_text.text().strip(), rep=self.second_text.text().strip())
 
-        return MaskFile(name, self.first_text.text().strip())
+        return MaskFile(name=name, path_to_file=self.first_text.text().strip())
 
 
 class MaskOperation(Enum):
@@ -567,7 +566,13 @@ class CreatePlan(QWidget):
         directory = values["directory"]
         del values["suffix"]
         del values["directory"]
-        save_elem = Save(suffix, directory, save_class.get_name(), save_class.get_short_name(), values)
+        save_elem = Save(
+            suffix=suffix,
+            directory=directory,
+            algorithm=save_class.get_name(),
+            short_name=save_class.get_short_name(),
+            values=values,
+        )
         if self.update_element_chk.isChecked():
             self.calculation_plan.replace_step(save_elem)
         else:
@@ -581,7 +586,7 @@ class CreatePlan(QWidget):
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
         if _check_widget(self.mask_stack, MaskWidget):
-            mask_ob = MaskCreate(text, self.segmentation_mask.get_mask_property())
+            mask_ob = MaskCreate(name=text, mask_property=self.segmentation_mask.get_mask_property())
         elif _check_widget(self.mask_stack, FileMask):
             mask_ob = self.file_mask.get_value(text)
         elif _check_widget(self.mask_stack, QEnumComboBox):  # existing mask
@@ -689,7 +694,7 @@ class CreatePlan(QWidget):
                 node = self.calculation_plan.get_node(pos)
                 pos.append(len(node.children) - 1)
                 self.calculation_plan.set_position(pos)
-                self.calculation_plan.add_step(MaskCreate("", el.mask_property))
+                self.calculation_plan.add_step(MaskCreate(name="", mask_property=el.mask_property))
                 self.plan.update_view()
                 pos.append(0)
                 self.calculation_plan.set_position(pos)
