@@ -1172,7 +1172,7 @@ class CalculateInfo(QWidget):
             return
         text = str(self.calculate_plans.currentItem().text())
         if not text:
-            return
+            return  # pragma: no cover
         if text in self.settings.batch_plans:
             del self.settings.batch_plans[text]
         self.plan_view.clear()
@@ -1182,7 +1182,7 @@ class CalculateInfo(QWidget):
             return
         text = str(self.calculate_plans.currentItem().text())
         if not text:
-            return
+            return  # pragma: no cover
         if text in self.settings.batch_plans:
             self.plan_to_edit = self.settings.batch_plans[text]
             self.plan_to_edit_signal.emit()

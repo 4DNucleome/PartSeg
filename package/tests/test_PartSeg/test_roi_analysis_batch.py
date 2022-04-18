@@ -1,6 +1,12 @@
+# pylint: disable=R0201
+
 import pytest
 
 from PartSeg._roi_analysis import prepare_plan_widget
+from PartSegCore import Units
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.analysis import AnalysisAlgorithmSelection
+from PartSegCore.analysis.calculation_plan import CalculationTree, MeasurementCalculate, RootType
 
 
 @pytest.mark.parametrize(
@@ -146,3 +152,84 @@ class TestFileMaskWidget:
         assert widget.first_text.text() == ""
         widget.select_file()
         assert widget.first_text.text() == "file_path"
+
+
+@pytest.fixture
+def calculation_plan(measurement_profiles):
+    roi_extraction = AnalysisAlgorithmSelection.get_default()
+    return prepare_plan_widget.CalculationPlan(
+        tree=CalculationTree(
+            operation=RootType.Image,
+            children=[
+                CalculationTree(
+                    operation=ROIExtractionProfile(
+                        name="test",
+                        algorithm=roi_extraction.name,
+                        values=roi_extraction.values,
+                    ),
+                    children=[
+                        CalculationTree(
+                            operation=MeasurementCalculate(
+                                channel=0, units=Units.nm, name_prefix="", measurement_profile=measurement_profiles[0]
+                            ),
+                            children=[],
+                        )
+                    ],
+                ),
+            ],
+        ),
+        name="test",
+    )
+
+
+class TestCalculateInfo:
+    def test_create(self, qtbot, part_settings, calculation_plan):
+        part_settings.batch_plans["test"] = calculation_plan
+        widget = prepare_plan_widget.CalculateInfo(part_settings)
+        qtbot.addWidget(widget)
+        assert widget.calculate_plans.count() == 1
+
+    def test_select_plan(self, qtbot, part_settings, calculation_plan):
+        part_settings.batch_plans["test"] = calculation_plan
+        widget = prepare_plan_widget.CalculateInfo(part_settings)
+        qtbot.addWidget(widget)
+        assert widget.plan_view.topLevelItemCount() == 0
+        with qtbot.waitSignal(widget.calculate_plans.currentRowChanged):
+            widget.calculate_plans.setCurrentRow(0)
+        assert widget.plan_view.topLevelItemCount() == 1
+
+    def test_add_calculation_plan(self, qtbot, part_settings, calculation_plan):
+        part_settings.batch_plans["test"] = calculation_plan
+        widget = prepare_plan_widget.CalculateInfo(part_settings)
+        qtbot.addWidget(widget)
+        assert widget.calculate_plans.count() == 1
+        widget.calculate_plans.setCurrentRow(0)
+        calculation_plan2 = prepare_plan_widget.CalculationPlan(
+            tree=calculation_plan.execution_tree,
+            name="test2",
+        )
+        part_settings.batch_plans["test2"] = calculation_plan2
+        assert widget.calculate_plans.count() == 2
+
+    def test_delete_plan(self, qtbot, part_settings, calculation_plan):
+        part_settings.batch_plans["test"] = calculation_plan
+        widget = prepare_plan_widget.CalculateInfo(part_settings)
+        qtbot.addWidget(widget)
+        assert widget.calculate_plans.count() == 1
+        widget.delete_plan()
+        assert widget.calculate_plans.count() == 1
+        widget.calculate_plans.setCurrentRow(0)
+        widget.delete_plan()
+        assert widget.calculate_plans.count() == 0
+        assert "test" not in part_settings.batch_plans
+
+    def test_edit_plan(self, qtbot, part_settings, calculation_plan):
+        part_settings.batch_plans["test"] = calculation_plan
+        widget = prepare_plan_widget.CalculateInfo(part_settings)
+        qtbot.addWidget(widget)
+        with qtbot.assert_not_emitted(widget.plan_to_edit_signal):
+            widget.edit_plan()
+        widget.calculate_plans.setCurrentRow(0)
+        with qtbot.waitSignal(widget.plan_to_edit_signal):
+            widget.edit_plan()
+        assert widget.plan_to_edit.name == "test"
