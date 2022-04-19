@@ -638,7 +638,10 @@ class MeasurementSettings(QWidget):
         if node.area is None:
             node = node.replace_(area=area)
         if node.per_component is None:
-            node = node.replace_(per_component=component)
+            try:
+                node = node.replace_(per_component=component)
+            except ValueError as e:
+                QMessageBox().warning(self, "Problem in add measurement", str(e))
         with suppress(KeyError):
             arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
             if len(arguments) > 0 and not dict(node.parameters):

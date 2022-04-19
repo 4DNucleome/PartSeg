@@ -29,6 +29,7 @@ class PerComponent(Enum):
     No = 1
     Yes = 2
     Mean = 3
+    Per_Mask_component = 4
 
     def __str__(self):
         return self.name.replace("_", " ")
@@ -98,6 +99,14 @@ class Leaf(BaseModel):
 
         v = REGISTER.migrate_data(class_to_str(method.__argument_class__), {}, v)
         return method.__argument_class__(**v)
+
+    @validator("per_component")
+    def _validate_per_component(cls, v, values):  # pylint: disable=R0201
+        if not isinstance(v, PerComponent) or "area" not in values:
+            return v
+        if v == PerComponent.Per_Mask_component and values["area"] != AreaType.ROI:
+            raise ValueError("Per_Mask_component can be used only with Mask area")
+        return v
 
     def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
         """
@@ -171,6 +180,8 @@ class Leaf(BaseModel):
         if self.per_component is not None:
             if self.per_component == PerComponent.Yes:
                 resp += " per component "
+            elif self.per_component == PerComponent.Per_Mask_component:
+                resp += " per mask component "
             elif self.per_component == PerComponent.Mean:
                 resp += " mean component "
         resp += self._parameters_string(measurement_dict)

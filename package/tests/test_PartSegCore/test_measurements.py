@@ -152,6 +152,14 @@ class TestLeaf:
         monkeypatch.setattr(mock, "__module__", "plugins.PartSegPlugin.submodule")
         assert Leaf(name="aa").pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
 
+    def test_per_mask_component_create(self):
+        with pytest.raises(ValueError):
+            Leaf(name="aa", per_component=PerComponent.Per_Mask_component, area=AreaType.Mask)
+
+        leaf = Leaf(name="aa")
+        with pytest.raises(ValueError):
+            leaf.replace_(per_component=PerComponent.Per_Mask_component, area=AreaType.Mask)
+
 
 class TestDiameter:
     def test_parameters(self):
