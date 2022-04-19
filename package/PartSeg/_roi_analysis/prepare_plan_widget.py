@@ -360,7 +360,49 @@ class OtherOperations(QGroupBox):
         self.save_operation.emit(save_elem)
 
 
-class ROIExtraction(QGroupBox):
+class ProtectedGroupBox(QGroupBox):
+    def __init__(self, text: str, parent: typing.Optional[QWidget] = None):
+        super().__init__(text, parent)
+        self.setStyleSheet(group_sheet)
+        self.protect = False
+        self._node_type = None
+        self._replace = False
+
+    def set_current_node(self, node: typing.Optional[NodeType]):
+        self._node_type = node
+
+    def set_replace(self, replace: bool):
+        self._replace = replace
+
+    @contextmanager
+    def enable_protect(self):
+        previous = self.protect
+        self.protect = True
+        try:
+            yield
+        finally:
+            self.protect = previous
+
+    @classmethod
+    def refresh_profiles(cls, list_widget: QListWidget, new_values: typing.List[str]):
+        index = cls.get_index(list_widget.currentItem(), new_values)
+        list_widget.clear()
+        list_widget.addItems(new_values)
+        if index != -1:
+            list_widget.setCurrentRow(index)
+
+    @staticmethod
+    def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
+        if item is None:
+            return -1
+        text = item.text()
+        try:
+            return new_values.index(text)
+        except ValueError:  # pragma: no cover
+            return -1
+
+
+class ROIExtraction(ProtectedGroupBox):
     roi_extraction_profile_selected = Signal(object)
     roi_extraction_pipeline_selected = Signal(object)
     roi_extraction_profile_add = Signal(object)
@@ -368,10 +410,7 @@ class ROIExtraction(QGroupBox):
 
     def __init__(self, settings: PartSettings, parent: QWidget = None):
         super().__init__("ROI extraction", parent)
-        self.protect = False
         self.settings = settings
-        self._node_type = None
-        self._replace = False
 
         self.roi_extraction_profile = SearchableListWidget()
         self.pipeline_profile = SearchableListWidget()
@@ -399,28 +438,18 @@ class ROIExtraction(QGroupBox):
         lay.addWidget(self.chose_profile_btn)
         lay.addWidget(self.get_big_btn)
 
-        self.setStyleSheet(group_sheet)
         self.setLayout(lay)
 
         self._refresh_profiles()
         self._refresh_pipelines()
         self._update_btn_text()
 
-    @contextmanager
-    def enable_protect(self):
-        previous = self.protect
-        self.protect = True
-        try:
-            yield
-        finally:
-            self.protect = previous
-
     def set_current_node(self, node: typing.Optional[NodeType]):
-        self._node_type = node
+        super().set_current_node(node)
         self._activate_button()
 
     def set_replace(self, replace: bool):
-        self._replace = replace
+        super().set_replace(replace)
         self.change_tab()
 
     def _activate_button(self, _val=None):
@@ -428,16 +457,6 @@ class ROIExtraction(QGroupBox):
             self._node_type in {NodeType.root, NodeType.mask, NodeType.file_mask}
             and self.segment_stack.currentWidget().currentRow() >= 0
         )
-
-    @staticmethod
-    def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
-        if item is None:
-            return -1
-        text = item.text()
-        try:
-            return new_values.index(text)
-        except ValueError:  # pragma: no cover
-            return -1
 
     def _update_btn_text(self):
         index = self.segment_stack.currentIndex()
@@ -453,13 +472,6 @@ class ROIExtraction(QGroupBox):
             self.roi_extraction_profile.setCurrentItem(None)
             self.pipeline_profile.setCurrentItem(None)
         self._activate_button()
-
-    def refresh_profiles(self, list_widget: QListWidget, new_values: typing.List[str]):
-        index = self.get_index(list_widget.currentItem(), new_values)
-        list_widget.clear()
-        list_widget.addItems(new_values)
-        if index != -1:
-            list_widget.setCurrentRow(index)
 
     def _refresh_profiles(self):
         new_profiles = list(sorted(self.settings.roi_profiles.keys(), key=str.lower))
@@ -496,6 +508,55 @@ class ROIExtraction(QGroupBox):
             self.roi_extraction_pipeline_add.emit(self.settings.roi_pipelines[item.text()])
 
 
+class SetOfMeasurement(ProtectedGroupBox):
+
+    set_of_measurement_add = Signal(object)
+
+    def __init__(self, settings: PartSettings, parent: QWidget = None):
+        super().__init__("Set of measurements:", parent)
+        self.settings = settings
+
+        self.measurements_list = SearchableListWidget(self)
+        self.measurement_name_prefix = QLineEdit(self)
+        self.choose_channel_for_measurements = QComboBox()
+        self.choose_channel_for_measurements.addItems(
+            ["Same as segmentation"] + [str(x + 1) for x in range(MAX_CHANNEL_NUM)]
+        )
+        self.units_choose = QEnumComboBox(enum_class=Units)
+        self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
+        self.add_calculation_btn = QPushButton("Add measurement calculation")
+
+        lay = QGridLayout()
+        lay.setSpacing(0)
+        lay.addWidget(self.measurements_list, 0, 0, 1, 2)
+        lab = QLabel("Name prefix:")
+        lab.setToolTip("Prefix added before each column name")
+        lay.addWidget(lab, 1, 0)
+        lay.addWidget(self.measurement_name_prefix, 1, 1)
+        lay.addWidget(QLabel("Channel:"), 2, 0)
+        lay.addWidget(self.choose_channel_for_measurements, 2, 1)
+        lay.addWidget(QLabel("Units:"), 3, 0)
+        lay.addWidget(self.units_choose, 3, 1)
+        lay.addWidget(self.add_calculation_btn, 4, 0, 1, 2)
+        self.setLayout(lay)
+
+        self.add_calculation_btn.setDisabled(True)
+        self._refresh_measurement()
+
+    def set_replace(self, replace: bool):
+        super().set_replace(replace)
+        self.add_calculation_btn.setText("Replace set of measurements" if self.replace else "Add set of measurements")
+
+    def set_current_node(self, node: typing.Optional[NodeType]):
+        super().set_current_node(node)
+        self.add_calculation_btn.setEnabled(node == NodeType.segment)
+
+    def _refresh_measurement(self):
+        new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
+        with self.enable_protect():
+            self.refresh_profiles(self.measurements_list, new_measurements)
+
+
 class CreatePlan(QWidget):
 
     plan_node_changed = Signal()
@@ -511,6 +572,8 @@ class CreatePlan(QWidget):
         self.update_element_chk = QCheckBox("Update element")
         self.other_operations = OtherOperations(self)
         self.roi_extraction = ROIExtraction(settings=settings, parent=self)
+        self.set_of_measurement = SetOfMeasurement(settings=settings, parent=self)
+
         self.generate_mask_btn = QPushButton("Add mask")
         self.generate_mask_btn.setToolTip("Mask need to have unique name")
         self.mask_name = QLineEdit()
@@ -560,7 +623,6 @@ class CreatePlan(QWidget):
         self.update_element_chk.stateChanged.connect(self.show_measurement)
         self.update_element_chk.stateChanged.connect(self.roi_extraction.set_replace)
         self.update_element_chk.stateChanged.connect(self.update_names)
-        self.settings.measurement_profiles_changed.connect(self._refresh_measurement)
 
         plan_box = QGroupBox("Prepare workflow:")
         lay = QVBoxLayout()
@@ -595,22 +657,6 @@ class CreatePlan(QWidget):
         lay.addWidget(self.generate_mask_btn, 2, 0, 1, 2)
         mask_box.setLayout(lay)
 
-        measurement_box = QGroupBox("Set of measurements:")
-        measurement_box.setStyleSheet(group_sheet)
-        lay = QGridLayout()
-        lay.setSpacing(0)
-        lay.addWidget(self.measurements_list, 0, 0, 1, 2)
-        lab = QLabel("Name prefix:")
-        lab.setToolTip("Prefix added before each column name")
-        lay.addWidget(lab, 1, 0)
-        lay.addWidget(self.measurement_name_prefix, 1, 1)
-        lay.addWidget(QLabel("Channel:"), 2, 0)
-        lay.addWidget(self.choose_channel_for_measurements, 2, 1)
-        lay.addWidget(QLabel("Units:"), 3, 0)
-        lay.addWidget(self.units_choose, 3, 1)
-        lay.addWidget(self.add_calculation_btn, 4, 0, 1, 2)
-        measurement_box.setLayout(lay)
-
         info_box = QGroupBox("Information")
         info_box.setStyleSheet(group_sheet)
         lay = QVBoxLayout()
@@ -625,7 +671,7 @@ class CreatePlan(QWidget):
         layout.addWidget(mask_box, 0, 2, 1, 2)
         layout.addWidget(self.other_operations, 0, 1)
         layout.addWidget(self.roi_extraction, 1, 1, 1, 2)
-        layout.addWidget(measurement_box, 1, 3)
+        layout.addWidget(self.set_of_measurement, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
         self.setLayout(layout)
 
@@ -933,11 +979,6 @@ class CreatePlan(QWidget):
             yield
         finally:
             self.protect = previous
-
-    def _refresh_measurement(self):
-        new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
-        with self.enable_protect():
-            self.refresh_profiles(self.measurements_list, new_measurements)
 
     def show_measurement_info(self, text=None):
         if self.protect:

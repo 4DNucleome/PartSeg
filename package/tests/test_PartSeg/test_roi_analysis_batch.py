@@ -458,6 +458,32 @@ class TestROIExtraction:
         assert widget.chose_profile_btn.text() == "Replace Pipeline"
 
 
+class TestSetOfMeasurement:
+    def test_create(self, qtbot, part_settings):
+        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        qtbot.addWidget(widget)
+
+    def test_replace(self, qtbot, part_settings):
+        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        qtbot.addWidget(widget)
+        widget.set_replace(True)
+        assert widget.add_calculation_btn.text() == "Replace set of measurement"
+        widget.set_replace(False)
+        assert widget.add_calculation_btn.text() == "Add set of measurement"
+
+    def test_set_current_node(self, qtbot, part_settings):
+        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        qtbot.addWidget(widget)
+        widget.set_current_node(NodeType.root)
+        assert not widget.add_calculation_btn.isEnabled()
+        widget.set_current_node(None)
+        assert not widget.add_calculation_btn.isEnabled()
+        widget.set_current_node(NodeType.segment)
+        assert widget.add_calculation_btn.isEnabled()
+        widget.set_current_node(NodeType.mask)
+        assert not widget.add_calculation_btn.isEnabled()
+
+
 class TestCreatePlan:
     def test_create(self, qtbot, part_settings):
         widget = prepare_plan_widget.CreatePlan(part_settings)
