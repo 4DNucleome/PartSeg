@@ -681,9 +681,9 @@ class CreatePlan(QWidget):
             return
         node_type = self.calculation_plan.get_node_type()
 
-        self.other_operations.set_current_node(
-            self.calculation_plan.get_node_type(parent=self.update_element_chk.isChecked())
-        )
+        node_type_for_ob = self.calculation_plan.get_node_type(parent=self.update_element_chk.isChecked())
+        self.other_operations.set_current_node(node_type_for_ob)
+        self.roi_extraction.set_current_node(node_type_for_ob)
         self.node_type = node_type
         if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.measurement, NodeType.save]:
             self.remove_btn.setEnabled(True)
