@@ -6,7 +6,9 @@ from PartSeg._roi_analysis import prepare_plan_widget
 from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import AnalysisAlgorithmSelection
-from PartSegCore.analysis.calculation_plan import CalculationTree, MeasurementCalculate, RootType
+from PartSegCore.analysis.calculation_plan import CalculationTree, MeasurementCalculate, NodeType, RootType
+from PartSegCore.analysis.save_functions import SaveAsTiff
+from PartSegCore.io_utils import SaveMaskAsTiff
 
 
 @pytest.mark.parametrize(
@@ -233,3 +235,70 @@ class TestCalculateInfo:
         with qtbot.waitSignal(widget.plan_to_edit_signal):
             widget.edit_plan()
         assert widget.plan_to_edit.name == "test"
+
+
+class TestOtherOperations:
+    def test_create(self, qtbot):
+        widget = prepare_plan_widget.OtherOperations()
+        qtbot.addWidget(widget)
+
+    def test_change_root_type(self, qtbot):
+        widget = prepare_plan_widget.OtherOperations()
+        qtbot.addWidget(widget)
+        with qtbot.waitSignal(widget.root_type_changed, check_params_cb=lambda x: x == RootType.Project):
+            widget.change_root.setCurrentEnum(RootType.Project)
+
+    def test_update_save_combo(self, qtbot):
+        widget = prepare_plan_widget.OtherOperations()
+        qtbot.addWidget(widget)
+        with qtbot.waitSignal(widget.save_choose.currentTextChanged):
+            widget.save_choose.setCurrentIndex(1)
+        assert widget.save_btn.text().startswith("Save to")
+
+        widget.save_changed("eeee")
+        assert widget.save_btn.text() == "Save"
+        assert widget.save_choose.currentIndex() == 0
+
+    def test_set_current_node(self, qtbot):
+        widget = prepare_plan_widget.OtherOperations()
+        qtbot.addWidget(widget)
+        widget.set_current_node(None)
+        assert not widget.save_btn.isEnabled()
+        widget.set_current_node(NodeType.root)
+        assert not widget.save_btn.isEnabled()
+        with qtbot.waitSignal(widget.save_choose.currentTextChanged):
+            widget.save_choose.setCurrentText(SaveAsTiff.get_short_name())
+        assert widget.save_btn.isEnabled()
+        with qtbot.waitSignal(widget.save_choose.currentTextChanged):
+            widget.save_choose.setCurrentText(SaveMaskAsTiff.get_short_name())
+        assert not widget.save_btn.isEnabled()
+
+    def test_save_action(self, qtbot, monkeypatch):
+        monkeypatch.setattr(prepare_plan_widget.FormDialog, "exec_", lambda x: True)
+        monkeypatch.setattr(
+            prepare_plan_widget.FormDialog,
+            "get_values",
+            lambda x: {"suffix": "test", "directory": "test2", "sample": 1},
+        )
+
+        def check_save_params(params):
+            assert params.suffix == "test"
+            assert params.directory == "test2"
+            assert params.algorithm == SaveAsTiff.get_name()
+            assert params.short_name == SaveAsTiff.get_short_name()
+            assert params.values == {"sample": 1}
+            return True
+
+        widget = prepare_plan_widget.OtherOperations()
+        qtbot.addWidget(widget)
+        widget.set_current_node(NodeType.root)
+        with qtbot.waitSignal(widget.save_choose.currentTextChanged):
+            widget.save_choose.setCurrentText(SaveAsTiff.get_short_name())
+        with qtbot.waitSignal(widget.save_operation, check_params_cb=check_save_params):
+            widget.save_btn.click()
+
+
+class TestCreatePlan:
+    def test_create(self, qtbot, part_settings):
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)

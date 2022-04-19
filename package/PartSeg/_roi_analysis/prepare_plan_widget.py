@@ -268,6 +268,97 @@ def _check_widget(tab_widget, type_):
     return isinstance(tab_widget.currentWidget(), type_) or tab_widget.currentWidget().findChildren(type_)
 
 
+class OtherOperations(QGroupBox):
+
+    save_operation = Signal(object)
+
+    def __init__(self, parent=None):
+        super().__init__("Other operations:", parent)
+        self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
+        self.save_constructor = None
+        self._current_node = None
+
+        self.change_root = QEnumComboBox(self, enum_class=RootType)
+        self.save_choose = QComboBox()
+        self.save_choose.addItem("<none>")
+        self.save_choose.addItems(list(self.save_translate_dict.keys()))
+        self.save_btn = QPushButton("Save")
+
+        self.save_choose.currentTextChanged.connect(self.save_changed)
+        self.save_btn.clicked.connect(self.save_action)
+
+        bt_lay = QVBoxLayout()
+        bt_lay.setSpacing(0)
+        bt_lay.addWidget(QLabel("Root type:"))
+        bt_lay.addWidget(self.change_root)
+        bt_lay.addStretch(1)
+        bt_lay.addWidget(QLabel("Saving:"))
+        bt_lay.addWidget(self.save_choose)
+        bt_lay.addWidget(self.save_btn)
+
+        self.setLayout(bt_lay)
+        self.setStyleSheet(group_sheet)
+
+    @property
+    def root_type_changed(self):
+        return self.change_root.currentEnumChanged
+
+    def set_current_node(self, node: typing.Optional[NodeType]):
+        self._current_node = node
+        self.save_activate()
+
+    def save_changed(self, text):
+        text = str(text)
+        save_class = self.save_translate_dict.get(text, None)
+        if save_class is None:
+            self.save_choose.setCurrentText("<none>")
+            self.save_btn.setText("Save")
+            self.save_btn.setToolTip("Choose file type")
+        else:
+            self.save_btn.setText(f"Save to {save_class.get_short_name()}")
+            self.save_btn.setToolTip("Choose mask create in plan view")
+        self.save_activate()
+
+    @property
+    def expected_node_type(self) -> typing.Optional[NodeType]:
+        save_class = self.save_translate_dict.get(self.save_choose.currentText(), None)
+        if save_class is None:
+            return None
+        if save_class.need_mask():
+            return NodeType.mask
+        if save_class.need_segmentation():
+            return NodeType.segment
+        return NodeType.root
+
+    def save_activate(self):
+        self.save_btn.setEnabled(self._current_node == self.expected_node_type and self._current_node is not None)
+
+    def save_action(self):
+        save_class = self.save_translate_dict.get(self.save_choose.currentText(), None)
+        if save_class is None:
+            QMessageBox.warning(self, "Save problem", "Not found save class")
+            return
+        dial = FormDialog(
+            [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
+            + save_class.get_fields()
+        )
+        if not dial.exec_():
+            return
+        values = dial.get_values()
+        suffix = values["suffix"]
+        directory = values["directory"]
+        del values["suffix"]
+        del values["directory"]
+        save_elem = Save(
+            suffix=suffix,
+            directory=directory,
+            algorithm=save_class.get_name(),
+            short_name=save_class.get_short_name(),
+            values=values,
+        )
+        self.save_operation.emit(save_elem)
+
+
 class CreatePlan(QWidget):
 
     plan_node_changed = Signal()
@@ -281,11 +372,7 @@ class CreatePlan(QWidget):
         self.clean_plan_btn = QPushButton("Remove all")
         self.remove_btn = QPushButton("Remove")
         self.update_element_chk = QCheckBox("Update element")
-        self.change_root = QEnumComboBox(enum_class=RootType)
-        self.save_choose = QComboBox()
-        self.save_choose.addItem("<none>")
-        self.save_choose.addItems(list(self.save_translate_dict.keys()))
-        self.save_btn = QPushButton("Save")
+        self.other_operations = OtherOperations(self)
         self.segment_profile = SearchableListWidget()
         self.pipeline_profile = SearchableListWidget()
         self.segment_stack = QTabWidget()
@@ -324,8 +411,8 @@ class CreatePlan(QWidget):
         self.segmentation_mask = MaskWidget(settings)
         self.file_mask = FileMask()
 
-        self.change_root.currentIndexChanged.connect(self.change_root_type)
-        self.save_choose.currentTextChanged.connect(self.save_changed)
+        self.other_operations.root_type_changed.connect(self.change_root_type)
+        self.other_operations.save_operation.connect(self.add_save_operation)
         self.measurements_list.currentTextChanged.connect(self.show_measurement)
         self.segment_profile.currentTextChanged.connect(self.show_segment)
         self.measurements_list.currentTextChanged.connect(self.show_measurement_info)
@@ -341,7 +428,6 @@ class CreatePlan(QWidget):
         self.get_big_btn.clicked.connect(self.add_leave_biggest)
         self.add_calculation_btn.clicked.connect(self.add_measurement)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
-        self.save_btn.clicked.connect(self.add_save_to_project)
         self.update_element_chk.stateChanged.connect(self.mask_text_changed)
         self.update_element_chk.stateChanged.connect(self.show_measurement)
         self.update_element_chk.stateChanged.connect(self.show_segment)
@@ -363,19 +449,6 @@ class CreatePlan(QWidget):
         lay.addLayout(bt_lay)
         plan_box.setLayout(lay)
         plan_box.setStyleSheet(group_sheet)
-
-        other_box = QGroupBox("Other operations:")
-        other_box.setContentsMargins(0, 0, 0, 0)
-        bt_lay = QVBoxLayout()
-        bt_lay.setSpacing(0)
-        bt_lay.addWidget(QLabel("Root type:"))
-        bt_lay.addWidget(self.change_root)
-        bt_lay.addStretch(1)
-        bt_lay.addWidget(QLabel("Saving:"))
-        bt_lay.addWidget(self.save_choose)
-        bt_lay.addWidget(self.save_btn)
-        other_box.setLayout(bt_lay)
-        other_box.setStyleSheet(group_sheet)
 
         mask_box = QGroupBox("Use mask from:")
         mask_box.setStyleSheet(group_sheet)
@@ -434,7 +507,7 @@ class CreatePlan(QWidget):
         fst_col.addWidget(mask_box)
         layout.addWidget(plan_box, 0, 0, 5, 1)
         layout.addWidget(mask_box, 0, 2, 1, 2)
-        layout.addWidget(other_box, 0, 1)
+        layout.addWidget(self.other_operations, 0, 1)
         layout.addWidget(segment_box, 1, 1, 1, 2)
         layout.addWidget(measurement_box, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
@@ -460,9 +533,15 @@ class CreatePlan(QWidget):
         self.node_type_changed()
         self.refresh_all_profiles()
 
-    def change_root_type(self):
-        value: RootType = self.change_root.currentEnum()
-        self.calculation_plan.set_root_type(value)
+    def change_root_type(self, root_type: RootType):
+        self.calculation_plan.set_root_type(root_type)
+        self.plan.update_view()
+
+    def add_save_operation(self, save_info: Save):
+        if self.update_element_chk.isChecked():
+            self.calculation_plan.replace_step(save_info)
+        else:
+            self.calculation_plan.add_step(save_info)
         self.plan.update_view()
 
     def change_segmentation_table(self):
@@ -474,34 +553,6 @@ class CreatePlan(QWidget):
             self.chose_profile_btn.setText(f"Add {text}")
         self.segment_profile.setCurrentItem(None)
         self.pipeline_profile.setCurrentItem(None)
-
-    def save_changed(self, text):
-        text = str(text)
-        if text == "<none>":
-            self.save_btn.setText("Save")
-            self.save_btn.setToolTip("Choose file type")
-            self.expected_node_type = None
-            self.save_constructor = None
-        else:
-            save_class = self.save_translate_dict.get(text, None)
-            if save_class is None:
-                self.save_choose.setCurrentText("<none>")
-                return
-            self.save_btn.setText(f"Save to {save_class.get_short_name()}")
-            self.save_btn.setToolTip("Choose mask create in plan view")
-            if save_class.need_mask():
-                self.expected_node_type = NodeType.mask
-            elif save_class.need_segmentation():
-                self.expected_node_type = NodeType.segment
-            else:
-                self.expected_node_type = NodeType.root
-            self.save_constructor = Save
-        self.save_activate()
-
-    def save_activate(self):
-        self.save_btn.setDisabled(True)
-        if self.node_type == self.expected_node_type:
-            self.save_btn.setEnabled(True)
 
     def segmentation_from_project(self):
         self.calculation_plan.add_step(Operations.reset_to_base)
@@ -518,7 +569,6 @@ class CreatePlan(QWidget):
             self.generate_mask_btn.setText("Generate mask")
 
     def node_type_changed(self):
-        self.save_btn.setDisabled(True)
         self.node_name = ""
         if self.plan.currentItem() is None:
             self.mask_allow = False
@@ -529,6 +579,10 @@ class CreatePlan(QWidget):
             logging.debug("[node_type_changed] return")
             return
         node_type = self.calculation_plan.get_node_type()
+
+        self.other_operations.set_current_node(
+            self.calculation_plan.get_node_type(parent=self.update_element_chk.isChecked())
+        )
         self.node_type = node_type
         if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.measurement, NodeType.save]:
             self.remove_btn.setEnabled(True)
@@ -543,7 +597,6 @@ class CreatePlan(QWidget):
             self.mask_allow = True
             self.segment_allow = False
             self.file_mask_allow = False
-            self.save_btn.setEnabled(True)
         elif node_type == NodeType.root:
             self.mask_allow = False
             self.segment_allow = True
@@ -552,36 +605,7 @@ class CreatePlan(QWidget):
             self.mask_allow = False
             self.segment_allow = False
             self.file_mask_allow = False
-        self.save_activate()
         self.plan_node_changed.emit()
-
-    def add_save_to_project(self):
-        save_class = self.save_translate_dict.get(self.save_choose.currentText(), None)
-        if save_class is None:
-            QMessageBox.warning(self, "Save problem", "Not found save class")
-        dial = FormDialog(
-            [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
-            + save_class.get_fields()
-        )
-        if not dial.exec_():
-            return
-        values = dial.get_values()
-        suffix = values["suffix"]
-        directory = values["directory"]
-        del values["suffix"]
-        del values["directory"]
-        save_elem = Save(
-            suffix=suffix,
-            directory=directory,
-            algorithm=save_class.get_name(),
-            short_name=save_class.get_short_name(),
-            values=values,
-        )
-        if self.update_element_chk.isChecked():
-            self.calculation_plan.replace_step(save_elem)
-        else:
-            self.calculation_plan.add_step(save_elem)
-        self.plan.update_view()
 
     def create_mask(self):
         text = str(self.mask_name.text()).strip()
