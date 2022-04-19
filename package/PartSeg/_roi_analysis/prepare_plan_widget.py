@@ -201,7 +201,7 @@ class FileMask(QWidget):
         self.select_type.currentIndexChanged.connect(self.change_type)
         self.select_file_btn.clicked.connect(self.select_file)
 
-    def _value_change_wrap(self, _val):
+    def _value_change_wrap(self, _val=None):
         """Pyside bug workaround"""
         self.value_changed.emit()
 
