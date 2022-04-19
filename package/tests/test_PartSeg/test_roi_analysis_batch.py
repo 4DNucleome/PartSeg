@@ -5,10 +5,15 @@ import pytest
 from PartSeg._roi_analysis import prepare_plan_widget
 from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis import AnalysisAlgorithmSelection
+from PartSegCore.analysis import AnalysisAlgorithmSelection, SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.calculation_plan import CalculationTree, MeasurementCalculate, NodeType, RootType
 from PartSegCore.analysis.save_functions import SaveAsTiff
 from PartSegCore.io_utils import SaveMaskAsTiff
+from PartSegCore.mask_create import MaskProperty
+from PartSegCore.segmentation.restartable_segmentation_algorithms import (
+    LowerThresholdAlgorithm,
+    UpperThresholdAlgorithm,
+)
 
 
 @pytest.mark.parametrize(
@@ -296,6 +301,161 @@ class TestOtherOperations:
             widget.save_choose.setCurrentText(SaveAsTiff.get_short_name())
         with qtbot.waitSignal(widget.save_operation, check_params_cb=check_save_params):
             widget.save_btn.click()
+
+
+class TestROIExtraction:
+    def test_create(self, qtbot, part_settings):
+        widget = prepare_plan_widget.ROIExtraction(settings=part_settings)
+        qtbot.addWidget(widget)
+
+    def test_selected_profile(self, qtbot, part_settings):
+        def check_profile(name):
+            def _check_profile(profile: ROIExtractionProfile):
+                assert profile == part_settings.roi_profiles[name]
+                return True
+
+            return _check_profile
+
+        part_settings.roi_profiles["test"] = ROIExtractionProfile(
+            name="test",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        )
+        part_settings.roi_profiles["test2"] = ROIExtractionProfile(
+            name="test2",
+            algorithm=UpperThresholdAlgorithm.get_name(),
+            values=UpperThresholdAlgorithm.get_default_values(),
+        )
+        widget = prepare_plan_widget.ROIExtraction(settings=part_settings)
+        qtbot.addWidget(widget)
+
+        assert widget.roi_extraction_profile.count() == 2
+        with qtbot.assert_not_emitted(widget.roi_extraction_profile_add):
+            widget._add_profile()
+        widget.segment_stack.setCurrentWidget(widget.roi_extraction_profile)
+        with qtbot.waitSignal(widget.roi_extraction_profile_selected, check_params_cb=check_profile("test")):
+            widget.roi_extraction_profile.setCurrentRow(0)
+
+        with qtbot.waitSignal(widget.roi_extraction_profile_selected, check_params_cb=check_profile("test2")):
+            widget.roi_extraction_profile.setCurrentRow(1)
+
+        widget.protect = True
+        with qtbot.assert_not_emitted(widget.roi_extraction_profile_selected):
+            widget.roi_extraction_profile.setCurrentRow(0)
+        widget.protect = False
+
+        part_settings.roi_profiles["test3"] = ROIExtractionProfile(
+            name="test3",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        )
+        assert widget.roi_extraction_profile.count() == 3
+
+        with qtbot.waitSignal(widget.roi_extraction_profile_add, check_params_cb=check_profile("test")):
+            widget._add_profile()
+
+    def test_select_pipeline(self, qtbot, part_settings):
+        def check_pipeline(name):
+            def _check_pipeline(pipeline: SegmentationPipeline):
+                assert pipeline == part_settings.roi_pipelines[name]
+                return True
+
+            return _check_pipeline
+
+        part_settings.roi_pipelines["test"] = SegmentationPipeline(
+            name="test",
+            segmentation=ROIExtractionProfile(
+                name="test3",
+                algorithm=LowerThresholdAlgorithm.get_name(),
+                values=LowerThresholdAlgorithm.get_default_values(),
+            ),
+            mask_history=[
+                SegmentationPipelineElement(
+                    segmentation=ROIExtractionProfile(
+                        name="test4",
+                        algorithm=LowerThresholdAlgorithm.get_name(),
+                        values=LowerThresholdAlgorithm.get_default_values(),
+                    ),
+                    mask_property=MaskProperty.simple_mask(),
+                )
+            ],
+        )
+        part_settings.roi_pipelines["test2"] = SegmentationPipeline(
+            name="test2",
+            segmentation=ROIExtractionProfile(
+                name="test5",
+                algorithm=LowerThresholdAlgorithm.get_name(),
+                values=LowerThresholdAlgorithm.get_default_values(),
+            ),
+            mask_history=[
+                SegmentationPipelineElement(
+                    segmentation=ROIExtractionProfile(
+                        name="test4",
+                        algorithm=UpperThresholdAlgorithm.get_name(),
+                        values=UpperThresholdAlgorithm.get_default_values(),
+                    ),
+                    mask_property=MaskProperty.simple_mask(),
+                )
+            ],
+        )
+
+        widget = prepare_plan_widget.ROIExtraction(part_settings)
+        qtbot.addWidget(widget)
+        with qtbot.waitSignal(widget.segment_stack.currentChanged):
+            widget.segment_stack.setCurrentWidget(widget.pipeline_profile)
+        assert widget.pipeline_profile.count() == 2
+        with qtbot.assert_not_emitted(widget.roi_extraction_pipeline_add):
+            widget._add_profile()
+        with qtbot.waitSignal(widget.roi_extraction_pipeline_selected, check_params_cb=check_pipeline("test")):
+            widget.pipeline_profile.setCurrentRow(0)
+        with qtbot.waitSignal(widget.roi_extraction_pipeline_selected, check_params_cb=check_pipeline("test2")):
+            widget.pipeline_profile.setCurrentRow(1)
+
+        widget.protect = True
+        with qtbot.assert_not_emitted(widget.roi_extraction_pipeline_selected):
+            widget.pipeline_profile.setCurrentRow(0)
+        widget.protect = False
+        with qtbot.waitSignal(widget.roi_extraction_pipeline_add, check_params_cb=check_pipeline("test")):
+            widget._add_profile()
+
+    def test_set_node_type(self, qtbot, part_settings):
+        part_settings.roi_profiles["test"] = ROIExtractionProfile(
+            name="test",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        )
+        widget = prepare_plan_widget.ROIExtraction(part_settings)
+        qtbot.addWidget(widget)
+        assert not widget.chose_profile_btn.isEnabled()
+        widget.set_current_node(NodeType.root)
+        assert not widget.chose_profile_btn.isEnabled()
+        widget.set_current_node(None)
+        with qtbot.waitSignal(widget.roi_extraction_profile_selected):
+            widget.roi_extraction_profile.setCurrentRow(0)
+        assert not widget.chose_profile_btn.isEnabled()
+        widget.set_current_node(NodeType.root)
+        assert widget.chose_profile_btn.isEnabled()
+        widget.set_current_node(NodeType.mask)
+        assert widget.chose_profile_btn.isEnabled()
+        widget.set_current_node(NodeType.file_mask)
+        assert widget.chose_profile_btn.isEnabled()
+        with qtbot.waitSignal(widget.segment_stack.currentChanged):
+            widget.segment_stack.setCurrentWidget(widget.pipeline_profile)
+        assert not widget.chose_profile_btn.isEnabled()
+
+    def test_replace(self, qtbot, part_settings):
+        widget = prepare_plan_widget.ROIExtraction(part_settings)
+        qtbot.addWidget(widget)
+        assert widget.chose_profile_btn.text() == "Add Profile"
+        widget.set_replace(True)
+        assert widget.chose_profile_btn.text() == "Replace Profile"
+        widget.set_replace(False)
+        assert widget.chose_profile_btn.text() == "Add Profile"
+        with qtbot.waitSignal(widget.segment_stack.currentChanged):
+            widget.segment_stack.setCurrentWidget(widget.pipeline_profile)
+        assert widget.chose_profile_btn.text() == "Add Pipeline"
+        widget.set_replace(True)
+        assert widget.chose_profile_btn.text() == "Replace Pipeline"
 
 
 class TestCreatePlan:

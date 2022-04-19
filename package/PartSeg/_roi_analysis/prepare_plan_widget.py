@@ -36,6 +36,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.calculation_plan import (
     CalculationPlan,
@@ -359,6 +360,142 @@ class OtherOperations(QGroupBox):
         self.save_operation.emit(save_elem)
 
 
+class ROIExtraction(QGroupBox):
+    roi_extraction_profile_selected = Signal(object)
+    roi_extraction_pipeline_selected = Signal(object)
+    roi_extraction_profile_add = Signal(object)
+    roi_extraction_pipeline_add = Signal(object)
+
+    def __init__(self, settings: PartSettings, parent: QWidget = None):
+        super().__init__("ROI extraction", parent)
+        self.protect = False
+        self.settings = settings
+        self._node_type = None
+        self._replace = False
+
+        self.roi_extraction_profile = SearchableListWidget()
+        self.pipeline_profile = SearchableListWidget()
+        self.segment_stack = QTabWidget()
+        self.segment_stack.addTab(self.roi_extraction_profile, "Profile")
+        self.segment_stack.addTab(self.pipeline_profile, "Pipeline")
+
+        self.chose_profile_btn = QPushButton("Add Profile")
+        self.chose_profile_btn.setDisabled(True)
+        self.get_big_btn = QPushButton("Leave the biggest")
+        self.get_big_btn.hide()
+        self.get_big_btn.setDisabled(True)
+
+        self.settings.roi_profiles_changed.connect(self._refresh_profiles)
+        self.settings.roi_pipelines_changed.connect(self._refresh_pipelines)
+
+        self.roi_extraction_profile.currentTextChanged.connect(self._roi_extraction_profile_selected)
+        self.pipeline_profile.currentTextChanged.connect(self._roi_extraction_pipeline_selected)
+        self.chose_profile_btn.clicked.connect(self._add_profile)
+        self.segment_stack.currentChanged.connect(self.change_tab)
+
+        lay = QVBoxLayout()
+        lay.setSpacing(0)
+        lay.addWidget(self.segment_stack)
+        lay.addWidget(self.chose_profile_btn)
+        lay.addWidget(self.get_big_btn)
+
+        self.setStyleSheet(group_sheet)
+        self.setLayout(lay)
+
+        self._refresh_profiles()
+        self._refresh_pipelines()
+        self._update_btn_text()
+
+    @contextmanager
+    def enable_protect(self):
+        previous = self.protect
+        self.protect = True
+        try:
+            yield
+        finally:
+            self.protect = previous
+
+    def set_current_node(self, node: typing.Optional[NodeType]):
+        self._node_type = node
+        self._activate_button()
+
+    def set_replace(self, replace: bool):
+        self._replace = replace
+        self.change_tab()
+
+    def _activate_button(self, _val=None):
+        self.chose_profile_btn.setEnabled(
+            self._node_type in {NodeType.root, NodeType.mask, NodeType.file_mask}
+            and self.segment_stack.currentWidget().currentRow() >= 0
+        )
+
+    @staticmethod
+    def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
+        if item is None:
+            return -1
+        text = item.text()
+        try:
+            return new_values.index(text)
+        except ValueError:  # pragma: no cover
+            return -1
+
+    def _update_btn_text(self):
+        index = self.segment_stack.currentIndex()
+        text = self.segment_stack.tabText(index)
+        if self._replace:
+            self.chose_profile_btn.setText(f"Replace {text}")
+        else:
+            self.chose_profile_btn.setText(f"Add {text}")
+
+    def change_tab(self, _val=None):
+        self._update_btn_text()
+        with self.enable_protect():
+            self.roi_extraction_profile.setCurrentItem(None)
+            self.pipeline_profile.setCurrentItem(None)
+        self._activate_button()
+
+    def refresh_profiles(self, list_widget: QListWidget, new_values: typing.List[str]):
+        index = self.get_index(list_widget.currentItem(), new_values)
+        list_widget.clear()
+        list_widget.addItems(new_values)
+        if index != -1:
+            list_widget.setCurrentRow(index)
+
+    def _refresh_profiles(self):
+        new_profiles = list(sorted(self.settings.roi_profiles.keys(), key=str.lower))
+        with self.enable_protect():
+            self.refresh_profiles(self.roi_extraction_profile, new_profiles)
+
+    def _refresh_pipelines(self):
+        new_pipelines = list(sorted(self.settings.roi_pipelines.keys(), key=str.lower))
+        with self.enable_protect():
+            self.refresh_profiles(self.pipeline_profile, new_pipelines)
+
+    def _roi_extraction_profile_selected(self, name: str):
+        if self.protect:
+            return
+        self._activate_button()
+        self.roi_extraction_profile_selected.emit(self.settings.roi_profiles[name])
+
+    def _roi_extraction_pipeline_selected(self, name: str):
+        if self.protect:
+            return
+        self._activate_button()
+        self.roi_extraction_pipeline_selected.emit(self.settings.roi_pipelines[name])
+
+    def _add_profile(self):
+        if self.segment_stack.currentWidget() == self.roi_extraction_profile:
+            item = self.roi_extraction_profile.currentItem()
+            if item is None:
+                return
+            self.roi_extraction_profile_add.emit(self.settings.roi_profiles[item.text()])
+        else:
+            item = self.pipeline_profile.currentItem()
+            if item is None:
+                return
+            self.roi_extraction_pipeline_add.emit(self.settings.roi_pipelines[item.text()])
+
+
 class CreatePlan(QWidget):
 
     plan_node_changed = Signal()
@@ -373,11 +510,7 @@ class CreatePlan(QWidget):
         self.remove_btn = QPushButton("Remove")
         self.update_element_chk = QCheckBox("Update element")
         self.other_operations = OtherOperations(self)
-        self.segment_profile = SearchableListWidget()
-        self.pipeline_profile = SearchableListWidget()
-        self.segment_stack = QTabWidget()
-        self.segment_stack.addTab(self.segment_profile, "Profile")
-        self.segment_stack.addTab(self.pipeline_profile, "Pipeline")
+        self.roi_extraction = ROIExtraction(settings=settings, parent=self)
         self.generate_mask_btn = QPushButton("Add mask")
         self.generate_mask_btn.setToolTip("Mask need to have unique name")
         self.mask_name = QLineEdit()
@@ -394,10 +527,6 @@ class CreatePlan(QWidget):
         self.expected_node_type = None
         self.save_constructor = None
 
-        self.chose_profile_btn = QPushButton("Add Profile")
-        self.get_big_btn = QPushButton("Leave the biggest")
-        self.get_big_btn.hide()
-        self.get_big_btn.setDisabled(True)
         self.measurements_list = SearchableListWidget(self)
         self.measurement_name_prefix = QLineEdit(self)
         self.add_calculation_btn = QPushButton("Add measurement calculation")
@@ -413,29 +542,25 @@ class CreatePlan(QWidget):
 
         self.other_operations.root_type_changed.connect(self.change_root_type)
         self.other_operations.save_operation.connect(self.add_save_operation)
+        self.roi_extraction.roi_extraction_pipeline_selected.connect(self.show_info)
+        self.roi_extraction.roi_extraction_profile_selected.connect(self.show_info)
+        self.roi_extraction.roi_extraction_profile_add.connect(self.add_roi_extraction)
+        self.roi_extraction.roi_extraction_pipeline_add.connect(self.add_roi_extraction_pipeline)
+
         self.measurements_list.currentTextChanged.connect(self.show_measurement)
-        self.segment_profile.currentTextChanged.connect(self.show_segment)
         self.measurements_list.currentTextChanged.connect(self.show_measurement_info)
-        self.segment_profile.currentTextChanged.connect(self.show_segment_info)
-        self.pipeline_profile.currentTextChanged.connect(self.show_segment_info)
-        self.pipeline_profile.currentTextChanged.connect(self.show_segment)
         self.mask_name.textChanged.connect(self.mask_name_changed)
         self.generate_mask_btn.clicked.connect(self.create_mask)
         self.clean_plan_btn.clicked.connect(self.clean_plan)
         self.remove_btn.clicked.connect(self.remove_element)
         self.mask_name.textChanged.connect(self.mask_text_changed)
-        self.chose_profile_btn.clicked.connect(self.add_segmentation)
-        self.get_big_btn.clicked.connect(self.add_leave_biggest)
         self.add_calculation_btn.clicked.connect(self.add_measurement)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
         self.update_element_chk.stateChanged.connect(self.mask_text_changed)
         self.update_element_chk.stateChanged.connect(self.show_measurement)
-        self.update_element_chk.stateChanged.connect(self.show_segment)
+        self.update_element_chk.stateChanged.connect(self.roi_extraction.set_replace)
         self.update_element_chk.stateChanged.connect(self.update_names)
-        self.segment_stack.currentChanged.connect(self.change_segmentation_table)
         self.settings.measurement_profiles_changed.connect(self._refresh_measurement)
-        self.settings.roi_profiles_changed.connect(self._refresh_profiles)
-        self.settings.roi_pipelines_changed.connect(self._refresh_pipelines)
 
         plan_box = QGroupBox("Prepare workflow:")
         lay = QVBoxLayout()
@@ -470,15 +595,6 @@ class CreatePlan(QWidget):
         lay.addWidget(self.generate_mask_btn, 2, 0, 1, 2)
         mask_box.setLayout(lay)
 
-        segment_box = QGroupBox("ROI extraction:")
-        segment_box.setStyleSheet(group_sheet)
-        lay = QVBoxLayout()
-        lay.setSpacing(0)
-        lay.addWidget(self.segment_stack)
-        lay.addWidget(self.chose_profile_btn)
-        lay.addWidget(self.get_big_btn)
-        segment_box.setLayout(lay)
-
         measurement_box = QGroupBox("Set of measurements:")
         measurement_box.setStyleSheet(group_sheet)
         lay = QGridLayout()
@@ -508,13 +624,12 @@ class CreatePlan(QWidget):
         layout.addWidget(plan_box, 0, 0, 5, 1)
         layout.addWidget(mask_box, 0, 2, 1, 2)
         layout.addWidget(self.other_operations, 0, 1)
-        layout.addWidget(segment_box, 1, 1, 1, 2)
+        layout.addWidget(self.roi_extraction, 1, 1, 1, 2)
         layout.addWidget(measurement_box, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
         self.setLayout(layout)
 
         self.generate_mask_btn.setDisabled(True)
-        self.chose_profile_btn.setDisabled(True)
         self.add_calculation_btn.setDisabled(True)
 
         self.mask_allow = False
@@ -524,14 +639,12 @@ class CreatePlan(QWidget):
         self.node_name = ""
         self.plan_node_changed.connect(self.mask_text_changed)
         self.plan.changed_node.connect(self.node_type_changed)
-        self.plan_node_changed.connect(self.show_segment)
         self.plan_node_changed.connect(self.show_measurement)
         self.plan_node_changed.connect(self.mask_stack_change)
         self.mask_stack.currentChanged.connect(self.mask_stack_change)
         self.file_mask.value_changed.connect(self.mask_stack_change)
         self.mask_name.textChanged.connect(self.mask_stack_change)
         self.node_type_changed()
-        self.refresh_all_profiles()
 
     def change_root_type(self, root_type: RootType):
         self.calculation_plan.set_root_type(root_type)
@@ -544,27 +657,15 @@ class CreatePlan(QWidget):
             self.calculation_plan.add_step(save_info)
         self.plan.update_view()
 
-    def change_segmentation_table(self):
-        index = self.segment_stack.currentIndex()
-        text = self.segment_stack.tabText(index)
-        if self.update_element_chk.isChecked():
-            self.chose_profile_btn.setText(f"Replace {text}")
-        else:
-            self.chose_profile_btn.setText(f"Add {text}")
-        self.segment_profile.setCurrentItem(None)
-        self.pipeline_profile.setCurrentItem(None)
-
     def segmentation_from_project(self):
         self.calculation_plan.add_step(Operations.reset_to_base)
         self.plan.update_view()
 
     def update_names(self):
         if self.update_element_chk.isChecked():
-            self.chose_profile_btn.setText("Replace Profile")
             self.add_calculation_btn.setText("Replace set of measurements")
             self.generate_mask_btn.setText("Replace mask")
         else:
-            self.chose_profile_btn.setText("Add Profile")
             self.add_calculation_btn.setText("Add set of measurements")
             self.generate_mask_btn.setText("Generate mask")
 
@@ -700,35 +801,31 @@ class CreatePlan(QWidget):
         self.calculation_plan.replace_step(profile)
         self.plan.update_view()
 
-    def add_segmentation(self):
-        if self.segment_stack.currentIndex() == 0:
-            text = str(self.segment_profile.currentItem().text())
-            if text not in self.settings.roi_profiles:
-                self.refresh_all_profiles()
-                return
-            profile = self.settings.roi_profiles[text]
-            if self.update_element_chk.isChecked():
-                self.calculation_plan.replace_step(profile)
-            else:
-                self.calculation_plan.add_step(profile)
-        else:  # self.segment_stack.currentIndex() == 1
-            text = self.pipeline_profile.currentItem().text()
-            segmentation_pipeline = self.settings.roi_pipelines[text]
-            pos = self.calculation_plan.current_pos[:]
-            old_pos = self.calculation_plan.current_pos[:]
-            for el in segmentation_pipeline.mask_history:
-                self.calculation_plan.add_step(el.segmentation)
-                self.plan.update_view()
-                node = self.calculation_plan.get_node(pos)
-                pos.append(len(node.children) - 1)
-                self.calculation_plan.set_position(pos)
-                self.calculation_plan.add_step(MaskCreate(name="", mask_property=el.mask_property))
-                self.plan.update_view()
-                pos.append(0)
-                self.calculation_plan.set_position(pos)
-            self.calculation_plan.add_step(segmentation_pipeline.segmentation)
-            self.calculation_plan.set_position(old_pos)
+    def add_roi_extraction(self, roi_extraction: ROIExtraction):
+        if self.update_element_chk.isChecked():
+            self.calculation_plan.replace_step(roi_extraction)
+        else:
+            self.calculation_plan.add_step(roi_extraction)
+        self.plan.update_view()
 
+    def add_roi_extraction_pipeline(self, roi_extraction_pipeline: SegmentationPipeline):
+        if self.update_element_chk.isChecked():
+            QMessageBox.warning("Cannot update pipeline", "Cannot update pipeline")
+            return
+        pos = self.calculation_plan.current_pos[:]
+        old_pos = pos[:]
+        for el in roi_extraction_pipeline.mask_history:
+            self.calculation_plan.add_step(el.segmentation)
+            self.plan.update_view()
+            node = self.calculation_plan.get_node(pos)
+            pos.append(len(node.children) - 1)
+            self.calculation_plan.set_position(pos)
+            self.calculation_plan.add_step(MaskCreate(name="", mask_property=el.mask_property))
+            self.plan.update_view()
+            pos.append(0)
+            self.calculation_plan.set_position(pos)
+        self.calculation_plan.add_step(roi_extraction_pipeline.segmentation)
+        self.calculation_plan.set_position(old_pos)
         self.plan.update_view()
 
     def add_measurement(self):
@@ -754,7 +851,8 @@ class CreatePlan(QWidget):
         conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
         if len(conflict_mask) > 0:
             logging.info("Mask in use")
-            QMessageBox.warning(self, "In use", "Masks {} are used in other places".format(", ".join(conflict_mask)))
+            QMessageBox.warning(self, "In use", f'Masks {", ".join(conflict_mask)} are used in other places')
+
             return
         self.mask_set -= used_mask
         self.calculation_plan.remove_step()
@@ -774,10 +872,10 @@ class CreatePlan(QWidget):
             if self.node_type not in [NodeType.file_mask, NodeType.mask]:
                 return
             # generate mask from segmentation
-            if self.node_type == NodeType.mask and (name == "" or name == self.node_name or name not in self.mask_set):
+            if self.node_type == NodeType.mask and (not name or name == self.node_name or name not in self.mask_set):
                 self.generate_mask_btn.setEnabled(True)
 
-        elif self.mask_allow and (name == "" or name not in self.mask_set):
+        elif self.mask_allow and (not name or name not in self.mask_set):
             self.generate_mask_btn.setEnabled(True)
 
     def add_calculation_plan(self, text=None):
@@ -817,7 +915,7 @@ class CreatePlan(QWidget):
         text = item.text()
         try:
             return new_values.index(text)
-        except ValueError:
+        except ValueError:  # pragma: no cover
             return -1
 
     def refresh_profiles(self, list_widget: QListWidget, new_values: typing.List[str]):
@@ -841,21 +939,6 @@ class CreatePlan(QWidget):
         with self.enable_protect():
             self.refresh_profiles(self.measurements_list, new_measurements)
 
-    def _refresh_profiles(self):
-        new_profiles = list(sorted(self.settings.roi_profiles.keys(), key=str.lower))
-        with self.enable_protect():
-            self.refresh_profiles(self.segment_profile, new_profiles)
-
-    def _refresh_pipelines(self):
-        new_pipelines = list(sorted(self.settings.roi_pipelines.keys(), key=str.lower))
-        with self.enable_protect():
-            self.refresh_profiles(self.pipeline_profile, new_pipelines)
-
-    def refresh_all_profiles(self):
-        self._refresh_measurement()
-        self._refresh_profiles()
-        self._refresh_pipelines()
-
     def show_measurement_info(self, text=None):
         if self.protect:
             return
@@ -867,6 +950,12 @@ class CreatePlan(QWidget):
         profile = self.settings.measurement_profiles[text]
         self.information.setText(str(profile))
 
+    def show_info(self, item: typing.Union[ROIExtraction, SegmentationPipeline, MeasurementProfile]):
+        if isinstance(item, ROIExtraction):
+            self.information.setText(str(item))
+        else:
+            self.information.setText(item.pretty_print(AnalysisAlgorithmSelection))
+
     def show_measurement(self):
         if self.update_element_chk.isChecked():
             if self.node_type == NodeType.measurement:
@@ -877,46 +966,6 @@ class CreatePlan(QWidget):
             self.add_calculation_btn.setEnabled(self.mask_allow)
         else:
             self.add_calculation_btn.setDisabled(True)
-
-    def show_segment_info(self, text=None):
-        if self.protect:
-            return
-        if text == "":
-            return
-        if self.segment_stack.currentIndex() == 0:
-            if text is None:
-                if self.segment_profile.currentItem() is not None:
-                    text = str(self.segment_profile.currentItem().text())
-                else:
-                    return
-            profile = self.settings.roi_profiles[text]
-        else:
-            if text is None:
-                if self.pipeline_profile.currentItem() is not None:
-                    text = str(self.pipeline_profile.currentItem().text())
-                else:
-                    return
-            profile = self.settings.roi_pipelines[text]
-        self.information.setText(profile.pretty_print(AnalysisAlgorithmSelection))
-
-    def show_segment(self):
-        if self.update_element_chk.isChecked() and self.segment_stack.currentIndex() == 0:
-            self.get_big_btn.setDisabled(True)
-            if self.node_type == NodeType.segment:
-                self.chose_profile_btn.setEnabled(True)
-            else:
-                self.chose_profile_btn.setDisabled(True)
-        else:
-            if self.node_type == NodeType.segment:
-                self.get_big_btn.setEnabled(True)
-            else:
-                self.get_big_btn.setDisabled(True)
-            if (
-                self.segment_stack.currentIndex() == 0 and self.segment_profile.currentItem()
-            ) or self.pipeline_profile.currentItem() is not None:
-                self.chose_profile_btn.setEnabled(self.segment_allow)
-            else:
-                self.chose_profile_btn.setDisabled(True)
 
     def edit_plan(self):
         plan = self.sender().plan_to_edit  # type: CalculationPlan
