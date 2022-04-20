@@ -266,97 +266,6 @@ def _check_widget(tab_widget, type_):
     return isinstance(tab_widget.currentWidget(), type_) or tab_widget.currentWidget().findChildren(type_)
 
 
-class OtherOperations(QGroupBox):
-
-    save_operation = Signal(object)
-
-    def __init__(self, parent=None):
-        super().__init__("Other operations:", parent)
-        self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
-        self.save_constructor = None
-        self._current_node = None
-
-        self.change_root = QEnumComboBox(self, enum_class=RootType)
-        self.save_choose = QComboBox()
-        self.save_choose.addItem("<none>")
-        self.save_choose.addItems(list(self.save_translate_dict.keys()))
-        self.save_btn = QPushButton("Save")
-
-        self.save_choose.currentTextChanged.connect(self.save_changed)
-        self.save_btn.clicked.connect(self.save_action)
-
-        bt_lay = QVBoxLayout()
-        bt_lay.setSpacing(0)
-        bt_lay.addWidget(QLabel("Root type:"))
-        bt_lay.addWidget(self.change_root)
-        bt_lay.addStretch(1)
-        bt_lay.addWidget(QLabel("Saving:"))
-        bt_lay.addWidget(self.save_choose)
-        bt_lay.addWidget(self.save_btn)
-
-        self.setLayout(bt_lay)
-        self.setStyleSheet(group_sheet)
-
-    @property
-    def root_type_changed(self):
-        return self.change_root.currentEnumChanged
-
-    def set_current_node(self, node: typing.Optional[NodeType]):
-        self._current_node = node
-        self.save_activate()
-
-    def save_changed(self, text):
-        text = str(text)
-        save_class = self.save_translate_dict.get(text, None)
-        if save_class is None:
-            self.save_choose.setCurrentText("<none>")
-            self.save_btn.setText("Save")
-            self.save_btn.setToolTip("Choose file type")
-        else:
-            self.save_btn.setText(f"Save to {save_class.get_short_name()}")
-            self.save_btn.setToolTip("Choose mask create in plan view")
-        self.save_activate()
-
-    @property
-    def expected_node_type(self) -> typing.Optional[NodeType]:
-        save_class = self.save_translate_dict.get(self.save_choose.currentText(), None)
-        if save_class is None:
-            return None
-        if save_class.need_mask():
-            return NodeType.mask
-        if save_class.need_segmentation():
-            return NodeType.segment
-        return NodeType.root
-
-    def save_activate(self):
-        self.save_btn.setEnabled(self._current_node == self.expected_node_type and self._current_node is not None)
-
-    def save_action(self):
-        save_class = self.save_translate_dict.get(self.save_choose.currentText(), None)
-        if save_class is None:
-            QMessageBox.warning(self, "Save problem", "Not found save class")
-            return
-        dial = FormDialog(
-            [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
-            + save_class.get_fields()
-        )
-        if not dial.exec_():
-            return
-        values = dial.get_values()
-        suffix = values["suffix"]
-        directory = values["directory"]
-        del values["suffix"]
-        del values["directory"]
-        save_elem = Save(
-            suffix=suffix,
-            directory=directory,
-            algorithm=save_class.get_name(),
-            short_name=save_class.get_short_name(),
-            values=values,
-        )
-        self.save_operation.emit(save_elem)
-
-
 class ProtectedGroupBox(QGroupBox):
     def __init__(self, text: str, parent: typing.Optional[QWidget] = None):
         super().__init__(text, parent)
@@ -403,6 +312,91 @@ class ProtectedGroupBox(QGroupBox):
             return -1
 
 
+class OtherOperations(ProtectedGroupBox):
+
+    save_operation = Signal(object)
+
+    def __init__(self, parent=None):
+        super().__init__("Other operations:", parent)
+        self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
+        self.save_constructor = None
+
+        self.change_root = QEnumComboBox(self, enum_class=RootType)
+        self.choose_save_method = QComboBox()
+        self.choose_save_method.addItem("<none>")
+        self.choose_save_method.addItems(list(self.save_translate_dict.keys()))
+        self.save_btn = QPushButton("Save")
+
+        self.choose_save_method.currentTextChanged.connect(self.save_changed)
+        self.save_btn.clicked.connect(self.save_action)
+
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.addWidget(QLabel("Root type:"))
+        layout.addWidget(self.change_root)
+        layout.addStretch(1)
+        layout.addWidget(QLabel("Saving:"))
+        layout.addWidget(self.choose_save_method)
+        layout.addWidget(self.save_btn)
+
+        self.setLayout(layout)
+
+    @property
+    def root_type_changed(self):
+        return self.change_root.currentEnumChanged
+
+    def save_changed(self, text):
+        text = str(text)
+        save_class = self.save_translate_dict.get(text, None)
+        if save_class is None:
+            self.choose_save_method.setCurrentText("<none>")
+            self.save_btn.setText("Save")
+            self.save_btn.setToolTip("Choose file type")
+        else:
+            self.save_btn.setText(f"Save to {save_class.get_short_name()}")
+            self.save_btn.setToolTip("Choose mask create in plan view")
+        self._activate_button()
+
+    @property
+    def expected_node_type(self) -> typing.Optional[NodeType]:
+        save_class = self.save_translate_dict.get(self.choose_save_method.currentText(), None)
+        if save_class is None:
+            return None
+        if save_class.need_mask():
+            return NodeType.mask
+        if save_class.need_segmentation():
+            return NodeType.segment
+        return NodeType.root
+
+    def _activate_button(self, _value=None):
+        self.save_btn.setEnabled(self._node_type == self.expected_node_type and self._node_type is not None)
+
+    def save_action(self):
+        save_class = self.save_translate_dict.get(self.choose_save_method.currentText(), None)
+        if save_class is None:
+            QMessageBox.warning(self, "Save problem", "Not found save class")
+            return
+        dial = FormDialog(
+            [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
+            + save_class.get_fields()
+        )
+        if not dial.exec_():
+            return
+        values = dial.get_values()
+        suffix = values["suffix"]
+        directory = values["directory"]
+        del values["suffix"]
+        del values["directory"]
+        save_elem = Save(
+            suffix=suffix,
+            directory=directory,
+            algorithm=save_class.get_name(),
+            short_name=save_class.get_short_name(),
+            values=values,
+        )
+        self.save_operation.emit(save_elem)
+
+
 class ROIExtraction(ProtectedGroupBox):
     roi_extraction_profile_selected = Signal(object)
     roi_extraction_pipeline_selected = Signal(object)
@@ -413,33 +407,29 @@ class ROIExtraction(ProtectedGroupBox):
         super().__init__("ROI extraction", parent)
         self.settings = settings
 
-        self.roi_extraction_profile = SearchableListWidget()
-        self.pipeline_profile = SearchableListWidget()
-        self.segment_stack = QTabWidget()
-        self.segment_stack.addTab(self.roi_extraction_profile, "Profile")
-        self.segment_stack.addTab(self.pipeline_profile, "Pipeline")
+        self.roi_profile = SearchableListWidget()
+        self.roi_pipeline = SearchableListWidget()
+        self.roi_extraction_stack = QTabWidget()
+        self.roi_extraction_stack.addTab(self.roi_profile, "Profile")
+        self.roi_extraction_stack.addTab(self.roi_pipeline, "Pipeline")
 
-        self.chose_profile_btn = QPushButton("Add Profile")
-        self.chose_profile_btn.setDisabled(True)
-        self.get_big_btn = QPushButton("Leave the biggest")
-        self.get_big_btn.hide()
-        self.get_big_btn.setDisabled(True)
+        self.choose_profile_btn = QPushButton("Add Profile")
+        self.choose_profile_btn.setDisabled(True)
 
         self.settings.roi_profiles_changed.connect(self._refresh_profiles)
         self.settings.roi_pipelines_changed.connect(self._refresh_pipelines)
 
-        self.roi_extraction_profile.currentTextChanged.connect(self._roi_extraction_profile_selected)
-        self.pipeline_profile.currentTextChanged.connect(self._roi_extraction_pipeline_selected)
-        self.chose_profile_btn.clicked.connect(self._add_profile)
-        self.segment_stack.currentChanged.connect(self.change_tab)
+        self.roi_profile.currentTextChanged.connect(self._roi_extraction_profile_selected)
+        self.roi_pipeline.currentTextChanged.connect(self._roi_extraction_pipeline_selected)
+        self.choose_profile_btn.clicked.connect(self._add_profile)
+        self.roi_extraction_stack.currentChanged.connect(self._on_change_tab)
 
-        lay = QVBoxLayout()
-        lay.setSpacing(0)
-        lay.addWidget(self.segment_stack)
-        lay.addWidget(self.chose_profile_btn)
-        lay.addWidget(self.get_big_btn)
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.addWidget(self.roi_extraction_stack)
+        layout.addWidget(self.choose_profile_btn)
 
-        self.setLayout(lay)
+        self.setLayout(layout)
 
         self._refresh_profiles()
         self._refresh_pipelines()
@@ -447,38 +437,38 @@ class ROIExtraction(ProtectedGroupBox):
 
     def set_replace(self, replace: bool):
         super().set_replace(replace)
-        self.change_tab()
+        self._on_change_tab()
 
     def _activate_button(self, _value=None):
-        self.chose_profile_btn.setEnabled(
+        self.choose_profile_btn.setEnabled(
             self._node_type in {NodeType.root, NodeType.mask, NodeType.file_mask}
-            and self.segment_stack.currentWidget().currentRow() >= 0
+            and self.roi_extraction_stack.currentWidget().currentRow() >= 0
         )
 
     def _update_btn_text(self):
-        index = self.segment_stack.currentIndex()
-        text = self.segment_stack.tabText(index)
+        index = self.roi_extraction_stack.currentIndex()
+        text = self.roi_extraction_stack.tabText(index)
         if self._replace:
-            self.chose_profile_btn.setText(f"Replace {text}")
+            self.choose_profile_btn.setText(f"Replace {text}")
         else:
-            self.chose_profile_btn.setText(f"Add {text}")
+            self.choose_profile_btn.setText(f"Add {text}")
 
-    def change_tab(self, _val=None):
+    def _on_change_tab(self, _val=None):
         self._update_btn_text()
         with self.enable_protect():
-            self.roi_extraction_profile.setCurrentItem(None)
-            self.pipeline_profile.setCurrentItem(None)
+            self.roi_profile.setCurrentItem(None)
+            self.roi_pipeline.setCurrentItem(None)
         self._activate_button()
 
     def _refresh_profiles(self):
         new_profiles = list(sorted(self.settings.roi_profiles.keys(), key=str.lower))
         with self.enable_protect():
-            self.refresh_profiles(self.roi_extraction_profile, new_profiles)
+            self.refresh_profiles(self.roi_profile, new_profiles)
 
     def _refresh_pipelines(self):
         new_pipelines = list(sorted(self.settings.roi_pipelines.keys(), key=str.lower))
         with self.enable_protect():
-            self.refresh_profiles(self.pipeline_profile, new_pipelines)
+            self.refresh_profiles(self.roi_pipeline, new_pipelines)
 
     def _roi_extraction_profile_selected(self, name: str):
         if self.protect:
@@ -493,13 +483,13 @@ class ROIExtraction(ProtectedGroupBox):
         self.roi_extraction_pipeline_selected.emit(self.settings.roi_pipelines[name])
 
     def _add_profile(self):
-        if self.segment_stack.currentWidget() == self.roi_extraction_profile:
-            item = self.roi_extraction_profile.currentItem()
+        if self.roi_extraction_stack.currentWidget() == self.roi_profile:
+            item = self.roi_profile.currentItem()
             if item is None:
                 return
             self.roi_extraction_profile_add.emit(deepcopy(self.settings.roi_profiles[item.text()]))
         else:
-            item = self.pipeline_profile.currentItem()
+            item = self.roi_pipeline.currentItem()
             if item is None:
                 return
             self.roi_extraction_pipeline_add.emit(deepcopy(self.settings.roi_pipelines[item.text()]))
@@ -523,22 +513,22 @@ class SetOfMeasurement(ProtectedGroupBox):
         self.units_choose = QEnumComboBox(enum_class=Units)
         self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
         self.add_calculation_btn = QPushButton("Add measurement calculation")
-        self.add_calculation_btn.clicked.connect(self._add_measurement)
+        self.add_calculation_btn.clicked.connect(self._measurement_add)
         self.measurements_list.currentTextChanged.connect(self._measurement_selected)
 
-        lay = QGridLayout()
-        lay.setSpacing(0)
-        lay.addWidget(self.measurements_list, 0, 0, 1, 2)
+        layout = QGridLayout()
+        layout.setSpacing(0)
+        layout.addWidget(self.measurements_list, 0, 0, 1, 2)
         lab = QLabel("Name prefix:")
         lab.setToolTip("Prefix added before each column name")
-        lay.addWidget(lab, 1, 0)
-        lay.addWidget(self.measurement_name_prefix, 1, 1)
-        lay.addWidget(QLabel("Channel:"), 2, 0)
-        lay.addWidget(self.choose_channel_for_measurements, 2, 1)
-        lay.addWidget(QLabel("Units:"), 3, 0)
-        lay.addWidget(self.units_choose, 3, 1)
-        lay.addWidget(self.add_calculation_btn, 4, 0, 1, 2)
-        self.setLayout(lay)
+        layout.addWidget(lab, 1, 0)
+        layout.addWidget(self.measurement_name_prefix, 1, 1)
+        layout.addWidget(QLabel("Channel:"), 2, 0)
+        layout.addWidget(self.choose_channel_for_measurements, 2, 1)
+        layout.addWidget(QLabel("Units:"), 3, 0)
+        layout.addWidget(self.units_choose, 3, 1)
+        layout.addWidget(self.add_calculation_btn, 4, 0, 1, 2)
+        self.setLayout(layout)
 
         self.add_calculation_btn.setDisabled(True)
         self._refresh_measurement()
@@ -557,7 +547,7 @@ class SetOfMeasurement(ProtectedGroupBox):
         with self.enable_protect():
             self.refresh_profiles(self.measurements_list, new_measurements)
 
-    def _add_measurement(self):
+    def _measurement_add(self):
         item = self.measurements_list.currentItem()
         if item is None:
             return
@@ -605,57 +595,57 @@ class UseMaskFrom(ProtectedGroupBox):
         self.mask_set = {}
 
         self.file_mask = FileMask()
-        self.segmentation_mask = MaskWidget(settings)
+        self.mask_from_segmentation = MaskWidget(settings)
         self.mask_operation = StretchWrap(QEnumComboBox(enum_class=MaskOperation))
-        self.generate_mask_btn = QPushButton("Add mask")
-        self.generate_mask_btn.setToolTip("Mask need to have unique name")
-        self.generate_mask_btn.clicked.connect(self._add_mask)
+        self.add_mask_btn = QPushButton("Add mask")
+        self.add_mask_btn.setToolTip("Mask need to have unique name")
+        self.add_mask_btn.clicked.connect(self._add_mask)
         self.mask_name = QLineEdit()
 
-        self.mask_stack = QTabWidget()
+        self.mask_tab_select = QTabWidget()
 
-        self.mask_stack.addTab(self.file_mask, "File")
-        self.mask_stack.addTab(self.segmentation_mask, "Current ROI")
-        self.mask_stack.addTab(self.mask_operation, "Operations on masks")
-        self.mask_stack.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
-        self.mask_stack.currentChanged.connect(self._activate_button)
+        self.mask_tab_select.addTab(self.file_mask, "File")
+        self.mask_tab_select.addTab(self.mask_from_segmentation, "Current ROI")
+        self.mask_tab_select.addTab(self.mask_operation, "Operations on masks")
+        self.mask_tab_select.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
+        self.mask_tab_select.currentChanged.connect(self._activate_button)
         self.mask_name.textChanged.connect(self._activate_button)
 
-        lay = QGridLayout()
-        lay.setSpacing(0)
-        lay.addWidget(self.mask_stack, 0, 0, 1, 2)
+        layout = QGridLayout()
+        layout.setSpacing(0)
+        layout.addWidget(self.mask_tab_select, 0, 0, 1, 2)
         label = QLabel("Mask name:")
         label.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
         self.mask_name.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
-        lay.addWidget(label, 1, 0)
-        lay.addWidget(self.mask_name, 1, 1)
-        lay.addWidget(self.generate_mask_btn, 2, 0, 1, 2)
-        self.setLayout(lay)
+        layout.addWidget(label, 1, 0)
+        layout.addWidget(self.mask_name, 1, 1)
+        layout.addWidget(self.add_mask_btn, 2, 0, 1, 2)
+        self.setLayout(layout)
 
-        self.generate_mask_btn.setDisabled(True)
+        self.add_mask_btn.setDisabled(True)
 
     def update_mask_set(self, mask_set: typing.Set[str]):
         self.mask_set = mask_set
 
     def set_replace(self, replace: bool):
         super().set_replace(replace)
-        self.generate_mask_btn.setText("Replace mask" if self._replace else "Add mask")
+        self.add_mask_btn.setText("Replace mask" if self._replace else "Add mask")
 
     def _activate_button(self, _value=None):
         name = self.mask_name.text().strip()
         name_ok = name == "" or name not in self.mask_set
-        if self.mask_stack.currentWidget() == self.segmentation_mask:
-            self.generate_mask_btn.setEnabled(self._node_type == NodeType.segment and name_ok)
+        if self.mask_tab_select.currentWidget() == self.mask_from_segmentation:
+            self.add_mask_btn.setEnabled(self._node_type == NodeType.segment and name_ok)
             return
-        self.generate_mask_btn.setEnabled(self._node_type == NodeType.root and name_ok)
+        self.add_mask_btn.setEnabled(self._node_type == NodeType.root and name_ok)
 
     def _add_mask(self):
-        widget = self.mask_stack.currentWidget()
+        widget = self.mask_tab_select.currentWidget()
         name = self.mask_name.text().strip()
         if widget == self.file_mask:
             mask_ob = self.file_mask.get_value(name)
-        elif widget == self.segmentation_mask:
-            mask_ob = MaskCreate(name=name, mask_property=self.segmentation_mask.get_mask_property())
+        elif widget == self.mask_from_segmentation:
+            mask_ob = MaskCreate(name=name, mask_property=self.mask_from_segmentation.get_mask_property())
         elif widget == self.mask_operation:
             dial = TwoMaskDialog(self.mask_set)
             if not dial.exec_():

@@ -257,13 +257,13 @@ class TestOtherOperations:
     def test_update_save_combo(self, qtbot):
         widget = prepare_plan_widget.OtherOperations()
         qtbot.addWidget(widget)
-        with qtbot.waitSignal(widget.save_choose.currentTextChanged):
-            widget.save_choose.setCurrentIndex(1)
+        with qtbot.waitSignal(widget.choose_save_method.currentTextChanged):
+            widget.choose_save_method.setCurrentIndex(1)
         assert widget.save_btn.text().startswith("Save to")
 
         widget.save_changed("eeee")
         assert widget.save_btn.text() == "Save"
-        assert widget.save_choose.currentIndex() == 0
+        assert widget.choose_save_method.currentIndex() == 0
 
     def test_set_current_node(self, qtbot):
         widget = prepare_plan_widget.OtherOperations()
@@ -272,11 +272,11 @@ class TestOtherOperations:
         assert not widget.save_btn.isEnabled()
         widget.set_current_node(NodeType.root)
         assert not widget.save_btn.isEnabled()
-        with qtbot.waitSignal(widget.save_choose.currentTextChanged):
-            widget.save_choose.setCurrentText(SaveAsTiff.get_short_name())
+        with qtbot.waitSignal(widget.choose_save_method.currentTextChanged):
+            widget.choose_save_method.setCurrentText(SaveAsTiff.get_short_name())
         assert widget.save_btn.isEnabled()
-        with qtbot.waitSignal(widget.save_choose.currentTextChanged):
-            widget.save_choose.setCurrentText(SaveMaskAsTiff.get_short_name())
+        with qtbot.waitSignal(widget.choose_save_method.currentTextChanged):
+            widget.choose_save_method.setCurrentText(SaveMaskAsTiff.get_short_name())
         assert not widget.save_btn.isEnabled()
 
     def test_save_action(self, qtbot, monkeypatch):
@@ -298,8 +298,8 @@ class TestOtherOperations:
         widget = prepare_plan_widget.OtherOperations()
         qtbot.addWidget(widget)
         widget.set_current_node(NodeType.root)
-        with qtbot.waitSignal(widget.save_choose.currentTextChanged):
-            widget.save_choose.setCurrentText(SaveAsTiff.get_short_name())
+        with qtbot.waitSignal(widget.choose_save_method.currentTextChanged):
+            widget.choose_save_method.setCurrentText(SaveAsTiff.get_short_name())
         with qtbot.waitSignal(widget.save_operation, check_params_cb=check_save_params):
             widget.save_btn.click()
 
@@ -330,26 +330,26 @@ class TestROIExtraction:
         widget = prepare_plan_widget.ROIExtraction(settings=part_settings)
         qtbot.addWidget(widget)
 
-        assert widget.roi_extraction_profile.count() == 2
+        assert widget.roi_profile.count() == 2
         with qtbot.assert_not_emitted(widget.roi_extraction_profile_add):
             widget._add_profile()
-        widget.segment_stack.setCurrentWidget(widget.roi_extraction_profile)
+        widget.roi_extraction_stack.setCurrentWidget(widget.roi_profile)
         with qtbot.waitSignal(widget.roi_extraction_profile_selected, check_params_cb=check_profile("test")):
-            widget.roi_extraction_profile.setCurrentRow(0)
+            widget.roi_profile.setCurrentRow(0)
 
         with qtbot.waitSignal(widget.roi_extraction_profile_selected, check_params_cb=check_profile("test2")):
-            widget.roi_extraction_profile.setCurrentRow(1)
+            widget.roi_profile.setCurrentRow(1)
 
         with widget.enable_protect():
             with qtbot.assert_not_emitted(widget.roi_extraction_profile_selected):
-                widget.roi_extraction_profile.setCurrentRow(0)
+                widget.roi_profile.setCurrentRow(0)
 
         part_settings.roi_profiles["test3"] = ROIExtractionProfile(
             name="test3",
             algorithm=LowerThresholdAlgorithm.get_name(),
             values=LowerThresholdAlgorithm.get_default_values(),
         )
-        assert widget.roi_extraction_profile.count() == 3
+        assert widget.roi_profile.count() == 3
 
         with qtbot.waitSignal(widget.roi_extraction_profile_add, check_params_cb=check_profile("test")):
             widget._add_profile()
@@ -401,19 +401,19 @@ class TestROIExtraction:
 
         widget = prepare_plan_widget.ROIExtraction(part_settings)
         qtbot.addWidget(widget)
-        with qtbot.waitSignal(widget.segment_stack.currentChanged):
-            widget.segment_stack.setCurrentWidget(widget.pipeline_profile)
-        assert widget.pipeline_profile.count() == 2
+        with qtbot.waitSignal(widget.roi_extraction_stack.currentChanged):
+            widget.roi_extraction_stack.setCurrentWidget(widget.roi_pipeline)
+        assert widget.roi_pipeline.count() == 2
         with qtbot.assert_not_emitted(widget.roi_extraction_pipeline_add):
             widget._add_profile()
         with qtbot.waitSignal(widget.roi_extraction_pipeline_selected, check_params_cb=check_pipeline("test")):
-            widget.pipeline_profile.setCurrentRow(0)
+            widget.roi_pipeline.setCurrentRow(0)
         with qtbot.waitSignal(widget.roi_extraction_pipeline_selected, check_params_cb=check_pipeline("test2")):
-            widget.pipeline_profile.setCurrentRow(1)
+            widget.roi_pipeline.setCurrentRow(1)
 
         with widget.enable_protect():
             with qtbot.assert_not_emitted(widget.roi_extraction_pipeline_selected):
-                widget.pipeline_profile.setCurrentRow(0)
+                widget.roi_pipeline.setCurrentRow(0)
         with qtbot.waitSignal(widget.roi_extraction_pipeline_add, check_params_cb=check_pipeline("test")):
             widget._add_profile()
 
@@ -425,36 +425,36 @@ class TestROIExtraction:
         )
         widget = prepare_plan_widget.ROIExtraction(part_settings)
         qtbot.addWidget(widget)
-        assert not widget.chose_profile_btn.isEnabled()
+        assert not widget.choose_profile_btn.isEnabled()
         widget.set_current_node(NodeType.root)
-        assert not widget.chose_profile_btn.isEnabled()
+        assert not widget.choose_profile_btn.isEnabled()
         widget.set_current_node(None)
         with qtbot.waitSignal(widget.roi_extraction_profile_selected):
-            widget.roi_extraction_profile.setCurrentRow(0)
-        assert not widget.chose_profile_btn.isEnabled()
+            widget.roi_profile.setCurrentRow(0)
+        assert not widget.choose_profile_btn.isEnabled()
         widget.set_current_node(NodeType.root)
-        assert widget.chose_profile_btn.isEnabled()
+        assert widget.choose_profile_btn.isEnabled()
         widget.set_current_node(NodeType.mask)
-        assert widget.chose_profile_btn.isEnabled()
+        assert widget.choose_profile_btn.isEnabled()
         widget.set_current_node(NodeType.file_mask)
-        assert widget.chose_profile_btn.isEnabled()
-        with qtbot.waitSignal(widget.segment_stack.currentChanged):
-            widget.segment_stack.setCurrentWidget(widget.pipeline_profile)
-        assert not widget.chose_profile_btn.isEnabled()
+        assert widget.choose_profile_btn.isEnabled()
+        with qtbot.waitSignal(widget.roi_extraction_stack.currentChanged):
+            widget.roi_extraction_stack.setCurrentWidget(widget.roi_pipeline)
+        assert not widget.choose_profile_btn.isEnabled()
 
     def test_replace(self, qtbot, part_settings):
         widget = prepare_plan_widget.ROIExtraction(part_settings)
         qtbot.addWidget(widget)
-        assert widget.chose_profile_btn.text() == "Add Profile"
+        assert widget.choose_profile_btn.text() == "Add Profile"
         widget.set_replace(True)
-        assert widget.chose_profile_btn.text() == "Replace Profile"
+        assert widget.choose_profile_btn.text() == "Replace Profile"
         widget.set_replace(False)
-        assert widget.chose_profile_btn.text() == "Add Profile"
-        with qtbot.waitSignal(widget.segment_stack.currentChanged):
-            widget.segment_stack.setCurrentWidget(widget.pipeline_profile)
-        assert widget.chose_profile_btn.text() == "Add Pipeline"
+        assert widget.choose_profile_btn.text() == "Add Profile"
+        with qtbot.waitSignal(widget.roi_extraction_stack.currentChanged):
+            widget.roi_extraction_stack.setCurrentWidget(widget.roi_pipeline)
+        assert widget.choose_profile_btn.text() == "Add Pipeline"
         widget.set_replace(True)
-        assert widget.chose_profile_btn.text() == "Replace Pipeline"
+        assert widget.choose_profile_btn.text() == "Replace Pipeline"
 
 
 class TestSetOfMeasurement:
@@ -515,12 +515,12 @@ class TestSetOfMeasurement:
         qtbot.addWidget(widget)
         assert widget.measurements_list.count() == 2
         with qtbot.assert_not_emitted(widget.set_of_measurement_add):
-            widget._add_measurement()
+            widget._measurement_add()
         widget.measurements_list.setCurrentRow(0)
         widget.measurement_name_prefix.setText("prefix_")
         widget.choose_channel_for_measurements.setCurrentIndex(5)
         with qtbot.waitSignal(widget.set_of_measurement_add, check_params_cb=check_measurement):
-            widget._add_measurement()
+            widget._measurement_add()
 
 
 class TestUseMaskFrom:
@@ -532,21 +532,21 @@ class TestUseMaskFrom:
         widget = prepare_plan_widget.UseMaskFrom(part_settings)
         qtbot.addWidget(widget)
         widget.set_replace(True)
-        assert widget.generate_mask_btn.text().startswith("Replace")
+        assert widget.add_mask_btn.text().startswith("Replace")
         widget.set_replace(False)
-        assert widget.generate_mask_btn.text().startswith("Add")
+        assert widget.add_mask_btn.text().startswith("Add")
 
     @pytest.mark.parametrize("node_type", NodeType.__members__.values())
     def test_set_current_node(self, qtbot, part_settings, node_type):
         widget = prepare_plan_widget.UseMaskFrom(part_settings)
         qtbot.addWidget(widget)
         widget.set_current_node(node_type)
-        widget.mask_stack.setCurrentWidget(widget.file_mask)
-        assert widget.generate_mask_btn.isEnabled() == (node_type is NodeType.root)
-        widget.mask_stack.setCurrentWidget(widget.segmentation_mask)
-        assert widget.generate_mask_btn.isEnabled() == (node_type is NodeType.segment)
-        widget.mask_stack.setCurrentWidget(widget.mask_operation)
-        assert widget.generate_mask_btn.isEnabled() == (node_type is NodeType.root)
+        widget.mask_tab_select.setCurrentWidget(widget.file_mask)
+        assert widget.add_mask_btn.isEnabled() == (node_type is NodeType.root)
+        widget.mask_tab_select.setCurrentWidget(widget.mask_from_segmentation)
+        assert widget.add_mask_btn.isEnabled() == (node_type is NodeType.segment)
+        widget.mask_tab_select.setCurrentWidget(widget.mask_operation)
+        assert widget.add_mask_btn.isEnabled() == (node_type is NodeType.root)
 
     def test_add_mask_segmentation(self, qtbot, part_settings):
         def check_mask(mask: prepare_plan_widget.MaskCreate):
@@ -556,7 +556,7 @@ class TestUseMaskFrom:
 
         widget = prepare_plan_widget.UseMaskFrom(part_settings)
         qtbot.addWidget(widget)
-        widget.mask_stack.setCurrentWidget(widget.segmentation_mask)
+        widget.mask_tab_select.setCurrentWidget(widget.mask_from_segmentation)
         widget.mask_name.setText("mask_name")
         with qtbot.waitSignal(widget.mask_step_add, check_params_cb=check_mask):
             widget._add_mask()
@@ -573,7 +573,7 @@ class TestUseMaskFrom:
 
         widget = prepare_plan_widget.UseMaskFrom(part_settings)
         qtbot.addWidget(widget)
-        widget.mask_stack.setCurrentWidget(widget.file_mask)
+        widget.mask_tab_select.setCurrentWidget(widget.file_mask)
         with qtbot.waitSignal(widget.file_mask.select_type.currentEnumChanged):
             widget.file_mask.select_type.setCurrentEnum(prepare_plan_widget.FileMaskType.Mapping_file)
         widget.file_mask.first_text.setText(file_path)
@@ -597,7 +597,7 @@ class TestUseMaskFrom:
 
         widget = prepare_plan_widget.UseMaskFrom(part_settings)
         qtbot.addWidget(widget)
-        widget.mask_stack.setCurrentWidget(widget.mask_operation)
+        widget.mask_tab_select.setCurrentWidget(widget.mask_operation)
         widget.mask_operation.setCurrentEnum(enum)
         monkeypatch.setattr(prepare_plan_widget.TwoMaskDialog, "exec_", lambda self: True)
         monkeypatch.setattr(prepare_plan_widget.TwoMaskDialog, "get_result", lambda self: ("mask1", "mask2"))
