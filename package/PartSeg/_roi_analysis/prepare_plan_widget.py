@@ -671,6 +671,7 @@ class CreatePlan(QWidget):
         super().__init__()
         self.settings = settings
         self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
+        self._mask_set = set()
         self.plan = PlanPreview(self)
         self.save_plan_btn = QPushButton("Save")
         self.clean_plan_btn = QPushButton("Remove all")
@@ -680,6 +681,7 @@ class CreatePlan(QWidget):
         self.roi_extraction = ROIExtraction(settings=settings, parent=self)
         self.set_of_measurement = SetOfMeasurement(settings=settings, parent=self)
         self.use_mask_from = UseMaskFrom(settings=settings, parent=self)
+        self.mask_set = set()
 
         self.expected_node_type = None
         self.save_constructor = None
@@ -687,7 +689,6 @@ class CreatePlan(QWidget):
         self.information = QTextEdit()
         self.information.setReadOnly(True)
 
-        self.mask_set = set()
         # FIXME: fix in better way
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
@@ -743,6 +744,15 @@ class CreatePlan(QWidget):
         self.node_name = ""
         self.plan.changed_node.connect(self.node_type_changed)
         self.node_type_changed()
+
+    @property
+    def mask_set(self):
+        return self._mask_set
+
+    @mask_set.setter
+    def mask_set(self, value):
+        self._mask_set = value
+        self.use_mask_from.update_mask_set(value)
 
     def change_root_type(self, root_type: RootType):
         self.calculation_plan.set_root_type(root_type)
@@ -809,7 +819,6 @@ class CreatePlan(QWidget):
         else:
             self.mask_set.add(mask_ob.name)
             self.calculation_plan.add_step(mask_ob)
-        self.use_mask_from.update_mask_set(self.mask_set)
         self.plan.update_view()
 
     def add_roi_extraction(self, roi_extraction: ROIExtraction):
@@ -847,7 +856,6 @@ class CreatePlan(QWidget):
 
             return
         self.mask_set -= used_mask
-        self.use_mask_from.update_mask_set(self.mask_set)
         self.calculation_plan.remove_step()
         self.plan.update_view()
 
@@ -856,7 +864,6 @@ class CreatePlan(QWidget):
         self.plan.set_plan(self.calculation_plan)
         self.node_type_changed()
         self.mask_set = set()
-        self.use_mask_from.update_mask_set(self.mask_set)
 
     def add_calculation_plan(self, text=None):
         if text is None or isinstance(text, bool):
@@ -904,7 +911,6 @@ class CreatePlan(QWidget):
         self.mask_set.clear()
         self.calculation_plan.set_position([])
         self.mask_set.update(self.calculation_plan.get_mask_names())
-        self.use_mask_from.update_mask_set(self.mask_set)
 
 
 class PlanPreview(QTreeWidget):
