@@ -304,9 +304,9 @@ class TestOtherOperations:
             widget.save_btn.click()
 
 
-class TestROIExtraction:
+class TestROIExtractionOp:
     def test_create(self, qtbot, part_settings):
-        widget = prepare_plan_widget.ROIExtraction(settings=part_settings)
+        widget = prepare_plan_widget.ROIExtractionOp(settings=part_settings)
         qtbot.addWidget(widget)
 
     def test_selected_profile(self, qtbot, part_settings):
@@ -327,7 +327,7 @@ class TestROIExtraction:
             algorithm=UpperThresholdAlgorithm.get_name(),
             values=UpperThresholdAlgorithm.get_default_values(),
         )
-        widget = prepare_plan_widget.ROIExtraction(settings=part_settings)
+        widget = prepare_plan_widget.ROIExtractionOp(settings=part_settings)
         qtbot.addWidget(widget)
 
         assert widget.roi_profile.count() == 2
@@ -399,7 +399,7 @@ class TestROIExtraction:
             ],
         )
 
-        widget = prepare_plan_widget.ROIExtraction(part_settings)
+        widget = prepare_plan_widget.ROIExtractionOp(part_settings)
         qtbot.addWidget(widget)
         with qtbot.waitSignal(widget.roi_extraction_tab.currentChanged):
             widget.roi_extraction_tab.setCurrentWidget(widget.roi_pipeline)
@@ -423,7 +423,7 @@ class TestROIExtraction:
             algorithm=LowerThresholdAlgorithm.get_name(),
             values=LowerThresholdAlgorithm.get_default_values(),
         )
-        widget = prepare_plan_widget.ROIExtraction(part_settings)
+        widget = prepare_plan_widget.ROIExtractionOp(part_settings)
         qtbot.addWidget(widget)
         assert not widget.choose_profile_btn.isEnabled()
         widget.set_current_node(NodeType.root)
@@ -443,7 +443,7 @@ class TestROIExtraction:
         assert not widget.choose_profile_btn.isEnabled()
 
     def test_replace(self, qtbot, part_settings):
-        widget = prepare_plan_widget.ROIExtraction(part_settings)
+        widget = prepare_plan_widget.ROIExtractionOp(part_settings)
         qtbot.addWidget(widget)
         assert widget.choose_profile_btn.text() == "Add Profile"
         widget.set_replace(True)
@@ -457,13 +457,13 @@ class TestROIExtraction:
         assert widget.choose_profile_btn.text() == "Replace Pipeline"
 
 
-class TestSetOfMeasurement:
+class TestSelectMeasurementOp:
     def test_create(self, qtbot, part_settings):
-        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        widget = prepare_plan_widget.SelectMeasurementOp(part_settings)
         qtbot.addWidget(widget)
 
     def test_replace(self, qtbot, part_settings):
-        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        widget = prepare_plan_widget.SelectMeasurementOp(part_settings)
         qtbot.addWidget(widget)
         widget.set_replace(True)
         assert widget.add_measurement_btn.text() == "Replace set of measurements"
@@ -477,7 +477,7 @@ class TestSetOfMeasurement:
 
             return _check_measurement
 
-        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        widget = prepare_plan_widget.SelectMeasurementOp(part_settings)
         qtbot.addWidget(widget)
         with qtbot.waitSignal(widget.set_of_measurement_selected, check_params_cb=check_measurement("statistic1")):
             widget.measurements_list.setCurrentRow(0)
@@ -488,7 +488,7 @@ class TestSetOfMeasurement:
                 widget.measurements_list.setCurrentRow(0)
 
     def test_set_current_node(self, qtbot, part_settings):
-        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        widget = prepare_plan_widget.SelectMeasurementOp(part_settings)
         qtbot.addWidget(widget)
         widget.set_current_node(NodeType.segment)
         assert not widget.add_measurement_btn.isEnabled()
@@ -517,7 +517,7 @@ class TestSetOfMeasurement:
             assert measurement.name_prefix == "prefix_"
             return True
 
-        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        widget = prepare_plan_widget.SelectMeasurementOp(part_settings)
         qtbot.addWidget(widget)
         assert widget.measurements_list.count() == 2
         with qtbot.assert_not_emitted(widget.set_of_measurement_add):
@@ -529,13 +529,13 @@ class TestSetOfMeasurement:
             widget._measurement_add()
 
 
-class TestUseMaskFrom:
+class TestSelectMaskOp:
     def test_create(self, qtbot, part_settings):
-        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        widget = prepare_plan_widget.SelectMaskOp(part_settings)
         qtbot.addWidget(widget)
 
     def test_replace(self, qtbot, part_settings):
-        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        widget = prepare_plan_widget.SelectMaskOp(part_settings)
         qtbot.addWidget(widget)
         widget.set_replace(True)
         assert widget.add_mask_btn.text().startswith("Replace")
@@ -544,7 +544,7 @@ class TestUseMaskFrom:
 
     @pytest.mark.parametrize("node_type", NodeType.__members__.values())
     def test_set_current_node(self, qtbot, part_settings, node_type):
-        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        widget = prepare_plan_widget.SelectMaskOp(part_settings)
         qtbot.addWidget(widget)
         widget.set_current_node(node_type)
         widget.mask_tab_select.setCurrentWidget(widget.file_mask)
@@ -556,7 +556,7 @@ class TestUseMaskFrom:
 
     @pytest.mark.parametrize("node_type", NodeType.__members__.values())
     def test_set_current_node_replace(self, qtbot, part_settings, node_type):
-        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        widget = prepare_plan_widget.SelectMaskOp(part_settings)
         qtbot.addWidget(widget)
         widget.set_current_node(NodeType.mask, node_type)
         widget.mask_tab_select.setCurrentWidget(widget.file_mask)
@@ -573,7 +573,7 @@ class TestUseMaskFrom:
             assert mask.name == "mask_name"
             return True
 
-        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        widget = prepare_plan_widget.SelectMaskOp(part_settings)
         qtbot.addWidget(widget)
         widget.mask_tab_select.setCurrentWidget(widget.mask_from_segmentation)
         widget.mask_name.setText("mask_name")
@@ -590,7 +590,7 @@ class TestUseMaskFrom:
             assert mask.path_to_file == file_path
             return True
 
-        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        widget = prepare_plan_widget.SelectMaskOp(part_settings)
         qtbot.addWidget(widget)
         widget.mask_tab_select.setCurrentWidget(widget.file_mask)
         with qtbot.waitSignal(widget.file_mask.select_type.currentEnumChanged):
@@ -614,7 +614,7 @@ class TestUseMaskFrom:
             assert mask.mask2 == "mask2"
             return True
 
-        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        widget = prepare_plan_widget.SelectMaskOp(part_settings)
         qtbot.addWidget(widget)
         widget.mask_tab_select.setCurrentWidget(widget.mask_operation)
         widget.mask_operation.setCurrentEnum(enum)

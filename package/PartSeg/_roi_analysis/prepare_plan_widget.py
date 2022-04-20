@@ -403,7 +403,7 @@ class OtherOperations(ProtectedGroupBox):
         self.save_operation.emit(save_elem)
 
 
-class ROIExtraction(ProtectedGroupBox):
+class ROIExtractionOp(ProtectedGroupBox):
     roi_extraction_profile_selected = Signal(object)
     roi_extraction_pipeline_selected = Signal(object)
     roi_extraction_profile_add = Signal(object)
@@ -508,7 +508,7 @@ class ROIExtraction(ProtectedGroupBox):
             self.roi_extraction_pipeline_add.emit(deepcopy(self.settings.roi_pipelines[item.text()]))
 
 
-class SetOfMeasurement(ProtectedGroupBox):
+class SelectMeasurementOp(ProtectedGroupBox):
 
     set_of_measurement_add = Signal(object)
     set_of_measurement_selected = Signal(object)
@@ -603,7 +603,7 @@ class StretchWrap(QWidget):
         return getattr(self.widget, item)
 
 
-class UseMaskFrom(ProtectedGroupBox):
+class SelectMaskOp(ProtectedGroupBox):
 
     mask_step_add = Signal(object)
 
@@ -701,9 +701,9 @@ class CreatePlan(QWidget):
         self.remove_btn = QPushButton("Remove")
         self.update_element_chk = QCheckBox("Update element")
         self.other_operations = OtherOperations(self)
-        self.roi_extraction = ROIExtraction(settings=settings, parent=self)
-        self.set_of_measurement = SetOfMeasurement(settings=settings, parent=self)
-        self.use_mask_from = UseMaskFrom(settings=settings, parent=self)
+        self.roi_extraction = ROIExtractionOp(settings=settings, parent=self)
+        self.select_measurement = SelectMeasurementOp(settings=settings, parent=self)
+        self.select_mask = SelectMaskOp(settings=settings, parent=self)
         self.mask_set = set()
 
         self.expected_node_type = None
@@ -724,16 +724,16 @@ class CreatePlan(QWidget):
         self.roi_extraction.roi_extraction_profile_selected.connect(self.show_info)
         self.roi_extraction.roi_extraction_profile_add.connect(self.add_roi_extraction)
         self.roi_extraction.roi_extraction_pipeline_add.connect(self.add_roi_extraction_pipeline)
-        self.set_of_measurement.set_of_measurement_add.connect(self.add_set_of_measurement)
-        self.set_of_measurement.set_of_measurement_selected.connect(self.show_measurement_info)
-        self.use_mask_from.mask_step_add.connect(self.create_mask)
+        self.select_measurement.set_of_measurement_add.connect(self.add_set_of_measurement)
+        self.select_measurement.set_of_measurement_selected.connect(self.show_measurement_info)
+        self.select_mask.mask_step_add.connect(self.create_mask)
 
         self.clean_plan_btn.clicked.connect(self.clean_plan)
         self.remove_btn.clicked.connect(self.remove_element)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
-        self.update_element_chk.stateChanged.connect(self.use_mask_from.set_replace)
+        self.update_element_chk.stateChanged.connect(self.select_mask.set_replace)
         self.update_element_chk.stateChanged.connect(self.roi_extraction.set_replace)
-        self.update_element_chk.stateChanged.connect(self.set_of_measurement.set_replace)
+        self.update_element_chk.stateChanged.connect(self.select_measurement.set_replace)
 
         plan_box = QGroupBox("Prepare workflow:")
         lay = QVBoxLayout()
@@ -756,10 +756,10 @@ class CreatePlan(QWidget):
 
         layout = QGridLayout()
         layout.addWidget(plan_box, 0, 0, 5, 1)
-        layout.addWidget(self.use_mask_from, 0, 2, 1, 2)
+        layout.addWidget(self.select_mask, 0, 2, 1, 2)
         layout.addWidget(self.other_operations, 0, 1)
         layout.addWidget(self.roi_extraction, 1, 1, 1, 2)
-        layout.addWidget(self.set_of_measurement, 1, 3)
+        layout.addWidget(self.select_measurement, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
         self.setLayout(layout)
 
@@ -775,7 +775,7 @@ class CreatePlan(QWidget):
     @mask_set.setter
     def mask_set(self, value):
         self._mask_set = value
-        self.use_mask_from.update_mask_set(value)
+        self.select_mask.update_mask_set(value)
 
     def change_root_type(self, root_type: RootType):
         self.calculation_plan.set_root_type(root_type)
@@ -812,8 +812,8 @@ class CreatePlan(QWidget):
 
         self.other_operations.set_current_node(node_type, node_type_for_ob)
         self.roi_extraction.set_current_node(node_type, node_type_for_ob)
-        self.set_of_measurement.set_current_node(node_type, node_type_for_ob)
-        self.use_mask_from.set_current_node(node_type, node_type_for_ob)
+        self.select_measurement.set_current_node(node_type, node_type_for_ob)
+        self.select_mask.set_current_node(node_type, node_type_for_ob)
 
         self.node_type = node_type
         self.plan_node_changed.emit()
@@ -840,7 +840,7 @@ class CreatePlan(QWidget):
             self.calculation_plan.add_step(mask_ob)
         self.plan.update_view()
 
-    def add_roi_extraction(self, roi_extraction: ROIExtraction):
+    def add_roi_extraction(self, roi_extraction: ROIExtractionOp):
         if self.update_element_chk.isChecked():
             self.calculation_plan.replace_step(roi_extraction)
         else:
@@ -917,8 +917,8 @@ class CreatePlan(QWidget):
     def show_measurement_info(self, profile: MeasurementProfile):
         self.information.setText(str(profile))
 
-    def show_info(self, item: typing.Union[ROIExtraction, SegmentationPipeline, MeasurementProfile]):
-        if isinstance(item, ROIExtraction):
+    def show_info(self, item: typing.Union[ROIExtractionOp, SegmentationPipeline, MeasurementProfile]):
+        if isinstance(item, ROIExtractionOp):
             self.information.setText(str(item))
         else:
             self.information.setText(item.pretty_print(AnalysisAlgorithmSelection))
