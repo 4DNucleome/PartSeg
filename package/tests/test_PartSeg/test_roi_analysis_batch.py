@@ -1,4 +1,5 @@
 # pylint: disable=R0201
+from copy import copy
 
 import pytest
 
@@ -339,10 +340,9 @@ class TestROIExtraction:
         with qtbot.waitSignal(widget.roi_extraction_profile_selected, check_params_cb=check_profile("test2")):
             widget.roi_extraction_profile.setCurrentRow(1)
 
-        widget.protect = True
-        with qtbot.assert_not_emitted(widget.roi_extraction_profile_selected):
-            widget.roi_extraction_profile.setCurrentRow(0)
-        widget.protect = False
+        with widget.enable_protect():
+            with qtbot.assert_not_emitted(widget.roi_extraction_profile_selected):
+                widget.roi_extraction_profile.setCurrentRow(0)
 
         part_settings.roi_profiles["test3"] = ROIExtractionProfile(
             name="test3",
@@ -411,10 +411,9 @@ class TestROIExtraction:
         with qtbot.waitSignal(widget.roi_extraction_pipeline_selected, check_params_cb=check_pipeline("test2")):
             widget.pipeline_profile.setCurrentRow(1)
 
-        widget.protect = True
-        with qtbot.assert_not_emitted(widget.roi_extraction_pipeline_selected):
-            widget.pipeline_profile.setCurrentRow(0)
-        widget.protect = False
+        with widget.enable_protect():
+            with qtbot.assert_not_emitted(widget.roi_extraction_pipeline_selected):
+                widget.pipeline_profile.setCurrentRow(0)
         with qtbot.waitSignal(widget.roi_extraction_pipeline_add, check_params_cb=check_pipeline("test")):
             widget._add_profile()
 
@@ -471,9 +470,29 @@ class TestSetOfMeasurement:
         widget.set_replace(False)
         assert widget.add_calculation_btn.text() == "Add set of measurements"
 
+    def test_selected_profile(self, qtbot, part_settings):
+        def check_measurement(name):
+            def _check_measurement(measurement):
+                return measurement == part_settings.measurement_profiles[name]
+
+            return _check_measurement
+
+        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        qtbot.addWidget(widget)
+        with qtbot.waitSignal(widget.set_of_measurement_selected, check_params_cb=check_measurement("statistic1")):
+            widget.measurements_list.setCurrentRow(0)
+        with qtbot.waitSignal(widget.set_of_measurement_selected, check_params_cb=check_measurement("statistic2")):
+            widget.measurements_list.setCurrentRow(1)
+        with widget.enable_protect():
+            with qtbot.assert_not_emitted(widget.set_of_measurement_selected):
+                widget.measurements_list.setCurrentRow(0)
+
     def test_set_current_node(self, qtbot, part_settings):
         widget = prepare_plan_widget.SetOfMeasurement(part_settings)
         qtbot.addWidget(widget)
+        widget.set_current_node(NodeType.segment)
+        assert not widget.add_calculation_btn.isEnabled()
+        widget.measurements_list.setCurrentRow(0)
         widget.set_current_node(NodeType.root)
         assert not widget.add_calculation_btn.isEnabled()
         widget.set_current_node(None)
@@ -482,6 +501,26 @@ class TestSetOfMeasurement:
         assert widget.add_calculation_btn.isEnabled()
         widget.set_current_node(NodeType.mask)
         assert not widget.add_calculation_btn.isEnabled()
+
+    def test_add_measurement(self, qtbot, part_settings):
+        def check_measurement(measurement: prepare_plan_widget.MeasurementCalculate):
+            mes = copy(part_settings.measurement_profiles["statistic1"])
+            mes.name_prefix = "prefix_"
+            assert measurement.measurement_profile == mes
+            assert measurement.channel == 4
+            assert measurement.name_prefix == "prefix_"
+            return True
+
+        widget = prepare_plan_widget.SetOfMeasurement(part_settings)
+        qtbot.addWidget(widget)
+        assert widget.measurements_list.count() == 2
+        with qtbot.assert_not_emitted(widget.set_of_measurement_add):
+            widget._add_measurement()
+        widget.measurements_list.setCurrentRow(0)
+        widget.measurement_name_prefix.setText("prefix_")
+        widget.choose_channel_for_measurements.setCurrentIndex(5)
+        with qtbot.waitSignal(widget.set_of_measurement_add, check_params_cb=check_measurement):
+            widget._add_measurement()
 
 
 class TestCreatePlan:

@@ -24,7 +24,6 @@ from qtpy.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
-    QSpinBox,
     QSplitter,
     QTabWidget,
     QTextEdit,
@@ -500,17 +499,18 @@ class ROIExtraction(ProtectedGroupBox):
             item = self.roi_extraction_profile.currentItem()
             if item is None:
                 return
-            self.roi_extraction_profile_add.emit(self.settings.roi_profiles[item.text()])
+            self.roi_extraction_profile_add.emit(deepcopy(self.settings.roi_profiles[item.text()]))
         else:
             item = self.pipeline_profile.currentItem()
             if item is None:
                 return
-            self.roi_extraction_pipeline_add.emit(self.settings.roi_pipelines[item.text()])
+            self.roi_extraction_pipeline_add.emit(deepcopy(self.settings.roi_pipelines[item.text()]))
 
 
 class SetOfMeasurement(ProtectedGroupBox):
 
     set_of_measurement_add = Signal(object)
+    set_of_measurement_selected = Signal(object)
 
     def __init__(self, settings: PartSettings, parent: QWidget = None):
         super().__init__("Set of measurements:", parent)
@@ -525,6 +525,8 @@ class SetOfMeasurement(ProtectedGroupBox):
         self.units_choose = QEnumComboBox(enum_class=Units)
         self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
         self.add_calculation_btn = QPushButton("Add measurement calculation")
+        self.add_calculation_btn.clicked.connect(self._add_measurement)
+        self.measurements_list.currentTextChanged.connect(self._measurement_selected)
 
         lay = QGridLayout()
         lay.setSpacing(0)
@@ -549,12 +551,40 @@ class SetOfMeasurement(ProtectedGroupBox):
 
     def set_current_node(self, node: typing.Optional[NodeType]):
         super().set_current_node(node)
-        self.add_calculation_btn.setEnabled(node == NodeType.segment)
+        self._activate_button()
+
+    def _activate_button(self):
+        self.add_calculation_btn.setEnabled(
+            self._node_type == NodeType.segment and self.measurements_list.currentItem() is not None
+        )
 
     def _refresh_measurement(self):
         new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
         with self.enable_protect():
             self.refresh_profiles(self.measurements_list, new_measurements)
+
+    def _add_measurement(self):
+        item = self.measurements_list.currentItem()
+        if item is None:
+            return
+        measurement_copy = deepcopy(self.settings.measurement_profiles[item.text()])
+        prefix = str(self.measurement_name_prefix.text()).strip()
+        channel = self.choose_channel_for_measurements.currentIndex() - 1
+        measurement_copy.name_prefix = prefix
+        self.set_of_measurement_add.emit(
+            MeasurementCalculate(
+                channel=channel,
+                measurement_profile=measurement_copy,
+                name_prefix=prefix,
+                units=self.units_choose.currentEnum(),
+            )
+        )
+
+    def _measurement_selected(self, name: str):
+        if self.protect:
+            return
+        self._activate_button()
+        self.set_of_measurement_selected.emit(self.settings.measurement_profiles[name])
 
 
 class CreatePlan(QWidget):
@@ -579,20 +609,9 @@ class CreatePlan(QWidget):
         self.mask_name = QLineEdit()
         self.mask_operation = QEnumComboBox(enum_class=MaskOperation)
 
-        self.chanel_num = QSpinBox()
-        self.choose_channel_for_measurements = QComboBox()
-        self.choose_channel_for_measurements.addItems(
-            ["Same as segmentation"] + [str(x + 1) for x in range(MAX_CHANNEL_NUM)]
-        )
-        self.units_choose = QEnumComboBox(enum_class=Units)
-        self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
-        self.chanel_num.setRange(0, 10)
         self.expected_node_type = None
         self.save_constructor = None
 
-        self.measurements_list = SearchableListWidget(self)
-        self.measurement_name_prefix = QLineEdit(self)
-        self.add_calculation_btn = QPushButton("Add measurement calculation")
         self.information = QTextEdit()
         self.information.setReadOnly(True)
 
@@ -609,19 +628,18 @@ class CreatePlan(QWidget):
         self.roi_extraction.roi_extraction_profile_selected.connect(self.show_info)
         self.roi_extraction.roi_extraction_profile_add.connect(self.add_roi_extraction)
         self.roi_extraction.roi_extraction_pipeline_add.connect(self.add_roi_extraction_pipeline)
+        self.set_of_measurement.set_of_measurement_add.connect(self.add_set_of_measurement)
+        self.set_of_measurement.set_of_measurement_selected.connect(self.show_measurement_info)
 
-        self.measurements_list.currentTextChanged.connect(self.show_measurement)
-        self.measurements_list.currentTextChanged.connect(self.show_measurement_info)
         self.mask_name.textChanged.connect(self.mask_name_changed)
         self.generate_mask_btn.clicked.connect(self.create_mask)
         self.clean_plan_btn.clicked.connect(self.clean_plan)
         self.remove_btn.clicked.connect(self.remove_element)
         self.mask_name.textChanged.connect(self.mask_text_changed)
-        self.add_calculation_btn.clicked.connect(self.add_measurement)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
         self.update_element_chk.stateChanged.connect(self.mask_text_changed)
-        self.update_element_chk.stateChanged.connect(self.show_measurement)
         self.update_element_chk.stateChanged.connect(self.roi_extraction.set_replace)
+        self.update_element_chk.stateChanged.connect(self.set_of_measurement.set_replace)
         self.update_element_chk.stateChanged.connect(self.update_names)
 
         plan_box = QGroupBox("Prepare workflow:")
@@ -676,7 +694,6 @@ class CreatePlan(QWidget):
         self.setLayout(layout)
 
         self.generate_mask_btn.setDisabled(True)
-        self.add_calculation_btn.setDisabled(True)
 
         self.mask_allow = False
         self.segment_allow = False
@@ -685,7 +702,6 @@ class CreatePlan(QWidget):
         self.node_name = ""
         self.plan_node_changed.connect(self.mask_text_changed)
         self.plan.changed_node.connect(self.node_type_changed)
-        self.plan_node_changed.connect(self.show_measurement)
         self.plan_node_changed.connect(self.mask_stack_change)
         self.mask_stack.currentChanged.connect(self.mask_stack_change)
         self.file_mask.value_changed.connect(self.mask_stack_change)
@@ -703,16 +719,21 @@ class CreatePlan(QWidget):
             self.calculation_plan.add_step(save_info)
         self.plan.update_view()
 
+    def add_set_of_measurement(self, set_of_measurement: MeasurementCalculate):
+        if self.update_element_chk.isChecked():
+            self.calculation_plan.replace_step(set_of_measurement)
+        else:
+            self.calculation_plan.add_step(set_of_measurement)
+        self.plan.update_view()
+
     def segmentation_from_project(self):
         self.calculation_plan.add_step(Operations.reset_to_base)
         self.plan.update_view()
 
     def update_names(self):
         if self.update_element_chk.isChecked():
-            self.add_calculation_btn.setText("Replace set of measurements")
             self.generate_mask_btn.setText("Replace mask")
         else:
-            self.add_calculation_btn.setText("Add set of measurements")
             self.generate_mask_btn.setText("Generate mask")
 
     def node_type_changed(self):
@@ -728,8 +749,12 @@ class CreatePlan(QWidget):
         node_type = self.calculation_plan.get_node_type()
 
         node_type_for_ob = self.calculation_plan.get_node_type(parent=self.update_element_chk.isChecked())
+        if self.update_element_chk.isChecked() and node_type == NodeType.root:
+            node_type_for_ob = None
+
         self.other_operations.set_current_node(node_type_for_ob)
         self.roi_extraction.set_current_node(node_type_for_ob)
+        self.set_of_measurement.set_current_node(node_type_for_ob)
         self.node_type = node_type
         if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.measurement, NodeType.save]:
             self.remove_btn.setEnabled(True)
@@ -874,25 +899,6 @@ class CreatePlan(QWidget):
         self.calculation_plan.set_position(old_pos)
         self.plan.update_view()
 
-    def add_measurement(self):
-        text = str(self.measurements_list.currentItem().text())
-        measurement_copy = deepcopy(self.settings.measurement_profiles[text])
-        prefix = str(self.measurement_name_prefix.text()).strip()
-        channel = self.choose_channel_for_measurements.currentIndex() - 1
-        measurement_copy.name_prefix = prefix
-        # noinspection PyTypeChecker
-        measurement_calculate = MeasurementCalculate(
-            channel=channel,
-            measurement_profile=measurement_copy,
-            name_prefix=prefix,
-            units=self.units_choose.currentEnum(),
-        )
-        if self.update_element_chk.isChecked():
-            self.calculation_plan.replace_step(measurement_calculate)
-        else:
-            self.calculation_plan.add_step(measurement_calculate)
-        self.plan.update_view()
-
     def remove_element(self):
         conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
         if len(conflict_mask) > 0:
@@ -980,15 +986,7 @@ class CreatePlan(QWidget):
         finally:
             self.protect = previous
 
-    def show_measurement_info(self, text=None):
-        if self.protect:
-            return
-        if text is None:
-            if self.measurements_list.currentItem() is not None:
-                text = str(self.measurements_list.currentItem().text())
-            else:
-                return
-        profile = self.settings.measurement_profiles[text]
+    def show_measurement_info(self, profile: MeasurementProfile):
         self.information.setText(str(profile))
 
     def show_info(self, item: typing.Union[ROIExtraction, SegmentationPipeline, MeasurementProfile]):
@@ -996,17 +994,6 @@ class CreatePlan(QWidget):
             self.information.setText(str(item))
         else:
             self.information.setText(item.pretty_print(AnalysisAlgorithmSelection))
-
-    def show_measurement(self):
-        if self.update_element_chk.isChecked():
-            if self.node_type == NodeType.measurement:
-                self.add_calculation_btn.setEnabled(True)
-            else:
-                self.add_calculation_btn.setDisabled(True)
-        elif self.measurements_list.currentItem() is not None:
-            self.add_calculation_btn.setEnabled(self.mask_allow)
-        else:
-            self.add_calculation_btn.setDisabled(True)
 
     def edit_plan(self):
         plan = self.sender().plan_to_edit  # type: CalculationPlan
