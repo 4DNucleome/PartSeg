@@ -7,7 +7,7 @@ from PartSeg._roi_analysis import prepare_plan_widget
 from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import AnalysisAlgorithmSelection, SegmentationPipeline, SegmentationPipelineElement
-from PartSegCore.analysis.calculation_plan import CalculationTree, MeasurementCalculate, NodeType, RootType
+from PartSegCore.analysis.calculation_plan import CalculationTree, MeasurementCalculate, NodeType, RootType, Save
 from PartSegCore.analysis.save_functions import SaveAsTiff
 from PartSegCore.io_utils import SaveMaskAsTiff
 from PartSegCore.mask_create import MaskProperty
@@ -629,6 +629,108 @@ class TestCreatePlan:
     def test_create(self, qtbot, part_settings):
         widget = prepare_plan_widget.CreatePlan(part_settings)
         qtbot.addWidget(widget)
+
+    def test_change_root_type(self, qtbot, part_settings, monkeypatch):
+        monkeypatch.setattr(prepare_plan_widget.QInputDialog, "getText", lambda *args: ("root_type", True))
+
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        widget.change_root_type(prepare_plan_widget.RootType.Project)
+        widget.add_calculation_plan()
+        assert "root_type" in part_settings.batch_plans
+        assert part_settings.batch_plans["root_type"].execution_tree.operation == RootType.Project
+
+    def test_add_roi_extraction(self, qtbot, part_settings, roi_extraction_profile):
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        widget.add_roi_extraction(roi_extraction_profile)
+        assert len(widget.calculation_plan.execution_tree.children) == 1
+        assert len(widget.calculation_plan.execution_tree.children[0].children) == 0
+        assert widget.calculation_plan.execution_tree.children[0].operation == roi_extraction_profile
+        roi_extraction_profile2 = roi_extraction_profile.copy(update={"name": "roi_extraction_profile2"})
+        widget.update_element_chk.setChecked(True)
+        widget.add_roi_extraction(roi_extraction_profile2)
+        assert len(widget.calculation_plan.execution_tree.children) == 1
+        assert len(widget.calculation_plan.execution_tree.children[0].children) == 0
+        assert widget.calculation_plan.execution_tree.children[0].operation == roi_extraction_profile2
+        widget.clean_plan()
+        assert len(widget.calculation_plan.execution_tree.children) == 0
+
+    def test_add_save_operation(self, qtbot, part_settings):
+        save_step_profile = Save(suffix="_save_step", directory="", algorithm="tiff", short_name="tiff", values={})
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        widget.add_save_operation(save_step_profile)
+        assert len(widget.calculation_plan.execution_tree.children) == 1
+        assert len(widget.calculation_plan.execution_tree.children[0].children) == 0
+        assert widget.calculation_plan.execution_tree.children[0].operation == save_step_profile
+        save_step_profile2 = save_step_profile.copy(update={"suffix": "_save"})
+        widget.update_element_chk.setChecked(True)
+        widget.add_save_operation(save_step_profile2)
+        assert len(widget.calculation_plan.execution_tree.children) == 1
+        assert len(widget.calculation_plan.execution_tree.children[0].children) == 0
+        assert widget.calculation_plan.execution_tree.children[0].operation == save_step_profile2
+        widget.remove_element()
+        assert len(widget.calculation_plan.execution_tree.children) == 0
+
+    def test_add_set_of_measurement(self, qtbot, part_settings, measurement_profiles):
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        measurement_calculate1 = MeasurementCalculate(
+            channel=0, units=Units.nm, measurement_profile=measurement_profiles[0], name_prefix=""
+        )
+        measurement_calculate2 = MeasurementCalculate(
+            channel=0, units=Units.nm, measurement_profile=measurement_profiles[1], name_prefix=""
+        )
+        widget.add_set_of_measurement(measurement_calculate1)
+        assert len(widget.calculation_plan.execution_tree.children) == 1
+        assert len(widget.calculation_plan.execution_tree.children[0].children) == 0
+        assert widget.calculation_plan.execution_tree.children[0].operation == measurement_calculate1
+        widget.update_element_chk.setChecked(True)
+        widget.add_set_of_measurement(measurement_calculate2)
+        assert len(widget.calculation_plan.execution_tree.children) == 1
+        assert len(widget.calculation_plan.execution_tree.children[0].children) == 0
+        assert widget.calculation_plan.execution_tree.children[0].operation == measurement_calculate2
+        widget.clean_plan()
+        assert len(widget.calculation_plan.execution_tree.children) == 0
+
+    def test_add_roi_extraction_pipeline(self, qtbot, part_settings, roi_extraction_profile, mask_property):
+        segmentation_pipeline = SegmentationPipeline(
+            name="test",
+            segmentation=roi_extraction_profile,
+            mask_history=[
+                SegmentationPipelineElement(segmentation=roi_extraction_profile, mask_property=mask_property)
+            ],
+        )
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        widget.add_roi_extraction_pipeline(segmentation_pipeline)
+        assert len(widget.calculation_plan.execution_tree.children) == 1
+        assert widget.calculation_plan.execution_tree.children[0].operation == roi_extraction_profile
+        assert len(widget.calculation_plan.execution_tree.children[0].children) == 1
+        assert widget.calculation_plan.execution_tree.children[0].children[0].operation.mask_property == mask_property
+        assert len(widget.calculation_plan.execution_tree.children[0].children[0].children) == 1
+        assert (
+            widget.calculation_plan.execution_tree.children[0].children[0].children[0].operation
+            == roi_extraction_profile
+        )
+
+    def test_create_mask(self, qtbot, part_settings, mask_property, roi_extraction_profile, mask_property_non_default):
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        widget.add_roi_extraction(roi_extraction_profile)
+        widget.create_mask(prepare_plan_widget.MaskCreate(name="test", mask_property=mask_property))
+        assert len(widget.calculation_plan.execution_tree.children) == 1
+        assert len(widget.calculation_plan.execution_tree.children[0].children) == 1
+        assert widget.calculation_plan.execution_tree.children[0].children[0].operation.mask_property == mask_property
+        assert widget.mask_set == {"test"}
+        widget.update_element_chk.setChecked(True)
+        widget.create_mask(prepare_plan_widget.MaskCreate(name="test2", mask_property=mask_property_non_default))
+        assert (
+            widget.calculation_plan.execution_tree.children[0].children[0].operation.mask_property
+            == mask_property_non_default
+        )
+        assert widget.mask_set == {"test2"}
 
 
 class TestCalculatePlaner:

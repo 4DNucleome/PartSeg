@@ -18,6 +18,7 @@ from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.roi_info import ROIInfo
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegImage import Image
 
 
@@ -107,6 +108,15 @@ def algorithm_parameters():
         },
     }
     return deepcopy(algorithm_parameters)
+
+
+@pytest.fixture
+def roi_extraction_profile():
+    return ROIExtractionProfile(
+        name="test",
+        algorithm=LowerThresholdAlgorithm.get_name(),
+        values=LowerThresholdAlgorithm.get_default_values(),
+    )
 
 
 @pytest.fixture

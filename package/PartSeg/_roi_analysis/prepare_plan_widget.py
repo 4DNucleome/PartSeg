@@ -48,7 +48,6 @@ from PartSegCore.analysis.calculation_plan import (
     MaskSum,
     MeasurementCalculate,
     NodeType,
-    Operations,
     PlanChanges,
     RootType,
     Save,
@@ -260,10 +259,6 @@ class MaskOperation(Enum):
 
     def __str__(self):
         return self.name.replace("_", " ").capitalize()
-
-
-def _check_widget(tab_widget, type_):
-    return isinstance(tab_widget.currentWidget(), type_) or tab_widget.currentWidget().findChildren(type_)
 
 
 class ProtectedGroupBox(QGroupBox):
@@ -725,7 +720,7 @@ class CreatePlan(QWidget):
         self.roi_extraction.roi_extraction_profile_add.connect(self.add_roi_extraction)
         self.roi_extraction.roi_extraction_pipeline_add.connect(self.add_roi_extraction_pipeline)
         self.select_measurement.set_of_measurement_add.connect(self.add_set_of_measurement)
-        self.select_measurement.set_of_measurement_selected.connect(self.show_measurement_info)
+        self.select_measurement.set_of_measurement_selected.connect(self.show_info)
         self.select_mask.mask_step_add.connect(self.create_mask)
 
         self.clean_plan_btn.clicked.connect(self.clean_plan)
@@ -793,10 +788,6 @@ class CreatePlan(QWidget):
             self.calculation_plan.replace_step(set_of_measurement)
         else:
             self.calculation_plan.add_step(set_of_measurement)
-        self.plan.update_view()
-
-    def segmentation_from_project(self):
-        self.calculation_plan.add_step(Operations.reset_to_base)
         self.plan.update_view()
 
     def node_type_changed(self):
@@ -914,11 +905,8 @@ class CreatePlan(QWidget):
             self.settings.batch_plans[text] = plan
             self.settings.dump()
 
-    def show_measurement_info(self, profile: MeasurementProfile):
-        self.information.setText(str(profile))
-
     def show_info(self, item: typing.Union[ROIExtractionOp, SegmentationPipeline, MeasurementProfile]):
-        if isinstance(item, ROIExtractionOp):
+        if isinstance(item, (ROIExtractionOp, MeasurementProfile)):
             self.information.setText(str(item))
         else:
             self.information.setText(item.pretty_print(AnalysisAlgorithmSelection))
