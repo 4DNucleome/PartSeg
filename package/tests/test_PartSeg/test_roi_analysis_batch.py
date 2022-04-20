@@ -135,19 +135,19 @@ class TestFileMaskWidget:
     def test_change_state_memory(self, qtbot):
         widget = prepare_plan_widget.FileMask()
         qtbot.addWidget(widget)
-        widget.change_type(0)
+        widget.change_type(prepare_plan_widget.FileMaskType.Suffix)
         widget.first_text.setText("suffix_text")
-        widget.change_type(1)
+        widget.change_type(prepare_plan_widget.FileMaskType.Replace)
         widget.first_text.setText("replace_base")
         widget.second_text.setText("replace")
-        widget.change_type(2)
+        widget.change_type(prepare_plan_widget.FileMaskType.Mapping_file)
         widget.first_text.setText("file_path")
-        widget.change_type(0)
+        widget.change_type(prepare_plan_widget.FileMaskType.Suffix)
         assert widget.first_text.text() == "suffix_text"
-        widget.change_type(1)
+        widget.change_type(prepare_plan_widget.FileMaskType.Replace)
         assert widget.first_text.text() == "replace_base"
         assert widget.second_text.text() == "replace"
-        widget.change_type(2)
+        widget.change_type(prepare_plan_widget.FileMaskType.Mapping_file)
         assert widget.first_text.text() == "file_path"
 
     def test_select_file(self, qtbot, monkeypatch):
@@ -523,7 +523,96 @@ class TestSetOfMeasurement:
             widget._add_measurement()
 
 
+class TestUseMaskFrom:
+    def test_create(self, qtbot, part_settings):
+        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        qtbot.addWidget(widget)
+
+    def test_replace(self, qtbot, part_settings):
+        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        qtbot.addWidget(widget)
+        widget.set_replace(True)
+        assert widget.generate_mask_btn.text().startswith("Replace")
+        widget.set_replace(False)
+        assert widget.generate_mask_btn.text().startswith("Add")
+
+    @pytest.mark.parametrize("node_type", NodeType.__members__.values())
+    def test_set_current_node(self, qtbot, part_settings, node_type):
+        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        qtbot.addWidget(widget)
+        widget.set_current_node(node_type)
+        widget.mask_stack.setCurrentWidget(widget.file_mask)
+        assert widget.generate_mask_btn.isEnabled() == (node_type is NodeType.root)
+        widget.mask_stack.setCurrentWidget(widget.segmentation_mask)
+        assert widget.generate_mask_btn.isEnabled() == (node_type is NodeType.segment)
+        widget.mask_stack.setCurrentWidget(widget.mask_operation)
+        assert widget.generate_mask_btn.isEnabled() == (node_type is NodeType.root)
+
+    def test_add_mask_segmentation(self, qtbot, part_settings):
+        def check_mask(mask: prepare_plan_widget.MaskCreate):
+            assert isinstance(mask, prepare_plan_widget.MaskCreate)
+            assert mask.name == "mask_name"
+            return True
+
+        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        qtbot.addWidget(widget)
+        widget.mask_stack.setCurrentWidget(widget.segmentation_mask)
+        widget.mask_name.setText("mask_name")
+        with qtbot.waitSignal(widget.mask_step_add, check_params_cb=check_mask):
+            widget._add_mask()
+
+    def test_add_mask_file(self, qtbot, part_settings, tmp_path):
+        file_path = str(tmp_path / "mask.txt")
+        with open(file_path, "w") as f:
+            f.write("mask")
+
+        def check_mask(mask: prepare_plan_widget.MaskFile):
+            assert isinstance(mask, prepare_plan_widget.MaskFile)
+            assert mask.path_to_file == file_path
+            return True
+
+        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        qtbot.addWidget(widget)
+        widget.mask_stack.setCurrentWidget(widget.file_mask)
+        with qtbot.waitSignal(widget.file_mask.select_type.currentEnumChanged):
+            widget.file_mask.select_type.setCurrentEnum(prepare_plan_widget.FileMaskType.Mapping_file)
+        widget.file_mask.first_text.setText(file_path)
+
+        with qtbot.waitSignal(widget.mask_step_add, check_params_cb=check_mask):
+            widget._add_mask()
+
+    @pytest.mark.parametrize(
+        "enum,klass",
+        [
+            (prepare_plan_widget.MaskOperation.mask_intersection, prepare_plan_widget.MaskIntersection),
+            (prepare_plan_widget.MaskOperation.mask_sum, prepare_plan_widget.MaskSum),
+        ],
+    )
+    def test_add_mask_operation(self, qtbot, part_settings, enum, klass, monkeypatch):
+        def check_mask(mask: klass):
+            assert isinstance(mask, klass)
+            assert mask.mask1 == "mask1"
+            assert mask.mask2 == "mask2"
+            return True
+
+        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        qtbot.addWidget(widget)
+        widget.mask_stack.setCurrentWidget(widget.mask_operation)
+        widget.mask_operation.setCurrentEnum(enum)
+        monkeypatch.setattr(prepare_plan_widget.TwoMaskDialog, "exec_", lambda self: True)
+        monkeypatch.setattr(prepare_plan_widget.TwoMaskDialog, "get_result", lambda self: ("mask1", "mask2"))
+
+        with qtbot.waitSignal(widget.mask_step_add, check_params_cb=check_mask):
+            widget._add_mask()
+
+
 class TestCreatePlan:
     def test_create(self, qtbot, part_settings):
         widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+
+
+class TestCalculatePlaner:
+    def test_create(self, qtbot, part_settings):
+        widget = prepare_plan_widget.CalculatePlaner(part_settings)
         qtbot.addWidget(widget)

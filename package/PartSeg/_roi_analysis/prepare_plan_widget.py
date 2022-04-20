@@ -43,7 +43,6 @@ from PartSegCore.analysis.calculation_plan import (
     MaskCreate,
     MaskFile,
     MaskIntersection,
-    MaskMapper,
     MaskSub,
     MaskSuffix,
     MaskSum,
@@ -156,14 +155,14 @@ class TwoMaskDialog(QDialog):
         return text1, text2
 
 
-def stretch_widget(widget):
-    base_widget = QWidget()
-    base_widget.setContentsMargins(0, 0, 0, 0)
-    lay = QVBoxLayout()
-    lay.addWidget(widget)
-    lay.addStretch(3)
-    base_widget.setLayout(lay)
-    return base_widget
+class FileMaskType(Enum):
+    """
+    Enum for file mask types
+    """
+
+    Suffix = 0
+    Replace = 1
+    Mapping_file = 2
 
 
 class FileMask(QWidget):
@@ -171,15 +170,14 @@ class FileMask(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.select_type = QComboBox()
-        self.select_type.addItems(["Suffix", "Replace", "Mapping file"])
+        self.select_type = QEnumComboBox(enum_class=FileMaskType)
         self.values = ["_mask", ("", ""), ""]
         self.first_text = QLineEdit(self.values[0])
         self.second_text = QLineEdit()
         self.first_label = QLabel("Use suffix:")
         self.second_label = QLabel("Replace:")
         self.select_file_btn = QPushButton("Select file")
-        self.state = 0
+        self.state = FileMaskType.Suffix
 
         layout = QGridLayout()
         layout.addWidget(self.select_type, 0, 0, 1, 2)
@@ -189,6 +187,7 @@ class FileMask(QWidget):
         layout.addWidget(self.second_text, 2, 1)
         layout.addWidget(self.select_file_btn, 3, 0, 1, 2)
         layout.setColumnStretch(0, 1)
+        layout.setRowStretch(4, 1)
         self.setLayout(layout)
 
         self.second_text.setHidden(True)
@@ -198,21 +197,21 @@ class FileMask(QWidget):
         self.first_text.textChanged.connect(self._value_change_wrap)
         self.second_text.textChanged.connect(self._value_change_wrap)
         self.select_type.currentIndexChanged.connect(self._value_change_wrap)
-        self.select_type.currentIndexChanged.connect(self.change_type)
+        self.select_type.currentEnumChanged.connect(self.change_type)
         self.select_file_btn.clicked.connect(self.select_file)
 
     def _value_change_wrap(self, _val=None):
         """Pyside bug workaround"""
         self.value_changed.emit()
 
-    def change_type(self, index):
+    def change_type(self, index: FileMaskType):
         if self.state == index:
             return
-        if self.state == 1:
+        if self.state == FileMaskType.Replace:
             self.values[1] = self.first_text.text(), self.second_text.text()
         else:
-            self.values[self.state] = self.first_text.text()
-        if index == 1:
+            self.values[self.state.value] = self.first_text.text()
+        if index == FileMaskType.Replace:
             self.second_text.setHidden(False)
             self.second_label.setHidden(False)
             self.layout().setColumnStretch(1, 1)
@@ -224,8 +223,8 @@ class FileMask(QWidget):
             self.second_text.setHidden(True)
             self.second_label.setHidden(True)
             self.layout().setColumnStretch(1, 0)
-            self.first_label.setText(["Use suffix:", "", "Path:"][index])
-            self.first_text.setText(self.values[index])
+            self.first_label.setText(["Use suffix:", "", "Path:"][index.value])
+            self.first_text.setText(self.values[index.value])
             self.select_file_btn.setHidden(index == 0)
         self.state = index
 
@@ -238,21 +237,20 @@ class FileMask(QWidget):
             self.first_text.setText(dial.selectedFiles()[0])
 
     def is_valid(self):
-        if self.select_type.currentIndex() == 0:
+        if self.select_type.currentEnum() == FileMaskType.Suffix:
             return self.first_text.text().strip() != ""
-        if self.select_type.currentIndex() == 1:
+        if self.select_type.currentEnum() == FileMaskType.Replace:
             return "" not in {self.first_text.text().strip(), self.second_text.text().strip()}
 
         text = self.first_text.text().strip()
         return text != "" and os.path.exists(text) and os.path.isfile(text)
 
     def get_value(self, name=""):
-        mask_type = self.select_type.currentIndex()
-        if mask_type == 0:
+        mask_type = self.select_type.currentEnum()
+        if mask_type == FileMaskType.Suffix:
             return MaskSuffix(name=name, suffix=self.first_text.text().strip())
-        if mask_type == 1:
+        if mask_type == FileMaskType.Replace:
             return MaskSub(name=name, base=self.first_text.text().strip(), rep=self.second_text.text().strip())
-
         return MaskFile(name=name, path_to_file=self.first_text.text().strip())
 
 
@@ -369,9 +367,13 @@ class ProtectedGroupBox(QGroupBox):
 
     def set_current_node(self, node: typing.Optional[NodeType]):
         self._node_type = node
+        self._activate_button()
 
     def set_replace(self, replace: bool):
         self._replace = replace
+
+    def _activate_button(self):
+        raise NotImplementedError
 
     @contextmanager
     def enable_protect(self):
@@ -442,10 +444,6 @@ class ROIExtraction(ProtectedGroupBox):
         self._refresh_profiles()
         self._refresh_pipelines()
         self._update_btn_text()
-
-    def set_current_node(self, node: typing.Optional[NodeType]):
-        super().set_current_node(node)
-        self._activate_button()
 
     def set_replace(self, replace: bool):
         super().set_replace(replace)
@@ -549,10 +547,6 @@ class SetOfMeasurement(ProtectedGroupBox):
         super().set_replace(replace)
         self.add_calculation_btn.setText("Replace set of measurements" if self._replace else "Add set of measurements")
 
-    def set_current_node(self, node: typing.Optional[NodeType]):
-        super().set_current_node(node)
-        self._activate_button()
-
     def _activate_button(self):
         self.add_calculation_btn.setEnabled(
             self._node_type == NodeType.segment and self.measurements_list.currentItem() is not None
@@ -587,6 +581,98 @@ class SetOfMeasurement(ProtectedGroupBox):
         self.set_of_measurement_selected.emit(self.settings.measurement_profiles[name])
 
 
+class StretchWrap(QWidget):
+    def __init__(self, widget: QWidget, parent: QWidget = None):
+        super().__init__(parent)
+        self.widget = widget
+        lay = QVBoxLayout()
+        lay.setSpacing(0)
+        lay.addWidget(widget)
+        lay.addStretch(1)
+        self.setLayout(lay)
+
+    def __getattr__(self, item):
+        return getattr(self.widget, item)
+
+
+class UseMaskFrom(ProtectedGroupBox):
+
+    mask_step_add = Signal(object)
+
+    def __init__(self, settings: PartSettings, parent: QWidget = None):
+        super().__init__("Use mask from:", parent)
+        self.settings = settings
+        self.mask_set = {}
+
+        self.file_mask = FileMask()
+        self.segmentation_mask = MaskWidget(settings)
+        self.mask_operation = StretchWrap(QEnumComboBox(enum_class=MaskOperation))
+        self.generate_mask_btn = QPushButton("Add mask")
+        self.generate_mask_btn.setToolTip("Mask need to have unique name")
+        self.generate_mask_btn.clicked.connect(self._add_mask)
+        self.mask_name = QLineEdit()
+
+        self.mask_stack = QTabWidget()
+
+        self.mask_stack.addTab(self.file_mask, "File")
+        self.mask_stack.addTab(self.segmentation_mask, "Current ROI")
+        self.mask_stack.addTab(self.mask_operation, "Operations on masks")
+        self.mask_stack.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
+        self.mask_stack.currentChanged.connect(self._activate_button)
+        self.mask_name.textChanged.connect(self._activate_button)
+
+        lay = QGridLayout()
+        lay.setSpacing(0)
+        lay.addWidget(self.mask_stack, 0, 0, 1, 2)
+        label = QLabel("Mask name:")
+        label.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
+        self.mask_name.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
+        lay.addWidget(label, 1, 0)
+        lay.addWidget(self.mask_name, 1, 1)
+        lay.addWidget(self.generate_mask_btn, 2, 0, 1, 2)
+        self.setLayout(lay)
+
+        self.generate_mask_btn.setDisabled(True)
+
+    def update_mask_set(self, mask_set: typing.Set[str]):
+        self.mask_set = mask_set
+
+    def set_replace(self, replace: bool):
+        super().set_replace(replace)
+        self.generate_mask_btn.setText("Replace mask" if self._replace else "Add mask")
+
+    def _activate_button(self, _value=None):
+        name = self.mask_name.text().strip()
+        name_ok = name == "" or name not in self.mask_set
+        if self.mask_stack.currentWidget() == self.segmentation_mask:
+            self.generate_mask_btn.setEnabled(self._node_type == NodeType.segment and name_ok)
+            return
+        self.generate_mask_btn.setEnabled(self._node_type == NodeType.root and name_ok)
+
+    def _add_mask(self):
+        widget = self.mask_stack.currentWidget()
+        name = self.mask_name.text().strip()
+        if widget == self.file_mask:
+            mask_ob = self.file_mask.get_value(name)
+        elif widget == self.segmentation_mask:
+            mask_ob = MaskCreate(name=name, mask_property=self.segmentation_mask.get_mask_property())
+        elif widget == self.mask_operation:
+            dial = TwoMaskDialog(self.mask_set)
+            if not dial.exec_():
+                return  # pragma: no cover
+            names = dial.get_result()
+
+            if self.mask_operation.currentEnum() == MaskOperation.mask_intersection:  # Mask intersection
+                mask_construct = MaskIntersection
+            else:
+                mask_construct = MaskSum
+            mask_ob = mask_construct(name=name, mask1=names[0], mask2=names[1])
+        else:
+            raise ValueError("Unknown widget")  # pragma: no cover
+
+        self.mask_step_add.emit(mask_ob)
+
+
 class CreatePlan(QWidget):
 
     plan_node_changed = Signal()
@@ -603,11 +689,7 @@ class CreatePlan(QWidget):
         self.other_operations = OtherOperations(self)
         self.roi_extraction = ROIExtraction(settings=settings, parent=self)
         self.set_of_measurement = SetOfMeasurement(settings=settings, parent=self)
-
-        self.generate_mask_btn = QPushButton("Add mask")
-        self.generate_mask_btn.setToolTip("Mask need to have unique name")
-        self.mask_name = QLineEdit()
-        self.mask_operation = QEnumComboBox(enum_class=MaskOperation)
+        self.use_mask_from = UseMaskFrom(settings=settings, parent=self)
 
         self.expected_node_type = None
         self.save_constructor = None
@@ -615,8 +697,8 @@ class CreatePlan(QWidget):
         self.information = QTextEdit()
         self.information.setReadOnly(True)
 
-        self.protect = False
         self.mask_set = set()
+        # FIXME: fix in better way
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
         self.segmentation_mask = MaskWidget(settings)
@@ -630,17 +712,14 @@ class CreatePlan(QWidget):
         self.roi_extraction.roi_extraction_pipeline_add.connect(self.add_roi_extraction_pipeline)
         self.set_of_measurement.set_of_measurement_add.connect(self.add_set_of_measurement)
         self.set_of_measurement.set_of_measurement_selected.connect(self.show_measurement_info)
+        self.use_mask_from.mask_step_add.connect(self.create_mask)
 
-        self.mask_name.textChanged.connect(self.mask_name_changed)
-        self.generate_mask_btn.clicked.connect(self.create_mask)
         self.clean_plan_btn.clicked.connect(self.clean_plan)
         self.remove_btn.clicked.connect(self.remove_element)
-        self.mask_name.textChanged.connect(self.mask_text_changed)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
-        self.update_element_chk.stateChanged.connect(self.mask_text_changed)
+        self.update_element_chk.stateChanged.connect(self.use_mask_from.set_replace)
         self.update_element_chk.stateChanged.connect(self.roi_extraction.set_replace)
         self.update_element_chk.stateChanged.connect(self.set_of_measurement.set_replace)
-        self.update_element_chk.stateChanged.connect(self.update_names)
 
         plan_box = QGroupBox("Prepare workflow:")
         lay = QVBoxLayout()
@@ -655,26 +734,6 @@ class CreatePlan(QWidget):
         plan_box.setLayout(lay)
         plan_box.setStyleSheet(group_sheet)
 
-        mask_box = QGroupBox("Use mask from:")
-        mask_box.setStyleSheet(group_sheet)
-        self.mask_stack = QTabWidget()
-
-        self.mask_stack.addTab(stretch_widget(self.file_mask), "File")
-        self.mask_stack.addTab(stretch_widget(self.segmentation_mask), "Current ROI")
-        self.mask_stack.addTab(stretch_widget(self.mask_operation), "Operations on masks")
-        self.mask_stack.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
-
-        lay = QGridLayout()
-        lay.setSpacing(0)
-        lay.addWidget(self.mask_stack, 0, 0, 1, 2)
-        label = QLabel("Mask name:")
-        label.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
-        self.mask_name.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
-        lay.addWidget(label, 1, 0)
-        lay.addWidget(self.mask_name, 1, 1)
-        lay.addWidget(self.generate_mask_btn, 2, 0, 1, 2)
-        mask_box.setLayout(lay)
-
         info_box = QGroupBox("Information")
         info_box.setStyleSheet(group_sheet)
         lay = QVBoxLayout()
@@ -682,30 +741,17 @@ class CreatePlan(QWidget):
         info_box.setLayout(lay)
 
         layout = QGridLayout()
-        fst_col = QVBoxLayout()
-        fst_col.addWidget(plan_box, 1)
-        fst_col.addWidget(mask_box)
         layout.addWidget(plan_box, 0, 0, 5, 1)
-        layout.addWidget(mask_box, 0, 2, 1, 2)
+        layout.addWidget(self.use_mask_from, 0, 2, 1, 2)
         layout.addWidget(self.other_operations, 0, 1)
         layout.addWidget(self.roi_extraction, 1, 1, 1, 2)
         layout.addWidget(self.set_of_measurement, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
         self.setLayout(layout)
 
-        self.generate_mask_btn.setDisabled(True)
-
-        self.mask_allow = False
-        self.segment_allow = False
-        self.file_mask_allow = False
         self.node_type = NodeType.root
         self.node_name = ""
-        self.plan_node_changed.connect(self.mask_text_changed)
         self.plan.changed_node.connect(self.node_type_changed)
-        self.plan_node_changed.connect(self.mask_stack_change)
-        self.mask_stack.currentChanged.connect(self.mask_stack_change)
-        self.file_mask.value_changed.connect(self.mask_stack_change)
-        self.mask_name.textChanged.connect(self.mask_stack_change)
         self.node_type_changed()
 
     def change_root_type(self, root_type: RootType):
@@ -730,18 +776,9 @@ class CreatePlan(QWidget):
         self.calculation_plan.add_step(Operations.reset_to_base)
         self.plan.update_view()
 
-    def update_names(self):
-        if self.update_element_chk.isChecked():
-            self.generate_mask_btn.setText("Replace mask")
-        else:
-            self.generate_mask_btn.setText("Generate mask")
-
     def node_type_changed(self):
         self.node_name = ""
         if self.plan.currentItem() is None:
-            self.mask_allow = False
-            self.file_mask_allow = False
-            self.segment_allow = False
             self.remove_btn.setDisabled(True)
             self.plan_node_changed.emit()
             logging.debug("[node_type_changed] return")
@@ -755,59 +792,22 @@ class CreatePlan(QWidget):
         self.other_operations.set_current_node(node_type_for_ob)
         self.roi_extraction.set_current_node(node_type_for_ob)
         self.set_of_measurement.set_current_node(node_type_for_ob)
+        self.use_mask_from.set_current_node(node_type_for_ob)
+
         self.node_type = node_type
-        if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.measurement, NodeType.save]:
-            self.remove_btn.setEnabled(True)
-        else:
-            self.remove_btn.setEnabled(False)
-        if node_type in (NodeType.mask, NodeType.file_mask):
-            self.mask_allow = False
-            self.segment_allow = True
-            self.file_mask_allow = False
-            self.node_name = self.calculation_plan.get_node().operation.name
-        elif node_type == NodeType.segment:
-            self.mask_allow = True
-            self.segment_allow = False
-            self.file_mask_allow = False
-        elif node_type == NodeType.root:
-            self.mask_allow = False
-            self.segment_allow = True
-            self.file_mask_allow = True
-        elif node_type in (NodeType.none, NodeType.measurement, NodeType.save):
-            self.mask_allow = False
-            self.segment_allow = False
-            self.file_mask_allow = False
         self.plan_node_changed.emit()
 
-    def create_mask(self):
-        text = str(self.mask_name.text()).strip()
+    def create_mask(self, mask_ob: MaskBase):
+        print("create_mask")
 
-        if text != "" and text in self.mask_set:
+        if mask_ob.name != "" and mask_ob.name in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
-        if _check_widget(self.mask_stack, MaskWidget):
-            mask_ob = MaskCreate(name=text, mask_property=self.segmentation_mask.get_mask_property())
-        elif _check_widget(self.mask_stack, FileMask):
-            mask_ob = self.file_mask.get_value(text)
-        elif _check_widget(self.mask_stack, QEnumComboBox):  # existing mask
-            mask_dialog = TwoMaskDialog
-            if self.mask_operation.currentEnum() == MaskOperation.mask_intersection:  # Mask intersection
-                MaskConstruct = MaskIntersection
-            else:
-                MaskConstruct = MaskSum
-            dial = mask_dialog(self.mask_set)
-            if not dial.exec_():
-                return
-            names = dial.get_result()
-
-            mask_ob = MaskConstruct(name=text, mask1=names[0], mask2=names[1])
-        else:
-            raise ValueError("Unknowsn widget")
 
         if self.update_element_chk.isChecked():
             node = self.calculation_plan.get_node()
             name = node.operation.name
-            if name in self.calculation_plan.get_reused_mask() and name != text:
+            if name in self.calculation_plan.get_reused_mask() and name != mask_ob.name:
                 QMessageBox.warning(
                     self, "Cannot remove", f"Cannot remove mask '{name}' from plan because it is used in other elements"
                 )
@@ -819,57 +819,7 @@ class CreatePlan(QWidget):
         else:
             self.mask_set.add(mask_ob.name)
             self.calculation_plan.add_step(mask_ob)
-        self.plan.update_view()
-        self.mask_text_changed()
-
-    def mask_stack_change(self):
-        node_type = self.calculation_plan.get_node_type()
-        if self.update_element_chk.isChecked() and node_type not in [NodeType.mask, NodeType.file_mask]:
-            self.generate_mask_btn.setDisabled(True)
-        text = self.mask_name.text()
-        update = self.update_element_chk.isChecked()
-        if self.node_type == NodeType.none:
-            self.generate_mask_btn.setDisabled(True)
-            return
-        operation = self.calculation_plan.get_node().operation
-        if (
-            not update
-            and isinstance(operation, (MaskMapper, MaskBase))
-            and self.calculation_plan.get_node().operation.name == text
-        ):
-            self.generate_mask_btn.setDisabled(True)
-            return
-        if _check_widget(self.mask_stack, MaskWidget):  # mask from segmentation
-            if (not update and node_type == NodeType.segment) or (update and node_type == NodeType.mask):
-                self.generate_mask_btn.setEnabled(True)
-            else:
-                self.generate_mask_btn.setEnabled(False)
-            self.generate_mask_btn.setToolTip("Select segmentation")
-        elif _check_widget(self.mask_stack, FileMask):
-            if (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask):
-                self.generate_mask_btn.setEnabled(self.file_mask.is_valid())
-            else:
-                self.generate_mask_btn.setEnabled(False)
-            self.generate_mask_btn.setToolTip("Need root selected")
-        else:  # reuse mask
-            if len(self.mask_set) > 1 and (
-                (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask)
-            ):
-                self.generate_mask_btn.setEnabled(True)
-            else:
-                self.generate_mask_btn.setEnabled(False)
-            self.generate_mask_btn.setToolTip("Need at least two named mask and root selected")
-
-    def mask_name_changed(self, text):
-        if str(text) in self.mask_set:
-            self.generate_mask_btn.setDisabled(True)
-        else:
-            self.generate_mask_btn.setDisabled(False)
-
-    def add_leave_biggest(self):
-        profile = self.calculation_plan.get_node().operation
-        profile.leave_biggest_swap()
-        self.calculation_plan.replace_step(profile)
+        self.use_mask_from.update_mask_set(self.mask_set)
         self.plan.update_view()
 
     def add_roi_extraction(self, roi_extraction: ROIExtraction):
@@ -907,6 +857,7 @@ class CreatePlan(QWidget):
 
             return
         self.mask_set -= used_mask
+        self.use_mask_from.update_mask_set(self.mask_set)
         self.calculation_plan.remove_step()
         self.plan.update_view()
 
@@ -915,20 +866,7 @@ class CreatePlan(QWidget):
         self.plan.set_plan(self.calculation_plan)
         self.node_type_changed()
         self.mask_set = set()
-
-    def mask_text_changed(self):
-        name = str(self.mask_name.text()).strip()
-        self.generate_mask_btn.setDisabled(True)
-        # load mask from file
-        if self.update_element_chk.isChecked():
-            if self.node_type not in [NodeType.file_mask, NodeType.mask]:
-                return
-            # generate mask from segmentation
-            if self.node_type == NodeType.mask and (not name or name == self.node_name or name not in self.mask_set):
-                self.generate_mask_btn.setEnabled(True)
-
-        elif self.mask_allow and (not name or name not in self.mask_set):
-            self.generate_mask_btn.setEnabled(True)
+        self.use_mask_from.update_mask_set(self.mask_set)
 
     def add_calculation_plan(self, text=None):
         if text is None or isinstance(text, bool):
@@ -960,32 +898,6 @@ class CreatePlan(QWidget):
             self.settings.batch_plans[text] = plan
             self.settings.dump()
 
-    @staticmethod
-    def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
-        if item is None:
-            return -1
-        text = item.text()
-        try:
-            return new_values.index(text)
-        except ValueError:  # pragma: no cover
-            return -1
-
-    def refresh_profiles(self, list_widget: QListWidget, new_values: typing.List[str]):
-        index = self.get_index(list_widget.currentItem(), new_values)
-        list_widget.clear()
-        list_widget.addItems(new_values)
-        if index != -1:
-            list_widget.setCurrentRow(index)
-
-    @contextmanager
-    def enable_protect(self):
-        previous = self.protect
-        self.protect = True
-        try:
-            yield
-        finally:
-            self.protect = previous
-
     def show_measurement_info(self, profile: MeasurementProfile):
         self.information.setText(str(profile))
 
@@ -1002,6 +914,7 @@ class CreatePlan(QWidget):
         self.mask_set.clear()
         self.calculation_plan.set_position([])
         self.mask_set.update(self.calculation_plan.get_mask_names())
+        self.use_mask_from.update_mask_set(self.mask_set)
 
 
 class PlanPreview(QTreeWidget):
@@ -1307,7 +1220,7 @@ class CalculatePlaner(QSplitter):
     :type settings: Settings
     """
 
-    def __init__(self, settings, parent):
+    def __init__(self, settings, parent=None):
         super().__init__(parent)
         self.settings = settings
         self.info_widget = CalculateInfo(settings)
