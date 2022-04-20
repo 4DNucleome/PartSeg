@@ -545,7 +545,7 @@ class SetOfMeasurement(ProtectedGroupBox):
 
     def set_replace(self, replace: bool):
         super().set_replace(replace)
-        self.add_calculation_btn.setText("Replace set of measurements" if self.replace else "Add set of measurements")
+        self.add_calculation_btn.setText("Replace set of measurements" if self._replace else "Add set of measurements")
 
     def set_current_node(self, node: typing.Optional[NodeType]):
         super().set_current_node(node)

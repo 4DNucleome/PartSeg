@@ -467,9 +467,9 @@ class TestSetOfMeasurement:
         widget = prepare_plan_widget.SetOfMeasurement(part_settings)
         qtbot.addWidget(widget)
         widget.set_replace(True)
-        assert widget.add_calculation_btn.text() == "Replace set of measurement"
+        assert widget.add_calculation_btn.text() == "Replace set of measurements"
         widget.set_replace(False)
-        assert widget.add_calculation_btn.text() == "Add set of measurement"
+        assert widget.add_calculation_btn.text() == "Add set of measurements"
 
     def test_set_current_node(self, qtbot, part_settings):
         widget = prepare_plan_widget.SetOfMeasurement(part_settings)
