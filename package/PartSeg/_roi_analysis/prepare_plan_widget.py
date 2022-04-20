@@ -272,14 +272,17 @@ class ProtectedGroupBox(QGroupBox):
         self.setStyleSheet(group_sheet)
         self.protect = False
         self._node_type = None
+        self._parent_node_type = None
         self._replace = False
 
-    def set_current_node(self, node: typing.Optional[NodeType]):
+    def set_current_node(self, node: typing.Optional[NodeType], parent_node: typing.Optional[NodeType] = None):
         self._node_type = node
+        self._parent_node_type = parent_node
         self._activate_button()
 
     def set_replace(self, replace: bool):
         self._replace = replace
+        self._activate_button()
 
     def _activate_button(self, _value=None):
         raise NotImplementedError
@@ -369,7 +372,10 @@ class OtherOperations(ProtectedGroupBox):
         return NodeType.root
 
     def _activate_button(self, _value=None):
-        self.save_btn.setEnabled(self._node_type == self.expected_node_type and self._node_type is not None)
+        if self._replace:
+            self.save_btn.setEnabled(self._parent_node_type == self.expected_node_type and self._node_type is not None)
+        else:
+            self.save_btn.setEnabled(self._node_type == self.expected_node_type and self._node_type is not None)
 
     def save_action(self):
         save_class = self.save_translate_dict.get(self.choose_save_method.currentText(), None)
@@ -409,9 +415,9 @@ class ROIExtraction(ProtectedGroupBox):
 
         self.roi_profile = SearchableListWidget()
         self.roi_pipeline = SearchableListWidget()
-        self.roi_extraction_stack = QTabWidget()
-        self.roi_extraction_stack.addTab(self.roi_profile, "Profile")
-        self.roi_extraction_stack.addTab(self.roi_pipeline, "Pipeline")
+        self.roi_extraction_tab = QTabWidget()
+        self.roi_extraction_tab.addTab(self.roi_profile, "Profile")
+        self.roi_extraction_tab.addTab(self.roi_pipeline, "Pipeline")
 
         self.choose_profile_btn = QPushButton("Add Profile")
         self.choose_profile_btn.setDisabled(True)
@@ -422,11 +428,11 @@ class ROIExtraction(ProtectedGroupBox):
         self.roi_profile.currentTextChanged.connect(self._roi_extraction_profile_selected)
         self.roi_pipeline.currentTextChanged.connect(self._roi_extraction_pipeline_selected)
         self.choose_profile_btn.clicked.connect(self._add_profile)
-        self.roi_extraction_stack.currentChanged.connect(self._on_change_tab)
+        self.roi_extraction_tab.currentChanged.connect(self._on_change_tab)
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
-        layout.addWidget(self.roi_extraction_stack)
+        layout.addWidget(self.roi_extraction_tab)
         layout.addWidget(self.choose_profile_btn)
 
         self.setLayout(layout)
@@ -440,14 +446,21 @@ class ROIExtraction(ProtectedGroupBox):
         self._on_change_tab()
 
     def _activate_button(self, _value=None):
+        if self._replace:
+            self.choose_profile_btn.setEnabled(
+                self._node_type == NodeType.segment
+                and self.roi_extraction_tab.currentWidget() == self.roi_profile
+                and self.roi_profile.currentItem() is not None
+            )
+            return
         self.choose_profile_btn.setEnabled(
             self._node_type in {NodeType.root, NodeType.mask, NodeType.file_mask}
-            and self.roi_extraction_stack.currentWidget().currentRow() >= 0
+            and self.roi_extraction_tab.currentWidget().currentRow() >= 0
         )
 
     def _update_btn_text(self):
-        index = self.roi_extraction_stack.currentIndex()
-        text = self.roi_extraction_stack.tabText(index)
+        index = self.roi_extraction_tab.currentIndex()
+        text = self.roi_extraction_tab.tabText(index)
         if self._replace:
             self.choose_profile_btn.setText(f"Replace {text}")
         else:
@@ -483,7 +496,7 @@ class ROIExtraction(ProtectedGroupBox):
         self.roi_extraction_pipeline_selected.emit(self.settings.roi_pipelines[name])
 
     def _add_profile(self):
-        if self.roi_extraction_stack.currentWidget() == self.roi_profile:
+        if self.roi_extraction_tab.currentWidget() == self.roi_profile:
             item = self.roi_profile.currentItem()
             if item is None:
                 return
@@ -512,8 +525,8 @@ class SetOfMeasurement(ProtectedGroupBox):
         )
         self.units_choose = QEnumComboBox(enum_class=Units)
         self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
-        self.add_calculation_btn = QPushButton("Add measurement calculation")
-        self.add_calculation_btn.clicked.connect(self._measurement_add)
+        self.add_measurement_btn = QPushButton("Add measurement calculation")
+        self.add_measurement_btn.clicked.connect(self._measurement_add)
         self.measurements_list.currentTextChanged.connect(self._measurement_selected)
 
         layout = QGridLayout()
@@ -527,20 +540,25 @@ class SetOfMeasurement(ProtectedGroupBox):
         layout.addWidget(self.choose_channel_for_measurements, 2, 1)
         layout.addWidget(QLabel("Units:"), 3, 0)
         layout.addWidget(self.units_choose, 3, 1)
-        layout.addWidget(self.add_calculation_btn, 4, 0, 1, 2)
+        layout.addWidget(self.add_measurement_btn, 4, 0, 1, 2)
         self.setLayout(layout)
 
-        self.add_calculation_btn.setDisabled(True)
+        self.add_measurement_btn.setDisabled(True)
         self._refresh_measurement()
 
     def set_replace(self, replace: bool):
         super().set_replace(replace)
-        self.add_calculation_btn.setText("Replace set of measurements" if self._replace else "Add set of measurements")
+        self.add_measurement_btn.setText("Replace set of measurements" if self._replace else "Add set of measurements")
 
     def _activate_button(self, _value=None):
-        self.add_calculation_btn.setEnabled(
-            self._node_type == NodeType.segment and self.measurements_list.currentItem() is not None
-        )
+        if self._replace:
+            self.add_measurement_btn.setEnabled(
+                self._node_type == NodeType.measurement and self.measurements_list.currentItem() is not None
+            )
+        else:
+            self.add_measurement_btn.setEnabled(
+                self._node_type == NodeType.segment and self.measurements_list.currentItem() is not None
+            )
 
     def _refresh_measurement(self):
         new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
@@ -634,10 +652,15 @@ class UseMaskFrom(ProtectedGroupBox):
     def _activate_button(self, _value=None):
         name = self.mask_name.text().strip()
         name_ok = name == "" or name not in self.mask_set
+        if self._replace:
+            name_ok = name_ok and self._node_type == NodeType.mask
+            node_type = self._parent_node_type
+        else:
+            node_type = self._node_type
         if self.mask_tab_select.currentWidget() == self.mask_from_segmentation:
-            self.add_mask_btn.setEnabled(self._node_type == NodeType.segment and name_ok)
+            self.add_mask_btn.setEnabled(node_type == NodeType.segment and name_ok)
             return
-        self.add_mask_btn.setEnabled(self._node_type == NodeType.root and name_ok)
+        self.add_mask_btn.setEnabled(node_type == NodeType.root and name_ok)
 
     def _add_mask(self):
         widget = self.mask_tab_select.currentWidget()
@@ -786,20 +809,16 @@ class CreatePlan(QWidget):
         node_type = self.calculation_plan.get_node_type()
 
         node_type_for_ob = self.calculation_plan.get_node_type(parent=self.update_element_chk.isChecked())
-        if self.update_element_chk.isChecked() and node_type == NodeType.root:
-            node_type_for_ob = None
 
-        self.other_operations.set_current_node(node_type_for_ob)
-        self.roi_extraction.set_current_node(node_type_for_ob)
-        self.set_of_measurement.set_current_node(node_type_for_ob)
-        self.use_mask_from.set_current_node(node_type_for_ob)
+        self.other_operations.set_current_node(node_type, node_type_for_ob)
+        self.roi_extraction.set_current_node(node_type, node_type_for_ob)
+        self.set_of_measurement.set_current_node(node_type, node_type_for_ob)
+        self.use_mask_from.set_current_node(node_type, node_type_for_ob)
 
         self.node_type = node_type
         self.plan_node_changed.emit()
 
     def create_mask(self, mask_ob: MaskBase):
-        print("create_mask")
-
         if mask_ob.name != "" and mask_ob.name in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return

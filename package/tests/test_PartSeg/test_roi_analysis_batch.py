@@ -96,7 +96,7 @@ class TestFileMaskWidget:
         assert widget.is_valid()
 
     @pytest.mark.parametrize("name", ["", "mask"])
-    def test_replace_state(self, qtbot, name):
+    def test_replace_path_state(self, qtbot, name):
         widget = prepare_plan_widget.FileMask()
         widget.show()
         qtbot.addWidget(widget)
@@ -333,7 +333,7 @@ class TestROIExtraction:
         assert widget.roi_profile.count() == 2
         with qtbot.assert_not_emitted(widget.roi_extraction_profile_add):
             widget._add_profile()
-        widget.roi_extraction_stack.setCurrentWidget(widget.roi_profile)
+        widget.roi_extraction_tab.setCurrentWidget(widget.roi_profile)
         with qtbot.waitSignal(widget.roi_extraction_profile_selected, check_params_cb=check_profile("test")):
             widget.roi_profile.setCurrentRow(0)
 
@@ -401,8 +401,8 @@ class TestROIExtraction:
 
         widget = prepare_plan_widget.ROIExtraction(part_settings)
         qtbot.addWidget(widget)
-        with qtbot.waitSignal(widget.roi_extraction_stack.currentChanged):
-            widget.roi_extraction_stack.setCurrentWidget(widget.roi_pipeline)
+        with qtbot.waitSignal(widget.roi_extraction_tab.currentChanged):
+            widget.roi_extraction_tab.setCurrentWidget(widget.roi_pipeline)
         assert widget.roi_pipeline.count() == 2
         with qtbot.assert_not_emitted(widget.roi_extraction_pipeline_add):
             widget._add_profile()
@@ -438,8 +438,8 @@ class TestROIExtraction:
         assert widget.choose_profile_btn.isEnabled()
         widget.set_current_node(NodeType.file_mask)
         assert widget.choose_profile_btn.isEnabled()
-        with qtbot.waitSignal(widget.roi_extraction_stack.currentChanged):
-            widget.roi_extraction_stack.setCurrentWidget(widget.roi_pipeline)
+        with qtbot.waitSignal(widget.roi_extraction_tab.currentChanged):
+            widget.roi_extraction_tab.setCurrentWidget(widget.roi_pipeline)
         assert not widget.choose_profile_btn.isEnabled()
 
     def test_replace(self, qtbot, part_settings):
@@ -450,8 +450,8 @@ class TestROIExtraction:
         assert widget.choose_profile_btn.text() == "Replace Profile"
         widget.set_replace(False)
         assert widget.choose_profile_btn.text() == "Add Profile"
-        with qtbot.waitSignal(widget.roi_extraction_stack.currentChanged):
-            widget.roi_extraction_stack.setCurrentWidget(widget.roi_pipeline)
+        with qtbot.waitSignal(widget.roi_extraction_tab.currentChanged):
+            widget.roi_extraction_tab.setCurrentWidget(widget.roi_pipeline)
         assert widget.choose_profile_btn.text() == "Add Pipeline"
         widget.set_replace(True)
         assert widget.choose_profile_btn.text() == "Replace Pipeline"
@@ -466,9 +466,9 @@ class TestSetOfMeasurement:
         widget = prepare_plan_widget.SetOfMeasurement(part_settings)
         qtbot.addWidget(widget)
         widget.set_replace(True)
-        assert widget.add_calculation_btn.text() == "Replace set of measurements"
+        assert widget.add_measurement_btn.text() == "Replace set of measurements"
         widget.set_replace(False)
-        assert widget.add_calculation_btn.text() == "Add set of measurements"
+        assert widget.add_measurement_btn.text() == "Add set of measurements"
 
     def test_selected_profile(self, qtbot, part_settings):
         def check_measurement(name):
@@ -491,16 +491,22 @@ class TestSetOfMeasurement:
         widget = prepare_plan_widget.SetOfMeasurement(part_settings)
         qtbot.addWidget(widget)
         widget.set_current_node(NodeType.segment)
-        assert not widget.add_calculation_btn.isEnabled()
+        assert not widget.add_measurement_btn.isEnabled()
         widget.measurements_list.setCurrentRow(0)
         widget.set_current_node(NodeType.root)
-        assert not widget.add_calculation_btn.isEnabled()
+        assert not widget.add_measurement_btn.isEnabled()
         widget.set_current_node(None)
-        assert not widget.add_calculation_btn.isEnabled()
+        assert not widget.add_measurement_btn.isEnabled()
         widget.set_current_node(NodeType.segment)
-        assert widget.add_calculation_btn.isEnabled()
+        assert widget.add_measurement_btn.isEnabled()
         widget.set_current_node(NodeType.mask)
-        assert not widget.add_calculation_btn.isEnabled()
+        assert not widget.add_measurement_btn.isEnabled()
+        widget.set_current_node(NodeType.measurement)
+        assert not widget.add_measurement_btn.isEnabled()
+        widget.set_replace(True)
+        assert widget.add_measurement_btn.isEnabled()
+        widget.set_current_node(NodeType.segment)
+        assert not widget.add_measurement_btn.isEnabled()
 
     def test_add_measurement(self, qtbot, part_settings):
         def check_measurement(measurement: prepare_plan_widget.MeasurementCalculate):
@@ -542,6 +548,19 @@ class TestUseMaskFrom:
         qtbot.addWidget(widget)
         widget.set_current_node(node_type)
         widget.mask_tab_select.setCurrentWidget(widget.file_mask)
+        assert widget.add_mask_btn.isEnabled() == (node_type is NodeType.root)
+        widget.mask_tab_select.setCurrentWidget(widget.mask_from_segmentation)
+        assert widget.add_mask_btn.isEnabled() == (node_type is NodeType.segment)
+        widget.mask_tab_select.setCurrentWidget(widget.mask_operation)
+        assert widget.add_mask_btn.isEnabled() == (node_type is NodeType.root)
+
+    @pytest.mark.parametrize("node_type", NodeType.__members__.values())
+    def test_set_current_node_replace(self, qtbot, part_settings, node_type):
+        widget = prepare_plan_widget.UseMaskFrom(part_settings)
+        qtbot.addWidget(widget)
+        widget.set_current_node(NodeType.mask, node_type)
+        widget.mask_tab_select.setCurrentWidget(widget.file_mask)
+        widget.set_replace(True)
         assert widget.add_mask_btn.isEnabled() == (node_type is NodeType.root)
         widget.mask_tab_select.setCurrentWidget(widget.mask_from_segmentation)
         assert widget.add_mask_btn.isEnabled() == (node_type is NodeType.segment)
