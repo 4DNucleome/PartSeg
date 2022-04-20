@@ -372,7 +372,7 @@ class ProtectedGroupBox(QGroupBox):
     def set_replace(self, replace: bool):
         self._replace = replace
 
-    def _activate_button(self):
+    def _activate_button(self, _value=None):
         raise NotImplementedError
 
     @contextmanager
@@ -449,7 +449,7 @@ class ROIExtraction(ProtectedGroupBox):
         super().set_replace(replace)
         self.change_tab()
 
-    def _activate_button(self, _val=None):
+    def _activate_button(self, _value=None):
         self.chose_profile_btn.setEnabled(
             self._node_type in {NodeType.root, NodeType.mask, NodeType.file_mask}
             and self.segment_stack.currentWidget().currentRow() >= 0
@@ -547,7 +547,7 @@ class SetOfMeasurement(ProtectedGroupBox):
         super().set_replace(replace)
         self.add_calculation_btn.setText("Replace set of measurements" if self._replace else "Add set of measurements")
 
-    def _activate_button(self):
+    def _activate_button(self, _value=None):
         self.add_calculation_btn.setEnabled(
             self._node_type == NodeType.segment and self.measurements_list.currentItem() is not None
         )
