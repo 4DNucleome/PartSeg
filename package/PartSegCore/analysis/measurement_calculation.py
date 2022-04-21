@@ -381,7 +381,7 @@ class MeasurementProfile(BaseModel):
         kw2 = kw.copy()
 
         component_mark_area = (
-            kw2["area_array"] if node.per_component == PerComponent.Per_Mask_component else kw2["mask"]
+            kw2["area_array"] if node.per_component != PerComponent.Per_Mask_component else kw2["mask"]
         )
 
         kw2["_component_num"] = component_index
