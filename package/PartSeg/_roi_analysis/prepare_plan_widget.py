@@ -24,7 +24,6 @@ from qtpy.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
-    QSpinBox,
     QSplitter,
     QTabWidget,
     QTextEdit,
@@ -36,6 +35,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.calculation_plan import (
     CalculationPlan,
@@ -43,13 +43,11 @@ from PartSegCore.analysis.calculation_plan import (
     MaskCreate,
     MaskFile,
     MaskIntersection,
-    MaskMapper,
     MaskSub,
     MaskSuffix,
     MaskSum,
     MeasurementCalculate,
     NodeType,
-    Operations,
     PlanChanges,
     RootType,
     Save,
@@ -112,9 +110,8 @@ class MaskDialog(QDialog):
 
 
 class TwoMaskDialog(QDialog):
-    def __init__(self, mask_names):
+    def __init__(self, mask_names: typing.Iterable[str]):
         """
-        :type mask_names: set
         :param mask_names: iterable collection of all available mask names
         """
         super().__init__()
@@ -157,14 +154,14 @@ class TwoMaskDialog(QDialog):
         return text1, text2
 
 
-def stretch_widget(widget):
-    base_widget = QWidget()
-    base_widget.setContentsMargins(0, 0, 0, 0)
-    lay = QVBoxLayout()
-    lay.addWidget(widget)
-    lay.addStretch(3)
-    base_widget.setLayout(lay)
-    return base_widget
+class FileMaskType(Enum):
+    """
+    Enum for file mask types
+    """
+
+    Suffix = 0
+    Replace = 1
+    Mapping_file = 2
 
 
 class FileMask(QWidget):
@@ -172,15 +169,14 @@ class FileMask(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.select_type = QComboBox()
-        self.select_type.addItems(["Suffix", "Replace", "Mapping file"])
+        self.select_type = QEnumComboBox(enum_class=FileMaskType)
         self.values = ["_mask", ("", ""), ""]
         self.first_text = QLineEdit(self.values[0])
         self.second_text = QLineEdit()
         self.first_label = QLabel("Use suffix:")
         self.second_label = QLabel("Replace:")
         self.select_file_btn = QPushButton("Select file")
-        self.state = 0
+        self.state = FileMaskType.Suffix
 
         layout = QGridLayout()
         layout.addWidget(self.select_type, 0, 0, 1, 2)
@@ -190,26 +186,31 @@ class FileMask(QWidget):
         layout.addWidget(self.second_text, 2, 1)
         layout.addWidget(self.select_file_btn, 3, 0, 1, 2)
         layout.setColumnStretch(0, 1)
+        layout.setRowStretch(4, 1)
         self.setLayout(layout)
 
         self.second_text.setHidden(True)
         self.second_label.setHidden(True)
         self.select_file_btn.setHidden(True)
 
-        self.first_text.textChanged.connect(self.value_changed.emit)
-        self.second_text.textChanged.connect(self.value_changed.emit)
-        self.select_type.currentIndexChanged.connect(self.value_changed.emit)
-        self.select_type.currentIndexChanged.connect(self.change_type)
+        self.first_text.textChanged.connect(self._value_change_wrap)
+        self.second_text.textChanged.connect(self._value_change_wrap)
+        self.select_type.currentIndexChanged.connect(self._value_change_wrap)
+        self.select_type.currentEnumChanged.connect(self.change_type)
         self.select_file_btn.clicked.connect(self.select_file)
 
-    def change_type(self, index):
+    def _value_change_wrap(self, _val=None):
+        """Pyside bug workaround"""
+        self.value_changed.emit()
+
+    def change_type(self, index: FileMaskType):
         if self.state == index:
             return
-        if self.state == 1:
+        if self.state == FileMaskType.Replace:
             self.values[1] = self.first_text.text(), self.second_text.text()
         else:
-            self.values[self.state] = self.first_text.text()
-        if index == 1:
+            self.values[self.state.value] = self.first_text.text()
+        if index == FileMaskType.Replace:
             self.second_text.setHidden(False)
             self.second_label.setHidden(False)
             self.layout().setColumnStretch(1, 1)
@@ -221,8 +222,8 @@ class FileMask(QWidget):
             self.second_text.setHidden(True)
             self.second_label.setHidden(True)
             self.layout().setColumnStretch(1, 0)
-            self.first_label.setText(["Use suffix:", "", "Path:"][index])
-            self.first_text.setText(self.values[index])
+            self.first_label.setText(["Use suffix:", "", "Path:"][index.value])
+            self.first_text.setText(self.values[index.value])
             self.select_file_btn.setHidden(index == 0)
         self.state = index
 
@@ -235,22 +236,21 @@ class FileMask(QWidget):
             self.first_text.setText(dial.selectedFiles()[0])
 
     def is_valid(self):
-        if self.select_type.currentIndex() == 0:
+        if self.select_type.currentEnum() == FileMaskType.Suffix:
             return self.first_text.text().strip() != ""
-        if self.select_type.currentIndex() == 1:
+        if self.select_type.currentEnum() == FileMaskType.Replace:
             return "" not in {self.first_text.text().strip(), self.second_text.text().strip()}
 
         text = self.first_text.text().strip()
         return text != "" and os.path.exists(text) and os.path.isfile(text)
 
     def get_value(self, name=""):
-        mask_type = self.select_type.currentIndex()
-        if mask_type == 0:
-            return MaskSuffix(name, self.first_text.text().strip())
-        if mask_type == 1:
-            return MaskSub(name, self.first_text.text().strip(), self.second_text.text().strip())
-
-        return MaskFile(name, self.first_text.text().strip())
+        mask_type = self.select_type.currentEnum()
+        if mask_type == FileMaskType.Suffix:
+            return MaskSuffix(name=name, suffix=self.first_text.text().strip())
+        if mask_type == FileMaskType.Replace:
+            return MaskSub(name=name, base=self.first_text.text().strip(), rep=self.second_text.text().strip())
+        return MaskFile(name=name, path_to_file=self.first_text.text().strip())
 
 
 class MaskOperation(Enum):
@@ -261,8 +261,424 @@ class MaskOperation(Enum):
         return self.name.replace("_", " ").capitalize()
 
 
-def _check_widget(tab_widget, type_):
-    return isinstance(tab_widget.currentWidget(), type_) or tab_widget.currentWidget().findChildren(type_)
+class ProtectedGroupBox(QGroupBox):
+    def __init__(self, text: str, parent: typing.Optional[QWidget] = None):
+        super().__init__(text, parent)
+        self.setStyleSheet(group_sheet)
+        self.protect = False
+        self._node_type = None
+        self._parent_node_type = None
+        self._replace = False
+
+    def set_current_node(self, node: typing.Optional[NodeType], parent_node: typing.Optional[NodeType] = None):
+        self._node_type = node
+        self._parent_node_type = parent_node
+        self._activate_button()
+
+    def set_replace(self, replace: bool):
+        self._replace = replace
+        self._activate_button()
+
+    def _activate_button(self, _value=None):
+        raise NotImplementedError
+
+    @contextmanager
+    def enable_protect(self):
+        previous = self.protect
+        self.protect = True
+        try:
+            yield
+        finally:
+            self.protect = previous
+
+    @classmethod
+    def refresh_profiles(cls, list_widget: QListWidget, new_values: typing.List[str]):
+        index = cls.get_index(list_widget.currentItem(), new_values)
+        list_widget.clear()
+        list_widget.addItems(new_values)
+        if index != -1:
+            list_widget.setCurrentRow(index)
+
+    @staticmethod
+    def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
+        if item is None:
+            return -1
+        text = item.text()
+        try:
+            return new_values.index(text)
+        except ValueError:  # pragma: no cover
+            return -1
+
+
+class OtherOperations(ProtectedGroupBox):
+
+    save_operation = Signal(object)
+
+    def __init__(self, parent=None):
+        super().__init__("Other operations:", parent)
+        self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
+        self.save_constructor = None
+
+        self.change_root = QEnumComboBox(self, enum_class=RootType)
+        self.choose_save_method = QComboBox()
+        self.choose_save_method.addItem("<none>")
+        self.choose_save_method.addItems(list(self.save_translate_dict.keys()))
+        self.save_btn = QPushButton("Save")
+
+        self.choose_save_method.currentTextChanged.connect(self.save_changed)
+        self.save_btn.clicked.connect(self.save_action)
+
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.addWidget(QLabel("Root type:"))
+        layout.addWidget(self.change_root)
+        layout.addStretch(1)
+        layout.addWidget(QLabel("Saving:"))
+        layout.addWidget(self.choose_save_method)
+        layout.addWidget(self.save_btn)
+
+        self.setLayout(layout)
+
+    @property
+    def root_type_changed(self):
+        return self.change_root.currentEnumChanged
+
+    def save_changed(self, text):
+        text = str(text)
+        save_class = self.save_translate_dict.get(text, None)
+        if save_class is None:
+            self.choose_save_method.setCurrentText("<none>")
+            self.save_btn.setText("Save")
+            self.save_btn.setToolTip("Choose file type")
+        else:
+            self.save_btn.setText(f"Save to {save_class.get_short_name()}")
+            self.save_btn.setToolTip("Choose mask create in plan view")
+        self._activate_button()
+
+    @property
+    def expected_node_type(self) -> typing.Optional[NodeType]:
+        save_class = self.save_translate_dict.get(self.choose_save_method.currentText(), None)
+        if save_class is None:
+            return None
+        if save_class.need_mask():
+            return NodeType.mask
+        if save_class.need_segmentation():
+            return NodeType.segment
+        return NodeType.root
+
+    def _activate_button(self, _value=None):
+        if self._replace:
+            self.save_btn.setEnabled(self._parent_node_type == self.expected_node_type and self._node_type is not None)
+        else:
+            self.save_btn.setEnabled(self._node_type == self.expected_node_type and self._node_type is not None)
+
+    def save_action(self):
+        save_class = self.save_translate_dict.get(self.choose_save_method.currentText(), None)
+        if save_class is None:
+            QMessageBox.warning(self, "Save problem", "Not found save class")
+            return
+        dial = FormDialog(
+            [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
+            + save_class.get_fields()
+        )
+        if not dial.exec_():
+            return
+        values = dial.get_values()
+        suffix = values["suffix"]
+        directory = values["directory"]
+        del values["suffix"]
+        del values["directory"]
+        save_elem = Save(
+            suffix=suffix,
+            directory=directory,
+            algorithm=save_class.get_name(),
+            short_name=save_class.get_short_name(),
+            values=values,
+        )
+        self.save_operation.emit(save_elem)
+
+
+class ROIExtractionOp(ProtectedGroupBox):
+    roi_extraction_profile_selected = Signal(object)
+    roi_extraction_pipeline_selected = Signal(object)
+    roi_extraction_profile_add = Signal(object)
+    roi_extraction_pipeline_add = Signal(object)
+
+    def __init__(self, settings: PartSettings, parent: QWidget = None):
+        super().__init__("ROI extraction", parent)
+        self.settings = settings
+
+        self.roi_profile = SearchableListWidget()
+        self.roi_pipeline = SearchableListWidget()
+        self.roi_extraction_tab = QTabWidget()
+        self.roi_extraction_tab.addTab(self.roi_profile, "Profile")
+        self.roi_extraction_tab.addTab(self.roi_pipeline, "Pipeline")
+
+        self.choose_profile_btn = QPushButton("Add Profile")
+        self.choose_profile_btn.setDisabled(True)
+
+        self.settings.roi_profiles_changed.connect(self._refresh_profiles)
+        self.settings.roi_pipelines_changed.connect(self._refresh_pipelines)
+
+        self.roi_profile.currentTextChanged.connect(self._roi_extraction_profile_selected)
+        self.roi_pipeline.currentTextChanged.connect(self._roi_extraction_pipeline_selected)
+        self.choose_profile_btn.clicked.connect(self._add_profile)
+        self.roi_extraction_tab.currentChanged.connect(self._on_change_tab)
+
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.addWidget(self.roi_extraction_tab)
+        layout.addWidget(self.choose_profile_btn)
+
+        self.setLayout(layout)
+
+        self._refresh_profiles()
+        self._refresh_pipelines()
+        self._update_btn_text()
+
+    def set_replace(self, replace: bool):
+        super().set_replace(replace)
+        self._on_change_tab()
+
+    def _activate_button(self, _value=None):
+        if self._replace:
+            self.choose_profile_btn.setEnabled(
+                self._node_type == NodeType.segment
+                and self.roi_extraction_tab.currentWidget() == self.roi_profile
+                and self.roi_profile.currentItem() is not None
+            )
+            return
+        self.choose_profile_btn.setEnabled(
+            self._node_type in {NodeType.root, NodeType.mask, NodeType.file_mask}
+            and self.roi_extraction_tab.currentWidget().currentRow() >= 0
+        )
+
+    def _update_btn_text(self):
+        index = self.roi_extraction_tab.currentIndex()
+        text = self.roi_extraction_tab.tabText(index)
+        if self._replace:
+            self.choose_profile_btn.setText(f"Replace {text}")
+        else:
+            self.choose_profile_btn.setText(f"Add {text}")
+
+    def _on_change_tab(self, _val=None):
+        self._update_btn_text()
+        with self.enable_protect():
+            self.roi_profile.setCurrentItem(None)
+            self.roi_pipeline.setCurrentItem(None)
+        self._activate_button()
+
+    def _refresh_profiles(self):
+        new_profiles = list(sorted(self.settings.roi_profiles.keys(), key=str.lower))
+        with self.enable_protect():
+            self.refresh_profiles(self.roi_profile, new_profiles)
+
+    def _refresh_pipelines(self):
+        new_pipelines = list(sorted(self.settings.roi_pipelines.keys(), key=str.lower))
+        with self.enable_protect():
+            self.refresh_profiles(self.roi_pipeline, new_pipelines)
+
+    def _roi_extraction_profile_selected(self, name: str):
+        if self.protect:
+            return
+        self._activate_button()
+        self.roi_extraction_profile_selected.emit(self.settings.roi_profiles[name])
+
+    def _roi_extraction_pipeline_selected(self, name: str):
+        if self.protect:
+            return
+        self._activate_button()
+        self.roi_extraction_pipeline_selected.emit(self.settings.roi_pipelines[name])
+
+    def _add_profile(self):
+        if self.roi_extraction_tab.currentWidget() == self.roi_profile:
+            item = self.roi_profile.currentItem()
+            if item is None:
+                return
+            self.roi_extraction_profile_add.emit(deepcopy(self.settings.roi_profiles[item.text()]))
+        else:
+            item = self.roi_pipeline.currentItem()
+            if item is None:
+                return
+            self.roi_extraction_pipeline_add.emit(deepcopy(self.settings.roi_pipelines[item.text()]))
+
+
+class SelectMeasurementOp(ProtectedGroupBox):
+
+    set_of_measurement_add = Signal(object)
+    set_of_measurement_selected = Signal(object)
+
+    def __init__(self, settings: PartSettings, parent: QWidget = None):
+        super().__init__("Set of measurements:", parent)
+        self.settings = settings
+
+        self.measurements_list = SearchableListWidget(self)
+        self.measurement_name_prefix = QLineEdit(self)
+        self.choose_channel_for_measurements = QComboBox()
+        self.choose_channel_for_measurements.addItems(
+            ["Same as segmentation"] + [str(x + 1) for x in range(MAX_CHANNEL_NUM)]
+        )
+        self.units_choose = QEnumComboBox(enum_class=Units)
+        self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
+        self.add_measurement_btn = QPushButton("Add measurement calculation")
+        self.add_measurement_btn.clicked.connect(self._measurement_add)
+        self.measurements_list.currentTextChanged.connect(self._measurement_selected)
+
+        layout = QGridLayout()
+        layout.setSpacing(0)
+        layout.addWidget(self.measurements_list, 0, 0, 1, 2)
+        lab = QLabel("Name prefix:")
+        lab.setToolTip("Prefix added before each column name")
+        layout.addWidget(lab, 1, 0)
+        layout.addWidget(self.measurement_name_prefix, 1, 1)
+        layout.addWidget(QLabel("Channel:"), 2, 0)
+        layout.addWidget(self.choose_channel_for_measurements, 2, 1)
+        layout.addWidget(QLabel("Units:"), 3, 0)
+        layout.addWidget(self.units_choose, 3, 1)
+        layout.addWidget(self.add_measurement_btn, 4, 0, 1, 2)
+        self.setLayout(layout)
+
+        self.add_measurement_btn.setDisabled(True)
+        self._refresh_measurement()
+
+    def set_replace(self, replace: bool):
+        super().set_replace(replace)
+        self.add_measurement_btn.setText("Replace set of measurements" if self._replace else "Add set of measurements")
+
+    def _activate_button(self, _value=None):
+        if self._replace:
+            self.add_measurement_btn.setEnabled(
+                self._node_type == NodeType.measurement and self.measurements_list.currentItem() is not None
+            )
+        else:
+            self.add_measurement_btn.setEnabled(
+                self._node_type == NodeType.segment and self.measurements_list.currentItem() is not None
+            )
+
+    def _refresh_measurement(self):
+        new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
+        with self.enable_protect():
+            self.refresh_profiles(self.measurements_list, new_measurements)
+
+    def _measurement_add(self):
+        item = self.measurements_list.currentItem()
+        if item is None:
+            return
+        measurement_copy = deepcopy(self.settings.measurement_profiles[item.text()])
+        prefix = str(self.measurement_name_prefix.text()).strip()
+        channel = self.choose_channel_for_measurements.currentIndex() - 1
+        measurement_copy.name_prefix = prefix
+        self.set_of_measurement_add.emit(
+            MeasurementCalculate(
+                channel=channel,
+                measurement_profile=measurement_copy,
+                name_prefix=prefix,
+                units=self.units_choose.currentEnum(),
+            )
+        )
+
+    def _measurement_selected(self, name: str):
+        if self.protect:
+            return
+        self._activate_button()
+        self.set_of_measurement_selected.emit(self.settings.measurement_profiles[name])
+
+
+class StretchWrap(QWidget):
+    def __init__(self, widget: QWidget, parent: QWidget = None):
+        super().__init__(parent)
+        self.widget = widget
+        lay = QVBoxLayout()
+        lay.setSpacing(0)
+        lay.addWidget(widget)
+        lay.addStretch(1)
+        self.setLayout(lay)
+
+    def __getattr__(self, item):
+        return getattr(self.widget, item)
+
+
+class SelectMaskOp(ProtectedGroupBox):
+
+    mask_step_add = Signal(object)
+
+    def __init__(self, settings: PartSettings, parent: QWidget = None):
+        super().__init__("Use mask from:", parent)
+        self.settings = settings
+        self.mask_set = {}
+
+        self.file_mask = FileMask()
+        self.mask_from_segmentation = MaskWidget(settings)
+        self.mask_operation = StretchWrap(QEnumComboBox(enum_class=MaskOperation))
+        self.add_mask_btn = QPushButton("Add mask")
+        self.add_mask_btn.setToolTip("Mask need to have unique name")
+        self.add_mask_btn.clicked.connect(self._add_mask)
+        self.mask_name = QLineEdit()
+
+        self.mask_tab_select = QTabWidget()
+
+        self.mask_tab_select.addTab(self.file_mask, "File")
+        self.mask_tab_select.addTab(self.mask_from_segmentation, "Current ROI")
+        self.mask_tab_select.addTab(self.mask_operation, "Operations on masks")
+        self.mask_tab_select.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
+        self.mask_tab_select.currentChanged.connect(self._activate_button)
+        self.mask_name.textChanged.connect(self._activate_button)
+
+        layout = QGridLayout()
+        layout.setSpacing(0)
+        layout.addWidget(self.mask_tab_select, 0, 0, 1, 2)
+        label = QLabel("Mask name:")
+        label.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
+        self.mask_name.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
+        layout.addWidget(label, 1, 0)
+        layout.addWidget(self.mask_name, 1, 1)
+        layout.addWidget(self.add_mask_btn, 2, 0, 1, 2)
+        self.setLayout(layout)
+
+        self.add_mask_btn.setDisabled(True)
+
+    def update_mask_set(self, mask_set: typing.Set[str]):
+        self.mask_set = mask_set
+
+    def set_replace(self, replace: bool):
+        super().set_replace(replace)
+        self.add_mask_btn.setText("Replace mask" if self._replace else "Add mask")
+
+    def _activate_button(self, _value=None):
+        name = self.mask_name.text().strip()
+        name_ok = name == "" or name not in self.mask_set
+        if self._replace:
+            name_ok = name_ok and self._node_type == NodeType.mask
+            node_type = self._parent_node_type
+        else:
+            node_type = self._node_type
+        if self.mask_tab_select.currentWidget() == self.mask_from_segmentation:
+            self.add_mask_btn.setEnabled(node_type == NodeType.segment and name_ok)
+            return
+        self.add_mask_btn.setEnabled(node_type == NodeType.root and name_ok)
+
+    def _add_mask(self):
+        widget = self.mask_tab_select.currentWidget()
+        name = self.mask_name.text().strip()
+        if widget == self.file_mask:
+            mask_ob = self.file_mask.get_value(name)
+        elif widget == self.mask_from_segmentation:
+            mask_ob = MaskCreate(name=name, mask_property=self.mask_from_segmentation.get_mask_property())
+        elif widget == self.mask_operation:
+            dial = TwoMaskDialog(self.mask_set)
+            if not dial.exec_():
+                return  # pragma: no cover
+            names = dial.get_result()
+
+            if self.mask_operation.currentEnum() == MaskOperation.mask_intersection:  # Mask intersection
+                mask_construct = MaskIntersection
+            else:
+                mask_construct = MaskSum
+            mask_ob = mask_construct(name=name, mask1=names[0], mask2=names[1])
+        else:
+            raise ValueError("Unknown widget")  # pragma: no cover
+
+        self.mask_step_add.emit(mask_ob)
 
 
 class CreatePlan(QWidget):
@@ -273,80 +689,46 @@ class CreatePlan(QWidget):
         super().__init__()
         self.settings = settings
         self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
+        self._mask_set = set()
         self.plan = PlanPreview(self)
         self.save_plan_btn = QPushButton("Save")
         self.clean_plan_btn = QPushButton("Remove all")
         self.remove_btn = QPushButton("Remove")
         self.update_element_chk = QCheckBox("Update element")
-        self.change_root = QEnumComboBox(enum_class=RootType)
-        self.save_choose = QComboBox()
-        self.save_choose.addItem("<none>")
-        self.save_choose.addItems(list(self.save_translate_dict.keys()))
-        self.save_btn = QPushButton("Save")
-        self.segment_profile = SearchableListWidget()
-        self.pipeline_profile = SearchableListWidget()
-        self.segment_stack = QTabWidget()
-        self.segment_stack.addTab(self.segment_profile, "Profile")
-        self.segment_stack.addTab(self.pipeline_profile, "Pipeline")
-        self.generate_mask_btn = QPushButton("Add mask")
-        self.generate_mask_btn.setToolTip("Mask need to have unique name")
-        self.mask_name = QLineEdit()
-        self.mask_operation = QEnumComboBox(enum_class=MaskOperation)
+        self.other_operations = OtherOperations(self)
+        self.roi_extraction = ROIExtractionOp(settings=settings, parent=self)
+        self.select_measurement = SelectMeasurementOp(settings=settings, parent=self)
+        self.select_mask = SelectMaskOp(settings=settings, parent=self)
+        self.mask_set = set()
 
-        self.chanel_num = QSpinBox()
-        self.choose_channel_for_measurements = QComboBox()
-        self.choose_channel_for_measurements.addItems(
-            ["Same as segmentation"] + [str(x + 1) for x in range(MAX_CHANNEL_NUM)]
-        )
-        self.units_choose = QEnumComboBox(enum_class=Units)
-        self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
-        self.chanel_num.setRange(0, 10)
         self.expected_node_type = None
         self.save_constructor = None
 
-        self.chose_profile_btn = QPushButton("Add Profile")
-        self.get_big_btn = QPushButton("Leave the biggest")
-        self.get_big_btn.hide()
-        self.get_big_btn.setDisabled(True)
-        self.measurements_list = SearchableListWidget(self)
-        self.measurement_name_prefix = QLineEdit(self)
-        self.add_calculation_btn = QPushButton("Add measurement calculation")
         self.information = QTextEdit()
         self.information.setReadOnly(True)
 
-        self.protect = False
-        self.mask_set = set()
+        # FIXME: fix in better way
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
         self.segmentation_mask = MaskWidget(settings)
         self.file_mask = FileMask()
 
-        self.change_root.currentIndexChanged.connect(self.change_root_type)
-        self.save_choose.currentTextChanged.connect(self.save_changed)
-        self.measurements_list.currentTextChanged.connect(self.show_measurement)
-        self.segment_profile.currentTextChanged.connect(self.show_segment)
-        self.measurements_list.currentTextChanged.connect(self.show_measurement_info)
-        self.segment_profile.currentTextChanged.connect(self.show_segment_info)
-        self.pipeline_profile.currentTextChanged.connect(self.show_segment_info)
-        self.pipeline_profile.currentTextChanged.connect(self.show_segment)
-        self.mask_name.textChanged.connect(self.mask_name_changed)
-        self.generate_mask_btn.clicked.connect(self.create_mask)
+        self.other_operations.root_type_changed.connect(self.change_root_type)
+        self.other_operations.save_operation.connect(self.add_save_operation)
+        self.roi_extraction.roi_extraction_pipeline_selected.connect(self.show_info)
+        self.roi_extraction.roi_extraction_profile_selected.connect(self.show_info)
+        self.roi_extraction.roi_extraction_profile_add.connect(self.add_roi_extraction)
+        self.roi_extraction.roi_extraction_pipeline_add.connect(self.add_roi_extraction_pipeline)
+        self.select_measurement.set_of_measurement_add.connect(self.add_set_of_measurement)
+        self.select_measurement.set_of_measurement_selected.connect(self.show_info)
+        self.select_mask.mask_step_add.connect(self.create_mask)
+
         self.clean_plan_btn.clicked.connect(self.clean_plan)
         self.remove_btn.clicked.connect(self.remove_element)
-        self.mask_name.textChanged.connect(self.mask_text_changed)
-        self.chose_profile_btn.clicked.connect(self.add_segmentation)
-        self.get_big_btn.clicked.connect(self.add_leave_biggest)
-        self.add_calculation_btn.clicked.connect(self.add_measurement)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
-        self.save_btn.clicked.connect(self.add_save_to_project)
-        self.update_element_chk.stateChanged.connect(self.mask_text_changed)
-        self.update_element_chk.stateChanged.connect(self.show_measurement)
-        self.update_element_chk.stateChanged.connect(self.show_segment)
-        self.update_element_chk.stateChanged.connect(self.update_names)
-        self.segment_stack.currentChanged.connect(self.change_segmentation_table)
-        self.settings.measurement_profiles_changed.connect(self._refresh_measurement)
-        self.settings.roi_profiles_changed.connect(self._refresh_profiles)
-        self.settings.roi_pipelines_changed.connect(self._refresh_pipelines)
+        self.update_element_chk.stateChanged.connect(self.select_mask.set_replace)
+        self.update_element_chk.stateChanged.connect(self.roi_extraction.set_replace)
+        self.update_element_chk.stateChanged.connect(self.select_measurement.set_replace)
 
         plan_box = QGroupBox("Prepare workflow:")
         lay = QVBoxLayout()
@@ -361,64 +743,6 @@ class CreatePlan(QWidget):
         plan_box.setLayout(lay)
         plan_box.setStyleSheet(group_sheet)
 
-        other_box = QGroupBox("Other operations:")
-        other_box.setContentsMargins(0, 0, 0, 0)
-        bt_lay = QVBoxLayout()
-        bt_lay.setSpacing(0)
-        bt_lay.addWidget(QLabel("Root type:"))
-        bt_lay.addWidget(self.change_root)
-        bt_lay.addStretch(1)
-        bt_lay.addWidget(QLabel("Saving:"))
-        bt_lay.addWidget(self.save_choose)
-        bt_lay.addWidget(self.save_btn)
-        other_box.setLayout(bt_lay)
-        other_box.setStyleSheet(group_sheet)
-
-        mask_box = QGroupBox("Use mask from:")
-        mask_box.setStyleSheet(group_sheet)
-        self.mask_stack = QTabWidget()
-
-        self.mask_stack.addTab(stretch_widget(self.file_mask), "File")
-        self.mask_stack.addTab(stretch_widget(self.segmentation_mask), "Current ROI")
-        self.mask_stack.addTab(stretch_widget(self.mask_operation), "Operations on masks")
-        self.mask_stack.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
-
-        lay = QGridLayout()
-        lay.setSpacing(0)
-        lay.addWidget(self.mask_stack, 0, 0, 1, 2)
-        label = QLabel("Mask name:")
-        label.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
-        self.mask_name.setToolTip("Needed if you would like to reuse this mask in tab 'Operations on masks'")
-        lay.addWidget(label, 1, 0)
-        lay.addWidget(self.mask_name, 1, 1)
-        lay.addWidget(self.generate_mask_btn, 2, 0, 1, 2)
-        mask_box.setLayout(lay)
-
-        segment_box = QGroupBox("ROI extraction:")
-        segment_box.setStyleSheet(group_sheet)
-        lay = QVBoxLayout()
-        lay.setSpacing(0)
-        lay.addWidget(self.segment_stack)
-        lay.addWidget(self.chose_profile_btn)
-        lay.addWidget(self.get_big_btn)
-        segment_box.setLayout(lay)
-
-        measurement_box = QGroupBox("Set of measurements:")
-        measurement_box.setStyleSheet(group_sheet)
-        lay = QGridLayout()
-        lay.setSpacing(0)
-        lay.addWidget(self.measurements_list, 0, 0, 1, 2)
-        lab = QLabel("Name prefix:")
-        lab.setToolTip("Prefix added before each column name")
-        lay.addWidget(lab, 1, 0)
-        lay.addWidget(self.measurement_name_prefix, 1, 1)
-        lay.addWidget(QLabel("Channel:"), 2, 0)
-        lay.addWidget(self.choose_channel_for_measurements, 2, 1)
-        lay.addWidget(QLabel("Units:"), 3, 0)
-        lay.addWidget(self.units_choose, 3, 1)
-        lay.addWidget(self.add_calculation_btn, 4, 0, 1, 2)
-        measurement_box.setLayout(lay)
-
         info_box = QGroupBox("Information")
         info_box.setStyleSheet(group_sheet)
         lay = QVBoxLayout()
@@ -426,183 +750,74 @@ class CreatePlan(QWidget):
         info_box.setLayout(lay)
 
         layout = QGridLayout()
-        fst_col = QVBoxLayout()
-        fst_col.addWidget(plan_box, 1)
-        fst_col.addWidget(mask_box)
         layout.addWidget(plan_box, 0, 0, 5, 1)
-        layout.addWidget(mask_box, 0, 2, 1, 2)
-        layout.addWidget(other_box, 0, 1)
-        layout.addWidget(segment_box, 1, 1, 1, 2)
-        layout.addWidget(measurement_box, 1, 3)
+        layout.addWidget(self.select_mask, 0, 2, 1, 2)
+        layout.addWidget(self.other_operations, 0, 1)
+        layout.addWidget(self.roi_extraction, 1, 1, 1, 2)
+        layout.addWidget(self.select_measurement, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
         self.setLayout(layout)
 
-        self.generate_mask_btn.setDisabled(True)
-        self.chose_profile_btn.setDisabled(True)
-        self.add_calculation_btn.setDisabled(True)
-
-        self.mask_allow = False
-        self.segment_allow = False
-        self.file_mask_allow = False
         self.node_type = NodeType.root
         self.node_name = ""
-        self.plan_node_changed.connect(self.mask_text_changed)
         self.plan.changed_node.connect(self.node_type_changed)
-        self.plan_node_changed.connect(self.show_segment)
-        self.plan_node_changed.connect(self.show_measurement)
-        self.plan_node_changed.connect(self.mask_stack_change)
-        self.mask_stack.currentChanged.connect(self.mask_stack_change)
-        self.file_mask.value_changed.connect(self.mask_stack_change)
-        self.mask_name.textChanged.connect(self.mask_stack_change)
         self.node_type_changed()
-        self.refresh_all_profiles()
 
-    def change_root_type(self):
-        value: RootType = self.change_root.currentEnum()
-        self.calculation_plan.set_root_type(value)
+    @property
+    def mask_set(self):
+        return self._mask_set
+
+    @mask_set.setter
+    def mask_set(self, value):
+        self._mask_set = value
+        self.select_mask.update_mask_set(value)
+
+    def change_root_type(self, root_type: RootType):
+        self.calculation_plan.set_root_type(root_type)
         self.plan.update_view()
 
-    def change_segmentation_table(self):
-        index = self.segment_stack.currentIndex()
-        text = self.segment_stack.tabText(index)
+    def add_save_operation(self, save_info: Save):
         if self.update_element_chk.isChecked():
-            self.chose_profile_btn.setText(f"Replace {text}")
+            self.calculation_plan.replace_step(save_info)
         else:
-            self.chose_profile_btn.setText(f"Add {text}")
-        self.segment_profile.setCurrentItem(None)
-        self.pipeline_profile.setCurrentItem(None)
-
-    def save_changed(self, text):
-        text = str(text)
-        if text == "<none>":
-            self.save_btn.setText("Save")
-            self.save_btn.setToolTip("Choose file type")
-            self.expected_node_type = None
-            self.save_constructor = None
-        else:
-            save_class = self.save_translate_dict.get(text, None)
-            if save_class is None:
-                self.save_choose.setCurrentText("<none>")
-                return
-            self.save_btn.setText(f"Save to {save_class.get_short_name()}")
-            self.save_btn.setToolTip("Choose mask create in plan view")
-            if save_class.need_mask():
-                self.expected_node_type = NodeType.mask
-            elif save_class.need_segmentation():
-                self.expected_node_type = NodeType.segment
-            else:
-                self.expected_node_type = NodeType.root
-            self.save_constructor = Save
-        self.save_activate()
-
-    def save_activate(self):
-        self.save_btn.setDisabled(True)
-        if self.node_type == self.expected_node_type:
-            self.save_btn.setEnabled(True)
-
-    def segmentation_from_project(self):
-        self.calculation_plan.add_step(Operations.reset_to_base)
+            self.calculation_plan.add_step(save_info)
         self.plan.update_view()
 
-    def update_names(self):
+    def add_set_of_measurement(self, set_of_measurement: MeasurementCalculate):
         if self.update_element_chk.isChecked():
-            self.chose_profile_btn.setText("Replace Profile")
-            self.add_calculation_btn.setText("Replace set of measurements")
-            self.generate_mask_btn.setText("Replace mask")
+            self.calculation_plan.replace_step(set_of_measurement)
         else:
-            self.chose_profile_btn.setText("Add Profile")
-            self.add_calculation_btn.setText("Add set of measurements")
-            self.generate_mask_btn.setText("Generate mask")
+            self.calculation_plan.add_step(set_of_measurement)
+        self.plan.update_view()
 
     def node_type_changed(self):
-        self.save_btn.setDisabled(True)
         self.node_name = ""
         if self.plan.currentItem() is None:
-            self.mask_allow = False
-            self.file_mask_allow = False
-            self.segment_allow = False
             self.remove_btn.setDisabled(True)
             self.plan_node_changed.emit()
             logging.debug("[node_type_changed] return")
             return
         node_type = self.calculation_plan.get_node_type()
+
+        node_type_for_ob = self.calculation_plan.get_node_type(parent=self.update_element_chk.isChecked())
+
+        self.other_operations.set_current_node(node_type, node_type_for_ob)
+        self.roi_extraction.set_current_node(node_type, node_type_for_ob)
+        self.select_measurement.set_current_node(node_type, node_type_for_ob)
+        self.select_mask.set_current_node(node_type, node_type_for_ob)
+
         self.node_type = node_type
-        if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.measurement, NodeType.save]:
-            self.remove_btn.setEnabled(True)
-        else:
-            self.remove_btn.setEnabled(False)
-        if node_type in (NodeType.mask, NodeType.file_mask):
-            self.mask_allow = False
-            self.segment_allow = True
-            self.file_mask_allow = False
-            self.node_name = self.calculation_plan.get_node().operation.name
-        elif node_type == NodeType.segment:
-            self.mask_allow = True
-            self.segment_allow = False
-            self.file_mask_allow = False
-            self.save_btn.setEnabled(True)
-        elif node_type == NodeType.root:
-            self.mask_allow = False
-            self.segment_allow = True
-            self.file_mask_allow = True
-        elif node_type in (NodeType.none, NodeType.measurement, NodeType.save):
-            self.mask_allow = False
-            self.segment_allow = False
-            self.file_mask_allow = False
-        self.save_activate()
         self.plan_node_changed.emit()
 
-    def add_save_to_project(self):
-        save_class = self.save_translate_dict.get(self.save_choose.currentText(), None)
-        if save_class is None:
-            QMessageBox.warning(self, "Save problem", "Not found save class")
-        dial = FormDialog(
-            [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
-            + save_class.get_fields()
-        )
-        if not dial.exec_():
-            return
-        values = dial.get_values()
-        suffix = values["suffix"]
-        directory = values["directory"]
-        del values["suffix"]
-        del values["directory"]
-        save_elem = Save(suffix, directory, save_class.get_name(), save_class.get_short_name(), values)
-        if self.update_element_chk.isChecked():
-            self.calculation_plan.replace_step(save_elem)
-        else:
-            self.calculation_plan.add_step(save_elem)
-        self.plan.update_view()
-
-    def create_mask(self):
-        text = str(self.mask_name.text()).strip()
-
-        if text != "" and text in self.mask_set:
+    def create_mask(self, mask_ob: MaskBase):
+        if mask_ob.name != "" and mask_ob.name in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
-        if _check_widget(self.mask_stack, MaskWidget):
-            mask_ob = MaskCreate(text, self.segmentation_mask.get_mask_property())
-        elif _check_widget(self.mask_stack, FileMask):
-            mask_ob = self.file_mask.get_value(text)
-        elif _check_widget(self.mask_stack, QEnumComboBox):  # existing mask
-            mask_dialog = TwoMaskDialog
-            if self.mask_operation.currentEnum() == MaskOperation.mask_intersection:  # Mask intersection
-                MaskConstruct = MaskIntersection
-            else:
-                MaskConstruct = MaskSum
-            dial = mask_dialog(self.mask_set)
-            if not dial.exec_():
-                return
-            names = dial.get_result()
-
-            mask_ob = MaskConstruct(name=text, mask1=names[0], mask2=names[1])
-        else:
-            raise ValueError("Unknowsn widget")
 
         if self.update_element_chk.isChecked():
             node = self.calculation_plan.get_node()
             name = node.operation.name
-            if name in self.calculation_plan.get_reused_mask() and name != text:
+            if name in self.calculation_plan.get_reused_mask() and name != mask_ob.name:
                 QMessageBox.warning(
                     self, "Cannot remove", f"Cannot remove mask '{name}' from plan because it is used in other elements"
                 )
@@ -615,113 +830,40 @@ class CreatePlan(QWidget):
             self.mask_set.add(mask_ob.name)
             self.calculation_plan.add_step(mask_ob)
         self.plan.update_view()
-        self.mask_text_changed()
 
-    def mask_stack_change(self):
-        node_type = self.calculation_plan.get_node_type()
-        if self.update_element_chk.isChecked() and node_type not in [NodeType.mask, NodeType.file_mask]:
-            self.generate_mask_btn.setDisabled(True)
-        text = self.mask_name.text()
-        update = self.update_element_chk.isChecked()
-        if self.node_type == NodeType.none:
-            self.generate_mask_btn.setDisabled(True)
-            return
-        operation = self.calculation_plan.get_node().operation
-        if (
-            not update
-            and isinstance(operation, (MaskMapper, MaskBase))
-            and self.calculation_plan.get_node().operation.name == text
-        ):
-            self.generate_mask_btn.setDisabled(True)
-            return
-        if _check_widget(self.mask_stack, MaskWidget):  # mask from segmentation
-            if (not update and node_type == NodeType.segment) or (update and node_type == NodeType.mask):
-                self.generate_mask_btn.setEnabled(True)
-            else:
-                self.generate_mask_btn.setEnabled(False)
-            self.generate_mask_btn.setToolTip("Select segmentation")
-        elif _check_widget(self.mask_stack, FileMask):
-            if (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask):
-                self.generate_mask_btn.setEnabled(self.file_mask.is_valid())
-            else:
-                self.generate_mask_btn.setEnabled(False)
-            self.generate_mask_btn.setToolTip("Need root selected")
-        else:  # reuse mask
-            if len(self.mask_set) > 1 and (
-                (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask)
-            ):
-                self.generate_mask_btn.setEnabled(True)
-            else:
-                self.generate_mask_btn.setEnabled(False)
-            self.generate_mask_btn.setToolTip("Need at least two named mask and root selected")
-
-    def mask_name_changed(self, text):
-        if str(text) in self.mask_set:
-            self.generate_mask_btn.setDisabled(True)
-        else:
-            self.generate_mask_btn.setDisabled(False)
-
-    def add_leave_biggest(self):
-        profile = self.calculation_plan.get_node().operation
-        profile.leave_biggest_swap()
-        self.calculation_plan.replace_step(profile)
-        self.plan.update_view()
-
-    def add_segmentation(self):
-        if self.segment_stack.currentIndex() == 0:
-            text = str(self.segment_profile.currentItem().text())
-            if text not in self.settings.roi_profiles:
-                self.refresh_all_profiles()
-                return
-            profile = self.settings.roi_profiles[text]
-            if self.update_element_chk.isChecked():
-                self.calculation_plan.replace_step(profile)
-            else:
-                self.calculation_plan.add_step(profile)
-        else:  # self.segment_stack.currentIndex() == 1
-            text = self.pipeline_profile.currentItem().text()
-            segmentation_pipeline = self.settings.roi_pipelines[text]
-            pos = self.calculation_plan.current_pos[:]
-            old_pos = self.calculation_plan.current_pos[:]
-            for el in segmentation_pipeline.mask_history:
-                self.calculation_plan.add_step(el.segmentation)
-                self.plan.update_view()
-                node = self.calculation_plan.get_node(pos)
-                pos.append(len(node.children) - 1)
-                self.calculation_plan.set_position(pos)
-                self.calculation_plan.add_step(MaskCreate("", el.mask_property))
-                self.plan.update_view()
-                pos.append(0)
-                self.calculation_plan.set_position(pos)
-            self.calculation_plan.add_step(segmentation_pipeline.segmentation)
-            self.calculation_plan.set_position(old_pos)
-
-        self.plan.update_view()
-
-    def add_measurement(self):
-        text = str(self.measurements_list.currentItem().text())
-        measurement_copy = deepcopy(self.settings.measurement_profiles[text])
-        prefix = str(self.measurement_name_prefix.text()).strip()
-        channel = self.choose_channel_for_measurements.currentIndex() - 1
-        measurement_copy.name_prefix = prefix
-        # noinspection PyTypeChecker
-        measurement_calculate = MeasurementCalculate(
-            channel=channel,
-            measurement_profile=measurement_copy,
-            name_prefix=prefix,
-            units=self.units_choose.currentEnum(),
-        )
+    def add_roi_extraction(self, roi_extraction: ROIExtractionOp):
         if self.update_element_chk.isChecked():
-            self.calculation_plan.replace_step(measurement_calculate)
+            self.calculation_plan.replace_step(roi_extraction)
         else:
-            self.calculation_plan.add_step(measurement_calculate)
+            self.calculation_plan.add_step(roi_extraction)
+        self.plan.update_view()
+
+    def add_roi_extraction_pipeline(self, roi_extraction_pipeline: SegmentationPipeline):
+        if self.update_element_chk.isChecked():
+            QMessageBox.warning("Cannot update pipeline", "Cannot update pipeline")
+            return
+        pos = self.calculation_plan.current_pos[:]
+        old_pos = pos[:]
+        for el in roi_extraction_pipeline.mask_history:
+            self.calculation_plan.add_step(el.segmentation)
+            self.plan.update_view()
+            node = self.calculation_plan.get_node(pos)
+            pos.append(len(node.children) - 1)
+            self.calculation_plan.set_position(pos)
+            self.calculation_plan.add_step(MaskCreate(name="", mask_property=el.mask_property))
+            self.plan.update_view()
+            pos.append(0)
+            self.calculation_plan.set_position(pos)
+        self.calculation_plan.add_step(roi_extraction_pipeline.segmentation)
+        self.calculation_plan.set_position(old_pos)
         self.plan.update_view()
 
     def remove_element(self):
         conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
         if len(conflict_mask) > 0:
             logging.info("Mask in use")
-            QMessageBox.warning(self, "In use", "Masks {} are used in other places".format(", ".join(conflict_mask)))
+            QMessageBox.warning(self, "In use", f'Masks {", ".join(conflict_mask)} are used in other places')
+
             return
         self.mask_set -= used_mask
         self.calculation_plan.remove_step()
@@ -732,20 +874,6 @@ class CreatePlan(QWidget):
         self.plan.set_plan(self.calculation_plan)
         self.node_type_changed()
         self.mask_set = set()
-
-    def mask_text_changed(self):
-        name = str(self.mask_name.text()).strip()
-        self.generate_mask_btn.setDisabled(True)
-        # load mask from file
-        if self.update_element_chk.isChecked():
-            if self.node_type not in [NodeType.file_mask, NodeType.mask]:
-                return
-            # generate mask from segmentation
-            if self.node_type == NodeType.mask and (name == "" or name == self.node_name or name not in self.mask_set):
-                self.generate_mask_btn.setEnabled(True)
-
-        elif self.mask_allow and (name == "" or name not in self.mask_set):
-            self.generate_mask_btn.setEnabled(True)
 
     def add_calculation_plan(self, text=None):
         if text is None or isinstance(text, bool):
@@ -777,113 +905,11 @@ class CreatePlan(QWidget):
             self.settings.batch_plans[text] = plan
             self.settings.dump()
 
-    @staticmethod
-    def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
-        if item is None:
-            return -1
-        text = item.text()
-        try:
-            return new_values.index(text)
-        except ValueError:
-            return -1
-
-    def refresh_profiles(self, list_widget: QListWidget, new_values: typing.List[str]):
-        index = self.get_index(list_widget.currentItem(), new_values)
-        list_widget.clear()
-        list_widget.addItems(new_values)
-        if index != -1:
-            list_widget.setCurrentRow(index)
-
-    @contextmanager
-    def enable_protect(self):
-        previous = self.protect
-        self.protect = True
-        try:
-            yield
-        finally:
-            self.protect = previous
-
-    def _refresh_measurement(self):
-        new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
-        with self.enable_protect():
-            self.refresh_profiles(self.measurements_list, new_measurements)
-
-    def _refresh_profiles(self):
-        new_profiles = list(sorted(self.settings.roi_profiles.keys(), key=str.lower))
-        with self.enable_protect():
-            self.refresh_profiles(self.segment_profile, new_profiles)
-
-    def _refresh_pipelines(self):
-        new_pipelines = list(sorted(self.settings.roi_pipelines.keys(), key=str.lower))
-        with self.enable_protect():
-            self.refresh_profiles(self.pipeline_profile, new_pipelines)
-
-    def refresh_all_profiles(self):
-        self._refresh_measurement()
-        self._refresh_profiles()
-        self._refresh_pipelines()
-
-    def show_measurement_info(self, text=None):
-        if self.protect:
-            return
-        if text is None:
-            if self.measurements_list.currentItem() is not None:
-                text = str(self.measurements_list.currentItem().text())
-            else:
-                return
-        profile = self.settings.measurement_profiles[text]
-        self.information.setText(str(profile))
-
-    def show_measurement(self):
-        if self.update_element_chk.isChecked():
-            if self.node_type == NodeType.measurement:
-                self.add_calculation_btn.setEnabled(True)
-            else:
-                self.add_calculation_btn.setDisabled(True)
-        elif self.measurements_list.currentItem() is not None:
-            self.add_calculation_btn.setEnabled(self.mask_allow)
+    def show_info(self, item: typing.Union[ROIExtractionOp, SegmentationPipeline, MeasurementProfile]):
+        if isinstance(item, (ROIExtractionOp, MeasurementProfile)):
+            self.information.setText(str(item))
         else:
-            self.add_calculation_btn.setDisabled(True)
-
-    def show_segment_info(self, text=None):
-        if self.protect:
-            return
-        if text == "":
-            return
-        if self.segment_stack.currentIndex() == 0:
-            if text is None:
-                if self.segment_profile.currentItem() is not None:
-                    text = str(self.segment_profile.currentItem().text())
-                else:
-                    return
-            profile = self.settings.roi_profiles[text]
-        else:
-            if text is None:
-                if self.pipeline_profile.currentItem() is not None:
-                    text = str(self.pipeline_profile.currentItem().text())
-                else:
-                    return
-            profile = self.settings.roi_pipelines[text]
-        self.information.setText(profile.pretty_print(AnalysisAlgorithmSelection))
-
-    def show_segment(self):
-        if self.update_element_chk.isChecked() and self.segment_stack.currentIndex() == 0:
-            self.get_big_btn.setDisabled(True)
-            if self.node_type == NodeType.segment:
-                self.chose_profile_btn.setEnabled(True)
-            else:
-                self.chose_profile_btn.setDisabled(True)
-        else:
-            if self.node_type == NodeType.segment:
-                self.get_big_btn.setEnabled(True)
-            else:
-                self.get_big_btn.setDisabled(True)
-            if (
-                self.segment_stack.currentIndex() == 0 and self.segment_profile.currentItem()
-            ) or self.pipeline_profile.currentItem() is not None:
-                self.chose_profile_btn.setEnabled(self.segment_allow)
-            else:
-                self.chose_profile_btn.setDisabled(True)
+            self.information.setText(item.pretty_print(AnalysisAlgorithmSelection))
 
     def edit_plan(self):
         plan = self.sender().plan_to_edit  # type: CalculationPlan
@@ -1167,7 +1193,7 @@ class CalculateInfo(QWidget):
             return
         text = str(self.calculate_plans.currentItem().text())
         if not text:
-            return
+            return  # pragma: no cover
         if text in self.settings.batch_plans:
             del self.settings.batch_plans[text]
         self.plan_view.clear()
@@ -1177,7 +1203,7 @@ class CalculateInfo(QWidget):
             return
         text = str(self.calculate_plans.currentItem().text())
         if not text:
-            return
+            return  # pragma: no cover
         if text in self.settings.batch_plans:
             self.plan_to_edit = self.settings.batch_plans[text]
             self.plan_to_edit_signal.emit()
@@ -1197,7 +1223,7 @@ class CalculatePlaner(QSplitter):
     :type settings: Settings
     """
 
-    def __init__(self, settings, parent):
+    def __init__(self, settings, parent=None):
         super().__init__(parent)
         self.settings = settings
         self.info_widget = CalculateInfo(settings)
