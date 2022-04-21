@@ -265,12 +265,14 @@ class TestOtherOperations:
         assert widget.save_btn.text() == "Save"
         assert widget.choose_save_method.currentIndex() == 0
 
-    def test_set_current_node(self, qtbot):
+    @pytest.mark.parametrize("root_type,replace", [(NodeType.root, False), (NodeType.mask, True)])
+    def test_set_current_node(self, qtbot, root_type, replace):
         widget = prepare_plan_widget.OtherOperations()
         qtbot.addWidget(widget)
         widget.set_current_node(None)
         assert not widget.save_btn.isEnabled()
-        widget.set_current_node(NodeType.root)
+        widget.set_replace(replace)
+        widget.set_current_node(root_type, NodeType.root)
         assert not widget.save_btn.isEnabled()
         with qtbot.waitSignal(widget.choose_save_method.currentTextChanged):
             widget.choose_save_method.setCurrentText(SaveAsTiff.get_short_name())
