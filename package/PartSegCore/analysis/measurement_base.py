@@ -207,11 +207,14 @@ class Leaf(BaseModel):
 
     def is_per_component(self) -> bool:
         """If measurement return list of result or single value."""
-        return self.per_component == PerComponent.Yes
+        return self.per_component in {PerComponent.Yes, PerComponent.Per_Mask_component}
 
     def need_mask(self) -> bool:
         """If this measurement need mast for proper calculation."""
-        return self.area in [AreaType.Mask, AreaType.Mask_without_ROI]
+        return (
+            self.area in [AreaType.Mask, AreaType.Mask_without_ROI]
+            or self.per_component is PerComponent.Per_Mask_component
+        )
 
 
 def replace(self, **kwargs) -> Leaf:
