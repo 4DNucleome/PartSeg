@@ -894,10 +894,6 @@ class ComponentsNumber(MeasurementMethodBase):
         return np.unique(area_array).size - 1
 
     @classmethod
-    def get_starting_leaf(cls):
-        return super().get_starting_leaf().replace_(per_component=PerComponent.No)
-
-    @classmethod
     def get_units(cls, ndim):
         return symbols("count")
 
