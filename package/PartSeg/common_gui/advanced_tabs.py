@@ -8,8 +8,6 @@ from contextlib import suppress
 from functools import partial
 from typing import List
 
-import napari
-from packaging.version import parse as parse_version
 from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
@@ -33,10 +31,7 @@ from PartSeg.common_gui.universal_gui_part import CustomDoubleSpinBox
 from PartSegCore import plugins as core_plugins
 from PartSegCore import register, state_store
 
-if parse_version(napari.__version__) < parse_version("0.4.11"):
-    RENDERING_LIST = ["translucent"]
-else:
-    RENDERING_LIST = ["iso_categorical", "translucent"]
+RENDERING_LIST = ["iso_categorical", "translucent"]
 
 RENDERING_MODE_NAME_STR = "rendering_mode"
 SEARCH_ZOOM_FACTOR_STR = "search_zoom_factor"
