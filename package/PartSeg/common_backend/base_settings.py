@@ -13,7 +13,9 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optiona
 
 import napari.utils.theme
 import numpy as np
+from napari.qt import get_stylesheet
 from napari.utils import Colormap
+from napari.utils.theme import get_theme
 from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
 from qtpy.QtWidgets import QMessageBox, QWidget
@@ -30,26 +32,6 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegCore.utils import ProfileDict
 from PartSegImage import Image
-
-if hasattr(napari.utils.theme, "get_theme"):
-
-    get_theme = napari.utils.theme.get_theme
-
-
-else:  # pragma: no cover
-
-    def get_theme(name: str, as_dict=True) -> Union[dict, Namespace]:
-        theme = napari.utils.theme.palettes[name]
-        theme["canvas"] = "black"
-        if as_dict:
-            return theme
-        return Namespace(**{k: Color(v) if isinstance(v, str) and v.startswith("rgb") else v for k, v in theme.items()})
-
-
-try:
-    from napari.qt import get_stylesheet
-except ImportError:  # pragma: no cover
-    from napari.resources import get_stylesheet
 
 if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings

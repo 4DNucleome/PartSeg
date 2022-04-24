@@ -81,8 +81,6 @@ NEXT_ORDER = {"xy": "zy", "zy": "zx", "zx": "xy"}
 
 ColorInfo = Dict[int, Union[str, List[float]]]
 
-napari_rendering = parse_version(napari.__version__) >= parse_version("0.4.11")
-
 
 @dataclass
 class ImageInfo:
@@ -498,8 +496,7 @@ class ImageView(QWidget):
             "blending": "translucent",
             "metadata": {"alternative": self.roi_alternative_selection},
         }
-        if napari_rendering:
-            kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0])
+        kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0])
 
         only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
         image_info.roi = self.viewer.add_labels(roi, **kwargs)
