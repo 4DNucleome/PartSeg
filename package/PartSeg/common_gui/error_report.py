@@ -12,6 +12,8 @@ import typing
 
 import requests
 import sentry_sdk
+from napari.settings import get_settings
+from napari.utils.theme import get_theme
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QApplication,
@@ -32,7 +34,7 @@ from sentry_sdk.utils import event_from_exception, exc_info_from_error
 from traceback_with_variables import print_exc
 
 from PartSeg import __version__
-from PartSeg.common_backend.python_syntax_highlight import PythonHighlighter
+from PartSeg.common_backend.python_syntax_highlight import Pylighter
 from PartSegCore import state_store
 from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
@@ -56,7 +58,8 @@ class ErrorDialog(QDialog):
         self.send_report_btn.setDisabled(not state_store.report_errors)
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
-        self._highlight = PythonHighlighter(self.error_description.document())
+        theme = get_theme(get_settings().appearance.theme, as_dict=False)
+        self._highlight = Pylighter(self.error_description.document(), "python", theme.syntax_style)
         self.traceback_summary = additional_info
         if additional_info is None:
             stream = io.StringIO()
