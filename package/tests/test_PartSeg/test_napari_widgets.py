@@ -1,11 +1,14 @@
 import numpy as np
+import pandas as pd
 import pytest
+from napari.layers import Labels
 
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
 from PartSeg.common_gui.napari_image_view import SearchType
 from PartSeg.plugins.napari_widgets import MaskCreate, ROIAnalysisExtraction, ROIMaskExtraction, SearchLabel, _settings
+from PartSeg.plugins.napari_widgets.measurement_widget import update_properties
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSeg.plugins.napari_widgets.search_label_widget import HIGHLIGHT_LABEL_NAME
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -178,6 +181,26 @@ def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
     assert measurement.measurement_widget.recalculate_button.isEnabled()
     assert measurement.measurement_widget.check_if_measurement_can_be_calculated("test") == "test"
     measurement.measurement_widget.append_measurement_result()
+
+
+def test_update_properties():
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[2:5, 2:-2] = 1
+    data[5:-2, 2:-2] = 2
+    labels = Labels(data)
+    df = pd.DataFrame([[0, 0], [1, 1]], columns=["x", "y"])
+    df2 = pd.DataFrame([[0, 0], [1, 1]], columns=["x", "z"])
+    update_properties(df, labels, True)
+    assert len(labels.properties) == 2
+    assert "x" in labels.properties
+    assert "y" in labels.properties
+    assert np.all(labels.properties["x"] == np.array([0, 1]))
+    update_properties(df2, labels, False)
+    assert len(labels.properties) == 3
+    assert "z" in labels.properties
+    update_properties(df2, labels, True)
+    assert len(labels.properties) == 2
+    assert "y" not in labels.properties
 
 
 def test_mask_create(make_napari_viewer, qtbot):

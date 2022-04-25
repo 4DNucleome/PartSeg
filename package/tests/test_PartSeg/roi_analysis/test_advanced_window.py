@@ -1,4 +1,4 @@
-from PartSeg._roi_analysis.advanced_window import Properties
+from PartSeg._roi_analysis.advanced_window import MeasurementSettings, Properties
 from PartSeg._roi_analysis.advanced_window import QInputDialog as advanced_module_input
 from PartSeg._roi_analysis.advanced_window import QMessageBox as advanced_message_box
 from PartSegCore.analysis import AnalysisAlgorithmSelection
@@ -91,6 +91,71 @@ class TestProperties:
         assert called_mock[0] == 1
         assert widget.profile_list.item(1).text() == "rim"
         assert set(part_settings.roi_profiles.keys()) == {"rim", lower_threshold_profile.name}
+        widget.hide()
+
+    def test_multiple_files_visibility(self, qtbot, part_settings):
+        widget = Properties(part_settings)
+        qtbot.addWidget(widget)
+        assert not part_settings.get("multiple_files_widget")
+        assert not widget.multiple_files_chk.isChecked()
+        with qtbot.waitSignal(widget.multiple_files_chk.stateChanged):
+            widget.multiple_files_chk.setChecked(True)
+        assert part_settings.get("multiple_files_widget")
+        part_settings.set("multiple_files_widget", False)
+        assert not widget.multiple_files_chk.isChecked()
+
+
+class TestMeasurementSettings:
+    def test_create(self, qtbot, part_settings):
+        widget = MeasurementSettings(part_settings)
+        qtbot.addWidget(widget)
+
+    def test_base_steep(self, qtbot, part_settings):
+        widget = MeasurementSettings(part_settings)
+        qtbot.addWidget(widget)
+        widget.show()
+        widget.profile_options.setCurrentRow(0)
+        assert widget.profile_options.item(0).text() == "Volume"
+        assert widget.profile_options.item(1).text() == "Diameter"
+        assert widget.profile_options_chosen.count() == 0
+        widget.choose_option()
+        assert widget.profile_options_chosen.count() == 1
+        widget.choose_option()
+        assert widget.profile_options_chosen.count() == 1
+        widget.profile_options.setCurrentRow(1)
+        assert widget.profile_options_chosen.count() == 1
+        widget.choose_option()
+        assert widget.profile_options_chosen.count() == 2
+        widget.profile_options.setCurrentRow(0)
+        widget.proportion_action()
+        assert widget.profile_options_chosen.count() == 2
+        widget.profile_options.setCurrentRow(1)
+        widget.proportion_action()
+        assert widget.profile_options_chosen.count() == 3
+        assert widget.profile_options_chosen.item(2).text() == "ROI Volume/ROI Diameter"
+
+        widget.profile_options_chosen.setCurrentRow(0)
+        assert widget.profile_options_chosen.item(0).text() == "ROI Volume"
+        widget.remove_element()
+        assert widget.profile_options_chosen.count() == 2
+        assert widget.profile_options_chosen.item(0).text() == "ROI Diameter"
+
+        assert not widget.save_butt.isEnabled()
+        with qtbot.waitSignal(widget.profile_name.textChanged):
+            widget.profile_name.setText("test")
+        assert widget.save_butt.isEnabled()
+
+        assert len(part_settings.measurement_profiles) == 2
+        with qtbot.waitSignal(widget.save_butt.clicked):
+            widget.save_butt.click()
+        assert len(part_settings.measurement_profiles) == 3
+
+        with qtbot.waitSignal(widget.profile_name.textChanged):
+            widget.profile_name.setText("")
+        assert not widget.save_butt.isEnabled()
+
+        widget.reset_action()
+        assert widget.profile_options_chosen.count() == 0
         widget.hide()
 
 

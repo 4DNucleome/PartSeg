@@ -126,6 +126,7 @@ class Measurement(QTabWidget):
 def update_properties(new_properties, layer: Labels, overwrite):
     try:
         if not overwrite:
+            new_properties = new_properties.copy()
             for key, value in layer.properties.items():
                 if key not in new_properties:
                     new_properties[key] = value
