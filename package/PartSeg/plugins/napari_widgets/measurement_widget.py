@@ -130,5 +130,5 @@ def update_properties(new_properties, layer: Labels, overwrite):
                 if key not in new_properties:
                     new_properties[key] = value
         layer.properties = new_properties
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except  # pragma: no cover
         notification_manager.recive_error(e)

@@ -102,10 +102,10 @@ class Leaf(BaseModel):
 
     @validator("per_component")
     def _validate_per_component(cls, v, values):  # pylint: disable=R0201
-        if not isinstance(v, PerComponent) or "area" not in values:
+        if not isinstance(v, PerComponent) or "area" not in values or values["area"] is None:
             return v
         if v == PerComponent.Per_Mask_component and values["area"] != AreaType.ROI:
-            raise ValueError("Per_Mask_component can be used only with Mask area")
+            raise ValueError("Per_Mask_component can be used only with ROI area")
         return v
 
     def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:

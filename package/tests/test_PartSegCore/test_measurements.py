@@ -130,6 +130,12 @@ class TestLeaf:
         leaf = Leaf(name="aa", parameters={"value": 15, "ch": 3}, channel=Channel(1))
         assert leaf.get_channel_num({"aa": mock}) == {Channel(1), Channel(3)}
 
+    def test_is_per_component(self):
+        assert Leaf(name="aa", per_component=PerComponent.Yes).is_per_component()
+        assert Leaf(name="aa", per_component=PerComponent.Per_Mask_component).is_per_component()
+        assert not Leaf(name="aa", per_component=PerComponent.No).is_per_component()
+        assert not Leaf(name="aa", per_component=PerComponent.Mean).is_per_component()
+
     def test_pretty_print(self, monkeypatch):
         mock = MagicMock()
         mock.get_fields = MagicMock(return_value=[])
@@ -144,6 +150,9 @@ class TestLeaf:
         assert "mean component" in Leaf(name="aa", per_component=PerComponent.Mean).pretty_print({"aa": mock})
         assert "to the power" not in Leaf(name="aa", power=1).pretty_print({"aa": mock})
         assert "to the power 2" in Leaf(name="aa", power=2).pretty_print({"aa": mock})
+        assert "per mask component" in Leaf(name="aa", per_component=PerComponent.Per_Mask_component).pretty_print(
+            {"aa": mock}
+        )
         monkeypatch.setattr(mock, "__module__", "PartSegCore.test")
         assert Leaf(name="aa").pretty_print({"aa": mock})[0] != "["
         monkeypatch.setattr(mock, "__module__", "PartSegPlugin.submodule")
