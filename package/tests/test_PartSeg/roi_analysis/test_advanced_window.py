@@ -1,3 +1,4 @@
+# pylint: disable=no-self-use
 from PartSeg._roi_analysis.advanced_window import MeasurementSettings, Properties
 from PartSeg._roi_analysis.advanced_window import QInputDialog as advanced_module_input
 from PartSeg._roi_analysis.advanced_window import QMessageBox as advanced_message_box
