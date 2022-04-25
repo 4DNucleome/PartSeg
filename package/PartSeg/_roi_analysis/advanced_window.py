@@ -897,11 +897,11 @@ class MultipleInput(QDialog):
         for name, (type_of, item) in self.object_dict.items():
             if type_of == str:
                 val = str(item.text())
-                if val.strip() != "":
-                    res[name] = val
-                else:
+                if not val.strip():
                     QMessageBox.warning(self, "Not all fields filled", "")
                     return
+                else:
+                    res[name] = val
             else:
                 val = type_of(item.value())
                 res[name] = val
