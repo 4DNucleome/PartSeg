@@ -19,7 +19,7 @@ jobs:
       matrix:
         platform: [ ubuntu-20.04 ]
         python: ['3.8', '3.9']
-        napari_version: [napari411, napari412, napari413, napari414, napari415]
+        napari_version: [napari412, napari413, napari414, napari415]
     steps:
       - uses: actions/checkout@v2
 
