@@ -314,7 +314,7 @@ superqt==0.3.1
     #   napari
 sympy==1.10.1
     # via -r requirements_pyinstaller.in
-tifffile==2022.4.8
+tifffile==2022.4.22
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
