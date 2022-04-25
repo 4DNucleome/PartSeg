@@ -38,7 +38,6 @@ def fix_qt_location(working_dir, dir_name):
 def create_bundle(spec_path, working_dir):
     pyinstaller_args = [
         "-y",
-        "--debug=all",
         spec_path,
         "--distpath",
         os.path.join(working_dir, "dist"),
