@@ -1,4 +1,3 @@
-import typing
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -118,7 +117,7 @@ def report_empty_fun(_x, _y):  # pragma: no cover # skipcq: PTC-W0049
 
 class AlgorithmInfo(BaseModel, arbitrary_types_allowed=True):
     algorithm_name: str
-    parameters: typing.Any
+    parameters: Any
     image: Image
 
 
