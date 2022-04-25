@@ -338,7 +338,7 @@ class TestComponentsNumber:
         leaf = ComponentsNumber.get_starting_leaf()
         assert isinstance(leaf, Leaf)
         assert leaf.area is None
-        assert leaf.per_component is PerComponent.No
+        assert leaf.per_component is None
         assert leaf.channel is None
 
     def test_cube(self):
