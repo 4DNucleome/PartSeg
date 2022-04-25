@@ -294,7 +294,7 @@ class MeasurementProfile(BaseModel):
             if tree.per_component == PerComponent.Mean:
                 return PerComponent.No, area_type
             if tree.per_component == PerComponent.Per_Mask_component:
-                return PerComponent.Per_Mask_component, AreaType.Mask
+                return tree.per_component, AreaType.Mask
             return tree.per_component, area_type
 
         left_par, left_area = self._get_par_component_and_area_type(tree.left)
