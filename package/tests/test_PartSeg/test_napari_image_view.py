@@ -5,9 +5,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 import qtpy
-from napari import __version__ as napari_version
 from napari.layers import Image as NapariImage
-from packaging.version import parse as parse_version
 from qtpy.QtCore import QPoint
 from test_PartSeg.utils import CI_BUILD
 from vispy.geometry import Rect
@@ -26,8 +24,6 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem with mocking excec_")
-
-NAPARI_GE_4_11 = parse_version(napari_version) >= parse_version("0.4.11")
 
 
 def test_image_info():
@@ -241,7 +237,7 @@ class TestImageView:
         assert "timer" in image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata
         timer = image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata["timer"]
         assert timer.isActive()
-        assert image_view.viewer.dims.range[0] == ((0, 1, 1) if NAPARI_GE_4_11 else (0, 0, 1))
+        assert image_view.viewer.dims.range[0] == (0, 1, 1)
         qtbot.wait(800)
         image_view.component_unmark(0)
         assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible

@@ -2,15 +2,10 @@ name: napari widgets
 
 on:
   push:
-    branches-ignore:
-      - 'release/**'
-      - 'dependabot/**'
-      - 'hotfix/**'
-      - 'bugfix/**'
-      - 'sourcery/**'
-      - update_requirements
-      - pre-commit-ci-update-config
-      - deepsource**
+    branches:
+      - master
+      - develop
+      - main
   pull_request:
     branches:
       - '**'
@@ -24,7 +19,7 @@ jobs:
       matrix:
         platform: [ ubuntu-20.04 ]
         python: ['3.8', '3.9']
-        napari_version: [napari410, napari411, napari412, napari413, napari414, napari415]
+        napari_version: [napari411, napari412, napari413, napari414, napari415]
     steps:
       - uses: actions/checkout@v2
 

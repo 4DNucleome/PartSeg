@@ -1,7 +1,5 @@
 from contextlib import suppress
 
-import napari
-import packaging.version
 import pytest
 from qtpy.QtWidgets import QApplication, QDialog, QMessageBox
 
@@ -147,33 +145,15 @@ def leaked_widgets():
 
 @pytest.fixture(autouse=True)
 def reset_napari_settings(monkeypatch, tmp_path):
-    napari_version = packaging.version.parse(napari.__version__)
-
     def _mock_save(self, path=None, **dict_kwargs):
         return  # skipcq: PTC-W0049
 
-    if napari_version < packaging.version.parse("0.4.10"):
-        from napari.utils.settings import _manager
+    from napari import settings
 
-        monkeypatch.setattr(_manager.SettingsManager, "_save", _mock_save)
-
-        _manager.SETTINGS = _manager.SettingsManager(tmp_path)
-
-    elif napari_version == packaging.version.parse("0.4.10"):
-        from napari.utils.settings import _manager
-
-        monkeypatch.setattr(_manager, "user_config_dir", lambda *x: tmp_path)
-        monkeypatch.setattr(_manager.SettingsManager, "_save", _mock_save)
-
-        _manager.SETTINGS = _manager._SettingsProxy()
-
-    else:
-        from napari import settings
-
-        cp = settings.NapariSettings.__private_attributes__["_config_path"]
-        monkeypatch.setattr(cp, "default", tmp_path / "save.yaml")
-        monkeypatch.setattr(settings.NapariSettings, "save", _mock_save)
-        settings._SETTINGS = None
+    cp = settings.NapariSettings.__private_attributes__["_config_path"]
+    monkeypatch.setattr(cp, "default", tmp_path / "save.yaml")
+    monkeypatch.setattr(settings.NapariSettings, "save", _mock_save)
+    settings._SETTINGS = None
 
     yield
 
@@ -190,24 +170,3 @@ def block_message_box(monkeypatch, request):
     monkeypatch.setattr(QMessageBox, "warning", raise_on_call)
     if "enabledialog" not in request.keywords:
         monkeypatch.setattr(QDialog, "exec_", raise_on_call)
-
-
-@pytest.fixture(autouse=True)
-def wrap_remove_flash_animation(monkeypatch):
-    if packaging.version.parse(napari.__version__) > packaging.version.parse("0.4.12"):
-        return
-    try:
-        from napari._qt import utils
-
-        if hasattr(utils, "remove_flash_animation"):
-            fun = utils.remove_flash_animation
-
-            def _ignore_runtime_error(widget_ref):
-                try:
-                    fun(widget_ref)
-                except RuntimeError:
-                    pass
-
-            monkeypatch.setattr(utils, "remove_flash_animation", _ignore_runtime_error)
-    except ImportError:
-        pass

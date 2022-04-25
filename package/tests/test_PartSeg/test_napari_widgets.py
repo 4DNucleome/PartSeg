@@ -1,6 +1,4 @@
-import napari
 import numpy as np
-import packaging.version
 import pytest
 
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
@@ -18,14 +16,6 @@ from PartSegCore.analysis.save_functions import SaveProfilesToJSON
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.segmentation import ROIExtractionResult
 
-napari_skip = pytest.mark.skipif(
-    packaging.version.parse(napari.__version__) < packaging.version.parse("0.4.10"), reason="To old napari"
-)
-
-napari_4_11_skip = pytest.mark.skipif(
-    packaging.version.parse(napari.__version__) == packaging.version.parse("0.4.11"), reason="To old napari"
-)
-
 
 @pytest.fixture(autouse=True)
 def clean_settings(tmp_path):
@@ -39,7 +29,6 @@ def no_action(*_):  # skipcq: PTC-W0049
     pass
 
 
-@napari_skip
 @pytest.mark.parametrize("widget_class", [ROIAnalysisExtraction, ROIMaskExtraction])
 def test_extraction_widget(make_napari_viewer, widget_class, monkeypatch, qtbot):
 
@@ -141,7 +130,6 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp
     assert dialog.profile_list.count() == 2
 
 
-@napari_skip
 def test_simple_measurement_create(make_napari_viewer, qtbot):
     from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
 
@@ -167,7 +155,6 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
     assert measurement.calculate_btn.enabled
 
 
-@napari_skip
 @pytest.mark.enablethread
 @pytest.mark.enabledialog
 def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
@@ -207,7 +194,6 @@ def test_mask_create(make_napari_viewer, qtbot):
     assert "Mask" in viewer.layers
 
 
-@napari_4_11_skip
 @pytest.mark.enablethread
 def test_search_labels(make_napari_viewer, qtbot):
     viewer = make_napari_viewer()

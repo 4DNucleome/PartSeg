@@ -12,13 +12,15 @@ imagecodecs==2020.5.30
 imageio==2.5.0
 magicgui==0.3.3
 mahotas==1.4.9
-napari==0.4.8
-numpy==1.18.0
+napari==0.4.12
+nme==0.1.4
+numpy==1.18.5
 oiffile==2020.1.18
 openpyxl==2.4.9
 packaging==20.0
 pandas==0.24.0
 psygnal==0.2.0
+pygments==2.4.0
 requests==2.18.0
 scipy==1.2.0
 sentry-sdk==0.14.3
@@ -26,6 +28,7 @@ six==1.11.0
 superqt==0.2.4
 sympy==1.1.1
 tifffile==2020.9.30
+traceback-with-variables==2.0.4
 vispy==0.6.4
 xlrd==1.1.0
 xlsxwriter
