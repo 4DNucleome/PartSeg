@@ -643,7 +643,7 @@ class MeasurementSettings(QWidget):
             except ValueError as e:
                 QMessageBox().warning(self, "Problem in add measurement", str(e))
         with suppress(KeyError):
-            arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
+            arguments = MEASUREMENT_DICT[str(node.name)]._get_fields()
             if len(arguments) > 0 and not dict(node.parameters):
                 dial = self.form_dialog(arguments)
                 if dial.exec_():
