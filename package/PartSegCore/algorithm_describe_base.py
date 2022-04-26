@@ -540,14 +540,6 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
             " " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}" for k, v in dkt.items()
         )
 
-    def __str__(self):
-        return ((f"ROI extraction profile name: {self.name}" + "\nAlgorithm: ") + self.algorithm) + self.print_dict(
-            self.values
-        )
-
-    def __repr__(self):
-        return f"ROIExtractionProfile(name={self.name}, algorithm={repr(self.algorithm)}, values={self.values})"
-
     def __eq__(self, other):
         return (
             isinstance(other, self.__class__)

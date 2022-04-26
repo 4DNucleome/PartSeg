@@ -415,6 +415,18 @@ class BaseModel(PydanticBaseModel):
             return getattr(self, item)
         raise KeyError(f"{item} not found in {self.__class__.__name__}")
 
+    def copy(self: PydanticBaseModel, *, validate: bool = True, **kwargs: typing.Any) -> PydanticBaseModel:
+        copy_res = super().copy(**kwargs)
+        if validate:
+            return self.validate(
+                dict(
+                    copy_res._iter(  # pylint: disable=protected-access
+                        to_dict=False, by_alias=False, exclude_unset=True
+                    )
+                )
+            )
+        return copy_res
+
 
 def iterate_names(base_name: str, data_dict, max_length=None) -> typing.Optional[str]:
     if base_name not in data_dict:

@@ -222,7 +222,7 @@ pygments==2.11.2
     #   ipython
     #   qtconsole
     #   sphinx
-pyinstaller==4.10
+pyinstaller==5.0
     # via -r requirements_pyinstaller.in
 pyinstaller-hooks-contrib==2022.3
     # via pyinstaller
@@ -282,7 +282,7 @@ scipy==1.8.0
     #   napari
 sentry-sdk==1.5.9
     # via -r requirements_pyinstaller.in
-simpleitk==2.1.1
+simpleitk==2.1.1.2
     # via -r requirements_pyinstaller.in
 six==1.16.0
     # via

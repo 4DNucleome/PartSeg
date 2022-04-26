@@ -316,6 +316,10 @@ class SaveAsTiff(SaveBase):
         return []
 
     @classmethod
+    def need_segmentation(cls):
+        return False
+
+    @classmethod
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],

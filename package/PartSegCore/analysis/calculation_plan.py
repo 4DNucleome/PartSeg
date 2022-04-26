@@ -532,16 +532,18 @@ class CalculationPlan:
     def __deepcopy__(self, memo):
         return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
-    def get_node(self, search_pos: typing.Optional[typing.List[int]] = None) -> CalculationTree:
+    def get_node(self, search_pos: typing.Optional[typing.List[int]] = None, parent=False) -> CalculationTree:
         """
         :param search_pos:
         :return: CalculationTree
         """
         node = self.execution_tree
         if search_pos is None:
-            if self.current_node is not None:
+            if self.current_node is not None and not parent:
                 return self.current_node
             search_pos = self.current_pos
+        if parent:
+            search_pos = search_pos[:-1]
         for pos in search_pos:
             node = node.children[pos]
         return node
@@ -586,12 +588,14 @@ class CalculationPlan:
     def get_reused_mask(self) -> set:
         return self._get_reused_mask(self.execution_tree)
 
-    def get_node_type(self) -> NodeType:
+    def get_node_type(self, parent=False) -> NodeType:
         if self.current_pos is None:
             return NodeType.none
         if not self.current_pos:
             return NodeType.root
-        node = self.get_node()
+        node = self.get_node(parent=parent)
+        if isinstance(node.operation, RootType):
+            return NodeType.root
         if isinstance(node.operation, (MaskMapper, MaskIntersection, MaskSum)):
             return NodeType.file_mask
         if isinstance(node.operation, MaskCreate):

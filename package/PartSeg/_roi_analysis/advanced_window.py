@@ -162,8 +162,8 @@ class Properties(QWidget):
                 self.delete_btn.setText("Delete pipeline")
                 self.rename_btn.setText("Rename pipeline")
             else:
-                return
-        except KeyError:
+                return  # pragma: no cover
+        except KeyError:  # pragma: no cover
             return
 
         # TODO update with knowledge from profile dict
@@ -388,7 +388,7 @@ class MeasurementSettings(QWidget):
         self.soft_reset_butt = QPushButton("Remove user parameters")
         self.profile_name = QLineEdit(self)
 
-        self.delete_profile_butt = QPushButton("Delete ")
+        self.delete_profile_butt = QPushButton("Delete")
         self.export_profiles_butt = QPushButton("Export")
         self.import_profiles_butt = QPushButton("Import")
         self.edit_profile_butt = QPushButton("Edit")
@@ -638,9 +638,12 @@ class MeasurementSettings(QWidget):
         if node.area is None:
             node = node.replace_(area=area)
         if node.per_component is None:
-            node = node.replace_(per_component=component)
+            try:
+                node = node.replace_(per_component=component)
+            except ValueError as e:  # pragma: no cover
+                QMessageBox().warning(self, "Problem in add measurement", str(e))
         with suppress(KeyError):
-            arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
+            arguments = MEASUREMENT_DICT[str(node.name)]._get_fields()  # pylint: disable=protected-access
             if len(arguments) > 0 and not dict(node.parameters):
                 dial = self.form_dialog(arguments)
                 if dial.exec_():
@@ -651,7 +654,7 @@ class MeasurementSettings(QWidget):
 
     def choose_option(self):
         selected_item = self.profile_options.currentItem()
-        if not isinstance(selected_item, MeasurementListWidgetItem):
+        if not isinstance(selected_item, MeasurementListWidgetItem):  # pragma: no cover
             raise ValueError(f"Current item (type: {type(selected_item)} is not instance of MeasurementListWidgetItem")
         node = deepcopy(selected_item.stat)
         # noinspection PyTypeChecker
@@ -704,6 +707,7 @@ class MeasurementSettings(QWidget):
         self.settings.measurement_profiles[stat_prof.name] = stat_prof
         self.settings.dump()
         self.export_profiles_butt.setEnabled(True)
+        self.save_butt.setDisabled(True)
 
     def named_save_action(self):
         if self.profile_name.text() in self.settings.measurement_profiles:
@@ -894,11 +898,11 @@ class MultipleInput(QDialog):
         for name, (type_of, item) in self.object_dict.items():
             if type_of == str:
                 val = str(item.text())
-                if val.strip() != "":
-                    res[name] = val
-                else:
+                if not val.strip():
                     QMessageBox.warning(self, "Not all fields filled", "")
                     return
+                else:
+                    res[name] = val
             else:
                 val = type_of(item.value())
                 res[name] = val

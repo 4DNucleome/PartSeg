@@ -40,11 +40,7 @@ class NapariFormWidgetWithMask(NapariFormWidget):
         return super()._element_list(itertools.chain([mask], fields))
 
     def get_layers(self):
-        return {
-            name: el.get_value()
-            for name, el in self.widgets_dict.items()
-            if name != "mask" and isinstance(el.get_value(), Layer)
-        }
+        return {name: el.get_value() for name, el in self.widgets_dict.items() if isinstance(el.get_value(), Layer)}
 
     def get_values(self):
         res = {name: el.get_value() for name, el in self.widgets_dict.items() if name != "mask"}

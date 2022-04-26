@@ -29,12 +29,7 @@ def _test_imports():
     app = QApplication([])
     import freetype
     import napari
-    from packaging.version import parse
-
-    if parse(napari.__version__) < parse("0.4.5"):
-        from napari._qt.widgets.qt_console import QtConsole
-    else:
-        from napari_console.qt_console import QtConsole
+    from napari_console.qt_console import QtConsole
 
     from PartSeg import plugins
     from PartSeg._launcher.main_window import MainWindow

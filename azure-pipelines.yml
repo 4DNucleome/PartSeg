@@ -1,17 +1,10 @@
 trigger:
   branches:
     include:
-    - '*'
-    exclude:
-    - dependabot/*
-    - documentation
-    - release/*
-    - hotfix/*
-    - bugfix/*
-    - sourcery/*
-    - update_requirements
-    - pre-commit-ci-update-config
-    - deepsource*
+    - master
+    - develop
+    - feature/**
+    - main
   tags:
     include:
     - v*

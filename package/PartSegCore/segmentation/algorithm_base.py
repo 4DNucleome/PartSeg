@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
+from textwrap import indent
 from typing import Any, Callable, Dict, MutableMapping, Optional
 
 import numpy as np
@@ -17,7 +18,7 @@ from ..algorithm_describe_base import (
 from ..image_operations import RadiusType
 from ..project_info import AdditionalLayerDescription
 from ..roi_info import ROIInfo
-from ..utils import numpy_repr
+from ..utils import BaseModel, numpy_repr
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
@@ -114,6 +115,12 @@ def report_empty_fun(_x, _y):  # pragma: no cover # skipcq: PTC-W0049
     pass
 
 
+class AlgorithmInfo(BaseModel, arbitrary_types_allowed=True):
+    algorithm_name: str
+    parameters: Any
+    image: Image
+
+
 class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
     """
     Base class for all segmentation algorithm.
@@ -142,8 +149,10 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         else:
             mask_info = f"mask={self.mask}"
         return (
-            f"{self.__class__.__module__}.{self.__class__.__name__}(image={repr(self.image)}, "
-            f"channel={self.channel} {mask_info}, value={self.get_segmentation_profile().values})"
+            f"{self.__class__.__module__}.{self.__class__.__name__}(\n"
+            + indent(f"image={repr(self.image)},\n", " " * 4)
+            + indent(f"channel={numpy_repr(self.channel)},\n{mask_info},", " " * 4)
+            + indent(f"\nvalue={repr(self.get_segmentation_profile().values)})", " " * 4)
         )
 
     def clean(self):
@@ -187,7 +196,9 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         except Exception:  # pragma: no cover
             parameters = self.get_segmentation_profile()
             image = self.image
-            raise SegmentationException(self.get_name(), parameters, image)
+            raise SegmentationException(
+                AlgorithmInfo(algorithm_name=self.get_name(), parameters=parameters, image=image)
+            )
 
     @abstractmethod
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:

@@ -27,7 +27,7 @@ from mahotas.features import haralick
 from nme import register_class, rename_key
 from pydantic import Field
 from scipy.spatial.distance import cdist
-from sympy import symbols
+from sympy import Rational, symbols
 
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.utils import BaseModel
@@ -87,7 +87,7 @@ class ComponentsInfo(NamedTuple):
 
 
 def empty_fun(_a0=None, _a1=None):
-    """This function  is be used as dummy reporting function."""
+    """This function is being used as dummy reporting function."""
 
 
 MeasurementValueType = Union[float, List[float], str]
@@ -211,7 +211,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         for el in iterator:
             per_comp = self._type_dict[el][0]
             val = self._data_dict[el]
-            if per_comp != PerComponent.Yes:
+            if per_comp not in {PerComponent.Yes, PerComponent.Per_Mask_component}:
                 res.append(val)
         return res
 
@@ -256,7 +256,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             per_comp, area_type = self._type_dict[el]
             val = self._data_dict[el]
             for i, (seg, mask) in enumerate(component_info):
-                if per_comp != PerComponent.Yes:
+                if per_comp not in {PerComponent.Yes, PerComponent.Per_Mask_component}:
                     res[i].append(val)
                 elif area_type == AreaType.ROI:
                     res[i].append(val[segmentation_to_pos[seg]])
@@ -293,6 +293,8 @@ class MeasurementProfile(BaseModel):
             area_type = method.area_type(tree.area)
             if tree.per_component == PerComponent.Mean:
                 return PerComponent.No, area_type
+            if tree.per_component == PerComponent.Per_Mask_component:
+                return tree.per_component, AreaType.Mask
             return tree.per_component, area_type
 
         left_par, left_area = self._get_par_component_and_area_type(tree.left)
@@ -343,7 +345,7 @@ class MeasurementProfile(BaseModel):
 
     def _is_component_measurement(self, node):
         if isinstance(node, Leaf):
-            return node.per_component == PerComponent.Yes
+            return node.per_component in {PerComponent.Yes, PerComponent.Per_Mask_component}
         return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
     @staticmethod
@@ -371,13 +373,25 @@ class MeasurementProfile(BaseModel):
         return kw
 
     def _clip_arrays(self, kw, node: Leaf, method: MeasurementMethodBase, component_index: int):
-        bounds = tuple(kw["bounds_info"][component_index].get_slices(margin=1))
+
         if node.area != AreaType.ROI or method.need_full_data():
-            bounds = tuple(slice(None, None) for _ in bounds)
+            bounds = tuple(slice(None, None) for _ in kw["area_array"].shape)
+        elif node.per_component == PerComponent.Per_Mask_component:
+            bounds = tuple(kw["mask_bound_info"][component_index].get_slices(margin=1))
+        else:
+            bounds = tuple(kw["bounds_info"][component_index].get_slices(margin=1))
         kw2 = kw.copy()
+
+        component_mark_area = (
+            kw2["area_array"] if node.per_component != PerComponent.Per_Mask_component else kw2["mask"]
+        )
+
         kw2["_component_num"] = component_index
 
-        kw2["area_array"] = kw["area_array"][bounds] == component_index
+        area_array = kw2["area_array"][bounds].copy()
+        area_array[component_mark_area[bounds] != component_index] = 0
+
+        kw2["area_array"] = area_array
         im_bounds = list(bounds)
         image: Image = kw["image"]
         im_bounds.insert(image.time_pos, slice(None))
@@ -401,7 +415,7 @@ class MeasurementProfile(BaseModel):
         # TODO use cache for per component calculate
         # kw["_cache"] = False
         val = []
-        if method.area_type(node.area) == AreaType.ROI:
+        if method.area_type(node.area) == AreaType.ROI and node.per_component != PerComponent.Per_Mask_component:
             components = segmentation_mask_map.roi_components
         else:
             components = segmentation_mask_map.mask_components
@@ -422,6 +436,8 @@ class MeasurementProfile(BaseModel):
             method, node.parameters, node.area, node.per_component, node.channel, NO_COMPONENT
         )
         area_type = method.area_type(node.area)
+        if node.per_component == PerComponent.Per_Mask_component:
+            area_type = AreaType.Mask
         if hash_str in help_dict:
             val = help_dict[hash_str]
         else:
@@ -430,7 +446,7 @@ class MeasurementProfile(BaseModel):
             help_dict[hash_str] = val
         unit: symbols = method.get_units(3) if kwargs["image"].is_stack else method.get_units(2)
         if node.power != 1:
-            return pow(val, node.power), pow(unit, node.power), area_type
+            return pow(val, node.power), pow(unit, Rational(node.power)), area_type
         return val, unit, area_type
 
     def _calculate_node(
@@ -602,6 +618,12 @@ class MeasurementProfile(BaseModel):
         result_scalar = UNIT_SCALE[result_units.value]
         if isinstance(roi, np.ndarray):
             roi = ROIInfo(roi).fit_to_image(image)
+        mask_bound_info = None
+        if isinstance(image.mask, np.ndarray):
+            mask_bound_info = {
+                k: v.del_dim(image.time_pos) if len(v.lower) == 4 else v
+                for k, v in ROIInfo(image.mask).fit_to_image(image).bound_info.items()
+            }
         roi_alternative = {}
         for name, array in roi.alternative.items():
             roi_alternative[name] = get_time(array)
@@ -613,6 +635,7 @@ class MeasurementProfile(BaseModel):
             "bounds_info": {
                 k: v.del_dim(image.time_pos) if len(v.lower) == 4 else v for k, v in roi.bound_info.items()
             },
+            "mask_bound_info": mask_bound_info,
             "mask": get_time(image.mask),
             "voxel_size": image.spacing,
             "result_scalar": result_scalar,
@@ -680,8 +703,7 @@ def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size)
 def get_main_axis_length(
     index: int, area_array: np.ndarray, channel: np.ndarray, voxel_size, result_scalar, _cache=False, **kwargs
 ):
-    _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
-    if _cache:
+    if _cache and "_area" in kwargs and "_per_component" in kwargs and "channel_num" in kwargs:
         help_dict: Dict = kwargs["help_dict"]
         _area: AreaType = kwargs["_area"]
         _per_component: PerComponent = kwargs["_per_component"]
@@ -875,10 +897,6 @@ class ComponentsNumber(MeasurementMethodBase):
         return np.unique(area_array).size - 1
 
     @classmethod
-    def get_starting_leaf(cls):
-        return super().get_starting_leaf().replace_(per_component=PerComponent.No)
-
-    @classmethod
     def get_units(cls, ndim):
         return symbols("count")
 
@@ -1063,11 +1081,7 @@ class Compactness(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(**kwargs):  # pylint: disable=W0221
-        cache = kwargs["_cache"] if "_cache" in kwargs else False
-        cache = cache and "help_dict" in kwargs
-        cache = cache and "_area" in kwargs
-        cache = cache and "_per_component" in kwargs
-        if cache:
+        if kwargs.get("_cache", False) and "help_dict" in kwargs and "_area" in kwargs and "_per_component" in kwargs:
             help_dict = kwargs["help_dict"]
             border_hash_str = hash_fun_call_name(
                 Surface, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1), kwargs["_component_num"]

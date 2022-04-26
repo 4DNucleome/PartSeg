@@ -1,5 +1,6 @@
 from contextlib import suppress
 from functools import partial
+from typing import List, Union
 
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget
@@ -12,7 +13,7 @@ from PartSegCore.segmentation.algorithm_base import calculate_operation_radius
 from ..common_backend.base_settings import BaseSettings, ImageSettings
 
 
-def off_widget(widget: QWidget, combo_box: QEnumComboBox):
+def off_widget(widget: QWidget, combo_box: QEnumComboBox, _val=None):
     widget.setDisabled(combo_box.currentEnum() == RadiusType.NO)
 
 
@@ -40,30 +41,33 @@ class MaskWidget(QWidget):
         self.dilate_dim.currentIndexChanged.connect(self.dilate_change)
 
         self.fill_holes = QEnumComboBox(enum_class=RadiusType)
-        self.max_hole_size = QSpinBox()
-        self.max_hole_size.setRange(-1, 10000)
-        self.max_hole_size.setValue(-1)
-        self.max_hole_size.setSingleStep(100)
-        self.max_hole_size.setDisabled(True)
-        self.max_hole_size.setToolTip("Maximum size of holes to be closed. -1 means that all holes will be closed")
+        self.max_holes_size = QSpinBox()
+        self.max_holes_size.setRange(-1, 10000)
+        self.max_holes_size.setValue(-1)
+        self.max_holes_size.setSingleStep(100)
+        self.max_holes_size.setDisabled(True)
+        self.max_holes_size.setToolTip("Maximum size of holes to be closed. -1 means that all holes will be closed")
         # noinspection PyUnresolvedReferences
-        self.fill_holes.currentIndexChanged.connect(partial(off_widget, self.max_hole_size, self.fill_holes))
+        self.fill_holes.currentIndexChanged.connect(partial(off_widget, self.max_holes_size, self.fill_holes))
 
         self.save_components = QCheckBox()
         self.clip_to_mask = QCheckBox()
-        self.reversed_check = QCheckBox()
+        self.reversed_mask = QCheckBox()
 
         # noinspection PyUnresolvedReferences
-        self.dilate_radius.valueChanged.connect(self.values_changed.emit)
+        self.dilate_radius.valueChanged.connect(self._value_changed_wrap)
         # noinspection PyUnresolvedReferences
-        self.dilate_dim.currentIndexChanged.connect(self.values_changed.emit)
+        self.dilate_dim.currentIndexChanged.connect(self._value_changed_wrap)
         # noinspection PyUnresolvedReferences
-        self.fill_holes.currentIndexChanged.connect(self.values_changed.emit)
+        self.fill_holes.currentIndexChanged.connect(self._value_changed_wrap)
         # noinspection PyUnresolvedReferences
-        self.max_hole_size.valueChanged.connect(self.values_changed.emit)
-        self.save_components.stateChanged.connect(self.values_changed.emit)
-        self.clip_to_mask.stateChanged.connect(self.values_changed.emit)
-        self.reversed_check.stateChanged.connect(self.values_changed.emit)
+        self.max_holes_size.valueChanged.connect(self._value_changed_wrap)
+        # noinspection PyUnresolvedReferences
+        self.save_components.stateChanged.connect(self._value_changed_wrap)
+        # noinspection PyUnresolvedReferences
+        self.clip_to_mask.stateChanged.connect(self._value_changed_wrap)
+        # noinspection PyUnresolvedReferences
+        self.reversed_mask.stateChanged.connect(self._value_changed_wrap)
 
         layout = QVBoxLayout()
         layout1 = QHBoxLayout()
@@ -76,12 +80,12 @@ class MaskWidget(QWidget):
         layout2.addWidget(QLabel("Fill holes:"))
         layout2.addWidget(self.fill_holes)
         layout2.addWidget(QLabel("Max size:"))
-        layout2.addWidget(self.max_hole_size)
+        layout2.addWidget(self.max_holes_size)
         layout.addLayout(layout2)
         layout3 = QHBoxLayout()
         comp_lab = QLabel("Save components:")
         comp_lab.setToolTip(
-            "save components information in mask. Dilation, " "holes filing will be done separately for each component"
+            "save components information in mask. Dilation, holes filing will be done separately for each component"
         )
         self.save_components.setToolTip(comp_lab.toolTip())
         layout3.addWidget(comp_lab)
@@ -94,13 +98,17 @@ class MaskWidget(QWidget):
         layout.addLayout(layout3)
         layout4 = QHBoxLayout()
         layout4.addWidget(QLabel("Reversed mask:"))
-        layout4.addWidget(self.reversed_check)
+        layout4.addWidget(self.reversed_mask)
         layout4.addStretch(1)
         layout.addLayout(layout4)
         self.setLayout(layout)
         self.dilate_change()
 
-    def get_dilate_radius(self):
+    def _value_changed_wrap(self, _val=None):
+        # noinspection PyUnresolvedReferences
+        self.values_changed.emit()
+
+    def get_dilate_radius(self) -> Union[int, List[int]]:
         radius = calculate_operation_radius(
             self.dilate_radius.value(), self.settings.image_spacing, self.dilate_dim.currentEnum()
         )
@@ -122,21 +130,21 @@ class MaskWidget(QWidget):
         return MaskProperty(
             dilate=self.dilate_dim.currentEnum() if self.dilate_radius.value() != 0 else RadiusType.NO,
             dilate_radius=self.dilate_radius.value() if self.dilate_dim.currentEnum() != RadiusType.NO else 0,
-            fill_holes=self.fill_holes.currentEnum() if self.max_hole_size.value() != 0 else RadiusType.NO,
-            max_holes_size=self.max_hole_size.value() if self.fill_holes.currentEnum() != RadiusType.NO else 0,
+            fill_holes=self.fill_holes.currentEnum() if self.max_holes_size.value() != 0 else RadiusType.NO,
+            max_holes_size=self.max_holes_size.value() if self.fill_holes.currentEnum() != RadiusType.NO else 0,
             save_components=self.save_components.isChecked(),
             clip_to_mask=self.clip_to_mask.isChecked(),
-            reversed_mask=self.reversed_check.isChecked(),
+            reversed_mask=self.reversed_mask.isChecked(),
         )
 
     def set_mask_property(self, prop: MaskProperty):
         self.dilate_dim.setCurrentEnum(prop.dilate)
         self.dilate_radius.setValue(prop.dilate_radius)
         self.fill_holes.setCurrentEnum(prop.fill_holes)
-        self.max_hole_size.setValue(prop.max_holes_size)
+        self.max_holes_size.setValue(prop.max_holes_size)
         self.save_components.setChecked(prop.save_components)
         self.clip_to_mask.setChecked(prop.clip_to_mask)
-        self.reversed_check.setChecked(prop.reversed_mask)
+        self.reversed_mask.setChecked(prop.reversed_mask)
 
 
 class MaskDialogBase(QDialog):

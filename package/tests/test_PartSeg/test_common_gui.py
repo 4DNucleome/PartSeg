@@ -39,6 +39,7 @@ from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, 
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.error_report import DataImportErrorDialog
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
+from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
 from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
 from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
@@ -54,7 +55,9 @@ from PartSegCore.algorithm_describe_base import (
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
+from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
+from PartSegCore.mask_create import MaskProperty
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel, Image, ImageWriter
 
@@ -1015,3 +1018,71 @@ class TestDataImportErrorDialog:
         assert text.startswith("aaaa\n")
         assert "__error__" in text
         assert "'aa': 1" in text
+
+
+class TestMaskWidget:
+    def test_create(self, qtbot, part_settings):
+        widget = MaskWidget(part_settings)
+        qtbot.addWidget(widget)
+        assert isinstance(widget.get_mask_property(), MaskProperty)
+
+    def test_update_dilate(self, qtbot, part_settings, image):
+        widget = MaskWidget(part_settings)
+        qtbot.addWidget(widget)
+        assert not widget.dilate_radius.isEnabled()
+        with qtbot.waitSignal(widget.values_changed):
+            widget.dilate_dim.setCurrentEnum(RadiusType.R2D)
+        assert widget.dilate_radius.isEnabled()
+        with qtbot.waitSignal(widget.values_changed):
+            widget.dilate_radius.setValue(10)
+        assert widget.get_dilate_radius() == 10
+        with qtbot.waitSignal(widget.values_changed):
+            widget.dilate_dim.setCurrentEnum(RadiusType.R3D)
+        # image is 2D so radius is still 2D
+        assert widget.get_dilate_radius() == 10
+        image = image.substitute(image_spacing=[100, 10, 10])
+        part_settings.image = image
+        # image is 3D so radius is now 3D
+        assert widget.get_dilate_radius() == [1, 10, 10]
+        with qtbot.waitSignal(widget.values_changed):
+            widget.dilate_radius.setValue(11)
+        assert widget.get_dilate_radius() == [1, 11, 11]
+
+    @pytest.mark.parametrize(
+        "name,func,value",
+        [
+            ("fill_holes", "setCurrentEnum", RadiusType.R2D),
+            ("max_holes_size", "setValue", 10),
+            ("save_components", "setChecked", True),
+            ("clip_to_mask", "setChecked", True),
+            ("reversed_mask", "setChecked", True),
+        ],
+    )
+    def test_update_attribute(self, qtbot, part_settings, name, func, value):
+        widget = MaskWidget(part_settings)
+        qtbot.addWidget(widget)
+        with qtbot.waitSignal(widget.values_changed):
+            widget.fill_holes.setCurrentEnum(RadiusType.R3D)
+        with qtbot.waitSignal(widget.values_changed):
+            getattr(getattr(widget, name), func)(value)
+
+        assert getattr(widget.get_mask_property(), name) == value
+
+    def test_set_mask_property(self, qtbot, part_settings, mask_property_non_default):
+        widget = MaskWidget(part_settings)
+        qtbot.addWidget(widget)
+        widget.set_mask_property(mask_property_non_default)
+        assert widget.get_mask_property() == mask_property_non_default
+
+
+class TestMaskDialogBase:
+    def test_create(self, qtbot, part_settings):
+        dialog = MaskDialogBase(part_settings)
+        qtbot.addWidget(dialog)
+        assert dialog.mask_widget.get_mask_property() == MaskProperty.simple_mask()
+
+    def test_create_mask_property_settings(self, qtbot, part_settings, mask_property_non_default):
+        part_settings.set("mask_manager.mask_property", mask_property_non_default)
+        dialog = MaskDialogBase(part_settings)
+        qtbot.addWidget(dialog)
+        assert dialog.mask_widget.get_mask_property() == mask_property_non_default

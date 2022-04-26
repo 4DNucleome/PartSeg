@@ -14,9 +14,11 @@ from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import ComponentsNumber, MeasurementProfile, Volume
+from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.roi_info import ROIInfo
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegImage import Image
 
 
@@ -109,6 +111,15 @@ def algorithm_parameters():
 
 
 @pytest.fixture
+def roi_extraction_profile():
+    return ROIExtractionProfile(
+        name="test",
+        algorithm=LowerThresholdAlgorithm.get_name(),
+        values=LowerThresholdAlgorithm.get_default_values(),
+    )
+
+
+@pytest.fixture
 def mask_segmentation_parameters():
     return ROIExtractionProfile(
         name="",
@@ -170,6 +181,19 @@ def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_paramet
 @pytest.fixture
 def mask_property():
     return MaskProperty.simple_mask()
+
+
+@pytest.fixture
+def mask_property_non_default():
+    return MaskProperty(
+        dilate=RadiusType.R2D,
+        dilate_radius=10,
+        fill_holes=RadiusType.R3D,
+        max_holes_size=10,
+        save_components=True,
+        clip_to_mask=True,
+        reversed_mask=True,
+    )
 
 
 @pytest.fixture
