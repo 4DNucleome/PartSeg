@@ -155,4 +155,5 @@ class SynchronizeView(QObject):
         else:
             origin, dest = self.image_view2, self.image_view1
         _block = QSignalBlocker(dest)  # noqa F841
-        dest.set_state(origin.get_state())
+        if origin.viewer.dims.ndim == dest.viewer.dims.ndim:
+            dest.set_state(origin.get_state())

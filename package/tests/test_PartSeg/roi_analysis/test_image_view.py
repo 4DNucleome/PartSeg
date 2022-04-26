@@ -40,6 +40,26 @@ def test_synchronize(part_settings, image2, qtbot):
     view2.hide()
 
 
+@pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+def test_synchronize_change_image_dim(part_settings, image2, image2d, qtbot):
+    part_settings.image = image2d
+    prop = ChannelProperty(part_settings, "test1")
+    view1 = ResultImageView(part_settings, prop, "test1")
+    view2 = CompareImageView(part_settings, prop, "test2")
+    sync = SynchronizeView(view1, view2)
+    qtbot.add_widget(prop)
+    qtbot.add_widget(view1)
+    qtbot.add_widget(view2)
+    view1.show()
+    view2.show()
+    sync.set_synchronize(True)
+    with qtbot.waitSignal(view1.view_changed):
+        part_settings.image = image2
+    view1.hide()
+    view2.hide()
+    qtbot.wait(50)
+
+
 def test_compare_view(part_settings, image2, qtbot):
     prop = ChannelProperty(part_settings, "test")
     view = CompareImageView(part_settings, prop, "test")
