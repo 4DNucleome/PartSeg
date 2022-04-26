@@ -220,7 +220,9 @@ jobs:
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          miniforge-version: latest
+          miniconda-version: latest
+          channels: conda-forge
+          channel-priority: strict
           environment-file: environment.yml
 
       - name: Install ubuntu libraries
@@ -230,6 +232,9 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: test_data
+
+      - name: Install dependencies
+        run: conda install -y tox tox-conda
 
       - name: Test with tox
         uses: GabrielBB/xvfb-action@v1
