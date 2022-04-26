@@ -219,10 +219,11 @@ pydantic==1.9.0
     #   npe2
 pygments==2.11.2
     # via
+    #   -r requirements_pyinstaller.in
     #   ipython
     #   qtconsole
     #   sphinx
-pyinstaller==5.0
+pyinstaller==5.0.1
     # via -r requirements_pyinstaller.in
 pyinstaller-hooks-contrib==2022.3
     # via pyinstaller
