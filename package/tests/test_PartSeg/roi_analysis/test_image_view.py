@@ -52,7 +52,8 @@ def test_synchronize_change_image_dim(part_settings, image2, image2d, qtbot):
     view1.show()
     view2.show()
     sync.set_synchronize(True)
-    part_settings.image = image2
+    with qtbot.waitSignal(view1.view_changed):
+        part_settings.image = image2
     view1.hide()
     view2.hide()
 
