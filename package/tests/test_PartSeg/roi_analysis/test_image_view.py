@@ -39,7 +39,7 @@ def test_synchronize(part_settings, image2, qtbot):
     view1.hide()
     view2.hide()
 
-
+@pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
 def test_synchronize_change_image_dim(part_settings, image2, image2d, qtbot):
     part_settings.image = image2d
     prop = ChannelProperty(part_settings, "test1")
