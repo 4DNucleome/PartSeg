@@ -19,12 +19,12 @@ class MaskAlgorithmSelection(
     """Register for segmentation method visible in PartSeg ROI Mask."""
 
 
-MaskAlgorithmSelection.register(AutoThresholdAlgorithm)
-MaskAlgorithmSelection.register(CellFromNucleusFlow)
-MaskAlgorithmSelection.register(MorphologicalWatershed)
 MaskAlgorithmSelection.register(ThresholdAlgorithm)
 MaskAlgorithmSelection.register(ThresholdFlowAlgorithm)
 MaskAlgorithmSelection.register(ThresholdPreview)
+MaskAlgorithmSelection.register(AutoThresholdAlgorithm)
+MaskAlgorithmSelection.register(CellFromNucleusFlow)
+MaskAlgorithmSelection.register(MorphologicalWatershed)
 
 
 def __getattr__(name):  # pragma: no cover
