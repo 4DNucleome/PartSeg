@@ -239,5 +239,6 @@ jobs:
       - name: Test with tox
         uses: GabrielBB/xvfb-action@v1
         with:
+          shell: bash -l {0}
           run: python3 -m tox -e py39-PySide2-conda
         timeout-minutes: 60
