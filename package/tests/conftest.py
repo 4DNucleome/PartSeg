@@ -83,6 +83,13 @@ def image2(image, tmp_path):
 
 
 @pytest.fixture
+def image2d(tmp_path):
+    data = np.zeros([20, 20], dtype=np.uint8)
+    data[10:-1, 1:-1] = 20
+    return Image(data, (10**-3, 10**-3), axes_order="YX", file_path=str(tmp_path / "test.tiff"))
+
+
+@pytest.fixture
 def stack_image():
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for x, y in itertools.product([0, 20], repeat=2):
