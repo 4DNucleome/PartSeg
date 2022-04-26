@@ -15,4 +15,4 @@ setup_cfg_block_to_yaml_list () {
         sed -r "s/^ +/  - /g"                     # (3)
 }
 
-setup_cfg_block_to_yaml_list $1
+setup_cfg_block_to_yaml_list "$1"
