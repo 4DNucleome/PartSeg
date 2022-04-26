@@ -56,6 +56,7 @@ def test_synchronize_change_image_dim(part_settings, image2, image2d, qtbot):
         part_settings.image = image2
     view1.hide()
     view2.hide()
+    qtbot.wait(50)
 
 
 def test_compare_view(part_settings, image2, qtbot):
