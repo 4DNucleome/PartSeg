@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.14.1
+
+### Bug Fixes
+
+-   Update build wheels and sdist to have proper version tag (#583)
+-   Fix removing the first measurement entry in the napari Measurement widget (#584)
+-   Fix compatibility bug for conda Pyside2 version (#595)
+-   Error when synchronization is loaded, and newly loaded image has different dimensionality than currently loaded. (#598)
+
+### Features
+
+-   Use pygments for coloring code in exception window (#591)
+-   Add option to calculate Measurement per Mask component (#590)
+
+### Refactor
+
+-   Refactor the creation batch plan widgets and add tests for it (#587)
+-   Drop napari bellow 0.4.12 (#592)
+
 ## 0.14.0
 
 ### Bug Fixes
