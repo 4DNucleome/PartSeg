@@ -236,6 +236,9 @@ jobs:
       - name: Install dependencies
         run: conda install -y tox tox-conda
 
+      - name: create environment
+        run: bash build_utils/create_environment_yml.sh
+
       - name: Test with tox
         uses: GabrielBB/xvfb-action@v1
         with:
