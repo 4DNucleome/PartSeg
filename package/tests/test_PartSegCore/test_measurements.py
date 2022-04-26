@@ -130,6 +130,12 @@ class TestLeaf:
         leaf = Leaf(name="aa", parameters={"value": 15, "ch": 3}, channel=Channel(1))
         assert leaf.get_channel_num({"aa": mock}) == {Channel(1), Channel(3)}
 
+    def test_is_per_component(self):
+        assert Leaf(name="aa", per_component=PerComponent.Yes).is_per_component()
+        assert Leaf(name="aa", per_component=PerComponent.Per_Mask_component).is_per_component()
+        assert not Leaf(name="aa", per_component=PerComponent.No).is_per_component()
+        assert not Leaf(name="aa", per_component=PerComponent.Mean).is_per_component()
+
     def test_pretty_print(self, monkeypatch):
         mock = MagicMock()
         mock.get_fields = MagicMock(return_value=[])
@@ -144,6 +150,9 @@ class TestLeaf:
         assert "mean component" in Leaf(name="aa", per_component=PerComponent.Mean).pretty_print({"aa": mock})
         assert "to the power" not in Leaf(name="aa", power=1).pretty_print({"aa": mock})
         assert "to the power 2" in Leaf(name="aa", power=2).pretty_print({"aa": mock})
+        assert "per mask component" in Leaf(name="aa", per_component=PerComponent.Per_Mask_component).pretty_print(
+            {"aa": mock}
+        )
         monkeypatch.setattr(mock, "__module__", "PartSegCore.test")
         assert Leaf(name="aa").pretty_print({"aa": mock})[0] != "["
         monkeypatch.setattr(mock, "__module__", "PartSegPlugin.submodule")
@@ -151,6 +160,14 @@ class TestLeaf:
         monkeypatch.setattr(sys, "frozen", True, raising=False)
         monkeypatch.setattr(mock, "__module__", "plugins.PartSegPlugin.submodule")
         assert Leaf(name="aa").pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
+
+    def test_per_mask_component_create(self):
+        with pytest.raises(ValueError):
+            Leaf(name="aa", per_component=PerComponent.Per_Mask_component, area=AreaType.Mask)
+
+        leaf = Leaf(name="aa")
+        with pytest.raises(ValueError):
+            leaf.replace_(per_component=PerComponent.Per_Mask_component, area=AreaType.Mask)
 
 
 class TestDiameter:
@@ -330,7 +347,7 @@ class TestComponentsNumber:
         leaf = ComponentsNumber.get_starting_leaf()
         assert isinstance(leaf, Leaf)
         assert leaf.area is None
-        assert leaf.per_component is PerComponent.No
+        assert leaf.per_component is None
         assert leaf.channel is None
 
     def test_cube(self):
@@ -2371,3 +2388,53 @@ def test_colocalization(method, randomize):
         randomize=randomize,
     )
     assert value == -factor or randomize
+
+
+def test_per_mask_component():
+    data = np.zeros((10, 20, 20), dtype=np.uint8)
+    data[2:-2, 2:-12, 2:-12] = 1
+    data[2:-2, 12:-2, 2:-12] = 2
+    data[2:-2, 2:-12, 12:-2] = 3
+    data[2:-2, 12:-2, 12:-2] = 4
+    mask = np.zeros(data.shape, dtype=np.uint8)
+    mask[2:-2, 2:-2, 2:-12] = 1
+    mask[2:-2, 2:-2, 12:-2] = 2
+    image = Image(data, image_spacing=(10**-8,) * 3, axes_order="ZYX", mask=mask)
+    profile = MeasurementProfile(
+        name="test",
+        chosen_fields=[
+            MeasurementEntry(
+                name="Volume",
+                calculation_tree=Leaf(name=Volume.get_name(), area=AreaType.ROI, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                name="Volume per component",
+                calculation_tree=Leaf(name=Volume.get_name(), area=AreaType.ROI, per_component=PerComponent.Yes),
+            ),
+            MeasurementEntry(
+                name="Volume per mask component",
+                calculation_tree=Leaf(
+                    name=Volume.get_name(), area=AreaType.ROI, per_component=PerComponent.Per_Mask_component
+                ),
+            ),
+            MeasurementEntry(
+                name="Mask Volume per component",
+                calculation_tree=Leaf(name=Volume.get_name(), area=AreaType.Mask, per_component=PerComponent.Yes),
+            ),
+        ],
+        name_prefix="",
+    )
+    result = profile.calculate(image=image, channel_num=0, roi=data, result_units=Units.nm)
+    assert len(result) == 4
+    assert isinstance(result["Volume"][0], float)
+    assert isinstance(result["Volume per component"][0], list)
+    assert len(result["Volume per component"][0]) == 4
+    assert len(result["Volume per mask component"][0]) == 2
+    assert len(result["Mask Volume per component"][0]) == 2
+    assert np.isclose(result["Volume"][0], result["Volume per component"][0][0] * 4)
+    assert np.isclose(result["Volume"][0], result["Volume per mask component"][0][0] * 2)
+    df = result.to_dataframe(all_components=True)
+    assert len(df) == 4
+    assert df["Mask component"][1] == df["Mask component"][2] == 1
+    assert df["Mask component"][3] == df["Mask component"][4] == 2
+    assert df["Volume (nm**3)"][1] == df["Volume (nm**3)"][2] == df["Volume (nm**3)"][3] == df["Volume (nm**3)"][4]

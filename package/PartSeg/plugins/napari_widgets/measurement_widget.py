@@ -4,7 +4,7 @@ from magicgui.widgets import create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
-from napari.utils.notifications import show_info
+from napari.utils.notifications import notification_manager, show_info
 from qtpy.QtWidgets import QCheckBox, QLabel, QTabWidget
 
 from PartSeg._roi_analysis.advanced_window import MeasurementSettings
@@ -76,14 +76,14 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         if "Mask component" in df and self.mask_chose.value is not None:
             df2 = df.groupby("Mask component").mean()
             df2["index"] = df2.index
-            update_properties(df, self.mask_chose.value, self.overwrite.isChecked())
+            update_properties(df2, self.mask_chose.value, self.overwrite.isChecked())
         df["index"] = df.index
-        update_properties(df, self.roi_chose.value, self.overwrite.isChecked())
         if stat is None:
             return
         self.measurements_storage.add_measurements(stat)
         self.previous_profile = compute_class.name
         self.refresh_view()
+        update_properties(df, self.roi_chose.value, self.overwrite.isChecked())
 
     def check_if_measurement_can_be_calculated(self, name):
         if name in (NO_MEASUREMENT_STRING, ""):
@@ -124,8 +124,12 @@ class Measurement(QTabWidget):
 
 
 def update_properties(new_properties, layer: Labels, overwrite):
-    if not overwrite:
-        for key, value in layer.properties.items():
-            if key not in new_properties:
-                new_properties[key] = value
-    layer.properties = new_properties
+    try:
+        if not overwrite:
+            new_properties = new_properties.copy()
+            for key, value in layer.properties.items():
+                if key not in new_properties:
+                    new_properties[key] = value
+        layer.properties = new_properties
+    except Exception as e:  # pylint: disable=broad-except  # pragma: no cover
+        notification_manager.recive_error(e)

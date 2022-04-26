@@ -292,7 +292,9 @@ class ProtectedGroupBox(QGroupBox):
             self.protect = previous
 
     @classmethod
-    def refresh_profiles(cls, list_widget: QListWidget, new_values: typing.List[str]):
+    def refresh_profiles(
+        cls, list_widget: typing.Union[QListWidget, SearchableListWidget], new_values: typing.List[str]
+    ):
         index = cls.get_index(list_widget.currentItem(), new_values)
         list_widget.clear()
         list_widget.addItems(new_values)
@@ -840,7 +842,7 @@ class CreatePlan(QWidget):
 
     def add_roi_extraction_pipeline(self, roi_extraction_pipeline: SegmentationPipeline):
         if self.update_element_chk.isChecked():
-            QMessageBox.warning("Cannot update pipeline", "Cannot update pipeline")
+            QMessageBox.warning(self, "Cannot update pipeline", "Cannot update pipeline")
             return
         pos = self.calculation_plan.current_pos[:]
         old_pos = pos[:]
@@ -1124,7 +1126,7 @@ class CalculateInfo(QWidget):
             )
             if not ok:
                 return
-            return self._save_roi_profile(data.copy(update={"name": text}))
+            return self._save_roi_profile(typing.cast(ROIExtractionProfile, data.copy(update={"name": text})))
         self.settings.roi_profiles[data.name] = data
 
     def _save_measurement_profile(self, data: MeasurementProfile):
@@ -1134,7 +1136,7 @@ class CalculateInfo(QWidget):
             )
             if not ok:
                 return
-            return self._save_measurement_profile(data.copy(update={"name": text}))
+            return self._save_measurement_profile(typing.cast(MeasurementProfile, data.copy(update={"name": text})))
         self.settings.measurement_profiles[data.name] = data
 
     def update_plan_list(self):
