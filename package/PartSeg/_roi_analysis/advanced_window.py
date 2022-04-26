@@ -550,14 +550,14 @@ class MeasurementSettings(QWidget):
             self.chosen_element = item
             item.setIcon(QIcon(os.path.join(icons_dir, "task-accepted.png")))
         elif (
-            self.profile_options.currentItem() == self.chosen_element
+            self.profile_options.currentItem() is self.chosen_element
             and self.measurement_area_choose.currentEnum() == self.chosen_element_area.area
             and self.per_component.currentEnum() == self.chosen_element_area.per_component
         ):
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
-            item: MeasurementListWidgetItem = self.profile_options.currentItem()
+            item = cast(MeasurementListWidgetItem, self.profile_options.currentItem())
             leaf = self.get_parameters(
                 deepcopy(item.stat),
                 self.measurement_area_choose.currentEnum(),

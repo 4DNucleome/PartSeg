@@ -221,8 +221,8 @@ def measurement_profiles():
     )
 
 
-def pytest_collection_modifyitems(session, config, items):
-    image_tests = [x for x in items if "PartSegImage" in str(x.fspath)]
-    core_tests = [x for x in items if "PartSegCore" in str(x.fspath)]
-    other_test = [x for x in items if "PartSegCore" not in str(x.fspath) and "PartSegImage" not in str(x.fspath)]
-    items[:] = image_tests + core_tests + other_test
+# def pytest_collection_modifyitems(session, config, items):
+#     image_tests = [x for x in items if "PartSegImage" in str(x.fspath)]
+#     core_tests = [x for x in items if "PartSegCore" in str(x.fspath)]
+#     other_test = [x for x in items if "PartSegCore" not in str(x.fspath) and "PartSegImage" not in str(x.fspath)]
+#     items[:] = image_tests + core_tests + other_test

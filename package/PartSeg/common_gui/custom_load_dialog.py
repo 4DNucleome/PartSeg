@@ -72,7 +72,7 @@ class LoadRegisterFileDialog(QFileDialog):
             io_register = {io_register.get_name(): io_register}
         super().__init__(parent, caption)
         self.io_register = {x.get_name_with_suffix(): x for x in io_register.values()}
-        self.setNameFilters(self.io_register.keys())
+        self.setNameFilters(list(self.io_register.keys()))
 
 
 class CustomLoadDialog(LoadRegisterFileDialog):

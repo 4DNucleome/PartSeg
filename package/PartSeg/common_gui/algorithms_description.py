@@ -73,7 +73,7 @@ class ProfileSelect(QComboBox):
     def add_settings(self, settings: BaseSettings):
         self._settings = settings
         if hasattr(settings, "roi_profiles"):
-            self.addItems(settings.roi_profiles.keys())
+            self.addItems(list(settings.roi_profiles.keys()))
 
     def get_value(self):
         if self._settings is not None and hasattr(self._settings, "roi_profiles"):
