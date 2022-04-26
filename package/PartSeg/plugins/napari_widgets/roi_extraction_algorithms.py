@@ -116,7 +116,7 @@ class ROIExtractionAlgorithms(QWidget):
 
         self.profile_combo_box = SearchComboBox()
         self.profile_combo_box.addItem(SELECT_TEXT)
-        self.profile_combo_box.addItems(self.profile_dict.keys())
+        self.profile_combo_box.addItems(list(self.profile_dict.keys()))
         self.save_btn = QPushButton("Save parameters")
         self.manage_btn = QPushButton("Manage parameters")
         self.target_layer_name = QLineEdit()
@@ -280,7 +280,7 @@ class ROIExtractionAlgorithms(QWidget):
     def refresh_profiles(self):
         self.profile_combo_box.clear()
         self.profile_combo_box.addItem(SELECT_TEXT)
-        self.profile_combo_box.addItems(self.profile_dict.keys())
+        self.profile_combo_box.addItems(list(self.profile_dict.keys()))
 
 
 class ROIAnalysisExtraction(ROIExtractionAlgorithms):
@@ -317,7 +317,7 @@ class ProfilePreviewDialog(QDialog):
         self.settings = settings
 
         self.profile_list = SearchableListWidget()
-        self.profile_list.addItems(self.profile_dict.keys())
+        self.profile_list.addItems(list(self.profile_dict.keys()))
         self.profile_list.currentTextChanged.connect(self.profile_selected)
         self.profile_view = QPlainTextEdit()
         self.profile_view.setReadOnly(True)
@@ -352,7 +352,7 @@ class ProfilePreviewDialog(QDialog):
         if self.profile_list.currentItem().text() in self.profile_dict:
             del self.profile_dict[self.profile_list.currentItem().text()]
         self.profile_list.clear()
-        self.profile_list.addItems(self.profile_dict.keys())
+        self.profile_list.addItems(list(self.profile_dict.keys()))
 
     def rename_action(self):
         if self.profile_list.currentItem() is None:
@@ -380,7 +380,7 @@ class ProfilePreviewDialog(QDialog):
         profile.name = text
         self.profile_dict[text] = profile
         self.profile_list.clear()
-        self.profile_list.addItems(self.profile_dict.keys())
+        self.profile_list.addItems(list(self.profile_dict.keys()))
 
     def export_action(self):
         exp = ExportDialog(self.profile_dict, ProfileDictViewer, parent=self)
@@ -407,4 +407,4 @@ class ProfilePreviewDialog(QDialog):
             self.profile_dict[final_name] = profs[original_name]
         self.settings.dump()
         self.profile_list.clear()
-        self.profile_list.addItems(self.profile_dict.keys())
+        self.profile_list.addItems(list(self.profile_dict.keys()))
