@@ -18,6 +18,7 @@
 
 -   Refactor the creation batch plan widgets and add tests for it (#587)
 -   Drop napari bellow 0.4.12 (#592)
+-   Update the order of ROI Mask algorithms to be the same as in older PartSeg versions (#600)
 
 ## 0.14.0
 
