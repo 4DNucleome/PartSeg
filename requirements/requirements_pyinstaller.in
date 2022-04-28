@@ -34,5 +34,5 @@ xlrd
 xlsxwriter
 sphinx!=3.5.0
 pydantic!=1.8
-vispy
+vispy!=0.10.0
 traceback-with-variables
