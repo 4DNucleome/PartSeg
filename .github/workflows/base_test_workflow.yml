@@ -62,6 +62,9 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: test_data
+      - name: List files
+        shell: bash
+        run: ls -l
 
       - name: Install dependencies
         run: |

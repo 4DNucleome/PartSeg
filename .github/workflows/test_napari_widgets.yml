@@ -12,7 +12,7 @@ on:
 
 jobs:
   call-test-workflow:
-    name: Test napari widgets
+    name: Napari widgets
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: >-
