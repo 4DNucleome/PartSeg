@@ -37,7 +37,7 @@ jobs:
     with:
       test_data: True
       python_version: >-
-        ["3.7", "3.10"]
+        ["3.7", "3.8", "3.10"]
       os: >-
         ["windows-2019", "ubuntu-20.04", "macos-11"]
       qt_backend: >-
@@ -52,7 +52,7 @@ jobs:
       python_version: >-
         ["3.7", "3.8", "3.10"]
       os: >-
-        ["windows-2019", "ubuntu-20.04", "macos-11"]
+        ["ubuntu-20.04"]
       qt_backend: >-
         ["PySide2"]
 
