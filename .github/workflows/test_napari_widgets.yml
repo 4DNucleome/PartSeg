@@ -13,8 +13,7 @@ on:
 jobs:
   call-test-workflow:
     name: Test napari widgets
-    uses: ./.github/workflows/test_workflow.yml
-    needs: download_data
+    uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: >-
         ["3.9"]

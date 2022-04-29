@@ -32,19 +32,21 @@ jobs:
 
   call-test-workflow:
     name: Test
-    uses: ./.github/workflows/test_workflow.yml
+    uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
     with:
+      test_data: True
       python_version: >-
         ["3.7", "3.8", "3.10"]
       os: >-
         ["windows-2019", "ubuntu-20.04", "macos-11"]
 
   base-test:
-    name: Test
-    uses: ./.github/workflows/test_workflow.yml
+    name: Base Test
+    uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
     with:
+      test_data: True
       python_version: >-
         ["3.9"]
       os: >-
@@ -92,6 +94,7 @@ jobs:
     needs: download_data
     uses: ./.github/workflows/test_workflow.yml
     with:
+      test_data: True
       python_version: >-
         ["3.7"]
       os: >-

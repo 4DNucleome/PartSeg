@@ -21,6 +21,10 @@ on:
         type: string
         default: >-
           ["PyQt5", "PySide2"]
+      test_data:
+        required: false
+        type: boolean
+        default: False
 
 
 jobs:
@@ -54,11 +58,10 @@ jobs:
           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
 
       - name: Download test data
-        uses: actions/download-artifact@v1
+        if: ${{ inputs.test_data }}
+        uses: actions/download-artifact@v3
         with:
           name: test_data
-      - shell: bash
-        run: ls
 
       - name: Install dependencies
         run: |
