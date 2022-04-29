@@ -31,7 +31,7 @@ jobs:
           path: test_data
 
   call-test-workflow:
-    uses: .github/workflows/test_workflow.yml
+    uses: ./.github/workflows/test_workflow.yml
     needs: download_data
     with:
       python_version: "[\"3.7\", \"3.8\", \"3.9\", \"3.10\"]"
