@@ -31,7 +31,7 @@ jobs:
           path: test_data
 
   test_pyqt5:
-    name: Test
+    name: PyQt5
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
     with:
@@ -44,7 +44,7 @@ jobs:
         ["PyQt5"]
 
   test_pyside2:
-    name: Test
+    name: PySide2
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
     with:
