@@ -7,17 +7,33 @@ on:
       os:
         required: true
         type: string
+      tox_args:
+        required: false
+        type: string
+        default: ""
+      napari:
+        required: false
+        type: string
+        default: >-
+          ["None"]
+      platform:
+        required: false
+        type: string
+        default: >-
+          ["PyQt5", "PySide2"]
 
 
 jobs:
   test:
-    name: PartSeg on ${{ matrix.os }} py ${{ matrix.python_version }}
+    name: ${{ matrix.os }} py ${{ matrix.python_version }} ${{ matrix.napari }} ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ${{fromJson(inputs.os)}}
         python_version: ${{fromJson(inputs.python_version)}}
+        napari_version: ${{fromJson(inputs.napari)}}
+        platform: ${{fromJson(inputs.platform)}}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
@@ -53,7 +69,8 @@ jobs:
         uses: GabrielBB/xvfb-action@v1
         timeout-minutes: 60
         with:
-          run: python -m tox
+          run: python -m tox ${{ input.tox_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: None
+          NAPARI: ${{ matrix.napari_version }}
+          PLATFORM: ${{ matrix.platform }}

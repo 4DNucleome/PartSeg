@@ -31,61 +31,24 @@ jobs:
           path: test_data
 
   call-test-workflow:
+    name: Test
     uses: ./.github/workflows/test_workflow.yml
     needs: download_data
     with:
-      python_version: "[\"3.7\", \"3.8\", \"3.9\", \"3.10\"]"
-      os: "[\"windows-2019\", \"ubuntu-20.04\", \"macos-11\"]"
+      python_version: >-
+        ["3.7", "3.8", "3.10"]
+      os: >-
+        ["windows-2019", "ubuntu-20.04", "macos-11"]
 
-
-  test_feature:
-    name: PartSeg on ${{ matrix.os }} py ${{ matrix.python_version }}
-    runs-on: ${{ matrix.os }}
+  base-test:
+    name: Test
+    uses: ./.github/workflows/test_workflow.yml
     needs: download_data
-    if: startsWith(github.ref, 'refs/heads/feature')
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ windows-2019, macos-11, ubuntu-20.04 ]
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
-        name: Install Python '3.8'
-        with:
-          python-version: '3.8'
-
-      - name: Install ubuntu libraries
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
-
-      - name: Install Windows OpenGL
-        if: runner.os == 'Windows'
-        run: |
-          git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-          powershell gl-ci-helpers/appveyor/install_opengl.ps1
-          if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
-
-      - name: Download test data
-        uses: actions/download-artifact@v1
-        with:
-          name: test_data
-      - shell: bash
-        run: ls
-
-      - name: Install dependencies
-        run: |
-          python -m pip install -r requirements/requirements_dev.txt tox-gh-actions
-      - name: Test with tox
-        # run tests using pip install --pre
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: python -m tox -e py38-PyQt5-all
-        env:
-          PLATFORM: ${{ matrix.platform }}
-          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: None
-        timeout-minutes: 60
+    with:
+      python_version: >-
+        ["3.9"]
+      os: >-
+        ["windows-2019", "ubuntu-20.04", "macos-11"]
 
   test_coverage:
     name: Test PartSeg coverage
@@ -126,30 +89,16 @@ jobs:
 
   test_minimal:
     name: Test PartSeg minimal
-    runs-on: ubuntu-20.04
     needs: download_data
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
-        name: Install Python '3.7'
-        with:
-          python-version: '3.7'
-      - name: Install ubuntu libraries
-        run: sudo apt-get install -y libxkbcommon-x11-0
-
-      - name: Download test data
-        uses: actions/download-artifact@v1
-        with:
-          name: test_data
-
-      - name: Install dependencies
-        run: |
-          python -m pip install -r requirements/requirements_dev.txt
-      - name: Test with tox
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: python -m tox -e py37-PyQt5-minimal
-        timeout-minutes: 60
+    uses: ./.github/workflows/test_workflow.yml
+    with:
+      python_version: >-
+        ["3.7"]
+      os: >-
+        ["ubuntu-20.04"]
+      platform: >-
+        ["PyQt5"]
+      tox_args: "-e py37-PyQt5-minimal"
 
   test_conda:
     name: Test PartSeg conda
