@@ -100,23 +100,6 @@ jobs:
     needs: download_data
     steps:
       - uses: actions/checkout@v2
-      - name: Create environment.yml
-        shell: bash
-        run: |
-          cat <<EOF > environment.yml
-          name: test
-          channels:
-            - conda-forge
-          dependencies:
-            - conda-smithy
-            - python 3.9
-            - pip
-            - tomlkit
-            - ruamel.yaml
-            - anaconda-client
-            - tox-conda
-          EOF
-
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
