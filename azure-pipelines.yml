@@ -3,7 +3,7 @@ trigger:
     include:
     - master
     - develop
-    - feature/**
+    - feature_prepare/**
     - main
   tags:
     include:
@@ -95,7 +95,7 @@ stages:
       AZURE_PIPELINES: 1
     jobs:
     - job: test
-      condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
+      condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature_prepare'))
       strategy:
         matrix:
           macos:
@@ -161,7 +161,7 @@ stages:
             displayName: TestBuild
 
       - job: pyinstaller
-        # condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
+        condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature_prepare'))
         strategy:
           matrix:
             macos:
