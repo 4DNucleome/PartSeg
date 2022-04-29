@@ -92,7 +92,7 @@ jobs:
   test_minimal:
     name: Test PartSeg minimal
     needs: download_data
-    uses: ./.github/workflows/test_workflow.yml
+    uses: ./.github/workflows/base_test_workflow.yml
     with:
       test_data: True
       python_version: >-
