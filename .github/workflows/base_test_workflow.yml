@@ -16,7 +16,7 @@ on:
         type: string
         default: >-
           ["None"]
-      platform:
+      qt_backend:
         required: false
         type: string
         default: >-
@@ -41,7 +41,7 @@ jobs:
         os: ${{fromJson(inputs.os)}}
         python_version: ${{fromJson(inputs.python_version)}}
         napari_version: ${{fromJson(inputs.napari)}}
-        platform: ${{fromJson(inputs.platform)}}
+        qt_backend: ${{fromJson(inputs.qt_backend)}}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
@@ -81,7 +81,7 @@ jobs:
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ matrix.napari_version }}
-          PLATFORM: ${{ matrix.platform }}
+          BACKEND: ${{ matrix.qt_backend }}
 
       - uses: codecov/codecov-action@v1
         if: ${{ inputs.coverage }}

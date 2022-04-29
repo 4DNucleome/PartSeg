@@ -11,7 +11,7 @@ on:
       - '**'
 
 jobs:
-  call-test-workflow:
+  test-pyqt5:
     name: Napari widgets
     uses: ./.github/workflows/base_test_workflow.yml
     with:
@@ -21,3 +21,19 @@ jobs:
         ["ubuntu-20.04"]
       napari: >-
         ["napari412", "napari413", "napari414", "napari415"]
+      qt_backend: >-
+        ["PyQt5"]
+
+  test-pyside2:
+    name: Napari widgets
+    uses: ./.github/workflows/base_test_workflow.yml
+    with:
+      python_version: >-
+        ["3.9"]
+      os: >-
+        ["ubuntu-20.04"]
+      napari: >-
+        ["napari412", "napari415"]
+
+      qt_backend: >-
+        ["PySide2"]

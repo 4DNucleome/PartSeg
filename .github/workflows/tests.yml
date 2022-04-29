@@ -30,7 +30,20 @@ jobs:
           name: test_data
           path: test_data
 
-  call-test-workflow:
+  test_pyqt5:
+    name: Test
+    uses: ./.github/workflows/base_test_workflow.yml
+    needs: download_data
+    with:
+      test_data: True
+      python_version: >-
+        ["3.7", "3.10"]
+      os: >-
+        ["windows-2019", "ubuntu-20.04", "macos-11"]
+      qt_backend: >-
+        ["PyQt5"]
+
+  test_pyside2:
     name: Test
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
@@ -40,6 +53,8 @@ jobs:
         ["3.7", "3.8", "3.10"]
       os: >-
         ["windows-2019", "ubuntu-20.04", "macos-11"]
+      qt_backend: >-
+        ["PySide2"]
 
   base-test:
     name: Base Test
@@ -61,7 +76,7 @@ jobs:
         ["3.9"]
       os: >-
         ["ubuntu-20.04"]
-      platform: >-
+      qt_backend: >-
         ["PyQt5"]
       tox_args: "-e py38-PyQt5-coverage"
 
@@ -75,7 +90,7 @@ jobs:
         ["3.7"]
       os: >-
         ["ubuntu-20.04"]
-      platform: >-
+      qt_backend: >-
         ["PyQt5"]
       tox_args: "-e py37-PyQt5-minimal"
 
