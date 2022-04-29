@@ -25,6 +25,10 @@ on:
         required: false
         type: boolean
         default: False
+      coverage:
+        required: false
+        type: boolean
+        default: False
 
 
 jobs:
@@ -63,9 +67,6 @@ jobs:
         with:
           name: test_data
           path: test_data
-      - name: List files
-        shell: bash
-        run: ls -l
 
       - name: Install dependencies
         run: |
@@ -81,3 +82,9 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ matrix.napari_version }}
           PLATFORM: ${{ matrix.platform }}
+
+      - uses: codecov/codecov-action@v1
+        if: ${{ inputs.coverage }}
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
