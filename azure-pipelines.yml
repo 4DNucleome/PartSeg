@@ -153,12 +153,14 @@ stages:
         variables:
           test_path: dist/PartSeg/PartSeg _test
           DISPLAY: ':99.0'
+          pip_cache_dir: $(Pipeline.Workspace)/.pip
         pool: { vmImage: 'ubuntu-18.04' }
         steps:
           - template: .azure-pipelines/linux_libs.yaml
           - template: .azure-pipelines/pyinstaller.yaml
             parameters:
               test_path: $(test_path)
+              cache_dir: $(pip_cache_dir)
 
       - job: pyinstaller
         condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature_prepare'))
@@ -170,8 +172,11 @@ stages:
             windows:
               imageName: 'windows-2019'
               test_path: dist\PartSeg\PartSeg _test
+        variables:
+          pip_cache_dir: $(Pipeline.Workspace)/.pip
         pool: {vmImage: $(imageName)}
         steps:
           - template: .azure-pipelines/pyinstaller.yaml
             parameters:
               test_path: $(test_path)
+              cache_dir: $(pip_cache_dir)

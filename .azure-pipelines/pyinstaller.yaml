@@ -1,9 +1,15 @@
 parameters:
 - name: test_path # name of the parameter; required
   type: string # data type of the parameter; required
+- name: cache_dir # name of the parameter; required
+  type: string
 
 steps:
   - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+  - template: .azure-pipelines/pip_cache.yaml
+    parameters:
+      key: pyinstaller | requirements/requirements_pyinstaller.txt | "$(Agent.OS)" | "$(PY)"
+      path:  ${{ parameters.cache_dir }}
   - bash: |
       python -m pip install -U pip
       python -m pip install -r requirements/requirements_pyinstaller.txt
