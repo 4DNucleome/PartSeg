@@ -11,10 +11,11 @@ steps:
       key: pyinstaller | requirements/requirements_pyinstaller.txt | "$(Agent.OS)" | "$(PY)"
       path:  ${{ parameters.cache_dir }}
   - bash: |
-      python -m pip install -U pip
+      python -m pip install -U pip wheel setuptools
       python -m pip install -r requirements/requirements_pyinstaller.txt
-      python -m pip install .
     displayName: install libs
+  - bash: python -m pip install .
+    displayName: install partseg
   - bash: |
       python  build_utils/create_and_pack_executable.py
     displayName: build
