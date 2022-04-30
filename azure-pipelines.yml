@@ -125,7 +125,7 @@ stages:
       pool: {vmImage: $(imageName)}
       steps:
         - template: .azure-pipelines/tests.yaml
-          inputs:
+          parameters:
             cache_dir: $(pip_cache_dir)
     - job: test_linux
       pool: { vmImage: 'ubuntu-20.04' }
@@ -136,7 +136,7 @@ stages:
       steps:
         - template: .azure-pipelines/linux_libs.yaml
         - template: .azure-pipelines/tests.yaml
-          inputs:
+          parameters:
             cache_dir: $(pip_cache_dir)
 
   - stage: Builds
