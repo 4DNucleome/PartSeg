@@ -57,11 +57,11 @@ stages:
     dependsOn: []
     jobs:
       - job: manifest_check
-        pool: {vmImage: 'Ubuntu-18.04'}
+        pool: {vmImage: 'Ubuntu-latest'}
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.10', architecture: x64}}
           - bash: |
-              python -m pip install check-manifest==0.42 numpy==1.19.1
+              python -m pip install check-manifest==0.48 numpy==1.22.3
             displayName: InstallDeps
           - bash: check-manifest
             displayName: check-manifest
