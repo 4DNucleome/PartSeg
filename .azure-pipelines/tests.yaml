@@ -1,5 +1,14 @@
+parameters:
+
+- name: cache_dir # name of the parameter; required
+  type: string
+
 steps:
   - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8'}}
+  - template: pip_cache.yaml
+    parameters:
+      key: test | requirements/requirements_pyinstaller.txt | "$(Agent.OS)" | "$(PY)"
+      path: ${{ parameters.cache_dir }}
   - task: DownloadPipelineArtifact@2
     inputs:
       artifact: TestData

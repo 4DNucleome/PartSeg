@@ -32,7 +32,7 @@ stages:
         - publish: changelog_cut.md
           artifact: ReleaseInfo
 
-  - stage: formating_check
+  - stage: formatting_check
     dependsOn: []
     jobs:
       - job: check_formating
@@ -112,6 +112,7 @@ stages:
     dependsOn: [GetTestData, formating_check]
     variables:
       AZURE_PIPELINES: 1
+      pip_cache_dir: $(Pipeline.Workspace)/.pip
     jobs:
     - job: test
       condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature_prepare'))
@@ -124,14 +125,19 @@ stages:
       pool: {vmImage: $(imageName)}
       steps:
         - template: .azure-pipelines/tests.yaml
+          inputs:
+            cache_dir: $(pip_cache_dir)
     - job: test_linux
       pool: { vmImage: 'ubuntu-20.04' }
       variables:
         AZURE_PIPELINES: 1
         DISPLAY: ':99.0'
+        pip_cache_dir: $(Pipeline.Workspace)/.pip
       steps:
         - template: .azure-pipelines/linux_libs.yaml
         - template: .azure-pipelines/tests.yaml
+          inputs:
+            cache_dir: $(pip_cache_dir)
 
   - stage: Builds
     dependsOn: Tests
