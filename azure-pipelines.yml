@@ -75,10 +75,8 @@ stages:
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
-          - script: echo "##vso[task.setvariable variable=PY]$(python -VV)"
-          - task: Cache@2
-            displayName: Cache pip
-            inputs:
+          - template: .azure-pipelines/pip_cache.yaml
+            parameters:
               key: doc | requirements/requirements_pyinstaller.txt | "$(PY)"
               path: $(pip_cache_dir)
           - bash: |
@@ -100,11 +98,9 @@ stages:
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
-          - script: echo "##vso[task.setvariable variable=PY]$(python -VV)"
-          - task: Cache@2
-            displayName: Cache pip
-            inputs:
-              key: doc | requirements/requirements_pyinstaller.txt | "$(PY)"
+          - template: .azure-pipelines/pip_cache.yaml
+            parameters:
+              key: notebook | requirements/requirements_pyinstaller.txt | "$(PY)"
               path: $(pip_cache_dir)
           - bash: |
               python -m pip install tox
