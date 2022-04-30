@@ -6,7 +6,7 @@ parameters:
 
 steps:
   - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
-  - template: .azure-pipelines/pip_cache.yaml
+  - template: pip_cache.yaml
     parameters:
       key: pyinstaller | requirements/requirements_pyinstaller.txt | "$(Agent.OS)" | "$(PY)"
       path:  ${{ parameters.cache_dir }}
