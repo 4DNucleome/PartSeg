@@ -1,0 +1,21 @@
+parameters:
+- name: test_path # name of the parameter; required
+  type: string # data type of the parameter; required
+
+steps:
+  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+  - bash: |
+      python -m pip install -U pip
+      python -m pip install -r requirements/requirements_pyinstaller.txt
+      python -m pip install .
+    displayName: install libs
+  - bash: |
+      python  build_utils/create_and_pack_executable.py
+    displayName: build
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: dist2
+      artifactName: execs
+  - script: ${{ parameters.test_path }}
+    displayName: TestBuild
