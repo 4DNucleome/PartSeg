@@ -1,5 +1,4 @@
 parameters:
-
 - name: cache_dir # name of the parameter; required
   type: string
 
