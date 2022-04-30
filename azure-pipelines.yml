@@ -109,7 +109,7 @@ stages:
             displayName: "Run Notebook"
 
   - stage: Tests
-    dependsOn: [GetTestData, formating_check]
+    dependsOn: [GetTestData, formatting_check]
     variables:
       AZURE_PIPELINES: 1
       pip_cache_dir: $(Pipeline.Workspace)/.pip
