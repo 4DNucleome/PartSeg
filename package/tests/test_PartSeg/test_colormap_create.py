@@ -246,7 +246,7 @@ class TestColormapList:
         ):
             widget.set_state(starting_colors[0], True)
         assert len(widget.get_selected()) == len(starting_colors)
-        name = starting_colors[0] + "_reversed"
+        name = f"{starting_colors[0]}_reversed"
         with qtbot.waitSignal(widget.visibility_colormap_change, check_params_cb=self.verify_visibility(name, True)):
             widget.set_state(name, True)
         assert len(widget.get_selected()) == len(starting_colors) + 1

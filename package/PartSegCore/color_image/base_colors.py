@@ -60,7 +60,7 @@ default_colormap_dict = {name: AVAILABLE_COLORMAPS[name] for name in starting_co
 default_colormap_dict.update(AVAILABLE_COLORMAPS)
 default_colormap_dict.update(
     {
-        k + "_reversed": Colormap(v.colors[::-1], controls=1 - v.controls[::-1])
+        f"{k}_reversed": Colormap(v.colors[::-1], controls=1 - v.controls[::-1])
         for k, v in AVAILABLE_COLORMAPS.items()
         if not k.endswith("_k")
     }
