@@ -12,7 +12,9 @@ steps:
     inputs:
       artifact: TestData
       path: $(Build.SourcesDirectory)/test_data
-  - script: pip install -r requirements/requirements_dev.txt
+  - script: |
+      pip install -U pip wheel setuptools virtualenv
+      pip install -r requirements/requirements_dev.txt
     displayName: "Install deps"
   - script: tox -vv -e py38-PyQt5-azure
     displayName: "Run Tox"
