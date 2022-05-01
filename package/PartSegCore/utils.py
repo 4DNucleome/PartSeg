@@ -410,8 +410,8 @@ class BaseModel(PydanticBaseModel):
         extra = "forbid"
 
     def __getitem__(self, item):
-        warnings.warn("Access to attribute by [] is deprecated. Use . instead", FutureWarning, stacklevel=2)
         if item in self.__fields__:
+            warnings.warn("Access to attribute by [] is deprecated. Use . instead", FutureWarning, stacklevel=2)
             return getattr(self, item)
         raise KeyError(f"{item} not found in {self.__class__.__name__}")
 
