@@ -17,6 +17,8 @@ from .utils import CI_BUILD
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
 
+pytestmark = pytest.mark.filterwarnings("ignore:Public access to Window.qt_viewer")
+
 
 class TestResultImageView:
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
