@@ -16,7 +16,7 @@ steps:
       pip install -U pip wheel setuptools virtualenv
       pip install -r requirements/requirements_dev.txt
     displayName: "Install deps"
-  - script: tox -vv -e py38-PyQt5-azure
+  - script: tox -vvv r -e py38-PyQt5-azure
     displayName: "Run Tox"
     env:
       CODECOV_TOKEN: $(codecov_token_secret)
