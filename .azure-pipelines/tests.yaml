@@ -14,7 +14,7 @@ steps:
       path: $(Build.SourcesDirectory)/test_data
   - script: pip install -r requirements/requirements_dev.txt
     displayName: "Install deps"
-  - script: tox -e py38-PyQt5-azure
+  - script: tox -vv -e py38-PyQt5-azure
     displayName: "Run Tox"
     env:
       CODECOV_TOKEN: $(codecov_token_secret)
