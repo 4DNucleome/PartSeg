@@ -12,6 +12,7 @@ from PartSeg._launcher.main_window import PartSegGUILauncher
 from PartSeg._launcher.main_window import Prepare as LauncherPrepare
 from PartSeg._roi_analysis import main_window as analysis_main_window
 from PartSeg._roi_mask import main_window as mask_main_window
+from PartSegCore import state_store
 
 from .utils import CI_BUILD, GITHUB_ACTIONS, TRAVIS
 
@@ -21,6 +22,11 @@ def empty(*_):
 
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
+
+
+@pytest.fixture(autouse=True)
+def mock_settings_path(tmp_path, monkeypatch):
+    monkeypatch.setattr(state_store, "save_folder", str(tmp_path))
 
 
 class TestAnalysisMainWindow:
