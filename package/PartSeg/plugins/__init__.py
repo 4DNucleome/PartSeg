@@ -43,7 +43,7 @@ def get_plugins():
         packages = pkgutil.iter_modules(new_path, "plugins" + ".")
         register_napari_plugins()
     else:
-        packages = pkgutil.iter_modules(__path__, __name__ + ".")
+        packages = pkgutil.iter_modules(__path__, f"{__name__}.")
     packages2 = itertools.chain(
         pkg_resources.iter_entry_points("PartSeg.plugins"),
         pkg_resources.iter_entry_points("partseg.plugins"),
