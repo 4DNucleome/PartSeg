@@ -108,7 +108,25 @@ stages:
           - bash: tox -e jupyter
             displayName: "Run Notebook"
 
-  - stage: Tests
+  - stage: Tests linux
+    dependsOn: [GetTestData, formatting_check]
+    variables:
+      AZURE_PIPELINES: 1
+      pip_cache_dir: $(Pipeline.Workspace)/.pip
+    jobs:
+    - job: test_linux
+      pool: { vmImage: 'ubuntu-20.04' }
+      variables:
+        AZURE_PIPELINES: 1
+        DISPLAY: ':99.0'
+        pip_cache_dir: $(Pipeline.Workspace)/.pip
+      steps:
+        - template: .azure-pipelines/linux_libs.yaml
+        - template: .azure-pipelines/tests.yaml
+          parameters:
+            cache_dir: $(pip_cache_dir)
+
+  - stage: Tests other
     dependsOn: [GetTestData, formatting_check]
     variables:
       AZURE_PIPELINES: 1
@@ -127,20 +145,9 @@ stages:
         - template: .azure-pipelines/tests.yaml
           parameters:
             cache_dir: $(pip_cache_dir)
-    - job: test_linux
-      pool: { vmImage: 'ubuntu-20.04' }
-      variables:
-        AZURE_PIPELINES: 1
-        DISPLAY: ':99.0'
-        pip_cache_dir: $(Pipeline.Workspace)/.pip
-      steps:
-        - template: .azure-pipelines/linux_libs.yaml
-        - template: .azure-pipelines/tests.yaml
-          parameters:
-            cache_dir: $(pip_cache_dir)
 
   - stage: Builds
-    dependsOn: Tests
+    dependsOn: Tests linux
     jobs:
       - job: sdist
         pool: {vmImage: 'Ubuntu-18.04'}
