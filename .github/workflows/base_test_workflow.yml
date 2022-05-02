@@ -74,7 +74,6 @@ jobs:
           python -m pip install -r requirements/requirements_dev.txt tox-gh-actions
 
       - name: Test with tox
-        # run tests using pip install --pre
         uses: GabrielBB/xvfb-action@v1
         timeout-minutes: 60
         with:

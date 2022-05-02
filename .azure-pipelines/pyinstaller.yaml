@@ -1,0 +1,28 @@
+parameters:
+- name: test_path # name of the parameter; required
+  type: string # data type of the parameter; required
+- name: cache_dir # name of the parameter; required
+  type: string
+
+steps:
+  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
+  - template: pip_cache.yaml
+    parameters:
+      key: pyinstaller | requirements/requirements_pyinstaller.txt | "$(Agent.OS)" | "$(PY)"
+      path:  ${{ parameters.cache_dir }}
+  - bash: |
+      python -m pip install -U pip wheel setuptools
+      python -m pip install -r requirements/requirements_pyinstaller.txt
+    displayName: install libs
+  - bash: python -m pip install .
+    displayName: install partseg
+  - bash: |
+      python  build_utils/create_and_pack_executable.py
+    displayName: build
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: dist2
+      artifactName: execs
+  - script: ${{ parameters.test_path }}
+    displayName: TestBuild
