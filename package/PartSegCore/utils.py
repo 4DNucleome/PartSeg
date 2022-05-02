@@ -223,7 +223,11 @@ def recursive_update_dict(main_dict: typing.Union[dict, EventedDict], other_dict
         {"test": {"test": 1, "test2": {"test4": 1, "test2": 1}}}
     """
     for key, val in other_dict.items():
-        if key in main_dict and isinstance(main_dict[key], dict) and isinstance(val, dict):
+        if (
+            key in main_dict
+            and isinstance(main_dict[key], typing.MutableMapping)
+            and isinstance(val, typing.MutableMapping)
+        ):
             recursive_update_dict(main_dict[key], val)
         else:
             main_dict[key] = val
@@ -330,7 +334,7 @@ class ProfileDict:
         if isinstance(value, dict):
             value = EventedDict(**value)
         curr_dict[key_path[-1]] = value
-        return value
+        return curr_dict[key_path[-1]]
 
     def _call_callback(self, key_path: typing.Union[typing.Sequence[str], str]):
         if isinstance(key_path, str):
