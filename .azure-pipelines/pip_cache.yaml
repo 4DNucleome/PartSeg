@@ -6,7 +6,7 @@ parameters:
 
 steps:
   - bash: echo "##vso[task.setvariable variable=PY]$(python -VV)"
-  - task: Cache@2
+  - task: CacheBeta@1
     displayName: Cache pip
     inputs:
       key: ${{ parameters.key }}
