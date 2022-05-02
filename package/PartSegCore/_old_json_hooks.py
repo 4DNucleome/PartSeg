@@ -4,6 +4,7 @@ from napari.utils import Colormap
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.class_generator import SerializeClassEncoder
+from PartSegCore.color_image.base_colors import Color
 from PartSegCore.image_operations import RadiusType
 
 
@@ -139,6 +140,9 @@ def profile_hook(dkt):
             dkt["segmentation_parameters"] = {"algorithm_name": name, "values": par}
         if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.ColorMap":
             positions, colors = list(zip(*dkt["colormap"]))
+            if any(isinstance(c, Color) for c in colors):
+                colors = [c.as_tuple() if isinstance(c, Color) else c + (1,) for c in colors]
+
             return Colormap(colors, controls=positions)
         if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.ColorPosition":
             return (dkt["color_position"], dkt["color"])
