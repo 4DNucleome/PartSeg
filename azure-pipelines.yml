@@ -23,7 +23,7 @@ stages:
           displayName: "download data"
         - task: UsePythonVersion@0
           inputs:
-            versionSpec: '3.8'
+            versionSpec: '3.9'
           displayName: 'Use Python $(python.version)'
         - script: python build_utils/cut_changelog.py changelog_cut.md
           displayName: "Cut changelog"
@@ -70,11 +70,11 @@ stages:
     dependsOn: []
     jobs:
       - job: help
-        pool: {vmImage: 'Ubuntu-18.04'}
+        pool: {vmImage: 'ubuntu-latest'}
         variables:
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
           - template: .azure-pipelines/pip_cache.yaml
             parameters:
               key: doc | requirements/requirements_pyinstaller.txt | "$(PY)"
@@ -97,7 +97,7 @@ stages:
           DATA_PATH: typy_neuronow2
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
           - template: .azure-pipelines/pip_cache.yaml
             parameters:
               key: notebook | requirements/requirements_pyinstaller.txt | "$(PY)"

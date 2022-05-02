@@ -5,7 +5,7 @@ parameters:
   type: string
 
 steps:
-  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
   - template: pip_cache.yaml
     parameters:
       key: pyinstaller | requirements/requirements_pyinstaller.txt | "$(Agent.OS)" | "$(PY)"
