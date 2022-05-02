@@ -31,7 +31,7 @@ class SaveITKSnap(SaveBase):
         step_changed=None,
     ):
         mask = SimpleITK.GetImageFromArray(project_info.roi_info.roi)
-        SimpleITK.WriteImage(save_location, mask)
+        SimpleITK.WriteImage(mask, save_location)
 
 
 def register():
