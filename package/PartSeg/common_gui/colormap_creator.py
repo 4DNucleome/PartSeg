@@ -285,7 +285,10 @@ class PColormapCreator(ColormapCreator):
         super().__init__()
         self.settings = settings
         for i, el in enumerate(settings.get_from_profile("custom_colors", [])):
-            self.color_picker.setCustomColor(i, qcolor_from_color(el))
+
+            self.color_picker.setCustomColor(
+                i, qcolor_from_color(el if isinstance(el, Color) else Color.from_tuple(el))
+            )
         self.prohibited_names = set(self.settings.colormap_dict.keys())  # Prohibited name is added to reduce
         # probability of colormap cache collision
 

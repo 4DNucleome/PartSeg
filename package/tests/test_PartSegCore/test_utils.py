@@ -261,6 +261,14 @@ class TestProfileDict:
         dkt.set("test.a", 2)
         assert receiver.empty.call_count == 5
 
+    def test_dict_add(self):
+        dkt = ProfileDict()
+        data = dkt.get("foo", default={})
+        assert isinstance(data, EventedDict)
+        dkt.update({"foo": {"bar": 1}})
+        data["a"] = 1
+        assert dkt.get("foo") == {"a": 1, "bar": 1}
+
 
 def test_iterate_names():
     assert iterate_names("aaaa", {}) == "aaaa"
