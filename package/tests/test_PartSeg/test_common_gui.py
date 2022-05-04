@@ -85,7 +85,7 @@ class Enum2(Enum):
     test4 = 4
 
     def __str__(self):
-        return self.name + " eee"
+        return f"{self.name} eee"
 
 
 @pytest.mark.filterwarnings("ignore:EnumComboBox is deprecated")
