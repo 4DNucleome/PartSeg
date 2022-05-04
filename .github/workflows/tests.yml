@@ -79,6 +79,7 @@ jobs:
       qt_backend: >-
         ["PyQt5"]
       tox_args: "-e py38-PyQt5-coverage"
+      coverage: true
 
   test_minimal:
     name: Test PartSeg minimal
