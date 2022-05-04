@@ -219,7 +219,7 @@ class CustomSpinBox(QSpinBox):
         super().__init__(*args, **kwargs)
         self.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
         if bounds is not None:
-            warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)
+            warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)  # pragma: no cover
 
 
 class CustomDoubleSpinBox(QDoubleSpinBox):
@@ -238,7 +238,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
         super().__init__(*args, **kwargs)
         self.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
         if bounds is not None:
-            warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)
+            warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)  # pragma: no cover
 
 
 class ProgressCircle(QWidget):
