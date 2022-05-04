@@ -85,7 +85,7 @@ class Enum2(Enum):
     test4 = 4
 
     def __str__(self):
-        return self.name
+        return self.name + " eee"
 
 
 @pytest.mark.filterwarnings("ignore:EnumComboBox is deprecated")
@@ -94,7 +94,7 @@ class TestEnumComboBox:
         widget = EnumComboBox(Enum1)
         qtbot.addWidget(widget)
         assert widget.count() == 3
-        assert widget.currentText() == "Enum1.test1"
+        assert widget.currentText() == "test1"
         with qtbot.waitSignal(widget.current_choose):
             widget.set_value(Enum1.test2)
 
@@ -102,7 +102,7 @@ class TestEnumComboBox:
         widget = EnumComboBox(Enum2)
         qtbot.addWidget(widget)
         assert widget.count() == 4
-        assert widget.currentText() == "test1"
+        assert widget.currentText() == "test1 eee"
         with qtbot.waitSignal(widget.current_choose):
             widget.set_value(Enum2.test2)
 
