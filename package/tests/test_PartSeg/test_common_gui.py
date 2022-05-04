@@ -43,8 +43,15 @@ from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
 from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
 from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
-from PartSeg.common_gui.universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox, EnumComboBox
-from PartSegCore import state_store
+from PartSeg.common_gui.universal_gui_part import (
+    ChannelComboBox,
+    CustomDoubleSpinBox,
+    CustomSpinBox,
+    EnumComboBox,
+    InfoLabel,
+    Spacing,
+)
+from PartSegCore import Units, state_store
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
@@ -78,7 +85,7 @@ class Enum2(Enum):
     test4 = 4
 
     def __str__(self):
-        return self.name
+        return f"{self.name} eee"
 
 
 @pytest.mark.filterwarnings("ignore:EnumComboBox is deprecated")
@@ -87,7 +94,7 @@ class TestEnumComboBox:
         widget = EnumComboBox(Enum1)
         qtbot.addWidget(widget)
         assert widget.count() == 3
-        assert widget.currentText() == "Enum1.test1"
+        assert widget.currentText() == "test1"
         with qtbot.waitSignal(widget.current_choose):
             widget.set_value(Enum1.test2)
 
@@ -95,7 +102,7 @@ class TestEnumComboBox:
         widget = EnumComboBox(Enum2)
         qtbot.addWidget(widget)
         assert widget.count() == 4
-        assert widget.currentText() == "test1"
+        assert widget.currentText() == "test1 eee"
         with qtbot.waitSignal(widget.current_choose):
             widget.set_value(Enum2.test2)
 
@@ -1086,3 +1093,30 @@ class TestMaskDialogBase:
         dialog = MaskDialogBase(part_settings)
         qtbot.addWidget(dialog)
         assert dialog.mask_widget.get_mask_property() == mask_property_non_default
+
+
+class TestSpacing:
+    def test_create(self, qtbot):
+        widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9, 10**-9), unit=Units.nm)
+        qtbot.addWidget(widget)
+
+    def test_get_values(self, qtbot):
+        widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9, 10**-9), unit=Units.nm)
+        qtbot.addWidget(widget)
+        assert widget.get_values() == [10**-9, 10**-9, 10**-9]
+        assert widget.get_unit_str() == "nm"
+        widget.units.setCurrentEnum(Units.µm)
+        assert widget.get_values() == [10**-6, 10**-6, 10**-6]
+
+
+@pytest.mark.enablethread
+def test_info_label(qtbot):
+    widget = InfoLabel(["Test", "Test2", "Test3"], delay=300)
+    qtbot.addWidget(widget)
+    widget.time = 250
+    widget.show()
+    assert widget.label.text() == "Test"
+    qtbot.wait(200)
+    assert widget.label.text() == "Test2"
+    widget.hide()
+    qtbot.wait(30)

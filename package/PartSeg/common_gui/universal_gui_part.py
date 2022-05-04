@@ -7,10 +7,9 @@ import math
 import typing
 import warnings
 from enum import Enum
-from sys import platform
 
 from qtpy import PYQT5
-from qtpy.QtCore import QPointF, QRect, Qt, QTimer, Signal
+from qtpy.QtCore import QPointF, QRect, Qt, QTimer
 from qtpy.QtGui import QColor, QFontMetrics, QPainter, QPaintEvent, QPalette, QPolygonF
 from qtpy.QtWidgets import (
     QAbstractSpinBox,
@@ -18,8 +17,6 @@ from qtpy.QtWidgets import (
     QDoubleSpinBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
-    QSlider,
     QSpinBox,
     QTextEdit,
     QWidget,
@@ -61,7 +58,7 @@ class ChannelComboBox(QComboBox):
 EnumType = typing.TypeVar("EnumType", bound=Enum)
 
 
-class EnumComboBox(QComboBox):
+class EnumComboBox(QEnumComboBox):
     """
     Combobox for choose :py:class:`enum.Enum` values
 
@@ -69,34 +66,30 @@ class EnumComboBox(QComboBox):
         For proper showing labels overload the ``__str__`` function of given :py:class:`enum.Enum`
     """
 
-    current_choose = Signal(enum_type)
-    """:py:class:`Signal` emitted when currentIndexChanged is emitted.
-    Argument is selected value"""
-
     def __init__(self, enum: type(EnumType), parent=None):
         warnings.warn(
             "EnumComboBox is deprecated, use superqt.QEnumComboBox instead", category=DeprecationWarning, stacklevel=2
         )
-        super().__init__(parent=parent)
-        self.enum = enum
-        self.addItems(list(map(str, enum.__members__.values())))
-        self.currentIndexChanged.connect(self._emit_signal)
+        super().__init__(parent=parent, enum_class=enum)
 
     def get_value(self) -> EnumType:
         """current value as Enum member"""
-        return list(self.enum.__members__.values())[self.currentIndex()]
+        return self.currentEnum()
+
+    @property
+    def current_choose(self):
+        """current value as Enum member"""
+        return self.currentEnumChanged
 
     def _emit_signal(self):
         self.current_choose.emit(self.get_value())
 
     def set_value(self, value: typing.Union[EnumType, int]):
         """Set value with Eunum or int"""
-        if not isinstance(value, (Enum, int)):
-            return
-        if isinstance(value, Enum):
-            self.setCurrentText(str(value))
-        else:
+        if isinstance(value, int):
             self.setCurrentIndex(value)
+        else:
+            self.setCurrentEnum(value)
 
 
 class Spacing(QWidget):
@@ -106,24 +99,20 @@ class Spacing(QWidget):
 
     def __init__(
         self,
-        title,
-        data_sequence,
+        title: str,
+        data_sequence: typing.Sequence[typing.Union[float, int]],
         unit: Units,
         parent=None,
-        input_type=QDoubleSpinBox,
-        decimals=2,
-        data_range=(0, 100000),
-        single_step=1,
+        input_type: QAbstractSpinBox = QDoubleSpinBox,
+        data_range: typing.Tuple[float, float] = (0, 100000),
     ):
         """
-        :type data_sequence: list[(float)]
-        :param data_sequence:
-        :type input_type: () -> (QDoubleSpinBox | QSpinBox)
-        :param parent:
-        :type decimals: int|None
+        :param title: title of the widget
+        :param data_sequence: initial values of the widget
+        :param unit: unit of the values
+        :param parent: parent widget
+        :param input_type: type of the input widget
         :type data_range: (float, float)
-        :type single_step: float
-        :type title: str
         """
         super().__init__(parent)
         layout = QHBoxLayout()
@@ -134,14 +123,11 @@ class Spacing(QWidget):
         for name, value in zip(["z", "y", "x"], data_sequence):
             lab = QLabel(f"{name}:")
             layout.addWidget(lab)
-            val = input_type()
+            val = QDoubleSpinBox()
             val.setButtonSymbols(QAbstractSpinBox.NoButtons)
-            if isinstance(val, QDoubleSpinBox):
-                val.setDecimals(decimals)
             val.setRange(*data_range)
             val.setValue(value * UNIT_SCALE[unit.value])
             val.setAlignment(Qt.AlignRight)
-            val.setSingleStep(single_step)
             font = val.font()
             fm = QFontMetrics(font)
             val_len = max(fm.width(str(data_range[0])), fm.width(str(data_range[1]))) + fm.width(" " * 8)
@@ -172,36 +158,6 @@ def right_label(text):
     return label
 
 
-def set_position(elem, previous, dist=10):
-    pos_y = previous.pos().y()
-    if platform.system() == "Darwin" and isinstance(elem, QLineEdit):
-        pos_y += 3
-    if platform.system() == "Darwin" and isinstance(previous, QLineEdit):
-        pos_y -= 3
-    if platform.system() == "Darwin" and isinstance(previous, QSlider):
-        pos_y -= 10
-    if platform.system() == "Darwin" and isinstance(elem, QSpinBox):
-        pos_y += 7
-    if platform.system() == "Darwin" and isinstance(previous, QSpinBox):
-        pos_y -= 7
-    elem.move(previous.pos().x() + previous.size().width() + dist, pos_y)
-
-
-def _verify_bounds(bounds):
-    if bounds is None:
-        return
-    try:
-        if len(bounds) != 2:
-            raise ValueError(f"Wrong bounds format for bounds: {bounds}")
-        if not (isinstance(bounds[1], (int, float)) and isinstance(bounds[0], typing.Iterable)):
-            raise ValueError(f"Wrong bounds format for bounds: {bounds}")
-        for el in bounds[1]:
-            if len(el) != 2 or not isinstance(el[0], (int, float)) or not isinstance(el[1], (int, float)):
-                raise ValueError(f"Wrong bounds format for bounds: {bounds}")
-    except TypeError:
-        raise ValueError(f"Wrong bounds format for bounds: {bounds}")
-
-
 class CustomSpinBox(QSpinBox):
     """
     Spin box for integer with dynamic single steep
@@ -215,7 +171,6 @@ class CustomSpinBox(QSpinBox):
     """
 
     def __init__(self, *args, bounds=None, **kwargs):
-        _verify_bounds(bounds)
         super().__init__(*args, **kwargs)
         self.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
         if bounds is not None:
@@ -273,11 +228,11 @@ class ProgressCircle(QWidget):
         factor = self.nominator / self.denominator
         radius = size / 2
         if factor > 0.5:
-            painter.drawChord(rect, 0, 16 * 360 * 0.5)
-            painter.drawChord(rect, 16 * 180, 16 * 360 * (factor - 0.5))
+            painter.drawChord(rect, 0, int(16 * 360 * 0.5))
+            painter.drawChord(rect, 16 * 180, int(16 * 360 * (factor - 0.5)))
             zero_point = QPointF(0, radius)
         else:
-            painter.drawChord(rect, 0, 16 * 360 * factor)
+            painter.drawChord(rect, 0, int(16 * 360 * factor))
             zero_point = QPointF(size, radius)
         mid_point = QPointF(radius, radius)
         point = mid_point + QPointF(
