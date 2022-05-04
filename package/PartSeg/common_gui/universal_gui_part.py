@@ -217,20 +217,9 @@ class CustomSpinBox(QSpinBox):
     def __init__(self, *args, bounds=None, **kwargs):
         _verify_bounds(bounds)
         super().__init__(*args, **kwargs)
-        self.valueChanged.connect(self._value_changed)
-        if bounds is None:
-            self.bounds = ((300, 1), (1000, 10), (10000, 100)), 1000
-        else:
-            self.bounds = bounds
-
-    def _value_changed(self, val: int):
-        val = abs(val)
-        for el in self.bounds[0]:
-            if val < el[0]:
-                self.setSingleStep(el[1])
-                break
-        else:
-            self.setSingleStep(self.bounds[1])
+        self.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+        if bounds is not None:
+            warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)  # pragma: no cover
 
 
 class CustomDoubleSpinBox(QDoubleSpinBox):
@@ -247,20 +236,9 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
 
     def __init__(self, *args, bounds=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.valueChanged.connect(self._value_changed)
-        if bounds is None:
-            self.bounds = ((0.2, 0.01), (2, 0.1), (300, 1), (1000, 10), (10000, 100)), 1000
-        else:
-            self.bounds = bounds
-
-    def _value_changed(self, val: float):
-        val = abs(val)
-        for el in self.bounds[0]:
-            if val < el[0]:
-                self.setSingleStep(el[1])
-                break
-        else:
-            self.setSingleStep(self.bounds[1])
+        self.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+        if bounds is not None:
+            warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)  # pragma: no cover
 
 
 class ProgressCircle(QWidget):
