@@ -1097,7 +1097,7 @@ class TestMaskDialogBase:
 
 class TestSpacing:
     def test_create(self, qtbot):
-        widget = Spacing(title="Test", data_sequence=(10, 10, 10), unit=Units.nm)
+        widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9, 10**-9), unit=Units.nm)
         qtbot.addWidget(widget)
 
     def test_get_values(self, qtbot):
