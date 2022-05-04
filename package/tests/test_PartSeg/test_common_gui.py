@@ -43,8 +43,14 @@ from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
 from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
 from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
-from PartSeg.common_gui.universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox, EnumComboBox
-from PartSegCore import state_store
+from PartSeg.common_gui.universal_gui_part import (
+    ChannelComboBox,
+    CustomDoubleSpinBox,
+    CustomSpinBox,
+    EnumComboBox,
+    Spacing,
+)
+from PartSegCore import Units, state_store
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
@@ -1086,3 +1092,17 @@ class TestMaskDialogBase:
         dialog = MaskDialogBase(part_settings)
         qtbot.addWidget(dialog)
         assert dialog.mask_widget.get_mask_property() == mask_property_non_default
+
+
+class TestSpacing:
+    def test_create(self, qtbot):
+        widget = Spacing(title="Test", data_sequence=(10, 10, 10), unit=Units.nm)
+        qtbot.addWidget(widget)
+
+    def test_get_values(self, qtbot):
+        widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9, 10**-9), unit=Units.nm)
+        qtbot.addWidget(widget)
+        assert widget.get_values() == [10**-9, 10**-9, 10**-9]
+        assert widget.get_unit_str() == "nm"
+        widget.units.setCurrentEnum(Units.µm)
+        assert widget.get_values() == [10**-6, 10**-6, 10**-6]
