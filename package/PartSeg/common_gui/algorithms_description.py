@@ -267,9 +267,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return widget.__class__.currentText, widget.__class__.setCurrentText
         if isinstance(widget, QCheckBox):
             return widget.__class__.isChecked, widget.__class__.setChecked
-        if isinstance(widget, CustomSpinBox):
-            return widget.__class__.value, widget.__class__.setValue
-        if isinstance(widget, CustomDoubleSpinBox):
+        if isinstance(widget, QAbstractSpinBox):
             return widget.__class__.value, widget.__class__.setValue
         if isinstance(widget, QLineEdit):
             return widget.__class__.text, widget.__class__.setText
