@@ -48,6 +48,7 @@ from PartSeg.common_gui.universal_gui_part import (
     CustomDoubleSpinBox,
     CustomSpinBox,
     EnumComboBox,
+    InfoLabel,
     Spacing,
 )
 from PartSegCore import Units, state_store
@@ -1106,3 +1107,16 @@ class TestSpacing:
         assert widget.get_unit_str() == "nm"
         widget.units.setCurrentEnum(Units.µm)
         assert widget.get_values() == [10**-6, 10**-6, 10**-6]
+
+
+@pytest.mark.enablethread
+def test_info_label(qtbot):
+    widget = InfoLabel(["Test", "Test2", "Test3"], delay=300)
+    qtbot.addWidget(widget)
+    widget.time = 250
+    widget.show()
+    assert widget.label.text() == "Test"
+    qtbot.wait(200)
+    assert widget.label.text() == "Test2"
+    widget.hide()
+    qtbot.wait(30)
