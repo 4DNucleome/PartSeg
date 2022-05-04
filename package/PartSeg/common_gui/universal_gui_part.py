@@ -228,11 +228,11 @@ class ProgressCircle(QWidget):
         factor = self.nominator / self.denominator
         radius = size / 2
         if factor > 0.5:
-            painter.drawChord(rect, 0, 16 * 360 * 0.5)
-            painter.drawChord(rect, 16 * 180, 16 * 360 * (factor - 0.5))
+            painter.drawChord(rect, 0, int(16 * 360 * 0.5))
+            painter.drawChord(rect, 16 * 180, int(16 * 360 * (factor - 0.5)))
             zero_point = QPointF(0, radius)
         else:
-            painter.drawChord(rect, 0, 16 * 360 * factor)
+            painter.drawChord(rect, 0, int(16 * 360 * factor))
             zero_point = QPointF(size, radius)
         mid_point = QPointF(radius, radius)
         point = mid_point + QPointF(
