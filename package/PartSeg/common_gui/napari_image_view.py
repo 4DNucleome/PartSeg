@@ -769,7 +769,6 @@ class ImageView(QWidget):
         dial.show_right_of_mouse()
 
     def component_unmark(self, _num):
-        self.viewer.layers.selection.clear()
         for el in self.image_info.values():
             if el.highlight is None:
                 continue
@@ -792,6 +791,7 @@ class ImageView(QWidget):
         translate = image_info.roi.translate + shift_base * image_info.roi.scale
         translate[image_info.image.stack_pos] = 0
         if image_info.highlight is None:
+            active_layer = self.viewer.layers.selection.active
             image_info.highlight = self.viewer.add_labels(
                 component_mark,
                 scale=image_info.roi.scale,
@@ -799,6 +799,7 @@ class ImageView(QWidget):
                 color={0: (0, 0, 0, 0), 1: "white"},
                 opacity=0.7,
             )
+            self.viewer.layers.selection.active = active_layer
         else:
             image_info.highlight.data = component_mark
         image_info.highlight.translate = translate
