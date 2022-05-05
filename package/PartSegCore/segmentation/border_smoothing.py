@@ -3,6 +3,7 @@ from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
+from nme import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
@@ -40,8 +41,9 @@ class OpeningSmoothing(BaseSmoothing):
         return "Opening"
 
     @classmethod
-    def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
-        radius = arguments["smooth_border_radius"]
+    @update_argument("arguments")
+    def smooth(cls, segmentation: np.ndarray, arguments: OpeningSmoothingParams) -> np.ndarray:
+        radius = arguments.smooth_border_radius
         if isinstance(radius, (int, float)):
             radius = [radius] * segmentation.ndim
         return sitk.GetArrayFromImage(sitk.BinaryMorphologicalOpening(sitk.GetImageFromArray(segmentation), radius))
@@ -68,16 +70,17 @@ class VoteSmoothing(BaseSmoothing):
         return "Vote"
 
     @classmethod
-    def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
+    @update_argument("arguments")
+    def smooth(cls, segmentation: np.ndarray, arguments: VoteSmoothingParams) -> np.ndarray:
         segmentation_bin = (segmentation > 0).astype(np.uint8)
         count_array = np.zeros(segmentation_bin.shape, dtype=segmentation.dtype)
-        neighbourhood = get_neighbourhood(segmentation_bin.squeeze().shape, arguments["neighbourhood_type"])
+        neighbourhood = get_neighbourhood(segmentation_bin.squeeze().shape, arguments.neighbourhood_type)
         axis = tuple(range(len(segmentation_bin.shape)))
         for shift in neighbourhood:
             count_array += np.roll(segmentation_bin, shift, axis)
         segmentation = segmentation.copy()
         count_array = count_array.reshape(segmentation.shape)
-        segmentation[count_array < arguments["support_level"]] = 0
+        segmentation[count_array < arguments.support_level] = 0
         return segmentation
 
 
@@ -95,17 +98,18 @@ class IterativeVoteSmoothing(BaseSmoothing):
         return "Iterative Vote"
 
     @classmethod
-    def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
+    @update_argument("arguments")
+    def smooth(cls, segmentation: np.ndarray, arguments: IterativeSmoothingParams) -> np.ndarray:
         segmentation_bin = (segmentation > 0).astype(np.uint8)
         count_array = np.zeros(segmentation_bin.shape, dtype=segmentation.dtype)
-        neighbourhood = get_neighbourhood(segmentation_bin.squeeze().shape, arguments["neighbourhood_type"])
+        neighbourhood = get_neighbourhood(segmentation_bin.squeeze().shape, arguments.neighbourhood_type)
         segmentation = segmentation.copy()
         count_point = np.count_nonzero(segmentation)
         axis = tuple(range(len(segmentation_bin.shape)))
-        for _ in range(arguments["max_steps"]):
+        for _ in range(arguments.max_steps):
             for shift in neighbourhood:
                 count_array += np.roll(segmentation_bin, shift, axis)
-            segmentation_bin[count_array < arguments["support_level"]] = 0
+            segmentation_bin[count_array < arguments.support_level] = 0
             count_point2 = np.count_nonzero(segmentation_bin)
             if count_point2 == count_point:
                 break
