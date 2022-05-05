@@ -850,6 +850,9 @@ class Options(QTabWidget):
 
 
 class MainWindow(BaseMainWindow):
+
+    settings: StackSettings
+
     @classmethod
     def get_setting_class(cls) -> Type[StackSettings]:
         return StackSettings
