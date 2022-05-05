@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.14.2
+
+### Bug Fixes
+
+-   Fix bug in save label colors between sessions (#610)
+-   Register PartSeg plugins before starting napari widgets. (#611)
+-   Mouse interaction with components works again after highlight. (#620)
+
+### Refactor
+
+-   Limit test run (#603)
+-   Filter and solve warnings in tests (#607)
+-   Use QAbstractSpinBox.AdaptiveDecimalStepType in SpinBox instead of hardcoded bounds (#616)
+-   Clean and test `PartSeg.common_gui.universal_gui_part` (#617)
+
+### Testing
+
+-   Speedup test by setup cache for pip (#604)
+-   Setup cache for azure pipelines workflows (#606)
+
 ## 0.14.1
 
 ### Bug Fixes
