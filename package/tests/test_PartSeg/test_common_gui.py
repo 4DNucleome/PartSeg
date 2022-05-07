@@ -2,6 +2,7 @@
 import datetime
 import os
 import platform
+import subprocess
 import sys
 import typing
 from enum import Enum
@@ -15,7 +16,17 @@ from magicgui.widgets import Widget
 from nme import register_class
 from pydantic import Field
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import QApplication, QCheckBox, QComboBox, QFileDialog, QLabel, QLineEdit, QMainWindow, QWidget
+from qtpy.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QFileDialog,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QVBoxLayout,
+    QWidget,
+)
 from superqt import QEnumComboBox
 
 from PartSeg.common_gui import select_multiple_files
@@ -28,6 +39,7 @@ from PartSeg.common_gui.advanced_tabs import (
     Appearance,
 )
 from PartSeg.common_gui.algorithms_description import FieldsList, FormWidget, ListInput, QtAlgorithmProperty
+from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
 from PartSeg.common_gui.custom_load_dialog import (
     CustomLoadDialog,
     IOMethodMock,
@@ -38,11 +50,13 @@ from PartSeg.common_gui.custom_load_dialog import (
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.error_report import DataImportErrorDialog
+from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
 from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
 from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
+from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.common_gui.universal_gui_part import (
     ChannelComboBox,
     CustomDoubleSpinBox,
@@ -1120,3 +1134,68 @@ def test_info_label(qtbot):
     assert widget.label.text() == "Test2"
     widget.hide()
     qtbot.wait(30)
+
+
+@pytest.mark.parametrize("platform,program", [("linux", "xdg-open"), ("linux2", "xdg-open"), ("darwin", "open")])
+def test_show_directory_dialog(qtbot, monkeypatch, platform, program):
+    called = []
+
+    def _test_arg(li):
+        assert li[0] == program
+        assert li[1] == "data_path"
+        called.append(True)
+
+    dialog = DirectoryDialog("data_path")
+    qtbot.addWidget(dialog)
+    monkeypatch.setattr(sys, "platform", platform)
+    monkeypatch.setattr(subprocess, "Popen", _test_arg)
+    dialog.open_folder()
+    assert called == [True]
+
+
+def test_show_directory_dialog_windows(qtbot, monkeypatch):
+    called = []
+
+    def _test_arg(arg):
+        assert arg == "data_path"
+        called.append(True)
+
+    dialog = DirectoryDialog("data_path")
+    qtbot.addWidget(dialog)
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(os, "startfile", _test_arg, raising=False)
+    dialog.open_folder()
+    assert called == [True]
+
+
+def test_image_adjustment(qtbot, image):
+    dialog = ImageAdjustmentDialog(image)
+    qtbot.addWidget(dialog)
+    assert dialog.result_val is None
+    dialog.process()
+    assert isinstance(dialog.result_val, ImageAdjustTuple)
+
+
+def test_collapsable(qtbot):
+    widget = QWidget()
+    qtbot.addWidget(widget)
+    col = CollapseCheckbox("Test")
+    chk = QCheckBox()
+    col.add_hide_element(chk)
+    layout = QVBoxLayout()
+    layout.addWidget(chk)
+    layout.addWidget(col)
+    widget.setLayout(layout)
+    widget.show()
+    assert chk.isVisible()
+    with qtbot.wait_signal(col.stateChanged):
+        col.setChecked(True)
+    assert not chk.isVisible()
+    with qtbot.wait_signal(col.stateChanged):
+        col.setChecked(False)
+    assert chk.isVisible()
+    col.remove_hide_element(chk)
+    with qtbot.wait_signal(col.stateChanged):
+        col.setChecked(True)
+    assert chk.isVisible()
+    widget.hide()
