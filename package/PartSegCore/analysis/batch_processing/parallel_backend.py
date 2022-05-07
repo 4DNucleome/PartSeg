@@ -247,7 +247,7 @@ class BatchWorker:
                 try:
                     task = self.task_queue.get_nowait()
                     self.calculate_task(task)
-                except Empty:
+                except Empty:  # pragma: no cover
                     time.sleep(0.1)
                     continue
                 except (MemoryError, OSError):  # pragma: no cover

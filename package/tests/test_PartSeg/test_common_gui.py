@@ -2,7 +2,7 @@
 import datetime
 import os
 import platform
-import subprocess
+import subprocess  # nosec
 import sys
 import typing
 from enum import Enum
@@ -1160,7 +1160,7 @@ def test_show_directory_dialog_windows(qtbot, monkeypatch):
         assert arg == "data_path"
         called.append(True)
 
-    dialog = DirectoryDialog("data_path")
+    dialog = DirectoryDialog("data_path", "Additional text")
     qtbot.addWidget(dialog)
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr(os, "startfile", _test_arg, raising=False)
@@ -1190,9 +1190,11 @@ def test_collapsable(qtbot):
     assert chk.isVisible()
     with qtbot.wait_signal(col.stateChanged):
         col.setChecked(True)
+    qtbot.wait(50)
     assert not chk.isVisible()
     with qtbot.wait_signal(col.stateChanged):
         col.setChecked(False)
+    qtbot.wait(50)
     assert chk.isVisible()
     col.remove_hide_element(chk)
     with qtbot.wait_signal(col.stateChanged):
