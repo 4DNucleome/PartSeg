@@ -269,11 +269,9 @@ def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, cal
     :param calculation_dict: dict with global parameters
     """
     register_if_need()
-    try:
+    with suppress(ImportError):
         from PartSeg.plugins import register_if_need as register
 
         register()
-    except ImportError:
-        pass
     worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
     worker.run()
