@@ -15,7 +15,7 @@ import qtpy
 from magicgui.widgets import Widget
 from nme import register_class
 from pydantic import Field
-from qtpy.QtCore import QSize, Qt
+from qtpy.QtCore import QPoint, QSize, Qt
 from qtpy.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -24,6 +24,8 @@ from qtpy.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMenu,
+    QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -53,7 +55,12 @@ from PartSeg.common_gui.error_report import DataImportErrorDialog
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
-from PartSeg.common_gui.multiple_file_widget import LoadRecentFiles, MultipleFileWidget, MultipleLoadDialog
+from PartSeg.common_gui.multiple_file_widget import (
+    LoadRecentFiles,
+    MultipleFilesTreeWidget,
+    MultipleFileWidget,
+    MultipleLoadDialog,
+)
 from PartSeg.common_gui.qt_modal import QtPopup
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
@@ -1202,3 +1209,49 @@ def test_collapsable(qtbot):
         col.setChecked(True)
     assert chk.isVisible()
     widget.hide()
+
+
+def test_multiple_files_tree_widget(qtbot, monkeypatch):
+    called = 0
+
+    def _exec_1(self, _point):
+        nonlocal called
+
+        assert len(self.actions()) == 1
+        called = 1
+
+    def _exec_2(self, _point):
+        nonlocal called
+
+        assert len(self.actions()) == 2
+        called = 2
+
+    def _exec_3(self, _point):
+        nonlocal called
+
+        assert len(self.actions()) == 3
+        called = 3
+
+    widget = MultipleFilesTreeWidget(compare=True)
+    qtbot.addWidget(widget)
+    item = QTreeWidgetItem(["file_path"])
+    widget.addTopLevelItem(item)
+    sub_item2 = QTreeWidgetItem(item, ["raw image"])
+    sub_item3 = QTreeWidgetItem(item, ["state2"])
+    monkeypatch.setattr(widget, "itemAt", lambda _: item)
+    monkeypatch.setattr(widget, "mapToGlobal", lambda _: QPoint(0, 0))
+    monkeypatch.setattr(QMenu, "exec_", _exec_1)
+    widget.showContextMenu(QPoint(0, 0))
+    assert called == 1
+
+    monkeypatch.setattr(widget, "itemAt", lambda _: sub_item2)
+    monkeypatch.setattr(QMenu, "exec_", _exec_2)
+
+    widget.showContextMenu(QPoint(0, 0))
+    assert called == 2
+
+    monkeypatch.setattr(widget, "itemAt", lambda _: sub_item3)
+    monkeypatch.setattr(QMenu, "exec_", _exec_3)
+
+    widget.showContextMenu(QPoint(0, 0))
+    assert called == 3
