@@ -91,8 +91,8 @@ class TestBaseMainWindow:
         qtbot.wait(50)
         assert len(main_window.viewer_list) == 1
         assert len(main_window.viewer_list[0].layers) == 2
-        with qtbot.wait_signal(main_window.viewer_list[0].window.qt_viewer.destroyed):
-            main_window.viewer_list[0].close()
+        # with qtbot.wait_signal(main_window.viewer_list[0].window.qt_viewer.destroyed):
+        main_window.viewer_list[0].close()
         qtbot.wait(50)
         assert not main_window.viewer_list
 
@@ -118,16 +118,16 @@ class TestBaseMainWindow:
         qtbot.wait(50)
         assert len(main_window.viewer_list) == 1
         assert len(main_window.viewer_list[0].layers) == 1
-        with qtbot.wait_signal(main_window.viewer_list[0].window.qt_viewer.destroyed):
-            main_window.viewer_list[0].close()
+        # with qtbot.wait_signal(main_window.viewer_list[0].window.qt_viewer.destroyed):
+        main_window.viewer_list[0].close()
         assert not main_window.viewer_list
         qtbot.wait(50)
         main_window.additional_layers_show(with_channels=True)
         qtbot.wait(50)
         assert len(main_window.viewer_list) == 1
         assert len(main_window.viewer_list[0].layers) == 3
-        with qtbot.wait_signal(main_window.viewer_list[0].window.qt_viewer.destroyed):
-            main_window.viewer_list[0].close()
+        # with qtbot.wait_signal(main_window.viewer_list[0].window.qt_viewer.destroyed):
+        main_window.viewer_list[0].close()
         qtbot.wait(50)
         assert not main_window.viewer_list
 
