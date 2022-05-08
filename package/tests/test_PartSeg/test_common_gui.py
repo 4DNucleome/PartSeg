@@ -1123,14 +1123,15 @@ class TestSpacing:
         assert widget.get_values() == [10**-6, 10**-6, 10**-6]
 
 
-@pytest.mark.enablethread
-def test_info_label(qtbot):
+def test_info_label(qtbot, monkeypatch):
     widget = InfoLabel(["Test", "Test2", "Test3"], delay=300)
+    monkeypatch.setattr(widget.timer, "start", lambda _: None)
     qtbot.addWidget(widget)
     widget.time = 250
-    widget.show()
     assert widget.label.text() == "Test"
-    qtbot.wait(200)
+    qtbot.wait(20)
+    widget.time = 500
+    widget.one_step()
     assert widget.label.text() == "Test2"
     widget.hide()
     qtbot.wait(30)

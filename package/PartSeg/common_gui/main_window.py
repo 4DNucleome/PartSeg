@@ -244,7 +244,7 @@ class BaseMainWindow(QMainWindow):
     def change_theme(self, event):
         style_sheet = self.settings.style_sheet
         app = QApplication.instance()
-        if app is not None:
+        if app is not None and "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
             app.setStyleSheet(style_sheet)
         self.setStyleSheet(style_sheet)
 
