@@ -6,6 +6,7 @@ import subprocess  # nosec
 import sys
 import typing
 from enum import Enum
+from functools import partial
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -1212,25 +1213,23 @@ def test_collapsable(qtbot):
 
 
 def test_multiple_files_tree_widget(qtbot, monkeypatch):
+    from PartSeg.common_gui import multiple_file_widget
+
+    def _monkey_qmenu(func):
+        res = QMenu()
+        monkeypatch.setattr(res, "exec_", partial(func, res))
+        return res
+
     called = 0
 
-    def _exec_1(self, _point):
-        nonlocal called
+    def _exec_create(num):
+        def _exec_(self, _pos):
+            assert len(self.actions()) == num
 
-        assert len(self.actions()) == 1
-        called = 1
+            nonlocal called
+            called = num
 
-    def _exec_2(self, _point):
-        nonlocal called
-
-        assert len(self.actions()) == 2
-        called = 2
-
-    def _exec_3(self, _point):
-        nonlocal called
-
-        assert len(self.actions()) == 3
-        called = 3
+        return _exec_
 
     widget = MultipleFilesTreeWidget(compare=True)
     qtbot.addWidget(widget)
@@ -1240,18 +1239,18 @@ def test_multiple_files_tree_widget(qtbot, monkeypatch):
     sub_item3 = QTreeWidgetItem(item, ["state2"])
     monkeypatch.setattr(widget, "itemAt", lambda _: item)
     monkeypatch.setattr(widget, "mapToGlobal", lambda _: QPoint(0, 0))
-    monkeypatch.setattr(QMenu, "exec_", _exec_1)
+    monkeypatch.setattr(multiple_file_widget, "QMenu", partial(_monkey_qmenu, _exec_create(1)))
     widget.showContextMenu(QPoint(0, 0))
     assert called == 1
 
     monkeypatch.setattr(widget, "itemAt", lambda _: sub_item2)
-    monkeypatch.setattr(QMenu, "exec_", _exec_2)
+    monkeypatch.setattr(multiple_file_widget, "QMenu", partial(_monkey_qmenu, _exec_create(2)))
 
     widget.showContextMenu(QPoint(0, 0))
     assert called == 2
 
     monkeypatch.setattr(widget, "itemAt", lambda _: sub_item3)
-    monkeypatch.setattr(QMenu, "exec_", _exec_3)
+    monkeypatch.setattr(multiple_file_widget, "QMenu", partial(_monkey_qmenu, _exec_create(3)))
 
     widget.showContextMenu(QPoint(0, 0))
     assert called == 3
