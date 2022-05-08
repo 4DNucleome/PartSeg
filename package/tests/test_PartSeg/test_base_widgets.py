@@ -6,6 +6,8 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from qtpy.QtCore import QMimeData, QPointF, Qt, QUrl
+from qtpy.QtGui import QDropEvent
 from qtpy.QtWidgets import QMessageBox
 
 from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow, BaseSettings
@@ -130,6 +132,22 @@ class TestBaseMainWindow:
         main_window.viewer_list[0].close()
         qtbot.wait(50)
         assert not main_window.viewer_list
+
+    def test_drop_files(self, qtbot, part_settings, data_test_dir, monkeypatch):
+        def mock_exec(self):
+            self.thread_to_wait.run()
+            return True
+
+        monkeypatch.setattr(ExecuteFunctionDialog, "exec_", mock_exec)
+
+        main_window = BaseMainWindow(settings=part_settings, load_dict=load_dict)
+        main_window.main_menu = BaseMainMenu(main_window.settings, main_window)
+        qtbot.addWidget(main_window)
+        data = QMimeData()
+        data.setUrls([QUrl(f"file:/{data_test_dir}/stack1_components/stack1_component1.tif")])
+
+        event = QDropEvent(QPointF(0, 0), Qt.MoveAction, data, Qt.NoButton, Qt.NoModifier)
+        main_window.dropEvent(event)
 
 
 class TestBaseMainMenu:
