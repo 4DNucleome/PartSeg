@@ -88,10 +88,12 @@ class TestBaseMainWindow:
         qtbot.addWidget(main_window)
         assert not main_window.viewer_list
         main_window.napari_viewer_show()
+        qtbot.wait(50)
         assert len(main_window.viewer_list) == 1
         assert len(main_window.viewer_list[0].layers) == 2
         with qtbot.wait_signal(main_window.viewer_list[0].window.qt_viewer.destroyed):
             main_window.viewer_list[0].close()
+        qtbot.wait(50)
         assert not main_window.viewer_list
 
     def test_napari_viewer_additional_layers_empty(self, qtbot, part_settings, monkeypatch):
@@ -113,17 +115,20 @@ class TestBaseMainWindow:
             "layer1": AdditionalLayerDescription(np.zeros((10, 10)), "image"),
         }
         main_window.additional_layers_show()
+        qtbot.wait(50)
         assert len(main_window.viewer_list) == 1
         assert len(main_window.viewer_list[0].layers) == 1
         with qtbot.wait_signal(main_window.viewer_list[0].window.qt_viewer.destroyed):
             main_window.viewer_list[0].close()
         assert not main_window.viewer_list
-
+        qtbot.wait(50)
         main_window.additional_layers_show(with_channels=True)
+        qtbot.wait(50)
         assert len(main_window.viewer_list) == 1
         assert len(main_window.viewer_list[0].layers) == 3
         with qtbot.wait_signal(main_window.viewer_list[0].window.qt_viewer.destroyed):
             main_window.viewer_list[0].close()
+        qtbot.wait(50)
         assert not main_window.viewer_list
 
 
