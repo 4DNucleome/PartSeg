@@ -193,11 +193,11 @@ class BaseMainWindow(QMainWindow):
                 self.settings.set(OPEN_DIRECTORY, os.path.dirname(data[0][0]))
                 self.settings.set(OPEN_FILE, data[0][0])
                 self.settings.set(OPEN_FILE_FILTER, data[1])
-        except KeyError:
+        except KeyError:  # pragma: no cover
             self.read_drop(data[0])
 
     def toggle_multiple_files(self):
-        self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget"))
+        self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget", False))
 
     def get_colormaps(self) -> List[Optional[colormap.Colormap]]:
         channel_num = self.settings.image.channels
