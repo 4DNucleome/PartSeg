@@ -48,7 +48,7 @@ class BaseMainMenu(QWidget):
                 self.settings.set("multiple_files", True)
             data = data[0]
         if isinstance(data, ProjectInfoBase):
-            if data.errors != "":
+            if data.errors != "":  # pragma: no cover
                 resp = QMessageBox.question(
                     self,
                     "Load problem",
