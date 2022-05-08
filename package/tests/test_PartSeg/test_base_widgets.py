@@ -1,6 +1,7 @@
 # pylint: disable=no-self-use
 
 import os
+import platform
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -13,6 +14,8 @@ from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadStackImage, load_dict
 from PartSegCore.project_info import AdditionalLayerDescription
 from PartSegImage import Image
+
+from .utils import CI_BUILD
 
 
 class TestBaseMainWindow:
@@ -79,6 +82,7 @@ class TestBaseMainWindow:
         qtbot.addWidget(main_window)
         assert len(main_window.get_colormaps()) == part_settings.image.channels
 
+    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_napari_viewer(self, qtbot, part_settings):
         main_window = BaseMainWindow(settings=part_settings)
         qtbot.addWidget(main_window)
@@ -100,6 +104,7 @@ class TestBaseMainWindow:
         assert not main_window.viewer_list
         information_mock.assert_called_once()
 
+    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_napari_viewer_additional_layers(self, qtbot, part_settings, monkeypatch):
         main_window = BaseMainWindow(settings=part_settings)
         qtbot.addWidget(main_window)
