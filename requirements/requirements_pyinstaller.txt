@@ -281,7 +281,7 @@ scipy==1.8.0
     # via
     #   -r requirements_pyinstaller.in
     #   napari
-sentry-sdk==1.5.11
+sentry-sdk==1.5.12
     # via -r requirements_pyinstaller.in
 simpleitk==2.1.1.2
     # via -r requirements_pyinstaller.in
