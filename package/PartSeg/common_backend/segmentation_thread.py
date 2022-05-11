@@ -32,6 +32,8 @@ class SegmentationThread(QThread):
         self.algorithm = algorithm
         self.clean_later = False
         self.cache = None
+        self._image = None
+        self._mask = None
         self.mutex = QMutex()
         self.rerun = False, QThread.InheritPriority
 
@@ -70,6 +72,12 @@ class SegmentationThread(QThread):
             self.algorithm.set_parameters(*args, **kwargs)
             self.cache = None
             self.clean_later = False
+        if self._image is not None:
+            self.algorithm.set_image(self._image)
+            self._image = None
+        if self._mask is not None:
+            self.algorithm.set_mask(self._mask)
+            self._mask = None
         if self.rerun[0]:
             self.rerun = False, QThread.InheritPriority
             super().start(self.rerun[1])
@@ -100,6 +108,32 @@ class SegmentationThread(QThread):
             self.clean_later = False
         else:
             self.algorithm.set_parameters(*args, **kwargs)
+        self.mutex.unlock()
+
+    def set_image(self, image):
+        """
+        check if calculation is running.
+        If yes then cache parameters until it finish, otherwise call :py:meth:`.SegmentationAlgorithm.set_image`
+        :param image: image to be set
+        """
+        self.mutex.lock()
+        if self.isRunning():
+            self._image = image
+        else:
+            self.algorithm.set_image(image)
+        self.mutex.unlock()
+
+    def set_mask(self, mask):
+        """
+        check if calculation is running.
+        If yes then cache parameters until it finish, otherwise call :py:meth:`.SegmentationAlgorithm.set_mask`
+        :param mask: mask to be set
+        """
+        self.mutex.lock()
+        if self.isRunning():
+            self._mask = mask
+        else:
+            self.algorithm.set_mask(mask)
         self.mutex.unlock()
 
     def start(self, priority: "QThread.Priority" = QThread.InheritPriority):
