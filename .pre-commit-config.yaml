@@ -54,7 +54,7 @@ repos:
     rev: v0.11.0  # Use the ref you want to point at
     hooks:
     - id: markdownlint
-      exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md
+      exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md|bug_report.md|feature_requests.md
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: 'v0.950'  # Use the sha / tag you want to point at
