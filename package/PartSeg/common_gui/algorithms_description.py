@@ -619,10 +619,10 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     def image_changed(self, image: Image):
         self.form_widget.image_changed(image)
-        self.algorithm_thread.algorithm.set_image(image)
+        self.algorithm_thread.set_image(image)
 
     def set_mask(self, mask):
-        self.algorithm_thread.algorithm.set_mask(mask)
+        self.algorithm_thread.set_mask(mask)
 
     def mask(self) -> typing.Optional[np.ndarray]:
         return self.algorithm_thread.algorithm.mask

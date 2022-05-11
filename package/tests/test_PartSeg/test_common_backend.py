@@ -6,6 +6,7 @@ from functools import partial
 from io import BytesIO
 from pathlib import Path
 from typing import Callable, Optional
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -294,6 +295,26 @@ class TestSegmentationThread:
         assert start_list == [1]
         thr.finished_task()
         assert start_list == [1, 1]
+
+    def test_setting_image(self, qtbot, monkeypatch, image):
+        algorithm_mock = MagicMock()
+        thread = segmentation_thread.SegmentationThread(algorithm_mock)
+        monkeypatch.setattr(thread, "isRunning", lambda: True)
+        assert thread._image is None
+        thread.set_image(image)
+        assert thread._image is image
+        algorithm_mock.set_image.assert_not_called()
+
+        assert thread._mask is None
+        thread.set_mask(image.get_channel(0))
+        assert thread._mask is not None
+        algorithm_mock.set_mask.assert_not_called()
+
+        thread.finished_task()
+        assert thread._image is None
+        assert thread._mask is None
+        algorithm_mock.set_image.assert_called_once()
+        algorithm_mock.set_mask.assert_called_once()
 
 
 class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
