@@ -48,11 +48,11 @@ from ..common_backend.segmentation_thread import SegmentationThread
 from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox
 
 
-def update(d, u):
+def recursive_update(d, u):
     if not isinstance(d, typing.MutableMapping):
         d = {}
     for k, v in u.items():
-        d[k] = update(d.get(k, {}), v) if isinstance(v, collections.abc.Mapping) else v
+        d[k] = recursive_update(d.get(k, {}), v) if isinstance(v, collections.abc.Mapping) else v
     return d
 
 
@@ -70,13 +70,20 @@ class ProfileSelect(QComboBox):
         super().__init__()
         self._settings = None
 
-    def add_settings(self, settings: BaseSettings):
+    def _update_choices(self):
+        if hasattr(self._settings, "roi_profiles"):
+            self.clear()
+            self.addItems(list(self._settings.roi_profiles.keys()))
+
+    def set_settings(self, settings: BaseSettings):
         self._settings = settings
-        if hasattr(settings, "roi_profiles"):
-            self.addItems(list(settings.roi_profiles.keys()))
+        if hasattr(self._settings, "roi_profiles"):
+            self._settings.roi_profiles.setted.connect(self._update_choices)
+            self._settings.roi_profiles.deleted.connect(self._update_choices)
+        self._update_choices()
 
     def get_value(self):
-        if self._settings is not None and hasattr(self._settings, "roi_profiles"):
+        if self._settings is not None and hasattr(self._settings, "roi_profiles") and self.currentText() != "":
             return self._settings.roi_profiles[self.currentText()]
         return None
 
@@ -386,6 +393,7 @@ class FormWidget(QWidget):
             if ap.name in start_values:
                 ap.get_field().set_starting(start_values[ap.name])
             ap.change_fun.connect(_any_arguments(self.value_changed.emit))
+            self.channels_chose.append(ap.get_field())
             return
         if isinstance(ap.get_field(), Widget):
             layout.addRow(label, ap.get_field().native)
@@ -402,7 +410,7 @@ class FormWidget(QWidget):
             self.channels_chose.append(ap.get_field())
         if issubclass(ap.value_type, ROIExtractionProfile):
             # noinspection PyTypeChecker
-            ap.get_field().add_settings(settings)
+            ap.get_field().set_settings(settings)
         if ap.name in start_values:
             with suppress(KeyError, ValueError, TypeError):
                 ap.set_value(start_values[ap.name])
@@ -574,6 +582,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         main_layout = QVBoxLayout()
         self.info_label = QLabel()
         self.info_label.setHidden(True)
+        # FIXME verify inflo_label usage
         main_layout.addWidget(self.info_label)
         start_values = settings.get(f"algorithm_widget_state.{name}", {})
         self.form_widget = self._form_widget(algorithm, start_values=start_values)
@@ -615,7 +624,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     def show_info(self, text):
         self.info_label.setText(text)
-        self.info_label.setVisible(True)
+        self.info_label.setVisible(text != "")
 
     def image_changed(self, image: Image):
         self.form_widget.image_changed(image)
@@ -632,9 +641,6 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     def get_values(self):
         return self.form_widget.get_values()
-
-    def channel_num(self):
-        return self.channels_chose.currentIndex()
 
     def execute(self, exclude_mask=None):
         values = self.get_values()
@@ -770,7 +776,9 @@ class AlgorithmChooseBase(QWidget):
     def recursive_get_values(self):
         result = {key: widget.recursive_get_values() for key, widget in self.algorithm_dict.items()}
 
-        self.settings.set("algorithm_widget_state", update(self.settings.get("algorithm_widget_state", {}), result))
+        self.settings.set(
+            "algorithm_widget_state", recursive_update(self.settings.get("algorithm_widget_state", {}), result)
+        )
         return result
 
     def change_algorithm(self, name, values: dict = None):

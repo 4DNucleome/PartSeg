@@ -41,7 +41,15 @@ from PartSeg.common_gui.advanced_tabs import (
     AdvancedWindow,
     Appearance,
 )
-from PartSeg.common_gui.algorithms_description import FieldsList, FormWidget, ListInput, QtAlgorithmProperty
+from PartSeg.common_gui.algorithms_description import (
+    BaseAlgorithmSettingsWidget,
+    FieldsList,
+    FormWidget,
+    ListInput,
+    ProfileSelect,
+    QtAlgorithmProperty,
+    SubAlgorithmWidget,
+)
 from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
 from PartSeg.common_gui.custom_load_dialog import (
     CustomLoadDialog,
@@ -79,6 +87,7 @@ from PartSegCore.algorithm_describe_base import (
     AlgorithmProperty,
     AlgorithmSelection,
     Register,
+    ROIExtractionProfile,
     base_model_to_algorithm_property,
 )
 from PartSegCore.analysis.calculation_plan import MaskSuffix
@@ -87,6 +96,8 @@ from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_di
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel, Image, ImageWriter
 from PartSegImage.image_reader import INCOMPATIBLE_IMAGE_MASK
@@ -838,6 +849,99 @@ class TestFormWidget:
             field1=10, check_selection=SampleSelection(name="1", values=SubModel1(field1=3))
         )
 
+    def test_image_changed(self, qtbot, clean_register, image):
+        class SampleSelection(AlgorithmSelection):
+            pass
+
+        @register_class
+        class SubModel1(BaseModel):
+            field1: Channel = 1
+
+        @register_class
+        class SubModel2(BaseModel):
+            field2: Channel = 0
+
+        class SampleClass1(AlgorithmDescribeBase):
+            __argument_class__ = SubModel1
+
+            @classmethod
+            def get_name(cls) -> str:
+                return "1"
+
+        class SampleClass2(AlgorithmDescribeBase):
+            __argument_class__ = SubModel2
+
+            @classmethod
+            def get_name(cls) -> str:
+                return "2"
+
+        SampleSelection.register(SampleClass1)
+        SampleSelection.register(SampleClass2)
+
+        @register_class
+        class SampleModel(BaseModel):
+            field1: int = Field(10, le=100, ge=0, title="Field 1")
+            channel: Channel = Field(1, title="Channel")
+            check_selection: SampleSelection = Field(SampleSelection(name="1", values={}), title="Class selection")
+
+        form = FormWidget(SampleModel)
+        qtbot.add_widget(form)
+        assert len(form.channels_chose) == 2
+        assert isinstance(form.channels_chose[0], ChannelComboBox)
+        assert isinstance(form.channels_chose[1], SubAlgorithmWidget)
+        assert form.channels_chose[0].count() == 10
+        form.image_changed(None)
+        assert form.channels_chose[0].count() == 10
+        form.image_changed(image)
+        assert form.channels_chose[0].count() == 2
+
+    def test_recursive_get_values(self, qtbot, clean_register):
+        class SampleSelection(AlgorithmSelection):
+            pass
+
+        @register_class
+        class SubModel1(BaseModel):
+            field1: int = 3
+
+        @register_class
+        class SubModel2(BaseModel):
+            field2: int = 5
+
+        class SampleClass1(AlgorithmDescribeBase):
+            __argument_class__ = SubModel1
+
+            @classmethod
+            def get_name(cls) -> str:
+                return "1"
+
+        class SampleClass2(AlgorithmDescribeBase):
+            __argument_class__ = SubModel2
+
+            @classmethod
+            def get_name(cls) -> str:
+                return "2"
+
+        SampleSelection.register(SampleClass1)
+        SampleSelection.register(SampleClass2)
+
+        @register_class
+        class SampleModel(BaseModel):
+            field1: int = Field(10, le=100, ge=0, title="Field 1")
+            check_selection: SampleSelection = Field(SampleSelection(name="1", values={}), title="Class selection")
+
+        form = FormWidget(SampleModel)
+        qtbot.add_widget(form)
+        assert form.recursive_get_values() == {"field1": 10, "check_selection": {"1": {"field1": 3}}}
+        assert form.widgets_dict["check_selection"].get_field().choose.currentText() == "1"
+        assert form.widgets_dict["check_selection"].get_field().choose.currentIndex() == 0
+        assert form.widgets_dict["check_selection"].get_field().choose.count() == 2
+        form.widgets_dict["check_selection"].get_field().choose.setCurrentIndex(1)
+        assert form.widgets_dict["check_selection"].get_field().choose.currentText() == "2"
+        assert form.recursive_get_values() == {
+            "field1": 10,
+            "check_selection": {"1": {"field1": 3}, "2": {"field2": 5}},
+        }
+
 
 class TestFieldsList:
     def test_simple(self):
@@ -1121,6 +1225,7 @@ class TestMaskDialogBase:
 class TestSpacing:
     def test_create(self, qtbot):
         widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9, 10**-9), unit=Units.nm)
+
         qtbot.addWidget(widget)
 
     def test_get_values(self, qtbot):
@@ -1294,3 +1399,116 @@ def test_exception_hooks_other_exception():
         raised = True
     finally:
         assert raised
+
+
+def test_update_dict():
+    from PartSeg.common_gui.algorithms_description import recursive_update
+
+    assert recursive_update({}, {}) == {}
+    assert recursive_update(None, {}) == {}
+    assert recursive_update(None, {"a": 1}) == {"a": 1}
+    assert recursive_update({"a": 1}, {"a": 2}) == {"a": 2}
+    assert recursive_update({"a": 1}, {"b": 2}) == {"a": 1, "b": 2}
+    assert recursive_update({"a": {"a": 1}}, {"a": {"a": 2}}) == {"a": {"a": 2}}
+    assert recursive_update({"a": {"a": 1}}, {"a": {"b": 2}}) == {"a": {"a": 1, "b": 2}}
+
+
+def test_pretty_print():
+    from PartSeg.common_gui.algorithms_description import _pretty_print
+
+    assert _pretty_print({"a": 1}) == "\n  a: 1"
+    assert _pretty_print({"a": 1}, indent=0) == "\na: 1"
+    assert _pretty_print({"a": {"a": 1}}) == "\n  a: \n    a: 1"
+
+
+def test_profile_select(qtbot, part_settings):
+    widget = ProfileSelect()
+    qtbot.addWidget(widget)
+    assert widget._settings is None
+    assert widget.get_value() is None
+    widget.set_settings(part_settings)
+    assert widget._settings is part_settings
+    assert widget.count() == 0
+    assert widget.get_value() is None
+    part_settings.roi_profiles["test"] = ROIExtractionProfile(name="test", algorithm="test", values={})
+    assert widget.count() == 1
+    assert widget.get_value() == ROIExtractionProfile(name="test", algorithm="test", values={})
+    val2 = ROIExtractionProfile(name="test2", algorithm="test", values={})
+    part_settings.roi_profiles["test2"] = val2
+    assert widget.count() == 2
+    assert widget.currentText() == "test"
+    widget.set_value(val2)
+    assert widget.currentText() == "test2"
+
+
+class TestBaseAlgorithmSettingsWidget:
+    def test_init(self, qtbot, part_settings):
+        widget = BaseAlgorithmSettingsWidget(part_settings, "name", LowerThresholdAlgorithm)
+        qtbot.addWidget(widget)
+
+    @pytest.mark.parametrize(
+        "exc, expected",
+        [
+            (SegmentationLimitException("Test text"), "During segmentation process algorithm meet"),
+            (
+                RuntimeError("Exception thrown in SimpleITK KittlerIllingworthThreshold\naaa"),
+                "Fail to apply Kittler Illingworth to current",
+            ),
+        ],
+    )
+    def test_exception_occurred(self, monkeypatch, exc, expected, qtbot):
+        from PartSeg.common_gui import algorithms_description
+
+        called = False
+
+        def _exec(self):
+            assert self.text().startswith(expected)
+            nonlocal called
+            called = True
+
+        monkeypatch.setattr(algorithms_description.QMessageBox, "exec_", _exec)
+        BaseAlgorithmSettingsWidget.exception_occurred(exc)
+        assert called
+
+    def test_exception_occurred_other_exception(self, monkeypatch, qtbot):
+        from PartSeg.common_gui import algorithms_description
+
+        called = False
+
+        def _exec(self):
+            nonlocal called
+            called = True
+
+        monkeypatch.setattr(algorithms_description.ErrorDialog, "exec_", _exec)
+        BaseAlgorithmSettingsWidget.exception_occurred(ValueError("Test text"))
+        assert called
+
+    def test_show_info(self, qtbot, part_settings):
+        widget = BaseAlgorithmSettingsWidget(part_settings, "name", LowerThresholdAlgorithm)
+        qtbot.addWidget(widget)
+        widget.show()
+        assert not widget.info_label.isVisible()
+
+        widget.show_info("Test text")
+        assert widget.info_label.isVisible()
+        assert widget.info_label.text() == "Test text"
+        widget.show_info("")
+        assert not widget.info_label.isVisible()
+        assert widget.info_label.text() == ""
+        widget.hide()
+
+    def test_image_change(self, qtbot, part_settings, image2):
+        widget = BaseAlgorithmSettingsWidget(part_settings, "name", LowerThresholdAlgorithm)
+        qtbot.addWidget(widget)
+        assert widget.algorithm_thread.algorithm.image is None
+        widget.image_changed(image2)
+        assert widget.algorithm_thread.algorithm.image is image2
+
+    def test_mask_change(self, qtbot, part_settings, image2):
+        widget = BaseAlgorithmSettingsWidget(part_settings, "name", LowerThresholdAlgorithm)
+        qtbot.addWidget(widget)
+        assert widget.mask() is None
+        widget.image_changed(image2)
+        assert widget.mask() is None
+        widget.set_mask(image2.get_channel(0))
+        assert widget.mask() is not None
