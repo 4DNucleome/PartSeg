@@ -1443,7 +1443,7 @@ def test_profile_select(qtbot, part_settings):
 
 class TestBaseAlgorithmSettingsWidget:
     def test_init(self, qtbot, part_settings):
-        widget = BaseAlgorithmSettingsWidget(part_settings, "name", LowerThresholdAlgorithm)
+        widget = BaseAlgorithmSettingsWidget(part_settings, LowerThresholdAlgorithm)
         qtbot.addWidget(widget)
 
     @pytest.mark.parametrize(
@@ -1484,7 +1484,7 @@ class TestBaseAlgorithmSettingsWidget:
         assert called
 
     def test_show_info(self, qtbot, part_settings):
-        widget = BaseAlgorithmSettingsWidget(part_settings, "name", LowerThresholdAlgorithm)
+        widget = BaseAlgorithmSettingsWidget(part_settings, LowerThresholdAlgorithm)
         qtbot.addWidget(widget)
         widget.show()
         assert not widget.info_label.isVisible()
@@ -1498,17 +1498,30 @@ class TestBaseAlgorithmSettingsWidget:
         widget.hide()
 
     def test_image_change(self, qtbot, part_settings, image2):
-        widget = BaseAlgorithmSettingsWidget(part_settings, "name", LowerThresholdAlgorithm)
+        widget = BaseAlgorithmSettingsWidget(part_settings, LowerThresholdAlgorithm)
         qtbot.addWidget(widget)
         assert widget.algorithm_thread.algorithm.image is None
         widget.image_changed(image2)
         assert widget.algorithm_thread.algorithm.image is image2
 
     def test_mask_change(self, qtbot, part_settings, image2):
-        widget = BaseAlgorithmSettingsWidget(part_settings, "name", LowerThresholdAlgorithm)
+        widget = BaseAlgorithmSettingsWidget(part_settings, LowerThresholdAlgorithm)
         qtbot.addWidget(widget)
         assert widget.mask() is None
         widget.image_changed(image2)
         assert widget.mask() is None
         widget.set_mask(image2.get_channel(0))
         assert widget.mask() is not None
+
+    def test_execute(self, qtbot, part_settings, monkeypatch):
+        widget = BaseAlgorithmSettingsWidget(part_settings, LowerThresholdAlgorithm)
+        qtbot.addWidget(widget)
+        mock = MagicMock()
+        monkeypatch.setattr(widget.algorithm_thread, "start", mock)
+        assert part_settings.get(f"algorithms.{LowerThresholdAlgorithm.get_name()}") == {}
+        widget.execute()
+        mock.assert_called_once()
+        assert (
+            part_settings.get(f"algorithms.{LowerThresholdAlgorithm.get_name()}")
+            == LowerThresholdAlgorithm.__argument_class__()
+        )

@@ -134,7 +134,7 @@ class MaskDistanceSplit(RestartableAlgorithm):
 
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
 class ThresholdBaseAlgorithmParameters(BaseModel):
-    channel: Channel = 0
+    channel: Channel = Channel(0)
     noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     minimum_size: int = Field(8000, title="Minimum size (px)", ge=0, le=10**6)
     side_connection: bool = Field(
