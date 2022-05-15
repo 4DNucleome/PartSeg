@@ -1,4 +1,3 @@
-import os
 from math import log
 from typing import List, Union
 
@@ -7,31 +6,16 @@ from napari.utils import Colormap
 from napari.utils.colormaps import make_colorbar
 from qtpy import QtGui
 from qtpy.QtCore import QRect, QSize
-from qtpy.QtGui import QIcon, QPainter
-from qtpy.QtWidgets import QLabel, QToolButton
-
-from PartSeg.common_gui.numpy_qimage import NumpyQImage
-from PartSegData import icons_dir
+from qtpy.QtGui import QPainter
+from qtpy.QtWidgets import QLabel
 
 from ..common_backend.base_settings import ViewSettings
+from ..common_gui.numpy_qimage import NumpyQImage
 from .napari_image_view import ImageView
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01
 max_step = log(1.2, step)
-
-
-def create_tool_button(text, icon):
-    res = QToolButton()
-    if icon is None:
-        res.setText(text)
-    else:
-        res.setToolTip(text)
-        if isinstance(icon, str):
-            res.setIcon(QIcon(os.path.join(icons_dir, icon)))
-        else:
-            res.setIcon(icon)
-    return res
 
 
 class ColorBar(QLabel):

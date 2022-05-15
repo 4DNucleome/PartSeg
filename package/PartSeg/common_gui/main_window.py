@@ -30,6 +30,8 @@ OPEN_FILE = "io.open_file"
 OPEN_DIRECTORY = "io.open_directory"
 OPEN_FILE_FILTER = "io.open_filter"
 
+_EXIT = object()
+
 
 class BaseMainMenu(QWidget):
     def __init__(self, settings: BaseSettings, main_window):
@@ -37,51 +39,60 @@ class BaseMainMenu(QWidget):
         self.settings = settings
         self.main_window = main_window
 
+    def _set_data_list(self, data_list):
+        if len(data_list) == 0:
+            QMessageBox.warning(self, "Empty list", "List of files to load is empty")
+            return _EXIT
+        if hasattr(self.main_window, "multiple_files"):
+            self.main_window.multiple_files.add_states(data_list)
+            self.main_window.multiple_files.setVisible(True)
+            self.settings.set("multiple_files", True)
+        return data_list[0]
+
+    def _set_project_info_base(self, project_info_base: ProjectInfoBase):
+        if project_info_base.errors != "":  # pragma: no cover
+            resp = QMessageBox.question(
+                self,
+                "Load problem",
+                f"During load data "
+                f"some problems occur: {project_info_base.errors}."
+                "Do you would like to try load it anyway?",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            if resp == QMessageBox.No:
+                return _EXIT
+        try:
+            image = self.settings.verify_image(project_info_base.image, False)
+        except SwapTimeStackException:
+            res = QMessageBox.question(
+                self,
+                "Not supported",
+                "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+
+            if res == QMessageBox.Yes:
+                image = project_info_base.image.swap_time_and_stack()
+            else:
+                return _EXIT
+        except TimeAndStackException:
+            QMessageBox.warning(self, "image error", "Do not support time and stack image")
+            return _EXIT
+        if not image:
+            return _EXIT
+        if isinstance(image, Image):
+            # noinspection PyProtectedMember
+            project_info_base = dataclasses.replace(project_info_base, image=image)
+        return project_info_base
+
     def set_data(self, data):
         if isinstance(data, list):
-            if len(data) == 0:
-                QMessageBox.warning(self, "Empty list", "List of files to load is empty")
-                return
-            if hasattr(self.main_window, "multiple_files"):
-                self.main_window.multiple_files.add_states(data)
-                self.main_window.multiple_files.setVisible(True)
-                self.settings.set("multiple_files", True)
-            data = data[0]
+            data = self._set_data_list(data)
         if isinstance(data, ProjectInfoBase):
-            if data.errors != "":
-                resp = QMessageBox.question(
-                    self,
-                    "Load problem",
-                    f"During load data "
-                    f"some problems occur: {data.errors}."
-                    "Do you would like to try load it anyway?",
-                    QMessageBox.Yes | QMessageBox.No,
-                )
-                if resp == QMessageBox.No:
-                    return
-            try:
-                image = self.settings.verify_image(data.image, False)
-            except SwapTimeStackException:
-                res = QMessageBox.question(
-                    self,
-                    "Not supported",
-                    "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
-                )
-
-                if res == QMessageBox.Yes:
-                    image = data.image.swap_time_and_stack()
-                else:
-                    return
-            except TimeAndStackException:
-                QMessageBox.warning(self, "image error", "Do not support time and stack image")
-                return
-            if not image:
-                return
-            if isinstance(image, Image):
-                # noinspection PyProtectedMember
-                data = dataclasses.replace(data, image=image)
+            data = self._set_project_info_base(data)
+        if data is _EXIT:
+            return
         if data is None:
             QMessageBox().warning(self, "Data loading failure", "Error during data loading", QMessageBox.Ok)
             return
@@ -148,7 +159,7 @@ class BaseMainWindow(QMainWindow):
         self.setWindowTitle(title)
         self.title_base = title
         app = QApplication.instance()
-        if app is not None and "PYTEST_CURRENT_TEST" not in os.environ:
+        if app is not None and "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
             # FIXME the PYTEST_CURRENT_TEST is used to prevent pytest session fail on CI.
             app.setStyleSheet(settings.get_style_sheet())
         self.settings.theme_changed.connect(self.change_theme)
@@ -193,11 +204,11 @@ class BaseMainWindow(QMainWindow):
                 self.settings.set(OPEN_DIRECTORY, os.path.dirname(data[0][0]))
                 self.settings.set(OPEN_FILE, data[0][0])
                 self.settings.set(OPEN_FILE_FILTER, data[1])
-        except KeyError:
+        except KeyError:  # pragma: no cover
             self.read_drop(data[0])
 
     def toggle_multiple_files(self):
-        self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget"))
+        self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget", False))
 
     def get_colormaps(self) -> List[Optional[colormap.Colormap]]:
         channel_num = self.settings.image.channels
@@ -233,7 +244,7 @@ class BaseMainWindow(QMainWindow):
     def change_theme(self, event):
         style_sheet = self.settings.style_sheet
         app = QApplication.instance()
-        if app is not None:
+        if app is not None and "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
             app.setStyleSheet(style_sheet)
         self.setStyleSheet(style_sheet)
 

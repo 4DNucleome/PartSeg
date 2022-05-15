@@ -1,10 +1,10 @@
 # pylint: disable=R0201
 import platform
+from functools import partial
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-import qtpy
 from napari.layers import Image as NapariImage
 from qtpy.QtCore import QPoint
 from test_PartSeg.utils import CI_BUILD
@@ -22,8 +22,6 @@ from PartSeg.common_gui.napari_image_view import (
 )
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
-
-pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem with mocking excec_")
 
 
 def test_image_info():
@@ -191,15 +189,21 @@ class TestImageView:
         assert not image_view.points_view_button.isVisible()
         image_view.hide()
 
-    @pyside_skip
     def test_dim_menu(self, base_settings, image_view, monkeypatch):
         called = []
+
+        from PartSeg.common_gui import napari_image_view
 
         def check_menu(self, point):
             assert len(self.actions()) == len(ORDER_DICT)
             called.append(1)
 
-        monkeypatch.setattr(QMenu, "exec_", check_menu)
+        def _monkey_qmenu():
+            res = QMenu()
+            monkeypatch.setattr(res, "exec_", partial(check_menu, res))
+            return res
+
+        monkeypatch.setattr(napari_image_view, "QMenu", _monkey_qmenu)
         image_view._dim_order_menu(QPoint(0, 0))
         assert called == [1]
 

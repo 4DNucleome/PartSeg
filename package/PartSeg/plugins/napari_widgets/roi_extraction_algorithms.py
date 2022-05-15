@@ -83,8 +83,8 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
 
 class NapariAlgorithmChoose(AlgorithmChooseBase):
     @staticmethod
-    def _algorithm_widget(settings, name, val) -> InteractiveAlgorithmSettingsWidget:
-        return NapariInteractiveAlgorithmSettingsWidget(settings, name, val, [])
+    def _algorithm_widget(settings, val) -> InteractiveAlgorithmSettingsWidget:
+        return NapariInteractiveAlgorithmSettingsWidget(settings, val, [])
 
     def reset_choices(self, event=None):
         for widget in self.algorithm_dict.values():

@@ -40,7 +40,7 @@ from PartSegImage import Image, TiffImageReader
 from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
 from ..common_backend.base_settings import IO_SAVE_DIRECTORY, ROI_NOT_FIT
 from ..common_gui.advanced_tabs import AdvancedWindow
-from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget
+from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_load_dialog import PLoadDialog
 from ..common_gui.custom_save_dialog import PSaveDialog
@@ -720,7 +720,7 @@ class AlgorithmOptions(QWidget):
             # TODO Fix This
             blank = blank[0]
         self.progress_bar.setHidden(False)
-        widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
+        widget: InteractiveAlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.set_mask(blank)
         self.progress_bar.setRange(0, widget.algorithm.get_steps_num())
         widget.execute()

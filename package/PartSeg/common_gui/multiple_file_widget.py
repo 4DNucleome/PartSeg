@@ -35,7 +35,7 @@ from .exception_hooks import load_data_exception_hook
 from .waiting_dialog import ExecuteFunctionDialog
 
 
-class CustomTreeWidget(QTreeWidget):
+class MultipleFilesTreeWidget(QTreeWidget):
     context_load = Signal(QTreeWidgetItem)
     context_compare = Signal(QTreeWidgetItem)
     context_forget = Signal(QTreeWidgetItem)
@@ -123,7 +123,7 @@ class MultipleFileWidget(QWidget):
         self.state_dict_count = Counter()
         self.file_list = []
         self.load_register = load_dict
-        self.file_view = CustomTreeWidget(compare_in_context_menu)
+        self.file_view = MultipleFilesTreeWidget(compare_in_context_menu)
         self.file_view.header().close()
         self.save_state_btn = QPushButton("Save state")
         self.save_state_btn.setStyleSheet("QPushButton{font-weight: bold;}")
@@ -222,7 +222,7 @@ class MultipleFileWidget(QWidget):
                 errors_message.setText("There are errors during load files")
                 errors_message.setInformativeText("During load files cannot found some of files on disc")
                 errors_message.setStandardButtons(QMessageBox.Ok)
-                text = "\n".join("File: " + x[0] + "\n" + str(x[1]) for x in self.error_list)
+                text = "\n".join(f"File: {x[0]}" + "\n" + str(x[1]) for x in self.error_list)
                 errors_message.setDetailedText(text)
                 errors_message.exec_()
 
