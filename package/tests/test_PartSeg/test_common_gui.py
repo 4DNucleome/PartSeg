@@ -32,7 +32,7 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
-from PartSeg.common_gui import select_multiple_files
+from PartSeg.common_gui import exception_hooks, select_multiple_files
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.advanced_tabs import (
     RENDERING_LIST,
@@ -89,6 +89,7 @@ from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel, Image, ImageWriter
+from PartSegImage.image_reader import INCOMPATIBLE_IMAGE_MASK
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
 IS_MACOS = sys.platform == "darwin"
@@ -1254,3 +1255,42 @@ def test_multiple_files_tree_widget(qtbot, monkeypatch):
 
     widget.showContextMenu(QPoint(0, 0))
     assert called == 3
+
+
+@pytest.mark.parametrize("exc", [MemoryError, IOError, KeyError])
+def test_exception_hooks(exc, monkeypatch):
+    called = False
+
+    def mock_show_warning(text1, text2):
+        nonlocal called
+        assert text1 == exception_hooks.OPEN_ERROR
+        assert "Test text" in text2
+        called = True
+
+    monkeypatch.setattr(exception_hooks, "show_warning", mock_show_warning)
+    exception_hooks.load_data_exception_hook(exc("Test text"))
+    assert called
+
+
+def test_exception_hooks_value_error(monkeypatch):
+    called = False
+
+    def mock_show_warning(text1, text2):
+        nonlocal called
+        assert text1 == exception_hooks.OPEN_ERROR
+        assert text2 == "Most probably you try to load mask from other image. Check selected files."
+        called = True
+
+    monkeypatch.setattr(exception_hooks, "show_warning", mock_show_warning)
+    exception_hooks.load_data_exception_hook(ValueError(INCOMPATIBLE_IMAGE_MASK))
+    assert called
+
+
+def test_exception_hooks_other_exception():
+    raised = False
+    try:
+        exception_hooks.load_data_exception_hook(ValueError("Test text"))
+    except ValueError:
+        raised = True
+    finally:
+        assert raised

@@ -15,6 +15,8 @@ from tifffile import TiffFile, natural_sorted
 
 from .image import Image
 
+INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
+
 
 class TiffFileException(Exception):
     """
@@ -412,10 +414,10 @@ class TiffImageReader(BaseImageReaderBuffer):
             try:
                 j = image_series.axes.index(pos)
             except ValueError:  # pragma: no cover
-                raise ValueError("Incompatible shape of mask and image (axes)")
+                raise ValueError(f"{INCOMPATIBLE_IMAGE_MASK} (axes)")
                 # TODO add verification if problem with T/Z/I
             if image_series.shape[j] != mask_series.shape[i]:  # pragma: no cover
-                raise ValueError("Incompatible shape of mask and image")
+                raise ValueError(INCOMPATIBLE_IMAGE_MASK)
             # TODO Add verification if mask have to few dimensions
 
     @staticmethod
