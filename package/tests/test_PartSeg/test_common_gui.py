@@ -42,9 +42,12 @@ from PartSeg.common_gui.advanced_tabs import (
     Appearance,
 )
 from PartSeg.common_gui.algorithms_description import (
+    AlgorithmChoose,
+    AlgorithmChooseBase,
     BaseAlgorithmSettingsWidget,
     FieldsList,
     FormWidget,
+    InteractiveAlgorithmSettingsWidget,
     ListInput,
     ProfileSelect,
     QtAlgorithmProperty,
@@ -90,6 +93,7 @@ from PartSegCore.algorithm_describe_base import (
     ROIExtractionProfile,
     base_model_to_algorithm_property,
 )
+from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
@@ -97,7 +101,7 @@ from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
-from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
+from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel, Image, ImageWriter
 from PartSegImage.image_reader import INCOMPATIBLE_IMAGE_MASK
@@ -1525,3 +1529,80 @@ class TestBaseAlgorithmSettingsWidget:
             part_settings.get(f"algorithms.{LowerThresholdAlgorithm.get_name()}")
             == LowerThresholdAlgorithm.__argument_class__()
         )
+
+
+class TestInteractiveAlgorithmSettingsWidget:
+    def test_init(self, qtbot, part_settings):
+        widget = InteractiveAlgorithmSettingsWidget(part_settings, LowerThresholdAlgorithm, [])
+        qtbot.addWidget(widget)
+
+    def test_selectors(self, qtbot, part_settings):
+        mock1 = MagicMock()
+        mock2 = MagicMock()
+        widget = InteractiveAlgorithmSettingsWidget(part_settings, LowerThresholdAlgorithm, [mock1, mock2])
+        qtbot.addWidget(widget)
+        mock1.setDisabled.assert_not_called()
+        widget.disable_selector()
+        mock1.setDisabled.assert_called_once()
+        mock2.setDisabled.assert_called_once()
+        mock1.setEnabled.assert_not_called()
+        widget.enable_selector()
+        mock1.setEnabled.assert_called_once()
+        mock2.setEnabled.assert_called_once()
+
+    def test_set_mask(self, qtbot, part_settings, image, monkeypatch):
+        widget = InteractiveAlgorithmSettingsWidget(part_settings, LowerThresholdAlgorithm, [])
+        qtbot.addWidget(widget)
+        mock = MagicMock()
+        monkeypatch.setattr(widget.algorithm_thread.algorithm, "set_mask", mock)
+        with qtbot.wait_signal(part_settings.mask_changed):
+            part_settings.mask = image.get_channel(0)
+        mock.assert_not_called()
+        monkeypatch.setattr(widget, "isVisible", lambda: True)
+        with qtbot.wait_signal(part_settings.mask_changed):
+            part_settings.mask = image.get_channel(0)
+        mock.assert_called_once()
+        monkeypatch.undo()
+
+    def test_get_segmentation_profile(self, qtbot, part_settings):
+        widget = InteractiveAlgorithmSettingsWidget(part_settings, LowerThresholdAlgorithm, [])
+        qtbot.addWidget(widget)
+        assert widget.get_segmentation_profile().name == ""
+        assert widget.get_segmentation_profile().algorithm == LowerThresholdAlgorithm.get_name()
+
+
+class TestAlgorithmChooseBase:
+    def test_init(self, qtbot, part_settings):
+        widget = AlgorithmChooseBase(part_settings, AnalysisAlgorithmSelection)
+        qtbot.addWidget(widget)
+        assert widget.algorithm_choose.currentText() == AnalysisAlgorithmSelection.get_default().name
+
+    def test_restore_algorithm(self, qtbot, part_settings):
+        assert BorderRim.get_name() != AnalysisAlgorithmSelection.get_default().name
+        part_settings.set("current_algorithm", BorderRim.get_name())
+        widget = AlgorithmChooseBase(part_settings, AnalysisAlgorithmSelection)
+        qtbot.addWidget(widget)
+        assert widget.algorithm_choose.currentText() == BorderRim.get_name()
+
+    def test_reload(self, qtbot, part_settings):
+        # Dummy test to check if code execute
+        widget = AlgorithmChooseBase(part_settings, AnalysisAlgorithmSelection)
+        qtbot.addWidget(widget)
+        widget.reload()
+
+
+class TestAlgorithmChoose:
+    def test_init(self, qtbot, part_settings):
+        widget = AlgorithmChoose(part_settings, AnalysisAlgorithmSelection)
+        qtbot.addWidget(widget)
+        assert widget.algorithm_choose.currentText() == AnalysisAlgorithmSelection.get_default().name
+
+    def test_image_changed(self, qtbot, part_settings, image2, monkeypatch):
+        mock = MagicMock()
+        widget = AlgorithmChoose(part_settings, AnalysisAlgorithmSelection)
+        monkeypatch.setattr(widget.stack_layout.currentWidget(), "image_changed", mock)
+        qtbot.addWidget(widget)
+        with qtbot.wait_signal(part_settings.image_changed):
+            part_settings.image = image2
+
+        mock.assert_called_once()

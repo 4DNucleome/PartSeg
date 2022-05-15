@@ -673,17 +673,12 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
 
     def __init__(self, settings, algorithm: typing.Type[ROIExtractionAlgorithm], selector: typing.List[QWidget]):
         super().__init__(settings, algorithm)
-        self.selector = selector
+        self.selector = selector[:]
         self.algorithm_thread.finished.connect(self.enable_selector)
         self.algorithm_thread.started.connect(self.disable_selector)
         # noinspection PyUnresolvedReferences
         if hasattr(settings, "mask_changed"):
             settings.mask_changed.connect(self.change_mask)
-
-    def value_updated(self):
-        if not self.parent().interactive:
-            return
-        self.execute()
 
     def change_mask(self):
         if not self.isVisible():
