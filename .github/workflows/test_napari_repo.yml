@@ -19,6 +19,7 @@ jobs:
         with:
           name: test_data
           path: test_data
+          retention-days: 5
 
   test_napari:
     name: ${{ matrix.napari_version }} py${{ matrix.python }}
