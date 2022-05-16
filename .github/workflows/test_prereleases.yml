@@ -37,7 +37,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [windows-2019, macos-11, ubuntu-20.04]
-        python: [3.8]
+        python: [3.9]
     steps:
       - uses: actions/checkout@v2
 
@@ -93,3 +93,41 @@ jobs:
         with:
           filename: .github/TEST_FAIL_TEMPLATE.md
           update_existing: true
+
+  pyinstaller:
+    name: "Test pyinstaller build"
+    runs-on: "ubuntu-latest"
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
+      name: Install Python 3.9
+      with:
+        python-version: 3.9
+        cache: 'pip'
+    - name: Install ubuntu libraries
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install pip-tools
+    - name: Compile and install PyInstaller requirements
+      run: |
+        pip-compile --output-file requirements.txt requirements/requirements_pyinstaller.in --pre
+        pip-sync
+        pip install .
+    - name: upload requirements
+      uses: actions/upload-artifact@v3
+      with:
+        name: requirements
+        path: requirements.txt
+    - name: Run PyInstaller
+      run: python  build_utils/create_and_pack_executable.py
+    - name: Upload bundle
+      uses: actions/upload-artifact@v3
+      with:
+        name: bundle
+        path: dist2/
+    - name: Test bundle
+      run: dist/PartSeg/PartSeg _test
