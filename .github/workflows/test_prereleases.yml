@@ -27,6 +27,7 @@ jobs:
         with:
           name: test_data
           path: test_data
+          retention-days: 5
 
 
   test:
