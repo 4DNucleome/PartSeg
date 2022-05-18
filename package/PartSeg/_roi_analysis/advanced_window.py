@@ -330,7 +330,7 @@ class Properties(QWidget):
         text, ok = QInputDialog.getText(self, "New profile name", f"New name for {profile_name}", text=profile_name)
         if ok:
             text = text.strip()
-            if text in profiles_dict.keys():
+            if text in profiles_dict:
                 res = QMessageBox.warning(
                     self,
                     "Already exist",

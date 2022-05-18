@@ -434,7 +434,6 @@ class ChosenComponents(QWidget):
         chosen_components = set(chosen_components)
         self.blockSignals(True)
         self.remove_components()
-        chosen_components = set(chosen_components)
         for el in components_index:
             check = ComponentCheckBox(el)
             if el in chosen_components:

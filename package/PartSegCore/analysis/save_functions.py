@@ -97,8 +97,8 @@ def save_project(
             tar.addfile(tar_algorithm, hist_buff)
 
 
-def save_cmap(
-    file: typing.Union[str, h5py.File, BytesIO],
+def _save_cmap(
+    cmap_file: h5py.File,
     data: np.ndarray,
     spacing,
     segmentation: np.ndarray,
@@ -106,16 +106,6 @@ def save_cmap(
     cmap_profile: dict,
     metadata: typing.Optional[dict] = None,
 ):
-    if segmentation is None or np.max(segmentation) == 0:
-        raise ValueError("No segmentation")
-    if isinstance(file, (str, BytesIO, Path)):
-        if isinstance(file, str) and os.path.exists(file):
-            os.remove(file)
-        cmap_file = h5py.File(file, "w")
-    elif isinstance(file, h5py.File):
-        cmap_file = file
-    else:
-        raise ValueError(f"Wrong type of file argument, type: {type(file)}")
     if cmap_profile["reverse"]:
         data = reverse_base - data
         data[data < 0] = 0
@@ -142,8 +132,29 @@ def save_cmap(
     grp.attrs["VERSION"] = np.string_("1.0")
     grp.attrs["step"] = np.array(spacing, dtype=np.float32)[::-1] * UNIT_SCALE[cmap_profile["units"].value]
 
-    if isinstance(file, str):
-        cmap_file.close()
+    return cmap_file
+
+
+def save_cmap(
+    file: typing.Union[str, h5py.File, BytesIO],
+    data: np.ndarray,
+    spacing,
+    segmentation: np.ndarray,
+    reverse_base: float,
+    cmap_profile: dict,
+    metadata: typing.Optional[dict] = None,
+):
+    if segmentation is None or np.max(segmentation) == 0:
+        raise ValueError("No segmentation")
+    if isinstance(file, (str, BytesIO, Path)):
+        if isinstance(file, str) and os.path.exists(file):
+            os.remove(file)
+        with h5py.File(file, "w") as cmap_file:
+            _save_cmap(cmap_file, data, spacing, segmentation, reverse_base, cmap_profile, metadata)
+    elif isinstance(file, h5py.File):
+        _save_cmap(file, data, spacing, segmentation, reverse_base, cmap_profile, metadata)
+    else:
+        raise ValueError(f"Wrong type of file argument, type: {type(file)}")
 
 
 class SaveProject(SaveBase):
