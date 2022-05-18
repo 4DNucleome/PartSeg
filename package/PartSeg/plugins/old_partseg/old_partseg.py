@@ -23,28 +23,8 @@ class LoadPartSegOld(LoadBase):
     def get_short_name(cls):
         return "project_old"
 
-    # noinspection DuplicatedCode
     @classmethod
-    def load(
-        cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
-        metadata: typing.Optional[dict] = None,
-    ):
-        """Load project from archive old format"""
-        file_ob: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase] = load_locations[0]
-        if isinstance(file_ob, tarfile.TarFile):
-            tar_file = file_ob
-            file_path = ""
-        elif isinstance(file_ob, str):
-            tar_file = tarfile.open(file_ob)
-            file_path = file_ob
-        elif isinstance(file_ob, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
-            tar_file = tarfile.open(fileobj=file_ob)
-            file_path = ""
-        else:
-            raise ValueError(f"wrong type of file_ argument: {type(file_ob)}")
+    def _load(cls, tar_file: tarfile.TarFile, file_path: str) -> ProjectTuple:
         image_buffer = BytesIO()
         image_tar = tar_file.extractfile(tar_file.getmember("image.npy"))
         image_buffer.write(image_tar.read())
@@ -77,5 +57,28 @@ class LoadPartSegOld(LoadBase):
             "values": values,
             "threshold_list": algorithm_dict["threshold_list"],
         }
-
         return ProjectTuple(file_path, image, ROIInfo(seg_array), algorithm_parameters=algorithm_parameters)
+
+    # noinspection DuplicatedCode
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ):
+        """Load project from archive old format"""
+        file_ob: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase] = load_locations[0]
+        if isinstance(file_ob, tarfile.TarFile):
+            res = cls._load(file_ob, "")
+        elif isinstance(file_ob, str):
+            with tarfile.open(file_ob, "r") as tar_file:
+                res = cls._load(tar_file, file_ob)
+        elif isinstance(file_ob, (BufferedIOBase, RawIOBase, IOBase)):
+            with tarfile.open(fileobj=file_ob) as tar_file:
+                res = cls._load(tar_file, "")
+        else:
+            raise ValueError(f"wrong type of file_ argument: {type(file_ob)}")
+
+        return res
