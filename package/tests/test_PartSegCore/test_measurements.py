@@ -2351,7 +2351,7 @@ def test_per_component(method, area):
 @pytest.mark.parametrize("randomize", [True, False])
 def test_colocalization(method, randomize):
     area_array = np.ones((10, 10))
-    data = np.random.rand(10, 10)
+    data = np.random.RandomState(10).rand(10, 10)
     factor = 0.5 if method == CorrelationEnum.intensity else 1
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
