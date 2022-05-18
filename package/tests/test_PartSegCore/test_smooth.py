@@ -3,6 +3,7 @@
 import itertools
 
 import numpy as np
+import pytest
 
 from PartSegCore.segmentation.border_smoothing import (
     IterativeSmoothingParams,
@@ -200,46 +201,54 @@ class TestIterativeVoteSmoothing:
         res2[3:-3, 3:-3, 3:-3] = 1
         assert np.all(res2 == res)
 
-    def test_cube_sides_iter(self):
+    @pytest.mark.parametrize("max_steps", range(2, 8))
+    def test_cube_sides_iter_4(self, max_steps: int):
         data = np.zeros((50, 50, 50), dtype=np.uint8)
         data[2:-2, 2:-2, 2:-2] = 1
 
-        for i in range(2, 8):
-            res = IterativeVoteSmoothing.smooth(
-                data, IterativeSmoothingParams(neighbourhood_type=NeighType.sides, support_level=4, max_steps=i)
-            )
-            res2 = np.copy(data)
-            for pos in itertools.product([2, -3], repeat=3):
+        res = IterativeVoteSmoothing.smooth(
+            data, IterativeSmoothingParams(neighbourhood_type=NeighType.sides, support_level=4, max_steps=max_steps)
+        )
+        res2 = np.copy(data)
+        for pos in itertools.product([2, -3], repeat=3):
+            sign = np.sign(pos)
+            for shift in generate_neighbour_sides(max_steps - 1, 3):
+                res2[calc_cord(pos, sign, shift)] = 0
+        assert np.all(res2 == res)
+
+    @pytest.mark.parametrize("max_steps", range(2, 8))
+    def test_cube_sides_iter_5(self, max_steps: int):
+        data = np.zeros((50, 50, 50), dtype=np.uint8)
+        data[2:-2, 2:-2, 2:-2] = 1
+
+        res = IterativeVoteSmoothing.smooth(
+            data, IterativeSmoothingParams(neighbourhood_type=NeighType.sides, support_level=5, max_steps=max_steps)
+        )
+        res2 = np.copy(data)
+        for pos in itertools.permutations([2, 2, -3, -3, slice(2, -2)], 3):
+            res2[pos] = 0
+        for ind in [0, 1, 2]:
+            for pos in itertools.product([2, -3], repeat=2):
                 sign = np.sign(pos)
-                for shift in generate_neighbour_sides(i - 1, 3):
-                    res2[calc_cord(pos, sign, shift)] = 0
-            assert np.all(res2 == res), f"Fail  on step {i}"
+                for shift in generate_neighbour_sides(max_steps - 1, 2):
+                    pos2 = list(calc_cord(pos, sign, shift))
+                    pos2.insert(ind, slice(2, -2))
+                    res2[tuple(pos2)] = 0
+        assert np.all(res2 == res)
 
-        for i in range(2, 8):
-            res = IterativeVoteSmoothing.smooth(
-                data, IterativeSmoothingParams(neighbourhood_type=NeighType.sides, support_level=5, max_steps=i)
-            )
-            res2 = np.copy(data)
-            for pos in itertools.permutations([2, 2, -3, -3, slice(2, -2)], 3):
-                res2[pos] = 0
-            for ind in [0, 1, 2]:
-                for pos in itertools.product([2, -3], repeat=2):
-                    sign = np.sign(pos)
-                    for shift in generate_neighbour_sides(i - 1, 2):
-                        pos2 = list(calc_cord(pos, sign, shift))
-                        pos2.insert(ind, slice(2, -2))
-                        res2[tuple(pos2)] = 0
-            assert np.all(res2 == res), f"Fail  on step {i}"
+    @pytest.mark.parametrize("max_steps", range(2, 8))
+    def test_cube_sides_iter_6(self, max_steps: int):
+        data = np.zeros((50, 50, 50), dtype=np.uint8)
+        data[2:-2, 2:-2, 2:-2] = 1
 
-        for i in range(2, 8):
-            res = IterativeVoteSmoothing.smooth(
-                data, IterativeSmoothingParams(neighbourhood_type=NeighType.sides, support_level=6, max_steps=i)
-            )
-            res2 = np.zeros(data.shape, dtype=data.dtype)
-            shift = 2 + i
-            p = slice(shift, -shift)
-            res2[p, p, p] = 1
-            assert np.all(res2 == res), f"Fail  on step {i}"
+        res = IterativeVoteSmoothing.smooth(
+            data, IterativeSmoothingParams(neighbourhood_type=NeighType.sides, support_level=6, max_steps=max_steps)
+        )
+        res2 = np.zeros(data.shape, dtype=data.dtype)
+        shift = 2 + max_steps
+        p = slice(shift, -shift)
+        res2[p, p, p] = 1
+        assert np.all(res2 == res)
 
     def test_cube_edges_base(self):
         data = np.zeros((50, 50, 50), dtype=np.uint8)
