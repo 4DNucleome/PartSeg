@@ -212,7 +212,7 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.2
     # via stack-data
-pydantic==1.9.0
+pydantic==1.9.1
     # via
     #   -r requirements_pyinstaller.in
     #   napari
