@@ -220,6 +220,16 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             map(str, self._sizes_array[1 : self.components_num + 1])
         )
 
+    def _lack_of_components(self):
+        res = self.prepare_result(self.threshold_image.astype(np.uint8))
+        info_text = (
+            "Something wrong with chosen threshold. Please check it. "
+            "May be too low or too high. The channel brightness range is "
+            f"{self.cleaned_image.min()}-{self.cleaned_image.max()} "
+            f"and chosen threshold is {self.threshold_info}"
+        )
+        return dataclasses.replace(res, info_text=info_text)
+
     def calculation_run(self, report_fun: typing.Callable[[str, int], typing.Any]) -> ROIExtractionResult:
         """
         main calculation function
@@ -251,14 +261,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             ) or self.old_threshold_info != self.threshold_info:
                 restarted = True
             if self.threshold_image.max() == 0:
-                res = self.prepare_result(self.threshold_image.astype(np.uint8))
-                info_text = (
-                    "Something wrong with chosen threshold. Please check it. "
-                    "May be too low or too high. The channel brightness range is "
-                    f"{self.cleaned_image.min()}-{self.cleaned_image.max()} "
-                    f"and chosen threshold is {self.threshold_info}"
-                )
-                return dataclasses.replace(res, info_text=info_text)
+                return self._lack_of_components()
         if restarted or self.new_parameters.side_connection != self.parameters["side_connection"]:
             self.parameters["side_connection"] = self.new_parameters.side_connection
             connect = SimpleITK.ConnectedComponent(
@@ -266,11 +269,13 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             )
             self.segmentation = SimpleITK.GetArrayFromImage(SimpleITK.RelabelComponent(connect))
             self._sizes_array = np.bincount(self.segmentation.flat)
+            if len(self._sizes_array) < 2:
+                return self._lack_of_components()
             restarted = True
         if restarted or self.new_parameters.minimum_size != self.parameters["minimum_size"]:
             self.parameters["minimum_size"] = self.new_parameters.minimum_size
             minimum_size = self.new_parameters.minimum_size
-            ind = bisect(self._sizes_array[1:], minimum_size, lambda x, y: x > y)
+            ind = bisect(self._sizes_array[1:], minimum_size, operator.ge)
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
