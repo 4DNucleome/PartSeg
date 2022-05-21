@@ -275,7 +275,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         if restarted or self.new_parameters.minimum_size != self.parameters["minimum_size"]:
             self.parameters["minimum_size"] = self.new_parameters.minimum_size
             minimum_size = self.new_parameters.minimum_size
-            ind = bisect(self._sizes_array[1:], minimum_size, operator.ge)
+            ind = bisect(self._sizes_array[1:], minimum_size, operator.gt)
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
