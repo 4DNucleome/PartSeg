@@ -83,7 +83,7 @@ jobs:
           NAPARI: ${{ matrix.napari_version }}
           BACKEND: ${{ matrix.qt_backend }}
 
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v3
         if: ${{ inputs.coverage }}
         with:
           file: ./coverage.xml
