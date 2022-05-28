@@ -64,7 +64,7 @@ h5py==3.6.0
     # via -r requirements_pyinstaller.in
 heapdict==1.0.1
     # via cachey
-hsluv==5.0.2
+hsluv==5.0.3
     # via vispy
 idna==3.3
     # via requests
