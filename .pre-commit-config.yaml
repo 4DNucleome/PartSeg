@@ -60,4 +60,4 @@ repos:
     rev: 'v0.960'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
-        files: ^package[\\/]PartSegImage[\\/].+\.py
+        files: ^package/PartSegImage/.+\.py

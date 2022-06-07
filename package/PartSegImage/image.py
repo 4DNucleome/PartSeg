@@ -3,7 +3,6 @@ import typing
 import warnings
 from collections.abc import Iterable
 from contextlib import suppress
-from itertools import zip_longest
 
 import numpy as np
 
@@ -179,10 +178,8 @@ class Image:
         if isinstance(channel_names, str):
             channel_names = [channel_names]
         if isinstance(channel_names, Iterable):
-            channel_names_list = [
-                str(x) if x is not None else y
-                for x, y in zip_longest(channel_names, default_channel_names, fillvalue=None)
-            ]
+            channel_names_list = [str(x) for x in channel_names]
+            channel_names_list = channel_names_list[:channels_num] + default_channel_names[len(channel_names_list) :]
         else:
             channel_names_list = default_channel_names
         return channel_names_list[:channels_num]
