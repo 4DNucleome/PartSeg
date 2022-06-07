@@ -12,7 +12,8 @@ setup_cfg_block_to_yaml_list () {
     awk -v RS= "/$1/{print; exit;}" setup.cfg | # (1)
         grep -E "^ +\w"                       | # (2)
         grep -v ";"                           |
-        sed -r "s/^ +/  - /g"                     # (3)
+        sed -r "s/^ +/  - /g"                 |    # (3)
+        sed 's/napari/"napari=*=*pyside2"/g'
 }
 
 setup_cfg_block_to_yaml_list "$1"
