@@ -111,7 +111,7 @@ jobs:
           python-version: 3.9
 
       - name: Install ubuntu libraries
-        run: sudo apt-get install -y libxkbcommon-x11-0
+        run: sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
 
       - name: Download test data
         uses: actions/download-artifact@v1
@@ -128,6 +128,4 @@ jobs:
         uses: GabrielBB/xvfb-action@v1
         with:
           run: conda run --no-capture-output tox -e py39-PySide2-conda
-        env:
-          QT_API: pyside2
         timeout-minutes: 60
