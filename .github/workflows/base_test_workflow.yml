@@ -44,7 +44,7 @@ jobs:
         qt_backend: ${{fromJson(inputs.qt_backend)}}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         name: Install Python ${{ matrix.python_version }}
         with:
           python-version: ${{ matrix.python_version }}
