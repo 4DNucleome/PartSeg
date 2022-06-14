@@ -1,3 +1,5 @@
+import contextlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -233,10 +235,12 @@ def shutdown_timers(monkeypatch):
     yield
 
     for timer in register:
-        timer.stop()
+        with contextlib.suppress(RuntimeError):
+            timer.stop()
 
     for timer in register:
-        assert not timer.isActive()
+        with contextlib.suppress(RuntimeError):
+            assert not timer.isActive()
 
 
 @pytest.mark.enablethread
