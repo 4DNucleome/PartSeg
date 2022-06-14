@@ -74,6 +74,7 @@ imageio==2.19.2
     # via
     #   napari
     #   napari-svg
+    #   scikit-image
 imagesize==1.3.0
     # via sphinx
 importlib-metadata==4.11.4
@@ -126,7 +127,7 @@ matplotlib-inline==0.1.3
     #   ipython
 mpmath==1.2.1
     # via sympy
-napari==0.4.15
+napari==0.4.16
     # via -r requirements_pyinstaller.in
 napari-console==0.0.4
     # via napari
@@ -141,6 +142,8 @@ nest-asyncio==1.5.5
     # via
     #   ipykernel
     #   jupyter-client
+networkx==2.8.4
+    # via scikit-image
 nme==0.1.5
     # via -r requirements_pyinstaller.in
 npe2==0.3.0
@@ -159,6 +162,8 @@ numpy==1.22.4
     #   oiffile
     #   pandas
     #   partsegcore-compiled-backend
+    #   pywavelets
+    #   scikit-image
     #   scipy
     #   tifffile
     #   vispy
@@ -175,6 +180,7 @@ packaging==21.3
     #   ipykernel
     #   nme
     #   qtpy
+    #   scikit-image
     #   sphinx
     #   superqt
 pandas==1.4.2
@@ -197,6 +203,7 @@ pillow==9.1.1
     # via
     #   imageio
     #   napari
+    #   scikit-image
 pint==0.19.2
     # via napari
 prompt-toolkit==3.0.29
@@ -222,6 +229,7 @@ pygments==2.12.0
     # via
     #   -r requirements_pyinstaller.in
     #   ipython
+    #   napari
     #   qtconsole
     #   sphinx
 pyinstaller==5.1
@@ -252,6 +260,8 @@ pytz==2022.1
     # via
     #   babel
     #   pandas
+pywavelets==1.3.0
+    # via scikit-image
 pyyaml==6.0
     # via
     #   dask
@@ -278,10 +288,13 @@ requests==2.28.0
     # via
     #   -r requirements_pyinstaller.in
     #   sphinx
+scikit-image==0.19.3
+    # via napari
 scipy==1.8.1
     # via
     #   -r requirements_pyinstaller.in
     #   napari
+    #   scikit-image
 sentry-sdk==1.5.12
     # via -r requirements_pyinstaller.in
 simpleitk==2.1.1.2
@@ -322,6 +335,7 @@ tifffile==2022.5.4
     #   czifile
     #   napari
     #   oiffile
+    #   scikit-image
 toolz==0.11.2
     # via
     #   dask
