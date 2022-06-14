@@ -1,7 +1,10 @@
+import contextlib
+
 import numpy as np
 import pandas as pd
 import pytest
 from napari.layers import Labels
+from qtpy.QtCore import QTimer
 
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
@@ -217,8 +220,31 @@ def test_mask_create(make_napari_viewer, qtbot):
     assert "Mask" in viewer.layers
 
 
+@pytest.fixture
+def shutdown_timers(monkeypatch):
+    register = []
+    old_start = QTimer.start
+
+    def mock_start(self, interval=None):
+        register.append(self)
+        if interval is None:
+            return old_start(self)
+        return old_start(self, interval)
+
+    monkeypatch.setattr(QTimer, "start", mock_start)
+    yield
+
+    for timer in register:
+        with contextlib.suppress(RuntimeError):
+            timer.stop()
+
+    for timer in register:
+        with contextlib.suppress(RuntimeError):
+            assert not timer.isActive()
+
+
 @pytest.mark.enablethread
-def test_search_labels(make_napari_viewer, qtbot):
+def test_search_labels(make_napari_viewer, qtbot, shutdown_timers):
     viewer = make_napari_viewer()
     data = np.zeros((10, 10), dtype=np.uint8)
     data[2:5, 2:-2] = 1
