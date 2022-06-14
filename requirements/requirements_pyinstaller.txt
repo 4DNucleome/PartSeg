@@ -110,7 +110,7 @@ kiwisolver==1.4.2
     # via vispy
 locket==1.0.0
     # via partd
-lxml==4.8.0
+lxml==4.9.0
     # via -r requirements_pyinstaller.in
 magicgui==0.4.0
     # via
