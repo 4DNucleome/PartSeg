@@ -47,6 +47,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
+          cache-dependency-path: 'requirements/requirements_pyinstaller.txt'
 
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
