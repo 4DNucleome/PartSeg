@@ -1,4 +1,0 @@
-sphinx-autodoc-typehints==1.17.0
-autodoc_pydantic==1.6.1
-sphinx-qt-documentation==0.3
-sphinx!=3.0.0, !=3.5.0
