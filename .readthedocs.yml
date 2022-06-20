@@ -24,4 +24,4 @@ python:
     - requirements: requirements/requirements_pyinstaller.txt
     - requirements: requirements/requirements_dev.txt
     - method: pip
-      path: .
+      path: .[docs]
