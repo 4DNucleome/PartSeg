@@ -25,7 +25,6 @@ build:
 # Optionally set the version of Python and requirements required to build your docs
 python:
   install:
-    - requirements: docs/requirements.txt
     - requirements: requirements/requirements_pyinstaller.txt
     - requirements: requirements/requirements_dev.txt
     - method: pip
