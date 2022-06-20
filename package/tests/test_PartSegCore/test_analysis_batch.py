@@ -434,7 +434,7 @@ class TestCalculationProcess:
                 time.sleep(0.1)
             else:
                 break
-        else:
+        else:  # pragma: no cover
             manager.kill_jobs()
             pytest.fail("jobs hanged")
 
