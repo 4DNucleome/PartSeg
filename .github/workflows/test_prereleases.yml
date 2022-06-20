@@ -105,7 +105,6 @@ jobs:
       name: Install Python 3.9
       with:
         python-version: 3.9
-        cache: 'pip'
     - name: Install ubuntu libraries
       if: runner.os == 'Linux'
       run: |
