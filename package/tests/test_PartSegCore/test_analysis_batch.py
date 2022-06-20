@@ -4,9 +4,9 @@ import os
 import shutil
 import sys
 import time
+import warnings
 from glob import glob
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -40,8 +40,8 @@ from PartSegCore.io_utils import SaveBase
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdFlowAlgorithm
-from PartSegCore.universal_const import UNIT_SCALE, Units
-from PartSegImage import Image, ImageWriter, TiffImageReader
+from PartSegCore.universal_const import Units
+from PartSegImage import TiffImageReader
 
 ENGINE = None if pd.__version__ == "0.24.0" else "openpyxl"
 
@@ -49,25 +49,6 @@ ENGINE = None if pd.__version__ == "0.24.0" else "openpyxl"
 class MocksCalculation:
     def __init__(self, file_path):
         self.file_path = file_path
-
-
-@pytest.fixture
-def create_test_data(tmpdir):
-    # for future use
-    spacing = tuple(x / UNIT_SCALE[Units.nm.value] for x in (210, 70, 70))
-    res = []
-    for i in range(8):
-        mask_data = np.zeros((10, 20, 20 + i), dtype=np.uint8)
-        mask_data[1:-1, 2:-2, 2:-2] = 1
-        data = np.zeros(mask_data.shape + (2,), dtype=np.uint16)
-        data[1:-1, 2:-2, 2:-2] = 15000
-        data[2:-2, 3:-3, 3:7] = 33000
-        data[2:-2, 3:-3, -7:-3] = 33000
-        image = Image(data, spacing, "", mask=mask_data, axes_order="ZYXC")
-        ImageWriter.save(image, os.path.join(str(tmpdir), f"file_{i}.tif"))
-        res.append(os.path.join(str(tmpdir), f"file_{i}.tif"))
-        ImageWriter.save_mask(image, os.path.join(str(tmpdir), f"file_{i}_mask.tif"))
-    return res
 
 
 # TODO add check of per component measurements
@@ -459,7 +440,7 @@ class TestCalculationProcess:
 
         manager.writer.finish()
         if sys.platform == "darwin":
-            time.sleep(2)
+            time.sleep(2)  # pragma: no cover
         else:
             time.sleep(0.4)
         assert os.path.exists(os.path.join(tmpdir, "test.xlsx"))
@@ -503,7 +484,7 @@ class TestCalculationProcess:
             manager.get_results()
         manager.writer.finish()
         if sys.platform == "darwin":
-            time.sleep(2)
+            time.sleep(2)  # pragma: no cover
         else:
             time.sleep(0.4)
         assert os.path.exists(os.path.join(result_dir, "test.xlsx"))
@@ -538,7 +519,7 @@ class TestCalculationProcess:
             time.sleep(0.1)
             manager.get_results()
         if sys.platform == "darwin":
-            time.sleep(2)
+            time.sleep(2)  # pragma: no cover
         else:
             time.sleep(0.4)
         manager.writer.finish()
@@ -660,7 +641,7 @@ class TestCalculationProcess:
             time.sleep(0.1)
             res = manager.get_results()
             if res.errors:
-                print(res.errors, file=sys.stderr)
+                warnings.warn(str(res.errors))
         if sys.platform == "darwin":
             time.sleep(2)
         else:

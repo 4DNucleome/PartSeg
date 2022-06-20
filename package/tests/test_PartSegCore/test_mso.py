@@ -521,7 +521,7 @@ class TestMSO:
         arr[2:8, 2:8, 11:18] = 3
         assert np.all(res == arr)
 
-    def _test_background_simple(self):
+    def test_background_simple(self):
         components = np.ones((20, 20, 20), dtype=np.uint8)
         components[1:-1, 1:-1, 1:-1] = 0
         components[9:11, 9:11, 9:11] = 2
