@@ -24,11 +24,7 @@ def test_fetching(thread, package_name, monkeypatch, qtbot):
             )
         )
 
-    def message_box_block(self, *args):
-        raise RuntimeError(f"call of message box {self.text()}")
-
     monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
-    monkeypatch.setattr(check_version.QMessageBox, "exec_", message_box_block)
     assert packaging.version.parse("0.10.0") < packaging.version.parse("0.11.0")
     chk_thr = check_version.CheckVersionThread(package_name, base_version="0.11.0")
     chk_thr.release = "0.10.0"
