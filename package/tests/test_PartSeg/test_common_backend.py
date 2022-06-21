@@ -399,8 +399,6 @@ class TestLoadBackup:
 
     def test_no_backup_old(self, monkeypatch, tmp_path):
         monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
-        monkeypatch.setattr(load_backup.QMessageBox, "exec_", self.block_exec)
-        monkeypatch.setattr(load_backup.QMessageBox, "question", self.block_exec)
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         (tmp_path / "0.13.14").mkdir()
         (tmp_path / "0.13.15").mkdir()
@@ -419,7 +417,6 @@ class TestLoadBackup:
             return response
 
         monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
-        monkeypatch.setattr(load_backup.QMessageBox, "exec_", self.block_exec)
         monkeypatch.setattr(load_backup.QMessageBox, "question", question)
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         create_file(tmp_path / "0.13.14" / "14.txt")
