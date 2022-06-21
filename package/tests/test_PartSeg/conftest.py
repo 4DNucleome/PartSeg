@@ -1,7 +1,7 @@
 from contextlib import suppress
 
 import pytest
-from qtpy.QtWidgets import QApplication, QDialog, QMessageBox
+from qtpy.QtWidgets import QDialog, QMessageBox
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_mask.main_window import ChosenComponents
@@ -133,16 +133,6 @@ def clean_settings():
         yield
 
 
-@pytest.fixture
-def leaked_widgets():
-    initial = QApplication.topLevelWidgets()
-    yield
-    QApplication.processEvents()
-    leak = set(QApplication.topLevelWidgets()).difference(initial)
-    if any(n.__class__.__name__ != "CanvasBackendDesktop" for n in leak):
-        raise AssertionError(f"Widgets ({len(leak)}) leaked!: {leak}")
-
-
 @pytest.fixture(autouse=True)
 def reset_napari_settings(monkeypatch, tmp_path):
     def _mock_save(self, path=None, **dict_kwargs):
@@ -161,7 +151,7 @@ def reset_napari_settings(monkeypatch, tmp_path):
 @pytest.fixture(autouse=True)
 def block_message_box(monkeypatch, request):
     def raise_on_call(*_, **__):
-        raise RuntimeError("exec_ call")
+        raise RuntimeError("exec_ call")  # pragma: no cover
 
     monkeypatch.setattr(QMessageBox, "exec_", raise_on_call)
     monkeypatch.setattr(QMessageBox, "critical", raise_on_call)

@@ -315,6 +315,7 @@ class TestAlgorithmDescribeBase:
                 ]
 
         assert SampleSubAlgorithm.get_name() == "sample2"
+        assert SampleAlgorithm.get_name() == "sample"
         with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
             assert len(SampleSubAlgorithm.get_fields()) == 3
         with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):

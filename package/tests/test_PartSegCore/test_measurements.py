@@ -73,16 +73,6 @@ def cube_image_fixture():
     return get_cube_image()
 
 
-@pytest.fixture
-def cube_mask_40(cube_image):
-    return cube_image.get_channel(0)[0] > 40
-
-
-@pytest.fixture
-def cube_mask_60(cube_image):
-    return cube_image.get_channel(0)[0] > 60
-
-
 def get_square_image():
     return Image(get_cube_array()[:, 25:26], (100, 50, 50), "", axes_order="TZYX")
 

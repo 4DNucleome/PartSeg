@@ -51,11 +51,11 @@ def test_callback_method():
 
 def test_get_callback():
     def call_fun():
-        return 1
+        raise NotImplementedError
 
     class A:
         def fun(self):  # pylint: disable=R0201
-            return 1
+            raise NotImplementedError
 
     a = A()
 
