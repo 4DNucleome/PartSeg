@@ -117,7 +117,7 @@ magicgui==0.5.1
     # via
     #   napari
     #   npe2
-mahotas==1.4.12
+mahotas==1.4.13
     # via -r requirements_pyinstaller.in
 markupsafe==2.1.1
     # via jinja2
