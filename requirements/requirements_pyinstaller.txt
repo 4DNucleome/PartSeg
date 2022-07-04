@@ -285,7 +285,7 @@ qtpy==2.1.0
     #   qtawesome
     #   qtconsole
     #   superqt
-requests==2.28.0
+requests==2.28.1
     # via
     #   -r requirements_pyinstaller.in
     #   sphinx
