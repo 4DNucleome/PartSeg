@@ -135,7 +135,9 @@ jobs:
       uses: GabrielBB/xvfb-action@v1
       timeout-minutes: 60
       with:
-        run: QT_DEBUG_PLUGINS=1 dist/PartSeg/PartSeg _test
+        run: dist/PartSeg/PartSeg _test
+      env:
+        QT_DEBUG_PLUGINS: 1
 
       # If something goes wrong, we can open an issue in the repo
     - name: Report Failures
