@@ -9,7 +9,6 @@ on:
       - master
       - develop
       - bugfix/fix_pre_tests
-      - fix_failing_build
   schedule:
     - cron: '0 */12 * * *'  # every 12 hours
   # Allows you to run this workflow manually from the Actions tab
