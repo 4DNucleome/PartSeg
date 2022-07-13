@@ -9,6 +9,7 @@ on:
       - master
       - develop
       - bugfix/fix_pre_tests
+      - fix_failing_build
   schedule:
     - cron: '0 */12 * * *'  # every 12 hours
   # Allows you to run this workflow manually from the Actions tab
@@ -134,7 +135,7 @@ jobs:
       uses: GabrielBB/xvfb-action@v1
       timeout-minutes: 60
       with:
-        run: dist/PartSeg/PartSeg _test
+        run: QT_DEBUG_PLUGINS=1 dist/PartSeg/PartSeg _test
 
       # If something goes wrong, we can open an issue in the repo
     - name: Report Failures
