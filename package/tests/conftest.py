@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 import itertools
 import multiprocessing as mp
 import os
@@ -233,3 +234,17 @@ def pytest_collection_modifyitems(session, config, items):
     core_tests = [x for x in items if "PartSegCore" in str(x.fspath)]
     other_test = [x for x in items if "PartSegCore" not in str(x.fspath) and "PartSegImage" not in str(x.fspath)]
     items[:] = image_tests + core_tests + other_test
+
+
+# @pytest.mark.trylast
+def pytest_configure(config) -> None:
+    if config.pluginmanager.has_plugin("terminalreporter"):
+        reporter = config.pluginmanager.get_plugin("terminalreporter")
+
+        old_get_progress = reporter._get_progress_information_message
+
+        def _get_progress_information_message():
+            text = old_get_progress()
+            return f'{text} {datetime.datetime.now().strftime("%H:%M:%S")}'
+
+        reporter._get_progress_information_message = _get_progress_information_message
