@@ -136,8 +136,6 @@ jobs:
       timeout-minutes: 60
       with:
         run: dist/PartSeg/PartSeg _test
-      env:
-        QT_DEBUG_PLUGINS: 1
 
       # If something goes wrong, we can open an issue in the repo
     - name: Report Failures
