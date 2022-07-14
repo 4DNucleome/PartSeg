@@ -236,7 +236,7 @@ def pytest_collection_modifyitems(session, config, items):
     items[:] = image_tests + core_tests + other_test
 
 
-# @pytest.mark.trylast
+@pytest.mark.trylast
 def pytest_configure(config) -> None:
     if config.pluginmanager.has_plugin("terminalreporter"):
         reporter = config.pluginmanager.get_plugin("terminalreporter")
