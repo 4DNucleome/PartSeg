@@ -83,6 +83,8 @@ imagesize==1.4.1
     # via sphinx
 importlib-metadata==4.12.0
     # via sphinx
+importlib-resources==5.9.0
+    # via jsonschema
 ipykernel==6.15.1
     # via
     #   napari-console
@@ -339,7 +341,7 @@ superqt==0.3.3
     #   napari
 sympy==1.10.1
     # via -r requirements_pyinstaller.in
-tifffile==2022.5.4
+tifffile==2022.8.8
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
@@ -379,6 +381,7 @@ typing-extensions==4.3.0
     #   napari
     #   psygnal
     #   pydantic
+    #   rich
     #   superqt
 urllib3==1.26.10
     # via
@@ -398,7 +401,9 @@ xlrd==2.0.1
 xlsxwriter==3.0.3
     # via -r requirements_pyinstaller.in
 zipp==3.8.1
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
