@@ -13,7 +13,7 @@ repos:
     -   id: autoflake
         args: ["--remove-all-unused-imports", "-i"]
 -   repo: https://github.com/PyCQA/flake8
-    rev: 5.0.2
+    rev: 5.0.4
     hooks:
     - id: flake8
       pass_filenames: true
