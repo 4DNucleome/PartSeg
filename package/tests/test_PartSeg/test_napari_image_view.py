@@ -268,6 +268,27 @@ class TestImageView:
         image_view.component_zoom(1)
         image_view.component_zoom(10)
 
+    def test_roi_removed_restore_roi(self, base_settings, image_view):
+        roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
+        roi[..., 2:-2, 2:-2, 2:-2] = 1
+        base_settings.roi = roi
+        assert "ROI" in image_view.viewer.layers
+        del image_view.viewer.layers["ROI"]
+        assert "ROI" not in image_view.viewer.layers
+        image_view.set_roi()
+        assert "ROI" in image_view.viewer.layers
+
+    def test_roi_removed__add_image_restore(self, base_settings, image_view):
+        roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
+        roi[..., 2:-2, 2:-2, 2:-2] = 1
+        base_settings.roi = roi
+        base_settings.mask = roi
+        assert "ROI" in image_view.viewer.layers
+        assert "Mask" in image_view.viewer.layers
+        image_view._add_image((image_view.image_info[base_settings.image.file_path], True))
+        assert "ROI" in image_view.viewer.layers
+        assert "Mask" in image_view.viewer.layers
+
 
 def test_search_component_modal(qtbot, image_view, monkeypatch):
     monkeypatch.setattr(image_view, "component_mark", MagicMock())
