@@ -404,6 +404,9 @@ class ImageView(QWidget):
 
         image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
 
+        if image_info.roi not in self.viewer.layers:
+            self.viewer.add_layer(image_info.roi)
+
         self.set_roi_colormap(image_info)
         image_info.roi.opacity = self.settings.get_from_profile(f"{self.name}.image_state.opacity", 1.0)
         image_info.roi.refresh()
@@ -495,8 +498,8 @@ class ImageView(QWidget):
             "name": "ROI",
             "blending": "translucent",
             "metadata": {"alternative": self.roi_alternative_selection},
+            "rendering": self.settings.get_from_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0]),
         }
-        kwargs["rendering"] = self.settings.get_from_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0])
 
         only_border = self.settings.get_from_profile(f"{self.name}.image_state.only_border", True)
         image_info.roi = self.viewer.add_labels(roi, **kwargs)
@@ -612,6 +615,10 @@ class ImageView(QWidget):
         self.image_info[image.file_path].filter_info = filters
         self.image_info[image.file_path].layers = image_info.layers
         self.current_image = image.file_path
+        if self.image_info[image.file_path].mask is not None:
+            self.viewer.add_layer(self.image_info[image.file_path].mask)
+        if self.image_info[image.file_path].roi is not None:
+            self.viewer.add_layer(self.image_info[image.file_path].roi)
         self.viewer.reset_view()
         if self.viewer.layers:
             if hasattr(self.viewer.layers, "selection"):
