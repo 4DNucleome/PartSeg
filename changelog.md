@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.14.3
+
+### Bug Fixes
+
+-   Fix lack of rendering ROI when load image from segmentation (#694)
+-   Fix running ROI extraction from napari widget (#695)
+-   Delay setting image if an algorithm is still running (#627)
+-   Wrong error report whe no component is found in restatrtable segmentation algorithm. (#633)
+-   Fix process of build documentation (#653)
+
+### Refactor
+
+-   Clean potential vulnerabilities  (#630)
+
+### Testing
+
+-   Add more tests for common GUI elements  (#622)
+-   Report coverage per package. (#639)
+-   Update conda environment to not use PyQt5 in test (#646)
+-   Add tests files to calcualate coverage (#655)
+
 ## 0.14.2
 
 ### Bug Fixes
