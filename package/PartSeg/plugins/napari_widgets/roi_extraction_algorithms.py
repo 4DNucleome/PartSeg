@@ -4,8 +4,7 @@ from contextlib import suppress
 import numpy as np
 import pandas as pd
 from napari import Viewer
-from napari.layers import Image as NapariImage
-from napari.layers import Labels, Layer
+from napari.layers import Layer
 from napari.utils.notifications import show_info
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
@@ -65,16 +64,6 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
 
     def get_layer_list(self) -> typing.List[str]:
         return [x.name for x in self.get_layers().values() if x.name != "mask"]
-
-    def get_values(self):
-        values = self.form_widget.get_values()
-        if not isinstance(values, dict):
-            values = dict(values)
-        return {
-            k: v.name if isinstance(v, NapariImage) else v
-            for k, v in values.items()
-            if not isinstance(v, Labels) and k != "mask"
-        }
 
     def get_layers(self) -> typing.Dict[str, Layer]:
         values = self.form_widget.get_layers()
