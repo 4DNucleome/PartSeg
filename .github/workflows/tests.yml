@@ -111,8 +111,7 @@ jobs:
           channel-priority: strict
           python-version: 3.9
 
-      - name: Install ubuntu libraries
-        run: sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
+      - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
         uses: actions/download-artifact@v1
@@ -124,6 +123,13 @@ jobs:
 
       - name: create environment
         run: bash build_utils/create_environment_yml.sh
+
+      - name: Upload environment file
+        uses: actions/upload-artifact@v3
+        with:
+          name: environment
+          path: environment.yml
+          retention-days: 5
 
       - name: Test with tox
         uses: GabrielBB/xvfb-action@v1
