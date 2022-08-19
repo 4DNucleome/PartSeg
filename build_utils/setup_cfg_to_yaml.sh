@@ -13,7 +13,8 @@ setup_cfg_block_to_yaml_list () {
         grep -E "^ +\w"                       | # (2)
         grep -v ";"                           |
         sed -r "s/^ +/  - /g"                 |    # (3)
-        sed 's/napari.*/"napari=*=*pyside2"/g'
+        sed 's/napari.*/"napari=*=*pyside2"/g'|
+        sed `s/qtconsole/qtconsole-base/g`
 }
 
 setup_cfg_block_to_yaml_list "$1"
