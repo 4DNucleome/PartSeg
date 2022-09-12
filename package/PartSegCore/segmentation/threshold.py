@@ -384,14 +384,8 @@ class MultipleOtsu(BaseThreshold):
         map_component[arguments.lower_component : arguments.upper_component] = 1
         map_component[arguments.upper_component :] = 2
         res2 = map_component[res]
-        if np.any(res2 == 2):
-            thr1 = data[res2 == 2].min()
-        else:
-            thr1 = data[res2 == 1].max()
-        if np.any(res2 == 1):
-            thr2 = data[res2 == 1].min()
-        else:
-            thr2 = data.max()
+        thr1 = data[res2 == 2].min() if np.any(res2 == 2) else data[res2 == 1].max()
+        thr2 = data[res2 == 1].min() if np.any(res2 == 1) else data.max()
         return res2, (thr1, thr2)
 
 
