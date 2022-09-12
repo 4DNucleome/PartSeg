@@ -388,7 +388,10 @@ class MultipleOtsu(BaseThreshold):
             thr1 = data[res2 == 2].min()
         else:
             thr1 = data[res2 == 1].max()
-        thr2 = data[res2 == 1].min()
+        if np.any(res2 == 1):
+            thr2 = data[res2 == 1].min()
+        else:
+            thr2 = data.max()
         return res2, (thr1, thr2)
 
 
