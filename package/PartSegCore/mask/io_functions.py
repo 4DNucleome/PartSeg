@@ -13,7 +13,6 @@ from pathlib import Path
 
 import numpy as np
 import tifffile
-from napari.plugins._builtins import napari_write_points
 
 from PartSegImage import BaseImageWriter, GenericImageReader, Image, IMAGEJImageWriter, ImageWriter, TiffImageReader
 from PartSegImage.image import FRAME_THICKNESS, reduce_array
@@ -38,6 +37,12 @@ from ..io_utils import (
 from ..json_hooks import PartSegEncoder
 from ..project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from ..roi_info import ROIInfo
+
+try:
+    from napari_builtins.io import napari_write_points
+except ImportError:
+    from napari.plugins._builtins import napari_write_points
+
 
 if sys.version_info[:3] == (3, 9, 7):
     ProjectInfoBase = object  # noqa: F811
