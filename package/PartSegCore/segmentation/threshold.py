@@ -353,6 +353,45 @@ class DoubleOtsu(BaseThreshold):
         return res, (thr1, thr2)
 
 
+class MultipleOtsuDoubleThresholdParams(BaseModel):
+    components: int = Field(2, title="Number of Components", ge=2, lt=100)
+    lower_component: int = Field(1, title="Lower Component", ge=1, lt=100)
+    upper_component: int = Field(1, title="Upper Component", ge=1, lt=100)
+    valley: bool = Field(True, title="Valley emphasis")
+    bins: int = Field(128, title="Number of histogram bins", ge=8, le=2**16)
+
+
+class MultipleOtsu(BaseThreshold):
+    __argument_class__ = MultipleOtsuDoubleThresholdParams
+
+    @classmethod
+    def get_name(cls):
+        return "Multiple Otsu"
+
+    @classmethod
+    def calculate_mask(
+        cls,
+        data: np.ndarray,
+        mask: typing.Optional[np.ndarray],
+        arguments: MultipleOtsuDoubleThresholdParams,
+        operator: typing.Callable[[object, object], bool],
+    ):
+        cleaned_image_sitk = sitk.GetImageFromArray(data)
+        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, arguments.components, 0, arguments.bins, arguments.valley)
+        res = sitk.GetArrayFromImage(res)
+        map_component = np.zeros(arguments.components + 1, dtype=np.uint8)
+        map_component[: arguments.lower_component] = 0
+        map_component[arguments.lower_component : arguments.upper_component] = 1
+        map_component[arguments.upper_component :] = 2
+        res2 = map_component[res]
+        if np.any(res2 == 2):
+            thr1 = data[res2 == 2].min()
+        else:
+            thr1 = data[res2 == 1].max()
+        thr2 = data[res2 == 1].min()
+        return res2, (thr1, thr2)
+
+
 class DoubleThresholdSelection(
     AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold
 ):
@@ -361,6 +400,7 @@ class DoubleThresholdSelection(
 
 DoubleThresholdSelection.register(DoubleThreshold)
 DoubleThresholdSelection.register(DoubleOtsu)
+DoubleThresholdSelection.register(MultipleOtsu)
 
 double_threshold_dict = DoubleThresholdSelection.__register__
 threshold_dict = ThresholdSelection.__register__
