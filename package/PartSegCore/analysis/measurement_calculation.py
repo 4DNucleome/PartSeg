@@ -879,7 +879,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
         if area_array.shape != channel.shape:
             if area_array.size == channel.size:
                 channel = channel.reshape(area_array.shape)
-            else:
+            else:  # pragma: no cover
                 raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
         return np.sum(channel[area_array > 0]) if np.any(area_array) else 0
 
