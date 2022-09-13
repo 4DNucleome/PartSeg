@@ -1,4 +1,5 @@
 import contextlib
+import gc
 
 import numpy as np
 import pandas as pd
@@ -33,6 +34,10 @@ def clean_settings(tmp_path):
 
 def no_action(*_):  # skipcq: PTC-W0049
     pass
+
+
+def test_dummy_for_gc():
+    gc.collect()
 
 
 @pytest.mark.parametrize("widget_class", [ROIAnalysisExtraction, ROIMaskExtraction])
