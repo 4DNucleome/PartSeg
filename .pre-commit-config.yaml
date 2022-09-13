@@ -3,12 +3,12 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.8.0
     hooks:
     - id: black
       pass_filenames: true
 -   repo: https://github.com/myint/autoflake
-    rev: 'v1.4'  # Use the revision sha / tag you want to point at
+    rev: 'v1.5.3'  # Use the revision sha / tag you want to point at
     hooks:
     -   id: autoflake
         args: ["--remove-all-unused-imports", "-i"]
