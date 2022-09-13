@@ -870,7 +870,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
     text_info = "Pixel brightness sum", "Sum of pixel brightness for current segmentation"
 
     @staticmethod
-    def calculate_property(area_array: np.ndarray, channel: np.ndarray, **_):    # pylint: disable=W0221
+    def calculate_property(area_array: np.ndarray, channel: np.ndarray, **_):  # pylint: disable=W0221
         """
         :param area_array: mask for area
         :param channel: data. same shape like area_type
