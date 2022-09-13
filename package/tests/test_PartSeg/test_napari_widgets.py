@@ -232,9 +232,7 @@ def shutdown_timers(monkeypatch):
 
     def mock_start(self, interval=None):
         register.append(self)
-        if interval is None:
-            return old_start(self)
-        return old_start(self, interval)
+        return old_start(self) if interval is None else old_start(self, interval)
 
     monkeypatch.setattr(QTimer, "start", mock_start)
     yield
