@@ -165,7 +165,12 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         """
         if all_components and self.components_info.has_components():
             return True, True
-        has_mask_components = any((x == PerComponent.Yes and y != AreaType.ROI for x, y in self._type_dict.values()))
+        has_mask_components = any(
+            (
+                x in {PerComponent.Yes, PerComponent.Per_Mask_component} and y != AreaType.ROI
+                for x, y in self._type_dict.values()
+            )
+        )
         has_segmentation_components = any(
             (x == PerComponent.Yes and y == AreaType.ROI for x, y in self._type_dict.values())
         )
