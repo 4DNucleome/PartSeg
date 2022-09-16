@@ -46,6 +46,8 @@ class SearchLabel(Container):
         self.insert(1, layout2)
         self.insert(2, self.stop)
 
+        self._update_roi_info()
+
     def _update_roi_info(self):
         if self.labels_layer.value is None:
             return

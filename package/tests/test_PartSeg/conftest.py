@@ -1,3 +1,4 @@
+import contextlib
 from contextlib import suppress
 
 import pytest
@@ -160,3 +161,37 @@ def block_message_box(monkeypatch, request):
     monkeypatch.setattr(QMessageBox, "warning", raise_on_call)
     if "enabledialog" not in request.keywords:
         monkeypatch.setattr(QDialog, "exec_", raise_on_call)
+
+
+class DummyConnect:
+    def __init__(self, li):
+        self.li = li
+
+    def connect(self, func):
+        self.li.append(func)
+
+
+class DummyThrottler:
+    def __init__(self, *args, **kwargs):
+        self._call_list = []
+
+    def setTimeout(self, *args, **kwargs):
+        pass
+
+    def throttle(self, *args, **kwargs):
+        for cl in self._call_list:
+            cl(*args, **kwargs)
+
+    @property
+    def triggered(self):
+        return DummyConnect(self._call_list)
+
+
+@pytest.fixture(autouse=True)
+def mock_throttler(monkeypatch):
+    with contextlib.suppress(ImportError):
+        from napari._qt import qt_main_window
+
+        if hasattr(qt_main_window, "QSignalThrottler"):
+            monkeypatch.setattr(qt_main_window, "QSignalThrottler", DummyThrottler)
+    yield
