@@ -20,7 +20,7 @@ class SearchLabel(Container):
         self.napari_viewer = napari_viewer
         self.search_type = create_widget(annotation=SearchType, label="Search type")
         self.search_type.changed.connect(self._component_num_changed)
-        self.component_selector = SpinBox(name="Label number", min=0, max=2**64 - 1)
+        self.component_selector = SpinBox(name="Label number", min=0, max=2**31 - 1)
         self.component_selector.changed.connect(self._component_num_changed)
         self.labels_layer = create_widget(annotation=Labels, label="ROI", options={})
         self.labels_layer.changed.connect(self._update_roi_info)
