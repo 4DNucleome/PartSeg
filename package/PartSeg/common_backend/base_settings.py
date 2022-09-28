@@ -726,6 +726,9 @@ class BaseSettings(ViewSettings):
             error = False
             try:
                 data: ProfileDict = self.load_metadata(file_path)
+                if isinstance(data, dict) and "__error__" in data:
+                    error = True
+                    errors_dict[file_path] = data["__error__"]
                 if not data.verify_data():
                     filtered = data.filter_data()
                     errors_dict[file_path] = filtered

@@ -142,7 +142,6 @@ class BaseMainWindow(QMainWindow):
             if errors:  # pragma: no cover
                 DataImportErrorDialog(
                     errors,
-                    self,
                     text="During load saved state some of data could not be load properly\n"
                     "The files has prepared backup copies in "
                     " state directory (Help > State directory)",

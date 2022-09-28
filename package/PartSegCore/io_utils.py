@@ -21,7 +21,7 @@ from PartSegImage.image import minimal_dtype
 
 from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from .project_info import ProjectInfoBase
-from .utils import ProfileDict, check_loaded_dict, iterate_names
+from .utils import EventedDict, ProfileDict, check_loaded_dict, iterate_names
 
 
 class SegmentationType(Enum):
@@ -254,7 +254,7 @@ def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMappin
     """
     if not isinstance(data, typing.MutableMapping):
         return []
-    if "__error__" not in data:
+    if "__error__" not in data and (not isinstance(data, EventedDict) or len(data) == 0):
         return []
     res = []
     data_to_check = data

@@ -124,6 +124,8 @@ class EventedDict(typing.MutableMapping):
     setted = Signal(str)
     deleted = Signal(str)
 
+    __allow_errors_in_values__ = True
+
     def __deepcopy__(self, memodict=None):
         if memodict is None:
             memodict = {}
@@ -247,6 +249,8 @@ class ProfileDict:
     >>> dkt.get("aa.bb")
         {'c1': 7, 'c2': 8}
     """
+
+    __allow_errors_in_values__ = True
 
     def __init__(self, **kwargs):
         self._my_dict = EventedDict(**kwargs)
