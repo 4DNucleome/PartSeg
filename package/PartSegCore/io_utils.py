@@ -97,9 +97,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_default_extension(cls):
         match = re.search(r"\(\*(\.\w+)", cls.get_name_with_suffix())
-        if match:
-            return match.group(1)
-        return ""
+        return match[1] if match else ""
 
     @classmethod
     def need_segmentation(cls):
@@ -114,7 +112,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         match = re.match(r".*\((.*)\)", cls.get_name())
         if match is None:
             raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match.group(1).split(" ")
+        extensions = match[1].split(" ")
         if not all(x.startswith("*.") for x in extensions):
             raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
         return [x[1:] for x in extensions]
@@ -163,7 +161,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         match = re.match(r".*\((.*)\)", cls.get_name())
         if match is None:
             raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match.group(1).split(" ")
+        extensions = match[1].split(" ")
         if not all(x.startswith("*.") for x in extensions):
             raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
         return [x[1:] for x in extensions]
@@ -262,9 +260,7 @@ def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMappin
         data_to_check = data["__values__"]
     for data_ in data_to_check.values():
         res.extend(find_problematic_leafs(data_))
-    if res:
-        return res
-    return [data]
+    return res or [data]
 
 
 def proxy_callback(
