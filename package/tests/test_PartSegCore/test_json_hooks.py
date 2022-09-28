@@ -32,11 +32,12 @@ def test_error_reported(bundle_test_dir):
     assert not res.verify_data()
     error_data = res.filter_data()
     assert len(error_data) == 2
-    # assert len(find_problematic_leafs(error_data[0][1])) == 1
+    assert len(find_problematic_leafs(error_data[0][1])) == 1
     assert len(find_problematic_leafs(error_data[1][1])) == 2
 
 
 def _test_prepare(bundle_test_dir):
+    """Prepare test data for test_error_reported. After call this the names of class should be manually broken"""
     from PartSegCore.segmentation.noise_filtering import BilateralNoiseFilteringParams, GaussNoiseFilteringParams
 
     dkt = ProfileDict()
