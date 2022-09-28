@@ -1,4 +1,5 @@
 # pylint: disable=R0201
+import gc
 import platform
 from functools import partial
 from unittest.mock import MagicMock
@@ -54,6 +55,7 @@ def image_view(base_settings, image2, qtbot, request):
     ch_prop.deleteLater()
     view.deleteLater()
     qtbot.wait(50)
+    gc.collect()
 
 
 class TestImageView:

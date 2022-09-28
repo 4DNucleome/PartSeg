@@ -1,5 +1,3 @@
-from math import isclose
-
 import numpy as np
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import QPoint, Qt
@@ -66,13 +64,13 @@ class TestColormapEdit:
         width = widget.width() - 20
         pos = 20 / width
         widget.add_color(pos, Color(red=0.49, green=0.9, blue=0.08))
-        assert widget.colormap.controls[1] == pos
-        qtbot.mousePress(widget, Qt.LeftButton, pos=QPoint(30, widget.height() // 2))
+        assert np.isclose(widget.colormap.controls[1], pos)
+        qtbot.mousePress(widget, Qt.MouseButton.LeftButton, pos=QPoint(30, widget.height() // 2))
         pos2 = 150 / width
         qtbot.mouseMove(widget, QPoint(70, widget.height() // 2))
         qtbot.mouseMove(widget, QPoint(160, widget.height() // 2))
-        qtbot.mouseRelease(widget, Qt.LeftButton, pos=QPoint(160, widget.height() // 2))
-        assert widget.colormap.controls[1] == pos2
+        qtbot.mouseRelease(widget, Qt.MouseButton.LeftButton, pos=QPoint(160, widget.height() // 2))
+        assert np.isclose(widget.colormap.controls[1], pos2)
 
 
 class TestColormapCreator:
@@ -88,7 +86,7 @@ class TestColormapCreator:
         assert np.allclose(
             widget.current_colormap().colors[0], Color(red=10 / 255, green=40 / 255, blue=12 / 255).as_tuple()
         )
-        assert isclose(widget.current_colormap().controls[1], 20 / (colormap_edit.width() - 20))
+        assert np.isclose(widget.current_colormap().controls[1], 20 / (colormap_edit.width() - 20))
         widget.color_picker.setCurrentColor(color2)
         with qtbot.waitSignal(colormap_edit.double_clicked):
             qtbot.mouseDClick(colormap_edit, Qt.LeftButton, pos=QPoint(80, widget.height() // 2))
@@ -99,8 +97,8 @@ class TestColormapCreator:
         assert np.allclose(
             widget.current_colormap().colors[2], Color(red=100 / 255, green=4 / 255, blue=220 / 255).as_tuple()
         )
-        assert isclose(widget.current_colormap().controls[1], 20 / (colormap_edit.width() - 20))
-        assert isclose(widget.current_colormap().controls[2], 70 / (colormap_edit.width() - 20))
+        assert np.isclose(widget.current_colormap().controls[1], 20 / (colormap_edit.width() - 20))
+        assert np.isclose(widget.current_colormap().controls[2], 70 / (colormap_edit.width() - 20))
 
     def test_save(self, qtbot):
         widget = ColormapCreator()
@@ -117,8 +115,8 @@ class TestColormapCreator:
                 len(colormap.colors) == 4
                 and np.allclose(colormap.colors[1], color_from_qcolor(color1).as_tuple())
                 and np.allclose(colormap.colors[2], color_from_qcolor(color2).as_tuple())
-                and colormap.controls[1] == 0.1
-                and colormap.controls[2] == 0.8
+                and np.isclose(colormap.controls[1], 0.1)
+                and np.isclose(colormap.controls[2], 0.8)
             )
 
         with qtbot.wait_signal(widget.colormap_selected, check_params_cb=check_res):
@@ -143,7 +141,7 @@ class TestColormapCreator:
         widget.color_picker.setCurrentColor(color5)
         widget.add_color(0.95)
         li = widget.current_colormap()
-        assert np.array_equal(li.controls, [0, 0.1, 0.3, 0.6, 0.9, 0.95, 1])
+        assert np.allclose(li.controls, [0, 0.1, 0.3, 0.6, 0.9, 0.95, 1])
         for el, col in zip(
             li.colors,
             [
@@ -160,7 +158,7 @@ class TestColormapCreator:
 
         widget.distribute_btn.click()
         li = widget.current_colormap()
-        assert np.array_equal(li.controls, [0, 0.25, 0.5, 0.75, 1])
+        assert np.allclose(li.controls, [0, 0.25, 0.5, 0.75, 1])
         for el, col in zip(
             li.colors,
             [
@@ -193,10 +191,7 @@ class TestPColormapCreator:
                 and np.allclose(colormap.colors[1], color_from_qcolor(color1).as_tuple())
                 and np.allclose(colormap.colors[2], color_from_qcolor(color2).as_tuple())
                 and np.allclose(colormap.colors[3], color_from_qcolor(color2).as_tuple())
-                and colormap.controls[0] == 0
-                and colormap.controls[1] == 0.1
-                and colormap.controls[2] == 0.8
-                and colormap.controls[3] == 1
+                and np.allclose(colormap.controls, [0, 0.1, 0.8, 1])
             )
 
         with qtbot.wait_signal(widget.colormap_selected, check_params_cb=check_res):
