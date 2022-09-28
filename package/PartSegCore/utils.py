@@ -119,12 +119,10 @@ def get_callback(callback: typing.Union[typing.Callable, MethodType], max_args=N
     return CallbackFun(callback, max_args)
 
 
-@register_class(old_paths=["PartSegCore.json_hooks.EventedDict"])
+@register_class(old_paths=["PartSegCore.json_hooks.EventedDict"], allow_errors_in_values=True)
 class EventedDict(typing.MutableMapping):
     setted = Signal(str)
     deleted = Signal(str)
-
-    __allow_errors_in_values__ = True
 
     def __deepcopy__(self, memodict=None):
         if memodict is None:
@@ -235,7 +233,7 @@ def recursive_update_dict(main_dict: typing.Union[dict, EventedDict], other_dict
             main_dict[key] = val
 
 
-@register_class(old_paths=["PartSegCore.json_hooks.ProfileDict"])
+@register_class(old_paths=["PartSegCore.json_hooks.ProfileDict"], allow_errors_in_values=True)
 class ProfileDict:
     """
     Dict for storing recursive data. The path are dot separated.
@@ -249,8 +247,6 @@ class ProfileDict:
     >>> dkt.get("aa.bb")
         {'c1': 7, 'c2': 8}
     """
-
-    __allow_errors_in_values__ = True
 
     def __init__(self, **kwargs):
         self._my_dict = EventedDict(**kwargs)
