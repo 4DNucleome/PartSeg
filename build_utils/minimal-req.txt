@@ -22,7 +22,7 @@ openpyxl==2.4.9
 packaging==20.0
 pandas==0.24.0
 psygnal==0.2.0
-pydantic==1.6.1
+pydantic==1.8.1
 pygments==2.4.0
 qtconsole!=4.7.6,==4.5.1
 requests==2.18.0
