@@ -1,4 +1,5 @@
 
+IPython==7.7.0
 PartSegCore-compiled-backend==0.13.11
 PartSegData==0.10.0
 QtAwesome==1.0.3
@@ -10,7 +11,8 @@ defusedxml==0.6.0
 h5py==2.8.0
 imagecodecs==2020.5.30
 imageio==2.5.0
-magicgui==0.3.3
+ipykernel==5.2.0
+magicgui!=0.5.0,==0.3.3
 mahotas==1.4.9
 napari==0.4.12
 nme==0.1.4
@@ -20,7 +22,9 @@ openpyxl==2.4.9
 packaging==20.0
 pandas==0.24.0
 psygnal==0.2.0
+pydantic==1.8.1
 pygments==2.4.0
+qtconsole==4.7.7
 requests==2.18.0
 scipy==1.2.0
 sentry-sdk==0.14.3
@@ -32,5 +36,6 @@ traceback-with-variables==2.0.4
 vispy==0.6.4
 xlrd==1.1.0
 xlsxwriter
+importlib-metadata!=4.12.0 ;python_version < '3.8'
 typing-extensions==3.7.4.3 ;python_version < '3.8'
 PyQt5!=5.15.0,==5.12.3
