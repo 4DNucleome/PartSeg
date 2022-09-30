@@ -343,7 +343,7 @@ class MainMenu(BaseMainMenu):
         for el in potential_names:
             if os.path.exists(el):
                 conflict.append(el)
-        if len(conflict) > 0:
+        if conflict:
             # TODO modify because of long lists
             conflict_str = "\n".join(conflict)
             if QMessageBox.No == QMessageBox.warning(
