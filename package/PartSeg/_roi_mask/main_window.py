@@ -299,7 +299,8 @@ class MainMenu(BaseMainMenu):
             path="io.save_segmentation_directory",
         )
 
-        dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
+        dial.selectFile(f"{os.path.splitext(os.path.basename(self.settings.image_path))[0]}.seg")
+
         if not dial.exec_():
             return
         save_location, _selected_filter, save_class, values = dial.get_result()
@@ -342,7 +343,7 @@ class MainMenu(BaseMainMenu):
         for el in potential_names:
             if os.path.exists(el):
                 conflict.append(el)
-        if len(conflict) > 0:
+        if conflict:
             # TODO modify because of long lists
             conflict_str = "\n".join(conflict)
             if QMessageBox.No == QMessageBox.warning(
@@ -933,6 +934,9 @@ class MainWindow(BaseMainWindow):
         with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
+
+    def _toggle_scale_bar(self):
+        self.image_view.toggle_scale_bar()
 
     def closeEvent(self, event: QCloseEvent):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
