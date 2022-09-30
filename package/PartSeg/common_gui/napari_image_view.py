@@ -225,6 +225,10 @@ class ImageView(QWidget):
         if self.points_layer is not None:
             self.points_layer.visible = not self.points_layer.visible
 
+    def toggle_scale_bar(self):
+        self.viewer.scale_bar.unit = "nm"
+        self.viewer.scale_bar.visible = not self.viewer.scale_bar.visible
+
     def _dim_order_menu(self, point: QPoint):
         menu = QMenu()
         for key in ORDER_DICT:

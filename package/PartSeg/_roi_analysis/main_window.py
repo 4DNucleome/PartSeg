@@ -574,6 +574,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
         view_menu.addAction("Toggle left panel").triggered.connect(self.toggle_left_panel)
         view_menu.addAction("Toggle console").triggered.connect(self._toggle_console)
+        view_menu.addAction("Toggle scale bar").triggered.connect(self._toggle_scale_bar)
         action = view_menu.addAction("Screenshot right panel")
         action.triggered.connect(self.screenshot(self.result_image))
         action.setShortcut(QKeySequence.Print)
@@ -610,6 +611,10 @@ class MainWindow(BaseMainWindow):
         with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
+
+    def _toggle_scale_bar(self):
+        self.raw_image.toggle_scale_bar()
+        self.result_image.toggle_scale_bar()
 
     def toggle_left_panel(self):
         self.options_panel.hide_left_panel(not self.settings.get_from_profile("hide_left_panel"))
