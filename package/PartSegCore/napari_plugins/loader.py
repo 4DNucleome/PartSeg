@@ -91,10 +91,7 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
 
 def partseg_loader(loader: typing.Type[LoadBase], path: str):
     load_locations = [path]
-    load_locations.extend(
-        loader.get_next_file(load_locations)
-        for _ in range(1, loader.number_of_files())
-    )
+    load_locations.extend(loader.get_next_file(load_locations) for _ in range(1, loader.number_of_files()))
 
     try:
         project_info = loader.load(load_locations)
