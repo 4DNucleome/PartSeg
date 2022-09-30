@@ -49,6 +49,15 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
                     "labels",
                 )
             )
+        if project_info.roi_info.alternative:
+            for name, roi in project_info.roi_info.alternative.items():
+                res_layers.append(
+                    (
+                        project_info.image.fit_array_to_image(roi),
+                        {"scale": scale, "name": name, "translate": translate, "visible": False},
+                        "labels",
+                    )
+                )
         if project_info.mask is not None:
             res_layers.append(
                 (

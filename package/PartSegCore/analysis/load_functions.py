@@ -31,6 +31,7 @@ from ..io_utils import (
     proxy_callback,
     tar_to_buff,
 )
+from ..json_hooks import partseg_object_hook
 from ..mask.io_functions import LoadROIImage
 from ..project_info import HistoryElement
 from ..roi_info import ROIInfo
@@ -68,7 +69,7 @@ def load_project(
         algorithm_dict = load_metadata(algorithm_str)
         algorithm_dict = update_algorithm_dict(algorithm_dict)
         algorithm_dict.get("project_file_version")
-        metadata = json.loads(tar_file.extractfile("metadata.json").read())
+        metadata = json.loads(tar_file.extractfile("metadata.json").read(), object_hook=partseg_object_hook)
         try:
             version = parse_version(metadata["project_version_info"])
         except KeyError:
