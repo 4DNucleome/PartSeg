@@ -284,7 +284,7 @@ class ViewSettings(ImageSettings):
         """QSS style sheet for current theme."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)
-            theme = get_theme(self.theme_name)
+            theme = get_theme(self.theme_name, as_dict=True)
         # TODO understand qss overwrite mechanism
         return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
