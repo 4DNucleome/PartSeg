@@ -117,6 +117,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: test_data
+          path: test_data
 
       - name: Install dependencies
         run: conda install -y tox tox-conda
