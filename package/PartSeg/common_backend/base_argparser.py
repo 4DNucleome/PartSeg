@@ -130,7 +130,10 @@ def _setup_sentry():  # pragma: no cover
     )
     with sentry_sdk.configure_scope() as scope:
         scope.set_user(
-            {"name": getpass.getuser(), "id": zlib.adler32((getpass.getuser() + "#" + platform.node()).encode())}
+            {
+                "name": getpass.getuser(),
+                "id": zlib.adler32(f"{getpass.getuser()}#{platform.node()}".encode()),
+            }
         )
 
 
