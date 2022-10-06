@@ -5,6 +5,7 @@ import os
 import platform
 import sys
 import zlib
+from contextlib import suppress
 from typing import Optional, Sequence
 
 import numpy as np
@@ -112,7 +113,10 @@ class CustomParser(argparse.ArgumentParser):
         if args.no_report and args.no_dialog:
             _setup_sentry()
         sys.excepthook = my_excepthook
-        locale.setlocale(locale.LC_NUMERIC, "")
+        with suppress(locale.Error):
+            # some bug in reseting locale
+            # https://stackoverflow.com/questions/68962248/python-setlocale-with-empty-string-default-locale-gives-unsupported-locale-se
+            locale.setlocale(locale.LC_NUMERIC, "")
         return args
 
 
