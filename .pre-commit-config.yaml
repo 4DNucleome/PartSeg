@@ -8,7 +8,7 @@ repos:
     - id: black
       pass_filenames: true
 -   repo: https://github.com/PyCQA/autoflake
-    rev: 'v1.7.2'  # Use the revision sha / tag you want to point at
+    rev: 'v1.7.3'  # Use the revision sha / tag you want to point at
     hooks:
     -   id: autoflake
         args: ["--remove-all-unused-imports", "-i"]
