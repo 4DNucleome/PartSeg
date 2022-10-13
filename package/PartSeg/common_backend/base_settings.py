@@ -714,7 +714,8 @@ class BaseSettings(ViewSettings):
         data: ProfileDict = self.load_metadata(file_path)
         if isinstance(data, dict) and "__error__" in data:
             error = data["__error__"]
-        if not data.verify_data():
+            data = ProfileDict()
+        elif not data.verify_data():
             filtered = data.pop_errors()
             error = filtered
             filtered_base_str = ((k, "\n".join(f"{x}" for x in find_problematic_entries(v))) for k, v in filtered)

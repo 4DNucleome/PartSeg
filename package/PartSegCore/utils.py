@@ -384,7 +384,7 @@ class ProfileDict:
         """
         return check_loaded_dict(self.my_dict)
 
-    def filter_data(self):
+    def filter_data(self):  # pragma: no cover
         warnings.warn("Deprecated, use pop errors instead", FutureWarning)
         self.pop_errors()
 
