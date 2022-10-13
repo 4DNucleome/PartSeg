@@ -220,7 +220,7 @@ def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any
     if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
         bad_key.extend((k, data.pop(k)) for k, v in list(data.items()) if not check_loaded_dict(v))
     elif isinstance(data, ProfileDict) and not data.verify_data():
-        bad_key = data.filter_data()
+        bad_key = data.pop_errors()
     return data, bad_key
 
 

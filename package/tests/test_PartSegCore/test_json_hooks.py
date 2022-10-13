@@ -30,7 +30,7 @@ def test_error_reported(bundle_test_dir):
 
     assert isinstance(res, ProfileDict)
     assert not res.verify_data()
-    error_data = res.filter_data()
+    error_data = res.pop_errors()
     assert len(error_data) == 2
     assert len(find_problematic_leafs(error_data[0][1])) == 1
     assert len(find_problematic_leafs(error_data[1][1])) == 2

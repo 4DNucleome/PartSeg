@@ -709,6 +709,20 @@ class BaseSettings(ViewSettings):
             logger.error(errors_list)
         return errors_list
 
+    def _load_settings_file(self, file_path: Union[Path, str]) -> Tuple[ProfileDict, Any]:
+        error = None
+        data: ProfileDict = self.load_metadata(file_path)
+        if isinstance(data, dict) and "__error__" in data:
+            error = data["__error__"]
+        if not data.verify_data():
+            filtered = data.pop_errors()
+            error = filtered
+            filtered_base_str = ((k, "\n".join(f"{x}" for x in find_problematic_entries(v))) for k, v in filtered)
+            filtered_str = "\n".join(f"{k}\n{v}\n" for k, v in filtered_base_str)
+
+            logger.error(f"error in load data from {file_path} problematic keys are {filtered_str}")
+        return data, error
+
     def load(self, folder_path: Union[Path, str, None] = None):
         """
         Load settings state from given directory
@@ -723,29 +737,18 @@ class BaseSettings(ViewSettings):
             file_path = os.path.join(folder_path, el.file_name)
             if not os.path.exists(file_path):
                 continue
-            error = False
+            error = None
             try:
-                data: ProfileDict = self.load_metadata(file_path)
-                if isinstance(data, dict) and "__error__" in data:
-                    error = True
-                    errors_dict[file_path] = data["__error__"]
-                if not data.verify_data():
-                    filtered = data.filter_data()
-                    errors_dict[file_path] = filtered
-                    filtered_base_str = (
-                        (k, "\n".join(f"{x}" for x in find_problematic_entries(v))) for k, v in filtered
-                    )
-                    filtered_str = "\n".join(f"{k}\n{v}\n" for k, v in filtered_base_str)
-
-                    logger.error(f"error in load data from {file_path} problematic keys are {filtered_str}")
-                    error = True
+                data, error = self._load_settings_file(file_path)
+                if error is not None:
+                    errors_dict[file_path] = error
                 el.values.update(data)
             except Exception as e:  # pylint: disable=W0703
                 error = True
                 logger.error(e)
                 errors_dict[file_path] = e
             finally:
-                if error:
+                if error is not None:
                     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")

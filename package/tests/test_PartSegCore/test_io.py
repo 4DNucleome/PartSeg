@@ -643,7 +643,7 @@ def test_load_notebook_json(file_path):
 )
 def test_old_saves_load(file_path):
     data: ProfileDict = load_metadata_base(file_path)
-    assert data.verify_data(), data.filter_data()
+    assert data.verify_data(), data.pop_errors()
 
 
 def test_load_plan_form_excel(bundle_test_dir):

@@ -384,7 +384,12 @@ class ProfileDict:
         """
         return check_loaded_dict(self.my_dict)
 
-    def filter_data(self) -> typing.List[typing.Tuple[str, dict]]:
+    def filter_data(self):
+        warnings.warn("Deprecated, use pop errors instead", FutureWarning)
+        self.pop_errors()
+
+    def pop_errors(self) -> typing.List[typing.Tuple[str, dict]]:
+        """Remove problematic entries from dict"""
         error_list = []
         for group, up_dkt in list(self.my_dict.items()):
             if not isinstance(up_dkt, (dict, EventedDict)):

@@ -214,10 +214,10 @@ class TestProfileDict:
         dkt.update({"w": 1, "z": 4}, w=3)
         assert dkt.get("w") == 3
         assert dkt.verify_data()
-        assert dkt.filter_data() == []
+        assert dkt.pop_errors() == []
         dkt.set("e.h.l", {"aaa": 1, "__error__": True})
         assert not dkt.verify_data()
-        assert dkt.filter_data()[0][0] == "e.h"
+        assert dkt.pop_errors()[0][0] == "e.h"
 
     def test_serialize(self, tmp_path):
         dkt = ProfileDict()
