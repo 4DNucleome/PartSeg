@@ -612,13 +612,19 @@ class TestSaveFunctions:
         array = np.load(os.path.join(tmpdir, "test1.npy"))
         assert np.all(array == analysis_project.roi_info.roi)
 
-    def test_get_extensions(self):
-        assert SaveAsNumpy.get_extensions() == [".npy"]
-        assert SaveAsTiff.get_extensions() == [".tiff", ".tif"]
-        assert SaveCmap.get_extensions() == [".cmap"]
-        assert SaveXYZ.get_extensions() == [".xyz", ".txt"]
-        assert SaveProject.get_extensions() == [".tgz", ".tbz2", ".gz", ".bz2"]
-        assert SaveROIAsNumpy.get_extensions() == [".npy"]
+    @pytest.mark.parametrize(
+        "klass,ext_li",
+        [
+            (SaveAsNumpy, [".npy"]),
+            (SaveAsTiff, [".tiff", ".tif"]),
+            (SaveCmap, [".cmap"]),
+            (SaveXYZ, [".xyz", ".txt"]),
+            (SaveProject, [".tgz", ".tbz2", ".gz", ".bz2"]),
+            (SaveROIAsNumpy, [".npy"]),
+        ],
+    )
+    def test_get_extensions(self, klass, ext_li):
+        assert klass.get_extensions() == ext_li
 
 
 def test_json_parameters_mask(stack_segmentation1, tmp_path):
