@@ -27,16 +27,8 @@ import napari
 
 napari_version = parse_version(napari.__version__)
 
-if napari_version < parse_version("0.4.3"):
-    from napari.resources import import_resources
-elif napari_version < parse_version("0.4.6"):
-    from napari._qt.qt_resources import import_resources as napari_import_resources
-
-    def import_resources():
-        return napari_import_resources()[0]
-
-
-else:
+print(napari_version)
+if napari_version <= parse_version("0.4.16"):
     from pathlib import Path
 
     import qtpy
@@ -50,20 +42,28 @@ else:
         key = f"_qt_resources_{qtpy.API_NAME}_{qtpy.QT_VERSION}_{icon_hash}"
         key = key.replace(".", "_")
         return Path(qt_resources.__file__).parent / f"{key}.py"
+else:
+    def import_resources():
+        from napari import resources
 
+        return os.path.join(os.path.dirname(resources.__file__), "icons")
 
 from dask import config
 
 import imagecodecs
 
-napari.plugins.plugin_manager.discover()
+
+plugins = []
+if napari_version <= parse_version("0.4.16"):
+    napari.plugins.plugin_manager.discover()
+    plugins = [x.__name__ for x in napari.plugins.plugin_manager.plugins.values()]
 
 from imageio.config.plugins import known_plugins as imageio_known_plugins
 
 hiddenimports = (
     ["imagecodecs._" + x for x in imagecodecs._extensions()]
     + ["imagecodecs._shared"]
-    + [x.__name__ for x in napari.plugins.plugin_manager.plugins.values()]
+    + plugins
     + ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"]
     + [
         "numpy.core._dtype_ctypes",
@@ -130,6 +130,13 @@ for package in packages:
     plugins_data.append(
         (os.path.join(path_to_module, "*.py"), os.path.join("plugins", os.path.basename(path_to_module)))
     )
+
+if napari_version > parse_version("0.4.16"):
+    import napari_builtins
+
+    yaml_file = os.path.join(os.path.dirname(napari_builtins.__file__), "builtins.yaml")
+    plugins_data.append((yaml_file, "napari_builtins"))
+
 
 a = Analysis(
     [os.path.join(base_path, "launcher_main.py")],
