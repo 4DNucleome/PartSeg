@@ -88,7 +88,8 @@ class CustomParser(argparse.ArgumentParser):
             "--sdir",
             type=proper_path,
             default=[state_store.save_folder],
-            help="path to custom configuration folder",
+            help=f"path to custom configuration folder, if not set then {state_store.save_folder} will be used. "
+            "Could be customized using 'PARTSEG_SETTINGS_DIR' environment variable.",
             nargs=1,
             metavar="path",
         )
