@@ -36,7 +36,7 @@ def test_error_reported(bundle_test_dir):
     assert len(find_problematic_leafs(error_data[1][1])) == 2
 
 
-def _test_prepare(bundle_test_dir):
+def _test_prepare(bundle_test_dir):  # pragma: no cover
     """Prepare test data for test_error_reported. After call this the names of class should be manually broken"""
     from PartSegCore.segmentation.noise_filtering import BilateralNoiseFilteringParams, GaussNoiseFilteringParams
 
