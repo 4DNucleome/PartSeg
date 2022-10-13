@@ -721,7 +721,7 @@ class BaseSettings(ViewSettings):
             filtered_base_str = ((k, "\n".join(f"{x}" for x in find_problematic_entries(v))) for k, v in filtered)
             filtered_str = "\n".join(f"{k}\n{v}\n" for k, v in filtered_base_str)
 
-            logger.error(f"error in load data from {file_path} problematic keys are {filtered_str}")
+            logger.error("error in load data from %s problematic keys are %s", file_path, filtered_str)
         return data, error
 
     def load(self, folder_path: Union[Path, str, None] = None):
