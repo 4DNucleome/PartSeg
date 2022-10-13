@@ -27,7 +27,6 @@ import napari
 
 napari_version = parse_version(napari.__version__)
 
-print(napari_version)
 if napari_version <= parse_version("0.4.16"):
     from pathlib import Path
 
