@@ -57,3 +57,6 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "oiffile"
 ignore_missing_imports = true
+
+[tool.check-wheel-contents]
+toplevel = ["PartSeg", "PartSegCore", "PartSegImage"]
