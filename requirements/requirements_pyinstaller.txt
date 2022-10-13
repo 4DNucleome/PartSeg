@@ -74,8 +74,9 @@ idna==3.4
     # via requests
 imagecodecs==2022.9.26
     # via -r requirements_pyinstaller.in
-imageio==2.22.1
+imageio==2.22.0
     # via
+    #   -r requirements_pyinstaller.in
     #   napari
     #   napari-svg
     #   scikit-image
