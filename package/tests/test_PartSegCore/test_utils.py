@@ -24,7 +24,7 @@ def test_callback_fun():
         call_list.append(1)
 
     callback = CallbackFun(call_fun)
-    assert call_list == []
+    assert not call_list
     callback()
     assert call_list == [1]
     assert callback.is_alive()
@@ -39,7 +39,7 @@ def test_callback_method():
 
     a = A()
     callback = CallbackMethod(a.fun)
-    assert call_list == []
+    assert not call_list
     callback()
     assert call_list == [1]
     assert callback.is_alive()
