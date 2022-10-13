@@ -137,3 +137,11 @@ jobs:
         with:
           run: conda run --no-capture-output tox -e py39-PySide2-conda
         timeout-minutes: 60
+
+  check-package:
+    name: Build & inspect our package.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hynek/build-and-inspect-python-package@v1
