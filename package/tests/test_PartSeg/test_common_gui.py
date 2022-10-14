@@ -1525,11 +1525,11 @@ class TestBaseAlgorithmSettingsWidget:
         qtbot.addWidget(widget)
         mock = MagicMock()
         monkeypatch.setattr(widget.algorithm_thread, "start", mock)
-        assert part_settings.get(f"algorithms.{LowerThresholdAlgorithm.get_name()}") == {}
+        assert part_settings.get_algorithm(f"algorithms.{LowerThresholdAlgorithm.get_name()}") == {}
         widget.execute()
         mock.assert_called_once()
         assert (
-            part_settings.get(f"algorithms.{LowerThresholdAlgorithm.get_name()}")
+            part_settings.get_algorithm(f"algorithms.{LowerThresholdAlgorithm.get_name()}")
             == LowerThresholdAlgorithm.__argument_class__()
         )
 
