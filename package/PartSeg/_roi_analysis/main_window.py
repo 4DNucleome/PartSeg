@@ -183,7 +183,7 @@ class Options(QWidget):
         if not name:
             QMessageBox.information(self, "No segmentation", "No segmentation executed", QMessageBox.Ok)
             return
-        values = self._settings.get(f"algorithms.{name}", {})
+        values = self._settings.get_algorithm(f"algorithms.{name}", {})
         if len(values) == 0:
             QMessageBox.information(self, "Some problem", "Pleas run execution again", QMessageBox.Ok)
             return
@@ -500,7 +500,7 @@ class MaskDialog(MaskDialogBase):
     def prev_mask(self):
         history: HistoryElement = self.settings.history_pop()
         algorithm_name = self.settings.last_executed_algorithm
-        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
+        algorithm_values = self.settings.get_algorithm(f"algorithms.{algorithm_name}")
         self.settings.fix_history(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
         self.settings.set("current_algorithm", history.roi_extraction_parameters["algorithm_name"])
         self.settings.set(

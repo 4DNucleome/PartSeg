@@ -25,7 +25,7 @@ from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
 from PartSegCore import register
 from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
-from PartSegCore.io_utils import find_problematic_entries, load_matadata_part, load_metadata_base
+from PartSegCore.io_utils import find_problematic_entries, load_metadata_base
 from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
@@ -459,6 +459,7 @@ class BaseSettings(ViewSettings):
         self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
         self._current_roi_dict = profile_name
         self._roi_dict = ProfileDict()
+        self._last_algorithm_dict = ProfileDict()
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""
         self.history: List[HistoryElement] = []
@@ -510,7 +511,7 @@ class BaseSettings(ViewSettings):
 
         self._additional_layers = result.additional_layers
         self.last_executed_algorithm = result.parameters.algorithm
-        self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
+        self.set_algorithm(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         # Fixme not use EventedDict here
         try:
             roi_info = result.roi_info.fit_to_image(self.image)
@@ -583,6 +584,7 @@ class BaseSettings(ViewSettings):
         return [
             SaveSettingsDescription("segmentation_settings.json", self._roi_dict),
             SaveSettingsDescription("view_settings.json", self.view_settings_dict),
+            SaveSettingsDescription("algorithm_settings.json", self._last_algorithm_dict),
         ]
 
     def get_path_history(self) -> List[str]:
@@ -643,6 +645,13 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param value: value to store. The value need to be json serializable.
         """
+        if (
+            key_path.startswith("algorithms.")
+            or key_path.startswith("algorithm_widget_state.")
+            or key_path == "current_algorithm"
+        ):
+            warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
+            self.set_algorithm(key_path, value)
         self._roi_dict.set(f"{self._current_roi_dict}.{key_path}", value)
 
     def get(self, key_path: str, default=None):
@@ -653,7 +662,35 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param default: default value if key is missed
         """
+        if (
+            key_path.startswith("algorithms.")
+            or key_path.startswith("algorithm_widget_state.")
+            or key_path == "current_algorithm"
+        ):
+            warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
+            self.get_algorithm(key_path, default)
         return self._roi_dict.get(f"{self._current_roi_dict}.{key_path}", default)
+
+    def set_algorithm(self, key_path: str, value):
+        """
+        function for saving last algorithm used information. This is accessor to
+        :py:meth:`~.ProfileDict.set` of inner variable.
+
+        :param key_path: dot separated path
+        :param value: value to store. The value need to be json serializable.
+        """
+        # if key_path.startswith("")
+        self._last_algorithm_dict.set(f"{self._current_roi_dict}.{key_path}", value)
+
+    def get_algorithm(self, key_path: str, default=None):
+        """
+        Function for getting last algorithm used information. This is accessor to
+        :py:meth:`~.ProfileDict.get` of inner variable.
+
+        :param key_path: dot separated path
+        :param default: default value if key is missed
+        """
+        return self._last_algorithm_dict.get(f"{self._current_roi_dict}.{key_path}", default)
 
     def connect_(self, key_path, callback):
         # TODO  fixme fix when introduce switch profiles
@@ -666,21 +703,6 @@ class BaseSettings(ViewSettings):
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "w", encoding="utf-8") as ff:
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
-
-    @classmethod
-    def load_part(cls, data: Union[Path, str]) -> Tuple[dict, List[str]]:  # pragma: no cover
-        """
-        Load serialized data. Get valid entries.
-
-        :param data: path to file or string to be decoded.
-        :return:
-        """
-        warnings.warn(
-            f"{cls.__name__}.load_part is deprecated. Please use PartSegCore.utils.load_matadata_part",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        return load_matadata_part(data)
 
     def dump(self, folder_path: Union[Path, str, None] = None):
         """
@@ -753,6 +775,7 @@ class BaseSettings(ViewSettings):
                     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
+
         return errors_dict
 
     def get_project_info(self) -> ProjectInfoBase:

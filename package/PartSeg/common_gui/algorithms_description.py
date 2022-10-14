@@ -581,11 +581,11 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         self.info_label.setHidden(True)
         # FIXME verify inflo_label usage
         main_layout.addWidget(self.info_label)
-        start_values = settings.get(f"algorithm_widget_state.{self.name}", {})
+        start_values = settings.get_algorithm(f"algorithm_widget_state.{self.name}", {})
         self.form_widget = self._form_widget(algorithm, start_values=start_values)
         self.form_widget.value_changed.connect(self.values_changed.emit)
         self.setWidget(self.form_widget)
-        value_dict = self.settings.get(f"algorithms.{self.name}", {})
+        value_dict = self.settings.get_algorithm(f"algorithms.{self.name}", {})
         self.set_values(value_dict)
         self.algorithm_thread = SegmentationThread(algorithm())
         self.algorithm_thread.info_signal.connect(self.show_info)
@@ -645,7 +645,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     def execute(self, exclude_mask=None):
         values = self.get_values()
-        self.settings.set(f"algorithms.{self.name}", deepcopy(values))
+        self.settings.set_algorithm(f"algorithms.{self.name}", deepcopy(values))
         if isinstance(values, dict):
             self.algorithm_thread.set_parameters(**values)
         else:
@@ -740,7 +740,7 @@ class AlgorithmChooseBase(QWidget):
             widget.algorithm_thread.progress_signal.connect(self.progress_signal.emit)
             widget.values_changed.connect(self.value_changed.emit)
             self.stack_layout.addWidget(widget)
-        name = self.settings.get("current_algorithm", "")
+        name = self.settings.get_algorithm("current_algorithm", "")
         self.algorithm_choose.blockSignals(False)
         if name:
             self.algorithm_choose.setCurrentText(name)
@@ -762,19 +762,20 @@ class AlgorithmChooseBase(QWidget):
     def updated_algorithm(self):
         self.change_algorithm(
             self.settings.last_executed_algorithm,
-            self.settings.get(f"algorithms.{self.settings.last_executed_algorithm}"),
+            self.settings.get_algorithm(f"algorithms.{self.settings.last_executed_algorithm}"),
         )
 
     def recursive_get_values(self):
         result = {key: widget.recursive_get_values() for key, widget in self.algorithm_dict.items()}
 
-        self.settings.set(
-            "algorithm_widget_state", recursive_update(self.settings.get("algorithm_widget_state", {}), result)
+        self.settings.set_algorithm(
+            "algorithm_widget_state",
+            recursive_update(self.settings.get_algorithm("algorithm_widget_state", {}), result),
         )
         return result
 
     def change_algorithm(self, name, values: dict = None):
-        self.settings.set("current_algorithm", name)
+        self.settings.set_algorithm("current_algorithm", name)
         widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
         blocked = self.blockSignals(True)
         if name != widget.name:
