@@ -1582,7 +1582,7 @@ class TestAlgorithmChooseBase:
 
     def test_restore_algorithm(self, qtbot, part_settings):
         assert BorderRim.get_name() != AnalysisAlgorithmSelection.get_default().name
-        part_settings.set("current_algorithm", BorderRim.get_name())
+        part_settings.set_algorithm("current_algorithm", BorderRim.get_name())
         widget = AlgorithmChooseBase(part_settings, AnalysisAlgorithmSelection)
         qtbot.addWidget(widget)
         assert widget.algorithm_choose.currentText() == BorderRim.get_name()

@@ -652,6 +652,7 @@ class BaseSettings(ViewSettings):
         ):
             warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
             self.set_algorithm(key_path, value)
+            return
         self._roi_dict.set(f"{self._current_roi_dict}.{key_path}", value)
 
     def get(self, key_path: str, default=None):
@@ -668,7 +669,7 @@ class BaseSettings(ViewSettings):
             or key_path == "current_algorithm"
         ):
             warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
-            self.get_algorithm(key_path, default)
+            return self.get_algorithm(key_path, default)
         return self._roi_dict.get(f"{self._current_roi_dict}.{key_path}", default)
 
     def set_algorithm(self, key_path: str, value):
