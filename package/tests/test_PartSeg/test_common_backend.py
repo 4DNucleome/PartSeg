@@ -1,5 +1,6 @@
 # pylint: disable=R0201
 import argparse
+import json
 import sys
 import typing
 from functools import partial
@@ -32,6 +33,7 @@ from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation import ROIExtractionResult
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, SegmentationLimitException
+from PartSegCore.utils import ProfileDict
 from PartSegImage import Image, TiffFileException
 
 IS_MACOS = sys.platform == "darwin"
@@ -49,7 +51,7 @@ class TestExceptHook:
         monkeypatch.setattr(ErrorDialog, "exec_", exec_mock)
 
         except_hook.show_error()
-        assert exec_list == []
+        assert not exec_list
         except_hook.show_error(TiffFileException("sample"))
         assert len(exec_list) == 1, "exec not called"
         message = exec_list[0]
@@ -135,7 +137,7 @@ class TestExceptHook:
         except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
         assert len(error_list) == 1
         assert isinstance(error_list[0], RuntimeError)
-        assert len(sentry_catch_list) == 0
+        assert not sentry_catch_list
 
         monkeypatch.setattr(except_hook, "show_error", import_raise)
 
@@ -707,3 +709,19 @@ class TestBaseSettings:
             settings.add_last_files(paths, method)
         assert len(settings.get_last_files()) == 10
         assert settings.get_last_files() == file_list[-10:][::-1]
+
+    def test_loading_data_error(self, bundle_test_dir, tmp_path):
+        settings = base_settings.BaseSettings(tmp_path)
+        data, error = settings._load_settings_file(bundle_test_dir / "problematic_profile_dict.json")
+        assert isinstance(data, ProfileDict)
+        assert len(error) == 2
+
+    def test_load_data_error_in_dict(self, tmp_path):
+        settings = base_settings.BaseSettings(tmp_path)
+        d = {"A": 1, "__error__": "bbbb"}
+        with (tmp_path / "data.json").open("w") as f:
+            json.dump(d, f)
+
+        data, error = settings._load_settings_file(tmp_path / "data.json")
+        assert isinstance(data, ProfileDict)
+        assert error == "bbbb"

@@ -1149,13 +1149,16 @@ class TestDataImportErrorDialog:
         assert item.childCount() == 1
 
     def test_clipboard(self, qtbot):
-        dial = DataImportErrorDialog({"aaaa": [("bbbb", {"__error__": True, "aa": 1})]})
+        dial = DataImportErrorDialog(
+            {"aaaa": [("bbbb", {"__error__": True, "aa": 1})], "ddd": ValueError("exception text")}
+        )
         qtbot.addWidget(dial)
         dial._copy_to_clipboard()
         text = QApplication.clipboard().text()
         assert text.startswith("aaaa\n")
         assert "__error__" in text
         assert "'aa': 1" in text
+        assert "exception text" in text
 
 
 class TestMaskWidget:

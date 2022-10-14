@@ -275,6 +275,9 @@ class DataImportErrorDialog(QDialog):
         res = ""
         for file_path, values in self.errors.items():
             res += f"{file_path}\n"
+            if isinstance(values, Exception):
+                res += f"\t{values}\n"
+                continue
             for key, desc in values:
                 problematic_entries = find_problematic_leafs(desc)
                 for entry in problematic_entries:

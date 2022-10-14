@@ -119,7 +119,7 @@ def get_callback(callback: typing.Union[typing.Callable, MethodType], max_args=N
     return CallbackFun(callback, max_args)
 
 
-@register_class(old_paths=["PartSegCore.json_hooks.EventedDict"])
+@register_class(old_paths=["PartSegCore.json_hooks.EventedDict"], allow_errors_in_values=True)
 class EventedDict(typing.MutableMapping):
     setted = Signal(str)
     deleted = Signal(str)
@@ -233,7 +233,7 @@ def recursive_update_dict(main_dict: typing.Union[dict, EventedDict], other_dict
             main_dict[key] = val
 
 
-@register_class(old_paths=["PartSegCore.json_hooks.ProfileDict"])
+@register_class(old_paths=["PartSegCore.json_hooks.ProfileDict"], allow_errors_in_values=True)
 class ProfileDict:
     """
     Dict for storing recursive data. The path are dot separated.
@@ -384,7 +384,12 @@ class ProfileDict:
         """
         return check_loaded_dict(self.my_dict)
 
-    def filter_data(self) -> typing.List[typing.Tuple[str, dict]]:
+    def filter_data(self):  # pragma: no cover
+        warnings.warn("Deprecated, use pop errors instead", FutureWarning)
+        self.pop_errors()
+
+    def pop_errors(self) -> typing.List[typing.Tuple[str, dict]]:
+        """Remove problematic entries from dict"""
         error_list = []
         for group, up_dkt in list(self.my_dict.items()):
             if not isinstance(up_dkt, (dict, EventedDict)):
