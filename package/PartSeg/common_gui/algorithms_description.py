@@ -425,9 +425,7 @@ class FormWidget(QWidget):
 
     def get_values(self):
         res = {name: el.get_value() for name, el in self.widgets_dict.items()}
-        if self._model_class is not None:
-            return self._model_class(**res)
-        return res
+        return self._model_class(**res) if self._model_class is not None else res
 
     def recursive_get_values(self):
         return {name: el.recursive_get_values() for name, el in self.widgets_dict.items()}
