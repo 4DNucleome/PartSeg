@@ -851,3 +851,14 @@ def test_dict_repr(monkeypatch):
     count = [0]
     algorithm_base.dict_repr({1: np.zeros(5), 2: {1: np.zeros(5)}})
     assert count[0] == 2
+
+
+def test_to_double_threshold(self):
+    data = {
+        "threshold": sa.TwoThreshold(
+            lower_threshold=50,
+            upper_threshold=100,
+        )
+    }
+    data = sa._to_double_threshold(data)
+    assert isinstance(data["threshold"], sa.DoubleThresholdSelection)
