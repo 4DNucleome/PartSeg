@@ -63,8 +63,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
         super().set_mask(mask)
         self.parameters["threshold"] = None
 
-    @staticmethod
-    def get_info_text():
+    def get_info_text(self):
         return "No info [Report this ass error]"
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
