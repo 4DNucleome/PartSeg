@@ -853,7 +853,7 @@ def test_dict_repr(monkeypatch):
     assert count[0] == 2
 
 
-def test_to_double_threshold(self):
+def test_to_double_threshold():
     data = {
         "threshold": sa.TwoThreshold(
             lower_threshold=50,
