@@ -29,6 +29,13 @@ class SimpleITKThresholdParams256(BaseModel):
     bins: int = Field(128, title="Histogram bins", ge=8, le=2**16)
 
 
+class MultipleOtsuThresholdParams(BaseModel):
+    components: int = Field(2, title="Number of Components", ge=2, lt=100)
+    border_component: int = Field(1, title="Border Component", ge=1, lt=100)
+    valley: bool = Field(True, title="Valley emphasis")
+    bins: int = Field(128, title="Number of histogram bins", ge=8, le=2**16)
+
+
 class BaseThreshold(AlgorithmDescribeBase, ABC):
     @classmethod
     def calculate_mask(
@@ -67,7 +74,7 @@ class SitkThreshold(BaseThreshold, ABC):
     def calculate_mask(
         cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SimpleITKThresholdParams128, operator
     ):
-        if mask is not None and mask.dtype != np.uint8:
+        if mask is not None and mask.dtype != np.uint8 and arguments.apply_mask:
             mask = (mask > 0).astype(np.uint8)
         ob, bg, th_op = (0, 1, np.min) if operator(1, 0) else (1, 0, np.max)
         image_sitk = sitk.GetImageFromArray(data)
@@ -194,7 +201,7 @@ class IntermodesThreshold(SitkThreshold):
             return sitk.IntermodesThreshold(*args)
         except RuntimeError as e:
             if "Exceeded maximum iterations for histogram smoothing" in e.args[0]:
-                raise SegmentationLimitException(*e.args)
+                raise SegmentationLimitException(*e.args) from e
             raise
 
 
@@ -223,7 +230,7 @@ class KittlerIllingworthThreshold(SitkThreshold):
             return sitk.KittlerIllingworthThreshold(*args)
         except RuntimeError as e:
             if "sigma2 <= 0" in e.args[0]:
-                raise SegmentationLimitException(*e.args)
+                raise SegmentationLimitException(*e.args) from e
             raise
 
 
@@ -237,6 +244,35 @@ class MomentsThreshold(SitkThreshold):
     @staticmethod
     def calculate_threshold(*args, **kwargs):
         return sitk.MomentsThreshold(*args)
+
+
+class MultipleOtsuThreshold(BaseThreshold):
+    __argument_class__ = MultipleOtsuThresholdParams
+
+    @classmethod
+    def calculate_mask(
+        cls,
+        data: np.ndarray,
+        mask: typing.Optional[np.ndarray],
+        arguments: MultipleOtsuThresholdParams,
+        operator: typing.Callable[[object, object], bool],
+    ):
+        cleaned_image_sitk = sitk.GetImageFromArray(data)
+        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, arguments.components, 0, arguments.bins, arguments.valley)
+        res = sitk.GetArrayFromImage(res)
+        if operator(1, 0):
+            res = (res >= arguments.border_component).astype(np.uint8)
+            threshold = np.min(data[res > 0]) if np.any(res) else np.max(data)
+        else:
+            res = (res < arguments.border_component).astype(np.uint8)
+            threshold = np.max(data[res > 0]) if np.any(res) else np.min(data)
+        if mask is not None:
+            res[mask == 0] = 0
+        return res, threshold
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Multiple Otsu"
 
 
 class ThresholdSelection(AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold):
@@ -256,6 +292,7 @@ ThresholdSelection.register(IsoDataThreshold)
 ThresholdSelection.register(KittlerIllingworthThreshold)
 ThresholdSelection.register(MomentsThreshold)
 ThresholdSelection.register(MaximumEntropyThreshold)
+ThresholdSelection.register(MultipleOtsuThreshold)
 
 
 class DoubleThresholdParams(BaseModel):
@@ -316,6 +353,42 @@ class DoubleOtsu(BaseThreshold):
         return res, (thr1, thr2)
 
 
+class MultipleOtsuDoubleThresholdParams(BaseModel):
+    components: int = Field(2, title="Number of Components", ge=2, lt=100)
+    lower_component: int = Field(1, title="Lower Component", ge=1, lt=100)
+    upper_component: int = Field(1, title="Upper Component", ge=1, lt=100)
+    valley: bool = Field(True, title="Valley emphasis")
+    bins: int = Field(128, title="Number of histogram bins", ge=8, le=2**16)
+
+
+class MultipleOtsu(BaseThreshold):
+    __argument_class__ = MultipleOtsuDoubleThresholdParams
+
+    @classmethod
+    def get_name(cls):
+        return "Multiple Otsu"
+
+    @classmethod
+    def calculate_mask(
+        cls,
+        data: np.ndarray,
+        mask: typing.Optional[np.ndarray],
+        arguments: MultipleOtsuDoubleThresholdParams,
+        operator: typing.Callable[[object, object], bool],
+    ):
+        cleaned_image_sitk = sitk.GetImageFromArray(data)
+        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, arguments.components, 0, arguments.bins, arguments.valley)
+        res = sitk.GetArrayFromImage(res)
+        map_component = np.zeros(arguments.components + 1, dtype=np.uint8)
+        map_component[: arguments.lower_component] = 0
+        map_component[arguments.lower_component : arguments.upper_component] = 1
+        map_component[arguments.upper_component :] = 2
+        res2 = map_component[res]
+        thr1 = data[res2 == 2].min() if np.any(res2 == 2) else data[res2 == 1].max()
+        thr2 = data[res2 == 1].min() if np.any(res2 == 1) else data.max()
+        return res2, (thr1, thr2)
+
+
 class DoubleThresholdSelection(
     AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold
 ):
@@ -324,6 +397,7 @@ class DoubleThresholdSelection(
 
 DoubleThresholdSelection.register(DoubleThreshold)
 DoubleThresholdSelection.register(DoubleOtsu)
+DoubleThresholdSelection.register(MultipleOtsu)
 
 double_threshold_dict = DoubleThresholdSelection.__register__
 threshold_dict = ThresholdSelection.__register__

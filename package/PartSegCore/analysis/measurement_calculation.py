@@ -165,7 +165,12 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         """
         if all_components and self.components_info.has_components():
             return True, True
-        has_mask_components = any((x == PerComponent.Yes and y != AreaType.ROI for x, y in self._type_dict.values()))
+        has_mask_components = any(
+            (
+                x in {PerComponent.Yes, PerComponent.Per_Mask_component} and y != AreaType.ROI
+                for x, y in self._type_dict.values()
+            )
+        )
         has_segmentation_components = any(
             (x == PerComponent.Yes and y == AreaType.ROI for x, y in self._type_dict.values())
         )
@@ -876,9 +881,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
                 channel = channel.reshape(area_array.shape)
             else:  # pragma: no cover
                 raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
-        if np.any(area_array):
-            return np.sum(channel[area_array > 0])
-        return 0
+        return np.sum(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -908,9 +911,7 @@ class MaximumPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
-        if np.any(area_array):
-            return np.max(channel[area_array > 0])
-        return 0
+        return np.max(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -928,9 +929,7 @@ class MinimumPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
-        if np.any(area_array):
-            return np.min(channel[area_array > 0])
-        return 0
+        return np.min(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -948,9 +947,7 @@ class MeanPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
-        if np.any(area_array):
-            return np.mean(channel[area_array > 0])
-        return 0
+        return np.mean(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -968,9 +965,7 @@ class MedianPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
-        if np.any(area_array):
-            return np.median(channel[area_array > 0])
-        return 0
+        return np.median(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -991,9 +986,7 @@ class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
-        if np.any(area_array):
-            return np.std(channel[area_array > 0])
-        return 0
+        return np.std(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -1208,9 +1201,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
         if border_mask_array is None:
             return None
         final_mask = np.array((border_mask_array > 0) * (area_array > 0))
-        if np.any(final_mask):
-            return np.sum(channel[final_mask])
-        return 0
+        return np.sum(channel[final_mask]) if np.any(final_mask) else 0
 
     @classmethod
     def get_units(cls, ndim):

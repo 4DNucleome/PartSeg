@@ -204,8 +204,21 @@ class TestRangeThresholdAlgorithm:
         alg = sa.RangeThresholdAlgorithm()
         parameters = sa.RangeThresholdAlgorithm.__argument_class__(
             threshold={
-                "lower_threshold": 45,
-                "upper_threshold": 60,
+                "name": "Base/Core",
+                "values": {
+                    "base_threshold": {
+                        "name": "Manual",
+                        "values": {
+                            "threshold": 45,
+                        },
+                    },
+                    "core_threshold": {
+                        "name": "Manual",
+                        "values": {
+                            "threshold": 60,
+                        },
+                    },
+                },
             },
             channel=0,
             minimum_size=8000,
@@ -222,7 +235,7 @@ class TestRangeThresholdAlgorithm:
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
 
-        parameters.threshold.lower_threshold -= 6
+        parameters.threshold.values.base_threshold.values.threshold -= 6
         alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         assert np.max(result.roi) == 1
@@ -235,8 +248,21 @@ class TestRangeThresholdAlgorithm:
         alg = sa.RangeThresholdAlgorithm()
         parameters = sa.RangeThresholdAlgorithm.__argument_class__(
             threshold={
-                "lower_threshold": 45,
-                "upper_threshold": 60,
+                "name": "Base/Core",
+                "values": {
+                    "base_threshold": {
+                        "name": "Manual",
+                        "values": {
+                            "threshold": 45,
+                        },
+                    },
+                    "core_threshold": {
+                        "name": "Manual",
+                        "values": {
+                            "threshold": 60,
+                        },
+                    },
+                },
             },
             channel=0,
             minimum_size=8000,
@@ -825,3 +851,14 @@ def test_dict_repr(monkeypatch):
     count = [0]
     algorithm_base.dict_repr({1: np.zeros(5), 2: {1: np.zeros(5)}})
     assert count[0] == 2
+
+
+def test_to_double_threshold():
+    data = {
+        "threshold": sa.TwoThreshold(
+            lower_threshold=50,
+            upper_threshold=100,
+        )
+    }
+    data = sa._to_double_threshold(data)
+    assert isinstance(data["threshold"], sa.DoubleThresholdSelection)

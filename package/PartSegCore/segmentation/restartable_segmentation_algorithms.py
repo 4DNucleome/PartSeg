@@ -23,7 +23,15 @@ from ..utils import bisect
 from .algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult, SegmentationLimitException
 from .mu_mid_point import BaseMuMid, MuMidSelection
 from .noise_filtering import NoiseFilterSelection
-from .threshold import BaseThreshold, DoubleThresholdSelection, ThresholdSelection
+from .threshold import (
+    BaseThreshold,
+    DoubleThreshold,
+    DoubleThresholdParams,
+    DoubleThresholdSelection,
+    ManualThreshold,
+    SingleThresholdParams,
+    ThresholdSelection,
+)
 from .watershed import BaseWatershed, FlowMethodSelection, calculate_distances_array, get_neigh
 
 REQUIRE_MASK_STR = "Need mask"
@@ -343,6 +351,7 @@ class UpperThresholdAlgorithm(OneThresholdAlgorithm):
 
 
 class TwoThreshold(BaseModel):
+    # keep for backward compatibility
     lower_threshold: float = Field(1000, ge=0, le=10**6)
     upper_threshold: float = Field(10000, ge=0, le=10**6)
 
@@ -354,9 +363,26 @@ def _to_two_thresholds(dkt):
     return dkt
 
 
-@register_class(version="0.0.1", migrations=[("0.0.1", _to_two_thresholds)])
+def _to_double_threshold(dkt):
+    dkt["threshold"] = DoubleThresholdSelection(
+        name=DoubleThreshold.get_name(),
+        values=DoubleThresholdParams(
+            core_threshold=ThresholdSelection(
+                name=ManualThreshold.get_name(),
+                values=SingleThresholdParams(threshold=dkt["threshold"].lower_threshold),
+            ),
+            base_threshold=ThresholdSelection(
+                name=ManualThreshold.get_name(),
+                values=SingleThresholdParams(threshold=dkt["threshold"].upper_threshold),
+            ),
+        ),
+    )
+    return dkt
+
+
+@register_class(version="0.0.2", migrations=[("0.0.1", _to_two_thresholds), ("0.0.2", _to_double_threshold)])
 class RangeThresholdAlgorithmParameters(ThresholdBaseAlgorithmParameters):
-    threshold: TwoThreshold = Field(TwoThreshold(), position=2)
+    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), position=2)
 
 
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
@@ -369,11 +395,12 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
     __argument_class__ = RangeThresholdAlgorithmParameters
 
     def _threshold(self, image, thr=None):
-        self.threshold_info = deepcopy(self.new_parameters.threshold)
-        return (
-            (image > self.new_parameters.threshold.lower_threshold)
-            * np.array(image < self.new_parameters.threshold.upper_threshold)
-        ).astype(np.uint8)
+        if thr is None:
+            thr: BaseThreshold = DoubleThresholdSelection[self.new_parameters.threshold.name]
+        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters.threshold.values, operator.ge)
+        mask[mask == 2] = 0
+        self.threshold_info = thr_val
+        return mask
 
     @classmethod
     def get_name(cls):
