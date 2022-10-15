@@ -17,7 +17,7 @@ stages:
   - stage: GetTestData
     jobs:
     - job: linux
-      pool: {vmImage: 'Ubuntu-18.04'}
+      pool: {vmImage: 'Ubuntu-20.04'}
       steps:
         - script: bash build_utils/download_data.sh
           displayName: "download data"
@@ -91,7 +91,7 @@ stages:
               artifactName: docs
 
       - job: Notebook_check
-        pool: {vmImage: 'Ubuntu-18.04'}
+        pool: {vmImage: 'Ubuntu-20.04'}
         continueOnError: true
         variables:
           DATA_PATH: typy_neuronow2
@@ -150,7 +150,7 @@ stages:
     dependsOn: Tests_linux
     jobs:
       - job: sdist
-        pool: {vmImage: 'Ubuntu-18.04'}
+        pool: {vmImage: 'Ubuntu-20.04'}
         steps:
           - task: UsePythonVersion@0
           - bash: pip install -r requirements/requirements_dev.txt
@@ -167,7 +167,7 @@ stages:
           test_path: dist/PartSeg/PartSeg _test
           DISPLAY: ':99.0'
           pip_cache_dir: $(Pipeline.Workspace)/.pip
-        pool: { vmImage: 'ubuntu-18.04' }
+        pool: { vmImage: 'Ubuntu-20.04' }
         steps:
           - template: .azure-pipelines/linux_libs.yaml
           - template: .azure-pipelines/pyinstaller.yaml

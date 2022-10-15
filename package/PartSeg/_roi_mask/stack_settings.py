@@ -61,7 +61,7 @@ class StackSettings(BaseSettings):
         self._additional_layers = result.additional_layers
         self.additional_layers_changed.emit()
         self.last_executed_algorithm = result.parameters.algorithm
-        self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
+        self.set_algorithm(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         self._set_roi_info(result.roi_info, True, [], parameters_dict)
         if result.points is not None:
             self.points = result.points

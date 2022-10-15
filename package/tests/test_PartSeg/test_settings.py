@@ -318,6 +318,15 @@ class TestBaseSettings:
         with pytest.raises(TimeAndStackException):
             BaseSettings.verify_image(Image(np.zeros((2, 2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TZXY"))
 
+    def test_algorithm_redirect(self, tmp_path):
+        settings = BaseSettings(tmp_path)
+        settings.set_algorithm("algorithms.aa", 2)
+        with pytest.warns(FutureWarning, match="Use `set_algorithm_state` instead"):
+            assert settings.get("algorithms.aa") == 2
+        with pytest.warns(FutureWarning, match="Use `set_algorithm_state` instead"):
+            settings.set("algorithms.aa", 3)
+        assert settings.get_algorithm("algorithms.aa") == 3
+
 
 class TestPartSettings:
     def test_set_mask_info(self, qtbot, tmp_path, image):
@@ -344,7 +353,7 @@ class TestPartSettings:
     def test_get_project_info(self, qtbot, tmp_path, image):
         settings = PartSettings(tmp_path)
         settings.last_executed_algorithm = "aa"
-        settings.set("algorithms.aa", 1)
+        settings.set_algorithm("algorithms.aa", 1)
         settings.image = image
         pt = settings.get_project_info()
         assert pt.algorithm_parameters["algorithm_name"] == "aa"
