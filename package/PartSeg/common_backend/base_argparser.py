@@ -5,6 +5,7 @@ import os
 import platform
 import sys
 import zlib
+from contextlib import suppress
 from typing import Optional, Sequence
 
 import numpy as np
@@ -87,7 +88,8 @@ class CustomParser(argparse.ArgumentParser):
             "--sdir",
             type=proper_path,
             default=[state_store.save_folder],
-            help="path to custom configuration folder",
+            help=f"path to custom configuration folder, if not set then {state_store.save_folder} will be used. "
+            "Could be customized using 'PARTSEG_SETTINGS_DIR' environment variable.",
             nargs=1,
             metavar="path",
         )
@@ -112,7 +114,10 @@ class CustomParser(argparse.ArgumentParser):
         if args.no_report and args.no_dialog:
             _setup_sentry()
         sys.excepthook = my_excepthook
-        locale.setlocale(locale.LC_NUMERIC, "")
+        with suppress(locale.Error):
+            # some bug in reseting locale
+            # https://stackoverflow.com/questions/68962248/python-setlocale-with-empty-string-default-locale-gives-unsupported-locale-se
+            locale.setlocale(locale.LC_NUMERIC, "")
         return args
 
 
@@ -126,7 +131,10 @@ def _setup_sentry():  # pragma: no cover
     )
     with sentry_sdk.configure_scope() as scope:
         scope.set_user(
-            {"name": getpass.getuser(), "id": zlib.adler32((getpass.getuser() + "#" + platform.node()).encode())}
+            {
+                "name": getpass.getuser(),
+                "id": zlib.adler32(f"{getpass.getuser()}#{platform.node()}".encode()),
+            }
         )
 
 

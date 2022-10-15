@@ -18,19 +18,20 @@ def _image_to_layers(project_info, scale, translate):
             )
         )
     else:
-        for i in range(project_info.image.channels):
-            res_layers.append(
-                (
-                    project_info.image.get_channel(i),
-                    {
-                        "scale": scale,
-                        "name": project_info.image.channel_names[i],
-                        "blending": "additive",
-                        "translate": translate,
-                    },
-                    "image",
-                )
+        res_layers.extend(
+            (
+                project_info.image.get_channel(i),
+                {
+                    "scale": scale,
+                    "name": project_info.image.channel_names[i],
+                    "blending": "additive",
+                    "translate": translate,
+                },
+                "image",
             )
+            for i in range(project_info.image.channels)
+        )
+
     return res_layers
 
 
@@ -49,6 +50,21 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
                     "labels",
                 )
             )
+        if project_info.roi_info.alternative:
+            res_layers.extend(
+                (
+                    project_info.image.fit_array_to_image(roi),
+                    {
+                        "scale": scale,
+                        "name": name,
+                        "translate": translate,
+                        "visible": False,
+                    },
+                    "labels",
+                )
+                for name, roi in project_info.roi_info.alternative.items()
+            )
+
         if project_info.mask is not None:
             res_layers.append(
                 (
@@ -75,8 +91,8 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
 
 def partseg_loader(loader: typing.Type[LoadBase], path: str):
     load_locations = [path]
-    for _ in range(1, loader.number_of_files()):
-        load_locations.append(loader.get_next_file(load_locations))
+    load_locations.extend(loader.get_next_file(load_locations) for _ in range(1, loader.number_of_files()))
+
     try:
         project_info = loader.load(load_locations)
     except WrongFileTypeException:

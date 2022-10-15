@@ -183,7 +183,7 @@ class Options(QWidget):
         if not name:
             QMessageBox.information(self, "No segmentation", "No segmentation executed", QMessageBox.Ok)
             return
-        values = self._settings.get(f"algorithms.{name}", {})
+        values = self._settings.get_algorithm(f"algorithms.{name}", {})
         if len(values) == 0:
             QMessageBox.information(self, "Some problem", "Pleas run execution again", QMessageBox.Ok)
             return
@@ -500,7 +500,7 @@ class MaskDialog(MaskDialogBase):
     def prev_mask(self):
         history: HistoryElement = self.settings.history_pop()
         algorithm_name = self.settings.last_executed_algorithm
-        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
+        algorithm_values = self.settings.get_algorithm(f"algorithms.{algorithm_name}")
         self.settings.fix_history(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
         self.settings.set("current_algorithm", history.roi_extraction_parameters["algorithm_name"])
         self.settings.set(
@@ -574,6 +574,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
         view_menu.addAction("Toggle left panel").triggered.connect(self.toggle_left_panel)
         view_menu.addAction("Toggle console").triggered.connect(self._toggle_console)
+        view_menu.addAction("Toggle scale bar").triggered.connect(self._toggle_scale_bar)
         action = view_menu.addAction("Screenshot right panel")
         action.triggered.connect(self.screenshot(self.result_image))
         action.setShortcut(QKeySequence.Print)
@@ -610,6 +611,10 @@ class MainWindow(BaseMainWindow):
         with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
+
+    def _toggle_scale_bar(self):
+        self.raw_image.toggle_scale_bar()
+        self.result_image.toggle_scale_bar()
 
     def toggle_left_panel(self):
         self.options_panel.hide_left_panel(not self.settings.get_from_profile("hide_left_panel"))

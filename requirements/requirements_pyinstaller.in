@@ -5,6 +5,7 @@ dask!=2021.3,!=2021.6.1,!=2021.7.1
 defusedxml
 h5py
 imagecodecs
+imageio!=2.22.1 # 2.22.1 has a bug in imread
 lxml
 mahotas
 napari!=0.4.11

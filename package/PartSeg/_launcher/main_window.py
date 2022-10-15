@@ -140,6 +140,6 @@ class MainWindow(QMainWindow):
         napari_settings = napari_get_settings(state_store.save_folder)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)
-            theme = get_theme(napari_settings.appearance.theme)
+            theme = get_theme(napari_settings.appearance.theme, as_dict=True)
         # TODO understand qss overwrite mechanism
         self.setStyleSheet(napari_template(get_stylesheet(), **theme))

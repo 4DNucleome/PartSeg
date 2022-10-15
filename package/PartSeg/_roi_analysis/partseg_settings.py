@@ -79,7 +79,7 @@ class PartSettings(BaseSettings):
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
         if algorithm_name:
-            value = self.get(f"algorithms.{algorithm_name}")
+            value = self.get_algorithm(f"algorithms.{algorithm_name}")
             if isinstance(value, EventedDict):
                 value = value.as_dict_deep()
             algorithm_val = {
@@ -125,7 +125,9 @@ class PartSettings(BaseSettings):
         self.set_history(data.history[:])
         if data.algorithm_parameters:
             self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]
-            self.set(f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"]))
+            self.set_algorithm(
+                f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"])
+            )
             self.algorithm_changed.emit()
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:

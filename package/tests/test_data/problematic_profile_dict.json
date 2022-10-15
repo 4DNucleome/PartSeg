@@ -1,0 +1,127 @@
+{
+  "__class__": "PartSegCore.utils.ProfileDict",
+  "__class_version_dkt__": {
+    "PartSegCore.utils.ProfileDict": "0.0.0"
+  },
+  "__values__": {
+    "a": {
+      "__class__": "PartSegCore.utils.EventedDict",
+      "__class_version_dkt__": {
+        "PartSegCore.utils.EventedDict": "0.0.0"
+      },
+      "__values__": {
+        "b": {
+          "__class__": "PartSegCore.segmentation.noise_filtering.GaussNoiseFilteringParams2",
+          "__class_version_dkt__": {
+            "PartSegCore.segmentation.noise_filtering.GaussNoiseFilteringParams2": "0.0.1",
+            "PartSegCore.utils.BaseModel": "0.0.0"
+          },
+          "__values__": {
+            "dimension_type": {
+              "__class__": "PartSegCore.segmentation.noise_filtering.DimensionType",
+              "__class_version_dkt__": {
+                "PartSegCore.segmentation.noise_filtering.DimensionType": "0.0.0"
+              },
+              "__values__": {
+                "value": 1
+              }
+            },
+            "radius": 1.0
+          }
+        },
+        "c": {
+          "__class__": "PartSegCore.segmentation.noise_filtering.BilateralNoiseFilteringParams",
+          "__class_version_dkt__": {
+            "PartSegCore.segmentation.noise_filtering.BilateralNoiseFilteringParams": "0.0.0",
+            "PartSegCore.utils.BaseModel": "0.0.0"
+          },
+          "__values__": {
+            "dimension_type": {
+              "__class__": "PartSegCore.segmentation.noise_filtering.DimensionType",
+              "__class_version_dkt__": {
+                "PartSegCore.segmentation.noise_filtering.DimensionType": "0.0.0"
+              },
+              "__values__": {
+                "value": 1
+              }
+            },
+            "radius": 1.0
+          }
+        }
+      }
+    },
+    "b": {
+      "__class__": "PartSegCore.utils.EventedDict",
+      "__class_version_dkt__": {
+        "PartSegCore.utils.EventedDict": "0.0.0"
+      },
+      "__values__": {
+        "a": {
+          "__class__": "PartSegCore.utils.EventedDict",
+          "__class_version_dkt__": {
+            "PartSegCore.utils.EventedDict": "0.0.0"
+          },
+          "__values__": {
+            "d": {
+              "__class__": "PartSegCore.segmentation.noise_filtering.GaussNoiseFilteringParams",
+              "__class_version_dkt__": {
+                "PartSegCore.segmentation.noise_filtering.GaussNoiseFilteringParams": "0.0.1",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "dimension_type": {
+                  "__class__": "PartSegCore.segmentation.noise_filtering.DimensionType",
+                  "__class_version_dkt__": {
+                    "PartSegCore.segmentation.noise_filtering.DimensionType": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "radius": 1.0
+              }
+            },
+            "e": {
+              "__class__": "PartSegCore.segmentation.noise_filtering.BilateralNoiseFilteringParams3",
+              "__class_version_dkt__": {
+                "PartSegCore.segmentation.noise_filtering.BilateralNoiseFilteringParams3": "0.0.0",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "dimension_type": {
+                  "__class__": "PartSegCore.segmentation.noise_filtering.DimensionType",
+                  "__class_version_dkt__": {
+                    "PartSegCore.segmentation.noise_filtering.DimensionType": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "radius": 1.0
+              }
+            },
+            "f": {
+              "__class__": "PartSegCore.segmentation.noise_filtering.GaussNoiseFilteringParams",
+              "__class_version_dkt__": {
+                "PartSegCore.segmentation.noise_filtering.GaussNoiseFilteringParams": "0.0.1",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "dimension_type": {
+                  "__class__": "PartSegCore.segmentation.noise_filtering.DimensionType4",
+                  "__class_version_dkt__": {
+                    "PartSegCore.segmentation.noise_filtering.DimensionType4": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "radius": 1.0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

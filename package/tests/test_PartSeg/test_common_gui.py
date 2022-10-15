@@ -1149,13 +1149,16 @@ class TestDataImportErrorDialog:
         assert item.childCount() == 1
 
     def test_clipboard(self, qtbot):
-        dial = DataImportErrorDialog({"aaaa": [("bbbb", {"__error__": True, "aa": 1})]})
+        dial = DataImportErrorDialog(
+            {"aaaa": [("bbbb", {"__error__": True, "aa": 1})], "ddd": ValueError("exception text")}
+        )
         qtbot.addWidget(dial)
         dial._copy_to_clipboard()
         text = QApplication.clipboard().text()
         assert text.startswith("aaaa\n")
         assert "__error__" in text
         assert "'aa': 1" in text
+        assert "exception text" in text
 
 
 class TestMaskWidget:
@@ -1522,11 +1525,11 @@ class TestBaseAlgorithmSettingsWidget:
         qtbot.addWidget(widget)
         mock = MagicMock()
         monkeypatch.setattr(widget.algorithm_thread, "start", mock)
-        assert part_settings.get(f"algorithms.{LowerThresholdAlgorithm.get_name()}") == {}
+        assert part_settings.get_algorithm(f"algorithms.{LowerThresholdAlgorithm.get_name()}") == {}
         widget.execute()
         mock.assert_called_once()
         assert (
-            part_settings.get(f"algorithms.{LowerThresholdAlgorithm.get_name()}")
+            part_settings.get_algorithm(f"algorithms.{LowerThresholdAlgorithm.get_name()}")
             == LowerThresholdAlgorithm.__argument_class__()
         )
 
@@ -1579,7 +1582,7 @@ class TestAlgorithmChooseBase:
 
     def test_restore_algorithm(self, qtbot, part_settings):
         assert BorderRim.get_name() != AnalysisAlgorithmSelection.get_default().name
-        part_settings.set("current_algorithm", BorderRim.get_name())
+        part_settings.set_algorithm("current_algorithm", BorderRim.get_name())
         widget = AlgorithmChooseBase(part_settings, AnalysisAlgorithmSelection)
         qtbot.addWidget(widget)
         assert widget.algorithm_choose.currentText() == BorderRim.get_name()

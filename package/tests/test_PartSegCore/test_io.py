@@ -612,6 +612,20 @@ class TestSaveFunctions:
         array = np.load(os.path.join(tmpdir, "test1.npy"))
         assert np.all(array == analysis_project.roi_info.roi)
 
+    @pytest.mark.parametrize(
+        "klass,ext_li",
+        [
+            (SaveAsNumpy, [".npy"]),
+            (SaveAsTiff, [".tiff", ".tif"]),
+            (SaveCmap, [".cmap"]),
+            (SaveXYZ, [".xyz", ".txt"]),
+            (SaveProject, [".tgz", ".tbz2", ".gz", ".bz2"]),
+            (SaveROIAsNumpy, [".npy"]),
+        ],
+    )
+    def test_get_extensions(self, klass, ext_li):
+        assert klass.get_extensions() == ext_li
+
 
 def test_json_parameters_mask(stack_segmentation1, tmp_path):
     SaveParametersJSON.save(tmp_path / "test.json", stack_segmentation1)
@@ -629,7 +643,7 @@ def test_load_notebook_json(file_path):
 )
 def test_old_saves_load(file_path):
     data: ProfileDict = load_metadata_base(file_path)
-    assert data.verify_data(), data.filter_data()
+    assert data.verify_data(), data.pop_errors()
 
 
 def test_load_plan_form_excel(bundle_test_dir):

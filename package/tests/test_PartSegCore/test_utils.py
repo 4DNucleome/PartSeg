@@ -24,7 +24,7 @@ def test_callback_fun():
         call_list.append(1)
 
     callback = CallbackFun(call_fun)
-    assert call_list == []
+    assert not call_list
     callback()
     assert call_list == [1]
     assert callback.is_alive()
@@ -39,7 +39,7 @@ def test_callback_method():
 
     a = A()
     callback = CallbackMethod(a.fun)
-    assert call_list == []
+    assert not call_list
     callback()
     assert call_list == [1]
     assert callback.is_alive()
@@ -214,10 +214,10 @@ class TestProfileDict:
         dkt.update({"w": 1, "z": 4}, w=3)
         assert dkt.get("w") == 3
         assert dkt.verify_data()
-        assert dkt.filter_data() == []
+        assert dkt.pop_errors() == []
         dkt.set("e.h.l", {"aaa": 1, "__error__": True})
         assert not dkt.verify_data()
-        assert dkt.filter_data()[0][0] == "e.h"
+        assert dkt.pop_errors()[0][0] == "e.h"
 
     def test_serialize(self, tmp_path):
         dkt = ProfileDict()

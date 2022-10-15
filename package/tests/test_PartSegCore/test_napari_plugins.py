@@ -2,7 +2,9 @@
 
 import os
 
+import numpy as np
 import pytest
+from napari.layers import Image, Labels, Layer
 
 from PartSegCore.napari_plugins.load_image import napari_get_reader as napari_get_reader_image
 from PartSegCore.napari_plugins.load_mask_project import napari_get_reader as napari_get_reader_mask
@@ -12,10 +14,22 @@ from PartSegCore.napari_plugins.loader import project_to_layers
 
 
 def test_project_to_layers_analysis(analysis_segmentation):
+    analysis_segmentation.roi_info.alternative["test"] = np.zeros(analysis_segmentation.image.shape, dtype=np.uint8)
     res = project_to_layers(analysis_segmentation)
-    assert len(res) == 2
-    assert res[0][2] == "image"
-    assert res[1][2] == "labels"
+    assert len(res) == 3
+    l1 = Layer.create(*res[0])
+    assert isinstance(l1, Image)
+    assert l1.name == "channel 1"
+    assert np.allclose(l1.scale[1:] / 1e9, analysis_segmentation.image.spacing)
+    l2 = Layer.create(*res[1])
+    assert isinstance(l2, Labels)
+    assert l2.name == "ROI"
+    assert np.allclose(l2.scale[1:] / 1e9, analysis_segmentation.image.spacing)
+    l3 = Layer.create(*res[2])
+    assert isinstance(l3, Labels)
+    assert l3.name == "test"
+    assert np.allclose(l3.scale[1:] / 1e9, analysis_segmentation.image.spacing)
+    assert not l3.visible
 
 
 def test_project_to_layers_mask(stack_segmentation1):

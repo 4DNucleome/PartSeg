@@ -114,9 +114,10 @@ jobs:
       - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: test_data
+          path: test_data
 
       - name: Install dependencies
         run: conda install -y tox tox-conda
@@ -136,3 +137,13 @@ jobs:
         with:
           run: conda run --no-capture-output tox -e py39-PySide2-conda
         timeout-minutes: 60
+
+  check-package:
+    name: Build & inspect our package.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: hynek/build-and-inspect-python-package@v1

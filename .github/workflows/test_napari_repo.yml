@@ -57,9 +57,10 @@ jobs:
           pip install setuptools tox tox-gh-actions
 
       - name: Download test data
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: test_data
+          path: test_data
 
       - name: Test with tox
         # run tests using pip install --pre

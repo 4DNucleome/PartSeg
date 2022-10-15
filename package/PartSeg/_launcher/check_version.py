@@ -89,5 +89,6 @@ class CheckVersionThread(QThread):
                 )
 
             if message.exec_() == QMessageBox.Ignore:
+                os.makedirs(state_store.save_folder, exist_ok=True)
                 with open(os.path.join(state_store.save_folder, IGNORE_FILE), "w", encoding="utf-8") as f_p:
                     f_p.write(date.today().isoformat())

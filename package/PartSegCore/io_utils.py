@@ -21,7 +21,7 @@ from PartSegImage.image import minimal_dtype
 
 from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from .project_info import ProjectInfoBase
-from .utils import ProfileDict, check_loaded_dict, iterate_names
+from .utils import EventedDict, ProfileDict, check_loaded_dict, iterate_names
 
 
 class SegmentationType(Enum):
@@ -97,9 +97,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_default_extension(cls):
         match = re.search(r"\(\*(\.\w+)", cls.get_name_with_suffix())
-        if match:
-            return match.group(1)
-        return ""
+        return match[1] if match else ""
 
     @classmethod
     def need_segmentation(cls):
@@ -114,7 +112,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         match = re.match(r".*\((.*)\)", cls.get_name())
         if match is None:
             raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match.group(1).split(" ")
+        extensions = match[1].split(" ")
         if not all(x.startswith("*.") for x in extensions):
             raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
         return [x[1:] for x in extensions]
@@ -163,7 +161,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         match = re.match(r".*\((.*)\)", cls.get_name())
         if match is None:
             raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match.group(1).split(" ")
+        extensions = match[1].split(" ")
         if not all(x.startswith("*.") for x in extensions):
             raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
         return [x[1:] for x in extensions]
@@ -222,7 +220,7 @@ def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any
     if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
         bad_key.extend((k, data.pop(k)) for k, v in list(data.items()) if not check_loaded_dict(v))
     elif isinstance(data, ProfileDict) and not data.verify_data():
-        bad_key = data.filter_data()
+        bad_key = data.pop_errors()
     return data, bad_key
 
 
@@ -254,7 +252,7 @@ def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMappin
     """
     if not isinstance(data, typing.MutableMapping):
         return []
-    if "__error__" not in data:
+    if "__error__" not in data and (not isinstance(data, EventedDict) or len(data) == 0):
         return []
     res = []
     data_to_check = data
@@ -262,9 +260,7 @@ def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMappin
         data_to_check = data["__values__"]
     for data_ in data_to_check.values():
         res.extend(find_problematic_leafs(data_))
-    if res:
-        return res
-    return [data]
+    return res or [data]
 
 
 def proxy_callback(
