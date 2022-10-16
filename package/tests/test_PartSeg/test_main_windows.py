@@ -115,10 +115,19 @@ class TestAnalysisOptions:
         info.assert_called_once()
         assert info.call_args[0][1] == "No segmentation"
 
+    @patch("PartSeg._roi_analysis.main_window.QMessageBox.information")
+    def test_save_pipeline_no_algorithm_values(
+        self, info, analysis_options, part_settings, history_element, lower_threshold_profile
+    ):
+        part_settings.add_history_element(history_element)
+        part_settings.last_executed_algorithm = lower_threshold_profile.name
+        analysis_options.save_pipeline()
+        info.assert_called_once()
+        assert info.call_args[0][1] == "Some problem"
+
     @patch("PartSeg._roi_analysis.main_window.QInputDialog.getText", return_value=("test", True))
     def test_save_pipeline(self, info, analysis_options, part_settings, history_element, lower_threshold_profile):
         part_settings.add_history_element(history_element)
-        part_settings.roi = np.zeros(part_settings.image.shape, dtype=np.uint8)
         part_settings.set_algorithm(f"algorithms.{lower_threshold_profile.name}", lower_threshold_profile)
         part_settings.last_executed_algorithm = lower_threshold_profile.name
         assert analysis_options.choose_pipe.count() == 1
@@ -128,6 +137,14 @@ class TestAnalysisOptions:
         assert info.call_args[0][1] == "Pipeline name"
         assert analysis_options.choose_pipe.count() == 2
         assert analysis_options.choose_pipe.itemText(1) == "test"
+
+    @patch("PartSeg._roi_analysis.main_window.QInputDialog.getText", return_value=("profile", True))
+    def test_save_profile(self, info, analysis_options, part_settings):
+        assert analysis_options.choose_profile.count() == 1
+        analysis_options.save_profile()
+        assert analysis_options.choose_profile.count() == 2
+        assert analysis_options.choose_profile.itemText(1) == "profile"
+        info.assert_called_once()
 
 
 class TestMaskMainWindow:
