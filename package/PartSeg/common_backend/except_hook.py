@@ -1,6 +1,7 @@
 import sys
 
 import sentry_sdk
+from qtpy.QtCore import QCoreApplication, QThread
 from qtpy.QtWidgets import QMessageBox
 from superqt import ensure_main_thread
 
@@ -21,6 +22,7 @@ def my_excepthook(type_, value, trace_back):
         if state_store.report_errors and parsed_version.is_devrelease:
             with sentry_sdk.push_scope() as scope:
                 scope.set_tag("auto_report", "true")
+                scope.set_tag("main_thread", QCoreApplication.instance().thread() == QThread.currentThread())
                 sentry_sdk.capture_exception(value)
         try:
             show_error(value)
