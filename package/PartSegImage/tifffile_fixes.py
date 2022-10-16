@@ -70,7 +70,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
                     text = t.text.strip()
                     if children or t.attrib:
                         if text:
-                            d[key][tx + "value"] = astype(text)
+                            d[key][f"{tx}value"] = astype(text)
                     else:
                         d[key] = astype(text)
                 return d
