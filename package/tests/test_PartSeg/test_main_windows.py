@@ -2,10 +2,12 @@
 import platform
 import sys
 from functools import partial
+from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 import qtpy
-from qtpy.QtCore import QCoreApplication
+from qtpy.QtCore import QCoreApplication, Qt
 
 from PartSeg._launcher.main_window import MainWindow as LauncherMainWindow
 from PartSeg._launcher.main_window import PartSegGUILauncher
@@ -13,6 +15,8 @@ from PartSeg._launcher.main_window import Prepare as LauncherPrepare
 from PartSeg._roi_analysis import main_window as analysis_main_window
 from PartSeg._roi_mask import main_window as mask_main_window
 from PartSegCore import state_store
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.analysis import SegmentationPipeline
 
 from .utils import CI_BUILD, GITHUB_ACTIONS, TRAVIS
 
@@ -43,6 +47,80 @@ class TestAnalysisMainWindow:
         main_window.advanced_window.close()
         main_window.advanced_window.close()
         qtbot.wait(50)
+
+
+@pytest.fixture
+def analysis_options(qtbot, part_settings):
+    ch_property = analysis_main_window.ChannelProperty(part_settings, "test")
+    qtbot.addWidget(ch_property)
+    left_image = MagicMock()
+    synchronize = MagicMock()
+    options = analysis_main_window.Options(part_settings, ch_property, left_image, synchronize)
+    qtbot.addWidget(options)
+    qtbot.addWidget(options.compare_btn)
+    return options
+
+
+class TestAnalysisOptions:
+    def test_create(self, qtbot, analysis_options):
+
+        assert analysis_options.choose_profile.count() == 1
+        assert analysis_options.choose_profile.currentText() == "<none>"
+        assert analysis_options.choose_pipe.count() == 1
+        assert analysis_options.choose_pipe.currentText() == "<none>"
+
+    def test_add_profile(self, qtbot, part_settings, analysis_options):
+        part_settings.roi_profiles["sample name"] = ROIExtractionProfile(
+            name="sample name", algorithm="sample algorithm", values=None
+        )
+        assert analysis_options.choose_profile.count() == 2
+        assert analysis_options.choose_profile.currentText() == "<none>"
+        assert analysis_options.choose_profile.itemText(1) == "sample name"
+        assert analysis_options.choose_profile.itemData(1, Qt.ItemDataRole.ToolTipRole) == str(
+            part_settings.roi_profiles["sample name"]
+        )
+        part_settings.roi_profiles["sample name2"] = ROIExtractionProfile(
+            name="sample name2", algorithm="sample algorithm", values=None
+        )
+        assert analysis_options.choose_profile.count() == 3
+        assert analysis_options.choose_pipe.count() == 1
+
+    def test_add_pipeline(self, part_settings, analysis_options):
+        part_settings.roi_pipelines["test1"] = SegmentationPipeline(
+            name="test1",
+            segmentation=ROIExtractionProfile(name="sample name", algorithm="sample algorithm", values=None),
+            mask_history=[],
+        )
+        assert analysis_options.choose_pipe.count() == 2
+        assert analysis_options.choose_pipe.itemText(1) == "test1"
+        assert analysis_options.choose_pipe.itemData(1, Qt.ItemDataRole.ToolTipRole) == str(
+            part_settings.roi_pipelines["test1"]
+        )
+        part_settings.roi_pipelines["test2"] = SegmentationPipeline(
+            name="test2",
+            segmentation=ROIExtractionProfile(name="sample name", algorithm="sample algorithm", values=None),
+            mask_history=[],
+        )
+        assert analysis_options.choose_pipe.count() == 3
+        assert analysis_options.choose_profile.count() == 1
+
+    def test_compare_action(self, part_settings, analysis_options, qtbot):
+        roi = np.zeros(part_settings.image.shape, dtype=np.uint8)
+        roi[0, 2:10] = 1
+        roi[0, 10:-2] = 2
+        part_settings.roi = roi
+        assert analysis_options.compare_btn.text() == "Compare"
+        analysis_options.compare_action()
+        assert analysis_options.compare_btn.text() == "Remove"
+        assert part_settings.compare_segmentation is not None
+        analysis_options.compare_action()
+        assert analysis_options.compare_btn.text() == "Compare"
+        assert part_settings.compare_segmentation is not None
+
+    @patch("PartSeg._roi_analysis.main_window.QMessageBox.information")
+    def test_empty_save_pipeline(self, info, analysis_options):
+        analysis_options.save_pipeline()
+        info.assert_called_once()
 
 
 class TestMaskMainWindow:
