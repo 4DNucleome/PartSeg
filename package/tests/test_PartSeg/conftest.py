@@ -1,8 +1,9 @@
 import contextlib
 from contextlib import suppress
 
+import numpy as np
 import pytest
-from qtpy.QtWidgets import QDialog, QMessageBox
+from qtpy.QtWidgets import QDialog, QInputDialog, QMessageBox
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_mask.main_window import ChosenComponents
@@ -11,6 +12,9 @@ from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui import napari_image_view
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import SegmentationPipeline, SegmentationPipelineElement
+from PartSegCore.mask_create import MaskProperty
+from PartSegCore.project_info import HistoryElement
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
 
 
@@ -69,6 +73,32 @@ def sample_pipeline(border_rim_profile, lower_threshold_profile, mask_property):
         name="sample_pipeline",
         segmentation=border_rim_profile,
         mask_history=[SegmentationPipelineElement(segmentation=lower_threshold_profile, mask_property=mask_property)],
+    )
+
+
+@pytest.fixture
+def sample_pipeline2(border_rim_profile, lower_threshold_profile, mask_property):
+    return SegmentationPipeline(
+        name="sample_pipeline2",
+        segmentation=lower_threshold_profile,
+        mask_history=[SegmentationPipelineElement(segmentation=border_rim_profile, mask_property=mask_property)],
+    )
+
+
+@pytest.fixture
+def history_element(image, lower_threshold_profile):
+    roi = np.zeros(image.shape, dtype=np.uint8)
+    roi[0, 2:10] = 1
+    roi[0, 10:-2] = 2
+
+    return HistoryElement.create(
+        roi_info=ROIInfo(roi),
+        mask=None,
+        roi_extraction_parameters={
+            "algorithm_name": lower_threshold_profile.name,
+            "values": lower_threshold_profile.values,
+        },
+        mask_property=MaskProperty.simple_mask(),
     )
 
 
@@ -159,6 +189,7 @@ def block_message_box(monkeypatch, request):
     monkeypatch.setattr(QMessageBox, "information", raise_on_call)
     monkeypatch.setattr(QMessageBox, "question", raise_on_call)
     monkeypatch.setattr(QMessageBox, "warning", raise_on_call)
+    monkeypatch.setattr(QInputDialog, "getText", raise_on_call)
     if "enabledialog" not in request.keywords:
         monkeypatch.setattr(QDialog, "exec_", raise_on_call)
 
