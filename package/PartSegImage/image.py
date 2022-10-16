@@ -27,9 +27,7 @@ def minimal_dtype(val: int):
     """
     if val < 250:
         return np.uint8
-    if val < 2**16 - 5:
-        return np.uint16
-    return np.uint32
+    return np.uint16 if val < 2**16 - 5 else np.uint32
 
 
 def reduce_array(
