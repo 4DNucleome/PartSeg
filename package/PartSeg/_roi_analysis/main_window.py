@@ -184,7 +184,7 @@ class Options(QWidget):
             QMessageBox.information(self, "No segmentation", "No segmentation executed", QMessageBox.Ok)
             return
         values = self._settings.get_algorithm(f"algorithms.{name}", {})
-        if len(values) == 0:
+        if isinstance(values, dict) and len(values) == 0:
             QMessageBox.information(self, "Some problem", "Pleas run execution again", QMessageBox.Ok)
             return
         current_segmentation = ROIExtractionProfile(name="Unknown", algorithm=name, values=values)
@@ -204,7 +204,6 @@ class Options(QWidget):
             profile = SegmentationPipeline(name=text, segmentation=current_segmentation, mask_history=mask_history)
             self._settings.roi_pipelines[text] = profile
             self._settings.dump()
-            self.choose_pipe.addItem(text)
             break
 
     def choose_pipeline(self, text):

@@ -15,8 +15,6 @@ from PartSeg._launcher.main_window import Prepare as LauncherPrepare
 from PartSeg._roi_analysis import main_window as analysis_main_window
 from PartSeg._roi_mask import main_window as mask_main_window
 from PartSegCore import state_store
-from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis import SegmentationPipeline
 
 from .utils import CI_BUILD, GITHUB_ACTIONS, TRAVIS
 
@@ -69,38 +67,24 @@ class TestAnalysisOptions:
         assert analysis_options.choose_pipe.count() == 1
         assert analysis_options.choose_pipe.currentText() == "<none>"
 
-    def test_add_profile(self, qtbot, part_settings, analysis_options):
-        part_settings.roi_profiles["sample name"] = ROIExtractionProfile(
-            name="sample name", algorithm="sample algorithm", values=None
-        )
+    def test_add_profile(self, qtbot, part_settings, analysis_options, lower_threshold_profile, border_rim_profile):
+        part_settings.roi_profiles[lower_threshold_profile.name] = lower_threshold_profile
         assert analysis_options.choose_profile.count() == 2
         assert analysis_options.choose_profile.currentText() == "<none>"
-        assert analysis_options.choose_profile.itemText(1) == "sample name"
-        assert analysis_options.choose_profile.itemData(1, Qt.ItemDataRole.ToolTipRole) == str(
-            part_settings.roi_profiles["sample name"]
-        )
-        part_settings.roi_profiles["sample name2"] = ROIExtractionProfile(
-            name="sample name2", algorithm="sample algorithm", values=None
-        )
+        assert analysis_options.choose_profile.itemText(1) == lower_threshold_profile.name
+        assert analysis_options.choose_profile.itemData(1, Qt.ItemDataRole.ToolTipRole) == str(lower_threshold_profile)
+        part_settings.roi_profiles[border_rim_profile.name] = border_rim_profile
         assert analysis_options.choose_profile.count() == 3
         assert analysis_options.choose_pipe.count() == 1
+        del part_settings.roi_profiles[lower_threshold_profile.name]
+        assert analysis_options.choose_profile.count() == 2
 
-    def test_add_pipeline(self, part_settings, analysis_options):
-        part_settings.roi_pipelines["test1"] = SegmentationPipeline(
-            name="test1",
-            segmentation=ROIExtractionProfile(name="sample name", algorithm="sample algorithm", values=None),
-            mask_history=[],
-        )
+    def test_add_pipeline(self, part_settings, analysis_options, sample_pipeline, sample_pipeline2):
+        part_settings.roi_pipelines[sample_pipeline.name] = sample_pipeline
         assert analysis_options.choose_pipe.count() == 2
-        assert analysis_options.choose_pipe.itemText(1) == "test1"
-        assert analysis_options.choose_pipe.itemData(1, Qt.ItemDataRole.ToolTipRole) == str(
-            part_settings.roi_pipelines["test1"]
-        )
-        part_settings.roi_pipelines["test2"] = SegmentationPipeline(
-            name="test2",
-            segmentation=ROIExtractionProfile(name="sample name", algorithm="sample algorithm", values=None),
-            mask_history=[],
-        )
+        assert analysis_options.choose_pipe.itemText(1) == sample_pipeline.name
+        assert analysis_options.choose_pipe.itemData(1, Qt.ItemDataRole.ToolTipRole) == str(sample_pipeline)
+        part_settings.roi_pipelines[sample_pipeline2.name] = sample_pipeline2
         assert analysis_options.choose_pipe.count() == 3
         assert analysis_options.choose_profile.count() == 1
 
@@ -118,9 +102,32 @@ class TestAnalysisOptions:
         assert part_settings.compare_segmentation is not None
 
     @patch("PartSeg._roi_analysis.main_window.QMessageBox.information")
-    def test_empty_save_pipeline(self, info, analysis_options):
+    def test_empty_save_pipeline(self, info, analysis_options, part_settings):
+        assert part_settings.history_size() == 0
         analysis_options.save_pipeline()
         info.assert_called_once()
+        assert info.call_args[0][1] == "No mask created"
+
+    @patch("PartSeg._roi_analysis.main_window.QMessageBox.information")
+    def test_save_pipeline_no_segmentation(self, info, analysis_options, part_settings, history_element):
+        part_settings.add_history_element(history_element)
+        analysis_options.save_pipeline()
+        info.assert_called_once()
+        assert info.call_args[0][1] == "No segmentation"
+
+    @patch("PartSeg._roi_analysis.main_window.QInputDialog.getText", return_value=("test", True))
+    def test_save_pipeline(self, info, analysis_options, part_settings, history_element, lower_threshold_profile):
+        part_settings.add_history_element(history_element)
+        part_settings.roi = np.zeros(part_settings.image.shape, dtype=np.uint8)
+        part_settings.set_algorithm(f"algorithms.{lower_threshold_profile.name}", lower_threshold_profile)
+        part_settings.last_executed_algorithm = lower_threshold_profile.name
+        assert analysis_options.choose_pipe.count() == 1
+        analysis_options.save_pipeline()
+        info.assert_called_once()
+        assert "test" in part_settings.roi_pipelines
+        assert info.call_args[0][1] == "Pipeline name"
+        assert analysis_options.choose_pipe.count() == 2
+        assert analysis_options.choose_pipe.itemText(1) == "test"
 
 
 class TestMaskMainWindow:
