@@ -391,6 +391,12 @@ class TestImageBase:
         assert image.time_pos == image.array_axis_order.index("T")
         assert image.stack_pos == image.array_axis_order.index("Z")
 
+    def test_get_axis_positions(self):
+        data = np.zeros((10, 10), np.uint8)
+        image = self.image_class(data, (1, 1), axes_order="XY")
+        assert set(image.get_axis_positions()) == set(Image.axis_order)
+        assert len(set(image.get_axis_positions().values())) == len(Image.axis_order)
+
 
 class ChangeChannelPosImage(Image):
     axis_order = "TZCYX"
