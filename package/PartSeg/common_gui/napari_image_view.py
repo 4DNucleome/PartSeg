@@ -17,7 +17,7 @@ from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from nme import register_class
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
+from qtpy.QtCore import QEvent, QPoint, Qt, QThread, QTimer, Signal
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
@@ -176,6 +176,8 @@ class ImageView(QWidget):
         self.mask_chk.setVisible(False)
         self.mask_label = QLabel("Mask:")
         self.mask_label.setVisible(False)
+
+        self.prepare_layers = thread_worker(_prepare_layers)
 
         self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_view_button)
@@ -386,6 +388,8 @@ class ImageView(QWidget):
             self.points_layer.data = np.empty((0, 4))
 
     def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
+        if QApplication.instance().thread() != QThread.currentThread():
+            raise RuntimeError("This method should be called from main thread")
         image = self.get_image(image)
         if roi_info is None:
             roi_info = self.settings.roi_info
@@ -601,6 +605,9 @@ class ImageView(QWidget):
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
         self._remove_worker(self.sender())
 
+        if QApplication.instance().thread() != QThread.currentThread():
+            raise RuntimeError("Not in main thread")
+
         image_info, replace = image_data
         image = image_info.image
         if replace:
@@ -674,7 +681,7 @@ class ImageView(QWidget):
         return image
 
     def _prepare_layers(self, image, parameters, replace):
-        worker = prepare_layers(image, parameters, replace)
+        worker = self.prepare_layers(image, parameters, replace)
         worker.returned.connect(self._add_image)
         self.worker_list.append(worker)
         worker.start()
