@@ -19,6 +19,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from PartSeg.common_gui.main_window import BaseMainWindow
 
 
+def _empty_push(_):
+    """Empty function for push"""
+
+
 def str_to_rgb(arg):
     """Convert an rgb string 'rgb(x,y,z)' to a list of ints [x,y,z]."""
     return list(map(int, re.match(r"rgb\((\d+),\s*(\d+),\s*(\d+)\)", arg).groups()))
@@ -108,7 +112,7 @@ class QtConsole(RichJupyterWidget):
             self.kernel_client = None
             self.kernel_manager = None
             self.shell = None
-            self.push = lambda var: None
+            self.push = _empty_push
 
         elif isinstance(shell, ZMQInteractiveShell):
             # if launching from jupyter notebook, connect to the existing
