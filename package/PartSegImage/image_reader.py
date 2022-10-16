@@ -18,6 +18,10 @@ from .image import Image
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
 
+def _empty(_, __):
+    """Empty function for callback"""
+
+
 class TiffFileException(Exception):
     """
     exception raised if reading tiff file fails. Created for distinguish exceptions which should
@@ -46,7 +50,7 @@ class BaseImageReader:
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
         if callback_function is None:
-            self.callback_function = lambda x, y: 0
+            self.callback_function = _empty
         else:
             self.callback_function = callback_function
 
@@ -106,7 +110,7 @@ class BaseImageReader:
         :param axes_li: current order of array axes as string like "TZYXC"
         """
         try:
-            final_mapping_dict = {l: i for i, l in enumerate(cls.return_order())}
+            final_mapping_dict = {letter: i for i, letter in enumerate(cls.return_order())}
             for let1, let2 in [("Z", "I"), ("Z", "Q"), ("C", "S")]:
                 if let1 in final_mapping_dict and let2 not in final_mapping_dict:
                     final_mapping_dict[let2] = final_mapping_dict[let1]
@@ -128,7 +132,7 @@ class BaseImageReader:
         except KeyError as e:  # pragma: no cover
             raise NotImplementedError(
                 f"Data type not supported ({e.args[0]}). Please contact with author for update code"
-            )
+            ) from e
         if len(final_mapping) != len(set(final_mapping)):
             raise NotImplementedError("Data type not supported. Please contact with author for update code")
         if len(array.shape) < len(cls.return_order()):

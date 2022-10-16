@@ -19,7 +19,10 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
         self.parent.report_func()
         return res
 
-    TiffFile.report_func = lambda x: 0
+    def _dummy_report_func(self):
+        """dummy function for report_func"""
+
+    TiffFile.report_func = _dummy_report_func
     tifffile.tifffile.TiffPage.asarray = asarray
 
     if packaging.version.parse(tifffile.__version__) <= packaging.version.parse("2019.7.26"):  # pragma: no cover

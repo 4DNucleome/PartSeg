@@ -37,6 +37,10 @@ known_first_party=['PartSeg', 'PartSegData','PartSegCore','PartSegImage', 'PartS
 profile="black"
 src_paths=["package"]
 
+[tool.ruff]
+line-length = 120
+exclude = ["examples/call_simple_threshold.py"]
+
 
 [tool.check-manifest]
 ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]

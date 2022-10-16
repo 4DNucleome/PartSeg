@@ -490,7 +490,7 @@ class Image:
         :return: dict with mapping axis to its position
         :rtype: dict
         """
-        return {l: i for i, l in enumerate(cls.axis_order)}
+        return {letter: i for i, letter in enumerate(cls.axis_order)}
 
     @classmethod
     def get_array_axis_positions(cls) -> typing.Dict[str, int]:
@@ -498,7 +498,7 @@ class Image:
         :return: dict with mapping axis to its position for array fitted to image
         :rtype: dict
         """
-        return {l: i for i, l in enumerate(cls.array_axis_order)}
+        return {letter: i for i, letter in enumerate(cls.array_axis_order)}
 
     def get_data_by_axis(self, **kwargs) -> np.ndarray:
         """

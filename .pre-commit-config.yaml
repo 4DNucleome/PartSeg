@@ -36,6 +36,10 @@ repos:
     rev: v2.0.0
     hooks:
     - id: setup-cfg-fmt
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.75
+    hooks:
+      - id: lint
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.1.0
     hooks:
