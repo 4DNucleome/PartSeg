@@ -394,8 +394,8 @@ class TestImageBase:
     def test_get_axis_positions(self):
         data = np.zeros((10, 10), np.uint8)
         image = self.image_class(data, (1, 1), axes_order="XY")
-        assert set(image.get_axis_positions()) == set(Image.axis_order)
-        assert len(set(image.get_axis_positions().values())) == len(Image.axis_order)
+        assert set(image.get_axis_positions()) == set(image.axis_order)
+        assert len(set(image.get_axis_positions().values())) == len(image.axis_order)
 
 
 class ChangeChannelPosImage(Image):
