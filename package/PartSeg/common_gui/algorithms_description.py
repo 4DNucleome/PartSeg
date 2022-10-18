@@ -109,6 +109,9 @@ class QtAlgorithmProperty(AlgorithmProperty):
     def get_value(self):
         return self._getter(self._widget)
 
+    def is_multiline(self):
+        return getattr(self._widget, "multiline", False)
+
     def recursive_get_values(self):
         if isinstance(self._widget, SubAlgorithmWidget):
             return self._widget.recursive_get_values()
@@ -413,15 +416,20 @@ class FormWidget(QWidget):
             ap.change_fun.connect(_any_arguments(self.value_changed.emit))
             self.channels_chose.append(w)
             return
-        if isinstance(ap.get_field(), Widget):
-            layout.addRow(label, typing.cast(Widget, ap.get_field()).native)
-            return
         if isinstance(ap.get_field(), FieldsList):
             layout.addRow(label)
             for el in typing.cast(FieldsList, ap.get_field()).field_list:
                 self._add_to_layout(layout, el, start_values.get(ap.name, {}), settings, add_to_widget_dict=False)
             return
-        layout.addRow(label, ap.get_field())
+        if isinstance(ap.get_field(), Widget):
+            widget = typing.cast(Widget, ap.get_field()).native
+        else:
+            widget = ap.get_field()
+        if ap.is_multiline():
+            layout.addRow(label)
+            layout.addRow(widget)
+        else:
+            layout.addRow(label, widget)
         # noinspection PyUnresolvedReferences
         if issubclass(ap.value_type, Channel):
             # noinspection PyTypeChecker
