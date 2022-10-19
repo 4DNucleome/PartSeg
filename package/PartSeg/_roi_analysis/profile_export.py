@@ -1,4 +1,5 @@
 import re
+import typing
 
 import numpy as np
 from qtpy.QtCore import Qt
@@ -77,14 +78,6 @@ class ExportDialog(QDialog):
         else:
             self.export_btn.setEnabled(True)
 
-    def get_checked(self):
-        res = []
-        for i in range(self.list_view.count()):
-            it = self.list_view.item(i)
-            if it.checkState() == Qt.Checked:
-                res.append(str(it.text()))
-        return res
-
     def preview(self):
         if self.list_view.currentItem() is None:
             return  # TODO check this
@@ -122,6 +115,9 @@ class ExportDialog(QDialog):
                 res.append(str(item.text()))
         return res
 
+    def get_checked(self):
+        return self.get_export_list()
+
 
 class ImportDialog(QDialog):
     def __init__(self, import_dict, local_dict, viewer, parent=None):
@@ -154,8 +150,8 @@ class ImportDialog(QDialog):
 
                 match = end_reg.match(ob_name)
                 if match:
-                    new_name_format = match.group(1) + " ({})"
-                    i = int(match.group(2)) + 1
+                    new_name_format = match[1] + " ({})"
+                    i = int(match[2]) + 1
                 else:
                     new_name_format = ob_name + " ({})"
                     i = 1
@@ -168,10 +164,7 @@ class ImportDialog(QDialog):
         def block_import(radio_btn, name_field):
             def inner_func():
                 text = str(name_field.text()).strip()
-                if text == "" and radio_btn.isChecked():
-                    self.import_btn.setDisabled(True)
-                else:
-                    self.import_btn.setEnabled(True)
+                self.import_btn.setDisabled(not text and radio_btn.isChecked())
 
             return inner_func
 
@@ -267,8 +260,8 @@ class ImportDialog(QDialog):
             item = self.list_view.topLevelItem(index)
             if item.checkState(0) == Qt.Checked:
                 chk = self.list_view.itemWidget(item, 2)
-                if chk is not None and chk.isChecked():
-                    res.append((str(item.text(0)), str(self.list_view.itemWidget(item, 3).text())))
+                if chk is not None and typing.cast(QRadioButton, chk).isChecked():
+                    res.append((item.text(0), typing.cast(QLineEdit, self.list_view.itemWidget(item, 3)).text()))
                 else:
                     name = str(item.text(0))
                     res.append((name, name))
@@ -278,7 +271,6 @@ class ImportDialog(QDialog):
         for index in range(self.list_view.topLevelItemCount()):
             item = self.list_view.topLevelItem(index)
             item.setCheckState(0, Qt.Unchecked)
-        self.check_state[...] = False
         self.import_btn.setDisabled(True)
         self.checked_num = 0
 
@@ -287,7 +279,6 @@ class ImportDialog(QDialog):
             item = self.list_view.topLevelItem(index)
             item.setCheckState(0, Qt.Checked)
         self.checked_num = len(self.import_dict)
-        self.check_state[...] = True
         self.import_btn.setDisabled(False)
 
 
