@@ -78,14 +78,6 @@ class ExportDialog(QDialog):
         else:
             self.export_btn.setEnabled(True)
 
-    def get_checked(self):
-        res = []
-        for i in range(self.list_view.count()):
-            it = self.list_view.item(i)
-            if it.checkState() == Qt.Checked:
-                res.append(str(it.text()))
-        return res
-
     def preview(self):
         if self.list_view.currentItem() is None:
             return  # TODO check this
@@ -122,6 +114,9 @@ class ExportDialog(QDialog):
             if item.checkState() == Qt.Checked:
                 res.append(str(item.text()))
         return res
+
+    def get_checked(self):
+        return self.get_export_list()
 
 
 class ImportDialog(QDialog):
