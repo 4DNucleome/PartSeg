@@ -8,6 +8,8 @@ import typing
 import warnings
 from enum import Enum
 
+from magicgui import register_type
+from magicgui.widgets import Combobox
 from qtpy import PYQT5
 from qtpy.QtCore import QPointF, QRect, Qt, QTimer
 from qtpy.QtGui import QColor, QFontMetrics, QPainter, QPaintEvent, QPalette, QPolygonF
@@ -53,6 +55,22 @@ class ChannelComboBox(QComboBox):
             index = 0
         self.blockSignals(block)
         self.setCurrentIndex(index)
+
+
+class MguiChannelComboBox(Combobox):
+    """Combobox for selecting channel index. Channel numeration starts from 1 for user and from 0 for developer"""
+
+    def change_channels_num(self, num: int):
+        """Change number of channels"""
+        self.choices = (Channel(i) for i in range(0, num))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._default_choices = [Channel(i) for i in range(0, 10)]
+        self.choices = self._default_choices
+
+
+register_type(Channel, widget_type=MguiChannelComboBox)
 
 
 EnumType = typing.TypeVar("EnumType", bound=Enum)
