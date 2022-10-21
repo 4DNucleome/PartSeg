@@ -512,3 +512,4 @@ def test_cut_with_roi():
         cut_image, cut_mask = image._cut_with_roi(mask == i, replace_mask=True, frame=2)
         assert cut_image[0].shape == (1, 1, 15, 15)
         assert np.all(cut_image[0][0, 0, 2:-2, 2:-2][diam > 0])
+        assert np.all(cut_mask[0, 0, 2:-2, 2:-2] == diam)
