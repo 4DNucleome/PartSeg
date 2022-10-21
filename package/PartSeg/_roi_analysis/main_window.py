@@ -2,7 +2,6 @@ import os
 from contextlib import suppress
 from typing import Type
 
-import numpy as np
 from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import (
@@ -142,6 +141,8 @@ class Options(QWidget):
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
         self.setLayout(layout)
+
+        settings.roi_changed.connect(self._refresh_compare_btn)
 
     @ensure_main_thread
     def _update_profiles(self):
@@ -343,8 +344,10 @@ class Options(QWidget):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         self._settings.set_segmentation_result(segmentation)
-        self.compare_btn.setEnabled(isinstance(segmentation.roi, np.ndarray) and np.any(segmentation.roi))
         self.label.setText(self.sender().get_info_text())
+
+    def _refresh_compare_btn(self):
+        self.compare_btn.setEnabled(bool(self._settings.roi_info.bound_info))
 
     def showEvent(self, _event):
         self.hide_left_panel_chk.setChecked(self._settings.get_from_profile("hide_left_panel", False))
