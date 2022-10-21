@@ -193,12 +193,12 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
             return self.calculation_run(report_fun)
         except SegmentationLimitException:  # pragma: no cover
             raise
-        except Exception:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             parameters = self.get_segmentation_profile()
             image = self.image
             raise SegmentationException(
                 AlgorithmInfo(algorithm_name=self.get_name(), parameters=parameters, image=image)
-            )
+            ) from e
 
     @abstractmethod
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:

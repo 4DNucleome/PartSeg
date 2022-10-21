@@ -62,12 +62,10 @@ class MguiChannelComboBox(Combobox):
 
     def change_channels_num(self, num: int):
         """Change number of channels"""
-        self.choices = (Channel(i) for i in range(0, num))
+        self.choices = [Channel(i) for i in range(num)]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._default_choices = [Channel(i) for i in range(0, 10)]
-        self.choices = self._default_choices
+    def __init__(self, **kwargs):
+        super().__init__(choices=[Channel(i) for i in range(10)], **kwargs)
 
 
 register_type(Channel, widget_type=MguiChannelComboBox)

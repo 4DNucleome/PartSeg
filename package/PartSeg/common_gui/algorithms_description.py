@@ -381,6 +381,8 @@ class FormWidget(QWidget):
                 layout.addRow(el)
                 continue
             self._add_to_layout(layout, el, start_values, settings)
+            if hasattr(el.get_field(), "change_channels_num"):
+                self.channels_chose.append(el.get_field())
         self.setLayout(layout)
         self.value_changed.connect(self.update_size)
 
@@ -416,7 +418,6 @@ class FormWidget(QWidget):
             if ap.name in start_values:
                 w.set_starting(start_values[ap.name])
             ap.change_fun.connect(_any_arguments(self.value_changed.emit))
-            self.channels_chose.append(w)
             return
         if isinstance(ap.get_field(), FieldsList):
             layout.addRow(label)
@@ -433,9 +434,6 @@ class FormWidget(QWidget):
         else:
             layout.addRow(label, widget)
         # noinspection PyUnresolvedReferences
-        if issubclass(ap.value_type, Channel):
-            # noinspection PyTypeChecker
-            self.channels_chose.append(ap.get_field())
         if issubclass(ap.value_type, ROIExtractionProfile):
             # noinspection PyTypeChecker
             ap.get_field().set_settings(settings)
