@@ -670,7 +670,7 @@ class Image:
         cut_area = self.fit_array_to_image(cut_area)
         new_cut = tuple(self._roi_to_slices(cut_area))
         catted_cut_area = cut_area[new_cut]
-        new_image = [x[new_cut] for x in self._channel_arrays]
+        new_image = [np.copy(x[new_cut]) for x in self._channel_arrays]
         for el in new_image:
             el[catted_cut_area == 0] = 0
         if replace_mask:
