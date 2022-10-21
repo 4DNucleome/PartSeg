@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import pytest
+from skimage.morphology import diamond
 
 from PartSegImage import Image, ImageWriter, TiffImageReader
 from PartSegImage.image import FRAME_THICKNESS
@@ -494,3 +495,21 @@ class TestMergeImage:
         assert res_image.channels == 2
         assert isinstance(res_image, Image)
         assert isinstance(image2.merge(image1, "C"), ChangeChannelPosImage)
+
+
+def test_cut_with_roi():
+    data = np.zeros((3, 23, 23), np.uint8)
+    data[0] = 1
+    data[1] = 2
+    data[2] = 3
+    diam = diamond(5, dtype=np.uint8)
+    mask = np.zeros((23, 23), np.uint8)
+    mask[0:11, 0:11][diam > 0] = 1
+    mask[6:17, 6:17][diam > 0] = 2
+    mask[12:23, 12:23][diam > 0] = 3
+    image = Image(data, (1, 1), axes_order="CXY")
+    for i in range(1, 4):
+        cut_image, cut_mask = image._cut_with_roi(mask == i, replace_mask=True, frame=2)
+        assert cut_image[0].shape == (1, 1, 15, 15)
+        assert np.all(cut_image[0][0, 0, 2:-2, 2:-2][diam > 0])
+        assert np.all(cut_mask[0, 0, 2:-2, 2:-2] == diam)

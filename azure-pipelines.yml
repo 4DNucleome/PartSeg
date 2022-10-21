@@ -180,7 +180,7 @@ stages:
         strategy:
           matrix:
             macos:
-              imageName: 'macos-10.15'
+              imageName: 'macos-11'
               test_path: dist/PartSeg/PartSeg _test
             windows:
               imageName: 'windows-2019'
