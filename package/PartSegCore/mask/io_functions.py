@@ -532,6 +532,7 @@ class SaveROI(SaveBase):
         return "seg"
 
     @classmethod
+    @update_argument("parameters")
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],

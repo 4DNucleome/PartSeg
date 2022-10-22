@@ -276,14 +276,22 @@ class LoadMask(LoadBase):
         return True
 
 
+def _mask_data_outside_mask(file_path):
+    if not isinstance(file_path, str):
+        return False
+    with tarfile.open(file_path, "r:*") as tar_file:
+        metadata = load_metadata_base(tar_file.extractfile("metadata.json").read().decode("utf8"))
+        return metadata.get("keep_data_outside_mask", False)
+
+
 def load_mask_project(
     load_locations: typing.List[typing.Union[str, BytesIO, Path]],
     range_changed: typing.Callable[[int, int], typing.Any] = None,
     step_changed: typing.Callable[[int], typing.Any] = None,
     metadata: typing.Optional[dict] = None,
-    zero_out_cut_area: bool = True,
 ):
     data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
+    zero_out_cut_area = _mask_data_outside_mask(load_locations[0])
     image = data.image
     roi = data.roi_info.roi
     components = data.selected_components
@@ -319,7 +327,7 @@ class LoadMaskSegmentation(LoadBase):
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.List[ProjectTuple]:
-        return load_mask_project(load_locations, range_changed, step_changed, metadata, zero_out_cut_area=False)
+        return load_mask_project(load_locations, range_changed, step_changed, metadata)
 
 
 class LoadProfileFromJSON(LoadBase):
