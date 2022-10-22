@@ -13,6 +13,8 @@ from pathlib import Path
 
 import numpy as np
 import tifffile
+from nme import update_argument
+from pydantic import Field
 
 from PartSegImage import BaseImageWriter, GenericImageReader, Image, IMAGEJImageWriter, ImageWriter, TiffImageReader
 from PartSegImage.image import FRAME_THICKNESS, reduce_array
@@ -37,6 +39,7 @@ from ..io_utils import (
 from ..json_hooks import PartSegEncoder
 from ..project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from ..roi_info import ROIInfo
+from ..utils import BaseModel
 
 try:
     from napari_builtins.io import napari_write_points
@@ -513,12 +516,21 @@ class SaveROI(SaveBase):
         save_stack_segmentation(save_location, project_info, parameters)
 
 
+class SaveComponentsOptions(BaseModel):
+    frame: int = Field(0, title="Frame", description="How many pixels around bounding box of ROI should be saved")
+    mask_data: bool = Field(
+        False,
+        title="Keep data outside ROI",
+        description="If not checked then data outside ROI will be replaced with zeros.",
+    )
+
+
 def save_components(
     image: Image,
     components: list,
     dir_path: str,
     roi_info: ROIInfo,
-    parameters=None,
+    parameters: typing.Optional[SaveComponentsOptions] = None,
     points: typing.Optional[np.ndarray] = None,
     range_changed=None,
     step_changed=None,
@@ -530,7 +542,7 @@ def save_components(
         step_changed = empty_fun
 
     if parameters is None:
-        parameters = SaveComponents.get_default_values()
+        parameters = SaveComponentsOptions()
 
     roi_info = roi_info.fit_to_image(image)
     os.makedirs(dir_path, exist_ok=True)
@@ -545,7 +557,7 @@ def save_components(
     for i in components:
         components_mark = np.array(roi_info.roi == i)
         im = image.cut_image(
-            components_mark, replace_mask=True, frame=parameters["frame"], zero_out_cut_area=parameters["mask_data"]
+            components_mark, replace_mask=True, frame=parameters.frame, zero_out_cut_area=parameters.mask_data
         )
         if points is not None and points_casted is not None:
             points_mask = components_mark[tuple(points_casted.T)]
@@ -569,16 +581,19 @@ class SaveComponents(SaveBase):
     Save selected components in separated files.
     """
 
+    __argument_class__ = SaveComponentsOptions
+
     @classmethod
     def get_short_name(cls):
         return "comp"
 
     @classmethod
+    @update_argument("parameters")
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info: MaskProjectTuple,
-        parameters: dict,
+        parameters: SaveComponentsOptions,
         range_changed=None,
         step_changed=None,
     ):
@@ -597,22 +612,21 @@ class SaveComponents(SaveBase):
     def get_name(cls) -> str:
         return "Components"
 
-    @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return [AlgorithmProperty("frame", "Frame", 2), AlgorithmProperty("mask_data", "Mask data", True)]
-
 
 class SaveComponentsImagej(SaveBase):
+    __argument_class__ = SaveComponentsOptions
+
     @classmethod
     def get_short_name(cls):
         return "comp_imagej"
 
     @classmethod
+    @update_argument("parameters")
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info: MaskProjectTuple,
-        parameters: dict,
+        parameters: SaveComponentsOptions,
         range_changed=None,
         step_changed=None,
     ):
@@ -631,10 +645,6 @@ class SaveComponentsImagej(SaveBase):
     @classmethod
     def get_name(cls) -> str:
         return "Components Imagej Tiff"
-
-    @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return [AlgorithmProperty("frame", "Frame", 2), AlgorithmProperty("mask_data", "Mask data", True)]
 
 
 class SaveParametersJSON(SaveBase):
