@@ -51,6 +51,12 @@ if sys.version_info[:3] == (3, 9, 7):
     ProjectInfoBase = object  # noqa: F811
 
 
+def empty_fun(_a0=None, _a1=None):
+    """
+    This is empty fun to pass as callback to for report.
+    """
+
+
 @dataclasses.dataclass(frozen=True)
 class MaskProjectTuple(ProjectInfoBase):
     """
@@ -103,93 +109,122 @@ class MaskProjectTuple(ProjectInfoBase):
         return self.roi_info.roi
 
 
+class SaveROIOptions(BaseModel):
+    relative_path: bool = Field(
+        True, title="Relative Path\nin segmentation", description="Use relative path to image in segmentation file"
+    )
+    mask_data: bool = Field(
+        False,
+        title="Keep data outside ROI",
+        description="When loading data in ROI analysis, if not checked"
+        " then data outside ROI will be replaced with zeros.",
+    )
+
+
+def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile):
+    segmentation_buff = BytesIO()
+    # noinspection PyTypeChecker
+    if project.image is not None:
+        spacing = project.image.spacing
+    else:
+        spacing = (10**-6, 10**-6, 10**-6)
+    segmentation_image = Image(project.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", ""))
+    try:
+        ImageWriter.save(segmentation_image, segmentation_buff, compression=None)
+    except ValueError:
+        segmentation_buff.seek(0)
+        tifffile.imwrite(segmentation_buff, project.roi_info.roi)
+    segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
+    tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
+
+
+def _save_mask_roi_metadata(
+    project: MaskProjectTuple, tar_file: tarfile.TarFile, parameters: SaveROIOptions, file_data
+):
+    metadata = {
+        "components": [int(x) for x in project.selected_components],
+        "parameters": {str(k): v for k, v in project.roi_extraction_parameters.items()},
+        "shape": project.roi_info.roi.shape,
+        "annotations": project.roi_info.annotations,
+        "keep_data_outside_mask": not parameters.mask_data,
+    }
+    if isinstance(project.image, Image):
+        file_path = project.image.file_path
+    elif isinstance(project.image, str):
+        file_path = project.image
+    else:
+        file_path = ""
+    if file_path != "":
+        if parameters.relative_path and isinstance(file_data, str):
+            metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
+        else:
+            metadata["base_file"] = file_path
+    metadata_buff = BytesIO(json.dumps(metadata, cls=PartSegEncoder).encode("utf-8"))
+    metadata_tar = get_tarinfo("metadata.json", metadata_buff)
+    tar_file.addfile(metadata_tar, metadata_buff)
+
+
+def _save_mask_mask(project: MaskProjectTuple, tar_file: tarfile.TarFile):
+    mask = project.mask
+    if mask.dtype == bool:
+        mask = mask.astype(np.uint8)
+    mask_buff = BytesIO()
+    tifffile.imwrite(mask_buff, mask)
+    mask_tar = get_tarinfo("mask.tif", mask_buff)
+    tar_file.addfile(mask_tar, fileobj=mask_buff)
+
+
+def _save_mask_alternative(project: MaskProjectTuple, tar_file: tarfile.TarFile):
+    alternative_buff = BytesIO()
+    np.savez(alternative_buff, **project.roi_info.alternative)
+    alternative_tar = get_tarinfo("alternative.npz", alternative_buff)
+    tar_file.addfile(alternative_tar, fileobj=alternative_buff)
+
+
+def _save_mask_history(project: MaskProjectTuple, tar_file: tarfile.TarFile):
+    el_info = []
+    for i, hist in enumerate(project.history):
+        el_info.append(
+            {
+                "index": i,
+                "mask_property": hist.mask_property,
+                "segmentation_parameters": hist.roi_extraction_parameters,
+                "annotations": hist.annotations,
+            }
+        )
+        hist.arrays.seek(0)
+        hist_info = get_tarinfo(f"history/arrays_{i}.npz", hist.arrays)
+        hist.arrays.seek(0)
+        tar_file.addfile(hist_info, hist.arrays)
+    if el_info:
+        hist_str = json.dumps(el_info, cls=PartSegEncoder)
+        hist_buff = BytesIO(hist_str.encode("utf-8"))
+        tar_algorithm = get_tarinfo("history/history.json", hist_buff)
+        tar_file.addfile(tar_algorithm, hist_buff)
+
+
 def save_stack_segmentation(
     file_data: typing.Union[tarfile.TarFile, str, Path, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
     segmentation_info: MaskProjectTuple,
-    parameters: dict,
-    range_changed=None,
-    step_changed=None,
+    parameters: SaveROIOptions,
+    range_changed=empty_fun,
+    step_changed=empty_fun,
 ):
-    if range_changed is None:
-        range_changed = empty_fun
-    if step_changed is None:
-        step_changed = empty_fun
     range_changed(0, 7)
     tar_file, file_path = open_tar_file(file_data, "w")
     step_changed(1)
     try:
-        segmentation_buff = BytesIO()
-        # noinspection PyTypeChecker
-        if segmentation_info.image is not None:
-            spacing = segmentation_info.image.spacing
-        else:
-            spacing = parameters.get("spacing", (10**-6, 10**-6, 10**-6))
-        segmentation_image = Image(
-            segmentation_info.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", "")
-        )
-        try:
-            ImageWriter.save(segmentation_image, segmentation_buff, compression=None)
-        except ValueError:
-            segmentation_buff.seek(0)
-            tifffile.imwrite(segmentation_buff, segmentation_info.roi_info.roi)
-        segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
-        tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
+        _save_mask_roi(segmentation_info, tar_file)
+        step_changed(2)
+        _save_mask_roi_metadata(segmentation_info, tar_file, parameters, file_data)
         step_changed(3)
-        metadata = {
-            "components": [int(x) for x in segmentation_info.selected_components],
-            "parameters": {str(k): v for k, v in segmentation_info.roi_extraction_parameters.items()},
-            "shape": segmentation_info.roi_info.roi.shape,
-            "annotations": segmentation_info.roi_info.annotations,
-        }
-        if isinstance(segmentation_info.image, Image):
-            file_path = segmentation_info.image.file_path
-        elif isinstance(segmentation_info.image, str):
-            file_path = segmentation_info.image
-        else:
-            file_path = ""
-        if file_path != "":
-            if parameters["relative_path"] and isinstance(file_data, str):
-                metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
-            else:
-                metadata["base_file"] = file_path
-        metadata_buff = BytesIO(json.dumps(metadata, cls=PartSegEncoder).encode("utf-8"))
-        metadata_tar = get_tarinfo("metadata.json", metadata_buff)
-        tar_file.addfile(metadata_tar, metadata_buff)
-        step_changed(4)
         if segmentation_info.mask is not None:
-            mask = segmentation_info.mask
-            if mask.dtype == bool:
-                mask = mask.astype(np.uint8)
-            mask_buff = BytesIO()
-            tifffile.imwrite(mask_buff, mask)
-            mask_tar = get_tarinfo("mask.tif", mask_buff)
-            tar_file.addfile(mask_tar, fileobj=mask_buff)
+            _save_mask_mask(segmentation_info, tar_file)
         if segmentation_info.roi_info.alternative:
-            alternative_buff = BytesIO()
-            np.savez(alternative_buff, **segmentation_info.roi_info.alternative)
-            alternative_tar = get_tarinfo("alternative.npz", alternative_buff)
-            tar_file.addfile(alternative_tar, fileobj=alternative_buff)
+            _save_mask_alternative(segmentation_info, tar_file)
+        step_changed(4)
+        _save_mask_history(segmentation_info, tar_file)
         step_changed(5)
-        el_info = []
-        for i, hist in enumerate(segmentation_info.history):
-            el_info.append(
-                {
-                    "index": i,
-                    "mask_property": hist.mask_property,
-                    "segmentation_parameters": hist.roi_extraction_parameters,
-                    "annotations": hist.annotations,
-                }
-            )
-            hist.arrays.seek(0)
-            hist_info = get_tarinfo(f"history/arrays_{i}.npz", hist.arrays)
-            hist.arrays.seek(0)
-            tar_file.addfile(hist_info, hist.arrays)
-        if el_info:
-            hist_str = json.dumps(el_info, cls=PartSegEncoder)
-            hist_buff = BytesIO(hist_str.encode("utf-8"))
-            tar_algorithm = get_tarinfo("history/history.json", hist_buff)
-            tar_file.addfile(tar_algorithm, hist_buff)
-        step_changed(6)
 
     finally:
         if isinstance(file_data, (str, Path)):
@@ -271,12 +306,6 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         history=history,
         spacing=([10**-9] + list(spacing)) if spacing is not None else None,
     )
-
-
-def empty_fun(_a0=None, _a1=None):
-    """
-    This is empty fun to pass as callback to for report.
-    """
 
 
 class LoadROI(LoadBase):
@@ -492,6 +521,8 @@ class SaveROI(SaveBase):
     Save current ROI
     """
 
+    __argument_class__ = SaveROIOptions
+
     @classmethod
     def get_name(cls):
         return "ROI project (*.seg *.tgz)"
@@ -501,15 +532,11 @@ class SaveROI(SaveBase):
         return "seg"
 
     @classmethod
-    def get_fields(cls):
-        return [AlgorithmProperty("relative_path", "Relative Path\nin segmentation", False)]
-
-    @classmethod
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info: MaskProjectTuple,
-        parameters: dict,
+        parameters: SaveROIOptions,
         range_changed=None,
         step_changed=None,
     ):
