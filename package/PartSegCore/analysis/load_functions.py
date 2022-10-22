@@ -322,26 +322,6 @@ class LoadMaskSegmentation(LoadBase):
         return load_mask_project(load_locations, range_changed, step_changed, metadata, zero_out_cut_area=False)
 
 
-class LoadMaskProjectWithBackground(LoadBase):
-    @classmethod
-    def get_name(cls):
-        return "Mask project with background (*.seg *.tgz)"
-
-    @classmethod
-    def get_short_name(cls):
-        return "mask_project_bg"
-
-    @classmethod
-    def load(
-        cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
-        metadata: typing.Optional[dict] = None,
-    ) -> typing.List[ProjectTuple]:
-        return load_mask_project(load_locations, range_changed, step_changed, metadata, zero_out_cut_area=True)
-
-
 class LoadProfileFromJSON(LoadBase):
     @classmethod
     def get_short_name(cls):
@@ -389,7 +369,6 @@ load_dict = Register(
     LoadImageMask,
     LoadProject,
     LoadMaskSegmentation,
-    LoadMaskProjectWithBackground,
     LoadPoints,
     class_methods=LoadBase.need_functions,
 )
