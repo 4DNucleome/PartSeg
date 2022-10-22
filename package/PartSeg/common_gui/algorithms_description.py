@@ -345,12 +345,17 @@ def _any_arguments(fun):
     return _any
 
 
+FieldAllowedTypes = typing.Union[
+    typing.List[AlgorithmProperty], typing.Type[BaseModel], typing.Type[AlgorithmDescribeBase]
+]
+
+
 class FormWidget(QWidget):
     value_changed = Signal()
 
     def __init__(
         self,
-        fields: typing.Union[typing.List[AlgorithmProperty], typing.Type[BaseModel]],
+        fields: FieldAllowedTypes,
         start_values=None,
         dimension_num=1,
         settings: typing.Optional[BaseSettings] = None,
@@ -363,9 +368,6 @@ class FormWidget(QWidget):
         layout = QFormLayout()
         layout.setContentsMargins(10, 0, 10, 0)
         self._model_class = None
-        if not isinstance(fields, list):
-            self._model_class = fields
-            fields = base_model_to_algorithm_property(fields)
         element_list = self._element_list(fields)
         for el in element_list:
             if isinstance(el, QLabel):
@@ -374,6 +376,17 @@ class FormWidget(QWidget):
             self._add_to_layout(layout, el, start_values, settings)
         self.setLayout(layout)
         self.value_changed.connect(self.update_size)
+
+    @staticmethod
+    def _element_list(fields: FieldAllowedTypes):
+        if issubclass(fields, AlgorithmDescribeBase):
+            if fields.__new_style__:
+                fields = base_model_to_algorithm_property(fields.__argument_class__)
+            else:
+                fields = fields.get_fields()
+        elif not isinstance(fields, list):
+            fields = base_model_to_algorithm_property(fields)
+        return map(QtAlgorithmProperty.from_algorithm_property, fields)
 
     def _add_to_layout(
         self, layout, ap: QtAlgorithmProperty, start_values: typing.MutableMapping, settings, add_to_widget_dict=True
@@ -412,10 +425,6 @@ class FormWidget(QWidget):
         if ap.name in start_values:
             with suppress(KeyError, ValueError, TypeError):
                 ap.set_value(start_values[ap.name])
-
-    @staticmethod
-    def _element_list(fields) -> typing.Iterable[QtAlgorithmProperty]:
-        return map(QtAlgorithmProperty.from_algorithm_property, fields)
 
     def has_elements(self):
         return len(self.widgets_dict) > 0
