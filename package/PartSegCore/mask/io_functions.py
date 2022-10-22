@@ -119,15 +119,16 @@ class SaveROIOptions(BaseModel):
         description="When loading data in ROI analysis, if not checked"
         " then data outside ROI will be replaced with zeros.",
     )
+    spacing: typing.List[float] = Field((10**-6, 10**-6, 10**-6), hidden=True)
 
 
-def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile):
+def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile, parameters: SaveROIOptions):
     segmentation_buff = BytesIO()
     # noinspection PyTypeChecker
     if project.image is not None:
         spacing = project.image.spacing
     else:
-        spacing = (10**-6, 10**-6, 10**-6)
+        spacing = parameters.spacing
     segmentation_image = Image(project.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", ""))
     try:
         ImageWriter.save(segmentation_image, segmentation_buff, compression=None)
@@ -214,7 +215,7 @@ def save_stack_segmentation(
     tar_file, file_path = open_tar_file(file_data, "w")
     step_changed(1)
     try:
-        _save_mask_roi(segmentation_info, tar_file)
+        _save_mask_roi(segmentation_info, tar_file, parameters)
         step_changed(2)
         _save_mask_roi_metadata(segmentation_info, tar_file, parameters, file_data)
         step_changed(3)

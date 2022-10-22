@@ -377,15 +377,20 @@ class FormWidget(QWidget):
         self.setLayout(layout)
         self.value_changed.connect(self.update_size)
 
-    @staticmethod
-    def _element_list(fields: FieldAllowedTypes):
-        if issubclass(fields, AlgorithmDescribeBase):
+    def _element_list(self, fields: FieldAllowedTypes):
+        if inspect.isclass(fields) and issubclass(fields, AlgorithmDescribeBase):
             if fields.__new_style__:
+                self._model_class = fields.__argument_class__
                 fields = base_model_to_algorithm_property(fields.__argument_class__)
             else:
                 fields = fields.get_fields()
-        elif not isinstance(fields, list):
+        elif not isinstance(fields, typing.Iterable):
+            self._model_class = fields
             fields = base_model_to_algorithm_property(fields)
+        return self._element_list_map(fields)
+
+    @staticmethod
+    def _element_list_map(fields):
         return map(QtAlgorithmProperty.from_algorithm_property, fields)
 
     def _add_to_layout(

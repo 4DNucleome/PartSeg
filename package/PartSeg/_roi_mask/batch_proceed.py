@@ -86,8 +86,8 @@ class BatchProceed(QThread):
                     while path.exists(path.join(task.save_prefix[0], name)):
                         match = re_end.match(name)
                         if match:
-                            num = int(match.group(2)) + 1
-                            name = match.group(1) + str(num) + ".seg"
+                            num = int(match[2]) + 1
+                            name = match[1] + str(num) + ".seg"
                         else:
                             name = path.splitext(path.basename(file_path))[0] + "_version1.seg"
                     SaveROI.save(path.join(task.save_prefix[0], name), state2, parameters=task.save_prefix[1])

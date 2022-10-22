@@ -594,7 +594,7 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
 
         if "position" in value.field_info.extra:
             res.insert(value.field_info.extra["position"], ap)
-        else:
+        elif not value.field_info.extra.get("hidden", False):
             res.append(ap)
         if "suffix" in value.field_info.extra:
             res.append(value.field_info.extra["suffix"])
