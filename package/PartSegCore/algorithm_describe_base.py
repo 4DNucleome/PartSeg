@@ -53,7 +53,7 @@ class AlgorithmProperty:
             warnings.warn("property_type is deprecated, use value_type instead", DeprecationWarning, stacklevel=2)
             value_type = kwargs["property_type"]
             del kwargs["property_type"]
-        if len(kwargs) != 0:
+        if kwargs:
             raise ValueError(", ".join(kwargs.keys()) + " are not expected")
 
         self.name = name
@@ -206,9 +206,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
 def is_static(fun):
     args = inspect.getfullargspec(fun).args
-    if len(args) == 0:
-        return True
-    return args[0] != "self"
+    return True if len(args) == 0 else args[0] != "self"
 
 
 AlgorithmType = typing.TypeVar("AlgorithmType", bound=typing.Type[AlgorithmDescribeBase])
@@ -426,7 +424,7 @@ class ROIExtractionProfileMeta(ModelMetaclass):
         def allow_positional_args(func):
             @wraps(func)
             def _wraps(self, *args, **kwargs):
-                if len(args) > 0:
+                if args:
                     warnings.warn(
                         "Positional arguments are deprecated, use keyword arguments instead",
                         FutureWarning,

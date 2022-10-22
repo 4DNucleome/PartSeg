@@ -44,9 +44,7 @@ class NapariFormWidgetWithMask(NapariFormWidget):
 
     def get_values(self):
         res = {name: el.get_value() for name, el in self.widgets_dict.items() if name != "mask"}
-        if self._model_class is not None:
-            return self._model_class(**res)
-        return res
+        return self._model_class(**res) if self._model_class is not None else res
 
 
 class NapariFormDialog(FormDialog):
