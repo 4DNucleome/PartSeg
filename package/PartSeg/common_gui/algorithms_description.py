@@ -501,13 +501,7 @@ class SubAlgorithmWidget(QWidget):
             calc_class = algorithm_property.possible_values[algorithm_property.default_value]
         else:
             calc_class = algorithm_property
-        if calc_class.__new_style__:
-            widget = FormWidget(calc_class.__argument_class__, start_values=start_values)
-        else:
-            widget = FormWidget(
-                algorithm_property.possible_values[algorithm_property.default_value].get_fields(),
-                start_values=start_values,
-            )
+        widget = FormWidget(calc_class, start_values=start_values)
         widget.layout().setContentsMargins(0, 0, 0, 0)
         return widget
 
@@ -605,7 +599,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     @staticmethod
     def _form_widget(algorithm, start_values) -> FormWidget:
         return FormWidget(
-            algorithm.__argument_class__ if algorithm.__new_style__ else algorithm.get_fields(),
+            algorithm,
             start_values=start_values,
         )
 
