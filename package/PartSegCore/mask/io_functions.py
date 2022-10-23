@@ -212,7 +212,7 @@ def save_stack_segmentation(
     step_changed=empty_fun,
 ):
     range_changed(0, 7)
-    tar_file, file_path = open_tar_file(file_data, "w")
+    tar_file, _file_path = open_tar_file(file_data, "w")
     step_changed(1)
     try:
         _save_mask_roi(segmentation_info, tar_file, parameters)
