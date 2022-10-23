@@ -7,7 +7,7 @@ from copy import deepcopy
 from enum import Enum
 
 import numpy as np
-from magicgui.widgets import ComboBox, Widget, create_widget
+from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
 from qtpy.QtCore import QObject, Signal
@@ -199,6 +199,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
         else:
             res = create_widget(value=ap.default_value, annotation=ap.value_type, options=ap.mgi_options)
+            if isinstance(res, EmptyWidget):
+                raise ValueError(f"Unknown type {ap.value_type}")
         return res
 
     def _get_field(self) -> typing.Union[QWidget, Widget]:
