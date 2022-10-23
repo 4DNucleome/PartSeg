@@ -69,7 +69,7 @@ class BatchProceed(QThread):
                 algorithm: StackAlgorithm = MaskAlgorithmSelection[task.parameters.algorithm]()
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
-                algorithm.set_parameters(**task.parameters.values)
+                algorithm.set_parameters(task.parameters.values)
                 if isinstance(task.save_prefix, tuple):
                     self.range_signal.emit(0, algorithm.get_steps_num() + 1)
                 else:

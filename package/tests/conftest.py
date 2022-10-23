@@ -11,14 +11,16 @@ import numpy as np
 import pytest
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis import ProjectTuple
+from PartSegCore.analysis import ProjectTuple, SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import ComponentsNumber, MeasurementProfile, Volume
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
+from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
+from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegImage import Image
 
 
@@ -225,6 +227,66 @@ def measurement_profiles():
     ]
     return MeasurementProfile(name="statistic1", chosen_fields=statistics), MeasurementProfile(
         name="statistic2", chosen_fields=statistics + statistics2
+    )
+
+
+@pytest.fixture
+def border_rim_profile():
+    return ROIExtractionProfile(
+        name="border_profile", algorithm=BorderRim.get_name(), values=BorderRim.get_default_values()
+    )
+
+
+@pytest.fixture
+def lower_threshold_profile():
+    return ROIExtractionProfile(
+        name="lower_profile",
+        algorithm=LowerThresholdAlgorithm.get_name(),
+        values=LowerThresholdAlgorithm.get_default_values(),
+    )
+
+
+@pytest.fixture
+def mask_threshold_profile():
+    return ROIExtractionProfile(
+        name="mask_profile",
+        algorithm=ThresholdAlgorithm.get_name(),
+        values=ThresholdAlgorithm.get_default_values(),
+    )
+
+
+@pytest.fixture
+def sample_pipeline(border_rim_profile, lower_threshold_profile, mask_property):
+    return SegmentationPipeline(
+        name="sample_pipeline",
+        segmentation=border_rim_profile,
+        mask_history=[SegmentationPipelineElement(segmentation=lower_threshold_profile, mask_property=mask_property)],
+    )
+
+
+@pytest.fixture
+def sample_pipeline2(border_rim_profile, lower_threshold_profile, mask_property):
+    return SegmentationPipeline(
+        name="sample_pipeline2",
+        segmentation=lower_threshold_profile,
+        mask_history=[SegmentationPipelineElement(segmentation=border_rim_profile, mask_property=mask_property)],
+    )
+
+
+@pytest.fixture
+def history_element(image, lower_threshold_profile):
+    roi = np.zeros(image.shape, dtype=np.uint8)
+    roi[0, 2:10] = 1
+    roi[0, 10:-2] = 2
+
+    return HistoryElement.create(
+        roi_info=ROIInfo(roi),
+        mask=None,
+        roi_extraction_parameters={
+            "algorithm_name": lower_threshold_profile.name,
+            "values": lower_threshold_profile.values,
+        },
+        mask_property=MaskProperty.simple_mask(),
     )
 
 
