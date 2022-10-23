@@ -21,7 +21,7 @@ class TestBatchProceed:
         thread.add_task([batch_task, batch_task])
         assert thread.queue.qsize() == 4
 
-    def test_simple_run_taks(self, qtbot, batch_task):
+    def test_simple_run_task(self, qtbot, batch_task):
         thread = BatchProceed()
         thread.add_task(batch_task)
         assert thread.index == 0
