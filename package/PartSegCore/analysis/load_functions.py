@@ -276,10 +276,44 @@ class LoadMask(LoadBase):
         return True
 
 
+def _mask_data_outside_mask(file_path):
+    if not isinstance(file_path, str):
+        return False
+    with tarfile.open(file_path, "r:*") as tar_file:
+        metadata = load_metadata_base(tar_file.extractfile("metadata.json").read().decode("utf8"))
+        return metadata.get("keep_data_outside_mask", False)
+
+
+def load_mask_project(
+    load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+    range_changed: typing.Callable[[int, int], typing.Any] = None,
+    step_changed: typing.Callable[[int], typing.Any] = None,
+    metadata: typing.Optional[dict] = None,
+):
+    data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
+    zero_out_cut_area = _mask_data_outside_mask(load_locations[0])
+    image = data.image
+    roi = data.roi_info.roi
+    components = data.selected_components
+    if not components:
+        components = list(data.roi_info.bound_info)
+    res = []
+    base, ext = os.path.splitext(load_locations[0])
+    path_template = base + "_component{}" + ext
+    for i in components:
+        single_roi = roi == i
+        if not np.any(single_roi):
+            continue
+        im = image.cut_image(roi == i, replace_mask=True, zero_out_cut_area=zero_out_cut_area)
+        im.file_path = path_template.format(i)
+        res.append(ProjectTuple(im.file_path, im, mask=im.mask))
+    return res
+
+
 class LoadMaskSegmentation(LoadBase):
     @classmethod
     def get_name(cls):
-        return "mask project (*.seg *.tgz)"
+        return "Mask project (*.seg *.tgz)"
 
     @classmethod
     def get_short_name(cls):
@@ -293,21 +327,7 @@ class LoadMaskSegmentation(LoadBase):
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.List[ProjectTuple]:
-        data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
-        image = data.image
-        roi = data.roi_info.roi
-        components = data.selected_components
-        res = []
-        base, ext = os.path.splitext(load_locations[0])
-        path_template = base + "_component{}" + ext
-        for i in components:
-            single_roi = roi == i
-            if not np.any(single_roi):
-                continue
-            im = image.cut_image(roi == i, replace_mask=True)
-            im.file_path = path_template.format(i)
-            res.append(ProjectTuple(im.file_path, im, mask=im.mask))
-        return res
+        return load_mask_project(load_locations, range_changed, step_changed, metadata)
 
 
 class LoadProfileFromJSON(LoadBase):
@@ -353,5 +373,10 @@ def update_algorithm_dict(dkt):
 
 
 load_dict = Register(
-    LoadStackImage, LoadImageMask, LoadProject, LoadMaskSegmentation, LoadPoints, class_methods=LoadBase.need_functions
+    LoadStackImage,
+    LoadImageMask,
+    LoadProject,
+    LoadMaskSegmentation,
+    LoadPoints,
+    class_methods=LoadBase.need_functions,
 )

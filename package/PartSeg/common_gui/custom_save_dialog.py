@@ -76,7 +76,7 @@ class CustomSaveDialog(LoadRegisterFileDialog):
         if not system_widget:
             widget = QStackedWidget()
             for name, val in self.io_register.items():
-                wi = FormWidget(val.get_fields())
+                wi = FormWidget(val)
                 if name in self.base_values:
                     wi.set_values(self.base_values[name])
                 widget.addWidget(wi)
@@ -99,10 +99,10 @@ class CustomSaveDialog(LoadRegisterFileDialog):
             return
         with suppress(ValueError):
             self.stack_widget.setCurrentIndex(self.names.index(text))
-            if not self.io_register[text].get_fields():
-                self.stack_widget.hide()
-            else:
+            if typing.cast(FormWidget, self.stack_widget.currentWidget()).has_elements():
                 self.stack_widget.show()
+            else:
+                self.stack_widget.hide()
 
     def selectNameFilter(self, filter_name: str):
         with suppress(IndexError):
@@ -121,7 +121,7 @@ class CustomSaveDialog(LoadRegisterFileDialog):
     def accept(self):
         self.accepted_native = True
         if hasattr(self, "stack_widget"):
-            self.values = self.stack_widget.currentWidget().get_values()
+            self.values = typing.cast(FormWidget, self.stack_widget.currentWidget()).get_values()
             super().accept()
             return
         save_class = self.io_register[self.selectedNameFilter()]

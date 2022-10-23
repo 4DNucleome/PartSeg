@@ -7,7 +7,7 @@ from copy import deepcopy
 from enum import Enum
 
 import numpy as np
-from magicgui.widgets import ComboBox, Widget, create_widget
+from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
 from qtpy.QtCore import QObject, Signal
@@ -199,6 +199,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
         else:
             res = create_widget(value=ap.default_value, annotation=ap.value_type, options=ap.mgi_options)
+            if isinstance(res, EmptyWidget):
+                raise ValueError(f"Unknown type {ap.value_type}")
         return res
 
     def _get_field(self) -> typing.Union[QWidget, Widget]:
@@ -345,12 +347,17 @@ def _any_arguments(fun):
     return _any
 
 
+FieldAllowedTypes = typing.Union[
+    typing.List[AlgorithmProperty], typing.Type[BaseModel], typing.Type[AlgorithmDescribeBase]
+]
+
+
 class FormWidget(QWidget):
     value_changed = Signal()
 
     def __init__(
         self,
-        fields: typing.Union[typing.List[AlgorithmProperty], typing.Type[BaseModel]],
+        fields: FieldAllowedTypes,
         start_values=None,
         dimension_num=1,
         settings: typing.Optional[BaseSettings] = None,
@@ -363,9 +370,6 @@ class FormWidget(QWidget):
         layout = QFormLayout()
         layout.setContentsMargins(10, 0, 10, 0)
         self._model_class = None
-        if not isinstance(fields, list):
-            self._model_class = fields
-            fields = base_model_to_algorithm_property(fields)
         element_list = self._element_list(fields)
         for el in element_list:
             if isinstance(el, QLabel):
@@ -374,6 +378,22 @@ class FormWidget(QWidget):
             self._add_to_layout(layout, el, start_values, settings)
         self.setLayout(layout)
         self.value_changed.connect(self.update_size)
+
+    def _element_list(self, fields: FieldAllowedTypes):
+        if inspect.isclass(fields) and issubclass(fields, AlgorithmDescribeBase):
+            if fields.__new_style__:
+                self._model_class = fields.__argument_class__
+                fields = base_model_to_algorithm_property(fields.__argument_class__)
+            else:
+                fields = fields.get_fields()
+        elif not isinstance(fields, typing.Iterable):
+            self._model_class = fields
+            fields = base_model_to_algorithm_property(fields)
+        return self._element_list_map(fields)
+
+    @staticmethod
+    def _element_list_map(fields):
+        return map(QtAlgorithmProperty.from_algorithm_property, fields)
 
     def _add_to_layout(
         self, layout, ap: QtAlgorithmProperty, start_values: typing.MutableMapping, settings, add_to_widget_dict=True
@@ -412,10 +432,6 @@ class FormWidget(QWidget):
         if ap.name in start_values:
             with suppress(KeyError, ValueError, TypeError):
                 ap.set_value(start_values[ap.name])
-
-    @staticmethod
-    def _element_list(fields) -> typing.Iterable[QtAlgorithmProperty]:
-        return map(QtAlgorithmProperty.from_algorithm_property, fields)
 
     def has_elements(self):
         return len(self.widgets_dict) > 0
@@ -492,13 +508,7 @@ class SubAlgorithmWidget(QWidget):
             calc_class = algorithm_property.possible_values[algorithm_property.default_value]
         else:
             calc_class = algorithm_property
-        if calc_class.__new_style__:
-            widget = FormWidget(calc_class.__argument_class__, start_values=start_values)
-        else:
-            widget = FormWidget(
-                algorithm_property.possible_values[algorithm_property.default_value].get_fields(),
-                start_values=start_values,
-            )
+        widget = FormWidget(calc_class, start_values=start_values)
         widget.layout().setContentsMargins(0, 0, 0, 0)
         return widget
 
@@ -596,7 +606,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     @staticmethod
     def _form_widget(algorithm, start_values) -> FormWidget:
         return FormWidget(
-            algorithm.__argument_class__ if algorithm.__new_style__ else algorithm.get_fields(),
+            algorithm,
             start_values=start_values,
         )
 

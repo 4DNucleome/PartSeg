@@ -25,7 +25,7 @@ class QtNapariAlgorithmProperty(QtAlgorithmProperty):
 
 class NapariFormWidget(FormWidget):
     @staticmethod
-    def _element_list(fields) -> typing.Iterable[QtAlgorithmProperty]:
+    def _element_list_map(fields) -> typing.Iterable[QtAlgorithmProperty]:
         return map(QtNapariAlgorithmProperty.from_algorithm_property, fields)
 
     def reset_choices(self, event=None):
@@ -35,18 +35,17 @@ class NapariFormWidget(FormWidget):
 
 
 class NapariFormWidgetWithMask(NapariFormWidget):
-    def _element_list(self, fields) -> typing.Iterable[QtAlgorithmProperty]:
+    @classmethod
+    def _element_list_map(cls, fields) -> typing.Iterable[QtAlgorithmProperty]:
         mask = AlgorithmProperty("mask", "Mask", None, value_type=typing.Optional[Labels])
-        return super()._element_list(itertools.chain([mask], fields))
+        return super()._element_list_map(itertools.chain([mask], fields))
 
     def get_layers(self):
         return {name: el.get_value() for name, el in self.widgets_dict.items() if isinstance(el.get_value(), Layer)}
 
     def get_values(self):
         res = {name: el.get_value() for name, el in self.widgets_dict.items() if name != "mask"}
-        if self._model_class is not None:
-            return self._model_class(**res)
-        return res
+        return self._model_class(**res) if self._model_class is not None else res
 
 
 class NapariFormDialog(FormDialog):

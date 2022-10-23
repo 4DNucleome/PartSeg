@@ -1,10 +1,12 @@
+import os
 import re
 from collections import defaultdict
 from functools import partial
-from os import path
+from pathlib import Path
 from queue import Queue
 from typing import List, NamedTuple, Optional, Tuple, Union
 
+from pydantic import BaseModel
 from qtpy.QtCore import QThread, Signal
 
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
@@ -18,7 +20,7 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
 class BatchTask(NamedTuple):
     data: Union[str, MaskProjectTuple]
     parameters: ROIExtractionProfile
-    save_prefix: Optional[Tuple[str, dict]]
+    save_prefix: Optional[Tuple[Union[str, Path], Union[dict, BaseModel]]]
 
 
 class BatchProceed(QThread):
@@ -54,7 +56,7 @@ class BatchProceed(QThread):
             task: BatchTask = self.queue.get()
             if isinstance(task.data, str):
                 file_path = task.data
-                if path.splitext(task.data)[1] == ".seg":
+                if os.path.splitext(task.data)[1] == ".seg":
                     project_tuple = LoadROIImage.load([task.data])
                 else:
                     project_tuple = LoadStackImage.load([task.data])
@@ -64,12 +66,12 @@ class BatchProceed(QThread):
             else:
                 continue
             try:
-                name = path.basename(file_path)
+                name = os.path.basename(file_path)
                 blank = get_mask(project_tuple.roi, project_tuple.mask, project_tuple.selected_components)
                 algorithm: StackAlgorithm = MaskAlgorithmSelection[task.parameters.algorithm]()
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
-                algorithm.set_parameters(**task.parameters.values)
+                algorithm.set_parameters(task.parameters.values)
                 if isinstance(task.save_prefix, tuple):
                     self.range_signal.emit(0, algorithm.get_steps_num() + 1)
                 else:
@@ -81,16 +83,17 @@ class BatchProceed(QThread):
                 )
                 if isinstance(task.save_prefix, tuple):
                     self.progress_info(name, "saving", algorithm.get_steps_num())
-                    name = f"{path.splitext(path.basename(file_path))[0]}.seg"
+                    name = f"{os.path.splitext(os.path.basename(file_path))[0]}.seg"
                     re_end = re.compile(r"(.*_version)(\d+)\.seg$")
-                    while path.exists(path.join(task.save_prefix[0], name)):
+                    os.makedirs(task.save_prefix[0], exist_ok=True)
+                    while os.path.exists(os.path.join(task.save_prefix[0], name)):
                         match = re_end.match(name)
                         if match:
-                            num = int(match.group(2)) + 1
-                            name = match.group(1) + str(num) + ".seg"
+                            num = int(match[2]) + 1
+                            name = match[1] + str(num) + ".seg"
                         else:
-                            name = path.splitext(path.basename(file_path))[0] + "_version1.seg"
-                    SaveROI.save(path.join(task.save_prefix[0], name), state2, parameters=task.save_prefix[1])
+                            name = f"{os.path.splitext(os.path.basename(file_path))[0]}_version1.seg"
+                    SaveROI.save(os.path.join(task.save_prefix[0], name), state2, parameters=task.save_prefix[1])
                 else:
                     self.multiple_result.emit(state2)
             except Exception as e:  # pylint: disable=W0703

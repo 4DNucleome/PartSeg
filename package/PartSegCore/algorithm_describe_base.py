@@ -53,7 +53,7 @@ class AlgorithmProperty:
             warnings.warn("property_type is deprecated, use value_type instead", DeprecationWarning, stacklevel=2)
             value_type = kwargs["property_type"]
             del kwargs["property_type"]
-        if len(kwargs) != 0:
+        if kwargs:
             raise ValueError(", ".join(kwargs.keys()) + " are not expected")
 
         self.name = name
@@ -206,9 +206,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
 def is_static(fun):
     args = inspect.getfullargspec(fun).args
-    if len(args) == 0:
-        return True
-    return args[0] != "self"
+    return True if len(args) == 0 else args[0] != "self"
 
 
 AlgorithmType = typing.TypeVar("AlgorithmType", bound=typing.Type[AlgorithmDescribeBase])
@@ -426,7 +424,7 @@ class ROIExtractionProfileMeta(ModelMetaclass):
         def allow_positional_args(func):
             @wraps(func)
             def _wraps(self, *args, **kwargs):
-                if len(args) > 0:
+                if args:
                     warnings.warn(
                         "Positional arguments are deprecated, use keyword arguments instead",
                         FutureWarning,
@@ -594,7 +592,7 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
 
         if "position" in value.field_info.extra:
             res.insert(value.field_info.extra["position"], ap)
-        else:
+        elif not value.field_info.extra.get("hidden", False):
             res.append(ap)
         if "suffix" in value.field_info.extra:
             res.append(value.field_info.extra["suffix"])

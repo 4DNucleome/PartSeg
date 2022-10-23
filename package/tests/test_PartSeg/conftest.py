@@ -1,7 +1,6 @@
 import contextlib
 from contextlib import suppress
 
-import numpy as np
 import pytest
 from qtpy.QtWidgets import QDialog, QInputDialog, QMessageBox
 
@@ -10,12 +9,6 @@ from PartSeg._roi_mask.main_window import ChosenComponents
 from PartSeg._roi_mask.stack_settings import StackSettings
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui import napari_image_view
-from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis import SegmentationPipeline, SegmentationPipelineElement
-from PartSegCore.mask_create import MaskProperty
-from PartSegCore.project_info import HistoryElement
-from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
 
 
 @pytest.fixture
@@ -49,57 +42,6 @@ def part_settings_with_project(image, analysis_segmentation2, tmp_path):
     settings.image = image
     settings.set_project_info(analysis_segmentation2)
     return settings
-
-
-@pytest.fixture
-def border_rim_profile():
-    return ROIExtractionProfile(
-        name="border_profile", algorithm=BorderRim.get_name(), values=BorderRim.get_default_values()
-    )
-
-
-@pytest.fixture
-def lower_threshold_profile():
-    return ROIExtractionProfile(
-        name="lower_profile",
-        algorithm=LowerThresholdAlgorithm.get_name(),
-        values=LowerThresholdAlgorithm.get_default_values(),
-    )
-
-
-@pytest.fixture
-def sample_pipeline(border_rim_profile, lower_threshold_profile, mask_property):
-    return SegmentationPipeline(
-        name="sample_pipeline",
-        segmentation=border_rim_profile,
-        mask_history=[SegmentationPipelineElement(segmentation=lower_threshold_profile, mask_property=mask_property)],
-    )
-
-
-@pytest.fixture
-def sample_pipeline2(border_rim_profile, lower_threshold_profile, mask_property):
-    return SegmentationPipeline(
-        name="sample_pipeline2",
-        segmentation=lower_threshold_profile,
-        mask_history=[SegmentationPipelineElement(segmentation=border_rim_profile, mask_property=mask_property)],
-    )
-
-
-@pytest.fixture
-def history_element(image, lower_threshold_profile):
-    roi = np.zeros(image.shape, dtype=np.uint8)
-    roi[0, 2:10] = 1
-    roi[0, 10:-2] = 2
-
-    return HistoryElement.create(
-        roi_info=ROIInfo(roi),
-        mask=None,
-        roi_extraction_parameters={
-            "algorithm_name": lower_threshold_profile.name,
-            "values": lower_threshold_profile.values,
-        },
-        mask_property=MaskProperty.simple_mask(),
-    )
 
 
 @pytest.fixture(autouse=True)
