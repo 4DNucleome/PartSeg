@@ -1,10 +1,13 @@
+import os
 import re
 from collections import defaultdict
 from functools import partial
 from os import path
+from pathlib import Path
 from queue import Queue
 from typing import List, NamedTuple, Optional, Tuple, Union
 
+from pydantic import BaseModel
 from qtpy.QtCore import QThread, Signal
 
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
@@ -18,7 +21,7 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
 class BatchTask(NamedTuple):
     data: Union[str, MaskProjectTuple]
     parameters: ROIExtractionProfile
-    save_prefix: Optional[Tuple[str, dict]]
+    save_prefix: Optional[Tuple[Union[str, Path], Union[dict, BaseModel]]]
 
 
 class BatchProceed(QThread):
@@ -83,6 +86,7 @@ class BatchProceed(QThread):
                     self.progress_info(name, "saving", algorithm.get_steps_num())
                     name = f"{path.splitext(path.basename(file_path))[0]}.seg"
                     re_end = re.compile(r"(.*_version)(\d+)\.seg$")
+                    os.makedirs(task.save_prefix[0], exist_ok=True)
                     while path.exists(path.join(task.save_prefix[0], name)):
                         match = re_end.match(name)
                         if match:

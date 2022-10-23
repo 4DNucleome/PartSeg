@@ -1,6 +1,7 @@
 import pytest
 
 from PartSeg._roi_mask.batch_proceed import BatchProceed, BatchTask
+from PartSegCore.mask.io_functions import SaveROIOptions
 
 
 @pytest.fixture
@@ -27,3 +28,14 @@ class TestBatchProceed:
         assert thread.index == 0
         with qtbot.waitSignal(thread.multiple_result):
             thread.run_calculation()
+
+    def test_run_with_save(self, qtbot, stack_image, mask_threshold_profile, tmp_path):
+        batch_task = BatchTask(stack_image, mask_threshold_profile, (tmp_path, SaveROIOptions()))
+        thread = BatchProceed()
+        thread.add_task([batch_task, batch_task, batch_task])
+        assert thread.index == 0
+        thread.run_calculation()
+
+        assert (tmp_path / "test_path.seg").exists()
+        assert (tmp_path / "test_path_version1.seg").exists()
+        assert (tmp_path / "test_path_version2.seg").exists()
