@@ -1,6 +1,41 @@
 # Changelog
 
-## 0.14.3
+## 0.14.4 - 2022-10-24
+
+### Bug Fixes
+
+-   Fix `get_theme` calls to prepare for napari 0.4.17 (#729)
+-   Fix sentry tests (#742)
+-   Fix reporting error in load settings from the drive (#725)
+-   Fix saving pipeline from GUI (#756)
+-   Fix profile export/import dialogs (#761)
+-   Enable the "Compare" button if ROI is available (#765)
+-   Fix bug in cut with ROI to not make black artifacts (#767)
+
+### Features
+
+-   Load alternatives labeling when opening PartSeg projects in napari (#731)
+-   Add option to toggle scale bar (#733)
+-   Allow customizing the settings directory using the `PARTSEG_SETTINGS_DIR` environment variable (#751)
+-   Separate recent algorithms from general application settings (#752)
+-   Add multiple otsu as threshold method with selection range of components (#710)
+-   Add function to load components from Mask Segmentation with a background in ROI Analysis (#768)
+
+### Miscellaneous Tasks
+
+-   Prepare pyinstaller configuration for napari 0.4.17 (#748)
+-   Add ruff linter (#754)
+
+### Testing
+
+-   Add new build and inspect wheel action (#747)
+
+### Build
+
+-   Bump actions/checkout from 2 to 3 (#716)
+-   Bump actions/download-artifact from 1 to 3 (#709)
+
+## 0.14.3 - 2022-08-18
 
 ### Bug Fixes
 
@@ -21,7 +56,7 @@
 -   Update conda environment to not use PyQt5 in test (#646)
 -   Add tests files to calculate coverage (#655)
 
-## 0.14.2
+## 0.14.2 - 2022-05-05
 
 ### Bug Fixes
 
@@ -41,7 +76,7 @@
 -   Speedup test by setup cache for pip (#604)
 -   Setup cache for azure pipelines workflows (#606)
 
-## 0.14.1
+## 0.14.1 - 2022-04-27
 
 ### Bug Fixes
 
@@ -61,7 +96,7 @@
 -   Drop napari bellow 0.4.12 (#592)
 -   Update the order of ROI Mask algorithms to be the same as in older PartSeg versions (#600)
 
-## 0.14.0
+## 0.14.0 - 2022-04-14
 
 ### Bug Fixes
 
