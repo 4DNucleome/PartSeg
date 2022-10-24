@@ -313,10 +313,10 @@ class DoubleThreshold(BaseThreshold):
     def calculate_mask(
         cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: DoubleThresholdParams, operator
     ):
-        thr: BaseThreshold = threshold_dict[arguments.core_threshold.name]
+        thr: BaseThreshold = ThresholdSelection[arguments.core_threshold.name]
         mask1, thr_val1 = thr.calculate_mask(data, mask, arguments.core_threshold.values, operator)
 
-        thr: BaseThreshold = threshold_dict[arguments.base_threshold.name]
+        thr: BaseThreshold = ThresholdSelection[arguments.base_threshold.name]
         mask2, thr_val2 = thr.calculate_mask(data, mask, arguments.base_threshold.values, operator)
         mask2[mask2 > 0] = 1
         mask2[mask1 > 0] = 2
@@ -398,9 +398,6 @@ class DoubleThresholdSelection(
 DoubleThresholdSelection.register(DoubleThreshold)
 DoubleThresholdSelection.register(DoubleOtsu)
 DoubleThresholdSelection.register(MultipleOtsu)
-
-double_threshold_dict = DoubleThresholdSelection.__register__
-threshold_dict = ThresholdSelection.__register__
 
 
 def __getattr__(name):  # pragma: no cover
