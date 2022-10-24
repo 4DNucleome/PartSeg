@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from napari import Viewer as NViewer
 from napari.utils.colormaps import Colormap
+from qtpy.QtCore import QCoreApplication, QThread
 from qtpy.QtWidgets import QCheckBox, QFormLayout, QPushButton, QWidget
 
 from PartSeg.common_backend.base_settings import BaseSettings
@@ -244,3 +245,13 @@ class Viewer(NViewer):
             self._sync_widget.sync_additional()
         if points:
             self._sync_widget.sync_points()
+
+    def add_layer(self, layer):
+        if QCoreApplication.instance().thread() != QThread.currentThread():
+            raise RuntimeError("add_layer must be called from the main thread")
+        super().add_layer(layer)
+
+    def add_labels(self, *args, **kwargs):
+        if QCoreApplication.instance().thread() != QThread.currentThread():
+            raise RuntimeError("add_labels must be called from the main thread")
+        return super().add_labels(*args, **kwargs)
