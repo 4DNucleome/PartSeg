@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
 
-from napari.settings import get_settings as _napari_get_settings
-
 
 def napari_get_settings(path=None) -> "NapariSettings":
+    from napari.settings import get_settings as _napari_get_settings
+
     if path is not None:
         path = os.path.join(path, "settings.yaml")
 

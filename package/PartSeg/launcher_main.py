@@ -7,24 +7,13 @@ import sys
 from contextlib import suppress
 from functools import partial
 
-from qtpy.QtCore import Qt
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QApplication
-
-from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
-from PartSeg._launcher.check_version import CheckVersionThread
-from PartSeg.common_backend import napari_get_settings
-from PartSeg.common_backend.base_argparser import CustomParser
-from PartSegCore import state_store
-from PartSegData import icons_dir
-from PartSegImage import TiffImageReader
-
 multiprocessing.freeze_support()
 
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
     print("start_test_import")
+    from qtpy.QtWidgets import QApplication
 
     app = QApplication([])
     import freetype
@@ -56,6 +45,8 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "_test":
         _test_imports()
         return
+    from PartSeg.common_backend.base_argparser import CustomParser
+
     parser = CustomParser("PartSeg")
     parser.add_argument(
         "--multiprocessing-fork", dest="mf", action="store_true", help=argparse.SUPPRESS
@@ -72,6 +63,15 @@ def main():
     sp_s.add_argument("image", nargs="?", help="image to read on begin", default="")
     argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
     args = parser.parse_args(argv)
+
+    from qtpy.QtCore import Qt
+    from qtpy.QtGui import QIcon
+    from qtpy.QtWidgets import QApplication
+
+    from PartSeg._launcher.check_version import CheckVersionThread
+    from PartSeg.common_backend import napari_get_settings
+    from PartSegCore import state_store
+    from PartSegData import icons_dir
 
     logging.basicConfig(level=logging.INFO)
     if platform.system() == "Darwin":
@@ -105,6 +105,9 @@ def main():
 
 
 def select_window(args):
+    from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
+    from PartSegImage import TiffImageReader
+
     if args.gui == "roi_analysis" or args.mf:
         from PartSeg import plugins
 
