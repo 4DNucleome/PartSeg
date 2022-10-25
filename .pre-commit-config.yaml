@@ -8,7 +8,7 @@ repos:
     - id: black
       pass_filenames: true
 -   repo: https://github.com/PyCQA/autoflake
-    rev: 'v1.7.6'  # Use the revision sha / tag you want to point at
+    rev: 'v1.7.7'  # Use the revision sha / tag you want to point at
     hooks:
     -   id: autoflake
         args: ["--remove-all-unused-imports", "-i"]
@@ -37,7 +37,7 @@ repos:
     hooks:
     - id: setup-cfg-fmt
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.77
+    rev: v0.0.82
     hooks:
       - id: lint
 -   repo: https://github.com/asottile/pyupgrade
@@ -55,7 +55,7 @@ repos:
     -   id: isort
 
 -   repo: https://github.com/markdownlint/markdownlint
-    rev: v0.11.0  # Use the ref you want to point at
+    rev: v0.12.0  # Use the ref you want to point at
     hooks:
     - id: markdownlint
       exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
