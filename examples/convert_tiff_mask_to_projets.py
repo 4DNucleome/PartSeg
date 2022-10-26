@@ -1,5 +1,4 @@
 import dataclasses
-import os
 import sys
 from glob import glob
 from os import path
@@ -14,7 +13,7 @@ def main():
     for image_path in tqdm(file_list):
         tiff_roi_path = path.join(path.dirname(image_path), "segmentation.tif")
         roi_path = path.join(path.dirname(image_path), "segmentation.seg")
-        if os.path.exists(roi_path):
+        if path.exists(roi_path):
             continue
         if not path.exists(tiff_roi_path):
             print(f"Mask {tiff_roi_path} not found", file=sys.stderr)
@@ -25,7 +24,7 @@ def main():
 
             project_tuple = dataclasses.replace(project_tuple, roi_info=mask_tuple.roi_info)
             SaveROI.save(roi_path, project_tuple, SaveROIOptions(relative_path=True, mask_data=True))
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0703
             print(f"Error in {image_path}: {e}", file=sys.stderr)
 
 
