@@ -41,10 +41,7 @@ def _test_imports():
     print("end_test_import")
 
 
-def main():
-    if len(sys.argv) > 1 and sys.argv[1] == "_test":
-        _test_imports()
-        return
+def create_parser():
     from PartSeg.common_backend.base_argparser import CustomParser
 
     parser = CustomParser("PartSeg")
@@ -61,6 +58,17 @@ def main():
     sp_a.add_argument("mask", nargs="?", help="mask to read on begin", default=None)
     sp_a.add_argument("--batch", action="store_true", help=argparse.SUPPRESS)
     sp_s.add_argument("image", nargs="?", help="image to read on begin", default="")
+
+    return parser
+
+
+def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "_test":
+        _test_imports()
+        return
+
+    parser = create_parser()
+
     argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
     args = parser.parse_args(argv)
 
