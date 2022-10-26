@@ -95,6 +95,7 @@ class CustomParser(argparse.ArgumentParser):
         )
         self.add_argument("--inner_plugins", action="store_true", help=argparse.SUPPRESS)
         self.add_argument("--develop", action="store_true", help=argparse.SUPPRESS)
+        self.add_argument("--version", action="version", version=f"%(prog)s {PartSeg.__version__}")
 
     def parse_args(self, args: Optional[Sequence[str]] = None, namespace: Optional[argparse.Namespace] = None):
         """
