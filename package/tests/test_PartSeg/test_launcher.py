@@ -1,5 +1,6 @@
 import pytest
 from pydantic import BaseModel
+from qtpy import API
 
 from PartSeg._launcher.main_window import MainWindow as LauncherMain
 from PartSeg._roi_analysis.main_window import MainWindow as AnalysisMain
@@ -19,6 +20,7 @@ def test_create_parser():
     assert isinstance(create_parser(), CustomParser)
 
 
+@pytest.mark.skipif(API.startswith("pyside"), reason="problem with make_napari_viewer fixture")
 @pytest.mark.parametrize(
     "gui, klass", (("roi_analysis", AnalysisMain), ("roi_mask", MaskMain), ("launcher", LauncherMain))
 )
