@@ -25,5 +25,7 @@ def test_create_parser():
 def test_select_window(qtbot, gui, klass):
     args = ArgsMock(gui=gui)
     widget = select_window(args)
-    qtbot.addWidget(widget)
     assert isinstance(widget, klass)
+    widget.close()
+    widget.deleteLater()
+    qtbot.wait(50)
