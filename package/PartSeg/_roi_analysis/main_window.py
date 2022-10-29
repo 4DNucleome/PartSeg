@@ -618,6 +618,7 @@ class MainWindow(BaseMainWindow):
     def _toggle_scale_bar(self):
         self.raw_image.toggle_scale_bar()
         self.result_image.toggle_scale_bar()
+        super()._toggle_scale_bar()
 
     def toggle_left_panel(self):
         self.options_panel.hide_left_panel(not self.settings.get_from_profile("hide_left_panel"))

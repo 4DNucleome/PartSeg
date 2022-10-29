@@ -176,6 +176,8 @@ class BaseMainWindow(QMainWindow):
         self.console_dock.hide()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.console_dock)
 
+        self._scale_bar_warning = True  # remove after drop napari 0.4.16
+
     def _toggle_console(self):
         if self.console is None:
             self.console = QtConsole(self)
@@ -353,3 +355,11 @@ class BaseMainWindow(QMainWindow):
     def deleteLater(self) -> None:
         self.settings.napari_settings.appearance.events.theme.disconnect(self.change_theme)
         super().deleteLater()
+
+    def _toggle_scale_bar(self):
+        """Remove after drop napari 0.4.16"""
+        if self._scale_bar_warning and self.settings.theme_name == "light":
+            QMessageBox.warning(
+                self, "Not supported", "Scale bar is not supported for light theme in this version of napari"
+            )
+            self._scale_bar_warning = False

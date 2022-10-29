@@ -938,6 +938,7 @@ class MainWindow(BaseMainWindow):
 
     def _toggle_scale_bar(self):
         self.image_view.toggle_scale_bar()
+        super()._toggle_scale_bar()
 
     def closeEvent(self, event: QCloseEvent):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
