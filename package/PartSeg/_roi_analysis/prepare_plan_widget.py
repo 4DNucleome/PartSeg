@@ -1185,7 +1185,7 @@ class CalculateInfo(QWidget):
             plans, err = res.load_class.load(res.load_location)
             if err:
                 QMessageBox.warning(self, "Import error", f"error during importing, part of data were filtered. {err}")
-            choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview)
+            choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview, CalculationPlan)
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():
                     self.settings.batch_plans[final_name] = plans[original_name]

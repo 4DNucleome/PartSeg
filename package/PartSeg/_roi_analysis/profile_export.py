@@ -167,6 +167,7 @@ class ImportDialog(QDialog):
         self.local_viewer = viewer()
         self.import_dict = import_dict
         self.local_dict = local_dict
+        self.expected_type = expected_type
         conflicts = set(local_dict.keys()) & set(import_dict.keys())
 
         self.list_view = QTreeWidget()
@@ -174,7 +175,13 @@ class ImportDialog(QDialog):
         self.radio_group_list = []
         self.checked_num = len(import_dict)
 
-        for name in sorted(import_dict.keys()):
+        ommit_count = 0
+
+        for name in sorted(import_dict):
+            if self.expected_type is not None and not isinstance(import_dict[name], self.expected_type):
+                ommit_count += 1
+                continue
+
             item = QTreeWidgetItem()
             item.setText(0, name)
             # noinspection PyTypeChecker
@@ -224,6 +231,8 @@ class ImportDialog(QDialog):
         v2_lay.addWidget(self.local_viewer)
         info_layout.addLayout(v2_lay, 1)
         layout.addLayout(info_layout)
+        if ommit_count:
+            layout.addWidget(QLabel(f"Omitted {ommit_count} objects as they are not of type {self.expected_type}"))
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.check_btn)
         btn_layout.addWidget(self.uncheck_btn)

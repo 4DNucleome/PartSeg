@@ -31,6 +31,8 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox, ensure_main_thread
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
@@ -272,7 +274,7 @@ class Properties(QWidget):
             if not profs:
                 return
             profiles_dict = self._settings.roi_profiles
-            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
+            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer, ROIExtractionProfile)
             if not imp.exec_():
                 return
             for original_name, final_name in imp.get_import_list():
@@ -309,7 +311,7 @@ class Properties(QWidget):
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             profiles_dict = self._settings.roi_pipelines
-            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
+            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer, SegmentationPipeline)
             if not imp.exec_():
                 return
             for original_name, final_name in imp.get_import_list():
@@ -797,7 +799,7 @@ class MeasurementSettings(QWidget):
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             measurement_dict = self.settings.measurement_profiles
-            imp = ImportDialog(stat, measurement_dict, StringViewer)
+            imp = ImportDialog(stat, measurement_dict, StringViewer, MeasurementProfile)
             if not imp.exec_():
                 return
             for original_name, final_name in imp.get_import_list():
