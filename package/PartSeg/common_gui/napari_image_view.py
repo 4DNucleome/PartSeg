@@ -41,6 +41,7 @@ except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
 
 _napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
+_napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
 
 
 class QtViewerPushButton(QtViewerPushButton_):
@@ -159,7 +160,7 @@ class ImageView(QWidget):
         self.viewer_widget = NapariQtViewer(self.viewer)
         if hasattr(self.viewer_widget.canvas, "background_color_override"):
             self.viewer_widget.canvas.background_color_override = "black"
-            if hasattr(self.viewer.scale_bar, "color"):
+            if _napari_ge_4_17:
                 self.viewer.scale_bar.color = "white"
                 self.viewer.scale_bar.colored = True
 
