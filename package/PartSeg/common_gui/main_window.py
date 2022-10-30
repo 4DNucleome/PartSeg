@@ -364,6 +364,6 @@ class BaseMainWindow(QMainWindow):
         """Remove after drop napari 0.4.16"""
         if NAPARI_LE_4_16 and self._scale_bar_warning and self.settings.theme_name == "light":  # pragma: no cover
             QMessageBox.warning(
-                self, "Not supported", "Scale bar is not supported for light theme in this version of napari"
+                self, "Not supported", "Scale bar is not supported for light theme and napari bellow 0.4.17"
             )
             self._scale_bar_warning = False
