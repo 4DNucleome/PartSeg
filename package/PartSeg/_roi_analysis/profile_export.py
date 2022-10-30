@@ -16,11 +16,37 @@ from qtpy.QtWidgets import (
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
+    QWidget,
 )
 
 from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
+
+
+class ObjectPreview(QTextEdit):
+    """Base class for viewer used by :py:class:`ExportDialog` to preview data"""
+
+    def preview_object(self, ob):
+        raise NotImplementedError()
+
+
+class StringViewer(ObjectPreview):
+    """Simple __str__ serialization"""
+
+    def preview_object(self, ob):
+        self.setText(str(ob))
+
+
+class ProfileDictViewer(ObjectPreview):
+    """
+    Preview of :py:class"`SegmentationProfile`.
+    Serialized using :py:meth:`ObjectPreview.pretty_print`.
+    """
+
+    def preview_object(self, ob: ROIExtractionProfile):
+        text = ob.pretty_print(AnalysisAlgorithmSelection.__register__)
+        self.setText(text)
 
 
 class ExportDialog(QDialog):
@@ -120,13 +146,20 @@ class ExportDialog(QDialog):
 
 
 class ImportDialog(QDialog):
-    def __init__(self, import_dict, local_dict, viewer, parent=None):
+    def __init__(
+        self,
+        import_dict: typing.Dict[str, typing.Any],
+        local_dict: typing.Dict[str, typing.Any],
+        viewer: typing.Type[ObjectPreview],
+        expected_type: typing.Type,
+        parent: typing.Optional[QWidget] = None,
+    ):
         """
-        :type import_dict: dict[str, object]
-        :type local_dict: dict[str, object]
-        :param import_dict:
-        :param local_dict:
-        :param viewer:
+        :param import_dict: dict with data to import
+        :param local_dict: dict with data already in project
+        :param viewer: class used to preview data
+        :param expected_type: type of data to import
+        :param parent: parent qt widget
         """
         super().__init__(parent=parent)
         self.setWindowTitle("Import")
@@ -141,33 +174,6 @@ class ImportDialog(QDialog):
         self.radio_group_list = []
         self.checked_num = len(import_dict)
 
-        def rename_func(ob_name, new_name_field, rename_radio):
-            end_reg = re.compile(r"(.*) \((\d+)\)$")
-
-            def in_func():
-                if not rename_radio.isChecked() or str(new_name_field.text()).strip() != "":
-                    return
-
-                match = end_reg.match(ob_name)
-                if match:
-                    new_name_format = match[1] + " ({})"
-                    i = int(match[2]) + 1
-                else:
-                    new_name_format = ob_name + " ({})"
-                    i = 1
-                while new_name_format.format(i) in self.local_dict:
-                    i += 1
-                new_name_field.setText(new_name_format.format(i))
-
-            return in_func
-
-        def block_import(radio_btn, name_field):
-            def inner_func():
-                text = str(name_field.text()).strip()
-                self.import_btn.setDisabled(not text and radio_btn.isChecked())
-
-            return inner_func
-
         for name in sorted(import_dict.keys()):
             item = QTreeWidgetItem()
             item.setText(0, name)
@@ -181,11 +187,11 @@ class ImportDialog(QDialog):
                 overwrite.setChecked(True)
                 rename = QRadioButton("Rename")
                 new_name = QLineEdit()
-                new_name.textChanged.connect(block_import(rename, new_name))
-                rename.toggled.connect(block_import(rename, new_name))
-                overwrite.toggled.connect(block_import(rename, new_name))
+                new_name.textChanged.connect(self.block_import(rename, new_name))
+                rename.toggled.connect(self.block_import(rename, new_name))
+                overwrite.toggled.connect(self.block_import(rename, new_name))
 
-                rename.toggled.connect(rename_func(name, new_name, rename))
+                rename.toggled.connect(self.rename_func(name, new_name, rename))
                 group.addButton(overwrite)
                 group.addButton(rename)
                 self.radio_group_list.append(group)
@@ -226,6 +232,33 @@ class ImportDialog(QDialog):
         btn_layout.addWidget(self.cancel_btn)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
+
+    def rename_func(self, ob_name, new_name_field, rename_radio):
+        end_reg = re.compile(r"(.*) \((\d+)\)$")
+
+        def in_func():
+            if not rename_radio.isChecked() or str(new_name_field.text()).strip() != "":
+                return
+
+            match = end_reg.match(ob_name)
+            if match:
+                new_name_format = match[1] + " ({})"
+                i = int(match[2]) + 1
+            else:
+                new_name_format = ob_name + " ({})"
+                i = 1
+            while new_name_format.format(i) in self.local_dict:
+                i += 1
+            new_name_field.setText(new_name_format.format(i))
+
+        return in_func
+
+    def block_import(self, radio_btn, name_field):
+        def inner_func():
+            text = str(name_field.text()).strip()
+            self.import_btn.setDisabled(not text and radio_btn.isChecked())
+
+        return inner_func
 
     def preview(self):
         item = self.list_view.currentItem()
@@ -280,28 +313,3 @@ class ImportDialog(QDialog):
             item.setCheckState(0, Qt.Checked)
         self.checked_num = len(self.import_dict)
         self.import_btn.setDisabled(False)
-
-
-class ObjectPreview(QTextEdit):
-    """Base class for viewer used by :py:class:`ExportDialog` to preview data"""
-
-    def preview_object(self, ob):
-        raise NotImplementedError()
-
-
-class StringViewer(ObjectPreview):
-    """Simple __str__ serialization"""
-
-    def preview_object(self, ob):
-        self.setText(str(ob))
-
-
-class ProfileDictViewer(ObjectPreview):
-    """
-    Preview of :py:class"`SegmentationProfile`.
-    Serialized using :py:meth:`ObjectPreview.pretty_print`.
-    """
-
-    def preview_object(self, ob: ROIExtractionProfile):
-        text = ob.pretty_print(AnalysisAlgorithmSelection.__register__)
-        self.setText(text)
