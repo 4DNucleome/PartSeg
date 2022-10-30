@@ -11,6 +11,7 @@ from typing import List
 from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
+    QCheckBox,
     QColorDialog,
     QComboBox,
     QDoubleSpinBox,
@@ -148,6 +149,11 @@ class Appearance(QWidget):
         self.zoom_factor_spin_box.valueChanged.connect(self.change_zoom_factor)
         settings.connect_to_profile(SEARCH_ZOOM_FACTOR_STR, self._update_zoom_factor)
 
+        self.scale_bar_ticks = QCheckBox()
+        self.scale_bar_ticks.setChecked(settings.get_from_profile("scale_bar_ticks", True))
+        self.scale_bar_ticks.stateChanged.connect(self.change_scale_bar_ticks)
+        settings.connect_to_profile("scale_bar_ticks", self._update_scale_bar_ticks)
+
         layout = QGridLayout()
         layout.addWidget(QLabel("Theme:"), 0, 0)
         layout.addWidget(self.layout_list, 0, 1)
@@ -155,9 +161,17 @@ class Appearance(QWidget):
         layout.addWidget(self.labels_render_cmb, 1, 1)
         layout.addWidget(QLabel("Zoom factor for search ROI:"), 2, 0)
         layout.addWidget(self.zoom_factor_spin_box, 2, 1)
+        layout.addWidget(QLabel("Show scale bar ticks"), 3, 0)
+        layout.addWidget(self.scale_bar_ticks, 3, 1)
         layout.setColumnStretch(2, 1)
-        layout.setRowStretch(3, 1)
+        layout.setRowStretch(6, 1)
         self.setLayout(layout)
+
+    def change_scale_bar_ticks(self):
+        self.settings.set_in_profile("scale_bar_ticks", self.scale_bar_ticks.isChecked())
+
+    def _update_scale_bar_ticks(self):
+        self.scale_bar_ticks.setChecked(self.settings.get_from_profile("scale_bar_ticks", True))
 
     def change_zoom_factor(self):
         self.settings.set_in_profile(SEARCH_ZOOM_FACTOR_STR, self.zoom_factor_spin_box.value())

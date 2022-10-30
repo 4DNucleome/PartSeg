@@ -718,6 +718,15 @@ class TestAppearance:
         assert app.layout_list.currentText() == "aaa"
         assert base_settings.theme_name == "aaa"
 
+    def test_scale_bar_ticks(self, qtbot, base_settings):
+        app = Appearance(base_settings)
+        qtbot.add_widget(app)
+        assert app.scale_bar_ticks.isChecked()
+        app.scale_bar_ticks.setChecked(False)
+        assert not base_settings.get_from_profile("scale_bar_ticks")
+        base_settings.set_in_profile("scale_bar_ticks", True)
+        assert app.scale_bar_ticks.isChecked()
+
 
 class TestFormWidget:
     def test_create(self, qtbot):

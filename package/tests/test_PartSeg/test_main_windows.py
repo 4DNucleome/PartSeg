@@ -46,6 +46,23 @@ class TestAnalysisMainWindow:
         main_window.advanced_window.close()
         qtbot.wait(50)
 
+    @pyside_skip
+    def test_change_theme(self, qtbot, tmpdir):
+        main_window = analysis_main_window.MainWindow(tmpdir, initial_image=False)
+        qtbot.addWidget(main_window)
+        assert main_window.raw_image.viewer.theme == "light"
+        main_window.settings.theme_name = "dark"
+        assert main_window.raw_image.viewer.theme == "dark"
+
+    @pyside_skip
+    def test_scale_bar(self, qtbot, tmpdir):
+        main_window = analysis_main_window.MainWindow(tmpdir, initial_image=False)
+        qtbot.addWidget(main_window)
+        main_window._scale_bar_warning = False
+        assert not main_window.result_image.viewer.scale_bar.visible
+        main_window._toggle_scale_bar()
+        assert main_window.result_image.viewer.scale_bar.visible
+
 
 @pytest.fixture
 def analysis_options(qtbot, part_settings):
@@ -154,6 +171,23 @@ class TestMaskMainWindow:
         main_window = mask_main_window.MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
         qtbot.wait(50)
+
+    @pyside_skip
+    def test_change_theme(self, qtbot, tmpdir):
+        main_window = mask_main_window.MainWindow(tmpdir, initial_image=False)
+        qtbot.addWidget(main_window)
+        assert main_window.image_view.viewer.theme == "light"
+        main_window.settings.theme_name = "dark"
+        assert main_window.image_view.viewer.theme == "dark"
+
+    @pyside_skip
+    def test_scale_bar(self, qtbot, tmpdir):
+        main_window = mask_main_window.MainWindow(tmpdir, initial_image=False)
+        qtbot.addWidget(main_window)
+        main_window._scale_bar_warning = False
+        assert not main_window.image_view.viewer.scale_bar.visible
+        main_window._toggle_scale_bar()
+        assert main_window.image_view.viewer.scale_bar.visible
 
 
 class TestLauncherMainWindow:

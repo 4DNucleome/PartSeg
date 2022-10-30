@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from typing import List, Optional, Type, Union
 
+from napari import __version__
+from packaging.version import parse as parse_version
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
 from qtpy.QtWidgets import QAction, QApplication, QDockWidget, QMainWindow, QMenu, QMessageBox, QWidget
@@ -31,6 +33,8 @@ OPEN_DIRECTORY = "io.open_directory"
 OPEN_FILE_FILTER = "io.open_filter"
 
 _EXIT = object()
+
+NAPARI_LE_4_16 = parse_version(__version__) <= parse_version("0.4.16")
 
 
 class BaseMainMenu(QWidget):
@@ -175,6 +179,8 @@ class BaseMainWindow(QMainWindow):
         self.console_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.BottomDockWidgetArea)
         self.console_dock.hide()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.console_dock)
+
+        self._scale_bar_warning = True  # remove after drop napari 0.4.16
 
     def _toggle_console(self):
         if self.console is None:
@@ -353,3 +359,11 @@ class BaseMainWindow(QMainWindow):
     def deleteLater(self) -> None:
         self.settings.napari_settings.appearance.events.theme.disconnect(self.change_theme)
         super().deleteLater()
+
+    def _toggle_scale_bar(self):
+        """Remove after drop napari 0.4.16"""
+        if NAPARI_LE_4_16 and self._scale_bar_warning and self.settings.theme_name == "light":  # pragma: no cover
+            QMessageBox.warning(
+                self, "Not supported", "Scale bar is not supported for light theme and napari bellow 0.4.17"
+            )
+            self._scale_bar_warning = False

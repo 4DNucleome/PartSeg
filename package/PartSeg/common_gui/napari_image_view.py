@@ -41,6 +41,7 @@ except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
 
 _napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
+_napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
 
 
 class QtViewerPushButton(QtViewerPushButton_):
@@ -159,6 +160,12 @@ class ImageView(QWidget):
         self.viewer_widget = NapariQtViewer(self.viewer)
         if hasattr(self.viewer_widget.canvas, "background_color_override"):
             self.viewer_widget.canvas.background_color_override = "black"
+            if _napari_ge_4_17:
+                self.viewer.scale_bar.color = "white"
+                self.viewer.scale_bar.colored = True
+
+        self._update_scale_bar_ticks()
+
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
         self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self._reset_view)
@@ -211,6 +218,7 @@ class ImageView(QWidget):
         settings.connect_to_profile(f"{name}.image_state.show_label", self.update_roi_labeling)
         settings.connect_to_profile("mask_presentation_opacity", self.update_mask_parameters)
         settings.connect_to_profile("mask_presentation_color", self.update_mask_parameters)
+        settings.connect_to_profile("scale_bar_ticks", self._update_scale_bar_ticks)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
@@ -220,6 +228,9 @@ class ImageView(QWidget):
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self.camera_change, position="last")
         self.viewer.events.reset_view.connect(self._view_changed, position="last")
+
+    def _update_scale_bar_ticks(self):
+        self.viewer.scale_bar.ticks = self.settings.get_from_profile("scale_bar_ticks", True)
 
     def toggle_points_visibility(self):
         if self.points_layer is not None:
