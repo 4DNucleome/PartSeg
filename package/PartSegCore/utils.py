@@ -133,10 +133,11 @@ class EventedDict(typing.MutableMapping):
         memodict[id(self)] = result
         return result
 
-    def __init__(self, **kwargs):
+    def __init__(self, klass=None, **kwargs):
         # TODO add positional only argument when drop python 3.7
         super().__init__()
         self._dict = {}
+        self._klass = klass
         for key, dkt in kwargs.items():
             if isinstance(dkt, dict):
                 dkt = EventedDict(**dkt)
@@ -148,6 +149,8 @@ class EventedDict(typing.MutableMapping):
         self.base_key = ""
 
     def __setitem__(self, k, v) -> None:
+        if self._klass is not None and not isinstance(v, self._klass):
+            raise TypeError(f"Value {v} is not instance of {self._klass}")
         if isinstance(v, dict):
             v = EventedDict(**v)
         if isinstance(v, EventedDict):
@@ -187,9 +190,13 @@ class EventedDict(typing.MutableMapping):
         return {k: v.as_dict_deep() if isinstance(v, EventedDict) else v for k, v in self._dict.items()}
 
     def __str__(self):
+        if self._klass is not None:
+            return f"EventedDict[{self._klass}]({self._dict})"
         return f"EventedDict({self._dict})"
 
     def __repr__(self):
+        if self._klass is not None:
+            return f"EventedDict(klass={self._klass}, {repr(self._dict)})"
         return f"EventedDict({repr(self._dict)})"
 
     def _propagate_setitem(self, key):

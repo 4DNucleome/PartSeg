@@ -184,6 +184,14 @@ class TestEventedDict:
         receiver.deleted.assert_called_with("foo")
         receiver.deleted.assert_called_once()
 
+    def test_dict_force_class(self):
+        dkt = EventedDict(klass=int)
+        dkt["a"] = 1
+        with pytest.raises(TypeError):
+            dkt["b"] = "a"
+        assert dkt["a"] == 1
+        assert set(dkt) == {"a"}
+
 
 class TestProfileDict:
     def test_simple(self):
