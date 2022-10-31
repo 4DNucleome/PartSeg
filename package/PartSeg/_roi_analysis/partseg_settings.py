@@ -44,10 +44,10 @@ class PartSettings(BaseSettings):
         super().__init__(json_path, profile_name)
         self._mask = None
         self.compare_segmentation = None
-        self._segmentation_pipelines_dict = ProfileDict()
-        self._segmentation_profiles_dict = ProfileDict()
-        self._batch_plans_dict = ProfileDict()
-        self._measurement_profiles_dict = ProfileDict()
+        self._segmentation_pipelines_dict = ProfileDict(klass={"*": {"*": SegmentationPipeline}})
+        self._segmentation_profiles_dict = ProfileDict(klass={"*": {"*": ROIExtractionProfile}})
+        self._batch_plans_dict = ProfileDict(klass={"*": {"*": CalculationPlan}})
+        self._measurement_profiles_dict = ProfileDict(klass={"*": {"*": MeasurementProfile}})
         self._segmentation_profiles_dict.connect("", self.roi_profiles_changed.emit, maxargs=0)
         self._segmentation_pipelines_dict.connect("", self.roi_pipelines_changed.emit, maxargs=0)
         self._measurement_profiles_dict.connect("", self.measurement_profiles_changed.emit, maxargs=0)

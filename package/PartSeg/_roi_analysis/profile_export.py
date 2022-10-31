@@ -243,7 +243,9 @@ class ImportDialog(QDialog):
         info_layout.addLayout(v2_lay, 1)
         layout.addLayout(info_layout)
         if ommit_count:
-            layout.addWidget(QLabel(f"Omitted {ommit_count} objects as they are not of type {self.expected_type}"))
+            layout.addWidget(
+                QLabel(f"Omitted {ommit_count} objects as they are not of type {self.expected_type.__name__}")
+            )
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.check_btn)
         btn_layout.addWidget(self.uncheck_btn)
