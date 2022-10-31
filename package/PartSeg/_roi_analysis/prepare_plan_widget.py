@@ -364,9 +364,7 @@ class OtherOperations(ProtectedGroupBox):
             return None
         if save_class.need_mask():
             return NodeType.mask
-        if save_class.need_segmentation():
-            return NodeType.segment
-        return NodeType.root
+        return NodeType.segment if save_class.need_segmentation() else NodeType.root
 
     def _activate_button(self, _value=None):
         if self._replace:
