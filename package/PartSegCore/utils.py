@@ -121,6 +121,13 @@ def get_callback(callback: typing.Union[typing.Callable, MethodType], max_args=N
 
 @register_class(old_paths=["PartSegCore.json_hooks.EventedDict"], allow_errors_in_values=True)
 class EventedDict(typing.MutableMapping):
+    """
+    Class for storing data in dictionary with possibility to connect to change of data.
+
+    :param klass: class of stored data. It could be Type or dict with key as name of key and value as class of data.
+        Key "*" is used as default class, for key different form specified one. .
+    """
+
     setted = Signal(str)
     deleted = Signal(str)
 
@@ -246,7 +253,10 @@ def recursive_update_dict(main_dict: typing.MutableMapping, other_dict: typing.M
 @register_class(old_paths=["PartSegCore.json_hooks.ProfileDict"], allow_errors_in_values=True)
 class ProfileDict:
     """
-    Dict for storing recursive data. The path are dot separated.
+    Dict for storing recursive data. The path is dot separated.
+
+    :param klass: class of stored data. Same as in :py:class:`EventedDict`
+    :parma kwargs: initial data
 
     >>> dkt = ProfileDict()
     >>> dkt.set(["aa", "bb", "c1"], 7)
