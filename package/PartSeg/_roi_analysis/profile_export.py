@@ -27,7 +27,7 @@ from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelectio
 if sys.version_info.minor < 8:
     from typing_extensions import Protocol
 else:
-    from typing import Protocol
+    Protocol = typing.Protocol
 
 
 class ObjectPreviewProtocol(Protocol):
