@@ -121,6 +121,13 @@ def get_callback(callback: typing.Union[typing.Callable, MethodType], max_args=N
 
 @register_class(old_paths=["PartSegCore.json_hooks.EventedDict"], allow_errors_in_values=True)
 class EventedDict(typing.MutableMapping):
+    """
+    Class for storing data in dictionary with possibility to connect to change of data.
+
+    :param klass: class of stored data. It could be Type or dict with key as name of key and value as class of data.
+        Key "*" is used as default class, for key different form specified one. .
+    """
+
     setted = Signal(str)
     deleted = Signal(str)
 
@@ -128,30 +135,36 @@ class EventedDict(typing.MutableMapping):
         if memodict is None:
             memodict = {}
         cls = self.__class__
-        result = cls(**copy.deepcopy(self._dict))
+        result = cls(klass=self._klass, **copy.deepcopy(self._dict))
         result.base_key = self.base_key
         memodict[id(self)] = result
         return result
 
-    def __init__(self, **kwargs):
+    def __init__(self, klass=None, **kwargs):
         # TODO add positional only argument when drop python 3.7
         super().__init__()
         self._dict = {}
+        if klass is None:
+            klass = object
+        self._klass = klass if isinstance(klass, dict) else {"*": klass}
+
         for key, dkt in kwargs.items():
-            if isinstance(dkt, dict):
-                dkt = EventedDict(**dkt)
-            if isinstance(dkt, EventedDict):
-                dkt.base_key = key
-                dkt.setted.connect(self._propagate_setitem)
-                dkt.deleted.connect(self._propagate_del)
-            self._dict[key] = dkt
+            self[key] = dkt
         self.base_key = ""
 
     def __setitem__(self, k, v) -> None:
+        klass = self._klass.get(k, self._klass.get("*", object))
+        if isinstance(klass, dict):
+            if not isinstance(v, typing.MutableMapping):
+                raise TypeError(f"Value for key {k} should be dict")
+        elif not isinstance(v, klass):
+            raise TypeError(f"Value {v} for key {k} is not instance of {klass}")
+
         if isinstance(v, dict):
-            v = EventedDict(**v)
+            v = EventedDict(klass=klass, **v)
         if isinstance(v, EventedDict):
             v.base_key = k
+            v._klass = klass if isinstance(klass, dict) else {"*": klass}
             v.setted.connect(self._propagate_setitem)
             v.deleted.connect(self._propagate_del)
         if k in self._dict and isinstance(self._dict[k], EventedDict):
@@ -187,9 +200,13 @@ class EventedDict(typing.MutableMapping):
         return {k: v.as_dict_deep() if isinstance(v, EventedDict) else v for k, v in self._dict.items()}
 
     def __str__(self):
+        if self._klass is not None:
+            return f"EventedDict[{self._klass}]({self._dict})"
         return f"EventedDict({self._dict})"
 
     def __repr__(self):
+        if self._klass is not None:
+            return f"EventedDict(klass={self._klass}, {repr(self._dict)})"
         return f"EventedDict({repr(self._dict)})"
 
     def _propagate_setitem(self, key):
@@ -209,7 +226,7 @@ class EventedDict(typing.MutableMapping):
             self.deleted.emit(key)
 
 
-def recursive_update_dict(main_dict: typing.Union[dict, EventedDict], other_dict: typing.Union[dict, EventedDict]):
+def recursive_update_dict(main_dict: typing.MutableMapping, other_dict: typing.MutableMapping):
     """
     recursive update main_dict with elements of other_dict
 
@@ -236,7 +253,10 @@ def recursive_update_dict(main_dict: typing.Union[dict, EventedDict], other_dict
 @register_class(old_paths=["PartSegCore.json_hooks.ProfileDict"], allow_errors_in_values=True)
 class ProfileDict:
     """
-    Dict for storing recursive data. The path are dot separated.
+    Dict for storing recursive data. The path is dot separated.
+
+    :param klass: class of stored data. Same as in :py:class:`EventedDict`
+    :parma kwargs: initial data
 
     >>> dkt = ProfileDict()
     >>> dkt.set(["aa", "bb", "c1"], 7)
@@ -248,8 +268,8 @@ class ProfileDict:
         {'c1': 7, 'c2': 8}
     """
 
-    def __init__(self, **kwargs):
-        self._my_dict = EventedDict(**kwargs)
+    def __init__(self, klass=None, **kwargs):
+        self._my_dict = EventedDict(klass=klass, **kwargs)
         self._callback_dict: typing.Dict[str, typing.List[CallbackBase]] = defaultdict(list)
 
         self._my_dict.setted.connect(self._call_callback)
@@ -328,7 +348,7 @@ class ProfileDict:
             except KeyError:
                 for key2 in key_path[i:-1]:
                     with curr_dict.setted.blocked():
-                        curr_dict[key2] = EventedDict()
+                        curr_dict[key2] = {}
                     curr_dict = curr_dict[key2]
                 break
         if isinstance(value, dict):

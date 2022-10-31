@@ -184,6 +184,43 @@ class TestEventedDict:
         receiver.deleted.assert_called_with("foo")
         receiver.deleted.assert_called_once()
 
+    def test_dict_force_class(self):
+        dkt = EventedDict(klass=int)
+        dkt["a"] = 1
+        with pytest.raises(TypeError):
+            dkt["b"] = "a"
+        assert dkt["a"] == 1
+        assert set(dkt) == {"a"}
+
+    def test_dict_force_class_dkt(self):
+        dkt = EventedDict(klass={"a": int, "b": tuple})
+        dkt["a"] = 1
+        with pytest.raises(TypeError):
+            dkt["b"] = "a"
+        dkt["b"] = (1, 2)
+        dkt["c"] = "A"
+        assert set(dkt) == {"a", "b", "c"}
+
+    def test_dict_force_class_dkt2(self):
+        dkt = EventedDict(klass={"a": int, "b": tuple, "*": str})
+        dkt["a"] = 1
+        with pytest.raises(TypeError):
+            dkt["b"] = "a"
+        dkt["b"] = (1, 2)
+        with pytest.raises(TypeError):
+            dkt["c"] = 1
+        dkt["c"] = "A"
+        assert set(dkt) == {"a", "b", "c"}
+
+    def test_dict_nested_type(self):
+        dkt = EventedDict(klass={"a": {"b": int}})
+        dkt["a"] = {"b": 1}
+        with pytest.raises(TypeError):
+            dkt["a"] = {"b": "a"}
+        assert dkt["a"]["b"] == 1
+        assert set(dkt) == {"a"}
+        assert set(dkt["a"]) == {"b"}
+
 
 class TestProfileDict:
     def test_simple(self):
@@ -268,6 +305,25 @@ class TestProfileDict:
         dkt.update({"foo": {"bar": 1}})
         data["a"] = 1
         assert dkt.get("foo") == {"a": 1, "bar": 1}
+
+    def test_force_type(self):
+        dkt = ProfileDict(klass=int)
+        dkt.set("a", 1)
+        with pytest.raises(TypeError):
+            dkt.set("b", "a")
+
+    def test_force_type_nested(self):
+        dkt = ProfileDict(klass={"a": int, "b": {"a": int, "*": str}})
+        dkt.set("a", 1)
+        with pytest.raises(TypeError):
+            dkt.set("b", "a")
+        dkt.set("b.a", 1)
+        with pytest.raises(TypeError):
+            dkt.set("b.c", 1)
+        with pytest.raises(TypeError):
+            dkt.set("a", "a")
+        assert dkt.get("a") == 1
+        assert dkt.get("b") == {"a": 1}
 
 
 def test_iterate_names():
