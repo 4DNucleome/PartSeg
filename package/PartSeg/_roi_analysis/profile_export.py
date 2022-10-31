@@ -1,4 +1,5 @@
 import re
+import sys
 import typing
 
 import numpy as np
@@ -22,6 +23,16 @@ from qtpy.QtWidgets import (
 from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
+
+if sys.version_info.minor < 8:
+    from typing_extensions import Protocol
+else:
+    from typing import Protocol
+
+
+class ObjectPreviewProtocol(Protocol):
+    def preview_object(self, ob):
+        raise NotImplementedError()
 
 
 class ObjectPreview(QTextEdit):
@@ -150,8 +161,8 @@ class ImportDialog(QDialog):
         self,
         import_dict: typing.Dict[str, typing.Any],
         local_dict: typing.Dict[str, typing.Any],
-        viewer: typing.Type[ObjectPreview],
-        expected_type: typing.Type,
+        viewer: typing.Type[ObjectPreviewProtocol],
+        expected_type: typing.Optional[typing.Type] = None,
         parent: typing.Optional[QWidget] = None,
     ):
         """
