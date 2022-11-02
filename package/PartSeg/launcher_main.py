@@ -49,8 +49,8 @@ def create_parser():
         "--multiprocessing-fork", dest="mf", action="store_true", help=argparse.SUPPRESS
     )  # Windows bug fix
     sp = parser.add_subparsers()
-    sp_a = sp.add_parser("roi_analysis", help="Starts GUI for segmentation analysis")
-    sp_s = sp.add_parser("mask_segmentation", help="Starts GUI for segmentation")
+    sp_a = sp.add_parser("roi_analysis", aliases=["roi"], help="Starts GUI for segmentation analysis")
+    sp_s = sp.add_parser("mask_segmentation", aliases=["mask"], help="Starts GUI for segmentation")
     parser.set_defaults(gui="launcher")
     sp_a.set_defaults(gui="roi_analysis")
     sp_s.set_defaults(gui="roi_mask")
