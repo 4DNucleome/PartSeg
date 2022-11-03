@@ -434,7 +434,7 @@ class FormWidget(QWidget):
         else:
             layout.addRow(label, widget)
         # noinspection PyUnresolvedReferences
-        if issubclass(ap.value_type, ROIExtractionProfile):
+        if inspect.isclass(ap.value_type) and issubclass(ap.value_type, ROIExtractionProfile):
             # noinspection PyTypeChecker
             ap.get_field().set_settings(settings)
         if ap.name in start_values:
