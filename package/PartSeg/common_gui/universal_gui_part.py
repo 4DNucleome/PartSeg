@@ -62,7 +62,8 @@ class MguiChannelComboBox(Combobox):
 
     def change_channels_num(self, num: int):
         """Change number of channels"""
-        self.choices = [Channel(i) for i in range(num)]
+        self.choices = [Channel(i) for i in range(num)]  # pylint: disable=attribute-defined-outside-init
+        # TODO understand why pylint do not se choices property in magicgui
 
     def __init__(self, **kwargs):
         super().__init__(choices=[Channel(i) for i in range(10)], **kwargs)
