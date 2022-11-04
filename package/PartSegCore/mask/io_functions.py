@@ -374,8 +374,8 @@ class LoadROIParameters(LoadBase):
             ext = os.path.splitext(file_data)[1]
             if ext == ".json":
                 project_metadata = load_metadata(file_data)
-                if isinstance(metadata, ROIExtractionProfile):
-                    parameters = {1: metadata}
+                if isinstance(project_metadata, ROIExtractionProfile):
+                    parameters = {1: project_metadata}
                 else:
                     parameters = defaultdict(
                         lambda: None,
@@ -685,7 +685,7 @@ class SaveParametersJSON(SaveBase):
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
-        project_info,
+        project_info: typing.Union[ROIExtractionProfile, MaskProjectTuple],
         parameters: dict = None,
         range_changed=None,
         step_changed=None,
@@ -699,7 +699,10 @@ class SaveParametersJSON(SaveBase):
         :return:
         """
         with open(save_location, "w", encoding="utf-8") as ff:
-            json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=PartSegEncoder)
+            if isinstance(project_info, ROIExtractionProfile):
+                json.dump(project_info, ff, cls=PartSegEncoder)
+            else:
+                json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=PartSegEncoder)
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
