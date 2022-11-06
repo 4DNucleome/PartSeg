@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 import qtpy
-from magicgui.widgets import Widget
+from magicgui.widgets import Widget, create_widget
 from nme import register_class
 from pydantic import Field
 from qtpy.QtCore import QPoint, QSize, Qt
@@ -82,6 +82,7 @@ from PartSeg.common_gui.universal_gui_part import (
     CustomSpinBox,
     EnumComboBox,
     InfoLabel,
+    MguiChannelComboBox,
     Spacing,
 )
 from PartSegCore import Units, state_store
@@ -1618,3 +1619,23 @@ class TestAlgorithmChoose:
             part_settings.image = image2
 
         mock.assert_called_once()
+
+
+class TestMguiChannelComboBox:
+    def test_create(self, qtbot):
+        widget = MguiChannelComboBox()
+        qtbot.addWidget(widget.native)
+        assert len(widget.choices) == 10
+
+    def test_creat_mgui(self, qtbot):
+        widget = create_widget(annotation=Channel)
+        qtbot.addWidget(widget.native)
+        assert isinstance(widget, MguiChannelComboBox)
+        assert widget.native.count() == 10
+
+    def test_set_value(self, qtbot):
+        widget = MguiChannelComboBox()
+        qtbot.addWidget(widget.native)
+        widget.change_channels_num(5)
+        assert len(widget.choices) == 5
+        assert widget.native.currentIndex() == 2
