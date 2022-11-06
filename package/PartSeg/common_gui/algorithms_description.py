@@ -825,9 +825,12 @@ class AlgorithmChoose(AlgorithmChooseBase):
 
     def image_changed(self):
         current_widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
+        prev_block = self.blockSignals(True)
         current_widget.image_changed(self.settings.image)
         if hasattr(self.settings, "mask") and hasattr(current_widget, "change_mask"):
             current_widget.change_mask()
+        self.blockSignals(prev_block)
+        self.value_changed.emit()
 
 
 def _value_get(self):
