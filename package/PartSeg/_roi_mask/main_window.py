@@ -625,7 +625,10 @@ class AlgorithmOptions(QWidget):
         if not dial.exec_():
             return
         res = dial.get_result()
-        res.save_class.save(res.save_destination, self.algorithm_choose_widget.current_parameters())
+        res.save_class.save(
+            save_location=res.save_destination,
+            project_info=self.algorithm_choose_widget.current_parameters(),
+        )
 
     def file_list_change(self, val):
         self.file_list = val

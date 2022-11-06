@@ -9,6 +9,7 @@ import pprint
 import re
 import traceback
 import typing
+from contextlib import suppress
 
 import numpy as np
 import requests
@@ -58,6 +59,7 @@ class ErrorDialog(QDialog):
         self.additional_notes = additional_notes
         self.send_report_btn = QPushButton("Send information")
         self.send_report_btn.setDisabled(not state_store.report_errors)
+        self.create_issue_btn = QPushButton("Create issue")
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
         theme = get_theme(get_settings().appearance.theme, as_dict=False)
@@ -78,6 +80,7 @@ class ErrorDialog(QDialog):
         self.user_name = QLineEdit()
         self.cancel_btn.clicked.connect(self.reject)
         self.send_report_btn.clicked.connect(self.send_information)
+        self.create_issue_btn.clicked.connect(self.create_issue)
 
         layout = QVBoxLayout()
         self.desc = QLabel(description)
@@ -106,6 +109,7 @@ class ErrorDialog(QDialog):
             )
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.cancel_btn)
+        btn_layout.addWidget(self.create_issue_btn)
         btn_layout.addWidget(self.send_report_btn)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
@@ -128,6 +132,36 @@ class ErrorDialog(QDialog):
             print_exc(self.exception)
             return False
         super().exec_()
+
+    def create_issue(self):
+        """
+        Create issue on github. This method is used when user disable error reporting.
+        """
+        import urllib.parse
+        import webbrowser
+
+        url = "https://github.com/4DNucleome/PartSeg/issues/new?"
+        data = {
+            "title": f"Error report from PartSeg `{repr(self.exception)}`",
+            "body": f"This issue is created from PartSeg error dialog\n\n```"
+            f"python\n{self.error_description.toPlainText()}\n```\n",
+            "labels": "bug",
+        }
+
+        versions_dkt = {"PartSeg": __version__}
+
+        with suppress(ModuleNotFoundError):
+            from importlib.metadata import PackageNotFoundError, version
+
+            for name in ["napari", "numpy", "SimpleITK", "PartSegData", "PartSegCore_compiled_backend"]:
+                try:
+                    versions_dkt[name] = version(name)
+                except PackageNotFoundError:  # pragma: no cover
+                    versions_dkt[name] = "not found"
+
+        data["body"] += "Packages: \n```\n" + "\n".join(f"{k}=={v}" for k, v in versions_dkt.items()) + "\n```\n"
+
+        webbrowser.open(f"{url}{urllib.parse.urlencode(data)}")
 
     def send_information(self):
         """
