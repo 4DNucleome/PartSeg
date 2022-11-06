@@ -156,7 +156,7 @@ class ErrorDialog(QDialog):
             for name in ["napari", "numpy", "SimpleITK", "PartSegData", "PartSegCore_compiled_backend"]:
                 try:
                     versions_dkt[name] = version(name)
-                except PackageNotFoundError:
+                except PackageNotFoundError:  # pragma: no cover
                     versions_dkt[name] = "not found"
 
         data["body"] += "Packages: \n```\n" + "\n".join(f"{k}=={v}" for k, v in versions_dkt.items()) + "\n```\n"
