@@ -46,7 +46,7 @@ from PartSegImage import Channel, Image
 
 from ..common_backend.base_settings import BaseSettings
 from ..common_backend.segmentation_thread import SegmentationThread
-from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox, MguiChannelComboBox
+from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox
 
 
 def recursive_update(d, u):
@@ -202,8 +202,6 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
         else:
             res = create_widget(value=ap.default_value, annotation=ap.value_type, options=ap.mgi_options)
-            if isinstance(res, MguiChannelComboBox):
-                res.change_channels_num(10)
             if isinstance(res, EmptyWidget):
                 raise ValueError(f"Unknown type {ap.value_type}")
         return res

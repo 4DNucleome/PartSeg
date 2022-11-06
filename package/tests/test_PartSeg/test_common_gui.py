@@ -13,7 +13,8 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 import qtpy
-from magicgui.widgets import Widget, create_widget
+from magicgui import register_type
+from magicgui.widgets import Container, Widget, create_widget
 from nme import register_class
 from pydantic import Field
 from qtpy.QtCore import QPoint, QSize, Qt
@@ -955,6 +956,25 @@ class TestFormWidget:
             "field1": 10,
             "check_selection": {"1": {"field1": 3}, "2": {"field2": 5}},
         }
+
+    def test_multiline_widget(self, qtbot):
+        class DummyClass:
+            def __init__(self, value):
+                self.value = value
+
+        class DummyWidget(Container):
+            multiline = True
+
+            def __init__(self, value, nullable, **kwargs):
+                self.value = value
+                self.nullable = nullable
+                super().__init__(**kwargs)
+
+        register_type(DummyClass, widget_type=DummyWidget)
+
+        form_widget = FormWidget([AlgorithmProperty("dummy", "dummy", DummyClass(1))])
+        qtbot.add_widget(form_widget)
+        assert form_widget.layout().rowCount() == 2
 
 
 class TestFieldsList:
