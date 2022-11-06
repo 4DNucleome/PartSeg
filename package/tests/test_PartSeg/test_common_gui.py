@@ -8,7 +8,7 @@ import typing
 from enum import Enum
 from functools import partial
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -63,7 +63,7 @@ from PartSeg.common_gui.custom_load_dialog import (
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
-from PartSeg.common_gui.error_report import DataImportErrorDialog
+from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
@@ -1618,3 +1618,18 @@ class TestAlgorithmChoose:
             part_settings.image = image2
 
         mock.assert_called_once()
+
+
+class TestErrorDialog:
+    def test_create(self, qtbot):
+        dialog = ErrorDialog(ValueError("aaa"), "Test text")
+        qtbot.addWidget(dialog)
+        assert dialog.desc.text() == "Test text"
+
+    @patch("webbrowser.open")
+    def test_create_issue(self, mock_web, qtbot):
+        dialog = ErrorDialog(ValueError("aaa"), "Test text")
+        qtbot.addWidget(dialog)
+        dialog.create_issue()
+        assert "title=Error" in mock_web.call_args.args[0]
+        assert "body=This" in mock_web.call_args.args[0]
