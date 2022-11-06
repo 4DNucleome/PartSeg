@@ -21,7 +21,7 @@ oiffile==2020.1.18
 openpyxl==2.4.9
 packaging==20.0
 pandas==0.24.0
-psygnal==0.3.0
+psygnal==0.3.1
 pydantic==1.8.1
 pygments==2.4.0
 qtconsole==4.7.7
