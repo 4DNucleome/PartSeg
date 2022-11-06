@@ -1658,4 +1658,3 @@ class TestMguiChannelComboBox:
         qtbot.addWidget(widget.native)
         widget.change_channels_num(5)
         assert len(widget.choices) == 5
-        assert widget.native.currentIndex() == 2
