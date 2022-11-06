@@ -109,6 +109,9 @@ class QtAlgorithmProperty(AlgorithmProperty):
     def get_value(self):
         return self._getter(self._widget)
 
+    def is_multiline(self):
+        return getattr(self._widget, "multiline", False)
+
     def recursive_get_values(self):
         if isinstance(self._widget, SubAlgorithmWidget):
             return self._widget.recursive_get_values()
@@ -376,6 +379,8 @@ class FormWidget(QWidget):
                 layout.addRow(el)
                 continue
             self._add_to_layout(layout, el, start_values, settings)
+            if hasattr(el.get_field(), "change_channels_num"):
+                self.channels_chose.append(el.get_field())
         self.setLayout(layout)
         self.value_changed.connect(self.update_size)
 
@@ -411,22 +416,23 @@ class FormWidget(QWidget):
             if ap.name in start_values:
                 w.set_starting(start_values[ap.name])
             ap.change_fun.connect(_any_arguments(self.value_changed.emit))
-            self.channels_chose.append(w)
-            return
-        if isinstance(ap.get_field(), Widget):
-            layout.addRow(label, typing.cast(Widget, ap.get_field()).native)
             return
         if isinstance(ap.get_field(), FieldsList):
             layout.addRow(label)
             for el in typing.cast(FieldsList, ap.get_field()).field_list:
                 self._add_to_layout(layout, el, start_values.get(ap.name, {}), settings, add_to_widget_dict=False)
             return
-        layout.addRow(label, ap.get_field())
+        if isinstance(ap.get_field(), Widget):
+            widget = typing.cast(Widget, ap.get_field()).native
+        else:
+            widget = ap.get_field()
+        if ap.is_multiline():
+            layout.addRow(label)
+            layout.addRow(widget)
+        else:
+            layout.addRow(label, widget)
         # noinspection PyUnresolvedReferences
-        if issubclass(ap.value_type, Channel):
-            # noinspection PyTypeChecker
-            self.channels_chose.append(ap.get_field())
-        if issubclass(ap.value_type, ROIExtractionProfile):
+        if inspect.isclass(ap.value_type) and issubclass(ap.value_type, ROIExtractionProfile):
             # noinspection PyTypeChecker
             ap.get_field().set_settings(settings)
         if ap.name in start_values:

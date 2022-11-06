@@ -13,7 +13,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import qtpy
-from magicgui.widgets import Widget
+from magicgui import register_type
+from magicgui.widgets import Container, Widget, create_widget
 from nme import register_class
 from pydantic import Field
 from qtpy.QtCore import QPoint, QSize, Qt
@@ -82,6 +83,7 @@ from PartSeg.common_gui.universal_gui_part import (
     CustomSpinBox,
     EnumComboBox,
     InfoLabel,
+    MguiChannelComboBox,
     Spacing,
 )
 from PartSegCore import Units, state_store
@@ -955,6 +957,25 @@ class TestFormWidget:
             "check_selection": {"1": {"field1": 3}, "2": {"field2": 5}},
         }
 
+    def test_multiline_widget(self, qtbot):
+        class DummyClass:
+            def __init__(self, value):
+                self.value = value
+
+        class DummyWidget(Container):
+            multiline = True
+
+            def __init__(self, value, nullable, **kwargs):
+                self.value = value
+                self.nullable = nullable
+                super().__init__(**kwargs)
+
+        register_type(DummyClass, widget_type=DummyWidget)
+
+        form_widget = FormWidget([AlgorithmProperty("dummy", "dummy", DummyClass(1))])
+        qtbot.add_widget(form_widget)
+        assert form_widget.layout().rowCount() == 2
+
 
 class TestFieldsList:
     def test_simple(self):
@@ -1634,3 +1655,22 @@ class TestErrorDialog:
         dialog.create_issue()
         assert "title=Error" in mock_web.call_args.args[0]
         assert "body=This" in mock_web.call_args.args[0]
+
+
+class TestMguiChannelComboBox:
+    def test_create(self, qtbot):
+        widget = MguiChannelComboBox()
+        qtbot.addWidget(widget.native)
+        assert len(widget.choices) == 10
+
+    def test_creat_mgui(self, qtbot):
+        widget = create_widget(annotation=Channel)
+        qtbot.addWidget(widget.native)
+        assert isinstance(widget, MguiChannelComboBox)
+        assert widget.native.count() == 10
+
+    def test_set_value(self, qtbot):
+        widget = MguiChannelComboBox()
+        qtbot.addWidget(widget.native)
+        widget.change_channels_num(5)
+        assert len(widget.choices) == 5
