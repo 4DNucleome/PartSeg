@@ -1626,6 +1626,7 @@ class TestErrorDialog:
         qtbot.addWidget(dialog)
         assert dialog.desc.text() == "Test text"
 
+    @pytest.mark.skipif(sys.version_info < (3, 8), reason="requires python3.8 or higher")
     @patch("webbrowser.open")
     def test_create_issue(self, mock_web, qtbot):
         dialog = ErrorDialog(ValueError("aaa"), "Test text")
