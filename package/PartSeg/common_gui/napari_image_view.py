@@ -400,6 +400,8 @@ class ImageView(QWidget):
         image = self.get_image(image)
         if roi_info is None:
             roi_info = self.settings.roi_info
+        if image.file_path not in self.image_info:
+            return
         image_info = self.image_info[image.file_path]
         if image_info.roi is None and roi_info.roi is not None:
             image_info.roi_info = roi_info
@@ -589,7 +591,8 @@ class ImageView(QWidget):
             logging.debug(f"[_remove_worker] {sender}")
 
     def _add_layer_util(self, index, layer, filters):
-        self.viewer.add_layer(layer)
+        if layer not in self.viewer:
+            self.viewer.add_layer(layer)
 
         def set_data(val):
             self._remove_worker(self.sender())
@@ -614,10 +617,6 @@ class ImageView(QWidget):
 
         image_info, replace = image_data
         image = image_info.image
-        if replace:
-            self.viewer.layers.select_all()
-            self.viewer.layers.remove_selected()
-            QApplication.instance().processEvents()
 
         filters = self.channel_control.get_filter()
         for i, layer in enumerate(image_info.layers):
@@ -630,10 +629,12 @@ class ImageView(QWidget):
         self.image_info[image.file_path].filter_info = filters
         self.image_info[image.file_path].layers = image_info.layers
         self.current_image = image.file_path
-        if self.image_info[image.file_path].mask is not None:
-            self.viewer.add_layer(self.image_info[image.file_path].mask)
-        if self.image_info[image.file_path].roi is not None:
-            self.viewer.add_layer(self.image_info[image.file_path].roi)
+        mask_layer = self.image_info[image.file_path].mask
+        if mask_layer is not None and mask_layer not in self.viewer.layers:
+            self.viewer.add_layer(mask_layer)
+        roi_layer = self.image_info[image.file_path].roi
+        if roi_layer is not None and roi_layer not in self.viewer.layers:
+            self.viewer.add_layer(roi_layer)
         self.viewer.reset_view()
         if self.viewer.layers:
             if hasattr(self.viewer.layers, "selection"):
@@ -662,6 +663,11 @@ class ImageView(QWidget):
 
         if image.file_path in self.image_info:
             raise ValueError("Image already added")
+
+        if replace:
+            for layer in list(reversed(self.viewer.layers)):
+                self.viewer.layers.remove(layer)
+            QApplication.instance().processEvents()
 
         self.image_info[image.file_path] = ImageInfo(image, [])
 
