@@ -615,7 +615,7 @@ class ImageView(QWidget):
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
         self._remove_worker(self.sender())
 
-        image_info, replace = image_data
+        image_info, _replace = image_data
         image = image_info.image
 
         filters = self.channel_control.get_filter()
