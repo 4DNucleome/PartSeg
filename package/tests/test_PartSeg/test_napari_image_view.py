@@ -280,7 +280,7 @@ class TestImageView:
         image_view.set_roi()
         assert "ROI" in image_view.viewer.layers
 
-    def test_roi_removed__add_image_restore(self, base_settings, image_view):
+    def test_roi_removed_add_image_restore(self, base_settings, image_view):
         roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
         roi[..., 2:-2, 2:-2, 2:-2] = 1
         base_settings.roi = roi

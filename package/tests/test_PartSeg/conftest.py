@@ -52,7 +52,8 @@ def disable_threads_viewer(monkeypatch):
     monkeypatch.setattr(napari_image_view.ImageView, "_prepare_layers", _prepare_layers)
 
     def _add_layer_util(self, index, layer, filters):
-        self.viewer.add_layer(layer)
+        if layer not in self.viewer.layers:
+            self.viewer.add_layer(layer)
 
     monkeypatch.setattr(napari_image_view.ImageView, "_add_layer_util", _add_layer_util)
 
