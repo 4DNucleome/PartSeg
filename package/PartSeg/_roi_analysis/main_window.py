@@ -143,6 +143,7 @@ class Options(QWidget):
         self.setLayout(layout)
 
         settings.roi_changed.connect(self._refresh_compare_btn)
+        settings.image_changed.connect(self._reset_compare_btn)
 
     @ensure_main_thread
     def _update_profiles(self):
@@ -348,6 +349,9 @@ class Options(QWidget):
 
     def _refresh_compare_btn(self):
         self.compare_btn.setEnabled(bool(self._settings.roi_info.bound_info))
+
+    def _reset_compare_btn(self):
+        self.compare_btn.setText("Compare")
 
     def showEvent(self, _event):
         self.hide_left_panel_chk.setChecked(self._settings.get_from_profile("hide_left_panel", False))
