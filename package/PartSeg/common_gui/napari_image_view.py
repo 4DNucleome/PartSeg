@@ -591,7 +591,7 @@ class ImageView(QWidget):
             logging.debug(f"[_remove_worker] {sender}")
 
     def _add_layer_util(self, index, layer, filters):
-        if layer not in self.viewer:
+        if layer not in self.viewer.layers:
             self.viewer.add_layer(layer)
 
         def set_data(val):

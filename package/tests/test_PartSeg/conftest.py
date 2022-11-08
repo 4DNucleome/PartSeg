@@ -45,7 +45,10 @@ def part_settings_with_project(image, analysis_segmentation2, tmp_path):
 
 
 @pytest.fixture(autouse=True)
-def disable_threads_viewer(monkeypatch):
+def disable_threads_viewer(monkeypatch, request):
+    if "no_viewer_patch" in request.keywords:
+        return
+
     def _prepare_layers(self, image, parameters, replace):
         self._add_image(napari_image_view._prepare_layers(image, parameters, replace))
 
