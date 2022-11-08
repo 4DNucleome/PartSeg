@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 from napari.layers import Image as NapariImage
+from napari.qt import QtViewer
 from qtpy.QtCore import QPoint
 from test_PartSeg.utils import CI_BUILD
 from vispy.geometry import Rect
@@ -55,8 +56,10 @@ def image_view(base_settings, image2, qtbot, request):
     view.close()
     ch_prop.deleteLater()
     view.deleteLater()
+    del view
     qtbot.wait(50)
     gc.collect()
+    QtViewer._instances.clear()
 
 
 class TestImageView:
