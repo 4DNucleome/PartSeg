@@ -58,7 +58,8 @@ def image_view(base_settings, image2, qtbot, request):
     view.deleteLater()
     qtbot.wait(50)
     gc.collect()
-    QtViewer._instances.clear()
+    if hasattr(QtViewer, "_instances"):
+        QtViewer._instances.clear()
 
 
 class TestImageView:
