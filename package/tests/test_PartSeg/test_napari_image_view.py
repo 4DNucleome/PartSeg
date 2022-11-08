@@ -56,7 +56,6 @@ def image_view(base_settings, image2, qtbot, request):
     view.close()
     ch_prop.deleteLater()
     view.deleteLater()
-    del view
     qtbot.wait(50)
     gc.collect()
     QtViewer._instances.clear()
