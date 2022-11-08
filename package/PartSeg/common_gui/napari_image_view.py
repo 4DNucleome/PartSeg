@@ -17,7 +17,7 @@ from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from nme import register_class
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
+from qtpy.QtCore import QEvent, QObject, QPoint, Qt, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
@@ -594,23 +594,17 @@ class ImageView(QWidget):
         if layer not in self.viewer.layers:
             self.viewer.add_layer(layer)
 
-        def set_data(val):
-            self._remove_worker(self.sender())
-            data_, layer_ = val
-            if data_ is None:
-                return
-            if layer_ not in self.viewer.layers:
-                return
-            layer_.data = data_
+        set_data_obj = _SetData(self)
 
-        @thread_worker(connect={"returned": set_data})
+        @thread_worker(connect={"returned": set_data_obj.set_data})
         def calc_filter(j, layer_):
             if filters[j][0] == NoiseFilterType.No or filters[j][1] == 0:
                 return None, layer_
             return self.calculate_filter(layer_.data, parameters=filters[j]), layer_
 
-        worker = calc_filter(index, layer)
-        self.worker_list.append(worker)
+        set_data_obj.worker = calc_filter(index, layer)
+
+        self.worker_list.append(set_data_obj)
 
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
         self._remove_worker(self.sender())
@@ -1029,3 +1023,23 @@ def _print_dict(dkt: MutableMapping, indent="") -> str:
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)
+
+
+class _SetData(QObject):
+    def __init__(self, viewer: ImageView):
+        super().__init__()
+        self.viewer = viewer
+        self.worker = None
+
+    @Slot()
+    def set_data(self, val):
+        self._set_data(val)
+        self.viewer.worker_list.remove(self)
+
+    def _set_data(self, val):
+        data_, layer_ = val
+        if data_ is None:
+            return
+        if layer_ not in self.viewer.viewer.layers:
+            return
+        layer_.data = data_
