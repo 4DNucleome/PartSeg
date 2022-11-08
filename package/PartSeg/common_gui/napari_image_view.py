@@ -17,7 +17,7 @@ from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from nme import register_class
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QObject, QPoint, Qt, QTimer, Signal, Slot
+from qtpy.QtCore import QEvent, QObject, QPoint, Qt, QTimer, Signal
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
@@ -1031,7 +1031,6 @@ class _SetData(QObject):
         self.viewer = viewer
         self.worker = None
 
-    @Slot()
     def set_data(self, val):
         self._set_data(val)
         self.viewer.worker_list.remove(self)
