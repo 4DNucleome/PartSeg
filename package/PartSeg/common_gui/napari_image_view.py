@@ -584,7 +584,7 @@ class ImageView(QWidget):
 
     def _remove_worker(self, sender):
         for worker in self.worker_list:
-            if sender is worker.signals:
+            if hasattr(worker, "signals") and sender is worker.signals:
                 self.worker_list.remove(worker)
                 break
         else:
