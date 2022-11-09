@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.6 - 2022-11-09
+
+### Bug Fixes
+
+-   Fix bug when loading already created project causing hide of ROI layer
+
 ## 0.14.5 - 2022-11-09
 
 ### Bug Fixes
