@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.14.5 - 2022-11-09
+
+### Bug Fixes
+
+-   Fix scalebar color (#774)
+-   Fix bug when saving segmentation parameters in mask analysis (#781)
+-   Fix multiple errors related to loading a new file in interactive mode (#784)
+
+### Features
+
+-   Add an option for ensuring type in EventedDict and use it to validate profiles structures (#776)
+-   Add an option to create an issue from the error report dialog (#782)
+-   Add option for the multiline field in algorithm parameters (#766)
+
+### Refactor
+
+-   Optimize CLI actions (#772)
+-   Clean warnings about threshold methods (#783)
+
+### Build
+
+-   Bump chanzuckerberg/napari-hub-preview-action from 0.1.5 to 0.1.6 (#775)
+
 ## 0.14.4 - 2022-10-24
 
 ### Bug Fixes
