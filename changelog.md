@@ -1,18 +1,18 @@
 # Changelog
 
-## [0.14.5] - 2022-11-08
+## 0.14.5 - 2022-11-08
 
 ### Bug Fixes
 
 -   Fix scalebar color (#774)
--   Fix bug when saving segmentation prameters in mask analysis (#781)
--   Fix multiple error related to loading new file in interactive mode (#784)
+-   Fix bug when saving segmentation parameters in mask analysis (#781)
+-   Fix multiple errors related to loading a new file in interactive mode (#784)
 
 ### Features
 
--   Add option for ensure type in EventedDict and use it to validate profiles structures (#776)
--   Add option to create issue from error report dialog (#782)
--   Add option for multiline field in algorithm parameters (#766)
+-   Add an option for ensuring type in EventedDict and use it to validate profiles structures (#776)
+-   Add an option to create an issue from the error report dialog (#782)
+-   Add option for the multiline field in algorithm parameters (#766)
 
 ### Refactor
 
