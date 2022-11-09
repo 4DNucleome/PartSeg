@@ -609,8 +609,13 @@ class ImageView(QWidget):
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
         self._remove_worker(self.sender())
 
-        image_info, _replace = image_data
+        image_info, replace = image_data
         image = image_info.image
+
+        if replace:
+            for layer in list(reversed(self.viewer.layers)):
+                self.viewer.layers.remove(layer)
+            QApplication.instance().processEvents()
 
         filters = self.channel_control.get_filter()
         for i, layer in enumerate(image_info.layers):
@@ -657,11 +662,6 @@ class ImageView(QWidget):
 
         if image.file_path in self.image_info:
             raise ValueError("Image already added")
-
-        if replace:
-            for layer in list(reversed(self.viewer.layers)):
-                self.viewer.layers.remove(layer)
-            QApplication.instance().processEvents()
 
         self.image_info[image.file_path] = ImageInfo(image, [])
 
