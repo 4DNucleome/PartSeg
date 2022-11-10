@@ -73,6 +73,6 @@ class EqualColumnLayout(QLayout):
         for el in self._item_list:
             if el.widget():
                 el.widget().deleteLater()
-            else:
+            elif el.layout():
                 el.layout().deleteLater()
         self._item_list = []

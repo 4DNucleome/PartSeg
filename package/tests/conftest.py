@@ -10,6 +10,7 @@ from queue import Empty
 import numpy as np
 import pytest
 
+from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
@@ -28,6 +29,11 @@ from PartSegImage import Image
 def data_test_dir():
     """Return path to directory with test data"""
     return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "test_data")
+
+
+@pytest.fixture(autouse=True)
+def mock_settings_path(tmp_path, monkeypatch):
+    monkeypatch.setattr(state_store, "save_folder", str(tmp_path))
 
 
 @pytest.fixture(scope="module")

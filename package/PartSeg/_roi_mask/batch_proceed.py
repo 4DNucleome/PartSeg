@@ -1,5 +1,6 @@
 import os
 import re
+import typing
 from collections import defaultdict
 from functools import partial
 from pathlib import Path
@@ -67,8 +68,8 @@ class BatchProceed(QThread):
                 continue
             try:
                 name = os.path.basename(file_path)
-                blank = get_mask(project_tuple.roi, project_tuple.mask, project_tuple.selected_components)
-                algorithm: StackAlgorithm = MaskAlgorithmSelection[task.parameters.algorithm]()
+                blank = get_mask(project_tuple.roi_info.roi, project_tuple.mask, project_tuple.selected_components)
+                algorithm = typing.cast(StackAlgorithm, MaskAlgorithmSelection[task.parameters.algorithm]())
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
                 algorithm.set_parameters(task.parameters.values)
