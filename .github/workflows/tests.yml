@@ -67,7 +67,7 @@ jobs:
       python_version: >-
         ["3.9"]
       os: >-
-        ["windows-2019", "ubuntu-20.04", "macos-11"]
+        ["windows-2019", "ubuntu-20.04", "macos-12"]
 
   test_coverage:
     needs: download_data
