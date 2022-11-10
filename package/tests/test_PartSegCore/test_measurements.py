@@ -2334,7 +2334,7 @@ def test_per_component(method, area):
     )
     assert len(result["Measurement per component"][0]) == 1
     assert isinstance(result["Measurement"][0], (float, int))
-    assert result["Measurement per component"][0][0] == result["Measurement"][0]
+    assert isclose(result["Measurement per component"][0][0], result["Measurement"][0])
 
 
 @pytest.mark.parametrize("method", CorrelationEnum.__members__.values())
