@@ -272,11 +272,15 @@ class MainMenu(BaseMainMenu):
             except ValueError as e:
                 if e.args != (ROI_NOT_FIT,):
                     raise
-                self.segmentation_dialog.set_additional_text(
-                    f"Segmentation ({result.file_path}) of shape {result.roi_info.roi.shape}\n"
-                    f"do not fit to image ({self.settings.image.file_path}) of shape "
-                    f"{self.settings.image.shape},\nmaybe you would like to load parameters only."
+                text = (
+                    f"Segmentation of shape {result.roi_info.roi.shape}\n({result.file_path})\n"
+                    f"do not fit to image of shape {self.settings.image.shape}\n({self.settings.image.file_path})"
                 )
+                if all(x is None for x in result.roi_extraction_parameters.values()):
+                    QMessageBox.warning(self, "Segmentation do not fit", f"{text} and no parameters for extraction")
+                    return
+
+                self.segmentation_dialog.set_additional_text(text + "\nmaybe you would like to load parameters only.")
             except HistoryProblem:
                 QMessageBox().warning(
                     self,
