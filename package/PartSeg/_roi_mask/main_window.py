@@ -223,6 +223,7 @@ class MainMenu(BaseMainMenu):
         return True
 
     def load_segmentation(self):
+        settings_path = OPEN_DIRECTORY if self.settings.get("sync_dirs", False) else "io.open_segmentation_directory"
         dial = PLoadDialog(
             {
                 LoadROI.get_name(): LoadROI,
@@ -230,7 +231,7 @@ class MainMenu(BaseMainMenu):
                 LoadROIFromTIFF.get_name(): LoadROIFromTIFF,
             },
             settings=self.settings,
-            path="io.open_segmentation_directory",
+            path=settings_path,
         )
         if not dial.exec_():
             return
@@ -261,26 +262,32 @@ class MainMenu(BaseMainMenu):
         )
         if not dial.exec_():
             return
-        result = dial.get_result()
+        result: MaskProjectTuple = dial.get_result()
         if result is None:
             QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
             return
-        if result.roi is not None:
+        if result.roi_info.roi is not None:
             try:
                 self.settings.set_project_info(dial.get_result())
                 return
             except ValueError as e:
                 if e.args != (ROI_NOT_FIT,):
                     raise
-                self.segmentation_dialog.set_additional_text(
-                    "Segmentation do not fit to image, maybe you would lie to load parameters only."
+                text = (
+                    f"Segmentation of shape {result.roi_info.roi.shape}\n({result.file_path})\n"
+                    f"do not fit to image of shape {self.settings.image.shape}\n({self.settings.image.file_path})"
                 )
+                if all(x is None for x in result.roi_extraction_parameters.values()):
+                    QMessageBox.warning(self, "Segmentation do not fit", f"{text} and no parameters for extraction")
+                    return
+
+                self.segmentation_dialog.set_additional_text(text + "\nmaybe you would like to load parameters only.")
             except HistoryProblem:
                 QMessageBox().warning(
                     self,
                     "Load Problem",
                     "You set to save selected components when loading "
-                    "another segmentation but history is incomatybile",
+                    "another segmentation but history is incompatibility",
                 )
 
         else:
@@ -292,11 +299,12 @@ class MainMenu(BaseMainMenu):
         if self.settings.roi is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
+        settings_path = OPEN_DIRECTORY if self.settings.get("sync_dirs", False) else "io.save_segmentation_directory"
         dial = PSaveDialog(
             io_functions.save_segmentation_dict,
             system_widget=False,
             settings=self.settings,
-            path="io.save_segmentation_directory",
+            path=settings_path,
         )
 
         dial.selectFile(f"{os.path.splitext(os.path.basename(self.settings.image_path))[0]}.seg")
@@ -768,6 +776,13 @@ class ImageInformation(QWidget):
         self.multiple_files = QCheckBox("Show multiple files panel")
         self.multiple_files.setChecked(settings.get("multiple_files_widget", True))
         self.multiple_files.stateChanged.connect(self.set_multiple_files)
+        self.sync_dirs = QCheckBox("Sync directories in file dialog")
+        self.sync_dirs.setToolTip(
+            "If checked then 'Load Image', 'Load segmentation' and 'Save segmentation' "
+            "will open file dialog in the same directory"
+        )
+        self.sync_dirs.setChecked(settings.get("sync_dirs", False))
+        self.sync_dirs.stateChanged.connect(self.set_sync_dirs)
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
@@ -795,12 +810,25 @@ class ImageInformation(QWidget):
         layout.addWidget(self.add_files)
         layout.addStretch(1)
         layout.addWidget(self.multiple_files)
+        layout.addWidget(self.sync_dirs)
         self.setLayout(layout)
         self._settings.image_changed[str].connect(self.set_image_path)
+        self._settings.connect_("multiple_files_widget", self._set_multiple_files)
+        self._settings.connect_("sync_dirs", self._set_sync_dirs)
 
     @Slot(int)
     def set_multiple_files(self, val):
         self._settings.set("multiple_files_widget", val)
+
+    @Slot(int)
+    def set_sync_dirs(self, val):
+        self._settings.set("sync_dirs", val)
+
+    def _set_multiple_files(self):
+        self.multiple_files.setChecked(self._settings.get("multiple_files_widget", True))
+
+    def _set_sync_dirs(self):
+        self.sync_dirs.setChecked(self._settings.get("sync_dirs", False))
 
     def update_spacing(self, index=None):
         units_value = self.units.currentEnum()
@@ -838,7 +866,7 @@ class Options(QTabWidget):
         super().__init__(parent)
         self._settings = settings
         self.algorithm_options = AlgorithmOptions(settings, image_view)
-        self.image_properties = ImageInformation(settings, parent)
+        self.image_properties = ImageInformation(settings)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
         self.algorithm_options.batch_process.multiple_result.connect(
             partial(self.image_properties.multiple_files.setChecked, True)

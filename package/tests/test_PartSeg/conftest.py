@@ -28,8 +28,9 @@ def part_settings(image, tmp_path, measurement_profiles):
 
 
 @pytest.fixture
-def stack_settings(tmp_path):
+def stack_settings(tmp_path, image):
     settings = StackSettings(tmp_path)
+    settings.image = image
     chose = ChosenComponents()
     settings.chosen_components_widget = chose
     yield settings

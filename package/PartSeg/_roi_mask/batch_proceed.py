@@ -4,7 +4,7 @@ from collections import defaultdict
 from functools import partial
 from pathlib import Path
 from queue import Queue
-from typing import List, NamedTuple, Optional, Tuple, Union
+from typing import List, NamedTuple, Optional, Tuple, Union, cast
 
 from pydantic import BaseModel
 from qtpy.QtCore import QThread, Signal
@@ -67,8 +67,8 @@ class BatchProceed(QThread):
                 continue
             try:
                 name = os.path.basename(file_path)
-                blank = get_mask(project_tuple.roi, project_tuple.mask, project_tuple.selected_components)
-                algorithm: StackAlgorithm = MaskAlgorithmSelection[task.parameters.algorithm]()
+                blank = get_mask(project_tuple.roi_info.roi, project_tuple.mask, project_tuple.selected_components)
+                algorithm = cast(StackAlgorithm, MaskAlgorithmSelection[task.parameters.algorithm]())
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
                 algorithm.set_parameters(task.parameters.values)
