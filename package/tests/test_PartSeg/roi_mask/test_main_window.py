@@ -31,3 +31,35 @@ class TestMaskMainWindow:
         assert not main_window.image_view.viewer.scale_bar.visible
         main_window._toggle_scale_bar()
         assert main_window.image_view.viewer.scale_bar.visible
+
+
+class TestImageInformation:
+    def test_create(self, stack_settings, qtbot):
+        info = mask_main_window.ImageInformation(stack_settings)
+        qtbot.addWidget(info)
+
+    def test_multiple_files(self, stack_settings, qtbot):
+        info = mask_main_window.ImageInformation(stack_settings)
+        qtbot.addWidget(info)
+
+        assert info.multiple_files.isChecked()
+        assert stack_settings.get("multiple_files_widget")
+
+        stack_settings.set("multiple_files_widget", False)
+        assert not info.multiple_files.isChecked()
+
+        info.multiple_files.setChecked(True)
+        assert stack_settings.get("multiple_files_widget")
+
+    def test_sync_dirs(self, stack_settings, qtbot):
+        info = mask_main_window.ImageInformation(stack_settings)
+        qtbot.addWidget(info)
+
+        assert not info.sync_dirs.isChecked()
+        assert not stack_settings.get("sync_dirs")
+
+        stack_settings.set("sync_dirs", True)
+        assert info.sync_dirs.isChecked()
+
+        info.sync_dirs.setChecked(False)
+        assert not stack_settings.get("sync_dirs")

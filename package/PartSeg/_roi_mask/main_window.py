@@ -866,7 +866,7 @@ class Options(QTabWidget):
         super().__init__(parent)
         self._settings = settings
         self.algorithm_options = AlgorithmOptions(settings, image_view)
-        self.image_properties = ImageInformation(settings, parent)
+        self.image_properties = ImageInformation(settings)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
         self.algorithm_options.batch_process.multiple_result.connect(
             partial(self.image_properties.multiple_files.setChecked, True)
