@@ -261,11 +261,11 @@ class MainMenu(BaseMainMenu):
         )
         if not dial.exec_():
             return
-        result = dial.get_result()
+        result: MaskProjectTuple = dial.get_result()
         if result is None:
             QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
             return
-        if result.roi is not None:
+        if result.roi_info.roi is not None:
             try:
                 self.settings.set_project_info(dial.get_result())
                 return
@@ -273,14 +273,16 @@ class MainMenu(BaseMainMenu):
                 if e.args != (ROI_NOT_FIT,):
                     raise
                 self.segmentation_dialog.set_additional_text(
-                    "Segmentation do not fit to image, maybe you would lie to load parameters only."
+                    f"Segmentation ({result.file_path}) of shape {result.roi_info.roi.shape}\n"
+                    f"do not fit to image ({self.settings.image.file_path}) of shape "
+                    f"{self.settings.image.shape},\nmaybe you would like to load parameters only."
                 )
             except HistoryProblem:
                 QMessageBox().warning(
                     self,
                     "Load Problem",
                     "You set to save selected components when loading "
-                    "another segmentation but history is incomatybile",
+                    "another segmentation but history is incompatibility",
                 )
 
         else:
