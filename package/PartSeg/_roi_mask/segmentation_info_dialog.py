@@ -65,7 +65,9 @@ class SegmentationInfoDialog(QWidget):
         if parameters is None:
             self.description.setPlainText("None")
         else:
-            self.description.setPlainText(f"Component {text}\n" + parameters.pretty_print(MaskAlgorithmSelection))
+            self.description.setPlainText(
+                f"Component {text}\n{parameters.pretty_print(MaskAlgorithmSelection)}"
+            )
 
     def set_parameter_action(self):
         if self.components.currentItem() is None:
