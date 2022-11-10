@@ -1,7 +1,6 @@
 # pylint: disable=R0201
 import gc
 import platform
-import sys
 from functools import partial
 from unittest.mock import MagicMock
 
@@ -297,7 +296,6 @@ class TestImageView:
         assert "Mask" in image_view.viewer.layers
 
     @pytest.mark.no_viewer_patch
-    @pytest.mark.skipif(sys.platform == "darwin", reason="fails on macos because of SIGILL")
     def test_add_layer_util(self, base_settings, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0
@@ -314,7 +312,7 @@ class TestImageView:
 
         image_view._add_layer_util(0, layer, [(NoiseFilterType.No, 0)])
 
-        qtbot.waitUntil(no_worker)
+        qtbot.waitUntil(no_worker, timeout=100000)
         assert layer.data is prev_data
 
         image_view._add_layer_util(0, layer, [(NoiseFilterType.Median, 1)])
