@@ -223,6 +223,7 @@ class MainMenu(BaseMainMenu):
         return True
 
     def load_segmentation(self):
+        settings_path = OPEN_DIRECTORY if self.settings.get("sync_dirs", False) else "io.open_segmentation_directory"
         dial = PLoadDialog(
             {
                 LoadROI.get_name(): LoadROI,
@@ -230,7 +231,7 @@ class MainMenu(BaseMainMenu):
                 LoadROIFromTIFF.get_name(): LoadROIFromTIFF,
             },
             settings=self.settings,
-            path="io.open_segmentation_directory",
+            path=settings_path,
         )
         if not dial.exec_():
             return
@@ -298,11 +299,12 @@ class MainMenu(BaseMainMenu):
         if self.settings.roi is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
+        settings_path = OPEN_DIRECTORY if self.settings.get("sync_dirs", False) else "io.save_segmentation_directory"
         dial = PSaveDialog(
             io_functions.save_segmentation_dict,
             system_widget=False,
             settings=self.settings,
-            path="io.save_segmentation_directory",
+            path=settings_path,
         )
 
         dial.selectFile(f"{os.path.splitext(os.path.basename(self.settings.image_path))[0]}.seg")
@@ -774,6 +776,13 @@ class ImageInformation(QWidget):
         self.multiple_files = QCheckBox("Show multiple files panel")
         self.multiple_files.setChecked(settings.get("multiple_files_widget", True))
         self.multiple_files.stateChanged.connect(self.set_multiple_files)
+        self.sync_dirs = QCheckBox("Sync directories in file dialog")
+        self.sync_dirs.setToolTip(
+            "If checked then 'Load Image', 'Load segmentation' and 'Save segmentation' "
+            "will open file dialog in the same directory"
+        )
+        self.sync_dirs.setChecked(settings.get("sync_dirs", False))
+        self.sync_dirs.stateChanged.connect(self.set_sync_dirs)
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
@@ -801,12 +810,25 @@ class ImageInformation(QWidget):
         layout.addWidget(self.add_files)
         layout.addStretch(1)
         layout.addWidget(self.multiple_files)
+        layout.addWidget(self.sync_dirs)
         self.setLayout(layout)
         self._settings.image_changed[str].connect(self.set_image_path)
+        self._settings.connect_("multiple_files_widget", self._set_multiple_files)
+        self._settings.connect_("sync_dirs", self._set_sync_dirs)
 
     @Slot(int)
     def set_multiple_files(self, val):
         self._settings.set("multiple_files_widget", val)
+
+    @Slot(int)
+    def set_sync_dirs(self, val):
+        self._settings.set("sync_dirs", val)
+
+    def _set_multiple_files(self):
+        self.multiple_files.setChecked(self._settings.get("multiple_files_widget", True))
+
+    def _set_sync_dirs(self):
+        self.sync_dirs.setChecked(self._settings.get("sync_dirs", False))
 
     def update_spacing(self, index=None):
         units_value = self.units.currentEnum()
