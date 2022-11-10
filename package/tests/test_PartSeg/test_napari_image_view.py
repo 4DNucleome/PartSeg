@@ -312,7 +312,7 @@ class TestImageView:
 
         image_view._add_layer_util(0, layer, [(NoiseFilterType.No, 0)])
 
-        qtbot.waitUntil(no_worker, timeout=100000)
+        qtbot.waitUntil(no_worker)
         assert layer.data is prev_data
 
         image_view._add_layer_util(0, layer, [(NoiseFilterType.Median, 1)])
