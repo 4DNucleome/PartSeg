@@ -295,6 +295,14 @@ class TestImageView:
         assert "ROI" in image_view.viewer.layers
         assert "Mask" in image_view.viewer.layers
 
+    @pytest.mark.parametrize("filter_type", NoiseFilterType.__members__.values())
+    @pytest.mark.parametrize("radius", [1, 2, 3.5])
+    def test_calculate_filter(self, filter_type, radius, image):
+        ch = image.get_channel(0)
+        filtered = ImageView.calculate_filter(ch, (filter_type, radius))
+        assert filtered.shape == ch.shape
+        assert (filter_type == NoiseFilterType.No) != (filtered is not ch)
+
     @pytest.mark.no_viewer_patch
     @pytest.mark.enablethread
     def test_add_layer_util(self, base_settings, image_view, qtbot):
