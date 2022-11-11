@@ -310,7 +310,6 @@ class TestImageView:
             return len(image_view.viewer.layers) > 0
 
         qtbot.waitUntil(has_layers)
-        image_view.show()
 
         layer = image_view.viewer.layers[0]
         assert isinstance(layer, NapariImage)
@@ -330,7 +329,6 @@ class TestImageView:
 
         qtbot.waitUntil(no_worker)
         assert layer.data is not prev_data
-        image_view.hide()
         qtbot.wait(50)
 
 
