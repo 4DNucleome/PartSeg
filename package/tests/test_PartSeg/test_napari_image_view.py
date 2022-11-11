@@ -296,6 +296,7 @@ class TestImageView:
         assert "Mask" in image_view.viewer.layers
 
     @pytest.mark.no_viewer_patch
+    @pytest.mark.enablethread
     def test_add_layer_util(self, base_settings, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0
@@ -306,7 +307,7 @@ class TestImageView:
         assert isinstance(layer, NapariImage)
 
         def no_worker():
-            return image_view.thread_poll.activeThreadCount() == 0
+            return len(image_view.worker_list) == 0
 
         prev_data = layer.data
 
