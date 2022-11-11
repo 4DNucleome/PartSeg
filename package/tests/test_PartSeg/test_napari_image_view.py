@@ -314,6 +314,7 @@ class TestImageView:
 
         layer = image_view.viewer.layers[0]
         assert isinstance(layer, NapariImage)
+        layer.visible = False
 
         def no_worker():
             return len(image_view.worker_list) == 0
