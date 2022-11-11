@@ -308,7 +308,7 @@ class TestImageView:
         assert isinstance(layer, NapariImage)
 
         def no_worker():
-            return not image_view.worker_list
+            return image_view.thread_poll.activeThreadCount() == 0
 
         prev_data = layer.data
 

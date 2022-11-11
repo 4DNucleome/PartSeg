@@ -17,7 +17,7 @@ from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from nme import register_class
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
+from qtpy.QtCore import QEvent, QObject, QPoint, QRunnable, Qt, QThreadPool, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
@@ -154,6 +154,8 @@ class ImageView(QWidget):
         self.roi_alternative_selection = "ROI"
         self._search_type = SearchType.Highlight
         self._last_component = 1
+
+        self.thread_poll = QThreadPool(self)
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -594,24 +596,18 @@ class ImageView(QWidget):
         if layer not in self.viewer.layers:
             self.viewer.add_layer(layer)
 
-        @thread_worker(connect={"returned": self._add_layer_util_end})
-        def calc_filter(j, layer_):
-            if filters[j][0] == NoiseFilterType.No or filters[j][1] == 0:
-                return None, layer_
-            return self.calculate_filter(layer_.data, parameters=filters[j]), layer_
+        if filters[index][0] == NoiseFilterType.No or filters[index][1] == 0:
+            return
 
-        worker = calc_filter(index, layer)
+        proc = ProcessImage(layer, filters[index][0], filters[index][1])
+        proc.signals.returned.connect(self._add_layer_util_end)
+        self.thread_poll.start(proc)
 
-        self.worker_list.append(worker)
-
+    @Slot(object)
     def _add_layer_util_end(self, val):
-        worker = self.sender()
-
         data_, layer_ = val
         if data_ is not None:
             layer_.data = data_
-
-        self._remove_worker(worker)
 
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
         self._remove_worker(self.sender())
@@ -1030,3 +1026,24 @@ def _print_dict(dkt: MutableMapping, indent="") -> str:
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)
+
+
+class ProcessImageSignals(QObject):
+    returned = Signal(object)
+
+
+class ProcessImage(QRunnable):
+    def __init__(self, layer: NapariImage, filter_type: NoiseFilterType, radius: float):
+        super().__init__()
+        self.signals = ProcessImageSignals()
+        self.layer = layer
+        self.filter_type = filter_type
+        self.radius = radius
+
+    def run(self):
+        if self.filter_type == NoiseFilterType.No or self.radius == 0:
+            self.signals.returned.emit((None, self.layer))
+            return
+        self.signals.returned.emit(
+            (ImageView.calculate_filter(self.layer.data, parameters=(self.filter_type, self.radius)), self.layer)
+        )
