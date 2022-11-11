@@ -305,6 +305,14 @@ class TestImageView:
 
     @pytest.mark.no_viewer_patch
     @pytest.mark.enablethread
+    def test_add_layer_util_check_init(self, base_settings, image_view, qtbot):
+        def has_layers():
+            return len(image_view.viewer.layers) > 0
+
+        qtbot.waitUntil(has_layers)
+
+    @pytest.mark.no_viewer_patch
+    @pytest.mark.enablethread
     def test_add_layer_util(self, base_settings, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0
