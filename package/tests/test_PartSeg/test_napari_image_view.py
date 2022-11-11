@@ -312,6 +312,7 @@ class TestImageView:
         qtbot.waitUntil(has_layers)
 
         layer = image_view.viewer.layers[0]
+        del image_view.viewer.layers[layer]
         assert isinstance(layer, NapariImage)
         layer.visible = False
 
@@ -324,6 +325,8 @@ class TestImageView:
 
         qtbot.waitUntil(no_worker)
         assert layer.data is prev_data
+
+        del image_view.viewer.layers[layer]
 
         image_view._add_layer_util(0, layer, [(NoiseFilterType.Median, 1)])
 
