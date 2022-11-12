@@ -45,12 +45,15 @@ def part_settings_with_project(image, analysis_segmentation2, tmp_path):
 
 
 @pytest.fixture(autouse=True)
-def disable_threads_viewer(monkeypatch, request):
+def disable_threads_viewer_patch_prepare_leyers(monkeypatch):
     def _prepare_layers(self, image, parameters, replace):
         self._add_image(napari_image_view._prepare_layers(image, parameters, replace))
 
     monkeypatch.setattr(napari_image_view.ImageView, "_prepare_layers", _prepare_layers)
 
+
+@pytest.fixture(autouse=True)
+def disable_threads_viewer_patch_add_layer(monkeypatch, request):
     if "no_patch_add_layer" in request.keywords:
         return
 
@@ -153,7 +156,7 @@ class DummyThrottler:
         self._call_list = []
 
     def setTimeout(self, *args, **kwargs):
-        pass
+        pass  # as it is dummy throttler then timeout is obsolete.
 
     def throttle(self, *args, **kwargs):
         for cl in self._call_list:
