@@ -303,6 +303,7 @@ class TestImageView:
         assert filtered.shape == ch.shape
         assert (filter_type == NoiseFilterType.No) != (filtered is not ch)
 
+    @pytest.mark.no_patch_add_layer
     @pytest.mark.enablethread
     def test_add_layer_util_check_init(self, base_settings, image_view, qtbot):
         def has_layers():
@@ -310,7 +311,7 @@ class TestImageView:
 
         qtbot.waitUntil(has_layers)
 
-    @pytest.mark.no_viewer_patch
+    @pytest.mark.no_patch_add_layer
     @pytest.mark.enablethread
     def test_add_layer_util(self, base_settings, image_view, qtbot):
         def has_layers():
