@@ -17,7 +17,7 @@ from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from nme import register_class
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QObject, QPoint, Qt, QThread, QTimer, Signal, Slot
+from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
@@ -585,16 +585,12 @@ class ImageView(QWidget):
     def _remove_worker(self, sender=None):
         if sender is None:
             sender = self.sender()
-
-        try:
-            self.worker_list.remove(sender)
-        except ValueError:
-            for worker in self.worker_list:
-                if hasattr(worker, "signals") and sender is worker.signals:
-                    self.worker_list.remove(worker)
-                    break
-            else:
-                logging.debug("[_remove_worker] %s", sender)
+        for worker in self.worker_list:
+            if hasattr(worker, "signals") and sender is worker.signals:
+                self.worker_list.remove(worker)
+                break
+        else:
+            logging.debug("[_remove_worker] %s", sender)
 
     def _add_layer_util(self, index, layer, filters):
         if layer not in self.viewer.layers:
@@ -603,11 +599,11 @@ class ImageView(QWidget):
         if filters[index][0] == NoiseFilterType.No or filters[index][1] == 0:
             return
 
-        proc = ProcessImage(layer, filters[index][0], filters[index][1])
-        proc.returned.connect(self._add_layer_util_end)
-        proc.finished.connect(self._remove_worker)
-        self.worker_list.append(proc)
-        proc.start()
+        worker = calc_layer_filter(layer, filters[index][0], filters[index][1])
+        worker.returned.connect(self._add_layer_util_end)
+        worker.finished.connect(self._remove_worker)
+        self.worker_list.append(worker)
+        worker.start()
 
     @Slot(object)
     def _add_layer_util_end(self, val):
@@ -616,8 +612,6 @@ class ImageView(QWidget):
             layer_.data = data_
 
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
-        self._remove_worker(self.sender())
-
         image_info, replace = image_data
         image = image_info.image
 
@@ -696,6 +690,7 @@ class ImageView(QWidget):
     def _prepare_layers(self, image, parameters, replace):
         worker = prepare_layers(image, parameters, replace)
         worker.returned.connect(self._add_image)
+        worker.finished.connect(self._remove_worker)
         self.worker_list.append(worker)
         worker.start()
 
@@ -1021,6 +1016,15 @@ def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tupl
 prepare_layers = thread_worker(_prepare_layers)
 
 
+def _calc_layer_filter(layer: NapariImage, filter_type: NoiseFilterType, radius: float):
+    if filter_type == NoiseFilterType.No or radius == 0:
+        return None, layer
+    return ImageView.calculate_filter(layer.data, parameters=(filter_type, radius)), layer
+
+
+calc_layer_filter = thread_worker(_calc_layer_filter)
+
+
 def _print_dict(dkt: MutableMapping, indent="") -> str:
     if not isinstance(dkt, MutableMapping):
         logging.error(f"{type(dkt)} instead of dict passed to _print_dict")
@@ -1032,25 +1036,3 @@ def _print_dict(dkt: MutableMapping, indent="") -> str:
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)
-
-
-class ProcessImageSignals(QObject):
-    returned = Signal(object)
-
-
-class ProcessImage(QThread):
-    returned = Signal(object)
-
-    def __init__(self, layer: NapariImage, filter_type: NoiseFilterType, radius: float):
-        super().__init__()
-        self.layer = layer
-        self.filter_type = filter_type
-        self.radius = radius
-
-    def run(self):
-        if self.filter_type == NoiseFilterType.No or self.radius == 0:
-            self.returned.emit((None, self.layer))
-            return
-        self.returned.emit(
-            (ImageView.calculate_filter(self.layer.data, parameters=(self.filter_type, self.radius)), self.layer)
-        )
