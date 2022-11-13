@@ -37,7 +37,7 @@ def str_to_rgb(arg):
 # remove and bump tornado requirement for py38
 # borrowed from ipykernel:  https://github.com/ipython/ipykernel/pull/456
 
-if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+if sys.platform.startswith("win"):
     import asyncio
 
     if (
