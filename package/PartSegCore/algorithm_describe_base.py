@@ -112,22 +112,22 @@ class _GetDescriptionClass:
         return model
 
 
-def _partial_abstractmethod(funcobj):
-    funcobj.__is_partial_abstractmethod__ = True
-    return funcobj
+def _partial_abstractmethod(func_obj):
+    func_obj.__is_partial_abstractmethod__ = True
+    return func_obj
 
 
 class AlgorithmDescribeBaseMeta(ABCMeta):
-    def __new__(cls, name, bases, attrs, **kwargs):
-        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+    def __new__(mcs, name, bases, attrs, **kwargs):
+        cls = super().__new__(mcs, name, bases, attrs, **kwargs)
         if (
-            not inspect.isabstract(cls2)
-            and hasattr(cls2.get_fields, "__is_partial_abstractmethod__")
-            and cls2.__argument_class__ is None
+            not inspect.isabstract(cls)
+            and hasattr(cls.get_fields, "__is_partial_abstractmethod__")
+            and cls.__argument_class__ is None
         ):
             raise RuntimeError("class need to have __argument_class__ set or get_fields functions defined")
-        cls2.__new_style__ = getattr(cls2.get_fields, "__is_partial_abstractmethod__", False)
-        return cls2
+        cls.__new_style__ = getattr(cls.get_fields, "__is_partial_abstractmethod__", False)
+        return cls
 
 
 class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
@@ -225,7 +225,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         """
         :param class_methods: list of method which should be class method
         :param methods: list of method which should be instance method
-        :param kwargs: elements passed to OrderedDict constructor (may be initial elements). I suggest to not use this.
+        :param kwargs: elements passed to OrderedDict constructor (maybe initial elements). I suggest to not use this.
         """
         super().__init__(**kwargs)
         self.suggested_base_class = suggested_base_class
@@ -272,8 +272,9 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         self.check_function(value, "get_name", True)
         try:
             name = value.get_name()
-        except NotImplementedError:
-            raise ValueError(f"Class {value} need to implement get_name class method")
+        except NotImplementedError as e:
+            raise ValueError(f"Class {value} need to implement get_name class method") from e
+
         if name in self and not replace:
             raise ValueError(
                 f"Object {self[name]} with this name: {name} already exist and register is not in replace mode"
@@ -309,8 +310,9 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         self.check_function(value, "get_fields", True)
         try:
             val = value.get_name()
-        except NotImplementedError:
-            raise ValueError(f"Method get_name of class {value} need to be implemented")
+        except NotImplementedError as e:
+            raise ValueError(f"Method get_name of class {value} need to be implemented") from e
+
         if not isinstance(val, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(val)}")
         if key != val:
@@ -320,8 +322,9 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
                 val = value.get_fields()
                 if not isinstance(val, list):
                     raise ValueError(f"Function get_fields of class {value} need return list not {type(val)}")
-            except NotImplementedError:
-                raise ValueError(f"Method get_fields of class {value} need to be implemented")
+            except NotImplementedError as exc:
+                raise ValueError(f"Method get_fields of class {value} need to be implemented") from exc
+
         for el in self.class_methods:
             self.check_function(value, el, True)
         for el in self.methods:
@@ -337,16 +340,16 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         """
         try:
             return next(iter(self.keys()))
-        except StopIteration:
-            raise ValueError("Register does not contain any algorithm.")
+        except StopIteration as e:
+            raise ValueError("Register does not contain any algorithm.") from e
 
 
 class AddRegisterMeta(ModelMetaclass):
-    def __new__(cls, name, bases, attrs, **kwargs):
+    def __new__(mcs, name, bases, attrs, **kwargs):
         methods = kwargs.pop("methods", [])
         suggested_base_class = kwargs.pop("suggested_base_class", None)
         class_methods = kwargs.pop("class_methods", [])
-        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+        cls2 = super().__new__(mcs, name, bases, attrs, **kwargs)
         cls2.__register__ = Register(
             class_methods=class_methods, methods=methods, suggested_base_class=suggested_base_class
         )
@@ -418,12 +421,12 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
 
 
 class ROIExtractionProfileMeta(ModelMetaclass):
-    def __new__(cls, name, bases, attrs, **kwargs):
-        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+    def __new__(mcs, name, bases, attrs, **kwargs):
+        cls2 = super().__new__(mcs, name, bases, attrs, **kwargs)
 
         def allow_positional_args(func):
             @wraps(func)
-            def _wraps(self, *args, **kwargs):
+            def _wraps(self, *args, **kwargs_):
                 if args:
                     warnings.warn(
                         "Positional arguments are deprecated, use keyword arguments instead",
@@ -431,7 +434,7 @@ class ROIExtractionProfileMeta(ModelMetaclass):
                         stacklevel=2,
                     )
                     kwargs.update(dict(zip(self.__fields__, args)))
-                return func(self, **kwargs)
+                return func(self, **kwargs_)
 
             return _wraps
 
