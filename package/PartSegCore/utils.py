@@ -135,13 +135,12 @@ class EventedDict(typing.MutableMapping):
         if memodict is None:
             memodict = {}
         cls = self.__class__
-        result = cls(klass=self._klass, **copy.deepcopy(self._dict))
+        result = cls(self._klass, **copy.deepcopy(self._dict))
         result.base_key = self.base_key
         memodict[id(self)] = result
         return result
 
-    def __init__(self, klass=None, **kwargs):
-        # TODO add positional only argument when drop python 3.7
+    def __init__(self, klass=None, /, **kwargs):
         super().__init__()
         self._dict = {}
         if klass is None:
@@ -161,7 +160,7 @@ class EventedDict(typing.MutableMapping):
             raise TypeError(f"Value {v} for key {k} is not instance of {klass}")
 
         if isinstance(v, dict):
-            v = EventedDict(klass=klass, **v)
+            v = EventedDict(klass, **v)
         if isinstance(v, EventedDict):
             v.base_key = k
             v._klass = klass if isinstance(klass, dict) else {"*": klass}
@@ -269,7 +268,7 @@ class ProfileDict:
     """
 
     def __init__(self, klass=None, **kwargs):
-        self._my_dict = EventedDict(klass=klass, **kwargs)
+        self._my_dict = EventedDict(klass, **kwargs)
         self._callback_dict: typing.Dict[str, typing.List[CallbackBase]] = defaultdict(list)
 
         self._my_dict.setted.connect(self._call_callback)
