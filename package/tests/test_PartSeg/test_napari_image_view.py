@@ -1,7 +1,6 @@
 # pylint: disable=R0201
 import gc
 import platform
-import sys
 from functools import partial
 from unittest.mock import MagicMock
 
@@ -21,6 +20,7 @@ from PartSeg.common_gui.napari_image_view import (
     QMenu,
     SearchComponentModal,
     SearchType,
+    _calc_layer_filter,
     _print_dict,
 )
 from PartSegCore.image_operations import NoiseFilterType
@@ -296,8 +296,23 @@ class TestImageView:
         assert "ROI" in image_view.viewer.layers
         assert "Mask" in image_view.viewer.layers
 
-    @pytest.mark.no_viewer_patch
-    @pytest.mark.skipif(sys.platform == "darwin", reason="fails on macos because of SIGILL")
+    @pytest.mark.parametrize("filter_type", NoiseFilterType.__members__.values())
+    @pytest.mark.parametrize("radius", [1, 2, 3.5])
+    def test_calculate_filter(self, filter_type, radius, image):
+        ch = image.get_channel(0)
+        filtered = ImageView.calculate_filter(ch, (filter_type, radius))
+        assert filtered.shape == ch.shape
+        assert (filter_type == NoiseFilterType.No) != (filtered is not ch)
+
+    @pytest.mark.no_patch_add_layer
+    @pytest.mark.enablethread
+    def test_add_layer_util_check_init(self, base_settings, image_view, qtbot):
+        def has_layers():
+            return len(image_view.viewer.layers) > 0
+
+        qtbot.waitUntil(has_layers)
+
+    @pytest.mark.no_patch_add_layer
     def test_add_layer_util(self, base_settings, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0
@@ -305,10 +320,12 @@ class TestImageView:
         qtbot.waitUntil(has_layers)
 
         layer = image_view.viewer.layers[0]
+        del image_view.viewer.layers[layer.name]
         assert isinstance(layer, NapariImage)
+        layer.visible = False
 
         def no_worker():
-            return not image_view.worker_list
+            return len(image_view.worker_list) == 0
 
         prev_data = layer.data
 
@@ -317,10 +334,13 @@ class TestImageView:
         qtbot.waitUntil(no_worker)
         assert layer.data is prev_data
 
+        del image_view.viewer.layers[layer.name]
+
         image_view._add_layer_util(0, layer, [(NoiseFilterType.Median, 1)])
 
         qtbot.waitUntil(no_worker)
         assert layer.data is not prev_data
+        qtbot.wait(50)
 
 
 def test_search_component_modal(qtbot, image_view, monkeypatch):
@@ -340,3 +360,14 @@ def test_search_component_modal(qtbot, image_view, monkeypatch):
     image_view.component_zoom.assert_called_with(1)
     modal.close()
     image_view.component_unmark.assert_called_once()
+
+
+def test_calc_layer_filter():
+    layer = NapariImage(np.zeros((10, 10)), name="test")
+
+    assert _calc_layer_filter(layer, NoiseFilterType.No, 0)[0] is None
+    assert _calc_layer_filter(layer, NoiseFilterType.No, 1)[0] is None
+    assert _calc_layer_filter(layer, NoiseFilterType.Gauss, 0)[0] is None
+
+    assert _calc_layer_filter(layer, NoiseFilterType.Gauss, 1)[0] is not None
+    assert _calc_layer_filter(layer, NoiseFilterType.Gauss, 1)[0] is not layer.data

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.14.6 - 2022-11-13
+
+### Bug Fixes
+
+-   Fix bug when loading already created project causing hide of ROI layer (#787)
+
+### Features
+
+-   Improve error message if segmentation do not fit in ROI Mask (#788)
+
 ## 0.14.5 - 2022-11-09
 
 ### Bug Fixes

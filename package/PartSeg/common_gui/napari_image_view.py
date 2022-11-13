@@ -17,7 +17,7 @@ from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from nme import register_class
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QObject, QPoint, Qt, QTimer, Signal
+from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
@@ -582,35 +582,43 @@ class ImageView(QWidget):
             return bilateral(array, parameters[1])
         return median(array, int(parameters[1]))
 
-    def _remove_worker(self, sender):
+    def _remove_worker(self, sender=None):
+        if sender is None:
+            sender = self.sender()
         for worker in self.worker_list:
             if hasattr(worker, "signals") and sender is worker.signals:
                 self.worker_list.remove(worker)
                 break
         else:
-            logging.debug(f"[_remove_worker] {sender}")
+            logging.debug("[_remove_worker] %s", sender)
 
     def _add_layer_util(self, index, layer, filters):
         if layer not in self.viewer.layers:
             self.viewer.add_layer(layer)
 
-        set_data_obj = _SetData(self)
+        if filters[index][0] == NoiseFilterType.No or filters[index][1] == 0:
+            return
 
-        @thread_worker(connect={"returned": set_data_obj.set_data})
-        def calc_filter(j, layer_):
-            if filters[j][0] == NoiseFilterType.No or filters[j][1] == 0:
-                return None, layer_
-            return self.calculate_filter(layer_.data, parameters=filters[j]), layer_
+        worker = calc_layer_filter(layer, filters[index][0], filters[index][1])
+        worker.returned.connect(self._add_layer_util_end)
+        worker.finished.connect(self._remove_worker)
+        self.worker_list.append(worker)
+        worker.start()
 
-        set_data_obj.worker = calc_filter(index, layer)
-
-        self.worker_list.append(set_data_obj)
+    @Slot(object)
+    def _add_layer_util_end(self, val):
+        data_, layer_ = val
+        if data_ is not None:
+            layer_.data = data_
 
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
-        self._remove_worker(self.sender())
-
-        image_info, _replace = image_data
+        image_info, replace = image_data
         image = image_info.image
+
+        if replace:
+            for layer in list(reversed(self.viewer.layers)):
+                self.viewer.layers.remove(layer)
+            QApplication.instance().processEvents()
 
         filters = self.channel_control.get_filter()
         for i, layer in enumerate(image_info.layers):
@@ -658,11 +666,6 @@ class ImageView(QWidget):
         if image.file_path in self.image_info:
             raise ValueError("Image already added")
 
-        if replace:
-            for layer in list(reversed(self.viewer.layers)):
-                self.viewer.layers.remove(layer)
-            QApplication.instance().processEvents()
-
         self.image_info[image.file_path] = ImageInfo(image, [])
 
         channels = image.channels
@@ -687,6 +690,7 @@ class ImageView(QWidget):
     def _prepare_layers(self, image, parameters, replace):
         worker = prepare_layers(image, parameters, replace)
         worker.returned.connect(self._add_image)
+        worker.finished.connect(self._remove_worker)
         self.worker_list.append(worker)
         worker.start()
 
@@ -1012,6 +1016,15 @@ def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tupl
 prepare_layers = thread_worker(_prepare_layers)
 
 
+def _calc_layer_filter(layer: NapariImage, filter_type: NoiseFilterType, radius: float):
+    if filter_type == NoiseFilterType.No or radius == 0:
+        return None, layer
+    return ImageView.calculate_filter(layer.data, parameters=(filter_type, radius)), layer
+
+
+calc_layer_filter = thread_worker(_calc_layer_filter)
+
+
 def _print_dict(dkt: MutableMapping, indent="") -> str:
     if not isinstance(dkt, MutableMapping):
         logging.error(f"{type(dkt)} instead of dict passed to _print_dict")
@@ -1023,22 +1036,3 @@ def _print_dict(dkt: MutableMapping, indent="") -> str:
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)
-
-
-class _SetData(QObject):
-    def __init__(self, viewer: ImageView):
-        super().__init__()
-        self.viewer = viewer
-        self.worker = None
-
-    def set_data(self, val):
-        self._set_data(val)
-        self.viewer.worker_list.remove(self)
-
-    def _set_data(self, val):
-        data_, layer_ = val
-        if data_ is None:
-            return
-        if layer_ not in self.viewer.viewer.layers:
-            return
-        layer_.data = data_
