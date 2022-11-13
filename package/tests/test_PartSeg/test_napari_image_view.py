@@ -20,6 +20,7 @@ from PartSeg.common_gui.napari_image_view import (
     QMenu,
     SearchComponentModal,
     SearchType,
+    _calc_layer_filter,
     _print_dict,
 )
 from PartSegCore.image_operations import NoiseFilterType
@@ -360,3 +361,14 @@ def test_search_component_modal(qtbot, image_view, monkeypatch):
     image_view.component_zoom.assert_called_with(1)
     modal.close()
     image_view.component_unmark.assert_called_once()
+
+
+def test_calc_layer_filter():
+    layer = NapariImage(np.zeros((10, 10)), name="test")
+
+    assert _calc_layer_filter(layer, NoiseFilterType.No, 0)[0] is None
+    assert _calc_layer_filter(layer, NoiseFilterType.No, 1)[0] is None
+    assert _calc_layer_filter(layer, NoiseFilterType.Gauss, 0)[0] is None
+
+    assert _calc_layer_filter(layer, NoiseFilterType.Gauss, 1)[0] is not None
+    assert _calc_layer_filter(layer, NoiseFilterType.Gauss, 1)[0] is not layer.data
