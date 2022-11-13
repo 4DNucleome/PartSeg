@@ -1,5 +1,4 @@
 import re
-import sys
 import typing
 
 import numpy as np
@@ -24,13 +23,8 @@ from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 
-if sys.version_info.minor < 8:
-    from typing_extensions import Protocol
-else:
-    Protocol = typing.Protocol
 
-
-class ObjectPreviewProtocol(Protocol):
+class ObjectPreviewProtocol(typing.Protocol):
     def preview_object(self, ob):
         raise NotImplementedError()
 

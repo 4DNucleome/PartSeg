@@ -3,7 +3,7 @@ ignore: []
 refactor:
   skip: []
   recommendation_level: suggestion
-  python_version: '3.7'
+  python_version: '3.8'
 
 metrics:
   quality_threshold: 25.0

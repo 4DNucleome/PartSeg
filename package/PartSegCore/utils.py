@@ -140,8 +140,7 @@ class EventedDict(typing.MutableMapping):
         memodict[id(self)] = result
         return result
 
-    def __init__(self, klass=None, **kwargs):
-        # TODO add positional only argument when drop python 3.7
+    def __init__(self, klass=None, /, **kwargs):
         super().__init__()
         self._dict = {}
         if klass is None:
