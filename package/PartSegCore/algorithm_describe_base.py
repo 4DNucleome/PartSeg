@@ -118,6 +118,16 @@ def _partial_abstractmethod(func_obj):
 
 
 class AlgorithmDescribeBaseMeta(ABCMeta):
+    __argument_class__: typing.Optional[typing.Type[PydanticBaseModel]] = None
+
+    def get_fields(self) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        """
+        This function return list of parameters needed by algorithm. It is used for generate form in User Interface
+
+        :return: list of algorithm parameters and comments
+        """
+        raise NotImplementedError()
+
     def __new__(mcs, name, bases, attrs, **kwargs):
         cls = super().__new__(mcs, name, bases, attrs, **kwargs)
         if (
@@ -433,7 +443,7 @@ class ROIExtractionProfileMeta(ModelMetaclass):
                         FutureWarning,
                         stacklevel=2,
                     )
-                    kwargs.update(dict(zip(self.__fields__, args)))
+                    kwargs_.update(dict(zip(self.__fields__, args)))
                 return func(self, **kwargs_)
 
             return _wraps
