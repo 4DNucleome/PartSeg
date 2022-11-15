@@ -83,7 +83,7 @@ class BaseImageReader:
         image_path: typing.Union[str, Path],
         mask_path=None,
         callback_function: typing.Optional[typing.Callable] = None,
-        default_spacing: typing.Tuple[float, float, float] = None,
+        default_spacing: typing.Optional[typing.Tuple[float, float, float]] = None,
     ) -> Image:
         """
         read image file with optional mask file
@@ -163,7 +163,7 @@ class BaseImageReaderBuffer(BaseImageReader):
         image_path: typing.Union[str, Path, BytesIO],
         mask_path=None,
         callback_function: typing.Optional[typing.Callable] = None,
-        default_spacing: typing.Tuple[float, float, float] = None,
+        default_spacing: typing.Optional[typing.Tuple[float, float, float]] = None,
     ) -> Image:
         """
         read image file with optional mask file
