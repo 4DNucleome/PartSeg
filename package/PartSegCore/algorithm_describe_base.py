@@ -355,11 +355,11 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
 
 
 class AddRegisterMeta(ModelMetaclass):
-    def __new__(mcs, name, bases, attrs, **kwargs):
+    def __new__(cls, name, bases, attrs, **kwargs):
         methods = kwargs.pop("methods", [])
         suggested_base_class = kwargs.pop("suggested_base_class", None)
         class_methods = kwargs.pop("class_methods", [])
-        cls2 = super().__new__(mcs, name, bases, attrs, **kwargs)
+        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
         cls2.__register__ = Register(
             class_methods=class_methods, methods=methods, suggested_base_class=suggested_base_class
         )
