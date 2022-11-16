@@ -777,8 +777,7 @@ class ImageView(QWidget):
         image_info = self.image_info[image.file_path]
         text_list = []
         for el in self.components:
-            data = image_info.roi_info.annotations.get(el, {})
-            if data:
+            if data := image_info.roi_info.annotations.get(el, {}):
                 try:
                     text_list.append(_print_dict(data))
                 except ValueError:  # pragma: no cover
@@ -787,8 +786,7 @@ class ImageView(QWidget):
 
     def event(self, event: QEvent):
         if event.type() == QEvent.ToolTip and self.components:
-            text = self.get_tool_tip_text()
-            if text:
+            if text := self.get_tool_tip_text():
                 QToolTip.showText(event.globalPos(), text, self)
         return super().event(event)
 
