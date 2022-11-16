@@ -534,19 +534,20 @@ class Image:
             return self._channel_arrays[channel][slices_t]
         return np.stack([x[slices_t] for x in self._channel_arrays[channel]], axis=axis_order.index("C"))
 
-    def clip_array(self, array, **kwargs):
+    def clip_array(self, array: np.ndarray, **kwargs: typing.Union[int, slice]) -> np.ndarray:
         """
-        #TODO add docs
-        :param array:
-        :param kwargs:
-        :return:
+        Clip array by axis. Axis is selected by single letter from :py:attr:`axis_order`
+
+        :param array: array to clip
+        :param kwargs: mapping from axis to position or slice on this axis
+        :return: clipped array
         """
         array = self.fit_array_to_image(array)
         slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.array_axis_order))]
         axis_pos = self.get_array_axis_positions()
         for name in kwargs:
-            if name.upper() in axis_pos:
-                slices[axis_pos[name.upper()]] = kwargs[name]
+            if (n := name.upper()) in axis_pos:
+                slices[axis_pos[n]] = kwargs[name]
         return array[tuple(slices)]
 
     def get_channel(self, num) -> np.ndarray:
