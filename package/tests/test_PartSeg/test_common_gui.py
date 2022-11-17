@@ -1,5 +1,6 @@
 # pylint: disable=R0201
 import datetime
+import io
 import os
 import platform
 import subprocess  # nosec
@@ -64,7 +65,7 @@ from PartSeg.common_gui.custom_load_dialog import (
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
-from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog
+from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, _print_traceback
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
@@ -1673,3 +1674,35 @@ class TestMguiChannelComboBox:
         qtbot.addWidget(widget.native)
         widget.change_channels_num(5)
         assert len(widget.choices) == 5
+
+
+def test_print_traceback_cause():
+    try:
+        try:
+            raise ValueError("foo")
+        except ValueError as e:
+            raise RuntimeError("bar") from e
+    except RuntimeError as e2:
+        stream = io.StringIO()
+        _print_traceback(e2, file_=stream)
+        text = stream.getvalue()
+
+        assert "ValueError" in text
+        assert "RuntimeError" in text
+        assert "cause of the following exception" in text
+
+
+def test_print_traceback_context():
+    try:
+        try:
+            raise ValueError("foo")
+        except ValueError:
+            raise RuntimeError("bar")
+    except RuntimeError as e2:
+        stream = io.StringIO()
+        _print_traceback(e2, file_=stream)
+        text = stream.getvalue()
+
+        assert "ValueError" in text
+        assert "RuntimeError" in text
+        assert "another exception occurred" in text
