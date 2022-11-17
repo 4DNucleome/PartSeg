@@ -1687,9 +1687,9 @@ def test_print_traceback_cause():
         _print_traceback(e2, file_=stream)
         text = stream.getvalue()
 
-    assert "ValueError" in text
-    assert "RuntimeError" in text
-    assert "cause of the following exception" in text
+        assert "ValueError" in text
+        assert "RuntimeError" in text
+        assert "cause of the following exception" in text
 
 
 def test_print_traceback_context():
@@ -1703,6 +1703,6 @@ def test_print_traceback_context():
         _print_traceback(e2, file_=stream)
         text = stream.getvalue()
 
-    assert "ValueError" in text
-    assert "RuntimeError" in text
-    assert "another exception occurred" in text
+        assert "ValueError" in text
+        assert "RuntimeError" in text
+        assert "another exception occurred" in text
