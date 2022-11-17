@@ -48,6 +48,19 @@ _feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_s
 )
 
 
+def _print_traceback(exception, file_):
+    while True:
+        print_exc(exception, file_=file_, fmt=Format(custom_var_printers=[(np.ndarray, numpy_repr)]))
+        if exception.__cause__ is not None:
+            print("The above exception was the direct cause of the following exception:", file=file_)
+            exception = exception.__cause__
+        elif exception.__context__ is not None:
+            print("During handling of the above exception, another exception occurred:", file=file_)
+            exception = exception.__context__
+        else:
+            break
+
+
 class ErrorDialog(QDialog):
     """
     Dialog to present user the exception information. User can send error report (possible to add custom information)
@@ -67,7 +80,7 @@ class ErrorDialog(QDialog):
         self.traceback_summary = additional_info
         if additional_info is None:
             stream = io.StringIO()
-            print_exc(exception, file_=stream, fmt=Format(custom_var_printers=[(np.ndarray, numpy_repr)]))
+            _print_traceback(exception, file_=stream)
             self.error_description.setText(stream.getvalue())
         elif isinstance(additional_info, traceback.StackSummary):
             self.error_description.setText("".join(additional_info.format()))
