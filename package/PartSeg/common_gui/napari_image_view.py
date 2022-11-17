@@ -342,6 +342,7 @@ class ImageView(QWidget):
             return
         bright_array = []
         components = []
+        alt_components = []
         for image_info in self.image_info.values():
             if not image_info.coords_in(cords):
                 continue
@@ -349,9 +350,11 @@ class ImageView(QWidget):
             bright_array.extend(layer.data[tuple(moved_coords)] for layer in image_info.layers if layer.visible)
 
             if image_info.roi_info.roi is not None and image_info.roi is not None:
-                val = image_info.roi_info.roi[tuple(moved_coords)]
-                if val:
+                if val := image_info.roi_info.roi[tuple(moved_coords)]:
                     components.append(val)
+            if self.roi_alternative_selection in image_info.roi_info.alternative:
+                if val := image_info.roi_info.alternative[self.roi_alternative_selection][tuple(moved_coords)]:
+                    alt_components.append(val)
 
         if not bright_array and not components:
             self.text_info_change.emit("")
@@ -365,6 +368,11 @@ class ImageView(QWidget):
                 text += f" component: {components[0]}"
             else:
                 text += f" components: {components}"
+        if alt_components:
+            if len(alt_components) == 1:
+                text += f" alt:  {alt_components[0]}"
+            else:
+                text += f" alt: {alt_components}"
         self.text_info_change.emit(text)
 
     def mask_opacity(self) -> float:
@@ -769,8 +777,7 @@ class ImageView(QWidget):
         image_info = self.image_info[image.file_path]
         text_list = []
         for el in self.components:
-            data = image_info.roi_info.annotations.get(el, {})
-            if data:
+            if data := image_info.roi_info.annotations.get(el, {}):
                 try:
                     text_list.append(_print_dict(data))
                 except ValueError:  # pragma: no cover
@@ -779,8 +786,7 @@ class ImageView(QWidget):
 
     def event(self, event: QEvent):
         if event.type() == QEvent.ToolTip and self.components:
-            text = self.get_tool_tip_text()
-            if text:
+            if text := self.get_tool_tip_text():
                 QToolTip.showText(event.globalPos(), text, self)
         return super().event(event)
 
