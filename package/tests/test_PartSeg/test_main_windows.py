@@ -12,7 +12,7 @@ from PartSeg._launcher.main_window import Prepare as LauncherPrepare
 from PartSeg._roi_analysis import main_window as analysis_main_window
 from PartSeg._roi_mask import main_window as mask_main_window
 
-from .utils import CI_BUILD, GITHUB_ACTIONS, TRAVIS
+from .utils import CI_BUILD, GITHUB_ACTIONS
 
 
 def empty(*_):
@@ -33,13 +33,13 @@ class TestLauncherMainWindow:
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_open_mask(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(mask_main_window, "CONFIG_FOLDER", str(tmp_path))
-        if platform.system() == "Linux" and (GITHUB_ACTIONS or TRAVIS):
+        if platform.system() == "Linux" and GITHUB_ACTIONS:
             monkeypatch.setattr(mask_main_window.MainWindow, "show", empty)
         main_window = PartSegGUILauncher()
         qtbot.addWidget(main_window)
         with qtbot.waitSignal(main_window.prepare.finished, timeout=10**4):
             main_window.launch_mask()
-        QCoreApplication.processEvents()
+        QCoreApplication.instance().processEvents()
         qtbot.add_widget(main_window.wind[0])
         main_window.wind[0].hide()
         qtbot.wait(50)
@@ -50,7 +50,7 @@ class TestLauncherMainWindow:
     @pyside_skip
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(analysis_main_window, "CONFIG_FOLDER", str(tmp_path))
-        if platform.system() in {"Darwin", "Linux"} and (GITHUB_ACTIONS or TRAVIS):
+        if platform.system() in {"Darwin", "Linux"} and GITHUB_ACTIONS:
             monkeypatch.setattr(analysis_main_window.MainWindow, "show", empty)
         main_window = PartSegGUILauncher()
         qtbot.addWidget(main_window)
