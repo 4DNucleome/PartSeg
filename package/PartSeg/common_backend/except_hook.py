@@ -5,21 +5,23 @@ from qtpy.QtCore import QCoreApplication, QThread
 from qtpy.QtWidgets import QMessageBox
 from superqt import ensure_main_thread
 
-from PartSeg import parsed_version, state_store
+from PartSeg import state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegImage import TiffFileException
 
 
 def my_excepthook(type_, value, trace_back):
     """
-    Custom excepthook. Base on :py:data:`state_store.show_error_dialog` decide if shown error dialog.
+    Custom excepthook.
+    Close application on :py:class:`KeyboardInterrupt`.
+    if :py:data:`PartSeg.state_store.always_report` is set then just sent report using sentry.
+    otherwise show dialog with information about error and ask user
+    if he wants to send report using :py:func:`show_error`.
     """
 
     # log the exception here
     if state_store.show_error_dialog and not isinstance(value, KeyboardInterrupt):
-        if (
-            state_store.report_errors and parsed_version.is_devrelease and getattr(sys, "frozen", False)
-        ) or state_store.always_report:
+        if state_store.auto_report or state_store.always_report:
             with sentry_sdk.push_scope() as scope:
                 scope.set_tag("auto_report", "true")
                 scope.set_tag("main_thread", QCoreApplication.instance().thread() == QThread.currentThread())

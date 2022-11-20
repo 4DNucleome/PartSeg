@@ -18,6 +18,7 @@ The documentation is incomplete. Many utilities are undocumented.
    PartSegImage
    interface-overview/interface-overview
    state_store
+   error_reporting
 
 
 Indices and tables
