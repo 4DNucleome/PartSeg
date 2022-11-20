@@ -143,6 +143,7 @@ class TestExceptHook:
 
         monkeypatch.setattr(state_store, "report_errors", True)
         monkeypatch.setattr(except_hook, "parsed_version", parse("0.13.12dev1"))
+        monkeypatch.setattr("sys.frozen", True, raising=False)
         except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
         assert len(sentry_catch_list) == 1
         assert isinstance(sentry_catch_list[0], RuntimeError)
@@ -396,7 +397,7 @@ class TestLoadBackup:
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         load_backup.import_config()
 
-        monkeypatch.setattr("PartSeg.state_store.save_folder", "save_folder", tmp_path / "0.13.13")
+        monkeypatch.setattr("PartSeg.state_store.save_folder", tmp_path / "0.13.13")
         load_backup.import_config()
 
     def test_no_backup_old(self, monkeypatch, tmp_path):
