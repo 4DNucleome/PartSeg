@@ -9,6 +9,8 @@ import packaging.version
 
 from PartSeg import APP_LAB, APP_NAME, __version__, parsed_version
 
+always_report: bool = False
+#: if report errors using sentry without asking user about it
 report_errors = False
 show_error_dialog = False
 custom_plugin_load = False
