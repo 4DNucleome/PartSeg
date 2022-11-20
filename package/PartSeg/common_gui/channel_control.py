@@ -609,12 +609,8 @@ class ColorComboBoxGroup(QWidget):
         resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = [(0, 0)] * self.layout().count()  #
         for i in range(self.layout().count()):
             resp[i] = (
-                self.settings.get_from_profile(
-                    f"{self.viewer_name}.range_{i}", (0, 65000)
-                )
-                if self.settings.get_from_profile(
-                    f"{self.viewer_name}.lock_{i}", False
-                )
+                self.settings.get_from_profile(f"{self.viewer_name}.range_{i}", (0, 65000))
+                if self.settings.get_from_profile(f"{self.viewer_name}.lock_{i}", False)
                 else None
             )
 
