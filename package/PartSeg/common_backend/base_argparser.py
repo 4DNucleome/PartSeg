@@ -105,6 +105,8 @@ class CustomParser(argparse.ArgumentParser):
         overload of :py:meth:`argparse.ArgumentParser.parse_args`. Set flags like described in class documentation.
         """
         args = super().parse_args(args, namespace)
+        if args.always_report and not args.no_report:
+            self.error("Cannot set both --always_report and --no_report")
         state_store.always_report = args.always_report
         state_store.report_errors = args.no_report
         state_store.show_error_dialog = args.no_dialog
