@@ -14,9 +14,8 @@ import sentry_sdk.serializer
 import sentry_sdk.utils
 from sentry_sdk.utils import safe_repr as _safe_repr
 
-import PartSeg
+from PartSeg import __version__, state_store
 from PartSeg.common_backend.except_hook import my_excepthook
-from PartSegCore import state_store
 from PartSegCore.utils import numpy_repr
 
 
@@ -98,7 +97,7 @@ class CustomParser(argparse.ArgumentParser):
         )
         self.add_argument("--inner_plugins", action="store_true", help=argparse.SUPPRESS)
         self.add_argument("--develop", action="store_true", help=argparse.SUPPRESS)
-        self.add_argument("--version", action="version", version=f"%(prog)s {PartSeg.__version__}")
+        self.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
     def parse_args(self, args: Optional[Sequence[str]] = None, namespace: Optional[argparse.Namespace] = None):
         """
@@ -126,17 +125,15 @@ class CustomParser(argparse.ArgumentParser):
 
 
 def _setup_sentry():  # pragma: no cover
-    if not (
-        sentry_url := os.environ.get("PARTSEG_SENTRY_URL", "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302")
-    ):
+    if not state_store.sentry_url:
         state_store.report_errors = False
         return
     sentry_sdk.utils.MAX_STRING_LENGTH = 10**4
     sentry_sdk.serializer.safe_repr = safe_repr
     sentry_sdk.serializer.MAX_DATABAG_BREADTH = 100
     sentry_sdk.init(
-        sentry_url,
-        release=f"PartSeg@{PartSeg.__version__}",
+        state_store.sentry_url,
+        release=f"PartSeg@{__version__}",
     )
     with sentry_sdk.configure_scope() as scope:
         scope.set_user(

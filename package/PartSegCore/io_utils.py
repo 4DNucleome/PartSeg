@@ -15,13 +15,12 @@ import pandas as pd
 import tifffile
 from openpyxl import load_workbook
 
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from PartSegCore.json_hooks import partseg_object_hook
+from PartSegCore.project_info import ProjectInfoBase
+from PartSegCore.utils import EventedDict, ProfileDict, check_loaded_dict, iterate_names
 from PartSegImage import ImageWriter
 from PartSegImage.image import minimal_dtype
-
-from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
-from .project_info import ProjectInfoBase
-from .utils import EventedDict, ProfileDict, check_loaded_dict, iterate_names
 
 
 class SegmentationType(Enum):

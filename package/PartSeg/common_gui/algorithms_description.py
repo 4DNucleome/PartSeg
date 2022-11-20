@@ -29,7 +29,10 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
+from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_backend.segmentation_thread import SegmentationThread
 from PartSeg.common_gui.error_report import ErrorDialog
+from PartSeg.common_gui.universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
@@ -43,10 +46,6 @@ from PartSegCore.segmentation.algorithm_base import (
     SegmentationLimitException,
 )
 from PartSegImage import Channel, Image
-
-from ..common_backend.base_settings import BaseSettings
-from ..common_backend.segmentation_thread import SegmentationThread
-from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox
 
 
 def recursive_update(d, u):

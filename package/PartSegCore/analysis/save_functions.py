@@ -9,15 +9,14 @@ import h5py
 import numpy as np
 import tifffile
 
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register
+from PartSegCore.analysis.io_utils import ProjectTuple, project_version_info
+from PartSegCore.io_utils import NotSupportedImage, SaveBase, SaveMaskAsTiff, SaveROIAsNumpy, SaveROIAsTIFF, get_tarinfo
+from PartSegCore.json_hooks import PartSegEncoder
+from PartSegCore.project_info import HistoryElement
+from PartSegCore.roi_info import ROIInfo
+from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Channel, Image, ImageWriter
-
-from ..algorithm_describe_base import AlgorithmProperty, Register
-from ..io_utils import NotSupportedImage, SaveBase, SaveMaskAsTiff, SaveROIAsNumpy, SaveROIAsTIFF, get_tarinfo
-from ..json_hooks import PartSegEncoder
-from ..project_info import HistoryElement
-from ..roi_info import ROIInfo
-from ..universal_const import UNIT_SCALE, Units
-from .io_utils import ProjectTuple, project_version_info
 
 __all__ = [
     "SaveProject",

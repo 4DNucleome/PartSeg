@@ -1,6 +1,6 @@
 import nme
 
-from ._old_json_hooks import part_hook
+from PartSegCore._old_json_hooks import part_hook
 
 
 class PartSegEncoder(nme.NMEEncoder):

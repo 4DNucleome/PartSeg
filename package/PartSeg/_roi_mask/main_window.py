@@ -27,7 +27,29 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 import PartSegData
-from PartSegCore import UNIT_SCALE, Units, state_store
+from PartSeg import state_store
+from PartSeg._roi_mask.batch_proceed import BatchProceed, BatchTask
+from PartSeg._roi_mask.image_view import StackImageView
+from PartSeg._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
+from PartSeg._roi_mask.simple_measurements import SimpleMeasurements
+from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY, ROI_NOT_FIT
+from PartSeg.common_gui.advanced_tabs import AdvancedWindow
+from PartSeg.common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
+from PartSeg.common_gui.channel_control import ChannelProperty
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.exception_hooks import load_data_exception_hook
+from PartSeg.common_gui.flow_layout import FlowLayout
+from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
+from PartSeg.common_gui.mask_widget import MaskDialogBase
+from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
+from PartSeg.common_gui.napari_image_view import LabelEnum
+from PartSeg.common_gui.select_multiple_files import AddFiles
+from PartSeg.common_gui.stack_image_view import ColorBar
+from PartSeg.common_gui.universal_gui_part import right_label
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
+from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.mask import io_functions
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
@@ -36,28 +58,6 @@ from PartSegCore.mask.io_functions import LoadROI, LoadROIFromTIFF, LoadROIParam
 from PartSegCore.project_info import HistoryElement, HistoryProblem, calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image, TiffImageReader
-
-from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
-from ..common_backend.base_settings import IO_SAVE_DIRECTORY, ROI_NOT_FIT
-from ..common_gui.advanced_tabs import AdvancedWindow
-from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_load_dialog import PLoadDialog
-from ..common_gui.custom_save_dialog import PSaveDialog
-from ..common_gui.exception_hooks import load_data_exception_hook
-from ..common_gui.flow_layout import FlowLayout
-from ..common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
-from ..common_gui.mask_widget import MaskDialogBase
-from ..common_gui.multiple_file_widget import MultipleFileWidget
-from ..common_gui.napari_image_view import LabelEnum
-from ..common_gui.select_multiple_files import AddFiles
-from ..common_gui.stack_image_view import ColorBar
-from ..common_gui.universal_gui_part import right_label
-from ..common_gui.waiting_dialog import ExecuteFunctionDialog
-from .batch_proceed import BatchProceed, BatchTask
-from .image_view import StackImageView
-from .simple_measurements import SimpleMeasurements
-from .stack_settings import StackSettings, get_mask
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 

@@ -4,11 +4,10 @@ import platform
 import numpy as np
 import pytest
 
+from package.tests.test_PartSeg.utils import CI_BUILD
 from PartSeg._roi_analysis.image_view import CompareImageView, ResultImageView, SynchronizeView
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSegCore.roi_info import ROIInfo
-
-from ..utils import CI_BUILD
 
 
 @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")

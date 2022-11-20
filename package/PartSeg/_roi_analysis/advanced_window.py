@@ -30,7 +30,16 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox, ensure_main_thread
 
+from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer, StringViewer
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
+from PartSeg.common_gui.error_report import DataImportErrorDialog
+from PartSeg.common_gui.lock_checkbox import LockCheckBox
+from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
@@ -39,16 +48,6 @@ from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, Measu
 from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
-
-from ..common_backend.base_settings import IO_SAVE_DIRECTORY
-from ..common_gui.custom_load_dialog import PLoadDialog
-from ..common_gui.custom_save_dialog import FormDialog, PSaveDialog
-from ..common_gui.error_report import DataImportErrorDialog
-from ..common_gui.lock_checkbox import LockCheckBox
-from ..common_gui.searchable_list_widget import SearchableListWidget
-from .measurement_widget import MeasurementWidget
-from .partseg_settings import PartSettings
-from .profile_export import ExportDialog, ImportDialog, ProfileDictViewer, StringViewer
 
 
 def h_line():

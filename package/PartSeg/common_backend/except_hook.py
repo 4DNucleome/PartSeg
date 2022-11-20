@@ -5,8 +5,7 @@ from qtpy.QtCore import QCoreApplication, QThread
 from qtpy.QtWidgets import QMessageBox
 from superqt import ensure_main_thread
 
-from PartSeg import parsed_version
-from PartSegCore import state_store
+from PartSeg import parsed_version, state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegImage import TiffFileException
 

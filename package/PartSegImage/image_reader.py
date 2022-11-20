@@ -13,7 +13,7 @@ from defusedxml import ElementTree
 from oiffile import OifFile
 from tifffile import TiffFile, natural_sorted
 
-from .image import Image
+from PartSegImage.image import Image
 
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 

@@ -16,10 +16,9 @@ from packaging.version import Version
 from packaging.version import parse as parse_version
 from tifffile import TiffFile
 
-from PartSegImage import GenericImageReader
-
-from ..algorithm_describe_base import Register, ROIExtractionProfile
-from ..io_utils import (
+from PartSegCore.algorithm_describe_base import Register, ROIExtractionProfile
+from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple, project_version_info
+from PartSegCore.io_utils import (
     LoadBase,
     LoadPoints,
     SegmentationType,
@@ -31,12 +30,12 @@ from ..io_utils import (
     proxy_callback,
     tar_to_buff,
 )
-from ..json_hooks import partseg_object_hook
-from ..mask.io_functions import LoadROIImage
-from ..project_info import HistoryElement
-from ..roi_info import ROIInfo
-from ..universal_const import UNIT_SCALE, Units
-from .io_utils import MaskInfo, ProjectTuple, project_version_info
+from PartSegCore.json_hooks import partseg_object_hook
+from PartSegCore.mask.io_functions import LoadROIImage
+from PartSegCore.project_info import HistoryElement
+from PartSegCore.roi_info import ROIInfo
+from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegImage import GenericImageReader
 
 __all__ = [
     "LoadStackImage",

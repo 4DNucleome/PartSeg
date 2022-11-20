@@ -2,9 +2,8 @@ import typing
 from textwrap import indent
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.mask_create import MaskProperty
 from PartSegCore.utils import BaseModel
-
-from ..mask_create import MaskProperty
 
 
 class SegmentationPipelineElement(BaseModel):

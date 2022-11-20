@@ -9,9 +9,9 @@ from qtpy.QtCore import QRect, QSize
 from qtpy.QtGui import QPainter
 from qtpy.QtWidgets import QLabel
 
-from ..common_backend.base_settings import ViewSettings
-from ..common_gui.numpy_qimage import NumpyQImage
-from .napari_image_view import ImageView
+from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_gui.napari_image_view import ImageView
+from PartSeg.common_gui.numpy_qimage import NumpyQImage
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01

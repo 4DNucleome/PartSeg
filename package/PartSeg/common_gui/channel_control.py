@@ -21,12 +21,11 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
+from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
 from PartSeg.common_gui.numpy_qimage import create_colormap_image
+from PartSeg.common_gui.universal_gui_part import CustomSpinBox
 from PartSegCore.image_operations import NoiseFilterType
-
-from ..common_backend.base_settings import ViewSettings
-from .collapse_checkbox import CollapseCheckbox
-from .universal_gui_part import CustomSpinBox
 
 image_dict = {}  # dict to store QImages generated from colormap
 

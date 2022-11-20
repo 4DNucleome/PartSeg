@@ -12,9 +12,7 @@ from qtpy.QtCore import QThread
 from qtpy.QtWidgets import QMessageBox
 from superqt import ensure_main_thread
 
-from PartSegCore import state_store
-
-from .. import __version__
+from PartSeg import __version__, state_store
 
 IGNORE_DAYS = 21
 IGNORE_FILE = "ignore.txt"

@@ -3,9 +3,8 @@ from typing import Callable, List, Optional
 from scipy.ndimage import zoom
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
+from PartSegCore.image_transforming.transform_base import TransformBase
 from PartSegImage import Image
-
-from .transform_base import TransformBase
 
 
 class InterpolateImage(TransformBase):

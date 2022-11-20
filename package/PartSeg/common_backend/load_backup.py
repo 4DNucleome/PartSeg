@@ -5,11 +5,9 @@ from glob import glob
 import packaging.version
 from qtpy.QtWidgets import QMessageBox, QWidget
 
-from PartSegCore import state_store
-
-from .. import parsed_version
-from .._launcher.check_version import IGNORE_FILE
-from . import napari_get_settings
+from PartSeg import parsed_version, state_store
+from PartSeg._launcher.check_version import IGNORE_FILE
+from PartSeg.common_backend import napari_get_settings
 
 
 def import_config():

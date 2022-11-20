@@ -15,6 +15,7 @@ import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
 
+from PartSeg import state_store
 from PartSeg.common_backend import (
     base_argparser,
     base_settings,
@@ -25,7 +26,6 @@ from PartSeg.common_backend import (
     segmentation_thread,
 )
 from PartSeg.common_gui.error_report import ErrorDialog
-from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.io_utils import load_matadata_part
 from PartSegCore.mask_create import MaskProperty
@@ -392,15 +392,15 @@ class TestPartiallyConstDict:
 
 class TestLoadBackup:
     def test_no_backup(self, monkeypatch, tmp_path):
-        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path)
+        monkeypatch.setattr("PartSeg.state_store.save_folder", tmp_path)
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         load_backup.import_config()
 
-        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
+        monkeypatch.setattr("PartSeg.state_store.save_folder", "save_folder", tmp_path / "0.13.13")
         load_backup.import_config()
 
     def test_no_backup_old(self, monkeypatch, tmp_path):
-        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
+        monkeypatch.setattr("PartSeg.state_store.save_folder", tmp_path / "0.13.13")
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         (tmp_path / "0.13.14").mkdir()
         (tmp_path / "0.13.15").mkdir()
@@ -418,7 +418,7 @@ class TestLoadBackup:
         def question(*args, **kwargs):
             return response
 
-        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
+        monkeypatch.setattr("PartSeg.state_store.save_folder", tmp_path / "0.13.13")
         monkeypatch.setattr(load_backup.QMessageBox, "question", question)
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         create_file(tmp_path / "0.13.14" / "14.txt")

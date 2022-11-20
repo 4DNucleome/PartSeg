@@ -35,9 +35,8 @@ from qtpy.QtWidgets import (
 from sentry_sdk.utils import event_from_exception, exc_info_from_error
 from traceback_with_variables import Format, print_exc
 
-from PartSeg import __version__
+from PartSeg import __version__, state_store
 from PartSeg.common_backend.python_syntax_highlight import Pylighter
-from PartSegCore import state_store
 from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.utils import numpy_repr
