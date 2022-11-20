@@ -12,8 +12,7 @@ def partseg_object_hook(dkt: dict):
         return nme.nme_object_hook(dkt)
 
     if "__ReadOnly__" in dkt or "__Serializable__" in dkt or "__Enum__" in dkt:
-        problematic_fields = nme.check_for_errors_in_dkt_values(dkt)
-        if problematic_fields:
+        if problematic_fields := nme.check_for_errors_in_dkt_values(dkt):
             dkt["__error__"] = f"Error in fields: {', '.join(problematic_fields)}"
             return dkt
         is_enum = "__Enum__" in dkt

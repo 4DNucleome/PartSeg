@@ -288,14 +288,14 @@ class FileChoose(QWidget):
 
     def change_situation(self):
         if (
-            str(self.calculation_choose.currentText()) != "<no calculation>"
-            and len(self.files_widget.files_to_proceed) != 0
-            and str(self.result_file.text()) != ""
+            str(self.calculation_choose.currentText()) == "<no calculation>"
+            or len(self.files_widget.files_to_proceed) == 0
+            or not str(self.result_file.text())
         ):
-            self.run_button.setEnabled(True)
-        else:
             self.run_button.setDisabled(True)
 
+        else:
+            self.run_button.setEnabled(True)
         if self.calculation_choose.currentText() in self.settings.batch_plans:
             plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
             self.files_widget.mask_list = plan.get_list_file_mask()
@@ -552,8 +552,7 @@ class CalculationPrepare(QDialog):
             for mask_num, mask_mapper in enumerate(self.mask_mapper_list):
                 if mask_mapper.is_ready():
                     mask_path = mask_mapper.get_mask_path(file_path)
-                    exist = os.path.exists(mask_path)
-                    if exist:
+                    if os.path.exists(mask_path):
                         sub_widget = QTreeWidgetItem(widget)
                         sub_widget.setText(0, f"Mask {mask_mapper.name} ok")
                         sub_widget.setIcon(0, ok_icon)
@@ -562,10 +561,9 @@ class CalculationPrepare(QDialog):
                         sub_widget = QTreeWidgetItem(widget)
                         sub_widget.setText(
                             0,
-                            "Mask {} do not exists (path: {})".format(
-                                mask_mapper.name, os.path.relpath(mask_path, all_prefix)
-                            ),
+                            f"Mask {mask_mapper.name} do not exists (path: {os.path.relpath(mask_path, all_prefix)})",
                         )
+
                         sub_widget.setIcon(0, bad_icon)
                         self.state_list[file_num, mask_num] = 2
                 else:

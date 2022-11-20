@@ -26,11 +26,7 @@ def import_config():
             reverse=True,
         )
     )
-    before_version = None
-    for x in versions:
-        if x < version:
-            before_version = x
-            break
+    before_version = next((x for x in versions if x < version), None)
     if before_version is not None:
         before_name = str(before_version)
         widget = QWidget()

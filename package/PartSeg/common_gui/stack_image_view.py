@@ -64,17 +64,13 @@ class ColorBar(QLabel):
             return 1000
         if val > 1000:
             return 100
-        if val > 100:
-            return 10
-        return 1
+        return 10 if val > 100 else 1
 
     @staticmethod
     def number_of_marks(val):
         if val < 500:
             return 6
-        if val > 1300:
-            return 21
-        return 11
+        return 21 if val > 1300 else 11
 
     def paintEvent(self, event: QtGui.QPaintEvent):
         bar_width = 30

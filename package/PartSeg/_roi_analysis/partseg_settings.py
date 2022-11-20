@@ -76,8 +76,7 @@ class PartSettings(BaseSettings):
         self._mask = None
 
     def get_project_info(self) -> ProjectTuple:
-        algorithm_name = self.last_executed_algorithm
-        if algorithm_name:
+        if algorithm_name := self.last_executed_algorithm:
             value = self.get_algorithm(f"algorithms.{algorithm_name}")
             if isinstance(value, EventedDict):
                 value = value.as_dict_deep()
