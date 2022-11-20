@@ -114,9 +114,7 @@ class MeasurementsStorage:
         if len(sublist) <= y:
             return ""
         val = sublist[y]
-        if isinstance(val, float):
-            return locale.str(val)
-        return str(val)
+        return locale.str(val) if isinstance(val, float) else str(val)
 
     def get_header(self, save_orientation: bool) -> List[str]:
         if save_orientation:

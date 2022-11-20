@@ -277,7 +277,7 @@ class ChannelProperty(QWidget):
     """
 
     def __init__(self, settings: ViewSettings, start_name: str):
-        if start_name == "":
+        if not start_name:
             raise ValueError("ChannelProperty should have non empty start_name")
         super().__init__()
         self.current_name = start_name
@@ -608,10 +608,12 @@ class ColorComboBoxGroup(QWidget):
     def get_limits(self) -> typing.List[typing.Union[typing.Tuple[int, int], None]]:
         resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = [(0, 0)] * self.layout().count()  #
         for i in range(self.layout().count()):
-            if not self.settings.get_from_profile(f"{self.viewer_name}.lock_{i}", False):
-                resp[i] = None
-            else:
-                resp[i] = self.settings.get_from_profile(f"{self.viewer_name}.range_{i}", (0, 65000))
+            resp[i] = (
+                self.settings.get_from_profile(f"{self.viewer_name}.range_{i}", (0, 65000))
+                if self.settings.get_from_profile(f"{self.viewer_name}.lock_{i}", False)
+                else None
+            )
+
         return resp
 
     def get_gamma(self) -> typing.List[float]:

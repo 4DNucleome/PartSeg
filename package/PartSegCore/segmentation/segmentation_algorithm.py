@@ -406,9 +406,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         mask2, thr_val = threshold_algorithm.calculate_mask(
             image, None, self.new_parameters.threshold.values, operator.le
         )
-        if thr_val < min_val:
-            return mask
-        return mask2
+        return mask if thr_val < min_val else mask2
 
     def _threshold_and_exclude(self, image, report_fun):
         if self.mask is not None:
