@@ -553,7 +553,7 @@ class CalculationPrepare(QDialog):
             for mask_num, mask_mapper in enumerate(self.mask_mapper_list):
                 if mask_mapper.is_ready():
                     mask_path = mask_mapper.get_mask_path(file_path)
-                    if exist := os.path.exists(mask_path):
+                    if os.path.exists(mask_path):
                         sub_widget = QTreeWidgetItem(widget)
                         sub_widget.setText(0, f"Mask {mask_mapper.name} ok")
                         sub_widget.setIcon(0, ok_icon)
