@@ -11,6 +11,12 @@ from PartSeg.common_backend import napari_get_settings
 
 
 def import_config():
+    """
+    Check if settings folder for current version already exists.
+
+    Otherwise, when settings for previous PartSeg version exists,
+    ask user if he would to import settings from the newest one.
+    """
     if os.path.exists(state_store.save_folder):
         return
     version = packaging.version.parse(parsed_version.base_version)

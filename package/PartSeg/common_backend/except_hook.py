@@ -14,7 +14,8 @@ def my_excepthook(type_, value, trace_back):
     """
     Custom excepthook.
     Close application on :py:class:`KeyboardInterrupt`.
-    if :py:data:`PartSeg.state_store.always_report` is set then just sent report using sentry.
+
+    If :py:data:`PartSeg.state_store.always_report` is set then just sent report using sentry.
     otherwise show dialog with information about error and ask user
     if he wants to send report using :py:func:`show_error`.
     """
@@ -42,7 +43,15 @@ def my_excepthook(type_, value, trace_back):
 
 @ensure_main_thread
 def show_error(error=None):
-    """This class create error dialog and show it"""
+    """
+    For :py:class:`SegmentationLimitException` and :py:class:`TiffFileException`
+    show dialog with information about problem.
+
+    For other exceptions show :py:class:`ErrorDialog` dialog
+    with information about error that allow to report it.
+
+    :param error: exception to show
+    """
     if error is None:
         return
 
@@ -68,6 +77,10 @@ def show_error(error=None):
 
 @ensure_main_thread
 def show_warning(header=None, text=None):
-    """show warning :py:class:`PyQt5.QtWidgets.QMessageBox`"""
+    """
+    Show warning :py:class:`PyQt5.QtWidgets.QMessageBox`
+
+    This function is to ensure creation warning dialog in main thread.
+    """
     message = QMessageBox(QMessageBox.Warning, header, text, QMessageBox.Ok)
     message.exec_()
