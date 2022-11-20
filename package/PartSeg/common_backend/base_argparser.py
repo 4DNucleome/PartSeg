@@ -118,7 +118,7 @@ class CustomParser(argparse.ArgumentParser):
             args.save_directory[0] + (f"_{state_store.save_suffix}" if state_store.save_suffix else "")
         )
 
-        if args.no_report and args.no_dialog:
+        if args.no_report and args.no_dialog and state_store.sentry_url:
             _setup_sentry()
         sys.excepthook = my_excepthook
         with suppress(locale.Error):
