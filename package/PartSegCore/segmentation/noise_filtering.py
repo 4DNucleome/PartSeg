@@ -95,9 +95,7 @@ class BilateralNoiseFiltering(NoiseFilteringBase):
 
 def calculate_operation_radius(radius, spacing, gauss_type):
     res = _calculate_operation_radius(radius, spacing, gauss_type)
-    if res == radius:
-        return [radius for _ in spacing]
-    return res
+    return [radius for _ in spacing] if res == radius else res
 
 
 class MedianNoiseFilteringParams(BaseModel):

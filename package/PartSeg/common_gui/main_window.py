@@ -146,8 +146,7 @@ class BaseMainWindow(QMainWindow):
             if not os.path.exists(config_folder):
                 import_config()
             settings: BaseSettings = self.get_setting_class()(config_folder)
-            errors = settings.load()
-            if errors:  # pragma: no cover
+            if errors := settings.load():
                 DataImportErrorDialog(
                     errors,
                     text="During load saved state some of data could not be load properly\n"

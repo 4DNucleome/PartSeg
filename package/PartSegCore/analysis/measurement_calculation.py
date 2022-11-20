@@ -1569,8 +1569,7 @@ class Haralick(MeasurementMethodBase):
     ):  # pylint: disable=W0221
         if isinstance(feature, str):
             feature = HaralickEnum(feature)
-        _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
-        if _cache:
+        if _cache := _cache and "_area" in kwargs and "_per_component" in kwargs:
             help_dict: Dict = kwargs["help_dict"]
             _area: AreaType = kwargs["_area"]
             _per_component: PerComponent = kwargs["_per_component"]

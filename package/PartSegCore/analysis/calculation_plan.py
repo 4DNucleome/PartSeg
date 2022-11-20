@@ -751,7 +751,7 @@ class CalculationPlan:
         raise ValueError(f"Unknown type {type(el)}")
 
     def pretty_print(self) -> str:
-        return f"Calcualation Plan: {self.name}\n" + self._pretty_print(self.execution_tree, 0)
+        return f"Calcualation Plan: {self.name}\n{self._pretty_print(self.execution_tree, 0)}"
 
     def _pretty_print(self, elem: CalculationTree, indent) -> str:
         if isinstance(elem.operation, str):
