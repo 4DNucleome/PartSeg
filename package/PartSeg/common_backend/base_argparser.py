@@ -65,12 +65,15 @@ class CustomParser(argparse.ArgumentParser):
          Set :py:data:`.state_store.custom_plugin_load`.
     #. ``--develop`` -- for developer purpose. Allow to reload part of Program without restarting. May be unstable.
          Set :py:data:`.state_store.develop`. Base on this :py:class:`PartSeg.common_gui.advanced_tabs.AdvancedWindow`
-         constructor add developer tab..
+         constructor add developer tab.
 
     """
 
     def __init__(self, *args, **kwargs):
+        if "epilog" not in kwargs and len(args) < 4:
+            kwargs["epilog"] = "To control server for sentry reporting use PARTSEG_SENTRY_URL environment variable"
         super().__init__(*args, **kwargs)
+
         self.add_argument("--no_report", action="store_false", help="disable error reporting")
         self.add_argument("--no_dialog", action="store_false", help="disable error reporting and showing error dialog")
         self.add_argument("--no_update", action="store_false", help="disable check for updates")
@@ -116,18 +119,23 @@ class CustomParser(argparse.ArgumentParser):
             _setup_sentry()
         sys.excepthook = my_excepthook
         with suppress(locale.Error):
-            # some bug in reseting locale
+            # some bug in reset locale
             # https://stackoverflow.com/questions/68962248/python-setlocale-with-empty-string-default-locale-gives-unsupported-locale-se
             locale.setlocale(locale.LC_NUMERIC, "")
         return args
 
 
 def _setup_sentry():  # pragma: no cover
+    if not (
+        sentry_url := os.environ.get("PARTSEG_SENTRY_URL", "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302")
+    ):
+        state_store.report_errors = False
+        return
     sentry_sdk.utils.MAX_STRING_LENGTH = 10**4
     sentry_sdk.serializer.safe_repr = safe_repr
     sentry_sdk.serializer.MAX_DATABAG_BREADTH = 100
     sentry_sdk.init(
-        "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
+        sentry_url,
         release=f"PartSeg@{PartSeg.__version__}",
     )
     with sentry_sdk.configure_scope() as scope:

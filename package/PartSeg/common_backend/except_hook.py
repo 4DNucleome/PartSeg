@@ -13,13 +13,12 @@ from PartSegImage import TiffFileException
 
 def my_excepthook(type_, value, trace_back):
     """
-    Custom excepthook. base on base on :py:data:`state_store.show_error_dialog` decide if shown error dialog.
-
+    Custom excepthook. Base on :py:data:`state_store.show_error_dialog` decide if shown error dialog.
     """
 
     # log the exception here
     if state_store.show_error_dialog and not isinstance(value, KeyboardInterrupt):
-        if state_store.report_errors and parsed_version.is_devrelease:
+        if state_store.report_errors and parsed_version.is_devrelease and getattr(sys, "frozen", False):
             with sentry_sdk.push_scope() as scope:
                 scope.set_tag("auto_report", "true")
                 scope.set_tag("main_thread", QCoreApplication.instance().thread() == QThread.currentThread())
@@ -45,7 +44,7 @@ def show_error(error=None):
     if isinstance(error, TiffFileException):
         mess = QMessageBox()
         mess.setIcon(QMessageBox.Critical)
-        mess.setText("During read file there is an error: " + error.args[0])
+        mess.setText(f"During read file there is an error: {error.args[0]}")
         mess.setWindowTitle("Tiff error")
         mess.exec_()
         return
