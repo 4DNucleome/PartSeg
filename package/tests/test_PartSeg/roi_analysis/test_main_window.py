@@ -1,12 +1,9 @@
-import platform
-import sys
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 import qtpy
 from qtpy.QtCore import Qt
-from test_PartSeg.utils import GITHUB_ACTIONS
 
 from PartSeg._roi_analysis import main_window as analysis_main_window
 
@@ -15,9 +12,6 @@ pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 pro
 
 class TestAnalysisMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="debug test fail")
-    @pytest.mark.skipif(
-        (platform.system() == "Windows") and GITHUB_ACTIONS and sys.version_info.minor == 7, reason="need to debug"
-    )
     @pyside_skip
     def test_opening(self, qtbot, tmpdir):
         main_window = analysis_main_window.MainWindow(tmpdir, initial_image=False)
