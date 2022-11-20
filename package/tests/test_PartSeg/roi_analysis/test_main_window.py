@@ -2,17 +2,14 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-import qtpy
 from qtpy.QtCore import Qt
 
 from PartSeg._roi_analysis import main_window as analysis_main_window
 
-pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
-
 
 class TestAnalysisMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="debug test fail")
-    @pyside_skip
+    @pytest.mark.pyside_skip
     def test_opening(self, qtbot, tmpdir):
         main_window = analysis_main_window.MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
@@ -22,7 +19,7 @@ class TestAnalysisMainWindow:
         main_window.advanced_window.close()
         qtbot.wait(50)
 
-    @pyside_skip
+    @pytest.mark.pyside_skip
     def test_change_theme(self, qtbot, tmpdir):
         main_window = analysis_main_window.MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
@@ -30,7 +27,7 @@ class TestAnalysisMainWindow:
         main_window.settings.theme_name = "dark"
         assert main_window.raw_image.viewer.theme == "dark"
 
-    @pyside_skip
+    @pytest.mark.pyside_skip
     def test_scale_bar(self, qtbot, tmpdir):
         main_window = analysis_main_window.MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)

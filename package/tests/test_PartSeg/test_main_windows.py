@@ -1,9 +1,9 @@
 # pylint: disable=R0201
+import os
 import platform
 from functools import partial
 
 import pytest
-import qtpy
 from qtpy.QtCore import QCoreApplication
 
 from PartSeg._launcher.main_window import MainWindow as LauncherMainWindow
@@ -12,14 +12,11 @@ from PartSeg._launcher.main_window import Prepare as LauncherPrepare
 from PartSeg._roi_analysis import main_window as analysis_main_window
 from PartSeg._roi_mask import main_window as mask_main_window
 
-from .utils import CI_BUILD, GITHUB_ACTIONS
+GITHUB_ACTIONS = "GITHUB_ACTIONS" in os.environ
 
 
 def empty(*_):
     """To silent some functions"""
-
-
-pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
 
 
 class TestLauncherMainWindow:
@@ -29,8 +26,8 @@ class TestLauncherMainWindow:
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.enablethread
-    @pyside_skip
-    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+    @pytest.mark.pyside_skip
+    @pytest.mark.windows_ci_skip
     def test_open_mask(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(mask_main_window, "CONFIG_FOLDER", str(tmp_path))
         if platform.system() == "Linux" and GITHUB_ACTIONS:
@@ -46,8 +43,8 @@ class TestLauncherMainWindow:
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.enablethread
-    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
-    @pyside_skip
+    @pytest.mark.windows_ci_skip
+    @pytest.mark.pyside_skip
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(analysis_main_window, "CONFIG_FOLDER", str(tmp_path))
         if platform.system() in {"Darwin", "Linux"} and GITHUB_ACTIONS:
