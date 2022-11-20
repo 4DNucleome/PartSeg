@@ -5,11 +5,10 @@ from glob import glob
 import packaging.version
 from qtpy.QtWidgets import QMessageBox, QWidget
 
+from PartSeg import parsed_version
+from PartSeg._launcher.check_version import IGNORE_FILE
+from PartSeg.common_backend import napari_get_settings
 from PartSegCore import state_store
-
-from .. import parsed_version
-from .._launcher.check_version import IGNORE_FILE
-from . import napari_get_settings
 
 
 def import_config():
@@ -28,11 +27,7 @@ def import_config():
             reverse=True,
         )
     )
-    before_version = None
-    for x in versions:
-        if x < version:
-            before_version = x
-            break
+    before_version = next((x for x in versions if x < version), None)
     if before_version is not None:
         before_name = str(before_version)
         widget = QWidget()

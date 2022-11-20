@@ -2,11 +2,10 @@ import typing
 
 import numpy as np
 
+from PartSeg.common_backend.progress_thread import ProgressTread
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.analysis.calculate_pipeline import PipelineResult, calculate_pipeline
 from PartSegImage import Image
-
-from ..common_backend.progress_thread import ProgressTread
 
 
 class CalculatePipelineThread(ProgressTread):

@@ -23,9 +23,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegCore.analysis.calculation_plan import MaskMapper
-
-from ..common_backend.base_settings import BaseSettings
 
 
 class AcceptFiles(QDialog):
@@ -171,8 +170,7 @@ class AddFiles(QWidget):
                 return
             else:
                 res_list.append(os.path.join(base_path, file_path.strip()))
-        missed_files = [x for x in res_list if not os.path.exists(x)]
-        if missed_files:
+        if missed_files := [x for x in res_list if not os.path.exists(x)]:
             if len(missed_files) > 6:
                 missed_files = missed_files[:6] + ["..."]
             missed_files_str = "<br>".join(missed_files)

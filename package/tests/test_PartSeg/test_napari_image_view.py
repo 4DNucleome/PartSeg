@@ -1,6 +1,5 @@
 # pylint: disable=R0201
 import gc
-import platform
 from functools import partial
 from unittest.mock import MagicMock
 
@@ -9,7 +8,6 @@ import pytest
 from napari.layers import Image as NapariImage
 from napari.qt import QtViewer
 from qtpy.QtCore import QPoint
-from test_PartSeg.utils import CI_BUILD
 from vispy.geometry import Rect
 
 from PartSeg.common_gui.channel_control import ChannelProperty
@@ -164,7 +162,7 @@ class TestImageView:
         image_view.update_spacing_info()
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10**5, 10**5, 10**5))
 
-    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+    @pytest.mark.windows_ci_skip
     def test_mask_control_visibility(self, base_settings, image_view, qtbot, tmp_path):
         image_view.show()
         assert not image_view.mask_chk.isVisible()
@@ -186,7 +184,7 @@ class TestImageView:
         image_view.toggle_points_visibility()
         assert not image_view.points_layer.visible
 
-    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+    @pytest.mark.windows_ci_skip
     def test_points_button_visibility(self, base_settings, image_view, qtbot, tmp_path):
         image_view.show()
         assert not image_view.points_view_button.isVisible()

@@ -4,12 +4,11 @@ from qtpy.QtCore import QObject, QSignalBlocker, Slot
 from qtpy.QtGui import QResizeEvent
 from qtpy.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLabel
 
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg.common_gui.channel_control import ChannelProperty
+from PartSeg.common_gui.napari_image_view import ImageView
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
-
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.napari_image_view import ImageView
-from .partseg_settings import PartSettings
 
 
 class ResultImageView(ImageView):
