@@ -1,6 +1,11 @@
 Error reporting
 ===============
 
+.. important::
+   In ideal state, during using PartSeg, there should be no exceptions.
+   Only dialogs with information what user done wrong and how to fix it.
+   So If you meet the exception please report it to the developers.
+
 The PartSeg software is created to simplify sharing segmentation algorithms,
 also with non programming persons. Because of this, next to the standard way
 of error reporting using `GitHub issues <https://github.com/4DNucleome/PartSeg/issues>`_
