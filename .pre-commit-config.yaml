@@ -7,7 +7,7 @@ repos:
     hooks:
     -   id: absolufy-imports
         args: ["--application-directories", "package"]
-        exclude: examples|setup.py|build_utils|docs|package/tests
+        exclude: examples|setup.py|build_utils|docs
 -   repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
