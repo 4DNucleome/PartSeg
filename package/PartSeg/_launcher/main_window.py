@@ -26,7 +26,7 @@ class Prepare(QThread):
 
     def run(self):
         if self.module != "":
-            from .. import plugins
+            from PartSeg import plugins
 
             plugins.register()
             main_window_module = importlib.import_module(self.module)

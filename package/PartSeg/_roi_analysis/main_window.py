@@ -19,10 +19,28 @@ from qtpy.QtWidgets import (
 from superqt import ensure_main_thread
 
 import PartSegData
+from PartSeg._roi_analysis.advanced_window import SegAdvancedWindow
+from PartSeg._roi_analysis.batch_window import BatchWindow
+from PartSeg._roi_analysis.calculation_pipeline_thread import CalculatePipelineThread
+from PartSeg._roi_analysis.image_view import CompareImageView, ResultImageView, SynchronizeView
 from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
+from PartSeg.common_backend.except_hook import show_warning
+from PartSeg.common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
+from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
+from PartSeg.common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
+from PartSeg.common_gui.mask_widget import MaskDialogBase
+from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
+from PartSeg.common_gui.searchable_combo_box import SearchComboBox
+from PartSeg.common_gui.stack_image_view import ColorBar
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
+from PartSeg.common_gui.universal_gui_part import TextShow
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog
 from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, algorithm_description, load_functions
@@ -35,25 +53,6 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegCore.utils import EventedDict
 from PartSegImage import TiffImageReader
-
-from ..common_backend.base_settings import IO_SAVE_DIRECTORY
-from ..common_backend.except_hook import show_warning
-from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_save_dialog import PSaveDialog
-from ..common_gui.equal_column_layout import EqualColumnLayout
-from ..common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
-from ..common_gui.mask_widget import MaskDialogBase
-from ..common_gui.multiple_file_widget import MultipleFileWidget
-from ..common_gui.searchable_combo_box import SearchComboBox
-from ..common_gui.stack_image_view import ColorBar
-from ..common_gui.universal_gui_part import TextShow
-from ..common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog
-from .advanced_window import SegAdvancedWindow
-from .batch_window import BatchWindow
-from .calculation_pipeline_thread import CalculatePipelineThread
-from .image_view import CompareImageView, ResultImageView, SynchronizeView
-from .partseg_settings import PartSettings
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "analysis")
 

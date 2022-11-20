@@ -1,7 +1,7 @@
 import warnings
 
-from ..algorithm_describe_base import AlgorithmSelection
-from ..segmentation.restartable_segmentation_algorithms import (
+from PartSegCore.algorithm_describe_base import AlgorithmSelection
+from PartSegCore.segmentation.restartable_segmentation_algorithms import (
     BorderRim,
     LowerThresholdAlgorithm,
     LowerThresholdFlowAlgorithm,

@@ -1,4 +1,4 @@
-from .old_partseg import LoadPartSegOld
+from PartSeg.plugins.old_partseg.old_partseg import LoadPartSegOld
 
 
 def register():

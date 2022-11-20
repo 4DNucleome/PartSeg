@@ -1,4 +1,4 @@
-from .save_modeling_data import SaveModeling
+from PartSeg.plugins.modeling_save.save_modeling_data import SaveModeling
 
 
 def register():

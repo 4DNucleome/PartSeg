@@ -7,10 +7,9 @@ import SimpleITK as sitk
 from nme import register_class, rename_key, update_argument
 from pydantic import Field
 
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
+from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.utils import BaseModel
-
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
-from .algorithm_base import SegmentationLimitException
 
 
 class SingleThresholdParams(BaseModel):

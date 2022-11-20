@@ -4,10 +4,9 @@ import numpy as np
 import SimpleITK as sitk
 from nme import register_class
 
+from PartSegCore.image_operations import RadiusType, dilate, erode
 from PartSegCore.utils import BaseModel
 from PartSegImage.image import minimal_dtype
-
-from .image_operations import RadiusType, dilate, erode
 
 
 @register_class(old_paths=["PartSeg.utils.mask_create.MaskProperty"])

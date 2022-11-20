@@ -1,8 +1,8 @@
 from vispy.app import MouseEvent
 
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.napari_image_view import ImageInfo, ImageView, LabelEnum
-from .stack_settings import StackSettings
+from PartSeg._roi_mask.stack_settings import StackSettings
+from PartSeg.common_gui.channel_control import ChannelProperty
+from PartSeg.common_gui.napari_image_view import ImageInfo, ImageView, LabelEnum
 
 
 class StackImageView(ImageView):

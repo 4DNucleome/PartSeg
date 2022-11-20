@@ -25,15 +25,14 @@ from vispy.color import Color, Colormap
 from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
+from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_gui.advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME_STR, SEARCH_ZOOM_FACTOR_STR
+from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBoxGroup
+from PartSeg.common_gui.custom_buttons import SearchROIButton
+from PartSeg.common_gui.qt_modal import QtPopup
 from PartSegCore.image_operations import NoiseFilterType, bilateral, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
-
-from ..common_backend.base_settings import BaseSettings
-from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME_STR, SEARCH_ZOOM_FACTOR_STR
-from .channel_control import ChannelProperty, ColorComboBoxGroup
-from .custom_buttons import SearchROIButton
-from .qt_modal import QtPopup
 
 try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_

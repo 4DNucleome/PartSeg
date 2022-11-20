@@ -10,6 +10,8 @@ import numpy as np
 from nme import update_argument
 from pydantic import Field
 
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
+from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.utils import BaseModel
 from PartSegCore_compiled_backend.multiscale_opening import MuType, PyMSO, calculate_mu
 from PartSegCore_compiled_backend.sprawl_utils.find_split import (
@@ -18,9 +20,6 @@ from PartSegCore_compiled_backend.sprawl_utils.find_split import (
     path_maximum_sprawl,
     path_minimum_sprawl,
 )
-
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
-from .algorithm_base import SegmentationLimitException
 
 
 class BaseWatershed(AlgorithmDescribeBase, ABC):

@@ -23,9 +23,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegCore.analysis.calculation_plan import MaskMapper
-
-from ..common_backend.base_settings import BaseSettings
 
 
 class AcceptFiles(QDialog):

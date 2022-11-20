@@ -11,13 +11,12 @@ from enum import Enum
 from nme import register_class, rename_key
 from pydantic import BaseModel as PydanticBaseModel
 
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.analysis import AnalysisAlgorithmSelection
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+from PartSegCore.mask_create import MaskProperty
+from PartSegCore.universal_const import Units
 from PartSegCore.utils import BaseModel
-
-from ..algorithm_describe_base import ROIExtractionProfile
-from ..mask_create import MaskProperty
-from ..universal_const import Units
-from . import AnalysisAlgorithmSelection
-from .measurement_calculation import MeasurementProfile
 
 
 class MaskBase(BaseModel):

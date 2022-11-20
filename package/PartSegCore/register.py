@@ -15,14 +15,14 @@ register_dict: holds information where register given operation type. Strongly s
 from enum import Enum
 from typing import Type
 
-from . import io_utils
-from .algorithm_describe_base import AlgorithmDescribeBase
-from .analysis import algorithm_description as analysis_algorithm_description
-from .analysis import load_functions, measurement_base, measurement_calculation, save_functions
-from .image_transforming import TransformBase, image_transform_dict
-from .mask import algorithm_description as mask_algorithm_description
-from .mask import io_functions
-from .segmentation import (
+from PartSegCore import io_utils
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase
+from PartSegCore.analysis import algorithm_description as analysis_algorithm_description
+from PartSegCore.analysis import load_functions, measurement_base, measurement_calculation, save_functions
+from PartSegCore.image_transforming import TransformBase, image_transform_dict
+from PartSegCore.mask import algorithm_description as mask_algorithm_description
+from PartSegCore.mask import io_functions
+from PartSegCore.segmentation import (
     noise_filtering,
     restartable_segmentation_algorithms,
     segmentation_algorithm,

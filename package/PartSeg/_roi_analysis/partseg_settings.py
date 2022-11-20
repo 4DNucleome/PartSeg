@@ -4,6 +4,7 @@ from copy import deepcopy
 
 from qtpy.QtCore import Signal
 
+from PartSeg.common_backend.base_settings import BaseSettings, SaveSettingsDescription
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.analysis.calculation_plan import CalculationPlan
@@ -15,8 +16,6 @@ from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.utils import EventedDict, ProfileDict
-
-from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
 
 
 class PartSettings(BaseSettings):

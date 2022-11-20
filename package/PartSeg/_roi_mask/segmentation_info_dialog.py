@@ -3,10 +3,9 @@ from typing import Callable, Dict, Optional
 from qtpy.QtCore import QEvent
 from qtpy.QtWidgets import QGridLayout, QLabel, QListWidget, QPlainTextEdit, QPushButton, QWidget
 
+from PartSeg._roi_mask.stack_settings import StackSettings
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
-
-from .stack_settings import StackSettings
 
 
 class SegmentationInfoDialog(QWidget):
