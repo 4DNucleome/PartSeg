@@ -116,7 +116,7 @@ class TestExceptHook:
         monkeypatch.setattr(sys, "exit", exit_catch)
         monkeypatch.setattr(sentry_sdk, "capture_exception", capture_exception_catch)
         monkeypatch.setattr(except_hook, "show_error", show_error_catch)
-        monkeypatch.setattr(except_hook, "parsed_version", parse("0.13.12"))
+        monkeypatch.setattr("PartSeg.state_store.auto_report", False)
 
         monkeypatch.setattr(state_store, "show_error_dialog", False)
         except_hook.my_excepthook(KeyboardInterrupt, KeyboardInterrupt(), [])
@@ -142,7 +142,7 @@ class TestExceptHook:
         monkeypatch.setattr(except_hook, "show_error", import_raise)
 
         monkeypatch.setattr(state_store, "report_errors", True)
-        monkeypatch.setattr(except_hook, "parsed_version", parse("0.13.12dev1"))
+        monkeypatch.setattr("PartSeg.state_store.auto_report", True)
         monkeypatch.setattr("sys.frozen", True, raising=False)
         except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
         assert len(sentry_catch_list) == 1
@@ -171,7 +171,7 @@ class TestBaseArgparse:
             base_argparser.proper_path(str(tmp_path / "dddddd"))
 
     def test_custom_parser(self, monkeypatch):
-        state_store_mock = argparse.Namespace(save_folder="/")
+        state_store_mock = argparse.Namespace(save_folder="/", sentry_url="https")
         monkeypatch.setattr(base_argparser, "state_store", state_store_mock)
         monkeypatch.setattr(base_argparser, "state_store", state_store_mock)
         monkeypatch.setattr(base_argparser, "_setup_sentry", lambda: 1)
