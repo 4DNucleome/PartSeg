@@ -9,6 +9,7 @@ import packaging.version
 
 from PartSeg import APP_LAB, APP_NAME, __version__, parsed_version
 
+#: if true then report errors using sentry without asking user
 auto_report = parsed_version.is_devrelease and getattr(sys, "frozen", False)
 #: if report errors using sentry without asking user about it
 always_report = False
@@ -33,6 +34,8 @@ save_folder = os.path.join(
 sentry_url = os.environ.get("PARTSEG_SENTRY_URL", "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302")
 
 __all__ = (
+    "auto_report",
+    "always_report",
     "report_errors",
     "show_error_dialog",
     "custom_plugin_load",
