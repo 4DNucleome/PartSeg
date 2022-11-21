@@ -31,7 +31,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from PartSeg import parsed_version
+from PartSeg import parsed_version, state_store
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.prepare_plan_widget import CalculatePlaner
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
@@ -40,7 +40,6 @@ from PartSeg.common_gui.error_report import ExceptionList, ExceptionListItem
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.select_multiple_files import AddFiles
 from PartSeg.common_gui.universal_gui_part import Spacing, right_label
-from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
 from PartSegCore.analysis.calculation_plan import Calculation, MaskFile

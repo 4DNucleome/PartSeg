@@ -11,7 +11,7 @@ from queue import Empty
 import numpy as np
 import pytest
 
-from PartSegCore import state_store
+from PartSeg import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent

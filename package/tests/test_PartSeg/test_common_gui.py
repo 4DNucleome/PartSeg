@@ -34,6 +34,7 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
+from PartSeg import state_store
 from PartSeg.common_gui import exception_hooks, select_multiple_files
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.advanced_tabs import (
@@ -87,7 +88,7 @@ from PartSeg.common_gui.universal_gui_part import (
     MguiChannelComboBox,
     Spacing,
 )
-from PartSegCore import Units, state_store
+from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,

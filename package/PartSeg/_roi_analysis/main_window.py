@@ -19,6 +19,7 @@ from qtpy.QtWidgets import (
 from superqt import ensure_main_thread
 
 import PartSegData
+from PartSeg import state_store
 from PartSeg._roi_analysis.advanced_window import SegAdvancedWindow
 from PartSeg._roi_analysis.batch_window import BatchWindow
 from PartSeg._roi_analysis.calculation_pipeline_thread import CalculatePipelineThread
@@ -41,7 +42,6 @@ from PartSeg.common_gui.stack_image_view import ColorBar
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
 from PartSeg.common_gui.universal_gui_part import TextShow
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog
-from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, algorithm_description, load_functions
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement

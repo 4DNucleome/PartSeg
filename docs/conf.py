@@ -21,7 +21,7 @@ import PartSeg
 # -- Project information -----------------------------------------------------
 
 project = "PartSeg"
-copyright = f"{date.today().year}, Laboratory of Functional and Structural Genomics"
+copyright = f"{date.today().year}, PartSeg team"
 author = "Grzegorz Bokota (LFSG)"
 
 # The full version, including alpha/beta/rc tags

@@ -27,6 +27,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 import PartSegData
+from PartSeg import state_store
 from PartSeg._roi_mask.batch_proceed import BatchProceed, BatchTask
 from PartSeg._roi_mask.image_view import StackImageView
 from PartSeg._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
@@ -48,7 +49,7 @@ from PartSeg.common_gui.select_multiple_files import AddFiles
 from PartSeg.common_gui.stack_image_view import ColorBar
 from PartSeg.common_gui.universal_gui_part import right_label
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
-from PartSegCore import UNIT_SCALE, Units, state_store
+from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.mask import io_functions
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection

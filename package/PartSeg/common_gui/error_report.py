@@ -35,9 +35,8 @@ from qtpy.QtWidgets import (
 from sentry_sdk.utils import event_from_exception, exc_info_from_error
 from traceback_with_variables import Format, print_exc
 
-from PartSeg import __version__
+from PartSeg import __version__, state_store
 from PartSeg.common_backend.python_syntax_highlight import Pylighter
-from PartSegCore import state_store
 from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.utils import numpy_repr
@@ -70,7 +69,7 @@ class ErrorDialog(QDialog):
         super().__init__()
         self.exception = exception
         self.additional_notes = additional_notes
-        self.send_report_btn = QPushButton("Send information")
+        self.send_report_btn = QPushButton("Report error")
         self.send_report_btn.setDisabled(not state_store.report_errors)
         self.create_issue_btn = QPushButton("Create issue")
         self.cancel_btn = QPushButton("Cancel")
