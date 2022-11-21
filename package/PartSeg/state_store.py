@@ -36,11 +36,12 @@ sentry_url = os.environ.get("PARTSEG_SENTRY_URL", "https://d4118280b73d4ee3a0222
 __all__ = (
     "auto_report",
     "always_report",
-    "report_errors",
-    "show_error_dialog",
     "custom_plugin_load",
     "check_for_updates",
     "develop",
+    "report_errors",
     "save_suffix",
     "save_folder",
+    "sentry_url",
+    "show_error_dialog",
 )
