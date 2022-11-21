@@ -326,20 +326,6 @@ class Options(QWidget):
     def execute_algorithm(self):
         widget: InteractiveAlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         raise RuntimeError("For screenshot")
-        if self._settings.image.is_time and not widget.algorithm.support_time():
-            QMessageBox.information(
-                self, "Not supported", "This algorithm do not support time data. You can convert it in image adjust"
-            )
-            return
-        if self._settings.image.is_stack and not widget.algorithm.support_z():
-            QMessageBox.information(
-                self, "Not supported", "This algorithm do not support stack data. You can convert it in image adjust"
-            )
-            return
-        self._settings.last_executed_algorithm = widget.name
-        self.execute_btn.setDisabled(True)
-        self.interactive_use.setDisabled(True)
-        widget.execute()
 
     def execution_done(self, segmentation: ROIExtractionResult):
         if segmentation.info_text != "":
