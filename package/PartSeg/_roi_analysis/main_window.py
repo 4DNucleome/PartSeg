@@ -325,6 +325,7 @@ class Options(QWidget):
 
     def execute_algorithm(self):
         widget: InteractiveAlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
+        raise RuntimeError("For screenshot")
         if self._settings.image.is_time and not widget.algorithm.support_time():
             QMessageBox.information(
                 self, "Not supported", "This algorithm do not support time data. You can convert it in image adjust"
