@@ -10,7 +10,7 @@ import numpy as np
 from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
-from qtpy.QtCore import QObject, Signal
+from qtpy.QtCore import QMargins, QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
     QApplication,
@@ -574,7 +574,7 @@ class SubAlgorithmWidget(QWidget):
         name = self.choose.currentText()
         if self.widgets_dict[name].has_elements() and event.rect().top() == 0 and event.rect().left() == 0:
             painter = QPainter(self)
-            painter.drawRect(event.rect())
+            painter.drawRect(self.rect() - QMargins(1, -1, 1, 1))
 
 
 class BaseAlgorithmSettingsWidget(QScrollArea):
