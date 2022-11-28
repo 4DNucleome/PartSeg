@@ -55,11 +55,11 @@ SELECT_TEXT = "<select>"
 class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidget):
     form_widget: NapariFormWidgetWithMask
 
-    @staticmethod
-    def _form_widget(algorithm, start_values) -> FormWidget:
+    def _form_widget(self, algorithm, start_values) -> FormWidget:
         return NapariFormWidgetWithMask(
             algorithm.__argument_class__ if algorithm.__new_style__ else algorithm.get_fields(),
             start_values=start_values,
+            parent=self,
         )
 
     def reset_choices(self, event=None):
@@ -74,9 +74,8 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
 
 
 class NapariAlgorithmChoose(AlgorithmChooseBase):
-    @staticmethod
-    def _algorithm_widget(settings, val) -> InteractiveAlgorithmSettingsWidget:
-        return NapariInteractiveAlgorithmSettingsWidget(settings, val, [])
+    def _algorithm_widget(self, settings, val) -> InteractiveAlgorithmSettingsWidget:
+        return NapariInteractiveAlgorithmSettingsWidget(settings, val, [], parent=self)
 
     def reset_choices(self, event=None):
         for widget in self.algorithm_dict.values():

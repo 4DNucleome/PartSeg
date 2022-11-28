@@ -497,16 +497,16 @@ class TestBaseSettings:
 
     def test_view_settings_theme(self, tmp_path, image, roi, qtbot):
         settings = base_settings.ViewSettings()
-        assert settings.theme_name == "light"
+        assert settings.theme_name == "dark"
         assert hasattr(settings.theme, "text")
         assert isinstance(settings.style_sheet, str)
         with pytest.raises(ValueError):
             settings.theme_name = "aaaa"
         with qtbot.assertNotEmitted(settings.theme_changed):
-            settings.theme_name = "light"
-        with qtbot.waitSignal(settings.theme_changed):
             settings.theme_name = "dark"
-        assert settings.theme_name == "dark"
+        with qtbot.waitSignal(settings.theme_changed):
+            settings.theme_name = "light"
+        assert settings.theme_name == "light"
         assert isinstance(settings.theme_list(), (tuple, list))
 
     def test_view_settings_colormaps(self, tmp_path, image, roi, qtbot):
