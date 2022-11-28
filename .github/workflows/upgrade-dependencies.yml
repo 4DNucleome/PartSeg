@@ -34,7 +34,7 @@ jobs:
         # ADD YOUR CUSTOM DEPENDENCY UPGRADE COMMANDS BELOW
         run: |
           pip install -U pip pip-tools
-          pip-compile --upgrade -o requirements/requirements_pyinstaller.txt setup.cfg --extra all
+          pip-compile --upgrade -o requirements/requirements_pyinstaller.txt setup.cfg --extra pyinstaller
       # END PYTHON DEPENDENCIES
 
       - name: Detect changes
