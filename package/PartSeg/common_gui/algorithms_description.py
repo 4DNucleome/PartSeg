@@ -558,12 +558,12 @@ class SubAlgorithmWidget(QWidget):
         for i in range(self.layout().count()):
             lay_elem = self.layout().itemAt(i)
             if lay_elem.widget():
-                lay_elem.widget().hide()
+                lay_elem.widget().setVisible(False)
         if widget.has_elements():
-            self.show()
-            widget.show()
+            self.setVisible(True)
+            widget.setVisible(True)
         else:
-            self.hide()
+            self.setVisible(False)
         self.values_changed.emit()
 
     def showEvent(self, _event):
