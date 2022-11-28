@@ -3,10 +3,9 @@ from typing import Callable, Dict, Optional
 from qtpy.QtCore import QEvent
 from qtpy.QtWidgets import QGridLayout, QLabel, QListWidget, QPlainTextEdit, QPushButton, QWidget
 
+from PartSeg._roi_mask.stack_settings import StackSettings
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
-
-from .stack_settings import StackSettings
 
 
 class SegmentationInfoDialog(QWidget):
@@ -30,6 +29,8 @@ class SegmentationInfoDialog(QWidget):
         self.set_parameters_btn = QPushButton("Reuse parameters")
         self.set_parameters_btn.clicked.connect(self.set_parameter_action)
         self.additional_text_label = QLabel(additional_text)
+        self.additional_text_label.setVisible(bool(additional_text))
+        self.additional_text_label.setWordWrap(True)
         layout = QGridLayout()
         layout.addWidget(self.additional_text_label, 0, 0, 1, 2)
         if not additional_text:
@@ -63,7 +64,7 @@ class SegmentationInfoDialog(QWidget):
         if parameters is None:
             self.description.setPlainText("None")
         else:
-            self.description.setPlainText(f"Component {text}\n" + parameters.pretty_print(MaskAlgorithmSelection))
+            self.description.setPlainText(f"Component {text}\n{parameters.pretty_print(MaskAlgorithmSelection)}")
 
     def set_parameter_action(self):
         if self.components.currentItem() is None:

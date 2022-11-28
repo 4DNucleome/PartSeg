@@ -34,8 +34,8 @@ This application is designed to help biologist with segmentation based on thresh
 
 -   From binaries:
     -   [Windows](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-windows.zip) (build on Windows 10)
-    -   [Linux](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-linux.zip) (build on Ubuntu 18.04)
-    -   [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS Mojave)
+    -   [Linux](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-linux.zip) (build on Ubuntu 20.04)
+    -   [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS 11)
 
 -   With pip:
     -   From pypi: `pip install PartSeg[all]`
@@ -55,8 +55,8 @@ PartSeg export few commandline options:
 
 -   `--no_report` - disable error reporting
 -   `--no_dialog` - disable error reporting and error dialog. Use only when running from terminal.
--   `segmentation_analysis` - skip launcher and start analysis gui
--   `segmentation` - skip launcher and start segmentation gui
+-   `roi` - skip launcher and start *ROI analysis* gui
+-   `mask`- skip launcher and start *ROI mask* gui
 
 ## napari plugin
 

@@ -16,9 +16,8 @@ from pydantic import Field
 from scipy.ndimage import distance_transform_edt
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase
+from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegCore.utils import BaseModel
-
-from .universal_const import UNIT_SCALE, Units
 
 
 class BorderRimParameters(BaseModel):

@@ -8,6 +8,7 @@ import numpy as np
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QMessageBox
 
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.io_utils import PointsInfo
 from PartSegCore.mask.io_functions import MaskProjectTuple, load_metadata
@@ -16,8 +17,6 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 from PartSegImage.image import minimal_dtype, reduce_array
-
-from ..common_backend.base_settings import BaseSettings
 
 
 class StackSettings(BaseSettings):

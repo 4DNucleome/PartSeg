@@ -10,23 +10,27 @@ from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
 from qtpy.QtWidgets import QAction, QApplication, QDockWidget, QMainWindow, QMenu, QMessageBox, QWidget
 from vispy.color import colormap
 
+from PartSeg.common_backend.base_settings import (
+    FILE_HISTORY,
+    BaseSettings,
+    SwapTimeStackException,
+    TimeAndStackException,
+)
+from PartSeg.common_backend.load_backup import import_config
+from PartSeg.common_gui.about_dialog import AboutDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.error_report import DataImportErrorDialog
+from PartSeg.common_gui.exception_hooks import load_data_exception_hook
+from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
+from PartSeg.common_gui.napari_image_view import ImageView
+from PartSeg.common_gui.napari_viewer_wrap import Viewer
+from PartSeg.common_gui.qt_console import QtConsole
+from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.algorithm_describe_base import Register
 from PartSegCore.io_utils import LoadBase, SaveScreenshot
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegImage import Image
-
-from ..common_backend.base_settings import FILE_HISTORY, BaseSettings, SwapTimeStackException, TimeAndStackException
-from ..common_backend.load_backup import import_config
-from .about_dialog import AboutDialog
-from .custom_save_dialog import PSaveDialog
-from .error_report import DataImportErrorDialog
-from .exception_hooks import load_data_exception_hook
-from .image_adjustment import ImageAdjustmentDialog
-from .napari_image_view import ImageView
-from .napari_viewer_wrap import Viewer
-from .qt_console import QtConsole
-from .show_directory_dialog import DirectoryDialog
-from .waiting_dialog import ExecuteFunctionDialog
 
 OPEN_FILE = "io.open_file"
 OPEN_DIRECTORY = "io.open_directory"
@@ -142,8 +146,7 @@ class BaseMainWindow(QMainWindow):
             if not os.path.exists(config_folder):
                 import_config()
             settings: BaseSettings = self.get_setting_class()(config_folder)
-            errors = settings.load()
-            if errors:  # pragma: no cover
+            if errors := settings.load():  # pragma: no cover
                 DataImportErrorDialog(
                     errors,
                     text="During load saved state some of data could not be load properly\n"

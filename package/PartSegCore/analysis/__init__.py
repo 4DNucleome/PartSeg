@@ -1,10 +1,10 @@
 import warnings
 
-from .algorithm_description import AnalysisAlgorithmSelection
-from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
-from .io_utils import ProjectTuple
-from .load_functions import load_metadata
-from .measurement_calculation import MEASUREMENT_DICT
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
+from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
+from PartSegCore.analysis.io_utils import ProjectTuple
+from PartSegCore.analysis.load_functions import load_metadata
+from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
 
 __all__ = (
     "AnalysisAlgorithmSelection",

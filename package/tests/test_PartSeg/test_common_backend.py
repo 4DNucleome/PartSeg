@@ -15,6 +15,7 @@ import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
 
+from PartSeg import state_store
 from PartSeg.common_backend import (
     base_argparser,
     base_settings,
@@ -25,7 +26,6 @@ from PartSeg.common_backend import (
     segmentation_thread,
 )
 from PartSeg.common_gui.error_report import ErrorDialog
-from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.io_utils import load_matadata_part
 from PartSegCore.mask_create import MaskProperty
@@ -116,7 +116,7 @@ class TestExceptHook:
         monkeypatch.setattr(sys, "exit", exit_catch)
         monkeypatch.setattr(sentry_sdk, "capture_exception", capture_exception_catch)
         monkeypatch.setattr(except_hook, "show_error", show_error_catch)
-        monkeypatch.setattr(except_hook, "parsed_version", parse("0.13.12"))
+        monkeypatch.setattr("PartSeg.state_store.auto_report", False)
 
         monkeypatch.setattr(state_store, "show_error_dialog", False)
         except_hook.my_excepthook(KeyboardInterrupt, KeyboardInterrupt(), [])
@@ -142,7 +142,8 @@ class TestExceptHook:
         monkeypatch.setattr(except_hook, "show_error", import_raise)
 
         monkeypatch.setattr(state_store, "report_errors", True)
-        monkeypatch.setattr(except_hook, "parsed_version", parse("0.13.12dev1"))
+        monkeypatch.setattr("PartSeg.state_store.auto_report", True)
+        monkeypatch.setattr("sys.frozen", True, raising=False)
         except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
         assert len(sentry_catch_list) == 1
         assert isinstance(sentry_catch_list[0], RuntimeError)
@@ -170,7 +171,7 @@ class TestBaseArgparse:
             base_argparser.proper_path(str(tmp_path / "dddddd"))
 
     def test_custom_parser(self, monkeypatch):
-        state_store_mock = argparse.Namespace(save_folder="/")
+        state_store_mock = argparse.Namespace(save_folder="/", sentry_url="https")
         monkeypatch.setattr(base_argparser, "state_store", state_store_mock)
         monkeypatch.setattr(base_argparser, "state_store", state_store_mock)
         monkeypatch.setattr(base_argparser, "_setup_sentry", lambda: 1)
@@ -392,15 +393,15 @@ class TestPartiallyConstDict:
 
 class TestLoadBackup:
     def test_no_backup(self, monkeypatch, tmp_path):
-        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path)
+        monkeypatch.setattr("PartSeg.state_store.save_folder", tmp_path)
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         load_backup.import_config()
 
-        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
+        monkeypatch.setattr("PartSeg.state_store.save_folder", tmp_path / "0.13.13")
         load_backup.import_config()
 
     def test_no_backup_old(self, monkeypatch, tmp_path):
-        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
+        monkeypatch.setattr("PartSeg.state_store.save_folder", tmp_path / "0.13.13")
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         (tmp_path / "0.13.14").mkdir()
         (tmp_path / "0.13.15").mkdir()
@@ -418,7 +419,7 @@ class TestLoadBackup:
         def question(*args, **kwargs):
             return response
 
-        monkeypatch.setattr(load_backup.state_store, "save_folder", tmp_path / "0.13.13")
+        monkeypatch.setattr("PartSeg.state_store.save_folder", tmp_path / "0.13.13")
         monkeypatch.setattr(load_backup.QMessageBox, "question", question)
         monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
         create_file(tmp_path / "0.13.14" / "14.txt")
@@ -496,16 +497,16 @@ class TestBaseSettings:
 
     def test_view_settings_theme(self, tmp_path, image, roi, qtbot):
         settings = base_settings.ViewSettings()
-        assert settings.theme_name == "light"
+        assert settings.theme_name == "dark"
         assert hasattr(settings.theme, "text")
         assert isinstance(settings.style_sheet, str)
         with pytest.raises(ValueError):
             settings.theme_name = "aaaa"
         with qtbot.assertNotEmitted(settings.theme_changed):
-            settings.theme_name = "light"
-        with qtbot.waitSignal(settings.theme_changed):
             settings.theme_name = "dark"
-        assert settings.theme_name == "dark"
+        with qtbot.waitSignal(settings.theme_changed):
+            settings.theme_name = "light"
+        assert settings.theme_name == "light"
         assert isinstance(settings.theme_list(), (tuple, list))
 
     def test_view_settings_colormaps(self, tmp_path, image, roi, qtbot):

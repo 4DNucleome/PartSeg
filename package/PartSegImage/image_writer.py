@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from tifffile import imwrite
 
-from .image import Image, minimal_dtype
+from PartSegImage.image import Image, minimal_dtype
 
 
 class BaseImageWriter(ABC):

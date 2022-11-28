@@ -7,18 +7,17 @@ from typing import Any, Callable, Dict, MutableMapping, Optional
 import numpy as np
 from nme import REGISTER, class_to_str
 
-from PartSegImage import Channel, Image
-
-from ..algorithm_describe_base import (
+from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
     ROIExtractionProfile,
     base_model_to_algorithm_property,
 )
-from ..image_operations import RadiusType
-from ..project_info import AdditionalLayerDescription
-from ..roi_info import ROIInfo
-from ..utils import BaseModel, numpy_repr
+from PartSegCore.image_operations import RadiusType
+from PartSegCore.project_info import AdditionalLayerDescription
+from PartSegCore.roi_info import ROIInfo
+from PartSegCore.utils import BaseModel, numpy_repr
+from PartSegImage import Channel, Image
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
@@ -91,7 +90,7 @@ class ROIExtractionResult:
 
     def __str__(self):  # pragma: no cover
         return (
-            f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
+            f"ROIExtractionResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
             f" max: {np.max(self.roi)}], parameters={self.parameters},"
             f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
             f" alternative={dict_repr(self.alternative_representation)},"
@@ -100,7 +99,7 @@ class ROIExtractionResult:
 
     def __repr__(self):  # pragma: no cover
         return (
-            f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
+            f"ROIExtractionResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
             f"max: {np.max(self.roi)}], parameters={self.parameters}, "
             f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
             f" alternative={dict_repr(self.alternative_representation)},"

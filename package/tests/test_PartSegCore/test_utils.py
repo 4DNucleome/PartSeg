@@ -185,7 +185,7 @@ class TestEventedDict:
         receiver.deleted.assert_called_once()
 
     def test_dict_force_class(self):
-        dkt = EventedDict(klass=int)
+        dkt = EventedDict(int)
         dkt["a"] = 1
         with pytest.raises(TypeError):
             dkt["b"] = "a"
@@ -193,7 +193,7 @@ class TestEventedDict:
         assert set(dkt) == {"a"}
 
     def test_dict_force_class_dkt(self):
-        dkt = EventedDict(klass={"a": int, "b": tuple})
+        dkt = EventedDict({"a": int, "b": tuple})
         dkt["a"] = 1
         with pytest.raises(TypeError):
             dkt["b"] = "a"
@@ -202,7 +202,7 @@ class TestEventedDict:
         assert set(dkt) == {"a", "b", "c"}
 
     def test_dict_force_class_dkt2(self):
-        dkt = EventedDict(klass={"a": int, "b": tuple, "*": str})
+        dkt = EventedDict({"a": int, "b": tuple, "*": str})
         dkt["a"] = 1
         with pytest.raises(TypeError):
             dkt["b"] = "a"
@@ -213,7 +213,7 @@ class TestEventedDict:
         assert set(dkt) == {"a", "b", "c"}
 
     def test_dict_nested_type(self):
-        dkt = EventedDict(klass={"a": {"b": int}})
+        dkt = EventedDict({"a": {"b": int}})
         dkt["a"] = {"b": 1}
         with pytest.raises(TypeError):
             dkt["a"] = {"b": "a"}
@@ -307,13 +307,13 @@ class TestProfileDict:
         assert dkt.get("foo") == {"a": 1, "bar": 1}
 
     def test_force_type(self):
-        dkt = ProfileDict(klass=int)
+        dkt = ProfileDict(int)
         dkt.set("a", 1)
         with pytest.raises(TypeError):
             dkt.set("b", "a")
 
     def test_force_type_nested(self):
-        dkt = ProfileDict(klass={"a": int, "b": {"a": int, "*": str}})
+        dkt = ProfileDict({"a": int, "b": {"a": int, "*": str}})
         dkt.set("a", 1)
         with pytest.raises(TypeError):
             dkt.set("b", "a")

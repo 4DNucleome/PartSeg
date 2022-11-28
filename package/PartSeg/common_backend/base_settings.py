@@ -263,7 +263,7 @@ class ViewSettings(ImageSettings):
     @property
     def theme_name(self) -> str:
         """Name of current theme."""
-        return self.get_from_profile("theme", "light")
+        return self.get_from_profile("theme", "dark")
 
     @property
     def theme(self):

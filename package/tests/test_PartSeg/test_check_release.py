@@ -7,9 +7,9 @@ from unittest.mock import MagicMock
 import packaging.version
 import pytest
 
+from PartSeg import state_store
 from PartSeg._launcher import check_version
 from PartSeg._launcher.check_version import IGNORE_FILE
-from PartSegCore import state_store
 
 
 @pytest.mark.enablethread
@@ -68,7 +68,7 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
 
 
 def test_no_update(monkeypatch, qtbot):
-    monkeypatch.setattr(check_version.state_store, "check_for_updates", False)
+    monkeypatch.setattr("PartSeg.state_store.save_folder", False)
 
     def urlopen_mock(url):
         raise RuntimeError()

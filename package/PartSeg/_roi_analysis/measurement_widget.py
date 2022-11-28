@@ -21,13 +21,12 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg.common_gui.searchable_combo_box import SearchComboBox
+from PartSeg.common_gui.universal_gui_part import ChannelComboBox
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.analysis.measurement_calculation import FILE_NAME_STR, MeasurementProfile, MeasurementResult
 from PartSegCore.universal_const import Units
-
-from ..common_gui.searchable_combo_box import SearchComboBox
-from ..common_gui.universal_gui_part import ChannelComboBox
-from ..common_gui.waiting_dialog import ExecuteFunctionDialog
-from .partseg_settings import PartSettings
 
 NO_MEASUREMENT_STRING = "<none>"
 
@@ -115,9 +114,7 @@ class MeasurementsStorage:
         if len(sublist) <= y:
             return ""
         val = sublist[y]
-        if isinstance(val, float):
-            return locale.str(val)
-        return str(val)
+        return locale.str(val) if isinstance(val, float) else str(val)
 
     def get_header(self, save_orientation: bool) -> List[str]:
         if save_orientation:

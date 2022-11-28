@@ -1,5 +1,6 @@
 # pylint: disable=R0201
 import datetime
+import io
 import os
 import platform
 import subprocess  # nosec
@@ -33,6 +34,7 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
+from PartSeg import state_store
 from PartSeg.common_gui import exception_hooks, select_multiple_files
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.advanced_tabs import (
@@ -64,7 +66,7 @@ from PartSeg.common_gui.custom_load_dialog import (
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
-from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog
+from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, _print_traceback
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
@@ -86,7 +88,7 @@ from PartSeg.common_gui.universal_gui_part import (
     MguiChannelComboBox,
     Spacing,
 )
-from PartSegCore import Units, state_store
+from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
@@ -1647,7 +1649,6 @@ class TestErrorDialog:
         qtbot.addWidget(dialog)
         assert dialog.desc.text() == "Test text"
 
-    @pytest.mark.skipif(sys.version_info < (3, 8), reason="requires python3.8 or higher")
     @patch("webbrowser.open")
     def test_create_issue(self, mock_web, qtbot):
         dialog = ErrorDialog(ValueError("aaa"), "Test text")
@@ -1674,3 +1675,35 @@ class TestMguiChannelComboBox:
         qtbot.addWidget(widget.native)
         widget.change_channels_num(5)
         assert len(widget.choices) == 5
+
+
+def test_print_traceback_cause():
+    try:
+        try:
+            raise ValueError("foo")
+        except ValueError as e:
+            raise RuntimeError("bar") from e
+    except RuntimeError as e2:
+        stream = io.StringIO()
+        _print_traceback(e2, file_=stream)
+        text = stream.getvalue()
+
+        assert "ValueError" in text
+        assert "RuntimeError" in text
+        assert "cause of the following exception" in text
+
+
+def test_print_traceback_context():
+    try:
+        try:
+            raise ValueError("foo")
+        except ValueError:
+            raise RuntimeError("bar")
+    except RuntimeError as e2:
+        stream = io.StringIO()
+        _print_traceback(e2, file_=stream)
+        text = stream.getvalue()
+
+        assert "ValueError" in text
+        assert "RuntimeError" in text
+        assert "another exception occurred" in text

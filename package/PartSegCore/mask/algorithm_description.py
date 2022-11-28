@@ -1,7 +1,7 @@
 import warnings
 
-from ..algorithm_describe_base import AlgorithmSelection
-from ..segmentation.segmentation_algorithm import (
+from PartSegCore.algorithm_describe_base import AlgorithmSelection
+from PartSegCore.segmentation.segmentation_algorithm import (
     AutoThresholdAlgorithm,
     CellFromNucleusFlow,
     MorphologicalWatershed,

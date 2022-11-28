@@ -76,9 +76,9 @@ def main():
     from qtpy.QtGui import QIcon
     from qtpy.QtWidgets import QApplication
 
+    from PartSeg import state_store
     from PartSeg._launcher.check_version import CheckVersionThread
     from PartSeg.common_backend import napari_get_settings
-    from PartSegCore import state_store
     from PartSegData import icons_dir
 
     logging.basicConfig(level=logging.INFO)

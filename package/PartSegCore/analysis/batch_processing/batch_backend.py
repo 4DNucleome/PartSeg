@@ -41,6 +41,7 @@ import xlsxwriter
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
+from PartSegCore.analysis.batch_processing.parallel_backend import BatchManager, SubprocessOrder
 from PartSegCore.analysis.calculation_plan import (
     BaseCalculation,
     Calculation,
@@ -63,17 +64,15 @@ from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProjec
 from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
+from PartSegCore.io_utils import WrongFileTypeException
+from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.mask_create import calculate_mask
+from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
+from PartSegCore.roi_info import ROIInfo
+from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, report_empty_fun
+from PartSegCore.utils import iterate_names
 from PartSegImage import Image, TiffImageReader
-
-from ...io_utils import WrongFileTypeException
-from ...json_hooks import PartSegEncoder
-from ...project_info import AdditionalLayerDescription, HistoryElement
-from ...roi_info import ROIInfo
-from ...segmentation import RestartableAlgorithm
-from ...utils import iterate_names
-from .parallel_backend import BatchManager, SubprocessOrder
 
 
 class ResponseData(NamedTuple):

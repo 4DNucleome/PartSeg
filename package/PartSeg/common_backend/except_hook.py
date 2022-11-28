@@ -5,25 +5,30 @@ from qtpy.QtCore import QCoreApplication, QThread
 from qtpy.QtWidgets import QMessageBox
 from superqt import ensure_main_thread
 
-from PartSeg import parsed_version
-from PartSegCore import state_store
+from PartSeg import state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegImage import TiffFileException
 
 
 def my_excepthook(type_, value, trace_back):
     """
-    Custom excepthook. base on base on :py:data:`state_store.show_error_dialog` decide if shown error dialog.
+    Custom excepthook.
+    Close application on :py:class:`KeyboardInterrupt`.
 
+    If :py:data:`PartSeg.state_store.always_report` is set then just sent report using sentry.
+    otherwise show dialog with information about error and ask user
+    if he wants to send report using :py:func:`show_error`.
     """
 
     # log the exception here
     if state_store.show_error_dialog and not isinstance(value, KeyboardInterrupt):
-        if state_store.report_errors and parsed_version.is_devrelease:
+        if state_store.auto_report or state_store.always_report:
             with sentry_sdk.push_scope() as scope:
                 scope.set_tag("auto_report", "true")
                 scope.set_tag("main_thread", QCoreApplication.instance().thread() == QThread.currentThread())
                 sentry_sdk.capture_exception(value)
+        if state_store.always_report:
+            return
         try:
             show_error(value)
         except ImportError:
@@ -38,14 +43,22 @@ def my_excepthook(type_, value, trace_back):
 
 @ensure_main_thread
 def show_error(error=None):
-    """This class create error dialog and show it"""
+    """
+    For :py:class:`SegmentationLimitException` and :py:class:`TiffFileException`
+    show dialog with information about problem.
+
+    For other exceptions show :py:class:`ErrorDialog` dialog
+    with information about error that allow to report it.
+
+    :param error: exception to show
+    """
     if error is None:
         return
 
     if isinstance(error, TiffFileException):
         mess = QMessageBox()
         mess.setIcon(QMessageBox.Critical)
-        mess.setText("During read file there is an error: " + error.args[0])
+        mess.setText(f"During read file there is an error: {error.args[0]}")
         mess.setWindowTitle("Tiff error")
         mess.exec_()
         return
@@ -64,6 +77,10 @@ def show_error(error=None):
 
 @ensure_main_thread
 def show_warning(header=None, text=None):
-    """show warning :py:class:`PyQt5.QtWidgets.QMessageBox`"""
+    """
+    Show warning :py:class:`PyQt5.QtWidgets.QMessageBox`
+
+    This function is to ensure creation warning dialog in main thread.
+    """
     message = QMessageBox(QMessageBox.Warning, header, text, QMessageBox.Ok)
     message.exec_()

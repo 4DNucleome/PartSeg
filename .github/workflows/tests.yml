@@ -39,7 +39,7 @@ jobs:
     with:
       test_data: True
       python_version: >-
-        ["3.7", "3.8", "3.10"]
+        ["3.8", "3.10"]
       os: >-
         ["windows-2019", "ubuntu-20.04", "macos-11"]
       qt_backend: >-
@@ -52,7 +52,7 @@ jobs:
     with:
       test_data: True
       python_version: >-
-        ["3.7", "3.8", "3.10"]
+        ["3.8", "3.10"]
       os: >-
         ["ubuntu-20.04"]
       qt_backend: >-
@@ -67,7 +67,7 @@ jobs:
       python_version: >-
         ["3.9"]
       os: >-
-        ["windows-2019", "ubuntu-20.04", "macos-11"]
+        ["windows-2019", "ubuntu-20.04", "macos-12"]
 
   test_coverage:
     needs: download_data
@@ -90,12 +90,12 @@ jobs:
     with:
       test_data: True
       python_version: >-
-        ["3.7"]
+        ["3.8"]
       os: >-
         ["ubuntu-20.04"]
       qt_backend: >-
         ["PyQt5"]
-      tox_args: "-e py37-PyQt5-minimal"
+      tox_args: "-e py38-PyQt5-minimal"
 
   test_conda:
     name: Test PartSeg conda

@@ -5,14 +5,18 @@ from glob import glob
 import packaging.version
 from qtpy.QtWidgets import QMessageBox, QWidget
 
-from PartSegCore import state_store
-
-from .. import parsed_version
-from .._launcher.check_version import IGNORE_FILE
-from . import napari_get_settings
+from PartSeg import parsed_version, state_store
+from PartSeg._launcher.check_version import IGNORE_FILE
+from PartSeg.common_backend import napari_get_settings
 
 
 def import_config():
+    """
+    Check if settings folder for current version already exists.
+
+    Otherwise, when settings for previous PartSeg version exists,
+    ask user if he would to import settings from the newest one.
+    """
     if os.path.exists(state_store.save_folder):
         return
     version = packaging.version.parse(parsed_version.base_version)
@@ -28,11 +32,7 @@ def import_config():
             reverse=True,
         )
     )
-    before_version = None
-    for x in versions:
-        if x < version:
-            before_version = x
-            break
+    before_version = next((x for x in versions if x < version), None)
     if before_version is not None:
         before_name = str(before_version)
         widget = QWidget()

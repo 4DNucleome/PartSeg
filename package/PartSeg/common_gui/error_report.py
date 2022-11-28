@@ -35,9 +35,8 @@ from qtpy.QtWidgets import (
 from sentry_sdk.utils import event_from_exception, exc_info_from_error
 from traceback_with_variables import Format, print_exc
 
-from PartSeg import __version__
+from PartSeg import __version__, state_store
 from PartSeg.common_backend.python_syntax_highlight import Pylighter
-from PartSegCore import state_store
 from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.utils import numpy_repr
@@ -46,6 +45,19 @@ _email_regexp = re.compile(r"[\w+]+@\w+\.\w+")
 _feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
     organization_slug="cent", project_slug="partseg"
 )
+
+
+def _print_traceback(exception, file_):
+    while True:
+        print_exc(exception, file_=file_, fmt=Format(custom_var_printers=[(np.ndarray, numpy_repr)]))
+        if exception.__cause__ is not None:
+            print("The above exception was the direct cause of the following exception:", file=file_)
+            exception = exception.__cause__
+        elif exception.__context__ is not None:
+            print("During handling of the above exception, another exception occurred:", file=file_)
+            exception = exception.__context__
+        else:
+            break
 
 
 class ErrorDialog(QDialog):
@@ -57,7 +69,7 @@ class ErrorDialog(QDialog):
         super().__init__()
         self.exception = exception
         self.additional_notes = additional_notes
-        self.send_report_btn = QPushButton("Send information")
+        self.send_report_btn = QPushButton("Report error")
         self.send_report_btn.setDisabled(not state_store.report_errors)
         self.create_issue_btn = QPushButton("Create issue")
         self.cancel_btn = QPushButton("Cancel")
@@ -67,7 +79,7 @@ class ErrorDialog(QDialog):
         self.traceback_summary = additional_info
         if additional_info is None:
             stream = io.StringIO()
-            print_exc(exception, file_=stream, fmt=Format(custom_var_printers=[(np.ndarray, numpy_repr)]))
+            _print_traceback(exception, file_=stream)
             self.error_description.setText(stream.getvalue())
         elif isinstance(additional_info, traceback.StackSummary):
             self.error_description.setText("".join(additional_info.format()))

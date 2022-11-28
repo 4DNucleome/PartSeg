@@ -34,6 +34,13 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
+from PartSeg.common_gui.mask_widget import MaskWidget
+from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
+from PartSeg.common_gui.universal_gui_part import right_label
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
@@ -56,14 +63,6 @@ from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.universal_const import Units
-
-from ..common_gui.custom_load_dialog import PLoadDialog
-from ..common_gui.custom_save_dialog import FormDialog, PSaveDialog
-from ..common_gui.mask_widget import MaskWidget
-from ..common_gui.searchable_list_widget import SearchableListWidget
-from ..common_gui.universal_gui_part import right_label
-from .partseg_settings import PartSettings
-from .profile_export import ExportDialog, ImportDialog
 
 group_sheet = (
     "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} "

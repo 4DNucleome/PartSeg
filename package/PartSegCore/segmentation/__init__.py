@@ -4,12 +4,12 @@ This module contains roi_extraction algorithms
 import os
 import sys
 
-from .algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult
-from .noise_filtering import NoiseFilteringBase
-from .restartable_segmentation_algorithms import RestartableAlgorithm
-from .segmentation_algorithm import StackAlgorithm
-from .threshold import BaseThreshold
-from .watershed import BaseWatershed
+from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult
+from PartSegCore.segmentation.noise_filtering import NoiseFilteringBase
+from PartSegCore.segmentation.restartable_segmentation_algorithms import RestartableAlgorithm
+from PartSegCore.segmentation.segmentation_algorithm import StackAlgorithm
+from PartSegCore.segmentation.threshold import BaseThreshold
+from PartSegCore.segmentation.watershed import BaseWatershed
 
 __all__ = [
     "ROIExtractionAlgorithm",

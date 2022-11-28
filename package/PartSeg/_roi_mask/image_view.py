@@ -1,8 +1,8 @@
 from vispy.app import MouseEvent
 
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.napari_image_view import ImageInfo, ImageView, LabelEnum
-from .stack_settings import StackSettings
+from PartSeg._roi_mask.stack_settings import StackSettings
+from PartSeg.common_gui.channel_control import ChannelProperty
+from PartSeg.common_gui.napari_image_view import ImageInfo, ImageView, LabelEnum
 
 
 class StackImageView(ImageView):
@@ -33,8 +33,7 @@ class StackImageView(ImageView):
             if not image_info.coords_in(cords):
                 continue
             moved_coords = image_info.translated_coords(cords)
-            component = image_info.roi_info.roi[tuple(moved_coords)]
-            if component:
+            if component := image_info.roi_info.roi[tuple(moved_coords)]:
                 self.component_clicked.emit(component)
 
     def get_roi_view_parameters(self, image_info: ImageInfo):
@@ -60,6 +59,4 @@ class StackImageView(ImageView):
                 text_list.append(f"☑{el}")
             else:
                 text_list.append(f"☐{el}")
-        if text:
-            return " ".join(text_list) + "\n" + text
-        return " ".join(text_list)
+        return " ".join(text_list) + "\n" + text if text else " ".join(text_list)

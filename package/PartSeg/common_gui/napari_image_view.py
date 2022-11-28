@@ -17,7 +17,7 @@ from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from nme import register_class
 from packaging.version import parse as parse_version
-from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal
+from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
 from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
@@ -25,15 +25,14 @@ from vispy.color import Color, Colormap
 from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
+from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_gui.advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME_STR, SEARCH_ZOOM_FACTOR_STR
+from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBoxGroup
+from PartSeg.common_gui.custom_buttons import SearchROIButton
+from PartSeg.common_gui.qt_modal import QtPopup
 from PartSegCore.image_operations import NoiseFilterType, bilateral, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
-
-from ..common_backend.base_settings import BaseSettings
-from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME_STR, SEARCH_ZOOM_FACTOR_STR
-from .channel_control import ChannelProperty, ColorComboBoxGroup
-from .custom_buttons import SearchROIButton
-from .qt_modal import QtPopup
 
 try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
@@ -342,6 +341,7 @@ class ImageView(QWidget):
             return
         bright_array = []
         components = []
+        alt_components = []
         for image_info in self.image_info.values():
             if not image_info.coords_in(cords):
                 continue
@@ -349,9 +349,11 @@ class ImageView(QWidget):
             bright_array.extend(layer.data[tuple(moved_coords)] for layer in image_info.layers if layer.visible)
 
             if image_info.roi_info.roi is not None and image_info.roi is not None:
-                val = image_info.roi_info.roi[tuple(moved_coords)]
-                if val:
+                if val := image_info.roi_info.roi[tuple(moved_coords)]:
                     components.append(val)
+            if self.roi_alternative_selection in image_info.roi_info.alternative:
+                if val := image_info.roi_info.alternative[self.roi_alternative_selection][tuple(moved_coords)]:
+                    alt_components.append(val)
 
         if not bright_array and not components:
             self.text_info_change.emit("")
@@ -365,6 +367,11 @@ class ImageView(QWidget):
                 text += f" component: {components[0]}"
             else:
                 text += f" components: {components}"
+        if alt_components:
+            if len(alt_components) == 1:
+                text += f" alt:  {alt_components[0]}"
+            else:
+                text += f" alt: {alt_components}"
         self.text_info_change.emit(text)
 
     def mask_opacity(self) -> float:
@@ -400,6 +407,8 @@ class ImageView(QWidget):
         image = self.get_image(image)
         if roi_info is None:
             roi_info = self.settings.roi_info
+        if image.file_path not in self.image_info:
+            return
         image_info = self.image_info[image.file_path]
         if image_info.roi is None and roi_info.roi is not None:
             image_info.roi_info = roi_info
@@ -580,43 +589,42 @@ class ImageView(QWidget):
             return bilateral(array, parameters[1])
         return median(array, int(parameters[1]))
 
-    def _remove_worker(self, sender):
+    def _remove_worker(self, sender=None):
+        if sender is None:
+            sender = self.sender()
         for worker in self.worker_list:
-            if sender is worker.signals:
+            if hasattr(worker, "signals") and sender is worker.signals:
                 self.worker_list.remove(worker)
                 break
         else:
-            logging.debug(f"[_remove_worker] {sender}")
+            logging.debug("[_remove_worker] %s", sender)
 
     def _add_layer_util(self, index, layer, filters):
-        self.viewer.add_layer(layer)
+        if layer not in self.viewer.layers:
+            self.viewer.add_layer(layer)
 
-        def set_data(val):
-            self._remove_worker(self.sender())
-            data_, layer_ = val
-            if data_ is None:
-                return
-            if layer_ not in self.viewer.layers:
-                return
+        if filters[index][0] == NoiseFilterType.No or filters[index][1] == 0:
+            return
+
+        worker = calc_layer_filter(layer, filters[index][0], filters[index][1])
+        worker.returned.connect(self._add_layer_util_end)
+        worker.finished.connect(self._remove_worker)
+        self.worker_list.append(worker)
+        worker.start()
+
+    @Slot(object)
+    def _add_layer_util_end(self, val):
+        data_, layer_ = val
+        if data_ is not None:
             layer_.data = data_
 
-        @thread_worker(connect={"returned": set_data})
-        def calc_filter(j, layer_):
-            if filters[j][0] == NoiseFilterType.No or filters[j][1] == 0:
-                return None, layer_
-            return self.calculate_filter(layer_.data, parameters=filters[j]), layer_
-
-        worker = calc_filter(index, layer)
-        self.worker_list.append(worker)
-
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
-        self._remove_worker(self.sender())
-
         image_info, replace = image_data
         image = image_info.image
+
         if replace:
-            self.viewer.layers.select_all()
-            self.viewer.layers.remove_selected()
+            for layer in list(reversed(self.viewer.layers)):
+                self.viewer.layers.remove(layer)
             QApplication.instance().processEvents()
 
         filters = self.channel_control.get_filter()
@@ -630,10 +638,12 @@ class ImageView(QWidget):
         self.image_info[image.file_path].filter_info = filters
         self.image_info[image.file_path].layers = image_info.layers
         self.current_image = image.file_path
-        if self.image_info[image.file_path].mask is not None:
-            self.viewer.add_layer(self.image_info[image.file_path].mask)
-        if self.image_info[image.file_path].roi is not None:
-            self.viewer.add_layer(self.image_info[image.file_path].roi)
+        mask_layer = self.image_info[image.file_path].mask
+        if mask_layer is not None and mask_layer not in self.viewer.layers:
+            self.viewer.add_layer(mask_layer)
+        roi_layer = self.image_info[image.file_path].roi
+        if roi_layer is not None and roi_layer not in self.viewer.layers:
+            self.viewer.add_layer(roi_layer)
         self.viewer.reset_view()
         if self.viewer.layers:
             if hasattr(self.viewer.layers, "selection"):
@@ -687,6 +697,7 @@ class ImageView(QWidget):
     def _prepare_layers(self, image, parameters, replace):
         worker = prepare_layers(image, parameters, replace)
         worker.returned.connect(self._add_image)
+        worker.finished.connect(self._remove_worker)
         self.worker_list.append(worker)
         worker.start()
 
@@ -765,8 +776,7 @@ class ImageView(QWidget):
         image_info = self.image_info[image.file_path]
         text_list = []
         for el in self.components:
-            data = image_info.roi_info.annotations.get(el, {})
-            if data:
+            if data := image_info.roi_info.annotations.get(el, {}):
                 try:
                     text_list.append(_print_dict(data))
                 except ValueError:  # pragma: no cover
@@ -775,8 +785,7 @@ class ImageView(QWidget):
 
     def event(self, event: QEvent):
         if event.type() == QEvent.ToolTip and self.components:
-            text = self.get_tool_tip_text()
-            if text:
+            if text := self.get_tool_tip_text():
                 QToolTip.showText(event.globalPos(), text, self)
         return super().event(event)
 
@@ -1010,6 +1019,15 @@ def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tupl
 
 
 prepare_layers = thread_worker(_prepare_layers)
+
+
+def _calc_layer_filter(layer: NapariImage, filter_type: NoiseFilterType, radius: float):
+    if filter_type == NoiseFilterType.No or radius == 0:
+        return None, layer
+    return ImageView.calculate_filter(layer.data, parameters=(filter_type, radius)), layer
+
+
+calc_layer_filter = thread_worker(_calc_layer_filter)
 
 
 def _print_dict(dkt: MutableMapping, indent="") -> str:
