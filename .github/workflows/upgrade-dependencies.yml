@@ -51,7 +51,7 @@ jobs:
       - name: Open pull request if needed
         if: steps.changes.outputs.count > 0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GHA_TOKEN }}
         # Only open a PR if the branch is not attached to an existing one
         run: |
           PR=$(gh pr list --head $BRANCH_NAME --json number -q '.[0].number')
