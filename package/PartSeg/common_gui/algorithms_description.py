@@ -363,8 +363,9 @@ class FormWidget(QWidget):
         start_values=None,
         dimension_num=1,
         settings: typing.Optional[BaseSettings] = None,
+        parent=None,
     ):
-        super().__init__()
+        super().__init__(parent=parent)
         if start_values is None:
             start_values = {}
         self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = {}
@@ -559,7 +560,7 @@ class SubAlgorithmWidget(QWidget):
             lay_elem = self.layout().itemAt(i)
             if lay_elem.widget():
                 lay_elem.widget().setVisible(False)
-        if widget.has_elements():
+        if widget.has_elements() and self.parent() is not None:
             self.setVisible(True)
             widget.setVisible(True)
         else:
@@ -581,11 +582,11 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     values_changed = Signal()
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings: BaseSettings, algorithm: typing.Type[ROIExtractionAlgorithm]):
+    def __init__(self, settings: BaseSettings, algorithm: typing.Type[ROIExtractionAlgorithm], parent=None):
         """
         For algorithm which works on one channel
         """
-        super().__init__()
+        super().__init__(parent=parent)
         self.settings = settings
         self.widget_list = []
         self.algorithm = algorithm
@@ -608,11 +609,11 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     def name(self):
         return self.algorithm.get_name()
 
-    @staticmethod
-    def _form_widget(algorithm, start_values) -> FormWidget:
+    def _form_widget(self, algorithm, start_values) -> FormWidget:
         return FormWidget(
             algorithm,
             start_values=start_values,
+            parent=self,
         )
 
     @staticmethod
@@ -682,8 +683,10 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings, algorithm: typing.Type[ROIExtractionAlgorithm], selector: typing.List[QWidget]):
-        super().__init__(settings, algorithm)
+    def __init__(
+        self, settings, algorithm: typing.Type[ROIExtractionAlgorithm], selector: typing.List[QWidget], parent=None
+    ):
+        super().__init__(settings, algorithm, parent=parent)
         self.selector = selector[:]
         self.algorithm_thread.finished.connect(self.enable_selector)
         self.algorithm_thread.started.connect(self.disable_selector)
@@ -719,7 +722,7 @@ class AlgorithmChooseBase(QWidget):
     algorithm_dict: typing.Dict[str, InteractiveAlgorithmSettingsWidget]
 
     def __init__(self, settings: BaseSettings, algorithms: typing.Type[AlgorithmSelection], parent=None):
-        super().__init__(parent)
+        super().__init__(parent=parent)
         self.settings = settings
         self.algorithms = algorithms
         settings.algorithm_changed.connect(self.updated_algorithm)
@@ -736,9 +739,8 @@ class AlgorithmChooseBase(QWidget):
         layout.addLayout(self.stack_layout)
         self.setLayout(layout)
 
-    @staticmethod
-    def _algorithm_widget(settings, val) -> InteractiveAlgorithmSettingsWidget:
-        return InteractiveAlgorithmSettingsWidget(settings, val, [])
+    def _algorithm_widget(self, settings, val) -> InteractiveAlgorithmSettingsWidget:
+        return InteractiveAlgorithmSettingsWidget(settings, val, [], parent=self)
 
     def add_widgets_to_algorithm(self):
         self.algorithm_choose.blockSignals(True)

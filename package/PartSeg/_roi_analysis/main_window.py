@@ -384,9 +384,9 @@ class MainMenu(BaseMainMenu):
 
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() < 800:
-            self.batch_processing_btn.hide()
+            self.batch_processing_btn.setVisible(False)
         else:
-            self.batch_processing_btn.show()
+            self.batch_processing_btn.setVisible(True)
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.matches(QKeySequence.Save):

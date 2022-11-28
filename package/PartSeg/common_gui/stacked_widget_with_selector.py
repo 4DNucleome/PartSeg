@@ -29,7 +29,7 @@ class StackedWidgetWithSelector(QStackedWidget):
         super().removeWidget(widget)
 
     def showEvent(self, _):
-        self.selector.show()
+        self.selector.setVisible(True)
 
     def hideEvent(self, _):
-        self.selector.hide()
+        self.selector.setVisible(False)
