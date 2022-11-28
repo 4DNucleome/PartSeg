@@ -90,7 +90,7 @@ class ROIExtractionResult:
 
     def __str__(self):  # pragma: no cover
         return (
-            f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
+            f"ROIExtractionResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
             f" max: {np.max(self.roi)}], parameters={self.parameters},"
             f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
             f" alternative={dict_repr(self.alternative_representation)},"
@@ -99,7 +99,7 @@ class ROIExtractionResult:
 
     def __repr__(self):  # pragma: no cover
         return (
-            f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
+            f"ROIExtractionResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
             f"max: {np.max(self.roi)}], parameters={self.parameters}, "
             f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
             f" alternative={dict_repr(self.alternative_representation)},"
