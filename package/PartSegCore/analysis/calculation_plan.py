@@ -705,7 +705,7 @@ class CalculationPlan:
         return res_plan
 
     @staticmethod
-    def get_el_name(el):
+    def get_el_name(el):  # noqa C901
         """
         :param el: Plan element
         :return: str

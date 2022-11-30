@@ -178,13 +178,13 @@ class TestColorComboBoxGroup:
         qtbot.add_widget(box)
         box.set_channels(3)
         assert len(box.current_colors) == 3
-        assert all(map(lambda x: isinstance(x, str), box.current_colors))
+        assert all(isinstance(x, str) for x in box.current_colors)
         with qtbot.waitSignal(box.coloring_update):
             box.layout().itemAt(0).widget().check_box.setChecked(False)
         with qtbot.waitSignal(box.coloring_update):
             box.layout().itemAt(0).widget().setCurrentIndex(2)
         assert box.current_colors[0] is None
-        assert all(map(lambda x: isinstance(x, str), box.current_colors[1:]))
+        assert all(isinstance(x, str) for x in box.current_colors[1:])
 
     def test_color_combo_box_group_and_color_preview(self, qtbot):
         settings = ViewSettings()

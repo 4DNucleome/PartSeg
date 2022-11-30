@@ -245,4 +245,4 @@ class AddFiles(QWidget):
         self.file_list_changed.emit(self.files_to_proceed)
 
     def get_paths(self):
-        return list(sorted(self.files_to_proceed))
+        return sorted(self.files_to_proceed)

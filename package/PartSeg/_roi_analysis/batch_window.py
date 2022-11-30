@@ -277,7 +277,7 @@ class FileChoose(QWidget):
 
     def _refresh_batch_list(self):
         current_calc = str(self.calculation_choose.currentText())
-        new_list = ["<no calculation>"] + list(sorted(self.settings.batch_plans.keys()))
+        new_list = ["<no calculation>"] + sorted(self.settings.batch_plans.keys())
         try:
             index = new_list.index(current_calc)
         except ValueError:

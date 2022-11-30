@@ -102,7 +102,7 @@ def part_hook(dkt):
     return profile_hook(dkt)
 
 
-def profile_hook(dkt):
+def profile_hook(dkt):  # noqa: C901
     """
     hook for json loading
 
@@ -117,18 +117,15 @@ def profile_hook(dkt):
             from PartSegCore.utils import ProfileDict
 
             del dkt["__ProfileDict__"]
-            res = ProfileDict(**dkt)
-            return res
+            return ProfileDict(**dkt)
         if "__RadiusType__" in dkt:
             return RadiusType(dkt["value"])
         if "__SegmentationProperty__" in dkt:
             del dkt["__SegmentationProperty__"]
-            res = ROIExtractionProfile(**dkt)
-            return res
+            return ROIExtractionProfile(**dkt)
         if "__SegmentationProfile__" in dkt:
             del dkt["__SegmentationProfile__"]
-            res = ROIExtractionProfile(**dkt)
-            return res
+            return ROIExtractionProfile(**dkt)
         if (
             "__Serializable__" in dkt and dkt["__subtype__"] == "HistoryElement" and "algorithm_name" in dkt
         ):  # pragma: no cover
@@ -158,8 +155,7 @@ def profile_hook(dkt):
                 dkt["colors"].append(dkt["colors"][-1])
             return Colormap(**dkt)
     except Exception as e:  # pylint: disable=W0703
-        problematic_fields = nme.check_for_errors_in_dkt_values(dkt2)
-        if problematic_fields:
+        if problematic_fields := nme.check_for_errors_in_dkt_values(dkt2):
             dkt2["__error__"] = f"Error in fields: {', '.join(problematic_fields)}"
             return dkt2
         dkt = dkt2

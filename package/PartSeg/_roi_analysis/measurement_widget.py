@@ -302,7 +302,7 @@ class MeasurementWidgetBase(QWidget):
 
     def update_measurement_list(self):
         self.measurement_type.blockSignals(True)
-        available = list(sorted(self.settings.measurement_profiles.keys()))
+        available = sorted(self.settings.measurement_profiles.keys())
         text = self.measurement_type.currentText()
         try:
             index = available.index(text) + 1

@@ -9,7 +9,7 @@ package_dir = os.path.join(current_dir, "package")
 
 
 def read(*parts):
-    with codecs.open(os.path.join(current_dir, *parts), "r") as fp:
+    with codecs.open(os.path.join(current_dir, *parts)) as fp:
         return fp.read()
 
 

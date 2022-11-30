@@ -468,12 +468,12 @@ class ROIExtractionOp(ProtectedGroupBox):
         self._activate_button()
 
     def _refresh_profiles(self):
-        new_profiles = list(sorted(self.settings.roi_profiles.keys(), key=str.lower))
+        new_profiles = sorted(self.settings.roi_profiles.keys(), key=str.lower)
         with self.enable_protect():
             self.refresh_profiles(self.roi_profile, new_profiles)
 
     def _refresh_pipelines(self):
-        new_pipelines = list(sorted(self.settings.roi_pipelines.keys(), key=str.lower))
+        new_pipelines = sorted(self.settings.roi_pipelines.keys(), key=str.lower)
         with self.enable_protect():
             self.refresh_profiles(self.roi_pipeline, new_pipelines)
 
@@ -555,7 +555,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
             )
 
     def _refresh_measurement(self):
-        new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
+        new_measurements = sorted(self.settings.measurement_profiles.keys(), key=str.lower)
         with self.enable_protect():
             self.refresh_profiles(self.measurements_list, new_measurements)
 
@@ -1085,7 +1085,7 @@ class CalculateInfo(QWidget):
         info_chose_layout.addWidget(self.plan_view)
         info_layout.addLayout(info_chose_layout)
         self.setLayout(info_layout)
-        self.calculate_plans.addItems(list(sorted(self.settings.batch_plans.keys())))
+        self.calculate_plans.addItems(sorted(self.settings.batch_plans.keys()))
         self.protect = False
         self.plan_to_edit = None
 
@@ -1137,7 +1137,7 @@ class CalculateInfo(QWidget):
         self.settings.measurement_profiles[data.name] = data
 
     def update_plan_list(self):
-        new_plan_list = list(sorted(self.settings.batch_plans.keys()))
+        new_plan_list = sorted(self.settings.batch_plans.keys())
         if self.calculate_plans.currentItem() is not None:
             text = str(self.calculate_plans.currentItem().text())
             try:

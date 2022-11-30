@@ -354,7 +354,7 @@ class ViewSettings(ImageSettings):
             with suppress(KeyError):
                 colormaps.remove(name)
         # TODO update sorting rule
-        self.chosen_colormap = list(sorted(colormaps, key=self.colormap_dict.get_position))
+        self.chosen_colormap = sorted(colormaps, key=self.colormap_dict.get_position)
 
     def get_channel_info(self, view: str, num: int, default: Optional[str] = None) -> str:  # pragma: no cover
         warnings.warn(
