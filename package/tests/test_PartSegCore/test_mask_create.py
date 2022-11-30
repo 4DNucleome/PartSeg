@@ -291,7 +291,7 @@ class TestCalculateMask:
             save_components=True,
             clip_to_mask=True,
         )
-        mp2 = mp.copy(update=dict(fill_holes=RadiusType.R3D))
+        mp2 = mp.copy(update={"fill_holes": RadiusType.R3D})
         mask1 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
         mask1 = calculate_mask(mp2, mask2, None, (1, 1, 1))

@@ -285,7 +285,7 @@ def open_tar_file(
         tar_file = TarFile.open(file_data, mode)
         file_path = str(file_data)
     elif isinstance(file_data, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
-        tar_file = TarFile.open(fileobj=file_data, mode="r")
+        tar_file = TarFile.open(fileobj=file_data)
         file_path = ""
     else:
         raise ValueError(f"wrong type of file_ argument: {type(file_data)}")

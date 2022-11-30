@@ -22,15 +22,13 @@ def import_config():
     version = packaging.version.parse(parsed_version.base_version)
     base_folder = os.path.dirname(state_store.save_folder)
     possible_folders = glob(os.path.join(base_folder, "*"))
-    versions = list(
-        sorted(
-            (
-                x
-                for x in [packaging.version.parse(os.path.basename(y)) for y in possible_folders]
-                if isinstance(x, packaging.version.Version)
-            ),
-            reverse=True,
-        )
+    versions = sorted(
+        (
+            x
+            for x in [packaging.version.parse(os.path.basename(y)) for y in possible_folders]
+            if isinstance(x, packaging.version.Version)
+        ),
+        reverse=True,
     )
     before_version = next((x for x in versions if x < version), None)
     if before_version is not None:

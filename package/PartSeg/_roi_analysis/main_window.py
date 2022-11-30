@@ -254,7 +254,7 @@ class Options(QWidget):
                 else:
                     i += 1
         if len(new_names) > 0:
-            combo_box.addItems(list(sorted(new_names)))
+            combo_box.addItems(sorted(new_names))
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() in [Qt.Key_Enter, Qt.Key_Return] and event.modifiers() == Qt.ControlModifier:
