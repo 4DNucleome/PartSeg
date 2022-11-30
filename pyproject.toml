@@ -39,7 +39,8 @@ src_paths=["package"]
 
 [tool.ruff]
 line-length = 120
-select = ["E", "F", "I", "U", "C"]
+select = ["E", "F", "I", "U", "C", "A" ,"YTT"]
+ignore = ["A003"]
 exclude = ["examples/call_simple_threshold.py"]
 target-version = "py38"
 fix = true
@@ -51,6 +52,9 @@ known-first-party=['PartSeg', 'PartSegData','PartSegCore','PartSegImage', 'PartS
 [tool.ruff.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 15
+
+[tool.ruff.per-file-ignores]
+"docs/conf.py" = ["A001"]
 
 
 [tool.check-manifest]
