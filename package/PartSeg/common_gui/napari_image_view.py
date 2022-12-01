@@ -12,7 +12,7 @@ from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
 from napari.layers.labels import Labels
-from napari.qt import QtStateButton, QtViewer
+from napari.qt import QtViewer
 from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from nme import register_class
@@ -63,6 +63,7 @@ if _napari_ge_4_13:
             self.viewer.dims.ndisplay = 2 + (self.viewer.dims.ndisplay == 2)
 
 else:
+    from napari.qt import QtStateButton
 
     class QtNDisplayButton(QtStateButton):
         def __init__(self, viewer):
