@@ -12,7 +12,7 @@ on:
 
 jobs:
   test-pyqt5:
-    name: PyQt5
+    name: PyQt5 ${{ matrix.napari }}
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: >-
@@ -25,7 +25,7 @@ jobs:
         ["PyQt5"]
 
   test-pyside2:
-    name: PySide2
+    name: PySide2 ${{ matrix.napari }}
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: >-
