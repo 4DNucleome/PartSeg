@@ -20,7 +20,7 @@ jobs:
       os: >-
         ["ubuntu-20.04"]
       napari: >-
-        ["napari412", "napari413", "napari414", "napari415"]
+        ["napari414", "napari415", "napari416", "napari417"]
       qt_backend: >-
         ["PyQt5"]
 
@@ -33,6 +33,6 @@ jobs:
       os: >-
         ["ubuntu-20.04"]
       napari: >-
-        ["napari412", "napari415"]
+        ["napari414", "napari417"]
       qt_backend: >-
         ["PySide2"]
