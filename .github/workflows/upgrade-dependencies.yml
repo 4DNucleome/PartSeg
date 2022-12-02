@@ -65,10 +65,12 @@ jobs:
         # Only open a PR if the branch is not attached to an existing one
         run: |
           if [ -z ${{ steps.id.outputs.PR }} ]; then
-            gh pr create \
-            --head $BRANCH_NAME \
-            --title "Automated dependency upgrades" \
-            --body "Full log: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            curl \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            https://api.github.com/repos/${{ github.repository }}/pulls \
+            -d '{"title":"Automated dependency upgrades", "body":"Full log: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}","head":"$BRANCH_NAME", "base":"develop"}'
           else
             echo "Pull request already exists, won't create a new one."
           fi
