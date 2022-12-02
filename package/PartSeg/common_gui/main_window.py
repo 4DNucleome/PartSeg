@@ -274,7 +274,10 @@ class BaseMainWindow(QMainWindow):
         def exception_hook(exception):
             if isinstance(exception, OSError):
                 QMessageBox().warning(
-                    self, "IO Error", "Disc operation error: " + ", ".join(exception.args), QMessageBox.Ok
+                    self,
+                    "IO Error",
+                    "Disc operation error: " + ", ".join(str(x) for x in exception.args),
+                    QMessageBox.Ok,
                 )
 
         for load_class in load_dict.values():
