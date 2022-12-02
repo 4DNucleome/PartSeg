@@ -51,16 +51,20 @@ jobs:
           git add .
           git commit -m "Automated dependency upgrades"
           git push -f origin ${{ github.ref_name }}:$BRANCH_NAME
+      - name: Check if PR is required
+        if: steps.changes.outputs.count > 0
+        id: pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "PR=$(gh pr list --head $BRANCH_NAME --json number -q '.[0].number')" >> $GITHUB_ENV
+
       - name: Open pull request if needed
         if: steps.changes.outputs.count > 0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHA_TOKEN }}
         # Only open a PR if the branch is not attached to an existing one
         run: |
-          echo 0
-          gh auth login --with-token <<< ${{ secrets.GHA_TOKEN }}
-          echo 1
-          PR=$(gh pr list --head $BRANCH_NAME --json number -q '.[0].number')
-          echo 2
-          if [ -z $PR ]; then
+          if [ -z ${{ steps.id.outputs.PR }} ]; then
             gh pr create \
             --head $BRANCH_NAME \
             --title "Automated dependency upgrades" \
