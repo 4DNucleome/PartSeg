@@ -65,7 +65,7 @@ jobs:
         # Only open a PR if the branch is not attached to an existing one
         run: |
           if [ -z ${{ steps.id.outputs.PR }} ]; then
-            curl \
+            curl -v\
             -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
