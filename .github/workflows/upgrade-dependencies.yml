@@ -57,7 +57,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GHA_TOKEN }}
         # Only open a PR if the branch is not attached to an existing one
         run: |
-          gh auth login --with-token <<< $GITHUB_TOKEN
+          gh auth login
           PR=$(gh pr list --head $BRANCH_NAME --json number -q '.[0].number')
           if [ -z $PR ]; then
             gh pr create \
