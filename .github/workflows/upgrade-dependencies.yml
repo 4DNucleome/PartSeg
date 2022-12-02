@@ -39,6 +39,8 @@ jobs:
 
       - name: Create PR updating vendored modules
         uses: peter-evans/create-pull-request@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHA_TOKEN }}
         with:
           commit-message: Update bundle dependencies.
           branch: ${{ env.BRANCH_NAME }}
