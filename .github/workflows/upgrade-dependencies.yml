@@ -70,7 +70,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             https://api.github.com/repos/${{ github.repository }}/pulls \
-            -d '{"title":"Automated dependency upgrades", "body":"Full log: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}","head":"$BRANCH_NAME", "base":"develop"}'
+            -d '{"title":"Automated dependency upgrades", "body":"Full log: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}","head":"auto-dependency-upgrades", "base":"develop"}'
           else
             echo "Pull request already exists, won't create a new one."
           fi
