@@ -39,8 +39,6 @@ jobs:
 
       - name: Create PR updating vendored modules
         uses: peter-evans/create-pull-request@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHA_TOKEN }}
         with:
           commit-message: Update bundle dependencies.
           branch: ${{ env.BRANCH_NAME }}
@@ -49,3 +47,4 @@ jobs:
           body: |
             This PR is automatically created and updated by PartSeg GitHub
             action cron to keep bundle dependencies modules up to date.
+          token: ${{ secrets.GHA_TOKEN }}
