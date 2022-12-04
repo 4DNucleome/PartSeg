@@ -135,7 +135,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
     def from_algorithm_property(cls, ob: typing.Union[str, AlgorithmProperty]):
         """
         Create class instance base on :py:class:`.AlgorithmProperty` instance
-        If ob is string that contains only `-` of length at least 5 then return :py:class:`.HLine`
+        If ob is string equal to `hline` or that contains only
+        `-` of length at least 5 then return :py:class:`.HLine`
 
         :type ob: AlgorithmProperty | str
         :param ob: AlgorithmProperty object or label
@@ -154,7 +155,9 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 mgi_options=ob.mgi_options,
             )
         if isinstance(ob, str):
-            return Hline() if len(ob) > 5 and all(x == "-" for x in ob) else QLabel(ob)
+            if ob.lower() == "hline" or len(ob) > 5 and all(x == "-" for x in ob):
+                return Hline()
+            return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
     @staticmethod
