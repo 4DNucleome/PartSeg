@@ -132,9 +132,10 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return self._widget
 
     @classmethod
-    def from_algorithm_property(cls, ob):
+    def from_algorithm_property(cls, ob: typing.Union[str, AlgorithmProperty]):
         """
         Create class instance base on :py:class:`.AlgorithmProperty` instance
+        If ob is string that contains only `-` of length at least 5 then return :py:class:`.HLine`
 
         :type ob: AlgorithmProperty | str
         :param ob: AlgorithmProperty object or label

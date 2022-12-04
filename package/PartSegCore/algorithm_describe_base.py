@@ -579,7 +579,13 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     )
 
 
-def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List[AlgorithmProperty]:
+def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List[typing.Union[str, AlgorithmProperty]]:
+    """
+    Convert pydantic model to list of AlgorithmPropert nad strings.
+
+    :param obj:
+    :return:
+    """
     res = []
     value: "ModelField"
     if hasattr(obj, "header") and obj.header():
