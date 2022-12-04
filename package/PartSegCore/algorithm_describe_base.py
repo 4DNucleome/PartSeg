@@ -346,7 +346,7 @@ class AddRegisterMeta(ModelMetaclass):
         methods = kwargs.pop("methods", [])
         suggested_base_class = kwargs.pop("suggested_base_class", None)
         class_methods = kwargs.pop("class_methods", [])
-        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)  # pylint: disable=too-many-function-args
         cls2.__register__ = Register(
             class_methods=class_methods, methods=methods, suggested_base_class=suggested_base_class
         )
@@ -419,7 +419,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
 
 class ROIExtractionProfileMeta(ModelMetaclass):
     def __new__(cls, name, bases, attrs, **kwargs):
-        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)  # pylint: disable=too-many-function-args
 
         def allow_positional_args(func):
             @wraps(func)
