@@ -32,7 +32,7 @@ from superqt import QEnumComboBox
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_backend.segmentation_thread import SegmentationThread
 from PartSeg.common_gui.error_report import ErrorDialog
-from PartSeg.common_gui.universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox
+from PartSeg.common_gui.universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox, Hline
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
@@ -153,6 +153,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 mgi_options=ob.mgi_options,
             )
         if isinstance(ob, str):
+            if len(ob) > 5 and all(x == "-" for x in ob):
+                return Hline()
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
@@ -375,7 +377,7 @@ class FormWidget(QWidget):
         self._model_class = None
         element_list = self._element_list(fields)
         for el in element_list:
-            if isinstance(el, QLabel):
+            if isinstance(el, (QLabel, Hline)):
                 layout.addRow(el)
                 continue
             self._add_to_layout(layout, el, start_values, settings)

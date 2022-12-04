@@ -1,5 +1,5 @@
 """
-This module contains simple, useful widgets which implementation is to short to create separated files for them
+This module contains simple, useful widgets which implementation is too short to create separated files for them
 """
 
 
@@ -368,3 +368,15 @@ class TextShow(QTextEdit):
         height = metrics.height()
         s.setHeight(int(height * (self.lines + 0.5)))
         return s
+
+
+class Hline(QWidget):
+    """Horizontal line"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMinimumHeight(3)
+
+    def paintEvent(self, _):
+        painter = QPainter(self)
+        painter.drawLine(0, 0, self.width(), 0)
