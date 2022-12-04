@@ -586,14 +586,15 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
         res.append(obj.header())
     for name, value in obj.__fields__.items():
         ap = _field_to_algorithm_property(name, value)
-
-        if "prefix" in value.field_info.extra:
-            res.append(value.field_info.extra["prefix"])
-
+        pos = len(res)
         if "position" in value.field_info.extra:
-            res.insert(value.field_info.extra["position"], ap)
-        elif not value.field_info.extra.get("hidden", False):
-            res.append(ap)
+            pos = value.field_info.extra["position"]
+        if "prefix" in value.field_info.extra:
+            res.insert(pos, value.field_info.extra["prefix"])
+            pos += 1
+
+        res.insert(pos, ap)
+
         if "suffix" in value.field_info.extra:
-            res.append(value.field_info.extra["suffix"])
+            res.insert(pos + 1, value.field_info.extra["suffix"])
     return res
