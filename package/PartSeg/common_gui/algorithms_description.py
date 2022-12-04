@@ -154,9 +154,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 mgi_options=ob.mgi_options,
             )
         if isinstance(ob, str):
-            if len(ob) > 5 and all(x == "-" for x in ob):
-                return Hline()
-            return QLabel(ob)
+            return Hline() if len(ob) > 5 and all(x == "-" for x in ob) else QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
     @staticmethod
