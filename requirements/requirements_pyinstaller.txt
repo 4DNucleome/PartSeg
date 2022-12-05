@@ -250,9 +250,9 @@ pygments==2.13.0
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==5.6.2
+pyinstaller==5.7.0
     # via PartSeg (setup.cfg)
-pyinstaller-hooks-contrib==2022.13
+pyinstaller-hooks-contrib==2022.14
     # via pyinstaller
 pyopengl==3.1.6
     # via napari
