@@ -289,6 +289,8 @@ class BaseMainWindow(QMainWindow):
                     "Disc operation error: " + ", ".join(str(x) for x in exception.args) + additional_info,
                     QMessageBox.Ok,
                 )
+            else:
+                raise exception
 
         for load_class in load_dict.values():
             if load_class.partial() or load_class.number_of_files() != len(paths):
