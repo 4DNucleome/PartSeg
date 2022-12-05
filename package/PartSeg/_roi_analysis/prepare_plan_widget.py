@@ -36,6 +36,7 @@ from superqt import QEnumComboBox
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
+from PartSeg.common_backend.except_hook import show_warning
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
 from PartSeg.common_gui.mask_widget import MaskWidget
@@ -374,7 +375,7 @@ class OtherOperations(ProtectedGroupBox):
     def save_action(self):
         save_class = self.save_translate_dict.get(self.choose_save_method.currentText(), None)
         if save_class is None:
-            QMessageBox.warning(self, "Save problem", "Not found save class")
+            show_warning(self, "Save problem", "Not found save class")
             return
         dial = FormDialog(
             [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
@@ -810,15 +811,15 @@ class CreatePlan(QWidget):
 
     def create_mask(self, mask_ob: MaskBase):
         if mask_ob.name != "" and mask_ob.name in self.mask_set:
-            QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
+            show_warning(self, "Already exists", "Mask with this name already exists")
             return
 
         if self.update_element_chk.isChecked():
             node = self.calculation_plan.get_node()
             name = node.operation.name
             if name in self.calculation_plan.get_reused_mask() and name != mask_ob.name:
-                QMessageBox.warning(
-                    self, "Cannot remove", f"Cannot remove mask '{name}' from plan because it is used in other elements"
+                show_warning(
+                    "Cannot remove", f"Cannot remove mask '{name}' from plan because it is used in other elements"
                 )
                 return
 
@@ -839,7 +840,7 @@ class CreatePlan(QWidget):
 
     def add_roi_extraction_pipeline(self, roi_extraction_pipeline: SegmentationPipeline):
         if self.update_element_chk.isChecked():
-            QMessageBox.warning(self, "Cannot update pipeline", "Cannot update pipeline")
+            show_warning("Cannot update pipeline", "Cannot update pipeline")
             return
         pos = self.calculation_plan.current_pos[:]
         old_pos = pos[:]
@@ -861,7 +862,7 @@ class CreatePlan(QWidget):
         conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
         if len(conflict_mask) > 0:
             logging.info("Mask in use")
-            QMessageBox.warning(self, "In use", f'Masks {", ".join(conflict_mask)} are used in other places')
+            show_warning("In use", f'Masks {", ".join(conflict_mask)} are used in other places')
 
             return
         self.mask_set -= used_mask
@@ -1181,7 +1182,7 @@ class CalculateInfo(QWidget):
             res = dial.get_result()
             plans, err = res.load_class.load(res.load_location)
             if err:
-                QMessageBox.warning(self, "Import error", f"error during importing, part of data were filtered. {err}")
+                show_warning("Import error", f"error during importing, part of data were filtered. {err}")
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview, CalculationPlan)
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():

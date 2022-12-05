@@ -271,7 +271,7 @@ class FileChoose(QWidget):
                 self.progress.new_task()
             except PicklingError as e:
                 if state_store.develop:
-                    QMessageBox.warning(self, "Pickle error", "Please restart PartSeg.")
+                    QMessageBox.critical(self, "Pickle error", "Please restart PartSeg.")
                 else:
                     raise e
 

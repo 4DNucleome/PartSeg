@@ -266,12 +266,12 @@ class Options(QWidget):
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
             if not ok:
                 return
-            if text in self._settings.roi_profiles and QMessageBox.No == QMessageBox.warning(
+            if text in self._settings.roi_profiles and QMessageBox.StandardButton.No == QMessageBox.warning(
                 self,
                 "Already exists",
                 "Profile with this name already exist. Overwrite?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             ):
                 continue
             resp = ROIExtractionProfile(name=text, algorithm=widget.name, values=widget.get_values())
