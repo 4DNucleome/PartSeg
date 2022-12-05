@@ -413,7 +413,7 @@ class MainMenu(BaseMainMenu):
 
             def exception_hook(exception):
                 if isinstance(exception, ValueError):
-                    show_warning("Save error", f"Error during saving\n{exception}")
+                    show_warning("Save error", f"Error during saving\n{exception}", exception=exception)
                 else:
                     raise exception
 
@@ -435,6 +435,7 @@ class MainMenu(BaseMainMenu):
                 show_warning(
                     OPEN_ERROR,
                     "No needed files inside archive. Most probably you choose file from segmentation mask",
+                    exception=exception,
                 )
             else:
                 load_data_exception_hook(exception)
@@ -461,7 +462,7 @@ class MainMenu(BaseMainMenu):
                     self.set_data(result)
 
         except ValueError as e:
-            show_warning("Open error", f"{e}")
+            show_warning("Open error", f"{e}", exception=e)
 
     def batch_window(self):
         if self.main_window.batch_window is None:

@@ -17,6 +17,7 @@ from PartSeg.common_backend.base_settings import (
     SwapTimeStackException,
     TimeAndStackException,
 )
+from PartSeg.common_backend.except_hook import show_warning
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.custom_save_dialog import PSaveDialog
@@ -282,12 +283,10 @@ class BaseMainWindow(QMainWindow):
                         "In latest macos release you may need to check if you gave PartSeg (or terminal)"
                         "Permission to access files. You can do it in System Preferences -> Security & Privacy"
                     )
-
-                QMessageBox().warning(
-                    self,
+                show_warning(
                     "IO Error",
                     "Disc operation error: " + ", ".join(str(x) for x in exception.args) + additional_info,
-                    QMessageBox.Ok,
+                    exception=exception,
                 )
             else:
                 raise exception
