@@ -1,5 +1,6 @@
 import dataclasses
 import os
+import sys
 from pathlib import Path
 from typing import List, Optional, Type, Union
 
@@ -272,11 +273,20 @@ class BaseMainWindow(QMainWindow):
         ext_set = {os.path.splitext(x)[1].lower() for x in paths}
 
         def exception_hook(exception):
+            additional_info = "files: " + ", ".join(paths)
+
             if isinstance(exception, OSError):
+                # if happens on macos then add information about requirements to check permissions to file
+                if sys.platform == "darwin":
+                    additional_info += (
+                        "In latest macos release you may need to check if you gave PartSeg (or terminal)"
+                        "Permission to access files. You can do it in System Preferences -> Security & Privacy"
+                    )
+
                 QMessageBox().warning(
                     self,
                     "IO Error",
-                    "Disc operation error: " + ", ".join(str(x) for x in exception.args),
+                    "Disc operation error: " + ", ".join(str(x) for x in exception.args) + additional_info,
                     QMessageBox.Ok,
                 )
 
