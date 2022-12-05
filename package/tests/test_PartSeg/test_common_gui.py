@@ -66,7 +66,7 @@ from PartSeg.common_gui.custom_load_dialog import (
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
-from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, _print_traceback
+from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, QMessageFromException, _print_traceback
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
@@ -1707,3 +1707,39 @@ def test_print_traceback_context():
         assert "ValueError" in text
         assert "RuntimeError" in text
         assert "another exception occurred" in text
+
+
+class TestQMessageFromException:
+    def test_create(self, qtbot):
+        try:
+            a = 1
+            raise ValueError(f"foo {a}")
+        except ValueError as e:
+            msg = QMessageFromException(QMessageFromException.Question, "Test", "test", e)
+            qtbot.addWidget(msg)
+
+            assert "foo 1" in msg.detailedText()
+            assert "a = 1" in msg.detailedText()
+
+    @pytest.mark.parametrize("method", ["critical", "information", "question", "warning"])
+    def test_methods(self, monkeypatch, qtbot, method):
+
+        called = False
+
+        def exec_mock(self):
+            nonlocal called
+
+            called = True
+            qtbot.add_widget(self)
+            assert "foo 1" in self.detailedText()
+            assert "a = 1" in self.detailedText()
+
+        monkeypatch.setattr(QMessageFromException, "exec_", exec_mock)
+
+        try:
+            a = 1
+            raise ValueError(f"foo {a}")
+        except ValueError as e:
+            getattr(QMessageFromException, method)(None, "Test", "test", exception=e)
+
+            assert called
