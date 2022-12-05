@@ -1405,8 +1405,9 @@ def test_multiple_files_tree_widget(qtbot, monkeypatch):
 def test_exception_hooks(exc, monkeypatch):
     called = False
 
-    def mock_show_warning(text1, text2):
+    def mock_show_warning(text1, text2, exception=None):
         nonlocal called
+        assert isinstance(exception, exc)
         assert text1 == exception_hooks.OPEN_ERROR
         assert "Test text" in text2
         called = True
@@ -1419,8 +1420,9 @@ def test_exception_hooks(exc, monkeypatch):
 def test_exception_hooks_value_error(monkeypatch):
     called = False
 
-    def mock_show_warning(text1, text2):
+    def mock_show_warning(text1, text2, exception=None):
         nonlocal called
+        assert isinstance(exception, ValueError)
         assert text1 == exception_hooks.OPEN_ERROR
         assert text2 == "Most probably you try to load mask from other image. Check selected files."
         called = True

@@ -6,7 +6,6 @@ from qtpy.QtWidgets import QMessageBox
 from superqt import ensure_main_thread
 
 from PartSeg import state_store
-from PartSeg.common_gui.error_report import QMessageFromException
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegImage import TiffFileException
 
@@ -70,7 +69,7 @@ def show_error(error=None):
         QMessageFromException.critical(
             None,
             "Segmentation limitations",
-            f"During read file there is an error: {', '.join(str(x) for x in error.args)}",
+            f"During segmentation process algorithm meet limitations: {', '.join(str(x) for x in error.args)}",
             exception=error,
         )
         return
@@ -87,7 +86,9 @@ def show_warning(header=None, text=None, exception=None):
     This function is to ensure creation warning dialog in main thread.
     """
     if exception is not None:
-        message = QMessageFromException(QMessageBox.Warning, header, text, exception=exception)
+        from PartSeg.common_gui.error_report import QMessageFromException
+
+        message = QMessageFromException(QMessageBox.Icon.Warning, header, text, exception=exception)
     else:
-        message = QMessageBox(QMessageBox.Warning, header, text, QMessageBox.Ok)
+        message = QMessageBox(QMessageBox.Icon.Warning, header, text, QMessageBox.StandardButton.Ok)
     message.exec_()

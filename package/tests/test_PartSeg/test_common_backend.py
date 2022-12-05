@@ -57,7 +57,7 @@ class TestExceptHook:
         message = exec_list[0]
         assert isinstance(message, QMessageBox)
         assert message.icon() == QMessageBox.Critical
-        assert message.windowTitle() == "Tiff error" or IS_MACOS
+        assert message.windowTitle() == "Tiff file error" or IS_MACOS
         assert message.text().startswith("During read file there is an error")
 
         exec_list = []
