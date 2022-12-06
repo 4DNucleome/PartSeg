@@ -38,7 +38,6 @@ try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
 except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
-
 _napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
 _napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
 

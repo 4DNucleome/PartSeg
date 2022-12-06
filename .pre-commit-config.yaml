@@ -44,11 +44,11 @@ repos:
     - id: setup-cfg-fmt
       args: ["--include-version-classifiers", "--max-py-version", "3.10"]
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.146
+    rev: v0.0.165
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.2.2
+    rev: v3.3.0
     hooks:
     - id: pyupgrade
       args: ["--py38-plus"]

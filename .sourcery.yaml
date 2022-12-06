@@ -1,7 +1,8 @@
 ignore: []
 
 refactor:
-  skip: []
+  skip:
+    - assign-if-exp
   recommendation_level: suggestion
   python_version: '3.8'
 

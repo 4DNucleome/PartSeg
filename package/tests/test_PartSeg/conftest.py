@@ -105,7 +105,6 @@ def clean_settings():
             from napari.settings import SETTINGS
         except ImportError:
             from napari.utils.settings import SETTINGS
-
         SETTINGS.reset()
         yield
         with suppress(AttributeError):

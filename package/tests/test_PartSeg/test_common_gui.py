@@ -24,10 +24,12 @@ from qtpy.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFileDialog,
+    QFormLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
     QMenu,
+    QSpinBox,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
@@ -84,6 +86,7 @@ from PartSeg.common_gui.universal_gui_part import (
     CustomDoubleSpinBox,
     CustomSpinBox,
     EnumComboBox,
+    Hline,
     InfoLabel,
     MguiChannelComboBox,
     Spacing,
@@ -977,6 +980,16 @@ class TestFormWidget:
         form_widget = FormWidget([AlgorithmProperty("dummy", "dummy", DummyClass(1))])
         qtbot.add_widget(form_widget)
         assert form_widget.layout().rowCount() == 2
+
+    def test_hline(self, qtbot):
+        w = FormWidget(["------", "---", AlgorithmProperty("dummy", "dummy", 1), "Hline"])
+        qtbot.add_widget(w)
+
+        layout = w.layout()
+        assert isinstance(layout.itemAt(0).widget(), Hline)
+        assert isinstance(layout.itemAt(1).widget(), QLabel)
+        assert isinstance(layout.itemAt(2, QFormLayout.FieldRole).widget(), QSpinBox)
+        assert isinstance(layout.itemAt(4).widget(), Hline)
 
 
 class TestFieldsList:
