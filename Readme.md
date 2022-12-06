@@ -36,10 +36,22 @@ This application is designed to help biologist with segmentation based on thresh
     -   [Windows](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-windows.zip) (build on Windows 10)
     -   [Linux](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-linux.zip) (build on Ubuntu 20.04)
     -   [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS 11)
+        There are reported problems with permissions systems on macOS. If you have problem with starting application please try to run it from terminal.
 
 -   With pip:
     -   From pypi: `pip install PartSeg[all]`
     -   From repository: `pip install git+https://github.com/4DNucleome/PartSeg.git`
+
+-   With conda:
+    -   `conda install -c conda-forge partseg`
+    -   `mamba install -c conda-forge partseg` - As mamba is faster than conda
+
+-   With napari:
+
+    If you do not know how to setup python environment on your system you may use [napari](https://napari.org/) to run PartSeg.
+    It is a GUI for scientific image analysis. PartSeg is also a plugin for napari so could be installed from plugin dialog.
+    To install napari bundle please download it [napari bundle](https://github.com/napari/napari/releases/latest)
+    and follow [installation instructions](https://napari.org/stable/tutorials/fundamentals/installation.html#install-as-a-bundled-app).
 
 Installation troubleshooting information could be found in wiki: [wiki](https://github.com/4DNucleome/PartSeg/wiki/Instalation-troubleshoot).
 If this information does not solve problem you can open [issue](https://github.com/4DNucleome/PartSeg/issues).
