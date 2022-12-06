@@ -25,6 +25,7 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QMessageBox,
     QPushButton,
     QTextEdit,
     QTreeWidget,
@@ -330,3 +331,101 @@ class DataImportErrorDialog(QDialog):
                     res += f"{key}: {entry['__error__']}\n{pprint.pformat(entry)}\n\n"
 
         QApplication.clipboard().setText(res)
+
+
+class QMessageFromException(QMessageBox):
+    """
+    Specialized QMessageBox to provide information with attached exception
+
+    """
+
+    def __init__(self, icon, title, text, exception, standard_buttons=QMessageBox.Ok, parent=None):
+        super().__init__(icon, title, text, standard_buttons, parent)
+        self.exception = exception
+        stream = io.StringIO()
+        _print_traceback(exception, file_=stream)
+        self.setDetailedText(stream.getvalue())
+
+    @classmethod
+    def critical(
+        cls,
+        parent=None,
+        title="",
+        text="",
+        standard_buttons=QMessageBox.Ok,
+        default_button=QMessageBox.NoButton,
+        exception=None,
+    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+        ob = cls(
+            icon=QMessageBox.Critical,
+            title=title,
+            text=text,
+            exception=exception,
+            parent=parent,
+            standard_buttons=standard_buttons,
+        )
+        ob.setDefaultButton(default_button)
+        return ob.exec_()
+
+    @classmethod
+    def information(
+        cls,
+        parent=None,
+        title="",
+        text="",
+        standard_buttons=QMessageBox.Ok,
+        default_button=QMessageBox.NoButton,
+        exception=None,
+    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+        ob = cls(
+            icon=QMessageBox.Information,
+            title=title,
+            text=text,
+            exception=exception,
+            parent=parent,
+            standard_buttons=standard_buttons,
+        )
+        ob.setDefaultButton(default_button)
+        return ob.exec_()
+
+    @classmethod
+    def question(
+        cls,
+        parent=None,
+        title="",
+        text="",
+        standard_buttons=QMessageBox.Ok,
+        default_button=QMessageBox.NoButton,
+        exception=None,
+    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+        ob = cls(
+            icon=QMessageBox.Question,
+            title=title,
+            text=text,
+            exception=exception,
+            parent=parent,
+            standard_buttons=standard_buttons,
+        )
+        ob.setDefaultButton(default_button)
+        return ob.exec_()
+
+    @classmethod
+    def warning(
+        cls,
+        parent=None,
+        title="",
+        text="",
+        standard_buttons=QMessageBox.Ok,
+        default_button=QMessageBox.NoButton,
+        exception=None,
+    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+        ob = cls(
+            icon=QMessageBox.Warning,
+            title=title,
+            text=text,
+            exception=exception,
+            parent=parent,
+            standard_buttons=standard_buttons,
+        )
+        ob.setDefaultButton(default_button)
+        return ob.exec_()

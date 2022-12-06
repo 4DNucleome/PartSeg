@@ -51,9 +51,17 @@ class WaitingDialog(QDialog):
 
 
 class ExecuteFunctionDialog(WaitingDialog):
+    thread_to_wait: ExecuteFunctionThread
+
     def __init__(self, fun, args=None, kwargs=None, text="", parent=None, exception_hook=None):
         thread = ExecuteFunctionThread(fun, args, kwargs)
         super().__init__(thread, text=text, parent=parent, exception_hook=exception_hook)
 
     def get_result(self):
         return self.thread_to_wait.result
+
+    def __repr__(self):
+        return (
+            f"ExecuteFunctionDialog({self.thread_to_wait.function.__name__}, {self.thread_to_wait.args}, "
+            f"{self.thread_to_wait.kwargs}, {self.exception_hook})"
+        )

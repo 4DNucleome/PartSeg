@@ -9,13 +9,17 @@ OPEN_ERROR = "Open error"
 def load_data_exception_hook(exception):
     if isinstance(exception, ValueError) and exception.args[0] == INCOMPATIBLE_IMAGE_MASK:
         # TODO think about incompatibilible axes (image_reader:417)
-        show_warning(OPEN_ERROR, "Most probably you try to load mask from other image. Check selected files.")
+        show_warning(
+            OPEN_ERROR,
+            "Most probably you try to load mask from other image. Check selected files.",
+            exception=exception,
+        )
     elif isinstance(exception, MemoryError):
-        show_warning(OPEN_ERROR, f"Not enough memory to read this image: {exception}")
+        show_warning(OPEN_ERROR, f"Not enough memory to read this image: {exception}", exception=exception)
     elif isinstance(exception, IOError):
-        show_warning(OPEN_ERROR, f"Some problem with reading from disc: {exception}")
+        show_warning(OPEN_ERROR, f"Some problem with reading from disc: {exception}", exception=exception)
     elif isinstance(exception, KeyError):
-        show_warning(OPEN_ERROR, f"Some problem project file: {exception}")
+        show_warning(OPEN_ERROR, f"Some problem project file: {exception}", exception=exception)
         logging.warning(exception)
     else:
         raise exception

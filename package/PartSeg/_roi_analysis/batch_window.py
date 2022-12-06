@@ -269,9 +269,9 @@ class FileChoose(QWidget):
             try:
                 self.batch_manager.add_calculation(dial.get_data())
                 self.progress.new_task()
-            except PicklingError as e:
+            except PicklingError as e:  # pragma: no cover
                 if state_store.develop:
-                    QMessageBox.warning(self, "Pickle error", "Please restart PartSeg.")
+                    QMessageBox.critical(self, "Pickle error", "Please restart PartSeg.")
                 else:
                     raise e
 

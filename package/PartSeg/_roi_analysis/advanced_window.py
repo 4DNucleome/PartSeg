@@ -336,10 +336,10 @@ class Properties(QWidget):
                     self,
                     "Already exist",
                     f"Profile with name {text} already exist. Would you like to overwrite?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
                 )
-                if res == QMessageBox.No:
+                if res == QMessageBox.StandardButton.No:
                     self.rename_profile()
                     return
             profiles_dict[text] = profiles_dict.pop(profile_name)

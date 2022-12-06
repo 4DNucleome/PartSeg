@@ -1,5 +1,6 @@
 import dataclasses
 import os
+import sys
 from pathlib import Path
 from typing import List, Optional, Type, Union
 
@@ -16,6 +17,7 @@ from PartSeg.common_backend.base_settings import (
     SwapTimeStackException,
     TimeAndStackException,
 )
+from PartSeg.common_backend.except_hook import show_warning
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.custom_save_dialog import PSaveDialog
@@ -271,11 +273,23 @@ class BaseMainWindow(QMainWindow):
     def _read_drop(self, paths, load_dict):
         ext_set = {os.path.splitext(x)[1].lower() for x in paths}
 
-        def exception_hook(exception):
+        def exception_hook(exception):  # pragma: no cover
+            additional_info = "files: " + ", ".join(paths)
+
             if isinstance(exception, OSError):
-                QMessageBox().warning(
-                    self, "IO Error", "Disc operation error: " + ", ".join(exception.args), QMessageBox.Ok
+                # if happens on macos then add information about requirements to check permissions to file
+                if sys.platform == "darwin":
+                    additional_info += (
+                        "In latest macos release you may need to check if you gave PartSeg (or terminal)"
+                        "Permission to access files. You can do it in System Preferences -> Security & Privacy"
+                    )
+                show_warning(
+                    "IO Error",
+                    "Disc operation error: " + ", ".join(str(x) for x in exception.args) + additional_info,
+                    exception=exception,
                 )
+            else:
+                raise exception
 
         for load_class in load_dict.values():
             if load_class.partial() or load_class.number_of_files() != len(paths):

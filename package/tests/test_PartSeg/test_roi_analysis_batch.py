@@ -1,5 +1,6 @@
 # pylint: disable=R0201
 from copy import copy
+from unittest.mock import patch
 
 import pytest
 
@@ -696,7 +697,10 @@ class TestCreatePlan:
         widget.clean_plan()
         assert len(widget.calculation_plan.execution_tree.children) == 0
 
-    def test_add_roi_extraction_pipeline(self, qtbot, part_settings, roi_extraction_profile, mask_property):
+    @patch("PartSeg._roi_analysis.prepare_plan_widget.show_warning")
+    def test_add_roi_extraction_pipeline(
+        self, show_warning_patch, qtbot, part_settings, roi_extraction_profile, mask_property
+    ):
         segmentation_pipeline = SegmentationPipeline(
             name="test",
             segmentation=roi_extraction_profile,
@@ -717,7 +721,16 @@ class TestCreatePlan:
             == roi_extraction_profile
         )
 
-    def test_create_mask(self, qtbot, part_settings, mask_property, roi_extraction_profile, mask_property_non_default):
+        # test if update pipeline fail
+        widget.update_element_chk.setChecked(True)
+        show_warning_patch.assert_not_called()
+        widget.add_roi_extraction_pipeline(segmentation_pipeline)
+        show_warning_patch.assert_called_once_with("Cannot update pipeline", "Cannot update pipeline")
+
+    @patch("PartSeg._roi_analysis.prepare_plan_widget.show_warning")
+    def test_create_mask(
+        self, show_warning_patch, qtbot, part_settings, mask_property, roi_extraction_profile, mask_property_non_default
+    ):
         widget = prepare_plan_widget.CreatePlan(part_settings)
         qtbot.addWidget(widget)
         widget.add_roi_extraction(roi_extraction_profile)
@@ -733,6 +746,11 @@ class TestCreatePlan:
             == mask_property_non_default
         )
         assert widget.mask_set == {"test2"}
+
+        # test adding mask with existing name
+        show_warning_patch.assert_not_called()
+        widget.create_mask(prepare_plan_widget.MaskCreate(name="test2", mask_property=mask_property_non_default))
+        show_warning_patch.assert_called_once_with("Already exists", "Mask with this name already exists")
 
 
 class TestCalculatePlaner:

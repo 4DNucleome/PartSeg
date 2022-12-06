@@ -55,32 +55,40 @@ def show_error(error=None):
     if error is None:
         return
 
+    from PartSeg.common_gui.error_report import ErrorDialog, QMessageFromException
+
     if isinstance(error, TiffFileException):
-        mess = QMessageBox()
-        mess.setIcon(QMessageBox.Critical)
-        mess.setText(f"During read file there is an error: {error.args[0]}")
-        mess.setWindowTitle("Tiff error")
-        mess.exec_()
+        QMessageFromException.critical(
+            None,
+            "Tiff file error",
+            f"During read file there is an error: {', '.join(str(x) for x in error.args)}",
+            exception=error,
+        )
         return
     if isinstance(error, SegmentationLimitException):
-        mess = QMessageBox()
-        mess.setIcon(QMessageBox.Critical)
-        mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(error.args))
-        mess.setWindowTitle("Segmentation limitations")
-        mess.exec_()
+        QMessageFromException.critical(
+            None,
+            "Segmentation limitations",
+            f"During segmentation process algorithm meet limitations: {', '.join(str(x) for x in error.args)}",
+            exception=error,
+        )
         return
-    from PartSeg.common_gui.error_report import ErrorDialog
 
     dial = ErrorDialog(error, "Exception during program run")
     dial.exec_()
 
 
 @ensure_main_thread
-def show_warning(header=None, text=None):
+def show_warning(header=None, text=None, exception=None):
     """
     Show warning :py:class:`PyQt5.QtWidgets.QMessageBox`
 
     This function is to ensure creation warning dialog in main thread.
     """
-    message = QMessageBox(QMessageBox.Warning, header, text, QMessageBox.Ok)
+    if exception is not None:
+        from PartSeg.common_gui.error_report import QMessageFromException
+
+        message = QMessageFromException(QMessageBox.Icon.Warning, header, text, exception=exception)
+    else:
+        message = QMessageBox(QMessageBox.Icon.Warning, header, text, QMessageBox.StandardButton.Ok)
     message.exec_()

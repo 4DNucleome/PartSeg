@@ -266,12 +266,12 @@ class Options(QWidget):
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
             if not ok:
                 return
-            if text in self._settings.roi_profiles and QMessageBox.No == QMessageBox.warning(
+            if text in self._settings.roi_profiles and QMessageBox.StandardButton.No == QMessageBox.warning(
                 self,
                 "Already exists",
                 "Profile with this name already exist. Overwrite?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             ):
                 continue
             resp = ROIExtractionProfile(name=text, algorithm=widget.name, values=widget.get_values())
@@ -411,9 +411,9 @@ class MainMenu(BaseMainMenu):
             project_info = self.settings.get_project_info()
             base_values[selected_filter] = values
 
-            def exception_hook(exception):
+            def exception_hook(exception):  # pragma: no cover
                 if isinstance(exception, ValueError):
-                    show_warning("Save error", f"Error during saving\n{exception}")
+                    show_warning("Save error", f"Error during saving\n{exception}", exception=exception)
                 else:
                     raise exception
 
@@ -435,6 +435,7 @@ class MainMenu(BaseMainMenu):
                 show_warning(
                     OPEN_ERROR,
                     "No needed files inside archive. Most probably you choose file from segmentation mask",
+                    exception=exception,
                 )
             else:
                 load_data_exception_hook(exception)
@@ -460,8 +461,8 @@ class MainMenu(BaseMainMenu):
                     result = dial2.get_result()
                     self.set_data(result)
 
-        except ValueError as e:
-            show_warning("Open error", f"{e}")
+        except ValueError as e:  # pragma: no cover
+            show_warning("Open error", f"{e}", exception=e)
 
     def batch_window(self):
         if self.main_window.batch_window is None:
