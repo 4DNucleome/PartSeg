@@ -199,7 +199,6 @@ class TestImageView:
 
         from PartSeg.common_gui import napari_image_view
 
-
         def check_menu(self, point):
             assert len(self.actions()) == len(ORDER_DICT)
             called.append(1)

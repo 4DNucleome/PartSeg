@@ -64,7 +64,6 @@ if _napari_ge_4_13:
 else:
     from napari.qt import QtStateButton
 
-
     class QtNDisplayButton(QtStateButton):
         def __init__(self, viewer):
             super().__init__(

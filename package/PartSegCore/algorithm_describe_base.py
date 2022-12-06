@@ -17,6 +17,8 @@ from PartSegImage import Channel
 
 if typing.TYPE_CHECKING:
     from pydantic.fields import ModelField
+
+
 class AlgorithmDescribeNotFound(Exception):
     """
     When algorithm description not found

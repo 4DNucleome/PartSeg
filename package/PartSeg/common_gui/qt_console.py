@@ -17,6 +17,8 @@ from qtpy.QtGui import QColor
 
 if TYPE_CHECKING:  # pragma: no cover
     from PartSeg.common_gui.main_window import BaseMainWindow
+
+
 def _empty_push(_):
     """Empty function for push"""
 

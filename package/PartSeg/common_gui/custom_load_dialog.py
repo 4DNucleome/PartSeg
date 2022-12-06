@@ -8,6 +8,8 @@ from PartSegCore.io_utils import LoadBase
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from PartSeg.common_backend.base_settings import BaseSettings
+
+
 class LoadProperty(typing.NamedTuple):
     load_location: typing.List[typing.Union[str, Path]]
     selected_filter: str
