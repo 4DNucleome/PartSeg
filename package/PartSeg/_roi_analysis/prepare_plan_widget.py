@@ -374,7 +374,7 @@ class OtherOperations(ProtectedGroupBox):
 
     def save_action(self):
         save_class = self.save_translate_dict.get(self.choose_save_method.currentText(), None)
-        if save_class is None:
+        if save_class is None:  # pragma: no cover
             show_warning(self, "Save problem", "Not found save class")
             return
         dial = FormDialog(
@@ -811,7 +811,7 @@ class CreatePlan(QWidget):
 
     def create_mask(self, mask_ob: MaskBase):
         if mask_ob.name != "" and mask_ob.name in self.mask_set:
-            show_warning(self, "Already exists", "Mask with this name already exists")
+            show_warning("Already exists", "Mask with this name already exists")
             return
 
         if self.update_element_chk.isChecked():

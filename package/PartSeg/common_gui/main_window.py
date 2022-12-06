@@ -273,7 +273,7 @@ class BaseMainWindow(QMainWindow):
     def _read_drop(self, paths, load_dict):
         ext_set = {os.path.splitext(x)[1].lower() for x in paths}
 
-        def exception_hook(exception):
+        def exception_hook(exception):  # pragma: no cover
             additional_info = "files: " + ", ".join(paths)
 
             if isinstance(exception, OSError):
