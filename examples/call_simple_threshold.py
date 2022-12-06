@@ -11,6 +11,6 @@ image = GenericImageReader.read_image(file_path)
 
 algorithm = ThresholdPreview()
 algorithm.set_image(image)
-algorithm.set_parameters(**profile.values)
+algorithm.set_parameters(profile.values)
 
 res = algorithm.calculation_run(lambda x, y: x)
