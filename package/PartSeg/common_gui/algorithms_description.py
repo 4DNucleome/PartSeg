@@ -10,6 +10,7 @@ import numpy as np
 from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
+from PyQt5.QtWidgets import QSizePolicy
 from qtpy.QtCore import QMargins, QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -109,7 +110,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return self._getter(self._widget)
 
     def is_multiline(self):
-        return getattr(self._widget, "multiline", False)
+        return getattr(self._widget, "__multiline__", False)
 
     def recursive_get_values(self):
         if isinstance(self._widget, SubAlgorithmWidget):
@@ -386,7 +387,7 @@ class FormWidget(QWidget):
             if hasattr(el.get_field(), "change_channels_num"):
                 self.channels_chose.append(el.get_field())
         self.setLayout(layout)
-        self.value_changed.connect(self.update_size)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
 
     def _element_list(self, fields: FieldAllowedTypes):
         if inspect.isclass(fields) and issubclass(fields, AlgorithmDescribeBase):
@@ -445,9 +446,6 @@ class FormWidget(QWidget):
 
     def has_elements(self):
         return len(self.widgets_dict) > 0
-
-    def update_size(self):
-        self.setMinimumHeight(self.layout().minimumSize().height())
 
     def get_values(self):
         res = {name: el.get_value() for name, el in self.widgets_dict.items()}
@@ -602,12 +600,17 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         start_values = settings.get_algorithm(f"algorithm_widget_state.{self.name}", {})
         self.form_widget = self._form_widget(algorithm, start_values=start_values)
         self.form_widget.value_changed.connect(self.values_changed.emit)
-        self.setWidget(self.form_widget)
+        self._widget = QWidget(self)
+        self._widget.setLayout(QVBoxLayout())
+        self._widget.layout().setContentsMargins(0, 0, 0, 0)
+        self._widget.layout().addWidget(self.form_widget)
+        self.setWidget(self._widget)
         value_dict = self.settings.get_algorithm(f"algorithms.{self.name}", {})
         self.set_values(value_dict)
         self.algorithm_thread = SegmentationThread(algorithm())
         self.algorithm_thread.info_signal.connect(self.show_info)
         self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
+        self.setWidgetResizable(True)
 
     @property
     def name(self):
