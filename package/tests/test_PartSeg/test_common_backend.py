@@ -49,6 +49,7 @@ class TestExceptHook:
             exec_list.append(self)
 
         monkeypatch.setattr(except_hook.QMessageBox, "exec_", exec_mock)
+        monkeypatch.setattr("PartSeg.common_gui.error_report.QMessageFromException.exec_", exec_mock)
         monkeypatch.setattr(ErrorDialog, "exec_", exec_mock)
 
         except_hook.show_error()
