@@ -26,6 +26,7 @@ from PartSeg.common_backend import (
     segmentation_thread,
 )
 from PartSeg.common_gui.error_report import ErrorDialog
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.io_utils import load_matadata_part
 from PartSegCore.mask_create import MaskProperty
@@ -80,15 +81,17 @@ class TestExceptHook:
 
     @pytest.mark.parametrize("header", [None, "Text"])
     @pytest.mark.parametrize("text", [None, "Long text"])
-    def test_show_warning(self, monkeypatch, header, text, qtbot):
+    @pytest.mark.parametrize("exception", [None, ValueError("Long text")])
+    def test_show_warning(self, monkeypatch, header, exception, text, qtbot):
         exec_list = []
 
         def exec_mock(self):
             qtbot.add_widget(self)
             exec_list.append(self)
 
+        monkeypatch.setattr("PartSeg.common_gui.error_report.QMessageFromException.exec_", exec_mock)
         monkeypatch.setattr(except_hook.QMessageBox, "exec_", exec_mock)
-        except_hook.show_warning(header, text)
+        except_hook.show_warning(header, text, exception)
         assert len(exec_list) == 1
 
     def test_my_excepthook(self, monkeypatch, capsys):
@@ -726,3 +729,13 @@ class TestBaseSettings:
         data, error = settings._load_settings_file(tmp_path / "data.json")
         assert isinstance(data, ProfileDict)
         assert error == "bbbb"
+
+
+class TestExecuteFunctionDialog:
+    def test_create_and_rep(self, qtbot):
+        dialog = ExecuteFunctionDialog(print, args=["aaa", "bbb"], kwargs={"ccc": 10})
+        qtbot.addWidget(dialog)
+
+        assert "print" in repr(dialog)
+        assert "aaa" in repr(dialog)
+        assert "'ccc': 10" in repr(dialog)

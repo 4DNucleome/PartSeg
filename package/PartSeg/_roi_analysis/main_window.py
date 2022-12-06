@@ -411,7 +411,7 @@ class MainMenu(BaseMainMenu):
             project_info = self.settings.get_project_info()
             base_values[selected_filter] = values
 
-            def exception_hook(exception):
+            def exception_hook(exception):  # pragma: no cover
                 if isinstance(exception, ValueError):
                     show_warning("Save error", f"Error during saving\n{exception}", exception=exception)
                 else:
@@ -461,7 +461,7 @@ class MainMenu(BaseMainMenu):
                     result = dial2.get_result()
                     self.set_data(result)
 
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             show_warning("Open error", f"{e}", exception=e)
 
     def batch_window(self):
