@@ -968,7 +968,7 @@ class TestFormWidget:
                 self.value = value
 
         class DummyWidget(Container):
-            multiline = True
+            __multiline__ = True
 
             def __init__(self, value, nullable, **kwargs):
                 self.value = value
