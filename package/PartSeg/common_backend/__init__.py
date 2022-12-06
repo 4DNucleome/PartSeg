@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
-
-
 def napari_get_settings(path=None) -> "NapariSettings":
     from napari.settings import get_settings as _napari_get_settings
 

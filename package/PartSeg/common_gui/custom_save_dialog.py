@@ -11,8 +11,6 @@ from PartSegCore.io_utils import SaveBase
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from PartSeg.common_backend.base_settings import BaseSettings
-
-
 class SaveProperty(typing.NamedTuple):
     save_destination: typing.Union[str, typing.List[str]]
     selected_filter: str

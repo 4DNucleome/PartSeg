@@ -3,6 +3,7 @@ from pygments.formatter import Formatter
 from pygments.lexers import get_lexer_by_name
 from qtpy import QtGui
 
+
 # inspired by  https://github.com/Vector35/snippets/blob/master/QCodeEditor.py (MIT license) and
 # https://pygments.org/docs/formatterdevelopment/#html-3-2-formatter
 

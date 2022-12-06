@@ -1373,6 +1373,7 @@ def test_collapsable(qtbot):
 def test_multiple_files_tree_widget(qtbot, monkeypatch):
     from PartSeg.common_gui import multiple_file_widget
 
+
     def _monkey_qmenu(func):
         res = QMenu()
         monkeypatch.setattr(res, "exec_", partial(func, res))

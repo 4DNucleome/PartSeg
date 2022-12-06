@@ -35,7 +35,6 @@ from PartSegImage import Image
 
 if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
-
 logger = logging.getLogger(__name__)
 
 DIR_HISTORY = "io.dir_location_history"

@@ -44,8 +44,6 @@ try:
     from napari_builtins.io import napari_write_points
 except ImportError:
     from napari.plugins._builtins import napari_write_points
-
-
 if sys.version_info[:3] == (3, 9, 7):
     ProjectInfoBase = object  # noqa: F811
 
