@@ -47,8 +47,6 @@ from PartSegCore.segmentation import ROIExtractionResult
 
 if typing.TYPE_CHECKING:
     from qtpy.QtGui import QHideEvent, QShowEvent  # pragma: no cover
-
-
 SELECT_TEXT = "<select>"
 
 
