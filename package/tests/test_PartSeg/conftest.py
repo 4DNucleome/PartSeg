@@ -105,7 +105,6 @@ def clean_settings():
             from napari.settings import SETTINGS
         except ImportError:
             from napari.utils.settings import SETTINGS
-
         SETTINGS.reset()
         yield
         with suppress(AttributeError):
@@ -139,6 +138,7 @@ def block_message_box(monkeypatch, request):
     monkeypatch.setattr(QMessageBox, "information", raise_on_call)
     monkeypatch.setattr(QMessageBox, "question", raise_on_call)
     monkeypatch.setattr(QMessageBox, "warning", raise_on_call)
+    monkeypatch.setattr("PartSeg.common_gui.error_report.QMessageFromException.exec_", raise_on_call)
     monkeypatch.setattr(QInputDialog, "getText", raise_on_call)
     if "enabledialog" not in request.keywords:
         monkeypatch.setattr(QDialog, "exec_", raise_on_call)

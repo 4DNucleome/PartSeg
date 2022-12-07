@@ -9,9 +9,9 @@ from qtpy.QtCore import QRect, QSize
 from qtpy.QtGui import QPainter
 from qtpy.QtWidgets import QLabel
 
-from ..common_backend.base_settings import ViewSettings
-from ..common_gui.numpy_qimage import NumpyQImage
-from .napari_image_view import ImageView
+from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_gui.napari_image_view import ImageView
+from PartSeg.common_gui.numpy_qimage import NumpyQImage
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01
@@ -64,17 +64,13 @@ class ColorBar(QLabel):
             return 1000
         if val > 1000:
             return 100
-        if val > 100:
-            return 10
-        return 1
+        return 10 if val > 100 else 1
 
     @staticmethod
     def number_of_marks(val):
         if val < 500:
             return 6
-        if val > 1300:
-            return 21
-        return 11
+        return 21 if val > 1300 else 11
 
     def paintEvent(self, event: QtGui.QPaintEvent):
         bar_width = 30

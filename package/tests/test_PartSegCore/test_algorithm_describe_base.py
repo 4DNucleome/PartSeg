@@ -255,6 +255,18 @@ def test_base_model_to_algorithm_property_magicgui_parameters():
     assert prop.mgi_options == {"a": 1, "b": 2}
 
 
+def test_base_model_to_algorithm_property_hline():
+    class Model(BaseModel):
+        field1: int = 1
+        field2: int = Field(1, prefix="------", suffix="---", position=0)
+
+    fields = base_model_to_algorithm_property(Model)
+
+    assert len(fields) == 4
+    assert isinstance(fields[0], str)
+    assert isinstance(fields[2], str)
+
+
 class TestAlgorithmDescribeBase:
     def test_old_style_algorithm(self):
         class SampleAlgorithm(AlgorithmDescribeBase):

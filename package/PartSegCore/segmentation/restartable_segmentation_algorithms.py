@@ -10,20 +10,18 @@ import SimpleITK
 from nme import REGISTER, class_to_str, register_class, rename_key
 from pydantic import Field, validator
 
-from PartSegCore.utils import BaseModel
-from PartSegCore_compiled_backend.multiscale_opening import PyMSO, calculate_mu_mid
-from PartSegImage import Channel
-
-from ..algorithm_describe_base import ROIExtractionProfile
-from ..mask_partition_utils import BorderRim as BorderRimBase
-from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
-from ..project_info import AdditionalLayerDescription
-from ..universal_const import Units
-from ..utils import bisect
-from .algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult, SegmentationLimitException
-from .mu_mid_point import BaseMuMid, MuMidSelection
-from .noise_filtering import NoiseFilterSelection
-from .threshold import (
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.mask_partition_utils import BorderRim as BorderRimBase
+from PartSegCore.mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
+from PartSegCore.project_info import AdditionalLayerDescription
+from PartSegCore.segmentation.algorithm_base import (
+    ROIExtractionAlgorithm,
+    ROIExtractionResult,
+    SegmentationLimitException,
+)
+from PartSegCore.segmentation.mu_mid_point import BaseMuMid, MuMidSelection
+from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
+from PartSegCore.segmentation.threshold import (
     BaseThreshold,
     DoubleThreshold,
     DoubleThresholdParams,
@@ -32,7 +30,11 @@ from .threshold import (
     SingleThresholdParams,
     ThresholdSelection,
 )
-from .watershed import BaseWatershed, FlowMethodSelection, calculate_distances_array, get_neigh
+from PartSegCore.segmentation.watershed import BaseWatershed, FlowMethodSelection, calculate_distances_array, get_neigh
+from PartSegCore.universal_const import Units
+from PartSegCore.utils import BaseModel, bisect
+from PartSegCore_compiled_backend.multiscale_opening import PyMSO, calculate_mu_mid
+from PartSegImage import Channel
 
 REQUIRE_MASK_STR = "Need mask"
 

@@ -1,6 +1,5 @@
 # pylint: disable=R0201
 
-import platform
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -17,8 +16,6 @@ from PartSeg.common_gui.napari_image_view import ImageView
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
-
-from .utils import CI_BUILD
 
 if PYQT5:
 
@@ -181,13 +178,13 @@ class TestColorComboBoxGroup:
         qtbot.add_widget(box)
         box.set_channels(3)
         assert len(box.current_colors) == 3
-        assert all(map(lambda x: isinstance(x, str), box.current_colors))
+        assert all(isinstance(x, str) for x in box.current_colors)
         with qtbot.waitSignal(box.coloring_update):
             box.layout().itemAt(0).widget().check_box.setChecked(False)
         with qtbot.waitSignal(box.coloring_update):
             box.layout().itemAt(0).widget().setCurrentIndex(2)
         assert box.current_colors[0] is None
-        assert all(map(lambda x: isinstance(x, str), box.current_colors[1:]))
+        assert all(isinstance(x, str) for x in box.current_colors[1:])
 
     def test_color_combo_box_group_and_color_preview(self, qtbot):
         settings = ViewSettings()
@@ -250,7 +247,7 @@ class TestColorComboBoxGroup:
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.filter_radius.setValue(0.5)
 
-    @pytest.mark.xfail((platform.system() == "Windows") and CI_BUILD, reason="GL problem")
+    @pytest.mark.windows_ci_skip
     @pytest.mark.parametrize("filter_value", NoiseFilterType.__members__.values())
     def test_image_view_integration_filter(self, qtbot, tmp_path, filter_value):
         settings = BaseSettings(tmp_path)
@@ -281,7 +278,7 @@ class TestColorComboBoxGroup:
             filter_value == NoiseFilterType.No and np.any(image4 == 255)
         )
 
-    @pytest.mark.xfail((platform.system() == "Windows") and CI_BUILD, reason="GL problem")
+    @pytest.mark.windows_ci_skip
     def test_image_view_integration(self, qtbot, tmp_path):
         settings = BaseSettings(tmp_path)
         ch_property = ChannelProperty(settings, "test")

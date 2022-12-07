@@ -7,11 +7,10 @@ import numpy as np
 from nme import register_class, rename_key, update_argument
 from pydantic import Field
 
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
+from PartSegCore.image_operations import bilateral, gaussian, median
+from PartSegCore.segmentation.algorithm_base import calculate_operation_radius as _calculate_operation_radius
 from PartSegCore.utils import BaseModel
-
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
-from ..image_operations import bilateral, gaussian, median
-from .algorithm_base import calculate_operation_radius as _calculate_operation_radius
 
 
 @register_class(old_paths=["PartSeg.utils.segmentation.noise_filtering.GaussType"])
@@ -96,9 +95,7 @@ class BilateralNoiseFiltering(NoiseFilteringBase):
 
 def calculate_operation_radius(radius, spacing, gauss_type):
     res = _calculate_operation_radius(radius, spacing, gauss_type)
-    if res == radius:
-        return [radius for _ in spacing]
-    return res
+    return [radius for _ in spacing] if res == radius else res
 
 
 class MedianNoiseFilteringParams(BaseModel):

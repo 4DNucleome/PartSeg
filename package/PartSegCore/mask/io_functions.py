@@ -16,11 +16,8 @@ import tifffile
 from nme import update_argument
 from pydantic import Field
 
-from PartSegImage import BaseImageWriter, GenericImageReader, Image, IMAGEJImageWriter, ImageWriter, TiffImageReader
-from PartSegImage.image import FRAME_THICKNESS, reduce_array
-
-from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
-from ..io_utils import (
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
+from PartSegCore.io_utils import (
     LoadBase,
     LoadPoints,
     SaveBase,
@@ -36,17 +33,17 @@ from ..io_utils import (
     proxy_callback,
     tar_to_buff,
 )
-from ..json_hooks import PartSegEncoder
-from ..project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
-from ..roi_info import ROIInfo
-from ..utils import BaseModel
+from PartSegCore.json_hooks import PartSegEncoder
+from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
+from PartSegCore.roi_info import ROIInfo
+from PartSegCore.utils import BaseModel
+from PartSegImage import BaseImageWriter, GenericImageReader, Image, IMAGEJImageWriter, ImageWriter, TiffImageReader
+from PartSegImage.image import FRAME_THICKNESS, reduce_array
 
 try:
     from napari_builtins.io import napari_write_points
 except ImportError:
     from napari.plugins._builtins import napari_write_points
-
-
 if sys.version_info[:3] == (3, 9, 7):
     ProjectInfoBase = object  # noqa: F811
 

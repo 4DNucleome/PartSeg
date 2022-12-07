@@ -447,7 +447,7 @@ class TestSegmentationMask:
             mask=stack_segmentation1.roi_info.roi,
         )
         SaveROI.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
-        with tarfile.open(tmp_path / "test1.seg", "r") as tf:
+        with tarfile.open(tmp_path / "test1.seg") as tf:
             tf.getmember("mask.tif")
             tf.getmember("segmentation.tif")
             tf.getmember("history/history.json")
@@ -479,7 +479,7 @@ class TestSaveFunctions:
     def read_cmap(file_path):
         with h5py.File(file_path, "r") as fp:
             arr = np.array(fp.get("Chimera/image1/data_zyx"))
-            steps = tuple(map(lambda x: int(x + 0.5), fp.get("Chimera/image1").attrs["step"]))
+            steps = tuple(int(x + 0.5) for x in fp.get("Chimera/image1").attrs["step"])
             return arr, steps
 
     def test_save_cmap(self, tmpdir, analysis_project):

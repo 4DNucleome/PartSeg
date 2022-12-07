@@ -24,13 +24,13 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from PartSeg import plugins
+from PartSeg import plugins, state_store
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelEditor
 from PartSeg.common_gui.universal_gui_part import CustomDoubleSpinBox
 from PartSegCore import plugins as core_plugins
-from PartSegCore import register, state_store
+from PartSegCore import register
 
 RENDERING_LIST = ["iso_categorical", "translucent"]
 

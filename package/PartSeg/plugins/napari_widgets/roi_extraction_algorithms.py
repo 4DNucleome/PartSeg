@@ -22,6 +22,21 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg import plugins
+from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY, BaseSettings
+from PartSeg.common_backend.except_hook import show_warning
+from PartSeg.common_gui.algorithms_description import (
+    AlgorithmChooseBase,
+    FormWidget,
+    InteractiveAlgorithmSettingsWidget,
+)
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.searchable_combo_box import SearchComboBox
+from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
+from PartSeg.common_gui.universal_gui_part import TextShow
+from PartSeg.plugins.napari_widgets._settings import get_settings
+from PartSeg.plugins.napari_widgets.utils import NapariFormWidgetWithMask, generate_image
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import AlgorithmSelection, ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
@@ -30,33 +45,19 @@ from PartSegCore.analysis.save_functions import SaveProfilesToJSON
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.segmentation import ROIExtractionResult
 
-from ..._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
-from ...common_backend.base_settings import IO_SAVE_DIRECTORY, BaseSettings
-from ...common_backend.except_hook import show_warning
-from ...common_gui.algorithms_description import AlgorithmChooseBase, FormWidget, InteractiveAlgorithmSettingsWidget
-from ...common_gui.custom_load_dialog import PLoadDialog
-from ...common_gui.custom_save_dialog import PSaveDialog
-from ...common_gui.searchable_combo_box import SearchComboBox
-from ...common_gui.searchable_list_widget import SearchableListWidget
-from ...common_gui.universal_gui_part import TextShow
-from ._settings import get_settings
-from .utils import NapariFormWidgetWithMask, generate_image
-
 if typing.TYPE_CHECKING:
     from qtpy.QtGui import QHideEvent, QShowEvent  # pragma: no cover
-
-
 SELECT_TEXT = "<select>"
 
 
 class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidget):
     form_widget: NapariFormWidgetWithMask
 
-    @staticmethod
-    def _form_widget(algorithm, start_values) -> FormWidget:
+    def _form_widget(self, algorithm, start_values) -> FormWidget:
         return NapariFormWidgetWithMask(
             algorithm.__argument_class__ if algorithm.__new_style__ else algorithm.get_fields(),
             start_values=start_values,
+            parent=self,
         )
 
     def reset_choices(self, event=None):
@@ -71,9 +72,8 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
 
 
 class NapariAlgorithmChoose(AlgorithmChooseBase):
-    @staticmethod
-    def _algorithm_widget(settings, val) -> InteractiveAlgorithmSettingsWidget:
-        return NapariInteractiveAlgorithmSettingsWidget(settings, val, [])
+    def _algorithm_widget(self, settings, val) -> InteractiveAlgorithmSettingsWidget:
+        return NapariInteractiveAlgorithmSettingsWidget(settings, val, [], parent=self)
 
     def reset_choices(self, event=None):
         for widget in self.algorithm_dict.values():

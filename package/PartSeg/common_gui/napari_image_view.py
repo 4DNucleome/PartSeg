@@ -12,7 +12,7 @@ from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
 from napari.layers.labels import Labels
-from napari.qt import QtStateButton, QtViewer
+from napari.qt import QtViewer
 from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
 from nme import register_class
@@ -25,21 +25,19 @@ from vispy.color import Color, Colormap
 from vispy.geometry.rect import Rect
 from vispy.scene import BaseCamera
 
+from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_gui.advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME_STR, SEARCH_ZOOM_FACTOR_STR
+from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBoxGroup
+from PartSeg.common_gui.custom_buttons import SearchROIButton
+from PartSeg.common_gui.qt_modal import QtPopup
 from PartSegCore.image_operations import NoiseFilterType, bilateral, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
-
-from ..common_backend.base_settings import BaseSettings
-from .advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME_STR, SEARCH_ZOOM_FACTOR_STR
-from .channel_control import ChannelProperty, ColorComboBoxGroup
-from .custom_buttons import SearchROIButton
-from .qt_modal import QtPopup
 
 try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
 except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
-
 _napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
 _napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
 
@@ -64,6 +62,7 @@ if _napari_ge_4_13:
             self.viewer.dims.ndisplay = 2 + (self.viewer.dims.ndisplay == 2)
 
 else:
+    from napari.qt import QtStateButton
 
     class QtNDisplayButton(QtStateButton):
         def __init__(self, viewer):
@@ -342,6 +341,7 @@ class ImageView(QWidget):
             return
         bright_array = []
         components = []
+        alt_components = []
         for image_info in self.image_info.values():
             if not image_info.coords_in(cords):
                 continue
@@ -349,9 +349,11 @@ class ImageView(QWidget):
             bright_array.extend(layer.data[tuple(moved_coords)] for layer in image_info.layers if layer.visible)
 
             if image_info.roi_info.roi is not None and image_info.roi is not None:
-                val = image_info.roi_info.roi[tuple(moved_coords)]
-                if val:
+                if val := image_info.roi_info.roi[tuple(moved_coords)]:
                     components.append(val)
+            if self.roi_alternative_selection in image_info.roi_info.alternative:
+                if val := image_info.roi_info.alternative[self.roi_alternative_selection][tuple(moved_coords)]:
+                    alt_components.append(val)
 
         if not bright_array and not components:
             self.text_info_change.emit("")
@@ -365,6 +367,11 @@ class ImageView(QWidget):
                 text += f" component: {components[0]}"
             else:
                 text += f" components: {components}"
+        if alt_components:
+            if len(alt_components) == 1:
+                text += f" alt:  {alt_components[0]}"
+            else:
+                text += f" alt: {alt_components}"
         self.text_info_change.emit(text)
 
     def mask_opacity(self) -> float:
@@ -769,8 +776,7 @@ class ImageView(QWidget):
         image_info = self.image_info[image.file_path]
         text_list = []
         for el in self.components:
-            data = image_info.roi_info.annotations.get(el, {})
-            if data:
+            if data := image_info.roi_info.annotations.get(el, {}):
                 try:
                     text_list.append(_print_dict(data))
                 except ValueError:  # pragma: no cover
@@ -779,8 +785,7 @@ class ImageView(QWidget):
 
     def event(self, event: QEvent):
         if event.type() == QEvent.ToolTip and self.components:
-            text = self.get_tool_tip_text()
-            if text:
+            if text := self.get_tool_tip_text():
                 QToolTip.showText(event.globalPos(), text, self)
         return super().event(event)
 

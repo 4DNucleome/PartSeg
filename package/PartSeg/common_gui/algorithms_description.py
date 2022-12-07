@@ -10,7 +10,7 @@ import numpy as np
 from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
-from qtpy.QtCore import QObject, Signal
+from qtpy.QtCore import QMargins, QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
     QApplication,
@@ -22,6 +22,7 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QStackedLayout,
     QVBoxLayout,
@@ -29,7 +30,10 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
+from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_backend.segmentation_thread import SegmentationThread
 from PartSeg.common_gui.error_report import ErrorDialog
+from PartSeg.common_gui.universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox, Hline
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
@@ -43,10 +47,6 @@ from PartSegCore.segmentation.algorithm_base import (
     SegmentationLimitException,
 )
 from PartSegImage import Channel, Image
-
-from ..common_backend.base_settings import BaseSettings
-from ..common_backend.segmentation_thread import SegmentationThread
-from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox
 
 
 def recursive_update(d, u):
@@ -110,7 +110,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return self._getter(self._widget)
 
     def is_multiline(self):
-        return getattr(self._widget, "multiline", False)
+        return getattr(self._widget, "__multiline__", False)
 
     def recursive_get_values(self):
         if isinstance(self._widget, SubAlgorithmWidget):
@@ -133,9 +133,11 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return self._widget
 
     @classmethod
-    def from_algorithm_property(cls, ob):
+    def from_algorithm_property(cls, ob: typing.Union[str, AlgorithmProperty]):
         """
         Create class instance base on :py:class:`.AlgorithmProperty` instance
+        If ob is string equal to `hline` or that contains only
+        `-` of length at least 5 then return :py:class:`.HLine`
 
         :type ob: AlgorithmProperty | str
         :param ob: AlgorithmProperty object or label
@@ -154,6 +156,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 mgi_options=ob.mgi_options,
             )
         if isinstance(ob, str):
+            if ob.lower() == "hline" or len(ob) > 5 and all(x == "-" for x in ob):
+                return Hline()
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
@@ -364,8 +368,9 @@ class FormWidget(QWidget):
         start_values=None,
         dimension_num=1,
         settings: typing.Optional[BaseSettings] = None,
+        parent=None,
     ):
-        super().__init__()
+        super().__init__(parent=parent)
         if start_values is None:
             start_values = {}
         self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = {}
@@ -375,14 +380,14 @@ class FormWidget(QWidget):
         self._model_class = None
         element_list = self._element_list(fields)
         for el in element_list:
-            if isinstance(el, QLabel):
+            if isinstance(el, (QLabel, Hline)):
                 layout.addRow(el)
                 continue
             self._add_to_layout(layout, el, start_values, settings)
             if hasattr(el.get_field(), "change_channels_num"):
                 self.channels_chose.append(el.get_field())
         self.setLayout(layout)
-        self.value_changed.connect(self.update_size)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
 
     def _element_list(self, fields: FieldAllowedTypes):
         if inspect.isclass(fields) and issubclass(fields, AlgorithmDescribeBase):
@@ -441,9 +446,6 @@ class FormWidget(QWidget):
 
     def has_elements(self):
         return len(self.widgets_dict) > 0
-
-    def update_size(self):
-        self.setMinimumHeight(self.layout().minimumSize().height())
 
     def get_values(self):
         res = {name: el.get_value() for name, el in self.widgets_dict.items()}
@@ -559,12 +561,12 @@ class SubAlgorithmWidget(QWidget):
         for i in range(self.layout().count()):
             lay_elem = self.layout().itemAt(i)
             if lay_elem.widget():
-                lay_elem.widget().hide()
-        if widget.has_elements():
-            self.show()
-            widget.show()
+                lay_elem.widget().setVisible(False)
+        if widget.has_elements() and self.parent() is not None:
+            self.setVisible(True)
+            widget.setVisible(True)
         else:
-            self.hide()
+            self.setVisible(False)
         self.values_changed.emit()
 
     def showEvent(self, _event):
@@ -575,18 +577,18 @@ class SubAlgorithmWidget(QWidget):
         name = self.choose.currentText()
         if self.widgets_dict[name].has_elements() and event.rect().top() == 0 and event.rect().left() == 0:
             painter = QPainter(self)
-            painter.drawRect(event.rect())
+            painter.drawRect(self.rect() - QMargins(1, -1, 1, 1))
 
 
 class BaseAlgorithmSettingsWidget(QScrollArea):
     values_changed = Signal()
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings: BaseSettings, algorithm: typing.Type[ROIExtractionAlgorithm]):
+    def __init__(self, settings: BaseSettings, algorithm: typing.Type[ROIExtractionAlgorithm], parent=None):
         """
         For algorithm which works on one channel
         """
-        super().__init__()
+        super().__init__(parent=parent)
         self.settings = settings
         self.widget_list = []
         self.algorithm = algorithm
@@ -598,22 +600,27 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         start_values = settings.get_algorithm(f"algorithm_widget_state.{self.name}", {})
         self.form_widget = self._form_widget(algorithm, start_values=start_values)
         self.form_widget.value_changed.connect(self.values_changed.emit)
-        self.setWidget(self.form_widget)
+        self._widget = QWidget(self)
+        self._widget.setLayout(QVBoxLayout())
+        self._widget.layout().setContentsMargins(0, 0, 0, 0)
+        self._widget.layout().addWidget(self.form_widget)
+        self.setWidget(self._widget)
         value_dict = self.settings.get_algorithm(f"algorithms.{self.name}", {})
         self.set_values(value_dict)
         self.algorithm_thread = SegmentationThread(algorithm())
         self.algorithm_thread.info_signal.connect(self.show_info)
         self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
+        self.setWidgetResizable(True)
 
     @property
     def name(self):
         return self.algorithm.get_name()
 
-    @staticmethod
-    def _form_widget(algorithm, start_values) -> FormWidget:
+    def _form_widget(self, algorithm, start_values) -> FormWidget:
         return FormWidget(
             algorithm,
             start_values=start_values,
+            parent=self,
         )
 
     @staticmethod
@@ -683,8 +690,10 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings, algorithm: typing.Type[ROIExtractionAlgorithm], selector: typing.List[QWidget]):
-        super().__init__(settings, algorithm)
+    def __init__(
+        self, settings, algorithm: typing.Type[ROIExtractionAlgorithm], selector: typing.List[QWidget], parent=None
+    ):
+        super().__init__(settings, algorithm, parent=parent)
         self.selector = selector[:]
         self.algorithm_thread.finished.connect(self.enable_selector)
         self.algorithm_thread.started.connect(self.disable_selector)
@@ -720,7 +729,7 @@ class AlgorithmChooseBase(QWidget):
     algorithm_dict: typing.Dict[str, InteractiveAlgorithmSettingsWidget]
 
     def __init__(self, settings: BaseSettings, algorithms: typing.Type[AlgorithmSelection], parent=None):
-        super().__init__(parent)
+        super().__init__(parent=parent)
         self.settings = settings
         self.algorithms = algorithms
         settings.algorithm_changed.connect(self.updated_algorithm)
@@ -737,9 +746,8 @@ class AlgorithmChooseBase(QWidget):
         layout.addLayout(self.stack_layout)
         self.setLayout(layout)
 
-    @staticmethod
-    def _algorithm_widget(settings, val) -> InteractiveAlgorithmSettingsWidget:
-        return InteractiveAlgorithmSettingsWidget(settings, val, [])
+    def _algorithm_widget(self, settings, val) -> InteractiveAlgorithmSettingsWidget:
+        return InteractiveAlgorithmSettingsWidget(settings, val, [], parent=self)
 
     def add_widgets_to_algorithm(self):
         self.algorithm_choose.blockSignals(True)

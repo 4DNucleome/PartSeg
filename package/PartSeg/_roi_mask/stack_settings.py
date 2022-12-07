@@ -8,6 +8,7 @@ import numpy as np
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QMessageBox
 
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.io_utils import PointsInfo
 from PartSegCore.mask.io_functions import MaskProjectTuple, load_metadata
@@ -16,8 +17,6 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 from PartSegImage.image import minimal_dtype, reduce_array
-
-from ..common_backend.base_settings import BaseSettings
 
 
 class StackSettings(BaseSettings):
@@ -157,7 +156,7 @@ class StackSettings(BaseSettings):
         state = self.get_project_info()
         # TODO Remove repetition this and set_segmentation code
 
-        components = list(sorted(data.roi_info.bound_info))
+        components = sorted(data.roi_info.bound_info)
         for i in components:
             _skip = data.roi_extraction_parameters[int(i)]  # noqa: F841
         self.mask = data.mask
@@ -172,14 +171,14 @@ class StackSettings(BaseSettings):
                 self.keep_chosen_components,
             )
             self.chosen_components_widget.set_chose(
-                list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components
+                sorted(state2.roi_extraction_parameters.keys()), state2.selected_components
             )
             self.roi = state2.roi_info
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             self.set_history(data.history)
             self.chosen_components_widget.set_chose(
-                list(sorted(data.roi_extraction_parameters.keys())), data.selected_components
+                sorted(data.roi_extraction_parameters.keys()), data.selected_components
             )
             self.roi = data.roi_info
             self.components_parameters_dict = data.roi_extraction_parameters
@@ -305,14 +304,14 @@ class StackSettings(BaseSettings):
         if save_chosen:
             state2 = self.transform_state(state, new_roi_info, segmentation_parameters, list_of_components, save_chosen)
             self.chosen_components_widget.set_chose(
-                list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components
+                sorted(state2.roi_extraction_parameters.keys()), state2.selected_components
             )
             self.roi = state2.roi_info
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             selected_parameters = {i: segmentation_parameters[i] for i in new_roi_info.bound_info}
 
-            self.chosen_components_widget.set_chose(list(sorted(selected_parameters.keys())), list_of_components)
+            self.chosen_components_widget.set_chose(sorted(selected_parameters.keys()), list_of_components)
             self.roi = new_roi_info
             self.components_parameters_dict = segmentation_parameters
 

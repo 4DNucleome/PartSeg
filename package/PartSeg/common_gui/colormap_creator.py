@@ -584,4 +584,4 @@ class PColormapList(ColormapList):
         else:
             with suppress(KeyError):
                 colormaps.remove(name)
-        self.settings.chosen_colormap = list(sorted(colormaps))
+        self.settings.chosen_colormap = sorted(colormaps)

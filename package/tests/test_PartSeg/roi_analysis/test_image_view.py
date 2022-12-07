@@ -1,6 +1,4 @@
 # pylint: disable=R0201
-import platform
-
 import numpy as np
 import pytest
 
@@ -8,10 +6,8 @@ from PartSeg._roi_analysis.image_view import CompareImageView, ResultImageView, 
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSegCore.roi_info import ROIInfo
 
-from ..utils import CI_BUILD
 
-
-@pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+@pytest.mark.windows_ci_skip
 def test_synchronize(part_settings, image2, qtbot):
     prop = ChannelProperty(part_settings, "test1")
     view1 = ResultImageView(part_settings, prop, "test1")
@@ -40,7 +36,7 @@ def test_synchronize(part_settings, image2, qtbot):
     view2.hide()
 
 
-@pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+@pytest.mark.windows_ci_skip
 def test_synchronize_change_image_dim(part_settings, image2, image2d, qtbot):
     part_settings.image = image2d
     prop = ChannelProperty(part_settings, "test1")
@@ -105,7 +101,7 @@ class TestResultImageView:
         part_settings.set_in_profile("test.image_state.only_border", False)
         assert not view.only_border.isChecked()
 
-    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+    @pytest.mark.windows_ci_skip
     def test_resize(self, part_settings, image2, qtbot):
         prop = ChannelProperty(part_settings, "test")
         view = ResultImageView(part_settings, prop, "test")
@@ -122,7 +118,7 @@ class TestResultImageView:
         assert view.btn_layout2.count() == 2
         view.hide()
 
-    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+    @pytest.mark.windows_ci_skip
     def test_with_roi_alternatives(self, part_settings, image2, qtbot):
         prop = ChannelProperty(part_settings, "test")
         view = ResultImageView(part_settings, prop, "test")

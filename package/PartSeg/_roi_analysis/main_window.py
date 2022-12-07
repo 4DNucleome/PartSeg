@@ -19,11 +19,29 @@ from qtpy.QtWidgets import (
 from superqt import ensure_main_thread
 
 import PartSegData
+from PartSeg import state_store
+from PartSeg._roi_analysis.advanced_window import SegAdvancedWindow
+from PartSeg._roi_analysis.batch_window import BatchWindow
+from PartSeg._roi_analysis.calculation_pipeline_thread import CalculatePipelineThread
+from PartSeg._roi_analysis.image_view import CompareImageView, ResultImageView, SynchronizeView
 from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
+from PartSeg.common_backend.except_hook import show_warning
+from PartSeg.common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
+from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
+from PartSeg.common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
+from PartSeg.common_gui.mask_widget import MaskDialogBase
+from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
+from PartSeg.common_gui.searchable_combo_box import SearchComboBox
+from PartSeg.common_gui.stack_image_view import ColorBar
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
-from PartSegCore import state_store
+from PartSeg.common_gui.universal_gui_part import TextShow
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, algorithm_description, load_functions
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
@@ -35,25 +53,6 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegCore.utils import EventedDict
 from PartSegImage import TiffImageReader
-
-from ..common_backend.base_settings import IO_SAVE_DIRECTORY
-from ..common_backend.except_hook import show_warning
-from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_save_dialog import PSaveDialog
-from ..common_gui.equal_column_layout import EqualColumnLayout
-from ..common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
-from ..common_gui.mask_widget import MaskDialogBase
-from ..common_gui.multiple_file_widget import MultipleFileWidget
-from ..common_gui.searchable_combo_box import SearchComboBox
-from ..common_gui.stack_image_view import ColorBar
-from ..common_gui.universal_gui_part import TextShow
-from ..common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog
-from .advanced_window import SegAdvancedWindow
-from .batch_window import BatchWindow
-from .calculation_pipeline_thread import CalculatePipelineThread
-from .image_view import CompareImageView, ResultImageView, SynchronizeView
-from .partseg_settings import PartSettings
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "analysis")
 
@@ -255,7 +254,7 @@ class Options(QWidget):
                 else:
                     i += 1
         if len(new_names) > 0:
-            combo_box.addItems(list(sorted(new_names)))
+            combo_box.addItems(sorted(new_names))
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() in [Qt.Key_Enter, Qt.Key_Return] and event.modifiers() == Qt.ControlModifier:
@@ -267,12 +266,12 @@ class Options(QWidget):
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
             if not ok:
                 return
-            if text in self._settings.roi_profiles and QMessageBox.No == QMessageBox.warning(
+            if text in self._settings.roi_profiles and QMessageBox.StandardButton.No == QMessageBox.warning(
                 self,
                 "Already exists",
                 "Profile with this name already exist. Overwrite?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             ):
                 continue
             resp = ROIExtractionProfile(name=text, algorithm=widget.name, values=widget.get_values())
@@ -385,9 +384,9 @@ class MainMenu(BaseMainMenu):
 
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() < 800:
-            self.batch_processing_btn.hide()
+            self.batch_processing_btn.setVisible(False)
         else:
-            self.batch_processing_btn.show()
+            self.batch_processing_btn.setVisible(True)
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.matches(QKeySequence.Save):
@@ -412,9 +411,9 @@ class MainMenu(BaseMainMenu):
             project_info = self.settings.get_project_info()
             base_values[selected_filter] = values
 
-            def exception_hook(exception):
+            def exception_hook(exception):  # pragma: no cover
                 if isinstance(exception, ValueError):
-                    show_warning("Save error", f"Error during saving\n{exception}")
+                    show_warning("Save error", f"Error during saving\n{exception}", exception=exception)
                 else:
                     raise exception
 
@@ -436,6 +435,7 @@ class MainMenu(BaseMainMenu):
                 show_warning(
                     OPEN_ERROR,
                     "No needed files inside archive. Most probably you choose file from segmentation mask",
+                    exception=exception,
                 )
             else:
                 load_data_exception_hook(exception)
@@ -461,8 +461,8 @@ class MainMenu(BaseMainMenu):
                     result = dial2.get_result()
                     self.set_data(result)
 
-        except ValueError as e:
-            show_warning("Open error", f"{e}")
+        except ValueError as e:  # pragma: no cover
+            show_warning("Open error", f"{e}", exception=e)
 
     def batch_window(self):
         if self.main_window.batch_window is None:

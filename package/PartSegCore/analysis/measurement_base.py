@@ -8,12 +8,15 @@ from nme import REGISTER, class_to_str, register_class, rename_key
 from pydantic import Field, validator
 from sympy import Symbol, symbols
 
+from PartSegCore.algorithm_describe_base import (
+    AlgorithmDescribeBase,
+    AlgorithmDescribeNotFound,
+    base_model_to_algorithm_property,
+)
+from PartSegCore.universal_const import Units
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 from PartSegImage.image import Spacing
-
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, base_model_to_algorithm_property
-from ..universal_const import Units
 
 
 @register_class(
@@ -54,7 +57,7 @@ class AreaType(Enum):
 
 
 def _migrate_leaf_dict(dkt):
-    from .measurement_calculation import MEASUREMENT_DICT
+    from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
 
     new_dkt = dkt.copy()
     new_dkt["parameter_dict"] = new_dkt.pop("dict")
@@ -88,7 +91,7 @@ class Leaf(BaseModel):
     def _validate_parameters(cls, v, values):  # pylint: disable=R0201
         if not isinstance(v, dict) or "name" not in values:
             return v
-        from .measurement_calculation import MEASUREMENT_DICT
+        from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
 
         if values["name"] not in MEASUREMENT_DICT:
             return v

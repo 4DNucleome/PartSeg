@@ -5,10 +5,9 @@ from pathlib import Path
 
 from qtpy.QtWidgets import QDialog, QFileDialog, QGridLayout, QPushButton, QStackedWidget
 
+from PartSeg.common_gui.algorithms_description import FormWidget
+from PartSeg.common_gui.custom_load_dialog import IORegister, LoadRegisterFileDialog
 from PartSegCore.io_utils import SaveBase
-
-from .algorithms_description import FormWidget
-from .custom_load_dialog import IORegister, LoadRegisterFileDialog
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from PartSeg.common_backend.base_settings import BaseSettings

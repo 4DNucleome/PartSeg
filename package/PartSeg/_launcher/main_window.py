@@ -7,12 +7,11 @@ from qtpy.QtCore import QSize, Qt, QThread, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QProgressBar, QToolButton, QWidget
 
-from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
+from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME, state_store
 from PartSeg.common_backend import napari_get_settings
 from PartSeg.common_backend.base_settings import BaseSettings, get_stylesheet, get_theme, napari_template
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_gui.main_window import BaseMainWindow
-from PartSegCore import state_store
 from PartSegData import icons_dir
 from PartSegImage import TiffImageReader
 
@@ -26,7 +25,7 @@ class Prepare(QThread):
 
     def run(self):
         if self.module != "":
-            from .. import plugins
+            from PartSeg import plugins
 
             plugins.register()
             main_window_module = importlib.import_module(self.module)

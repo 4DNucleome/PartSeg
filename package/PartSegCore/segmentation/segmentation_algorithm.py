@@ -7,17 +7,15 @@ import SimpleITK as sitk
 from nme import register_class, rename_key
 from pydantic import Field
 
-from PartSegCore.utils import BaseModel
+from PartSegCore.convex_fill import convex_fill
+from PartSegCore.project_info import AdditionalLayerDescription
+from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult
+from PartSegCore.segmentation.border_smoothing import NoneSmoothing, OpeningSmoothing, SmoothAlgorithmSelection
+from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
+from PartSegCore.segmentation.threshold import BaseThreshold, DoubleThresholdSelection, ThresholdSelection
+from PartSegCore.segmentation.watershed import BaseWatershed, FlowMethodSelection
+from PartSegCore.utils import BaseModel, bisect
 from PartSegImage import Channel
-
-from ..convex_fill import convex_fill
-from ..project_info import AdditionalLayerDescription
-from ..segmentation.algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult
-from ..utils import bisect
-from .border_smoothing import NoneSmoothing, OpeningSmoothing, SmoothAlgorithmSelection
-from .noise_filtering import NoiseFilterSelection
-from .threshold import BaseThreshold, DoubleThresholdSelection, ThresholdSelection
-from .watershed import BaseWatershed, FlowMethodSelection
 
 
 class StackAlgorithm(ROIExtractionAlgorithm, ABC):
@@ -408,9 +406,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         mask2, thr_val = threshold_algorithm.calculate_mask(
             image, None, self.new_parameters.threshold.values, operator.le
         )
-        if thr_val < min_val:
-            return mask
-        return mask2
+        return mask if thr_val < min_val else mask2
 
     def _threshold_and_exclude(self, image, report_fun):
         if self.mask is not None:

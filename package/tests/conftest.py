@@ -2,6 +2,7 @@ import dataclasses
 import itertools
 import multiprocessing as mp
 import os
+import platform
 import signal
 from copy import deepcopy
 from pathlib import Path
@@ -10,7 +11,7 @@ from queue import Empty
 import numpy as np
 import pytest
 
-from PartSegCore import state_store
+from PartSeg import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
@@ -301,3 +302,13 @@ def pytest_collection_modifyitems(session, config, items):
     core_tests = [x for x in items if "PartSegCore" in str(x.fspath)]
     other_test = [x for x in items if "PartSegCore" not in str(x.fspath) and "PartSegImage" not in str(x.fspath)]
     items[:] = image_tests + core_tests + other_test
+
+
+def pytest_runtest_setup(item):
+    if platform.system() == "Windows" and any(item.iter_markers(name="windows_ci_skip")):
+        pytest.skip("glBindFramebuffer with no OpenGL")
+    if platform.system() == "Windows" and any(item.iter_markers(name="pyside_skip")):
+        import qtpy
+
+        if qtpy.API_NAME == "PySide2":
+            pytest.skip("PySide2 problems")

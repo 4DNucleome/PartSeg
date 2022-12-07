@@ -7,14 +7,15 @@ import pytest
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadImageMask, LoadMaskSegmentation, LoadProject, LoadStackImage
 from PartSegCore.analysis.save_functions import save_dict as analysis_save_dict
-from PartSegCore.mask.io_functions import LoadROIImage, LoadROIParameters
-from PartSegCore.mask.io_functions import LoadStackImage as MaskLoadStackImage
 from PartSegCore.mask.io_functions import (
+    LoadROIImage,
+    LoadROIParameters,
     MaskProjectTuple,
     save_components_dict,
     save_parameters_dict,
     save_segmentation_dict,
 )
+from PartSegCore.mask.io_functions import LoadStackImage as MaskLoadStackImage
 
 
 class TestPartSettingsIO:

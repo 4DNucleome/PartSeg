@@ -35,7 +35,6 @@ from PartSegImage import Image
 
 if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
-
 logger = logging.getLogger(__name__)
 
 DIR_HISTORY = "io.dir_location_history"
@@ -263,7 +262,7 @@ class ViewSettings(ImageSettings):
     @property
     def theme_name(self) -> str:
         """Name of current theme."""
-        return self.get_from_profile("theme", "light")
+        return self.get_from_profile("theme", "dark")
 
     @property
     def theme(self):
@@ -354,7 +353,7 @@ class ViewSettings(ImageSettings):
             with suppress(KeyError):
                 colormaps.remove(name)
         # TODO update sorting rule
-        self.chosen_colormap = list(sorted(colormaps, key=self.colormap_dict.get_position))
+        self.chosen_colormap = sorted(colormaps, key=self.colormap_dict.get_position)
 
     def get_channel_info(self, view: str, num: int, default: Optional[str] = None) -> str:  # pragma: no cover
         warnings.warn(

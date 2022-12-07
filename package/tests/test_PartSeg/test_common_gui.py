@@ -1,5 +1,6 @@
 # pylint: disable=R0201
 import datetime
+import io
 import os
 import platform
 import subprocess  # nosec
@@ -23,16 +24,19 @@ from qtpy.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFileDialog,
+    QFormLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
     QMenu,
+    QSpinBox,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 from superqt import QEnumComboBox
 
+from PartSeg import state_store
 from PartSeg.common_gui import exception_hooks, select_multiple_files
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.advanced_tabs import (
@@ -64,7 +68,7 @@ from PartSeg.common_gui.custom_load_dialog import (
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
-from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog
+from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, QMessageFromException, _print_traceback
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
@@ -82,11 +86,12 @@ from PartSeg.common_gui.universal_gui_part import (
     CustomDoubleSpinBox,
     CustomSpinBox,
     EnumComboBox,
+    Hline,
     InfoLabel,
     MguiChannelComboBox,
     Spacing,
 )
-from PartSegCore import Units, state_store
+from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmProperty,
@@ -963,7 +968,7 @@ class TestFormWidget:
                 self.value = value
 
         class DummyWidget(Container):
-            multiline = True
+            __multiline__ = True
 
             def __init__(self, value, nullable, **kwargs):
                 self.value = value
@@ -975,6 +980,16 @@ class TestFormWidget:
         form_widget = FormWidget([AlgorithmProperty("dummy", "dummy", DummyClass(1))])
         qtbot.add_widget(form_widget)
         assert form_widget.layout().rowCount() == 2
+
+    def test_hline(self, qtbot):
+        w = FormWidget(["------", "---", AlgorithmProperty("dummy", "dummy", 1), "Hline"])
+        qtbot.add_widget(w)
+
+        layout = w.layout()
+        assert isinstance(layout.itemAt(0).widget(), Hline)
+        assert isinstance(layout.itemAt(1).widget(), QLabel)
+        assert isinstance(layout.itemAt(2, QFormLayout.FieldRole).widget(), QSpinBox)
+        assert isinstance(layout.itemAt(4).widget(), Hline)
 
 
 class TestFieldsList:
@@ -1403,8 +1418,9 @@ def test_multiple_files_tree_widget(qtbot, monkeypatch):
 def test_exception_hooks(exc, monkeypatch):
     called = False
 
-    def mock_show_warning(text1, text2):
+    def mock_show_warning(text1, text2, exception=None):
         nonlocal called
+        assert isinstance(exception, exc)
         assert text1 == exception_hooks.OPEN_ERROR
         assert "Test text" in text2
         called = True
@@ -1417,8 +1433,9 @@ def test_exception_hooks(exc, monkeypatch):
 def test_exception_hooks_value_error(monkeypatch):
     called = False
 
-    def mock_show_warning(text1, text2):
+    def mock_show_warning(text1, text2, exception=None):
         nonlocal called
+        assert isinstance(exception, ValueError)
         assert text1 == exception_hooks.OPEN_ERROR
         assert text2 == "Most probably you try to load mask from other image. Check selected files."
         called = True
@@ -1673,3 +1690,71 @@ class TestMguiChannelComboBox:
         qtbot.addWidget(widget.native)
         widget.change_channels_num(5)
         assert len(widget.choices) == 5
+
+
+def test_print_traceback_cause():
+    try:
+        try:
+            raise ValueError("foo")
+        except ValueError as e:
+            raise RuntimeError("bar") from e
+    except RuntimeError as e2:
+        stream = io.StringIO()
+        _print_traceback(e2, file_=stream)
+        text = stream.getvalue()
+
+        assert "ValueError" in text
+        assert "RuntimeError" in text
+        assert "cause of the following exception" in text
+
+
+def test_print_traceback_context():
+    try:
+        try:
+            raise ValueError("foo")
+        except ValueError:
+            raise RuntimeError("bar")
+    except RuntimeError as e2:
+        stream = io.StringIO()
+        _print_traceback(e2, file_=stream)
+        text = stream.getvalue()
+
+        assert "ValueError" in text
+        assert "RuntimeError" in text
+        assert "another exception occurred" in text
+
+
+class TestQMessageFromException:
+    def test_create(self, qtbot):
+        try:
+            a = 1
+            raise ValueError(f"foo {a}")
+        except ValueError as e:
+            msg = QMessageFromException(QMessageFromException.Question, "Test", "test", e)
+            qtbot.addWidget(msg)
+
+            assert "foo 1" in msg.detailedText()
+            assert "a = 1" in msg.detailedText()
+
+    @pytest.mark.parametrize("method", ["critical", "information", "question", "warning"])
+    def test_methods(self, monkeypatch, qtbot, method):
+
+        called = False
+
+        def exec_mock(self):
+            nonlocal called
+
+            called = True
+            qtbot.add_widget(self)
+            assert "foo 1" in self.detailedText()
+            assert "a = 1" in self.detailedText()
+
+        monkeypatch.setattr(QMessageFromException, "exec_", exec_mock)
+
+        try:
+            a = 1
+            raise ValueError(f"foo {a}")
+        except ValueError as e:
+            getattr(QMessageFromException, method)(None, "Test", "test", exception=e)
+
+            assert called

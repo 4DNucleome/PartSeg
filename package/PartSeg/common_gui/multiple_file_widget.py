@@ -27,12 +27,11 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog, LoadProperty
+from PartSeg.common_gui.exception_hooks import load_data_exception_hook
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.io_utils import LoadBase
 from PartSegCore.project_info import ProjectInfoBase
-
-from .custom_load_dialog import CustomLoadDialog, LoadProperty
-from .exception_hooks import load_data_exception_hook
-from .waiting_dialog import ExecuteFunctionDialog
 
 
 class MultipleFilesTreeWidget(QTreeWidget):

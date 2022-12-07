@@ -359,7 +359,7 @@ class AddRegisterMeta(ModelMetaclass):
         methods = kwargs.pop("methods", [])
         suggested_base_class = kwargs.pop("suggested_base_class", None)
         class_methods = kwargs.pop("class_methods", [])
-        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)  # pylint: disable=too-many-function-args
         cls2.__register__ = Register(
             class_methods=class_methods, methods=methods, suggested_base_class=suggested_base_class
         )
@@ -431,8 +431,8 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
 
 
 class ROIExtractionProfileMeta(ModelMetaclass):
-    def __new__(mcs, name, bases, attrs, **kwargs):
-        cls2 = super().__new__(mcs, name, bases, attrs, **kwargs)
+    def __new__(cls, name, bases, attrs, **kwargs):
+        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)  # pylint: disable=too-many-function-args
 
         def allow_positional_args(func):
             @wraps(func)
@@ -592,21 +592,28 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     )
 
 
-def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List[AlgorithmProperty]:
+def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List[typing.Union[str, AlgorithmProperty]]:
+    """
+    Convert pydantic model to list of AlgorithmPropert nad strings.
+
+    :param obj:
+    :return:
+    """
     res = []
     value: "ModelField"
     if hasattr(obj, "header") and obj.header():
         res.append(obj.header())
     for name, value in obj.__fields__.items():
         ap = _field_to_algorithm_property(name, value)
-
-        if "prefix" in value.field_info.extra:
-            res.append(value.field_info.extra["prefix"])
-
+        pos = len(res)
         if "position" in value.field_info.extra:
-            res.insert(value.field_info.extra["position"], ap)
-        elif not value.field_info.extra.get("hidden", False):
-            res.append(ap)
+            pos = value.field_info.extra["position"]
+        if "prefix" in value.field_info.extra:
+            res.insert(pos, value.field_info.extra["prefix"])
+            pos += 1
+
+        res.insert(pos, ap)
+
         if "suffix" in value.field_info.extra:
-            res.append(value.field_info.extra["suffix"])
+            res.insert(pos + 1, value.field_info.extra["suffix"])
     return res

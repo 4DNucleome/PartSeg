@@ -6,11 +6,10 @@ from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget
 from superqt import QEnumComboBox
 
+from PartSeg.common_backend.base_settings import BaseSettings, ImageSettings
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.segmentation.algorithm_base import calculate_operation_radius
-
-from ..common_backend.base_settings import BaseSettings, ImageSettings
 
 
 def off_widget(widget: QWidget, combo_box: QEnumComboBox, _val=None):

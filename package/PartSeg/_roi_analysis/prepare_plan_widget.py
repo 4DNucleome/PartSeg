@@ -34,6 +34,14 @@ from qtpy.QtWidgets import (
 )
 from superqt import QEnumComboBox
 
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
+from PartSeg.common_backend.except_hook import show_warning
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
+from PartSeg.common_gui.mask_widget import MaskWidget
+from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
+from PartSeg.common_gui.universal_gui_part import right_label
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
@@ -56,14 +64,6 @@ from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.universal_const import Units
-
-from ..common_gui.custom_load_dialog import PLoadDialog
-from ..common_gui.custom_save_dialog import FormDialog, PSaveDialog
-from ..common_gui.mask_widget import MaskWidget
-from ..common_gui.searchable_list_widget import SearchableListWidget
-from ..common_gui.universal_gui_part import right_label
-from .partseg_settings import PartSettings
-from .profile_export import ExportDialog, ImportDialog
 
 group_sheet = (
     "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} "
@@ -374,8 +374,8 @@ class OtherOperations(ProtectedGroupBox):
 
     def save_action(self):
         save_class = self.save_translate_dict.get(self.choose_save_method.currentText(), None)
-        if save_class is None:
-            QMessageBox.warning(self, "Save problem", "Not found save class")
+        if save_class is None:  # pragma: no cover
+            show_warning(self, "Save problem", "Not found save class")
             return
         dial = FormDialog(
             [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
@@ -469,12 +469,12 @@ class ROIExtractionOp(ProtectedGroupBox):
         self._activate_button()
 
     def _refresh_profiles(self):
-        new_profiles = list(sorted(self.settings.roi_profiles.keys(), key=str.lower))
+        new_profiles = sorted(self.settings.roi_profiles.keys(), key=str.lower)
         with self.enable_protect():
             self.refresh_profiles(self.roi_profile, new_profiles)
 
     def _refresh_pipelines(self):
-        new_pipelines = list(sorted(self.settings.roi_pipelines.keys(), key=str.lower))
+        new_pipelines = sorted(self.settings.roi_pipelines.keys(), key=str.lower)
         with self.enable_protect():
             self.refresh_profiles(self.roi_pipeline, new_pipelines)
 
@@ -556,7 +556,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
             )
 
     def _refresh_measurement(self):
-        new_measurements = list(sorted(self.settings.measurement_profiles.keys(), key=str.lower))
+        new_measurements = sorted(self.settings.measurement_profiles.keys(), key=str.lower)
         with self.enable_protect():
             self.refresh_profiles(self.measurements_list, new_measurements)
 
@@ -811,15 +811,15 @@ class CreatePlan(QWidget):
 
     def create_mask(self, mask_ob: MaskBase):
         if mask_ob.name != "" and mask_ob.name in self.mask_set:
-            QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
+            show_warning("Already exists", "Mask with this name already exists")
             return
 
         if self.update_element_chk.isChecked():
             node = self.calculation_plan.get_node()
             name = node.operation.name
             if name in self.calculation_plan.get_reused_mask() and name != mask_ob.name:
-                QMessageBox.warning(
-                    self, "Cannot remove", f"Cannot remove mask '{name}' from plan because it is used in other elements"
+                show_warning(
+                    "Cannot remove", f"Cannot remove mask '{name}' from plan because it is used in other elements"
                 )
                 return
 
@@ -840,7 +840,7 @@ class CreatePlan(QWidget):
 
     def add_roi_extraction_pipeline(self, roi_extraction_pipeline: SegmentationPipeline):
         if self.update_element_chk.isChecked():
-            QMessageBox.warning(self, "Cannot update pipeline", "Cannot update pipeline")
+            show_warning("Cannot update pipeline", "Cannot update pipeline")
             return
         pos = self.calculation_plan.current_pos[:]
         old_pos = pos[:]
@@ -862,7 +862,7 @@ class CreatePlan(QWidget):
         conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
         if len(conflict_mask) > 0:
             logging.info("Mask in use")
-            QMessageBox.warning(self, "In use", f'Masks {", ".join(conflict_mask)} are used in other places')
+            show_warning("In use", f'Masks {", ".join(conflict_mask)} are used in other places')
 
             return
         self.mask_set -= used_mask
@@ -1086,7 +1086,7 @@ class CalculateInfo(QWidget):
         info_chose_layout.addWidget(self.plan_view)
         info_layout.addLayout(info_chose_layout)
         self.setLayout(info_layout)
-        self.calculate_plans.addItems(list(sorted(self.settings.batch_plans.keys())))
+        self.calculate_plans.addItems(sorted(self.settings.batch_plans.keys()))
         self.protect = False
         self.plan_to_edit = None
 
@@ -1138,7 +1138,7 @@ class CalculateInfo(QWidget):
         self.settings.measurement_profiles[data.name] = data
 
     def update_plan_list(self):
-        new_plan_list = list(sorted(self.settings.batch_plans.keys()))
+        new_plan_list = sorted(self.settings.batch_plans.keys())
         if self.calculate_plans.currentItem() is not None:
             text = str(self.calculate_plans.currentItem().text())
             try:
@@ -1182,7 +1182,7 @@ class CalculateInfo(QWidget):
             res = dial.get_result()
             plans, err = res.load_class.load(res.load_location)
             if err:
-                QMessageBox.warning(self, "Import error", f"error during importing, part of data were filtered. {err}")
+                show_warning("Import error", f"error during importing, part of data were filtered. {err}")
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview, CalculationPlan)
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():

@@ -4,6 +4,7 @@ from copy import deepcopy
 
 from qtpy.QtCore import Signal
 
+from PartSeg.common_backend.base_settings import BaseSettings, SaveSettingsDescription
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.analysis.calculation_plan import CalculationPlan
@@ -15,8 +16,6 @@ from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.utils import EventedDict, ProfileDict
-
-from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
 
 
 class PartSettings(BaseSettings):
@@ -61,7 +60,7 @@ class PartSettings(BaseSettings):
         :param dict algorithm_values:
         """
         self.history[self.history_index + 1] = self.history[self.history_index + 1].copy(
-            update=dict(roi_extraction_parameters={"algorithm_name": algorithm_name, "values": algorithm_values})
+            update={"roi_extraction_parameters": {"algorithm_name": algorithm_name, "values": algorithm_values}}
         )
 
     @staticmethod
@@ -77,8 +76,7 @@ class PartSettings(BaseSettings):
         self._mask = None
 
     def get_project_info(self) -> ProjectTuple:
-        algorithm_name = self.last_executed_algorithm
-        if algorithm_name:
+        if algorithm_name := self.last_executed_algorithm:
             value = self.get_algorithm(f"algorithms.{algorithm_name}")
             if isinstance(value, EventedDict):
                 value = value.as_dict_deep()
