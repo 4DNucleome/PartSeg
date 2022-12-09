@@ -43,10 +43,6 @@ jobs:
           echo "main_packages=$(python build_utils/check_updated_packages.py --main-packages)" >> $GITHUB_OUTPUT
           echo "all_packages=$(python build_utils/check_updated_packages.py)" >> $GITHUB_OUTPUT
 
-      - name: Check updated packages
-        id: all_packages
-        run: python build_utils/check_updated_packages.py
-
       - name: Create PR updating vendored modules
         uses: peter-evans/create-pull-request@v4
         with:
