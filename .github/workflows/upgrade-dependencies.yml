@@ -40,6 +40,7 @@ jobs:
       - name: Check updated packages
         id: packages
         run: |
+          python build_utils/check_updated_packages.py --main-packages
           echo "main_packages=$(python build_utils/check_updated_packages.py --main-packages)" >> $GITHUB_OUTPUT
           echo "all_packages=$(python build_utils/check_updated_packages.py)" >> $GITHUB_OUTPUT
 
@@ -49,10 +50,10 @@ jobs:
           commit-message: Update bundle dependencies.
           branch: ${{ env.BRANCH_NAME }}
           delete-branch: true
-          title: "dep: [Automatic] Dependency upgrades of ${{ steps.packages.main_packages }}"
+          title: "dep: [Automatic] Dependency upgrades of ${{ steps.packages.outputs.main_packages }}"
           body: |
             This PR is automatically created and updated by PartSeg GitHub
             action cron to keep bundle dependencies modules up to date.
 
-            The updated packages are: ${{ steps.packages.all_packages }}
+            The updated packages are: ${{ steps.packages.outputs.all_packages }}
           token: ${{ secrets.GHA_TOKEN }}
