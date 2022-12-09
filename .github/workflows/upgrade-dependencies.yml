@@ -41,6 +41,7 @@ jobs:
         id: packages
         run: |
           python build_utils/check_updated_packages.py --main-packages
+          python build_utils/check_updated_packages.py
           echo "main_packages=$(python build_utils/check_updated_packages.py --main-packages)" >> $GITHUB_OUTPUT
           echo "all_packages=$(python build_utils/check_updated_packages.py)" >> $GITHUB_OUTPUT
 
