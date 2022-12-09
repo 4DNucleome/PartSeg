@@ -23,7 +23,7 @@ out = subprocess.run(
 changed_packages = [changed_name_re.match(x)[1] for x in out.stdout.decode().split("\n") if changed_name_re.match(x)]
 
 if not args.main_packages:
-    print(", ".join(sorted(changed_packages)))
+    print(", ".join(f"`{x}`" for x in sorted(changed_packages)))
     sys.exit(0)
 
 
@@ -32,4 +32,4 @@ config.read(src_dir / "setup.cfg")
 packages = config["options"]["install_requires"].split("\n")
 packages = [name_re.match(package).group() for package in packages if name_re.match(package)]
 
-print(", ".join(sorted(set(packages) & set(changed_packages))))
+print("\n".join(f" * {x}" for x in sorted(set(packages) & set(changed_packages))))
