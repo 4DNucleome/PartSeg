@@ -43,7 +43,9 @@ jobs:
           python build_utils/check_updated_packages.py --main-packages
           python build_utils/check_updated_packages.py
           echo "main_packages=$(python build_utils/check_updated_packages.py --main-packages)" >> $GITHUB_OUTPUT
-          echo "all_packages=$(python build_utils/check_updated_packages.py)" >> $GITHUB_OUTPUT
+          echo "all_packages<<EOF"
+          echo "$(python build_utils/check_updated_packages.py)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create PR updating vendored modules
         uses: peter-evans/create-pull-request@v4
