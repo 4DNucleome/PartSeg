@@ -1,6 +1,9 @@
 name: Upgrade dependencies
 
 on:
+  push:
+    branches:
+      - list_updated_packages
   workflow_dispatch: # Allow running on-demand
   schedule:
     # Runs every Monday at 8:00 UTC (4:00 Eastern)
