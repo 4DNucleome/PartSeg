@@ -1,6 +1,6 @@
 import argparse
 import re
-import subprocess
+import subprocess  # nosec
 import sys
 from configparser import ConfigParser
 from pathlib import Path
