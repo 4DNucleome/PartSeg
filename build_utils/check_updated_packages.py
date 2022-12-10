@@ -16,8 +16,8 @@ parser.add_argument("--main-packages", action="store_true")
 args = parser.parse_args()
 
 
-out = subprocess.run(
-    ["git", "diff", str(src_dir / "requirements" / "requirements_pyinstaller.txt")], capture_output=True
+out = subprocess.run(  # nosec
+    ["git", "diff", str(src_dir / "requirements" / "requirements_pyinstaller.txt")], capture_output=True, check=True
 )
 
 changed_packages = [changed_name_re.match(x)[1] for x in out.stdout.decode().split("\n") if changed_name_re.match(x)]
