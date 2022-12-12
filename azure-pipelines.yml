@@ -17,7 +17,7 @@ stages:
   - stage: GetTestData
     jobs:
     - job: linux
-      pool: {vmImage: 'Ubuntu-20.04'}
+      pool: {vmImage: 'Ubuntu-22.04'}
       steps:
         - script: bash build_utils/download_data.sh
           displayName: "download data"
@@ -91,7 +91,7 @@ stages:
               artifactName: docs
 
       - job: Notebook_check
-        pool: {vmImage: 'Ubuntu-20.04'}
+        pool: {vmImage: 'Ubuntu-22.04'}
         continueOnError: true
         variables:
           DATA_PATH: typy_neuronow2
@@ -115,7 +115,7 @@ stages:
       pip_cache_dir: $(Pipeline.Workspace)/.pip
     jobs:
     - job: test_linux
-      pool: { vmImage: 'ubuntu-20.04' }
+      pool: { vmImage: 'ubuntu-22.04' }
       variables:
         AZURE_PIPELINES: 1
         DISPLAY: ':99.0'
