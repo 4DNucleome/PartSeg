@@ -70,7 +70,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install setuptools tox tox-gh-actions
+          pip install setuptools tox tox-gh-actions>=2.12.0
 
       - name: Test with tox linux
         # run tests using pip install --pre
