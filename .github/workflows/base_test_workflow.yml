@@ -15,7 +15,7 @@ on:
         required: false
         type: string
         default: >-
-          ["None"]
+          ["latest"]
       qt_backend:
         required: false
         type: string
