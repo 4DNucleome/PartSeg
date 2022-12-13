@@ -81,7 +81,7 @@ jobs:
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: None
+          NAPARI: latest
 
       # If something goes wrong, we can open an issue in the repo
       - name: Report Failures
