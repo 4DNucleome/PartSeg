@@ -15,7 +15,7 @@ on:
         required: false
         type: string
         default: >-
-          ["None"]
+          ["latest"]
       qt_backend:
         required: false
         type: string
@@ -33,7 +33,7 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }} py ${{ matrix.python_version }} ${{ matrix.napari }} ${{ matrix.qt_backend }}
+    name: ${{ matrix.os }} py ${{ matrix.python_version }} ${{ matrix.napari_version }} ${{ matrix.qt_backend }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
