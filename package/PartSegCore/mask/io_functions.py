@@ -34,7 +34,7 @@ from PartSegCore.io_utils import (
     tar_to_buff,
 )
 from PartSegCore.json_hooks import PartSegEncoder
-from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
+from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.utils import BaseModel
 from PartSegImage import BaseImageWriter, GenericImageReader, Image, IMAGEJImageWriter, ImageWriter, TiffImageReader
