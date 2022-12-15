@@ -34,7 +34,7 @@ from PartSegCore.io_utils import (
     tar_to_buff,
 )
 from PartSegCore.json_hooks import PartSegEncoder
-from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
+from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.utils import BaseModel
 from PartSegImage import BaseImageWriter, GenericImageReader, Image, IMAGEJImageWriter, ImageWriter, TiffImageReader
@@ -44,8 +44,11 @@ try:
     from napari_builtins.io import napari_write_points
 except ImportError:
     from napari.plugins._builtins import napari_write_points
+
 if sys.version_info[:3] == (3, 9, 7):
-    ProjectInfoBase = object  # noqa: F811
+    ProjectInfoBase = object
+else:
+    from PartSegCore.project_info import ProjectInfoBase
 
 
 def empty_fun(_a0=None, _a1=None):

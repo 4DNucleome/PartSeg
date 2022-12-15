@@ -7,7 +7,7 @@ import numpy as np
 import packaging.version
 
 from PartSegCore.mask_create import MaskProperty
-from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
+from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.utils import numpy_repr
 from PartSegImage import Image
@@ -15,7 +15,9 @@ from PartSegImage import Image
 project_version_info = packaging.version.Version("1.1")
 
 if sys.version_info[:3] == (3, 9, 7):
-    ProjectInfoBase = object  # noqa: F811
+    ProjectInfoBase = object
+else:
+    from PartSegCore.project_info import ProjectInfoBase
 
 
 @dataclass(frozen=True)
