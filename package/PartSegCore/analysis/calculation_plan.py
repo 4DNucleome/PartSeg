@@ -255,7 +255,7 @@ class MaskFile(MaskMapper):
         self.path_to_file = value
 
     def parse_map(self, sep=";"):
-        if not os.path.exists(self.path_to_file):
+        if not os.path.exists(self.path_to_file):  # pragma: no cover
             logging.error("File does not exists: %s", self.path_to_file)
             raise ValueError(f"File for mapping mask does not exists: {self.path_to_file}")
         with open(self.path_to_file, encoding="utf-8") as map_file:
@@ -263,7 +263,7 @@ class MaskFile(MaskMapper):
             for i, line in enumerate(map_file):
                 try:
                     file_name, mask_name = line.split(sep)
-                except ValueError:
+                except ValueError:  # pragma: no cover
                     logging.error("Error in parsing map file\nline %s\n%s\nfrom file %s", i, line, self.path_to_file)
                     continue
                 file_name = file_name.strip()
