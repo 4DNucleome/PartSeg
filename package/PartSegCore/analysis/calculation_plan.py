@@ -710,7 +710,7 @@ class CalculationPlan:
         :param el: Plan element
         :return: str
         """
-        if el.__class__.__name__ not in CalculationPlan.correct_name.keys():
+        if el.__class__.__name__ not in CalculationPlan.correct_name:
             print(el, el.__class__.__name__, file=sys.stderr)
             raise ValueError(f"Unknown type {el.__class__.__name__}")
         if isinstance(el, RootType):
