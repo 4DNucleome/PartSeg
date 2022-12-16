@@ -187,8 +187,7 @@ def add_classes(types_list, translate_dict, global_state):
             continue
         if hasattr(type_, "__module__") and type_.__module__ == "typing":
             if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.abc.Iterable):
-                sub_types = [x for x in type_.__args__ if not isinstance(x, omit_list)]
-                if sub_types:
+                if sub_types := [x for x in type_.__args__ if not isinstance(x, omit_list)]:
                     add_classes(sub_types, translate_dict, global_state)
                     if type_._name is None:  # pylint: disable=W0212
                         type_str = str(type_.__origin__)
@@ -251,8 +250,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         field_definitions = ""
     init_sig = [f"self.{f_name} = {v_name}" for f_name, v_name in zip(slots, type_dict.keys())]
     tuple_list = [f"self.{name_}" for name_ in slots]
-    init_content = "\n        ".join(init_sig)
-    init_content += "\n        self.__post_init__()"
+    init_content = "\n        ".join(init_sig) + "\n        self.__post_init__()"
     class_definition = _class_template.format(
         imports="\n".join(import_set),
         typename=typename,
@@ -268,7 +266,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         base_classes=", ".join(translate_dict[x] for x in base_classes),
     )
 
-    global_state["__name__"] = "serialize_%s" % typename
+    global_state["__name__"] = f"serialize_{typename}"
     try:
         # pylint: disable=W0122
         exec(class_definition, global_state)  # nosec
@@ -291,9 +289,9 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
 
 
 class BaseMeta(type):
-    def __new__(mcs, name, bases, attrs):
+    def __new__(cls, name, bases, attrs):
         if attrs.get("_root", False):
-            return super().__new__(mcs, name, bases, attrs)
+            return super().__new__(cls, name, bases, attrs)
         warnings.warn(
             "BaseSerializableClass is deprecated, use pydantic.BaseModel instead", FutureWarning, stacklevel=2
         )
