@@ -224,7 +224,7 @@ class OifImagReader(BaseImageReader):
         i = 0
         while True:
             name = f"Axis {i} Parameters Common"
-            if name not in image_file.mainfile:
+            if name not in image_file.mainfile:  # pragma: no cover
                 z_scale = 1
                 break
             axis_info = image_file.mainfile[name]
