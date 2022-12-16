@@ -352,23 +352,23 @@ class BaseSerializableClass(metaclass=BaseMeta):
     __old_names__ = ()
 
     def __init__(self, *args, **kwargs):
-        pass
+        """declare interface"""
 
     def __post_init__(self):
-        pass
+        """declare interface"""
 
     def asdict(self) -> collections.OrderedDict:
-        pass
+        """declare interface"""
 
     def replace_(self, **_kwargs):
         return self
 
     def as_tuple(self) -> typing.Tuple:
-        pass
+        """declare interface"""
 
     @classmethod
     def make_(cls, iterable):
-        pass
+        """declare interface"""
 
 
 class SerializeClassEncoder(json.JSONEncoder):

@@ -37,7 +37,7 @@ def teardown_module():
 
 
 def empty(*_):
-    pass
+    """Empty function to avoid unused variable warning."""
 
 
 def test_readonly():

@@ -65,7 +65,7 @@ class SaveExcel(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        pass
+        """empty function to satisfy interface"""
 
     @classmethod
     def get_name(cls) -> str:
