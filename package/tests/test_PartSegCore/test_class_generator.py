@@ -167,7 +167,7 @@ def test_typing():
 
 
 def test_forward_ref():
-    class Test(BaseSerializableClass):  # pylint: disable=W0612
+    class Test(BaseSerializableClass):  # pylint: disable=W0612 # skipcq: PTC-W0065
         val: int
         child: typing.Optional["Test"] = None  # noqa F821
 
