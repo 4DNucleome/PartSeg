@@ -159,11 +159,11 @@ class BatchManager:
             del self.calculation_dict[global_parameters.uuid]
 
     def join_all(self):
-        logging.debug(f"Join begin {len(self.process_list)} {self.number_off_process}")
+        logging.debug("Join begin %s %s", len(self.process_list), self.number_off_process)
         with self.locker:
             if len(self.process_list) > self.number_off_process:
                 to_remove = []
-                logging.debug(f"Process list start {self.process_list}")
+                logging.debug("Process list start %s", self.process_list)
                 for p in self.process_list:
                     if not p.is_alive():
                         p.join()
@@ -172,12 +172,15 @@ class BatchManager:
                 for p in to_remove:
                     self.process_list.remove(p)
                 self.number_off_alive_process -= len(to_remove)
-                logging.debug(f"Process list end {self.process_list}")
+                logging.debug("Process list end %s", self.process_list)
             # FIXME self.number_off_alive_process,  self.number_off_process negative values
             if len(self.process_list) > self.number_off_process and len(self.process_list) > 0:
                 logging.info(
-                    f"Wait on process, time {time.time()}, {self.number_off_alive_process},"
-                    f" {len(self.process_list)}, {self.number_off_process}"
+                    "Wait on process, time %s, %s, %s, %s",
+                    time.time(),
+                    self.number_off_alive_process,
+                    len(self.process_list),
+                    self.number_off_process,
                 )
 
                 Timer(1, self.join_all).start()
@@ -235,12 +238,12 @@ class BatchWorker:
 
     def run(self):
         """Worker main loop"""
-        logging.debug(f"Process started {os.getpid()}")
+        logging.debug("Process started %s", os.getpid())
         while True:
             if not self.order_queue.empty():
                 with suppress(Empty):
                     order = self.order_queue.get_nowait()
-                    logging.debug(f"Order message: {order}")
+                    logging.debug("Order message: %s", order)
                     if order == SubprocessOrder.kill:
                         break
             if not self.task_queue.empty():
@@ -253,10 +256,10 @@ class BatchWorker:
                 except (MemoryError, OSError):  # pragma: no cover
                     pass
                 except Exception as ex:  # pragma: no cover # pylint: disable=W0703
-                    logging.warning(f"Unsupported exception {ex}")
+                    logging.warning("Unsupported exception %s", ex)
             else:
                 time.sleep(0.1)
-        logging.info(f"Process {os.getpid()} ended")
+        logging.info("Process %s ended", os.getpid())
 
 
 def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: Dict[uuid.UUID, Any]):

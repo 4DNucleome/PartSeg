@@ -1032,7 +1032,7 @@ calc_layer_filter = thread_worker(_calc_layer_filter)
 
 def _print_dict(dkt: MutableMapping, indent="") -> str:
     if not isinstance(dkt, MutableMapping):
-        logging.error(f"{type(dkt)} instead of dict passed to _print_dict")
+        logging.error("%s instead of dict passed to _print_dict", type(dkt))
         return indent + str(dkt)
     res = []
     for k, v in dkt.items():

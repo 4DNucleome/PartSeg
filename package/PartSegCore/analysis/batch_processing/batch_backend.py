@@ -476,7 +476,7 @@ class CalculationManager:
 
         :param int val: number of workers.
         """
-        logging.debug(f"Number off process {val}")
+        logging.debug("Number off process %s", val)
         self.batch_manager.set_number_of_process(val)
 
     def get_results(self) -> BatchResultDescription:
@@ -764,7 +764,7 @@ class FileData:
                 if i == 100:  # pragma: no cover
                     raise PermissionError(f"Fail to write result excel {self.file_path}")
             except Exception as e:  # pragma: no cover   # pylint: disable=W0703
-                logging.error(f"[batch_backend] {e}")
+                logging.error("[batch_backend] %s", e)
                 self.error_queue.put(prepare_error_data(e))
             finally:
                 self.writing = False
