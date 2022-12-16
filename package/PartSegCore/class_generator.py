@@ -187,9 +187,7 @@ def add_classes(types_list, translate_dict, global_state):
             continue
         if hasattr(type_, "__module__") and type_.__module__ == "typing":
             if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.abc.Iterable):
-                if sub_types := [
-                    x for x in type_.__args__ if not isinstance(x, omit_list)
-                ]:
+                if sub_types := [x for x in type_.__args__ if not isinstance(x, omit_list)]:
                     add_classes(sub_types, translate_dict, global_state)
                     if type_._name is None:  # pylint: disable=W0212
                         type_str = str(type_.__origin__)
