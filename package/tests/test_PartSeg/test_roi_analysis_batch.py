@@ -343,9 +343,8 @@ class TestROIExtractionOp:
         with qtbot.waitSignal(widget.roi_extraction_profile_selected, check_params_cb=check_profile("test2")):
             widget.roi_profile.setCurrentRow(1)
 
-        with widget.enable_protect():
-            with qtbot.assert_not_emitted(widget.roi_extraction_profile_selected):
-                widget.roi_profile.setCurrentRow(0)
+        with widget.enable_protect(), qtbot.assert_not_emitted(widget.roi_extraction_profile_selected):
+            widget.roi_profile.setCurrentRow(0)
 
         part_settings.roi_profiles["test3"] = ROIExtractionProfile(
             name="test3",
@@ -414,9 +413,8 @@ class TestROIExtractionOp:
         with qtbot.waitSignal(widget.roi_extraction_pipeline_selected, check_params_cb=check_pipeline("test2")):
             widget.roi_pipeline.setCurrentRow(1)
 
-        with widget.enable_protect():
-            with qtbot.assert_not_emitted(widget.roi_extraction_pipeline_selected):
-                widget.roi_pipeline.setCurrentRow(0)
+        with widget.enable_protect(), qtbot.assert_not_emitted(widget.roi_extraction_pipeline_selected):
+            widget.roi_pipeline.setCurrentRow(0)
         with qtbot.waitSignal(widget.roi_extraction_pipeline_add, check_params_cb=check_pipeline("test")):
             widget._add_profile()
 
@@ -486,9 +484,8 @@ class TestSelectMeasurementOp:
             widget.measurements_list.setCurrentRow(0)
         with qtbot.waitSignal(widget.set_of_measurement_selected, check_params_cb=check_measurement("statistic2")):
             widget.measurements_list.setCurrentRow(1)
-        with widget.enable_protect():
-            with qtbot.assert_not_emitted(widget.set_of_measurement_selected):
-                widget.measurements_list.setCurrentRow(0)
+        with widget.enable_protect(), qtbot.assert_not_emitted(widget.set_of_measurement_selected):
+            widget.measurements_list.setCurrentRow(0)
 
     def test_set_current_node(self, qtbot, part_settings):
         widget = prepare_plan_widget.SelectMeasurementOp(part_settings)

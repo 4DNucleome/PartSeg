@@ -169,4 +169,7 @@ def check_text(expected, to_return):
 
 
 def _empty():
-    pass
+    """
+    Empty function for monkeypatching to prevent recursive call
+    in `test_rename_profile` test
+    """

@@ -38,8 +38,7 @@ class LoadPartSegOld(LoadBase):
             seg_array = np.load(res_buffer)
         except KeyError:
             seg_array = None
-        algorithm_str = tar_file.extractfile("data.json").read()
-        algorithm_dict = json.loads(algorithm_str)
+        algorithm_dict = json.load(tar_file.extractfile("data.json"))
         spacing = np.array(algorithm_dict["spacing"][::-1]) / UNIT_SCALE[Units.nm.value]
         image = Image(image_arr.reshape((1,) + image_arr.shape + (1,)), spacing, file_path, axes_order="TZYXC")
         values = {

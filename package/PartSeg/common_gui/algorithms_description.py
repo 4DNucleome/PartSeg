@@ -122,7 +122,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         try:
             return self._setter(self._widget, val)
         except (TypeError, ValueError) as e:
-            logging.error(f"Error {e} setting value {val} to {self.name}")
+            logging.error("Error %s setting value %s to %s", e, val, self.name)
 
     def get_field(self) -> QWidget:
         """

@@ -15,8 +15,8 @@ from PartSegCore.segmentation.segmentation_algorithm import (
 from PartSegCore.segmentation.segmentation_algorithm import final_algorithm_list as algorithm_list
 
 
-def empty(*args):
-    pass
+def empty(*_):
+    """Empty function to pass as a callback"""
 
 
 @pytest.fixture(autouse=True)

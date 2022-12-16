@@ -73,7 +73,7 @@ class FlowLayout(QLayout):
         self.itemList.append(layout)
 
     def addStretch(self):
-        pass
+        """To satisfy the QLayout API"""
 
     def count(self):
         return len(self.itemList)

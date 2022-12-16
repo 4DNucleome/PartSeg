@@ -1047,7 +1047,7 @@ class PlanPreview(QTreeWidget):
                         QTreeWidgetItem(child, [line])
 
             else:
-                logging.error(f"Unknown operation {op_type}")
+                logging.error("Unknown operation %s", op_type)  # pragma: no cover
         self.blockSignals(False)
         self.set_path()
         self.changed_node.emit()

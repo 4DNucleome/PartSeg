@@ -27,7 +27,7 @@ def test_sentry_serialize_clip(monkeypatch):
     try:
         raise ValueError("eeee")
     except ValueError as e:
-        event, hint = sentry_sdk.utils.event_from_exception(e)
+        event, _hint = sentry_sdk.utils.event_from_exception(e)
         event["message"] = message
 
         cliped = serialize(event)

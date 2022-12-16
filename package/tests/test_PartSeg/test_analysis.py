@@ -1,22 +1,20 @@
 # pylint: disable=R0201
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 from qtpy.QtCore import QEvent
 from qtpy.QtWidgets import QApplication, QCheckBox
 
-from PartSeg._roi_analysis.measurement_widget import MeasurementsStorage, MeasurementWidget, QMessageBox
+from PartSeg._roi_analysis.measurement_widget import MeasurementsStorage, MeasurementWidget
 from PartSeg._roi_mask.simple_measurements import SimpleMeasurements
 from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import ComponentsInfo, MeasurementResult
 
 
 class TestMeasurementWidget:
-    def test_missed_mask(self, qtbot, analysis_segmentation, part_settings, monkeypatch):
-        def simple(*args, **kwargs):
-            pass
-
-        monkeypatch.setattr(QMessageBox, "information", simple)
+    @patch("PartSeg._roi_analysis.measurement_widget.QMessageBox")
+    def test_missed_mask(self, qmessagebox_path, qtbot, analysis_segmentation, part_settings, monkeypatch):
         widget = MeasurementWidget(part_settings)
         qtbot.addWidget(widget)
 
@@ -27,6 +25,8 @@ class TestMeasurementWidget:
             widget.measurement_type.setCurrentIndex(2)
         assert widget.measurement_type.currentIndex() == 0
         assert not widget.recalculate_button.isEnabled()
+        qmessagebox_path.information.assert_called_once()
+        assert qmessagebox_path.information.call_args[0][1] == "Need mask"
 
     @pytest.mark.enablethread
     @pytest.mark.enabledialog
