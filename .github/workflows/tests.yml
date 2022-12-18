@@ -120,7 +120,10 @@ jobs:
           path: test_data
 
       - name: Install dependencies
-        run: conda install -y tox tox-conda
+        run: conda install -y tox-conda>=0.10.0
+
+      - name: List environment packages
+        run: conda list
 
       - name: create environment
         run: bash build_utils/create_environment_yml.sh
