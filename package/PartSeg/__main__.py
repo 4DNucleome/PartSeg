@@ -1,4 +1,4 @@
 if __name__ == "__main__":
-    from . import launcher_main
+    from PartSeg import launcher_main
 
     launcher_main.main()

@@ -1,29 +1,46 @@
 import dataclasses
 import os
+import sys
 from pathlib import Path
-from typing import List, Optional, Type
+from typing import List, Optional, Type, Union
 
+from napari import __version__
+from packaging.version import parse as parse_version
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
-from qtpy.QtWidgets import QAction, QApplication, QDockWidget, QFileDialog, QMainWindow, QMenu, QMessageBox, QWidget
+from qtpy.QtWidgets import QAction, QApplication, QDockWidget, QMainWindow, QMenu, QMessageBox, QWidget
 from vispy.color import colormap
 
+from PartSeg.common_backend.base_settings import (
+    FILE_HISTORY,
+    BaseSettings,
+    SwapTimeStackException,
+    TimeAndStackException,
+)
+from PartSeg.common_backend.except_hook import show_warning
+from PartSeg.common_backend.load_backup import import_config
+from PartSeg.common_gui.about_dialog import AboutDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.error_report import DataImportErrorDialog
+from PartSeg.common_gui.exception_hooks import load_data_exception_hook
+from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
+from PartSeg.common_gui.napari_image_view import ImageView
+from PartSeg.common_gui.napari_viewer_wrap import Viewer
+from PartSeg.common_gui.qt_console import QtConsole
+from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.algorithm_describe_base import Register
 from PartSegCore.io_utils import LoadBase, SaveScreenshot
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegImage import Image
 
-from ..common_backend.base_settings import FILE_HISTORY, BaseSettings, SwapTimeStackException, TimeAndStackException
-from ..common_backend.load_backup import import_config
-from .about_dialog import AboutDialog
-from .custom_save_dialog import CustomSaveDialog
-from .exception_hooks import load_data_exception_hook
-from .image_adjustment import ImageAdjustmentDialog
-from .napari_image_view import ImageView
-from .napari_viewer_wrap import Viewer
-from .qt_console import QtConsole
-from .show_directory_dialog import DirectoryDialog
-from .waiting_dialog import ExecuteFunctionDialog
+OPEN_FILE = "io.open_file"
+OPEN_DIRECTORY = "io.open_directory"
+OPEN_FILE_FILTER = "io.open_filter"
+
+_EXIT = object()
+
+NAPARI_LE_4_16 = parse_version(__version__) <= parse_version("0.4.16")
 
 
 class BaseMainMenu(QWidget):
@@ -32,51 +49,60 @@ class BaseMainMenu(QWidget):
         self.settings = settings
         self.main_window = main_window
 
+    def _set_data_list(self, data_list):
+        if len(data_list) == 0:
+            QMessageBox.warning(self, "Empty list", "List of files to load is empty")
+            return _EXIT
+        if hasattr(self.main_window, "multiple_files"):
+            self.main_window.multiple_files.add_states(data_list)
+            self.main_window.multiple_files.setVisible(True)
+            self.settings.set("multiple_files", True)
+        return data_list[0]
+
+    def _set_project_info_base(self, project_info_base: ProjectInfoBase):
+        if project_info_base.errors != "":  # pragma: no cover
+            resp = QMessageBox.question(
+                self,
+                "Load problem",
+                f"During load data "
+                f"some problems occur: {project_info_base.errors}."
+                "Do you would like to try load it anyway?",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            if resp == QMessageBox.No:
+                return _EXIT
+        try:
+            image = self.settings.verify_image(project_info_base.image, False)
+        except SwapTimeStackException:
+            res = QMessageBox.question(
+                self,
+                "Not supported",
+                "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+
+            if res == QMessageBox.Yes:
+                image = project_info_base.image.swap_time_and_stack()
+            else:
+                return _EXIT
+        except TimeAndStackException:
+            QMessageBox.warning(self, "image error", "Do not support time and stack image")
+            return _EXIT
+        if not image:
+            return _EXIT
+        if isinstance(image, Image):
+            # noinspection PyProtectedMember
+            project_info_base = dataclasses.replace(project_info_base, image=image)
+        return project_info_base
+
     def set_data(self, data):
         if isinstance(data, list):
-            if len(data) == 0:
-                QMessageBox.warning(self, "Empty list", "List of files to load is empty")
-                return
-            if hasattr(self.main_window, "multiple_files"):
-                self.main_window.multiple_files.add_states(data)
-                self.main_window.multiple_files.setVisible(True)
-                self.settings.set("multiple_files", True)
-            data = data[0]
+            data = self._set_data_list(data)
         if isinstance(data, ProjectInfoBase):
-            if data.errors != "":
-                resp = QMessageBox.question(
-                    self,
-                    "Load problem",
-                    f"During load data "
-                    f"some problems occur: {data.errors}."
-                    "Do you would like to try load it anyway?",
-                    QMessageBox.Yes | QMessageBox.No,
-                )
-                if resp == QMessageBox.No:
-                    return
-            try:
-                image = self.settings.verify_image(data.image, False)
-            except SwapTimeStackException:
-                res = QMessageBox.question(
-                    self,
-                    "Not supported",
-                    "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
-                )
-
-                if res == QMessageBox.Yes:
-                    image = data.image.swap_time_and_stack()
-                else:
-                    return
-            except TimeAndStackException:
-                QMessageBox.warning(self, "image error", "Do not support time and stack image")
-                return
-            if not image:
-                return
-            if isinstance(image, Image):
-                # noinspection PyProtectedMember
-                data = dataclasses.replace(data, image=image)
+            data = self._set_project_info_base(data)
+        if data is _EXIT:
+            return
         if data is None:
             QMessageBox().warning(self, "Data loading failure", "Error during data loading", QMessageBox.Ok)
             return
@@ -110,7 +136,7 @@ class BaseMainWindow(QMainWindow):
 
     def __init__(
         self,
-        config_folder: Optional[str] = None,
+        config_folder: Union[str, Path, None] = None,
         title="PartSeg",
         settings: Optional[BaseSettings] = None,
         load_dict: Optional[Register] = None,
@@ -122,19 +148,13 @@ class BaseMainWindow(QMainWindow):
             if not os.path.exists(config_folder):
                 import_config()
             settings: BaseSettings = self.get_setting_class()(config_folder)
-            errors = settings.load()
-            if errors:
-                errors_message = QMessageBox()
-                errors_message.setText("There are errors during start")
-                errors_message.setInformativeText(
-                    "During load saved state some of data could not be load properly\n"
+            if errors := settings.load():  # pragma: no cover
+                DataImportErrorDialog(
+                    errors,
+                    text="During load saved state some of data could not be load properly\n"
                     "The files has prepared backup copies in "
-                    " state directory (Help > State directory)"
-                )
-                errors_message.setStandardButtons(QMessageBox.Ok)
-                text = "\n".join("File: " + x[0] + "\n" + str(x[1]) for x in errors)
-                errors_message.setDetailedText(text)
-                errors_message.exec()
+                    " state directory (Help > State directory)",
+                ).exec_()
 
         super().__init__()
         if signal_fun is not None:
@@ -147,23 +167,25 @@ class BaseMainWindow(QMainWindow):
         self.setWindowTitle(title)
         self.title_base = title
         app = QApplication.instance()
-        if app is not None:
-            app.setStyleSheet(settings.style_sheet)
+        if app is not None and "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
+            # FIXME the PYTEST_CURRENT_TEST is used to prevent pytest session fail on CI.
+            app.setStyleSheet(settings.get_style_sheet())
         self.settings.theme_changed.connect(self.change_theme)
         self.channel_info = ""
         self.multiple_files = None
         self.settings.request_load_files.connect(self.read_drop)
         self.recent_file_menu = QMenu("Open recent")
-        self._refresh_recent(FILE_HISTORY, self.settings.get_last_files())
-        self.settings.data_changed.connect(self._refresh_recent)
+        self._refresh_recent()
+        self.settings.connect_(FILE_HISTORY, self._refresh_recent)
         self.settings.napari_settings.appearance.events.theme.connect(self.change_theme)
         self.settings.set_parent(self)
         self.console = None
         self.console_dock = QDockWidget("console", self)
         self.console_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.BottomDockWidgetArea)
-        # self.console_dock.setWidget(self.console)
         self.console_dock.hide()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.console_dock)
+
+        self._scale_bar_warning = True  # remove after drop napari 0.4.16
 
     def _toggle_console(self):
         if self.console is None:
@@ -171,11 +193,10 @@ class BaseMainWindow(QMainWindow):
             self.console_dock.setWidget(self.console)
         self.console_dock.setVisible(not self.console_dock.isVisible())
 
-    def _refresh_recent(self, name, value):
-        if name != FILE_HISTORY or self._load_dict is None:
-            return
+    def _refresh_recent(self):
+
         self.recent_file_menu.clear()
-        for name_list, method in value:
+        for name_list, method in self.settings.get_last_files():
             action = self.recent_file_menu.addAction(f"{name_list[0]}, {method}")
             action.setData((name_list, method))
             action.triggered.connect(self._load_recent)
@@ -186,21 +207,24 @@ class BaseMainWindow(QMainWindow):
         try:
             method: LoadBase = self._load_dict[data[1]]
             dial = ExecuteFunctionDialog(method.load, [data[0]], exception_hook=load_data_exception_hook)
-            if dial.exec():
+            if dial.exec_():
                 result = dial.get_result()
                 self.main_menu.set_data(result)
-                self.settings.add_load_files_history(data[0], method.get_name())
-        except KeyError:
+                self.settings.add_last_files(data[0], method.get_name())
+                self.settings.set(OPEN_DIRECTORY, os.path.dirname(data[0][0]))
+                self.settings.set(OPEN_FILE, data[0][0])
+                self.settings.set(OPEN_FILE_FILTER, data[1])
+        except KeyError:  # pragma: no cover
             self.read_drop(data[0])
 
     def toggle_multiple_files(self):
-        self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget"))
+        self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget", False))
 
     def get_colormaps(self) -> List[Optional[colormap.Colormap]]:
         channel_num = self.settings.image.channels
         if not self.channel_info:
             return [None for _ in range(channel_num)]
-        colormaps_name = [self.settings.get_channel_info(self.channel_info, i) for i in range(channel_num)]
+        colormaps_name = [self.settings.get_channel_colormap_name(self.channel_info, i) for i in range(channel_num)]
         return [self.settings.colormap_dict[name][0] for name in colormaps_name]
 
     def napari_viewer_show(self):
@@ -230,7 +254,7 @@ class BaseMainWindow(QMainWindow):
     def change_theme(self, event):
         style_sheet = self.settings.style_sheet
         app = QApplication.instance()
-        if app is not None:
+        if app is not None and "PYTEST_CURRENT_TEST" not in os.environ:  # pragma: no cover
             app.setStyleSheet(style_sheet)
         self.setStyleSheet(style_sheet)
 
@@ -249,21 +273,33 @@ class BaseMainWindow(QMainWindow):
     def _read_drop(self, paths, load_dict):
         ext_set = {os.path.splitext(x)[1].lower() for x in paths}
 
-        def exception_hook(exception):
+        def exception_hook(exception):  # pragma: no cover
+            additional_info = "files: " + ", ".join(paths)
+
             if isinstance(exception, OSError):
-                QMessageBox().warning(
-                    self, "IO Error", "Disc operation error: " + ", ".join(exception.args), QMessageBox.Ok
+                # if happens on macos then add information about requirements to check permissions to file
+                if sys.platform == "darwin":
+                    additional_info += (
+                        "In latest macos release you may need to check if you gave PartSeg (or terminal)"
+                        "Permission to access files. You can do it in System Preferences -> Security & Privacy"
+                    )
+                show_warning(
+                    "IO Error",
+                    "Disc operation error: " + ", ".join(str(x) for x in exception.args) + additional_info,
+                    exception=exception,
                 )
+            else:
+                raise exception
 
         for load_class in load_dict.values():
             if load_class.partial() or load_class.number_of_files() != len(paths):
                 continue
             if ext_set.issubset(load_class.get_extensions()):
                 dial = ExecuteFunctionDialog(load_class.load, [paths], exception_hook=exception_hook)
-                if dial.exec():
+                if dial.exec_():
                     result = dial.get_result()
                     self.main_menu.set_data(result)
-                    self.settings.add_load_files_history(paths, load_class.get_name())
+                    self.settings.add_last_files(paths, load_class.get_name())
                 return
         QMessageBox.information(self, "No method", "No methods for load files: " + ",".join(paths))
 
@@ -284,7 +320,7 @@ class BaseMainWindow(QMainWindow):
     def show_settings_directory(self):
         DirectoryDialog(
             self.settings.json_folder_path, "Path to place where PartSeg store the data between runs"
-        ).exec()
+        ).exec_()
 
     @staticmethod
     def show_about_dialog():
@@ -297,12 +333,12 @@ class BaseMainWindow(QMainWindow):
 
     def image_adjust_exec(self):
         dial = ImageAdjustmentDialog(self.settings.image)
-        if dial.exec():
+        if dial.exec_():
             algorithm = dial.result_val.algorithm
             dial2 = ExecuteFunctionDialog(
                 algorithm.transform, [], {"image": self.settings.image, "arguments": dial.result_val.values}
             )
-            if dial2.exec():
+            if dial2.exec_():
                 result: Image = dial2.get_result()
                 self.settings.set_project_info(self.get_project_info(result.file_path, result))
 
@@ -317,27 +353,34 @@ class BaseMainWindow(QMainWindow):
     def screenshot(self, viewer: ImageView):
         def _screenshot():
             data = viewer.viewer_widget.screenshot()
-            dial = CustomSaveDialog(
-                {SaveScreenshot.get_name(): SaveScreenshot},
-                history=self.settings.get_path_history(),
+            dial = PSaveDialog(
+                SaveScreenshot,
+                settings=self.settings,
                 system_widget=False,
+                path="io.save_screenshot",
+                file_mode=PSaveDialog.AnyFile,
             )
-            dial.setFileMode(QFileDialog.AnyFile)
-            dial.setDirectory(self.settings.get("io.save_screenshot", str(Path.home())))
+
             if not dial.exec_():
                 return
             res = dial.get_result()
-            save_dir = os.path.dirname(str(res.save_destination))
-            self.settings.add_path_history(save_dir)
-            self.settings.set("io.save_screenshot", str(save_dir))
             res.save_class.save(res.save_destination, data, res.parameters)
 
         return _screenshot
 
     def image_read(self):
-        self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
+        folder_name, file_name = os.path.split(self.settings.image_path)
+        self.setWindowTitle(f"{self.title_base}: {os.path.join(os.path.basename(folder_name), file_name)}")
         self.statusBar().showMessage(self.settings.image_path)
 
     def deleteLater(self) -> None:
         self.settings.napari_settings.appearance.events.theme.disconnect(self.change_theme)
         super().deleteLater()
+
+    def _toggle_scale_bar(self):
+        """Remove after drop napari 0.4.16"""
+        if NAPARI_LE_4_16 and self._scale_bar_warning and self.settings.theme_name == "light":  # pragma: no cover
+            QMessageBox.warning(
+                self, "Not supported", "Scale bar is not supported for light theme and napari bellow 0.4.17"
+            )
+            self._scale_bar_warning = False

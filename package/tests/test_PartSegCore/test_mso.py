@@ -137,7 +137,6 @@ class TestConstrainedDilation:
         assert np.all(res == components)
 
         fdt[:] = 20
-        # fdt[:, :, 10] = 1
         components2 = np.zeros(components.shape, dtype=np.uint8)
         components2[2:8, 2:8, 2:10] = 1
         components2[2:8, 2:8, 10:18] = 2
@@ -477,21 +476,17 @@ class TestMSO:
 
         mso.run_MSO(10)
         mso.steps_done()
-        # res = mso.get_result_catted()
         arr = np.copy(components)
         arr[arr == 1] = 0
         arr[3:7, 3:7, 3:10] = 2
         arr[3:7, 3:7, 10:17] = 3
-        # assert np.all(arr == res)
 
         mu_arr[2:8, 2:8, 10] = 0.08
         mso.set_mu_array(mu_arr)
         mso.run_MSO(10)
-        # res = mso.get_result_catted()
         arr[2:8, 2:8, 2:10] = 2
         arr[2:8, 2:8, 11:18] = 3
         arr[3:7, 3:7, 10] = 0
-        # assert np.all(arr == res)
         mu_arr[2:8, 2:8, 9] = 0.08
         mso.set_mu_array(mu_arr)
         arr[2:8, 2:8, 2:9] = 2
@@ -526,7 +521,7 @@ class TestMSO:
         arr[2:8, 2:8, 11:18] = 3
         assert np.all(res == arr)
 
-    def _test_background_simple(self):
+    def test_background_simple(self):
         components = np.ones((20, 20, 20), dtype=np.uint8)
         components[1:-1, 1:-1, 1:-1] = 0
         components[9:11, 9:11, 9:11] = 2

@@ -6,10 +6,10 @@ import pytest
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.segmentation.threshold import (
     BaseThreshold,
+    DoubleThresholdSelection,
     IntermodesThreshold,
     KittlerIllingworthThreshold,
-    double_threshold_dict,
-    threshold_dict,
+    ThresholdSelection,
 )
 
 square = np.zeros((21, 21))
@@ -21,7 +21,7 @@ for i, v in [(2, 1000), (4, 10000), (6, 20000), (7, 21000), (8, 22000), (9, 2300
     cube[i:-i, i:-i, i:-i] = v
 
 
-@pytest.mark.parametrize("method", threshold_dict.values())
+@pytest.mark.parametrize("method", ThresholdSelection.__register__.values())
 @pytest.mark.parametrize("data", [square, cube], ids=["square", "cube"])
 @pytest.mark.parametrize("op", [operator.lt, operator.gt])
 @pytest.mark.parametrize("masking", [True, False])
@@ -40,7 +40,7 @@ def test_threshold(method: BaseThreshold, data, op, masking):
     assert isinstance(thr_info, (int, float))
 
 
-@pytest.mark.parametrize("method", double_threshold_dict.values())
+@pytest.mark.parametrize("method", DoubleThresholdSelection.__register__.values())
 @pytest.mark.parametrize("data", [square, cube], ids=["square", "cube"])
 @pytest.mark.parametrize("op", [operator.lt, operator.gt])
 @pytest.mark.parametrize("masking", [True, False])

@@ -1,4 +1,5 @@
 import collections
+from contextlib import suppress
 
 import packaging.version
 import tifffile.tifffile
@@ -18,7 +19,10 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
         self.parent.report_func()
         return res
 
-    TiffFile.report_func = lambda x: 0
+    def _dummy_report_func(self):
+        """dummy function for report_func"""
+
+    TiffFile.report_func = _dummy_report_func
     tifffile.tifffile.TiffPage.asarray = asarray
 
     if packaging.version.parse(tifffile.__version__) <= packaging.version.parse("2019.7.26"):  # pragma: no cover
@@ -43,10 +47,8 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
                     return value
 
                 for t in (int, float, asbool):
-                    try:
+                    with suppress(TypeError, ValueError):
                         return t(value)
-                    except (TypeError, ValueError):
-                        pass
                 return value
 
             def etree2dict(t):
@@ -68,7 +70,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
                     text = t.text.strip()
                     if children or t.attrib:
                         if text:
-                            d[key][tx + "value"] = astype(text)
+                            d[key][f"{tx}value"] = astype(text)
                     else:
                         d[key] = astype(text)
                 return d

@@ -1,147 +1,135 @@
-"""Implementation of PartSeg measurement feature for napari viewer."""
-
-import warnings
 from typing import Optional
 
-import numpy as np
-from magicgui.widgets import CheckBox, Container, HBox, PushButton, Table, VBox, create_widget
+from magicgui.widgets import create_widget
 from napari import Viewer
-from napari._qt.qthreading import thread_worker
 from napari.layers import Image as NapariImage
-from napari.layers import Labels as NapariLabels
-from napari.qt import create_worker
+from napari.layers import Labels
+from napari.utils.notifications import notification_manager, show_info
+from qtpy.QtWidgets import QCheckBox, QLabel, QTabWidget
 
-from PartSegCore import UNIT_SCALE, Units
-from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
-from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile, MeasurementResult
+from PartSeg._roi_analysis.advanced_window import MeasurementSettings
+from PartSeg._roi_analysis.measurement_widget import NO_MEASUREMENT_STRING, FileNamesEnum, MeasurementWidgetBase
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
+from PartSeg.plugins.napari_widgets._settings import get_settings
+from PartSeg.plugins.napari_widgets.utils import NapariFormDialog, generate_image
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from PartSegCore.roi_info import ROIInfo
-from PartSegImage import Image
 
 
-class SimpleMeasurement(Container):
-    """Widget that provide access to simple measurement feature from PartSeg ROI Mask."""
+class NapariMeasurementSettings(MeasurementSettings):
+    def form_dialog(self, arguments):
+        return NapariFormDialog(arguments, settings=self.settings, parent=self)
 
-    def __init__(self, napari_viewer: Viewer):
-        """:param napari_viewer: napari viewer instance."""
-        super().__init__(layout="vertical")
-        self.viewer = napari_viewer
-        self.labels_choice = create_widget(annotation=NapariLabels, label="Labels")
-        self.scale_units_select = create_widget(annotation=Units, label="Data units")  # EnumComboBox(Units)
-        self.units_select = create_widget(annotation=Units, label="Units")
-        self.image_choice = create_widget(annotation=Optional[NapariImage], label="Image", options={})
-        self.table = Table()
-        self.calculate_btn = PushButton(text="Calculate")
-        self.margins = (0, 0, 0, 0)
-        self.measurement_result: Optional[MeasurementResult] = None
 
-        options_layout = HBox(
-            widgets=(
-                self.image_choice,
-                self.labels_choice,
-                self.scale_units_select,
-                self.units_select,
-                self.calculate_btn,
-            )
-        )
-        self.measurement_layout = VBox()
+class NapariMeasurementWidget(MeasurementWidgetBase):
+    def __init__(self, settings, napari_viewer, segment=None):
+        super().__init__(settings, segment)
+        self.napari_viewer = napari_viewer
+        self.channels_chose = create_widget(annotation=NapariImage, label="Image", options={})
+        self.roi_chose = create_widget(annotation=Labels, label="ROI", options={})
+        self.mask_chose = create_widget(annotation=Optional[Labels], label="ROI", options={})
+        self.overwrite = QCheckBox("Overwrite")
+        self.overwrite.setToolTip("If overwrite properties")
+        self.butt_layout.insertWidget(3, self.overwrite)
+        self.butt_layout3.insertWidget(0, QLabel("Channel:"))
+        self.butt_layout3.insertWidget(1, self.channels_chose.native)
+        self.butt_layout3.insertWidget(2, QLabel("ROI:"))
+        self.butt_layout3.insertWidget(3, self.roi_chose.native)
+        self.butt_layout3.insertWidget(4, QLabel("Mask:"))
+        self.butt_layout3.insertWidget(5, self.mask_chose.native)
+        self.file_names.setCurrentEnum(FileNamesEnum.No)
+        self.file_names.setVisible(False)
+        self.file_names_label.setVisible(False)
 
-        bottom_layout = HBox(widgets=(self.measurement_layout, self.table))
+    def _get_mask(self):
+        return self.mask_chose.value
 
-        self.insert(0, options_layout)
-        self.insert(1, bottom_layout)
-
-        self.image_choice.native.currentIndexChanged.connect(self._refresh_measurements)
-        self.labels_choice.changed.connect(self._refresh_measurements)
-        self.calculate_btn.changed.connect(self._calculate)
-
-    def _calculate(self, event=None):
-        to_calculate = []
-        for chk in self.measurement_layout:
-            # noinspection PyTypeChecker
-            if chk.value:
-                leaf: Leaf = MEASUREMENT_DICT[chk.text].get_starting_leaf()
-                to_calculate.append(leaf.replace_(per_component=PerComponent.Yes, area=AreaType.ROI))
-        if not to_calculate:  # pragma: no cover
-            warnings.warn("No measurement. Select at least one measurement")
+    def append_measurement_result(self):
+        try:
+            compute_class = self.settings.measurement_profiles[self.measurement_type.currentText()]
+        except KeyError:
+            show_info(f"Measurement profile '{self.measurement_type.currentText()}' not found")
             return
-
-        profile = MeasurementProfile("", [MeasurementEntry(x.name, x) for x in to_calculate])
-
-        data_layer = self.image_choice.value or self.labels_choice.value
-
-        data_ndim = data_layer.data.ndim
-        if data_ndim > 4:  # pragma: no cover
-            warnings.warn("Not Supported. Currently measurement engine does not support data over 4 dim (TZYX)")
+        if self.roi_chose.value is None:
             return
-        data_scale = data_layer.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]
-        image = Image(data_layer.data, data_scale, axes_order="TZYX"[-data_ndim:])
-        worker = _prepare_data(profile, image, self.labels_choice.value.data)
-        worker.returned.connect(self._calculate_next)
-        worker.errored.connect(self._finished)
-        worker.start()
-        self.calculate_btn.enabled = False
+        if self.channels_chose.value is None:
+            return
+        for name in compute_class.get_channels_num():
+            if name not in self.napari_viewer.layers:
+                show_info("Cannot calculate this measurement because " f"image do not have layer {name}")
+                return
+        units = self.units_choose.currentEnum()
+        image = generate_image(self.napari_viewer, self.channels_chose.value.name, *compute_class.get_channels_num())
+        if self.mask_chose.value is not None:
+            image.set_mask(self.mask_chose.value.data)
+        roi_info = ROIInfo(self.roi_chose.value.data).fit_to_image(image)
+        dial = ExecuteFunctionDialog(
+            compute_class.calculate,
+            [image, self.channels_chose.value.name, roi_info, units],
+            text="Measurement calculation",
+            parent=self,
+        )  # , exception_hook=exception_hook)
+        dial.exec_()
+        stat: MeasurementResult = dial.get_result()
 
-    def _calculate_next(self, data):
-        profile, image, roi_info, segmentation_mask_map = data
-        self.measurement_result = MeasurementResult(segmentation_mask_map)
-        create_worker(
-            profile.calculate_yield,
-            _start_thread=True,
-            _progress={"total": len(profile.chosen_fields)},
-            _connect={"finished": self._finished, "yielded": self._set_result},
-            image=image,
-            channel_num=0,
-            roi=roi_info,
-            result_units=self.units_select.get_value(),
-            segmentation_mask_map=segmentation_mask_map,
-        )
+        df = stat.to_dataframe(True)
+        if "Mask component" in df and self.mask_chose.value is not None:
+            df2 = df.groupby("Mask component").mean()
+            df2["index"] = df2.index
+            update_properties(df2, self.mask_chose.value, self.overwrite.isChecked())
+        df["index"] = df.index
+        if stat is None:
+            return
+        self.measurements_storage.add_measurements(stat)
+        self.previous_profile = compute_class.name
+        self.refresh_view()
+        update_properties(df, self.roi_chose.value, self.overwrite.isChecked())
 
-    def _set_result(self, result):
-        self.measurement_result[result[0]] = result[1]
-        self.table.value = self.measurement_result.to_dataframe()
-
-    def _finished(self):
-        self.calculate_btn.enabled = True
-
-    def _clean_measurements(self):
-        selected = set()
-        for _ in range(len(self.measurement_layout)):
-            # noinspection PyTypeChecker
-            chk = self.measurement_layout.pop(0)
-            if chk.value:
-                selected.add(chk.text)
-        return selected
-
-    def _refresh_measurements(self, event=None):
-        has_channel = self.image_choice.value is not None
-        selected = self._clean_measurements()
-        for val in MEASUREMENT_DICT.values():
-            area = val.get_starting_leaf().area
-            pc = val.get_starting_leaf().per_component
-            if (
-                val.get_fields()
-                or (area is not None and area != AreaType.ROI)
-                or (pc is not None and pc != PerComponent.Yes)
-            ):
-                continue
-            text = val.get_name()
-            chk = CheckBox(name=text, label=text)
-            if val.need_channel() and not has_channel:
-                chk.enabled = False
-                chk.tooltip = "Need selected image"
-            elif text in selected:
-                chk.value = True
-            self.measurement_layout.insert(-1, chk)
+    def check_if_measurement_can_be_calculated(self, name):
+        if name in (NO_MEASUREMENT_STRING, ""):
+            return NO_MEASUREMENT_STRING
+        profile: MeasurementProfile = self.settings.measurement_profiles.get(name)
+        if profile.is_any_mask_measurement() and self.mask_chose.value is None:
+            show_info("To use this measurement set please select mask layer")
+            self.measurement_type.setCurrentIndex(0)
+            return NO_MEASUREMENT_STRING
+        if self.roi_chose.value is None:
+            show_info("Before calculate measurement please select ROI Layer")
+            self.measurement_type.setCurrentIndex(0)
+            return NO_MEASUREMENT_STRING
+        return name
 
     def reset_choices(self, event=None):
-        super().reset_choices(event)
-        self._refresh_measurements()
+        self.channels_chose.reset_choices()
+        self.roi_chose.reset_choices()
+        self.mask_chose.reset_choices()
+
+    def showEvent(self, event) -> None:
+        self.reset_choices(None)
+        super().showEvent(event)
 
 
-@thread_worker(progress=True)
-def _prepare_data(profile: MeasurementProfile, image: Image, labels: np.ndarray):
-    roi_info = ROIInfo(labels).fit_to_image(image)
-    yield 1
-    segmentation_mask_map = profile.get_segmentation_mask_map(image, roi_info, time=0)
-    yield 2
-    return profile, image, roi_info, segmentation_mask_map
+class Measurement(QTabWidget):
+    def __init__(self, napari_viewer: Viewer):
+        super().__init__()
+        self.viewer = napari_viewer
+        self.settings = get_settings()
+        self.measurement_widget = NapariMeasurementWidget(self.settings, napari_viewer)
+        self.measurement_settings = NapariMeasurementSettings(self.settings)
+        self.addTab(self.measurement_widget, "Measurements")
+        self.addTab(self.measurement_settings, "Measurements settings")
+
+    def reset_choices(self, event=None):
+        self.measurement_widget.reset_choices()
+
+
+def update_properties(new_properties, layer: Labels, overwrite):
+    try:
+        if not overwrite:
+            new_properties = new_properties.copy()
+            for key, value in layer.properties.items():
+                if key not in new_properties:
+                    new_properties[key] = value
+        layer.properties = new_properties
+    except Exception as e:  # pylint: disable=broad-except  # pragma: no cover
+        notification_manager.recive_error(e)

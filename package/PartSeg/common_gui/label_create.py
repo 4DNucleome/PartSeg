@@ -18,11 +18,10 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_gui.icon_selector import IconSelector
+from PartSeg.common_gui.numpy_qimage import NumpyQImage
 from PartSegCore.custom_name_generate import custom_name_generate
-
-from ..common_backend.base_settings import ViewSettings
-from .icon_selector import IconSelector
-from .numpy_qimage import NumpyQImage
 
 _icon_selector = IconSelector()
 

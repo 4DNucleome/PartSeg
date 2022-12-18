@@ -1,18 +1,23 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional
+from textwrap import indent
+from typing import Any, Callable, Dict, MutableMapping, Optional
 
 import numpy as np
+from nme import REGISTER, class_to_str
 
-from PartSegCore.channel_class import Channel
-from PartSegImage import Image
-
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
-from ..image_operations import RadiusType
-from ..project_info import AdditionalLayerDescription, ProjectInfoBase
-from ..roi_info import ROIInfo
-from ..utils import numpy_repr
+from PartSegCore.algorithm_describe_base import (
+    AlgorithmDescribeBase,
+    AlgorithmProperty,
+    ROIExtractionProfile,
+    base_model_to_algorithm_property,
+)
+from PartSegCore.image_operations import RadiusType
+from PartSegCore.project_info import AdditionalLayerDescription
+from PartSegCore.roi_info import ROIInfo
+from PartSegCore.utils import BaseModel, numpy_repr
+from PartSegImage import Channel, Image
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
@@ -25,7 +30,7 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     return radius
 
 
-def dict_repr(dkt: dict) -> str:
+def dict_repr(dkt: MutableMapping) -> str:
     """
     calculate dict representation which use :py:func:`numpy_repr` for numpy representation.
 
@@ -34,7 +39,7 @@ def dict_repr(dkt: dict) -> str:
     """
     res = []
     for k, v in dkt.items():
-        if isinstance(v, dict):
+        if isinstance(v, MutableMapping):
             res.append(f"{k}: {dict_repr(v)}")
         elif isinstance(v, np.ndarray):
             res.append(f"{k}: {numpy_repr(v)}")
@@ -85,7 +90,7 @@ class ROIExtractionResult:
 
     def __str__(self):  # pragma: no cover
         return (
-            f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
+            f"ROIExtractionResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
             f" max: {np.max(self.roi)}], parameters={self.parameters},"
             f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
             f" alternative={dict_repr(self.alternative_representation)},"
@@ -94,7 +99,7 @@ class ROIExtractionResult:
 
     def __repr__(self):  # pragma: no cover
         return (
-            f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
+            f"ROIExtractionResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
             f"max: {np.max(self.roi)}], parameters={self.parameters}, "
             f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
             f" alternative={dict_repr(self.alternative_representation)},"
@@ -107,6 +112,12 @@ SegmentationResult = ROIExtractionResult
 
 def report_empty_fun(_x, _y):  # pragma: no cover # skipcq: PTC-W0049
     pass
+
+
+class AlgorithmInfo(BaseModel, arbitrary_types_allowed=True):
+    algorithm_name: str
+    parameters: Any
+    image: Image
 
 
 class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
@@ -137,8 +148,10 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         else:
             mask_info = f"mask={self.mask}"
         return (
-            f"{self.__class__.__module__}.{self.__class__.__name__}(image={repr(self.image)}, "
-            f"channel={self.channel} {mask_info}, value={self.get_segmentation_profile().values})"
+            f"{self.__class__.__module__}.{self.__class__.__name__}(\n"
+            + indent(f"image={repr(self.image)},\n", " " * 4)
+            + indent(f"channel={numpy_repr(self.channel)},\n{mask_info},", " " * 4)
+            + indent(f"\nvalue={repr(self.get_segmentation_profile().values)})", " " * 4)
         )
 
     def clean(self):
@@ -146,11 +159,6 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.segmentation = None
         self.channel = None
         self.mask = None
-
-    @staticmethod
-    def single_channel():
-        """Check if algorithm run on single channel"""
-        return True
 
     @property
     def mask(self) -> Optional[np.ndarray]:
@@ -184,29 +192,16 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
             return self.calculation_run(report_fun)
         except SegmentationLimitException:  # pragma: no cover
             raise
-        except Exception:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             parameters = self.get_segmentation_profile()
             image = self.image
-            raise SegmentationException(self.get_name(), parameters, image)
+            raise SegmentationException(
+                AlgorithmInfo(algorithm_name=self.get_name(), parameters=parameters, image=image)
+            ) from e
 
     @abstractmethod
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         raise NotImplementedError()
-
-    @classmethod
-    def segment_project(cls, project: ProjectInfoBase, parameters: dict) -> ROIExtractionResult:
-        """
-
-        :param ProjectInfoBase project:
-        :param dict parameters:
-        :return:
-        :rtype:
-        """
-        instance = cls()
-        instance.set_image(project.image)
-        instance.set_mask(project.mask)
-        instance.set_parameters(**parameters)
-        return instance.calculation_run(report_empty_fun)
 
     @abstractmethod
     def get_info_text(self):
@@ -215,7 +210,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
     def get_channel(self, channel_idx):
         if self.support_time():
             return self.image.get_data_by_axis(c=channel_idx)
-        if self.image.shape[self.image.time_pos] != 1:
+        if self.image.is_time:
             raise ValueError("This algorithm do not support time data")
         if isinstance(channel_idx, int) and self.image.channels <= channel_idx:
             raise SegmentationException(
@@ -230,9 +225,21 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
     def set_image(self, image):
         self.image = image
         self.channel = None
-        self._mask = None
+        self.mask = None
 
-    def set_parameters(self, **kwargs):
+    def set_parameters(self, _params=None, **kwargs):
+        # FIXME when drop python 3.7 use postional only argument
+        if _params is not None:
+            if isinstance(_params, dict):
+                kwargs = _params
+            else:
+                self.new_parameters = _params
+                return
+        if self.__new_style__:
+            kwargs = REGISTER.migrate_data(class_to_str(self.__argument_class__), {}, kwargs)
+            self.new_parameters = self.__argument_class__(**kwargs)  # pylint: disable=E1102
+            return
+
         base_names = [x.name for x in self.get_fields() if isinstance(x, AlgorithmProperty)]
         if set(base_names) != set(kwargs.keys()):
             missed_arguments = ", ".join(set(base_names).difference(set(kwargs.keys())))
@@ -241,7 +248,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.new_parameters = deepcopy(kwargs)
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
+        return ROIExtractionProfile(name="", algorithm=self.get_name(), values=deepcopy(self.new_parameters))
 
     @staticmethod
     def get_steps_num():
@@ -250,7 +257,11 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_channel_parameter_name(cls):
-        for el in cls.get_fields():
+        if cls.__new_style__:
+            fields = base_model_to_algorithm_property(cls.__argument_class__)
+        else:
+            fields = cls.get_fields()
+        for el in fields:
             if el.value_type == Channel:
                 return el.name
         raise ValueError("No channel defined")

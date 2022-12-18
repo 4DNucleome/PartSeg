@@ -13,12 +13,15 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+
+from datetime import date
+
 import PartSeg
 
 # -- Project information -----------------------------------------------------
 
 project = "PartSeg"
-copyright = "2019, Laboratory of Functional and Structural Genomics"
+copyright = f"{date.today().year}, PartSeg team"
 author = "Grzegorz Bokota (LFSG)"
 
 # The full version, including alpha/beta/rc tags
@@ -37,7 +40,9 @@ extensions = [
     "sphinx_qt_documentation",
     "sphinx.ext.viewcode",
     "sphinx.ext.graphviz",
+    "sphinx_autodoc_typehints",
     "PartSegCore.sphinx.auto_parameters",
+    "sphinxcontrib.autodoc_pydantic",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -67,6 +72,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "PyQt5": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
     "Numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "packaging": ("https://packaging.pypa.io/en/latest/", None),
 }
 
 qt_documentation = "Qt5"

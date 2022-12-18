@@ -1,4 +1,3 @@
-import os
 from math import log
 from typing import List, Union
 
@@ -7,32 +6,16 @@ from napari.utils import Colormap
 from napari.utils.colormaps import make_colorbar
 from qtpy import QtGui
 from qtpy.QtCore import QRect, QSize
-from qtpy.QtGui import QIcon, QPainter
-from qtpy.QtWidgets import QLabel, QToolButton
+from qtpy.QtGui import QPainter
+from qtpy.QtWidgets import QLabel
 
+from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_gui.napari_image_view import ImageView
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
-from PartSegData import icons_dir
-
-from ..common_backend.base_settings import ViewSettings
-from .napari_image_view import ImageView
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01
 max_step = log(1.2, step)
-
-
-def create_tool_button(text, icon):
-    res = QToolButton()
-    # res.setIconSize(canvas_icon_size)
-    if icon is None:
-        res.setText(text)
-    else:
-        res.setToolTip(text)
-        if isinstance(icon, str):
-            res.setIcon(QIcon(os.path.join(icons_dir, icon)))
-        else:
-            res.setIcon(icon)
-    return res
 
 
 class ColorBar(QLabel):
@@ -57,7 +40,7 @@ class ColorBar(QLabel):
             self.range = self._settings.get_from_profile(f"{name}.range_{channel_id}")
         else:
             self.range = self._settings.border_val[channel_id]
-        cmap = self._settings.colormap_dict[self._settings.get_channel_info(name, channel_id)][0]
+        cmap = self._settings.colormap_dict[self._settings.get_channel_colormap_name(name, channel_id)][0]
 
         round_factor = self.round_base(self.range[1])
         self.round_range = (
@@ -68,10 +51,9 @@ class ColorBar(QLabel):
             self.round_range = self.round_range[0] + round_factor, self.round_range[1]
         if self.round_range[1] > self.range[1]:
             self.round_range = self.round_range[0], self.round_range[1] - round_factor
-        # print(self.range, self.round_range)
         data = np.linspace(0, 1, 512)
         interpolated = cmap.map(data)
-        data = data ** gamma
+        data = data**gamma
         colormap = Colormap(interpolated, controls=data)
         self.image = NumpyQImage(np.array(make_colorbar(colormap, size=(512, 1), horizontal=False)[::-1]))
         self.repaint()
@@ -82,17 +64,13 @@ class ColorBar(QLabel):
             return 1000
         if val > 1000:
             return 100
-        if val > 100:
-            return 10
-        return 1
+        return 10 if val > 100 else 1
 
     @staticmethod
     def number_of_marks(val):
         if val < 500:
             return 6
-        if val > 1300:
-            return 21
-        return 11
+        return 21 if val > 1300 else 11
 
     def paintEvent(self, event: QtGui.QPaintEvent):
         bar_width = 30
@@ -122,4 +100,3 @@ class ColorBar(QLabel):
         ):
             painter.drawText(bar_width + 5, int(pos), f"{val}")
         painter.setFont(old_font)
-        # print(self.image.shape)

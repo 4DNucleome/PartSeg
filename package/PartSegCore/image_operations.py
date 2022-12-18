@@ -3,10 +3,10 @@ from typing import Iterable, List, Union
 
 import numpy as np
 import SimpleITK as sitk
+from nme import register_class
 
-from .class_generator import enum_register
 
-
+@register_class
 class RadiusType(Enum):
     """
     If operation should be performed and if on each layer separately on globally
@@ -20,17 +20,15 @@ class RadiusType(Enum):
         return ["No", "2d", "3d"][self.value]
 
 
+@register_class
 class NoiseFilterType(Enum):
     No = 0
     Gauss = 1
     Median = 2
+    Bilateral = 3
 
     def __str__(self):
         return self.name
-
-
-enum_register.register_class(RadiusType)
-enum_register.register_class(NoiseFilterType)
 
 
 def _generic_image_operation(image, radius, fun, layer):
@@ -66,6 +64,18 @@ def gaussian(image: np.ndarray, radius: float, layer=True):
     :return:
     """
     return _generic_image_operation(image, radius, sitk.DiscreteGaussian, layer)
+
+
+def bilateral(image: np.ndarray, radius: float, layer=True):
+    """
+    Gaussian blur of image.
+
+    :param np.ndarray image: image to apply gaussian filter
+    :param float radius: radius for gaussian kernel
+    :param bool layer: if operation should be run on each layer separately
+    :return:
+    """
+    return _generic_image_operation(image, radius, sitk.Bilateral, layer)
 
 
 def median(image: np.ndarray, radius: Union[int, List[int]], layer=True):

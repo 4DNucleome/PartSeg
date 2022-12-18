@@ -9,16 +9,14 @@ import h5py
 import numpy as np
 import tifffile
 
-from PartSegImage import Image, ImageWriter
-
-from ..algorithm_describe_base import AlgorithmProperty, Register
-from ..channel_class import Channel
-from ..io_utils import NotSupportedImage, SaveBase, SaveMaskAsTiff, SaveROIAsNumpy, SaveROIAsTIFF, get_tarinfo
-from ..project_info import HistoryElement
-from ..roi_info import ROIInfo
-from ..universal_const import UNIT_SCALE, Units
-from .io_utils import ProjectTuple, project_version_info
-from .save_hooks import PartEncoder
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register
+from PartSegCore.analysis.io_utils import ProjectTuple, project_version_info
+from PartSegCore.io_utils import NotSupportedImage, SaveBase, SaveMaskAsTiff, SaveROIAsNumpy, SaveROIAsTIFF, get_tarinfo
+from PartSegCore.json_hooks import PartSegEncoder
+from PartSegCore.project_info import HistoryElement
+from PartSegCore.roi_info import ROIInfo
+from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegImage import Channel, Image, ImageWriter
 
 __all__ = [
     "SaveProject",
@@ -65,13 +63,13 @@ def save_project(
         ImageWriter.save(image, image_buff, compression=None)
         tar_image = get_tarinfo("image.tif", image_buff)
         tar.addfile(tarinfo=tar_image, fileobj=image_buff)
-        para_str = json.dumps(algorithm_parameters, cls=PartEncoder)
+        para_str = json.dumps(algorithm_parameters, cls=PartSegEncoder)
         parameters_buff = BytesIO(para_str.encode("utf-8"))
         tar_algorithm = get_tarinfo("algorithm.json", parameters_buff)
         tar.addfile(tar_algorithm, parameters_buff)
         meta_str = json.dumps(
             {"project_version_info": str(project_version_info), "roi_annotations": roi_info.annotations},
-            cls=PartEncoder,
+            cls=PartSegEncoder,
         )
         meta_buff = BytesIO(meta_str.encode("utf-8"))
         tar_meta = get_tarinfo("metadata.json", meta_buff)
@@ -92,14 +90,14 @@ def save_project(
             el.arrays.seek(0)
             tar.addfile(hist_info, el.arrays)
         if el_info:
-            hist_str = json.dumps(el_info, cls=PartEncoder)
+            hist_str = json.dumps(el_info, cls=PartSegEncoder)
             hist_buff = BytesIO(hist_str.encode("utf-8"))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
             tar.addfile(tar_algorithm, hist_buff)
 
 
-def save_cmap(
-    file: typing.Union[str, h5py.File, BytesIO],
+def _save_cmap(
+    cmap_file: h5py.File,
     data: np.ndarray,
     spacing,
     segmentation: np.ndarray,
@@ -107,16 +105,6 @@ def save_cmap(
     cmap_profile: dict,
     metadata: typing.Optional[dict] = None,
 ):
-    if segmentation is None or np.max(segmentation) == 0:
-        raise ValueError("No segmentation")
-    if isinstance(file, (str, BytesIO, Path)):
-        if isinstance(file, str) and os.path.exists(file):
-            os.remove(file)
-        cmap_file = h5py.File(file, "w")
-    elif isinstance(file, h5py.File):
-        cmap_file = file
-    else:
-        raise ValueError(f"Wrong type of file argument, type: {type(file)}")
     if cmap_profile["reverse"]:
         data = reverse_base - data
         data[data < 0] = 0
@@ -143,8 +131,29 @@ def save_cmap(
     grp.attrs["VERSION"] = np.string_("1.0")
     grp.attrs["step"] = np.array(spacing, dtype=np.float32)[::-1] * UNIT_SCALE[cmap_profile["units"].value]
 
-    if isinstance(file, str):
-        cmap_file.close()
+    return cmap_file
+
+
+def save_cmap(
+    file: typing.Union[str, h5py.File, BytesIO],
+    data: np.ndarray,
+    spacing,
+    segmentation: np.ndarray,
+    reverse_base: float,
+    cmap_profile: dict,
+    metadata: typing.Optional[dict] = None,
+):
+    if segmentation is None or np.max(segmentation) == 0:
+        raise ValueError("No segmentation")
+    if isinstance(file, (str, BytesIO, Path)):
+        if isinstance(file, str) and os.path.exists(file):
+            os.remove(file)
+        with h5py.File(file, "w") as cmap_file:
+            _save_cmap(cmap_file, data, spacing, segmentation, reverse_base, cmap_profile, metadata)
+    elif isinstance(file, h5py.File):
+        _save_cmap(file, data, spacing, segmentation, reverse_base, cmap_profile, metadata)
+    else:
+        raise ValueError(f"Wrong type of file argument, type: {type(file)}")
 
 
 class SaveProject(SaveBase):
@@ -230,7 +239,7 @@ class SaveCmap(SaveBase):
                 seg = (segmentation == i).astype(np.uint8)
                 if np.any(seg):
                     base, ext = os.path.splitext(save_location)
-                    save_loc = base + f"_comp{i}" + ext
+                    save_loc = f"{base}_comp{i}{ext}"
                     save_cmap(save_loc, data, spacing, seg, reverse_base, parameters)
         else:
             save_cmap(save_location, data, spacing, segmentation, reverse_base, parameters)
@@ -299,7 +308,7 @@ class SaveXYZ(SaveBase):
                 if size > 0:
                     segmentation_mask = np.array(project_info.roi_info.roi == i)[parameters.get("time", 0)]
                     base_path, ext = os.path.splitext(save_location)
-                    new_save_location = base_path + f"_part{i}" + ext
+                    new_save_location = f"{base_path}_part{i}{ext}"
                     cls._save(new_save_location, channel_image, segmentation_mask, shift)
 
 
@@ -315,6 +324,10 @@ class SaveAsTiff(SaveBase):
     @classmethod
     def get_fields(cls):
         return []
+
+    @classmethod
+    def need_segmentation(cls):
+        return False
 
     @classmethod
     def save(
@@ -377,8 +390,8 @@ class SaveProfilesToJSON(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        with open(save_location, "w") as ff:
-            json.dump(project_info, ff, cls=PartEncoder, indent=2)
+        with open(save_location, "w", encoding="utf-8") as ff:
+            json.dump(project_info, ff, cls=PartSegEncoder, indent=2)
 
     @classmethod
     def get_name(cls) -> str:

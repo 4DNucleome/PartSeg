@@ -7,6 +7,8 @@ import pathlib
 import pprint
 import sys
 import typing
+import warnings
+from contextlib import suppress
 from enum import Enum, EnumMeta
 
 # TODO read about dataclsss and maybe apply
@@ -70,6 +72,10 @@ class {typename}({base_classes}):
         'Return a new OrderedDict which maps field names to their values.'
         return OrderedDict(zip(self._fields, _attrgetter(*self.__slots__)(self)))
 
+    def as_dict(self):
+        'Return a new OrderedDict which maps field names to their values.'
+        return dict(zip(self._fields, _attrgetter(*self.__slots__)(self)))
+
     def as_tuple(self):
         return {tuple_fields}
 
@@ -116,10 +122,8 @@ class RegisterClass(typing.Generic[T]):
             return self.exact_class_register[path]
         name = path[path.rfind(".") + 1 :]
         if name not in self.predict_class_register:
-            try:
+            with suppress(ImportError):
                 importlib.import_module(path[: path.rfind(".")])
-            except ImportError:
-                pass
         if name in self.predict_class_register:
             if len(self.predict_class_register[name]) == 1:
                 return self.predict_class_register[name][0]
@@ -183,13 +187,12 @@ def add_classes(types_list, translate_dict, global_state):
             continue
         if hasattr(type_, "__module__") and type_.__module__ == "typing":
             if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.abc.Iterable):
-                sub_types = [x for x in type_.__args__ if not isinstance(x, omit_list)]
-                if sub_types:
+                if sub_types := [x for x in type_.__args__ if not isinstance(x, omit_list)]:
                     add_classes(sub_types, translate_dict, global_state)
                     if type_._name is None:  # pylint: disable=W0212
                         type_str = str(type_.__origin__)
                     else:
-                        type_str = "typing." + str(type_._name)  # pylint: disable=W0212
+                        type_str = f"typing.{str(type_._name)}"  # pylint: disable=W0212
                     type_str += "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
                     translate_dict[type_] = type_str
                     continue
@@ -224,7 +227,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         type_str, module = extract_type_info(type_)
         type_dict[name_] = type_str
         if module:
-            import_set.add("import " + module)
+            import_set.add(f"import {module}")
     translate_dict = {type(None): "None"}
     global_state = {typename: "a", "typing": typing}
     add_classes(itertools.chain(types.values(), base_classes), translate_dict, global_state)
@@ -239,15 +242,15 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     )
 
     if readonly:
-        slots = tuple("_" + x for x in field_names)
-        field_definitions = "\n".join(_field_template.format(name=name) for index, name in enumerate(field_names))
+        slots = tuple(f"_{x}" for x in field_names)
+        field_definitions = "\n".join(_field_template.format(name=name) for name in field_names)
+
     else:
         slots = tuple(field_names)
         field_definitions = ""
     init_sig = [f"self.{f_name} = {v_name}" for f_name, v_name in zip(slots, type_dict.keys())]
     tuple_list = [f"self.{name_}" for name_ in slots]
-    init_content = "\n        ".join(init_sig)
-    init_content += "\n        self.__post_init__()"
+    init_content = "\n        ".join(init_sig) + "\n        self.__post_init__()"
     class_definition = _class_template.format(
         imports="\n".join(import_set),
         typename=typename,
@@ -263,35 +266,35 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         base_classes=", ".join(translate_dict[x] for x in base_classes),
     )
 
-    global_state["__name__"] = "serialize_%s" % typename
+    global_state["__name__"] = f"serialize_{typename}"
     try:
         # pylint: disable=W0122
         exec(class_definition, global_state)  # nosec
-    except AttributeError as e:
+    except AttributeError:
         print(class_definition, file=sys.stderr)
-        raise e
-    except NameError as e:
+        raise
+    except NameError:
         for i, el in enumerate(class_definition.split("\n"), 1):
             print(f"{i}: {el}", file=sys.stderr)
-        raise e
+        raise
 
     result = global_state[typename]
     result._source = class_definition
     result._field_defaults = defaults_dict  # pylint: disable=W0212
     result.__annotations__ = types
-    try:
+    with suppress(AttributeError):
         result.__signature__ = inspect.signature(result)
-    except AttributeError:
-        pass
     result._field_types = collections.OrderedDict(types)  # pylint: disable=W0212
     return result
 
 
 class BaseMeta(type):
-    def __new__(mcs, name, bases, attrs):
-        # print("BaseMeta.__new__", mcs, name, bases, attrs)
+    def __new__(cls, name, bases, attrs):
         if attrs.get("_root", False):
-            return super().__new__(mcs, name, bases, attrs)
+            return super().__new__(cls, name, bases, attrs)
+        warnings.warn(
+            "BaseSerializableClass is deprecated, use pydantic.BaseModel instead", FutureWarning, stacklevel=2
+        )
         types = attrs.get("__annotations__", {})
         defaults = []
         defaults_dict = {}
@@ -310,12 +313,11 @@ class BaseMeta(type):
         if "__readonly__" in attrs:
             readonly = attrs["__readonly__"]
         else:
-            for el in bases:
-                if hasattr(el, "__readonly__"):
-                    readonly = el.__readonly__
-                    break
-            else:
-                readonly = False
+            readonly = next(
+                (el.__readonly__ for el in bases if hasattr(el, "__readonly__")),
+                False,
+            )
+
         if "__old_names__" in attrs:
             old_names = attrs["__old_names__"]
             del attrs["__old_names__"]
@@ -323,15 +325,10 @@ class BaseMeta(type):
             old_names = ()
 
         result = _make_class(name, types, defaults_dict, list(bases), readonly)
-        # nm_tpl.__new__.__annotations__ = collections.OrderedDict(types)
-        # nm_tpl.__new__.__defaults__ = tuple(defaults)
-        # nm_tpl._field_defaults = defaults_dict
         module = attrs.get("__module__", None)
         if module is None:
-            try:
+            with suppress(AttributeError, ValueError):
                 module = sys._getframe(1).f_globals.get("__name__", "__main__")
-            except (AttributeError, ValueError):
-                pass
         if module is not None:
             result.__module__ = module
 
@@ -339,7 +336,7 @@ class BaseMeta(type):
             if key in _prohibited:
                 if key == "__init__":
                     continue
-                raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
+                raise AttributeError(f"Cannot overwrite NamedTuple attribute {key}")
             if key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
         if "_reloading" not in attrs or not attrs["_reloading"]:
@@ -349,28 +346,27 @@ class BaseMeta(type):
 
 class BaseSerializableClass(metaclass=BaseMeta):
     _root = True
-    # __signature__ = ()
     __readonly__ = True
     __old_names__ = ()
 
     def __init__(self, *args, **kwargs):
-        pass
+        """declare interface"""
 
     def __post_init__(self):
-        pass
+        """declare interface"""
 
     def asdict(self) -> collections.OrderedDict:
-        pass
+        """declare interface"""
 
     def replace_(self, **_kwargs):
         return self
 
     def as_tuple(self) -> typing.Tuple:
-        pass
+        """declare interface"""
 
     @classmethod
     def make_(cls, iterable):
-        pass
+        """declare interface"""
 
 
 class SerializeClassEncoder(json.JSONEncoder):

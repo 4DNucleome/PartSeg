@@ -1,10 +1,16 @@
+import os
 import typing
+from contextlib import suppress
+from pathlib import Path
 
 from qtpy.QtWidgets import QDialog, QFileDialog, QGridLayout, QPushButton, QStackedWidget
 
+from PartSeg.common_gui.algorithms_description import FormWidget
+from PartSeg.common_gui.custom_load_dialog import IORegister, LoadRegisterFileDialog
 from PartSegCore.io_utils import SaveBase
 
-from .algorithms_description import FormWidget
+if typing.TYPE_CHECKING:  # pragma: no cover
+    from PartSeg.common_backend.base_settings import BaseSettings
 
 
 class SaveProperty(typing.NamedTuple):
@@ -15,9 +21,13 @@ class SaveProperty(typing.NamedTuple):
 
 
 class FormDialog(QDialog):
-    def __init__(self, fields, values=None, image=None, settings=None):
-        super().__init__()
-        self.widget = FormWidget(fields, settings=settings)
+    @staticmethod
+    def widget_class() -> typing.Type[FormWidget]:
+        return FormWidget
+
+    def __init__(self, fields, values=None, image=None, settings=None, parent=None):
+        super().__init__(parent)
+        self.widget = self.widget_class()(fields, settings=settings)
         if values is not None:
             self.widget.set_values(values)
         if image is not None:
@@ -39,25 +49,22 @@ class FormDialog(QDialog):
         return self.widget.set_values(values)
 
 
-class CustomSaveDialog(QFileDialog):
+class CustomSaveDialog(LoadRegisterFileDialog):
     def __init__(
         self,
-        save_register: typing.Union[typing.Dict[str, type(SaveBase)], type(SaveBase)],
+        save_register: IORegister,
         system_widget=True,
         base_values: typing.Optional[dict] = None,
         parent=None,
+        caption="Save file",
         history: typing.Optional[typing.List[str]] = None,
         file_mode=QFileDialog.AnyFile,
     ):
-        if not isinstance(save_register, dict):
-            save_register = {save_register.get_name(): save_register}
-        super().__init__(parent)
+        super().__init__(save_register, caption, parent)
         self.setFileMode(file_mode)
-        self.save_register = {x.get_name_with_suffix(): x for x in save_register.values()}
         self.setOption(QFileDialog.DontUseNativeDialog, not system_widget)
         self.setAcceptMode(QFileDialog.AcceptSave)
         self.filterSelected.connect(self.change_filter)
-        self.setNameFilters(self.save_register.keys())
         self.accepted_native = False
         self.values = {}
         self.names = []
@@ -67,8 +74,8 @@ class CustomSaveDialog(QFileDialog):
         self.base_values = base_values if base_values is not None else {}
         if not system_widget:
             widget = QStackedWidget()
-            for name, val in self.save_register.items():
-                wi = FormWidget(val.get_fields())
+            for name, val in self.io_register.items():
+                wi = FormWidget(val)
                 if name in self.base_values:
                     wi.set_values(self.base_values[name])
                 widget.addWidget(wi)
@@ -89,49 +96,42 @@ class CustomSaveDialog(QFileDialog):
     def change_parameters(self, text):
         if not hasattr(self, "stack_widget"):
             return
-        try:
+        with suppress(ValueError):
             self.stack_widget.setCurrentIndex(self.names.index(text))
-            if not self.save_register[text].get_fields():
-                self.stack_widget.hide()
-            else:
+            if typing.cast(FormWidget, self.stack_widget.currentWidget()).has_elements():
                 self.stack_widget.show()
-        except ValueError:
-            pass
+            else:
+                self.stack_widget.hide()
 
     def selectNameFilter(self, filter_name: str):
-        try:
+        with suppress(IndexError):
             self.change_parameters(filter_name)
-        except IndexError:
-            pass
         super().selectNameFilter(filter_name)
-        try:
-            ext = self.save_register[filter_name].get_default_extension()
+        with suppress(KeyError):
+            ext = self.io_register[filter_name].get_default_extension()
             self.setDefaultSuffix(ext)
-        except KeyError:
-            pass
 
     def change_filter(self, current_filter):
-        if current_filter not in self.save_register:
+        if current_filter not in self.io_register:
             return
-        ext = self.save_register[current_filter].get_default_extension()
+        ext = self.io_register[current_filter].get_default_extension()
         self.setDefaultSuffix(ext)
 
     def accept(self):
         self.accepted_native = True
         if hasattr(self, "stack_widget"):
-            self.values = self.stack_widget.currentWidget().get_values()
+            self.values = typing.cast(FormWidget, self.stack_widget.currentWidget()).get_values()
             super().accept()
             return
-        save_class = self.save_register[self.selectedNameFilter()]
+        save_class = self.io_register[self.selectedNameFilter()]
         fields = save_class.get_fields()
-        # print(fields, len(fields))
         if len(fields) == 0:
             super().accept()
             return
         dial = FormDialog(fields)
         if self.selectedNameFilter() in self.base_values:
             dial.set_values(self.base_values[self.selectedNameFilter()])
-        if dial.exec():
+        if dial.exec_():
             self.values = dial.get_values()
             super().accept()
         else:
@@ -142,9 +142,51 @@ class CustomSaveDialog(QFileDialog):
         return SaveProperty(
             files[0] if len(files) == 1 else files,
             self.selectedNameFilter(),
-            self.save_register[self.selectedNameFilter()],
+            self.io_register[self.selectedNameFilter()],
             self.values,
         )
+
+
+class PSaveDialog(CustomSaveDialog):
+    def __init__(
+        self,
+        save_register: IORegister,
+        *,
+        settings: "BaseSettings",
+        path: str,
+        default_directory=str(Path.home()),
+        filter_path="",
+        system_widget=True,
+        base_values: typing.Optional[dict] = None,
+        parent=None,
+        caption="Save file",
+        file_mode=QFileDialog.AnyFile,
+    ):
+        super().__init__(
+            save_register=save_register,
+            system_widget=system_widget,
+            base_values=base_values,
+            parent=parent,
+            caption=caption,
+            history=settings.get_path_history(),
+            file_mode=file_mode,
+        )
+        self.settings = settings
+        self.path_in_dict = path
+        self.filter_path = filter_path
+        self.setDirectory(self.settings.get(path, default_directory))
+        if self.filter_path:
+            self.selectNameFilter(self.settings.get(self.filter_path, ""))
+
+    def accept(self):
+        super().accept()
+        if self.result() != QDialog.Accepted:
+            return
+        directory = os.path.dirname(self.selectedFiles()[0])
+        self.settings.add_path_history(directory)
+        self.settings.set(self.path_in_dict, directory)
+        if self.filter_path:
+            self.settings.set(self.filter_path, self.selectedNameFilter())
 
 
 SaveDialog = CustomSaveDialog

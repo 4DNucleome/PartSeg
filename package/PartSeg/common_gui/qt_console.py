@@ -15,8 +15,12 @@ from qtconsole.inprocess import QtInProcessKernelManager
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtpy.QtGui import QColor
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from PartSeg.common_gui.main_window import BaseMainWindow
+
+
+def _empty_push(_):
+    """Empty function for push"""
 
 
 def str_to_rgb(arg):
@@ -33,7 +37,7 @@ def str_to_rgb(arg):
 # remove and bump tornado requirement for py38
 # borrowed from ipykernel:  https://github.com/ipython/ipykernel/pull/456
 
-if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+if sys.platform.startswith("win"):
     import asyncio
 
     if (
@@ -108,7 +112,7 @@ class QtConsole(RichJupyterWidget):
             self.kernel_client = None
             self.kernel_manager = None
             self.shell = None
-            self.push = lambda var: None
+            self.push = _empty_push
 
         elif isinstance(shell, ZMQInteractiveShell):
             # if launching from jupyter notebook, connect to the existing

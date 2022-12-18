@@ -1,4 +1,6 @@
+import warnings
 from collections import OrderedDict
+from contextlib import suppress
 from enum import Enum
 from functools import reduce
 from math import pi
@@ -22,30 +24,42 @@ import numpy as np
 import pandas as pd
 import SimpleITK
 from mahotas.features import haralick
+from nme import register_class, rename_key
+from pydantic import Field
 from scipy.spatial.distance import cdist
-from sympy import symbols
+from sympy import Rational, symbols
 
+from PartSegCore import autofit as af
+from PartSegCore.algorithm_describe_base import Register, ROIExtractionProfile
+from PartSegCore.analysis.calculate_pipeline import calculate_segmentation_step
+from PartSegCore.analysis.measurement_base import (
+    AreaType,
+    Leaf,
+    MeasurementEntry,
+    MeasurementMethodBase,
+    Node,
+    PerComponent,
+)
+from PartSegCore.mask_partition_utils import BorderRim, MaskDistanceSplit
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
-from PartSegImage import Image
-
-from .. import autofit as af
-from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
-from ..channel_class import Channel
-from ..class_generator import enum_register
-from ..mask_partition_utils import BorderRim, MaskDistanceSplit
-from ..roi_info import ROIInfo
-from ..universal_const import UNIT_SCALE, Units
-from .calculate_pipeline import calculate_segmentation_step
-from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMethodBase, Node, PerComponent
+from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegCore.utils import BaseModel
+from PartSegImage import Channel, Image
 
 # TODO change image to channel in signature of measurement calculate_property
 
 NO_COMPONENT = -1
 
-PEARSON_CORRELATION = "Pearson correlation coefficient"
-MANDERS_COEFIICIENT = "Mander's overlap coefficient"
-INTENSITY_CORRELATION = "Intensity correlation quotient"
-SPEARMAN_CORRELATION = "Spearman rank correlation"
+
+class CorrelationEnum(str, Enum):
+    pearson = "Pearson correlation coefficient"
+    manders = "Mander's overlap coefficient"
+    intensity = "Intensity correlation quotient"
+    spearman = "Spearman rank correlation"
+
+    def __str__(self):
+        return self.value
 
 
 class ProhibitedDivision(Exception):
@@ -74,9 +88,12 @@ class ComponentsInfo(NamedTuple):
     mask_components: np.ndarray
     components_translation: Dict[int, List[int]]
 
+    def has_components(self):
+        return all(len(x) for x in self.components_translation.values())
+
 
 def empty_fun(_a0=None, _a1=None):
-    """This function  is be used as dummy reporting function."""
+    """This function is being used as dummy reporting function."""
 
 
 MeasurementValueType = Union[float, List[float], str]
@@ -126,13 +143,16 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def __iter__(self) -> Iterator[str]:
         return iter(self._data_dict)
 
-    def to_dataframe(self) -> pd.DataFrame:
-        data = self.get_separated()
+    def to_dataframe(self, all_components=False) -> pd.DataFrame:
+        data = self.get_separated(all_components)
         columns = [
-            f"{label} ({units})" if units else label for label, units in zip(self.get_labels(), self.get_units())
+            f"{label} ({units})" if units else label
+            for label, units in zip(self.get_labels(all_components=all_components), self.get_units(all_components))
         ]
-        df = pd.DataFrame(data, columns=columns)
-        return df.astype({"Segmentation component": int}).set_index("Segmentation component")
+        df = pd.DataFrame(data, columns=columns, index=self.components_info.roi_components)
+        if "Segmentation component" in df.columns:
+            df = df.astype({"Segmentation component": int}).set_index("Segmentation component")
+        return df
 
     def set_filename(self, path_fo_file: str):
         """
@@ -143,19 +163,26 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         self._units_dict[FILE_NAME_STR] = ""
         self._data_dict.move_to_end(FILE_NAME_STR, False)
 
-    def get_component_info(self) -> Tuple[bool, bool]:
+    def get_component_info(self, all_components: bool = False) -> Tuple[bool, bool]:
         """
         Get information which type of components are in storage.
 
         :return: has_mask_components, has_segmentation_components
         """
-        has_mask_components = any((x == PerComponent.Yes and y != AreaType.ROI for x, y in self._type_dict.values()))
+        if all_components and self.components_info.has_components():
+            return True, True
+        has_mask_components = any(
+            (
+                x in {PerComponent.Yes, PerComponent.Per_Mask_component} and y != AreaType.ROI
+                for x, y in self._type_dict.values()
+            )
+        )
         has_segmentation_components = any(
             (x == PerComponent.Yes and y == AreaType.ROI for x, y in self._type_dict.values())
         )
         return has_mask_components, has_segmentation_components
 
-    def get_labels(self, expand=True) -> List[str]:
+    def get_labels(self, expand=True, all_components=False) -> List[str]:
         """
         If expand is false return list of keys of this storage.
         Otherwise return  labels for measurement. Base are keys of this storage.
@@ -164,7 +191,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
         if not expand:
             return list(self.keys())
-        has_mask_components, has_segmentation_components = self.get_component_info()
+        has_mask_components, has_segmentation_components = self.get_component_info(all_components)
         labels = list(self._data_dict.keys())
         index = 1 if FILE_NAME_STR in self._data_dict else 0
         if has_mask_components:
@@ -173,8 +200,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             labels.insert(index, "Segmentation component")
         return labels
 
-    def get_units(self) -> List[str]:
-        return [self._units_dict[x] for x in self.get_labels()]
+    def get_units(self, all_components=False) -> List[str]:
+        return [self._units_dict[x] for x in self.get_labels(all_components=all_components)]
 
     def get_global_names(self):
         """Get names for only parameters which are not 'PerComponent.Yes'"""
@@ -187,17 +214,15 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             name = self._data_dict[FILE_NAME_STR]
             res = [name]
             iterator = iter(self._data_dict.keys())
-            try:
-                next(iterator)
-            except StopIteration:
-                pass
+            with suppress(StopIteration):
+                next(iterator)  # skipcq: PTC-W0063`
         else:
             res = []
             iterator = iter(self._data_dict.keys())
         for el in iterator:
             per_comp = self._type_dict[el][0]
             val = self._data_dict[el]
-            if per_comp != PerComponent.Yes:
+            if per_comp not in {PerComponent.Yes, PerComponent.Per_Mask_component}:
                 res.append(val)
         return res
 
@@ -214,18 +239,16 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             name = self._data_dict[FILE_NAME_STR]
             res = [[name] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
-            try:
-                next(iterator)
-            except StopIteration:
-                pass
+            with suppress(StopIteration):
+                next(iterator)  # skipcq: PTC-W0063`
         else:
             res = [[] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
         return res, iterator
 
-    def get_separated(self) -> List[List[MeasurementValueType]]:
+    def get_separated(self, all_components=False) -> List[List[MeasurementValueType]]:
         """Get measurements separated for each component"""
-        has_mask_components, has_segmentation_components = self.get_component_info()
+        has_mask_components, has_segmentation_components = self.get_component_info(all_components)
         if not has_mask_components and not has_segmentation_components:
             return [list(self._data_dict.values())]
         component_info = self._get_component_info(has_mask_components, has_segmentation_components)
@@ -244,7 +267,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             per_comp, area_type = self._type_dict[el]
             val = self._data_dict[el]
             for i, (seg, mask) in enumerate(component_info):
-                if per_comp != PerComponent.Yes:
+                if per_comp not in {PerComponent.Yes, PerComponent.Per_Mask_component}:
                     res[i].append(val)
                 elif area_type == AreaType.ROI:
                     res[i].append(val[segmentation_to_pos[seg]])
@@ -253,24 +276,22 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         return res
 
 
-class MeasurementProfile:
-    PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
+class MeasurementProfile(BaseModel):
+    name: str
+    chosen_fields: List[MeasurementEntry]
+    name_prefix: str = ""
 
-    def __init__(self, name, chosen_fields: List[MeasurementEntry], name_prefix=""):
-        self.name = name
-        self.chosen_fields: List[MeasurementEntry] = chosen_fields
-        self._need_mask = False
-        for cf_val in chosen_fields:
-            self._need_mask = self._need_mask or self.need_mask(cf_val.calculation_tree)
-        self.name_prefix = name_prefix
+    @property
+    def _need_mask(self):
+        return any(cf_val.calculation_tree.need_mask() for cf_val in self.chosen_fields)
 
-    def to_dict(self):
-        return {"name": self.name, "chosen_fields": self.chosen_fields, "name_prefix": self.name_prefix}
-
-    def need_mask(self, tree):
-        if isinstance(tree, Leaf):
-            return tree.area in [AreaType.Mask, AreaType.Mask_without_ROI]
-        return self.need_mask(tree.left) or self.need_mask(tree.right)
+    def to_dict(self):  # pragma: no cover
+        warnings.warn(
+            f"{self.__class__.__name__}.to_dict is deprecated. Use as_dict instead",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+        return dict(self)
 
     def _need_mask_without_segmentation(self, tree):
         if isinstance(tree, Leaf):
@@ -283,6 +304,8 @@ class MeasurementProfile:
             area_type = method.area_type(tree.area)
             if tree.per_component == PerComponent.Mean:
                 return PerComponent.No, area_type
+            if tree.per_component == PerComponent.Per_Mask_component:
+                return tree.per_component, AreaType.Mask
             return tree.per_component, area_type
 
         left_par, left_area = self._get_par_component_and_area_type(tree.left)
@@ -329,11 +352,11 @@ class MeasurementProfile:
         ]
 
     def is_any_mask_measurement(self):
-        return any(self.need_mask(el.calculation_tree) for el in self.chosen_fields)
+        return any(el.calculation_tree.need_mask() for el in self.chosen_fields)
 
     def _is_component_measurement(self, node):
         if isinstance(node, Leaf):
-            return node.per_component == PerComponent.Yes
+            return node.per_component in {PerComponent.Yes, PerComponent.Per_Mask_component}
         return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
     @staticmethod
@@ -345,7 +368,7 @@ class MeasurementProfile:
             AreaType.ROI: "segmentation",
         }
         kw = dict(kwargs)
-        kw.update(node.dict)
+        kw.update(dict(node.parameters))
 
         if node.channel is not None:
             kw["channel"] = kw[f"channel_{node.channel}"]
@@ -361,19 +384,29 @@ class MeasurementProfile:
         return kw
 
     def _clip_arrays(self, kw, node: Leaf, method: MeasurementMethodBase, component_index: int):
-        bounds = tuple(kw["bounds_info"][component_index].get_slices(margin=1))
+
         if node.area != AreaType.ROI or method.need_full_data():
-            bounds = tuple(slice(None, None) for _ in bounds)
+            bounds = tuple(slice(None, None) for _ in kw["area_array"].shape)
+        elif node.per_component == PerComponent.Per_Mask_component:
+            bounds = tuple(kw["mask_bound_info"][component_index].get_slices(margin=1))
+        else:
+            bounds = tuple(kw["bounds_info"][component_index].get_slices(margin=1))
         kw2 = kw.copy()
+
+        component_mark_area = (
+            kw2["area_array"] if node.per_component != PerComponent.Per_Mask_component else kw2["mask"]
+        )
+
         kw2["_component_num"] = component_index
 
-        kw2["area_array"] = kw["area_array"][bounds] == component_index
+        area_array = kw2["area_array"][bounds].copy()
+        area_array[component_mark_area[bounds] != component_index] = 0
+
+        kw2["area_array"] = area_array
         im_bounds = list(bounds)
         image: Image = kw["image"]
-        im_bounds.insert(image.time_pos if image.time_pos < image.channel_pos else image.time_pos - 1, slice(None))
-        im_mask = image.mask[tuple(im_bounds)] if image.mask is not None else None
-        im_bounds.insert(image.channel_pos, slice(None))
-        kw2["image"] = kw["image"].substitute(data=image.get_data()[tuple(im_bounds)], mask=im_mask)
+        im_bounds.insert(image.time_pos, slice(None))
+        kw2["image"] = image.cut_image(tuple(im_bounds))
         for name in ["channel", "segmentation", "roi", "mask"] + [f"channel_{num}" for num in self.get_channels_num()]:
             if kw[name] is not None:
                 kw2[name] = kw[name][bounds]
@@ -393,7 +426,7 @@ class MeasurementProfile:
         # TODO use cache for per component calculate
         # kw["_cache"] = False
         val = []
-        if method.area_type(node.area) == AreaType.ROI:
+        if method.area_type(node.area) == AreaType.ROI and node.per_component != PerComponent.Per_Mask_component:
             components = segmentation_mask_map.roi_components
         else:
             components = segmentation_mask_map.mask_components
@@ -410,8 +443,12 @@ class MeasurementProfile:
     ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
 
-        hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel, NO_COMPONENT)
+        hash_str = hash_fun_call_name(
+            method, node.parameters, node.area, node.per_component, node.channel, NO_COMPONENT
+        )
         area_type = method.area_type(node.area)
+        if node.per_component == PerComponent.Per_Mask_component:
+            area_type = AreaType.Mask
         if hash_str in help_dict:
             val = help_dict[hash_str]
         else:
@@ -420,7 +457,7 @@ class MeasurementProfile:
             help_dict[hash_str] = val
         unit: symbols = method.get_units(3) if kwargs["image"].is_stack else method.get_units(2)
         if node.power != 1:
-            return pow(val, node.power), pow(unit, node.power), area_type
+            return pow(val, node.power), pow(unit, Rational(node.power)), area_type
         return val, unit, area_type
 
     def _calculate_node(
@@ -592,6 +629,12 @@ class MeasurementProfile:
         result_scalar = UNIT_SCALE[result_units.value]
         if isinstance(roi, np.ndarray):
             roi = ROIInfo(roi).fit_to_image(image)
+        mask_bound_info = None
+        if isinstance(image.mask, np.ndarray):
+            mask_bound_info = {
+                k: v.del_dim(image.time_pos) if len(v.lower) == 4 else v
+                for k, v in ROIInfo(image.mask).fit_to_image(image).bound_info.items()
+            }
         roi_alternative = {}
         for name, array in roi.alternative.items():
             roi_alternative[name] = get_time(array)
@@ -603,6 +646,7 @@ class MeasurementProfile:
             "bounds_info": {
                 k: v.del_dim(image.time_pos) if len(v.lower) == 4 else v for k, v in roi.bound_info.items()
             },
+            "mask_bound_info": mask_bound_info,
             "mask": get_time(image.mask),
             "voxel_size": image.spacing,
             "result_scalar": result_scalar,
@@ -670,8 +714,7 @@ def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size)
 def get_main_axis_length(
     index: int, area_array: np.ndarray, channel: np.ndarray, voxel_size, result_scalar, _cache=False, **kwargs
 ):
-    _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
-    if _cache:
+    if _cache and "_area" in kwargs and "_per_component" in kwargs and "channel_num" in kwargs:
         help_dict: Dict = kwargs["help_dict"]
         _area: AreaType = kwargs["_area"]
         _per_component: PerComponent = kwargs["_per_component"]
@@ -844,9 +887,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
                 channel = channel.reshape(area_array.shape)
             else:  # pragma: no cover
                 raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
-        if np.any(area_array):
-            return np.sum(channel[area_array > 0])
-        return 0
+        return np.sum(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -865,10 +906,6 @@ class ComponentsNumber(MeasurementMethodBase):
         return np.unique(area_array).size - 1
 
     @classmethod
-    def get_starting_leaf(cls):
-        return super().get_starting_leaf().replace_(per_component=PerComponent.No)
-
-    @classmethod
     def get_units(cls, ndim):
         return symbols("count")
 
@@ -880,9 +917,7 @@ class MaximumPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
-        if np.any(area_array):
-            return np.max(channel[area_array > 0])
-        return 0
+        return np.max(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -900,9 +935,7 @@ class MinimumPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
-        if np.any(area_array):
-            return np.min(channel[area_array > 0])
-        return 0
+        return np.min(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -920,9 +953,7 @@ class MeanPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
-        if np.any(area_array):
-            return np.mean(channel[area_array > 0])
-        return 0
+        return np.mean(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -940,9 +971,7 @@ class MedianPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
-        if np.any(area_array):
-            return np.median(channel[area_array > 0])
-        return 0
+        return np.median(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -963,9 +992,7 @@ class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
-        if np.any(area_array):
-            return np.std(channel[area_array > 0])
-        return 0
+        return np.std(channel[area_array > 0]) if np.any(area_array) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -1053,11 +1080,7 @@ class Compactness(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(**kwargs):  # pylint: disable=W0221
-        cache = kwargs["_cache"] if "_cache" in kwargs else False
-        cache = cache and "help_dict" in kwargs
-        cache = cache and "_area" in kwargs
-        cache = cache and "_per_component" in kwargs
-        if cache:
+        if kwargs.get("_cache", False) and "help_dict" in kwargs and "_area" in kwargs and "_per_component" in kwargs:
             help_dict = kwargs["help_dict"]
             border_hash_str = hash_fun_call_name(
                 Surface, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1), kwargs["_component_num"]
@@ -1080,7 +1103,7 @@ class Compactness(MeasurementMethodBase):
         else:
             border_surface = Surface.calculate_property(**kwargs)
             volume = Volume.calculate_property(**kwargs)
-        return border_surface ** 1.5 / volume
+        return border_surface**1.5 / volume
 
     @classmethod
     def get_units(cls, ndim):
@@ -1118,8 +1141,8 @@ class Sphericity(MeasurementMethodBase):
             diameter_val = help_dict[diameter_hash_str]
         radius = diameter_val / 2
         if kwargs["area_array"].shape[0] > 1:
-            return volume / (4 / 3 * pi * (radius ** 3))
-        return volume / (pi * (radius ** 2))
+            return volume / (4 / 3 * pi * (radius**3))
+        return volume / (pi * (radius**2))
 
     @classmethod
     def get_units(cls, ndim):
@@ -1140,10 +1163,7 @@ class Surface(MeasurementMethodBase):
 
 class RimVolume(MeasurementMethodBase):
     text_info = "rim volume", "Calculate volumes for elements in radius (in physical units) from mask"
-
-    @classmethod
-    def get_fields(cls):
-        return BorderRim.get_fields()
+    __argument_class__ = BorderRim.__argument_class__
 
     @classmethod
     def get_starting_leaf(cls):
@@ -1171,10 +1191,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
         "rim pixel brightness sum",
         "Calculate mass for components located within rim (in physical units) from mask",
     )
-
-    @classmethod
-    def get_fields(cls):
-        return BorderRim.get_fields()
+    __argument_class__ = BorderRim.__argument_class__
 
     @classmethod
     def get_starting_leaf(cls):
@@ -1190,9 +1207,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
         if border_mask_array is None:
             return None
         final_mask = np.array((border_mask_array > 0) * (area_array > 0))
-        if np.any(final_mask):
-            return np.sum(channel[final_mask])
-        return 0
+        return np.sum(channel[final_mask]) if np.any(final_mask) else 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -1207,6 +1222,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
         return AreaType.ROI
 
 
+@register_class(old_paths=["PartSeg.utils.analysis.statistics_calculation.DistancePoint"])
 class DistancePoint(Enum):
     Border = 1
     Mass_center = 2
@@ -1216,23 +1232,15 @@ class DistancePoint(Enum):
         return self.name.replace("_", " ")
 
 
-try:
-    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
-    reloading
-except NameError:
-    reloading = False
-    enum_register.register_class(DistancePoint)
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("distance_to_segmentation", "distance_to_roi"))])
+class DistanceMaskROIParameters(BaseModel):
+    distance_from_mask: DistancePoint = DistancePoint.Border
+    distance_to_roi: DistancePoint = Field(DistancePoint.Border, title="Distance to ROI")
 
 
 class DistanceMaskROI(MeasurementMethodBase):
     text_info = "ROI distance", "Calculate distance between ROI and mask"
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("distance_from_mask", "Distance from mask", DistancePoint.Border),
-            AlgorithmProperty("distance_to_segmentation", "Distance to ROI", DistancePoint.Border),
-        ]
+    __argument_class__ = DistanceMaskROIParameters
 
     @staticmethod
     def calculate_points(channel, area_array, voxel_size, result_scalar, point_type: DistancePoint) -> np.ndarray:
@@ -1258,7 +1266,7 @@ class DistanceMaskROI(MeasurementMethodBase):
         voxel_size,
         result_scalar,
         distance_from_mask: DistancePoint,
-        distance_to_segmentation: DistancePoint,
+        distance_to_roi: DistancePoint,
         *args,
         **kwargs,
     ):  # pylint: disable=W0221
@@ -1269,7 +1277,7 @@ class DistanceMaskROI(MeasurementMethodBase):
         if not (np.any(mask) and np.any(area_array)):
             return 0
         mask_pos = cls.calculate_points(channel, mask, voxel_size, result_scalar, distance_from_mask)
-        seg_pos = cls.calculate_points(channel, area_array, voxel_size, result_scalar, distance_to_segmentation)
+        seg_pos = cls.calculate_points(channel, area_array, voxel_size, result_scalar, distance_to_roi)
         if 1 in {mask_pos.shape[0], seg_pos.shape[0]}:
             return np.min(cdist(mask_pos, seg_pos))
 
@@ -1295,27 +1303,26 @@ class DistanceMaskROI(MeasurementMethodBase):
         return AreaType.ROI
 
 
+class DistanceROIROIParameters(BaseModel):
+    profile: ROIExtractionProfile = Field(
+        ROIExtractionProfile(
+            name="default",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        ),
+        title="ROI extraction profile",
+    )
+    distance_from_new_roi: DistancePoint = Field(DistancePoint.Border, title="Distance new ROI")
+    distance_to_roi: DistancePoint = Field(DistancePoint.Border, title="Distance to ROI")
+
+
 class DistanceROIROI(DistanceMaskROI):
     text_info = "to new ROI distance", "Calculate distance between ROI and new ROI"
+    __argument_class__ = DistanceROIROIParameters
 
     @classmethod
     def get_starting_leaf(cls):
         return Leaf(name=cls.text_info[0], area=AreaType.ROI)
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "profile",
-                "ROI extraction profile",
-                ROIExtractionProfile(
-                    "default", LowerThresholdAlgorithm.get_name(), LowerThresholdAlgorithm.get_default_values()
-                ),
-                value_type=ROIExtractionProfile,
-            ),
-            AlgorithmProperty("distance_from_new_roi", "Distance new ROI", DistancePoint.Border),
-            AlgorithmProperty("distance_to_roi", "Distance to ROI", DistancePoint.Border),
-        ]
 
     # noinspection PyMethodOverriding
     @classmethod
@@ -1363,7 +1370,7 @@ class DistanceROIROI(DistanceMaskROI):
             tuple(voxel_size),
             result_scalar,
             distance_from_mask=distance_from_new_roi,
-            distance_to_segmentation=distance_to_roi,
+            distance_to_roi=distance_to_roi,
         )
 
     @staticmethod
@@ -1371,27 +1378,26 @@ class DistanceROIROI(DistanceMaskROI):
         return True
 
 
+class ROINeighbourhoodROIParameters(BaseModel):
+    profile: ROIExtractionProfile = Field(
+        ROIExtractionProfile(
+            name="default",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        ),
+        title="ROI extraction profile",
+    )
+    distance: float = Field(500, ge=0, le=10000, title="Distance")
+    units: Units = Units.nm
+
+
 class ROINeighbourhoodROI(DistanceMaskROI):
     text_info = "Neighbourhood new ROI presence", "Count how many of new roi are present in neighbourhood of new ROI"
+    __argument_class__ = ROINeighbourhoodROIParameters
 
     @classmethod
     def get_starting_leaf(cls):
         return Leaf(name=cls.text_info[0], area=AreaType.ROI)
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "profile",
-                "ROI extraction profile",
-                ROIExtractionProfile(
-                    "default", LowerThresholdAlgorithm.get_name(), LowerThresholdAlgorithm.get_default_values()
-                ),
-                value_type=ROIExtractionProfile,
-            ),
-            AlgorithmProperty("distance", "Distance", 500.0, options_range=(0, 10000), value_type=float),
-            AlgorithmProperty("units", "Units", Units.nm, value_type=Units),
-        ]
 
     # noinspection PyMethodOverriding
     @classmethod
@@ -1445,17 +1451,16 @@ class ROINeighbourhoodROI(DistanceMaskROI):
         return True
 
 
+class SplitOnPartParameters(MaskDistanceSplit.__argument_class__):
+    part_selection: int = Field(2, title="Which part (from border)", ge=1, le=1024)
+
+
 class SplitOnPartVolume(MeasurementMethodBase):
     text_info = (
         "distance splitting volume",
         "Split mask on parts and then calculate volume of cross of segmentation and mask part",
     )
-
-    @classmethod
-    def get_fields(cls):
-        return MaskDistanceSplit.get_fields() + [
-            AlgorithmProperty("part_selection", "Which part  (from border)", 2, (1, 1024))
-        ]
+    __argument_class__ = SplitOnPartParameters
 
     @staticmethod
     def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
@@ -1481,12 +1486,7 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
         "distance splitting pixel brightness sum",
         "Split mask on parts and then calculate pixel brightness sum of cross of segmentation and mask part",
     )
-
-    @classmethod
-    def get_fields(cls):
-        return MaskDistanceSplit.get_fields() + [
-            AlgorithmProperty("part_selection", "Which part (from border)", 2, (1, 1024))
-        ]
+    __argument_class__ = SplitOnPartParameters
 
     @staticmethod
     def calculate_property(part_selection, channel, area_array, **kwargs):  # pylint: disable=W0221
@@ -1518,6 +1518,25 @@ InverseDifferenceMoment SumAverage SumVariance SumEntropy Entropy
 DifferenceVariance DifferenceEntropy InfoMeas1 InfoMeas2""".split()
 
 
+class HaralickEnum(Enum):
+    AngularSecondMoment = "AngularSecondMoment"
+    Contrast = "Contrast"
+    Correlation = "Correlation"
+    Variance = "Variance"
+    InverseDifferenceMoment = "InverseDifferenceMoment"
+    SumAverage = "SumAverage"
+    SumVariance = "SumVariance"
+    SumEntropy = "SumEntropy"
+    Entropy = "Entropy"
+    DifferenceVariance = "DifferenceVariance"
+    DifferenceEntropy = "DifferenceEntropy"
+    InfoMeas1 = "InfoMeas1"
+    InfoMeas2 = "InfoMeas2"
+
+    def index(self) -> int:
+        return list(self.__class__).index(self)
+
+
 def _rescale_image(data: np.ndarray):
     if data.dtype == np.uint8:
         return data
@@ -1526,19 +1545,19 @@ def _rescale_image(data: np.ndarray):
     return ((data - min_val) / ((max_val - min_val) / 255)).astype(np.uint8)
 
 
+class HaralickParameters(BaseModel):
+    feature: HaralickEnum = HaralickEnum.AngularSecondMoment
+    distance: int = Field(1, ge=1, le=10)
+
+
 class Haralick(MeasurementMethodBase):
+    __argument_class__ = HaralickParameters
+
     @classmethod
     def get_units(cls, ndim) -> symbols:
         return "1"
 
     text_info = "Haralick", "Calculate Haralick features"
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("feature", "Feature", HARALIC_FEATURES[0], possible_values=HARALIC_FEATURES),
-            AlgorithmProperty("distance", "Distance", 1, options_range=(1, 10)),
-        ]
 
     @classmethod
     def need_channel(cls):
@@ -1548,8 +1567,9 @@ class Haralick(MeasurementMethodBase):
     def calculate_property(
         cls, area_array, channel, distance, feature, _cache=False, **kwargs
     ):  # pylint: disable=W0221
-        _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
-        if _cache:
+        if isinstance(feature, str):
+            feature = HaralickEnum(feature)
+        if _cache := _cache and "_area" in kwargs and "_per_component" in kwargs:
             help_dict: Dict = kwargs["help_dict"]
             _area: AreaType = kwargs["_area"]
             _per_component: PerComponent = kwargs["_per_component"]
@@ -1558,10 +1578,10 @@ class Haralick(MeasurementMethodBase):
             )
             if hash_name not in help_dict:
                 help_dict[hash_name] = cls.calculate_haralick(channel, area_array, distance)
-            return help_dict[hash_name][HARALIC_FEATURES.index(feature)]
+            return help_dict[hash_name][feature.index()]
 
         res = cls.calculate_haralick(channel, area_array, distance)
-        return res[HARALIC_FEATURES.index(feature)]
+        return res[feature.index()]
 
     @staticmethod
     def calculate_haralick(channel, area_array, distance):
@@ -1587,12 +1607,13 @@ class ComponentBoundingBox(MeasurementMethodBase):
         return super().get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
 
 
+class GetROIAnnotationTypeParameters(BaseModel):
+    name: str = ""
+
+
 class GetROIAnnotationType(MeasurementMethodBase):
     text_info = "annotation by name", "Get roi annotation by name"
-
-    @classmethod
-    def get_fields(cls):
-        return [AlgorithmProperty("name", "Name", "")]
+    __argument_class__ = GetROIAnnotationTypeParameters
 
     @classmethod
     def get_starting_leaf(cls):
@@ -1607,50 +1628,57 @@ class GetROIAnnotationType(MeasurementMethodBase):
         return "str"
 
 
+class ColocalizationMeasurementParameters(BaseModel):
+    channel_fst: Channel = Field(0, title="Channel 1")
+    channel_scd: Channel = Field(1, title="Channel 2")
+    colocalization: CorrelationEnum = CorrelationEnum.pearson
+    randomize: bool = Field(
+        False, description="If randomize orders of pixels in one channel", title="Randomize channel"
+    )
+    randomize_repeat: int = Field(10, description="Number of repetitions for mean_calculate", title="Randomize num")
+
+
 class ColocalizationMeasurement(MeasurementMethodBase):
     text_info = "Colocalization", "Measurement of colocalization of two channels."
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("channel_fst", "Channel 1", 0, value_type=Channel),
-            AlgorithmProperty("channel_scd", "Channel 2", 0, value_type=Channel),
-            AlgorithmProperty(
-                "colocalization",
-                "Colocalization",
-                PEARSON_CORRELATION,
-                possible_values=[PEARSON_CORRELATION, MANDERS_COEFIICIENT, INTENSITY_CORRELATION, SPEARMAN_CORRELATION],
-            ),
-        ]
+    __argument_class__ = ColocalizationMeasurementParameters
 
     @staticmethod
-    def calculate_property(area_array, colocalization, channel_fst=0, channel_scd=1, **kwargs):  # pylint: disable=W0221
-        mask_binary = area_array > 0
-        data_1 = kwargs[f"channel_{channel_fst}"][mask_binary].astype(float)
-        data_2 = kwargs[f"channel_{channel_scd}"][mask_binary].astype(float)
-        # data_max = max(data_1.max(), data_2.max())
-        # data_1 = data_1 / data_max
-        # data_2 = data_2 / data_max
-        if colocalization == SPEARMAN_CORRELATION:
+    def _calculate_masked(data_1, data_2, colocalization):
+        if colocalization == CorrelationEnum.spearman:
             data_1 = data_1.argsort().argsort().astype(float)
             data_2 = data_2.argsort().argsort().astype(float)
-            colocalization = PEARSON_CORRELATION
-        if colocalization == PEARSON_CORRELATION:
+            colocalization = CorrelationEnum.pearson
+        if colocalization == CorrelationEnum.pearson:
             data_1_mean = np.mean(data_1)
             data_2_mean = np.mean(data_2)
             nominator = np.sum((data_1 - data_1_mean) * (data_2 - data_2_mean))
             numerator = np.sqrt(np.sum((data_1 - data_1_mean) ** 2) * np.sum((data_2 - data_2_mean) ** 2))
             return nominator / numerator
-        if colocalization == MANDERS_COEFIICIENT:
+        if colocalization == CorrelationEnum.manders:
             nominator = np.sum(data_1 * data_2)
-            numerator = np.sqrt(np.sum(data_1 ** 2) * np.sum(data_2 ** 2))
+            numerator = np.sqrt(np.sum(data_1**2) * np.sum(data_2**2))
             return nominator / numerator
-        if colocalization == INTENSITY_CORRELATION:
+        if colocalization == CorrelationEnum.intensity:
             data_1_mean = np.mean(data_1)
             data_2_mean = np.mean(data_2)
             return np.sum((data_1 > data_1_mean) == (data_2 > data_2_mean)) / data_1.size - 0.5
 
-        raise RuntimeError("Not supported colocalization method")  # pragma: no cover
+        raise RuntimeError(f"Not supported colocalization method {colocalization}")  # pragma: no cover
+
+    @classmethod
+    def calculate_property(
+        cls, area_array, colocalization, randomize=False, randomize_repeat=10, channel_fst=0, channel_scd=1, **kwargs
+    ):  # pylint: disable=W0221
+        mask_binary = area_array > 0
+        data_1 = kwargs[f"channel_{channel_fst}"][mask_binary].astype(float)
+        data_2 = kwargs[f"channel_{channel_scd}"][mask_binary].astype(float)
+        if not randomize:
+            return cls._calculate_masked(data_1, data_2, colocalization)
+        res_list = []
+        for _ in range(randomize_repeat):
+            rand_data2 = np.random.permutation(data_2)
+            res_list.append(cls._calculate_masked(data_1, rand_data2, colocalization))
+        return np.mean(res_list)
 
     @classmethod
     def get_units(cls, ndim) -> symbols:
@@ -1697,35 +1725,34 @@ def calc_diam(array, voxel_size):  # pragma: no cover
     return np.sqrt(diam)
 
 
-MEASUREMENT_DICT = Register(
-    Volume,
-    Diameter,
-    PixelBrightnessSum,
-    ComponentBoundingBox,
-    GetROIAnnotationType,
-    ComponentsNumber,
-    MaximumPixelBrightness,
-    MinimumPixelBrightness,
-    MeanPixelBrightness,
-    MedianPixelBrightness,
-    StandardDeviationOfPixelBrightness,
-    ColocalizationMeasurement,
-    Moment,
-    FirstPrincipalAxisLength,
-    SecondPrincipalAxisLength,
-    ThirdPrincipalAxisLength,
-    Compactness,
-    Sphericity,
-    Surface,
-    RimVolume,
-    RimPixelBrightnessSum,
-    ROINeighbourhoodROI,
-    DistanceMaskROI,
-    DistanceROIROI,
-    SplitOnPartVolume,
-    SplitOnPartPixelBrightnessSum,
-    Voxels,
-    Haralick,
-    suggested_base_class=MeasurementMethodBase,
-)
+MEASUREMENT_DICT = Register(suggested_base_class=MeasurementMethodBase)
 """Register with all measurements algorithms"""
+
+MEASUREMENT_DICT.register(Volume)
+MEASUREMENT_DICT.register(Diameter)
+MEASUREMENT_DICT.register(PixelBrightnessSum, old_names=["Pixel Brightness Sum"])
+MEASUREMENT_DICT.register(ComponentBoundingBox)
+MEASUREMENT_DICT.register(GetROIAnnotationType)
+MEASUREMENT_DICT.register(ComponentsNumber, old_names=["Components Number"])
+MEASUREMENT_DICT.register(MaximumPixelBrightness)
+MEASUREMENT_DICT.register(MinimumPixelBrightness)
+MEASUREMENT_DICT.register(MeanPixelBrightness)
+MEASUREMENT_DICT.register(MedianPixelBrightness)
+MEASUREMENT_DICT.register(StandardDeviationOfPixelBrightness)
+MEASUREMENT_DICT.register(ColocalizationMeasurement)
+MEASUREMENT_DICT.register(Moment, old_names=["Moment of inertia"])
+MEASUREMENT_DICT.register(FirstPrincipalAxisLength, old_names=["Longest main axis length"])
+MEASUREMENT_DICT.register(SecondPrincipalAxisLength, old_names=["Middle main axis length"])
+MEASUREMENT_DICT.register(ThirdPrincipalAxisLength, old_names=["Shortest main axis length"])
+MEASUREMENT_DICT.register(Compactness)
+MEASUREMENT_DICT.register(Sphericity)
+MEASUREMENT_DICT.register(Surface)
+MEASUREMENT_DICT.register(RimVolume, old_names=["Rim Volume"])
+MEASUREMENT_DICT.register(RimPixelBrightnessSum, old_names=["Rim Pixel Brightness Sum"])
+MEASUREMENT_DICT.register(ROINeighbourhoodROI)
+MEASUREMENT_DICT.register(DistanceMaskROI, old_names=["segmentation distance"])
+MEASUREMENT_DICT.register(DistanceROIROI, old_names=["to ROI distance"])
+MEASUREMENT_DICT.register(SplitOnPartVolume, old_names=["split on part volume"])
+MEASUREMENT_DICT.register(SplitOnPartPixelBrightnessSum, old_names=["split on part pixel brightness sum"])
+MEASUREMENT_DICT.register(Voxels)
+MEASUREMENT_DICT.register(Haralick)

@@ -12,11 +12,13 @@ from sentry_sdk.serializer import serialize
 from PartSeg.common_backend.base_argparser import safe_repr
 from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
 
+DEFAULT_ERROR_REPORT = sentry_sdk.utils.MAX_STRING_LENGTH
+
 
 def test_message_clip(monkeypatch):
     message = "a" * 5000
-    assert len(sentry_sdk.utils.strip_string(message).value) == 512
-    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10 ** 4)
+    assert len(sentry_sdk.utils.strip_string(message).value) == DEFAULT_ERROR_REPORT
+    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
     assert len(sentry_sdk.utils.strip_string(message)) == 5000
 
 
@@ -25,12 +27,12 @@ def test_sentry_serialize_clip(monkeypatch):
     try:
         raise ValueError("eeee")
     except ValueError as e:
-        event, hint = sentry_sdk.utils.event_from_exception(e)
+        event, _hint = sentry_sdk.utils.event_from_exception(e)
         event["message"] = message
 
         cliped = serialize(event)
-        assert len(cliped["message"]) == 512
-        monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10 ** 4)
+        assert len(cliped["message"]) == DEFAULT_ERROR_REPORT
+        monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
         cliped = serialize(event)
         assert len(cliped["message"]) == 5000
 
@@ -64,8 +66,8 @@ def test_sentry_report(monkeypatch):
 
     def check_event(event):
         happen[0] = True
-        assert len(event["message"]) == 512
-        assert len(event["extra"]["lorem"]) == 512
+        assert len(event["message"]) == DEFAULT_ERROR_REPORT
+        assert len(event["extra"]["lorem"]) == DEFAULT_ERROR_REPORT
 
     try:
         raise ValueError("eeee")
@@ -84,7 +86,7 @@ def test_sentry_report(monkeypatch):
 def test_sentry_report_no_clip(monkeypatch):
     message = "a" * 5000
     happen = [False]
-    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10 ** 4)
+    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
 
     def check_event(event):
         happen[0] = True

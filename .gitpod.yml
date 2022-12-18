@@ -1,4 +1,4 @@
 tasks:
   - init: >
-      pip3 install .
-      pip3 install -r docs/requirements.txt
+      pip install -e .[test,pyqt]
+      pip install -r docs/requirements.txt

@@ -1,5 +1,7 @@
 import os
 
+from packaging.version import parse as parse_version
+from qtpy import QT_VERSION
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QGridLayout, QLabel, QPushButton
 
@@ -25,7 +27,7 @@ class AboutDialog(QDialog):
         )
         dev_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(PartSeg.__file__))), "changelog.md")
         if os.path.exists(dev_path):
-            with open(dev_path) as ff:
+            with open(dev_path, encoding="utf-8") as ff:
                 changelog_text = ff.read()
         else:
             changelog_text = PartSeg.changelog
@@ -33,12 +35,17 @@ class AboutDialog(QDialog):
         text_label.setText(text)
         self.change_log = TextShow()
         self.change_log.setAcceptRichText(True)
-        self.change_log.setMarkdown(changelog_text)
+        if parse_version(QT_VERSION) < parse_version("5.14.0"):  # pragma: no cover
+            self.change_log.setText(changelog_text)
+        else:
+            self.change_log.setMarkdown(changelog_text)
         self.cite_as = TextShow(lines=3)
-        self.cite_as.setMarkdown(cite_as_text)
+        if parse_version(QT_VERSION) < parse_version("5.14.0"):  # pragma: no cover
+            self.cite_as.setText(cite_as_text)
+        else:
+            self.cite_as.setMarkdown(cite_as_text)
         ok_but = QPushButton("Ok")
         ok_but.clicked.connect(self.accept)
-        # text_label.setWordWrap(True)
         text_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout = QGridLayout()
         layout.addWidget(text_label, 0, 0, 1, 3)

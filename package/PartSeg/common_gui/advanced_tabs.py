@@ -4,12 +4,14 @@ In this moment controlling colormaps tabs and developer PartSegCore
 """
 import importlib
 import sys
+from contextlib import suppress
 from functools import partial
 from typing import List
 
 from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
+    QCheckBox,
     QColorDialog,
     QComboBox,
     QDoubleSpinBox,
@@ -22,12 +24,18 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from PartSeg import plugins
+from PartSeg import plugins, state_store
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelEditor
+from PartSeg.common_gui.universal_gui_part import CustomDoubleSpinBox
 from PartSegCore import plugins as core_plugins
-from PartSegCore import register, state_store
+from PartSegCore import register
+
+RENDERING_LIST = ["iso_categorical", "translucent"]
+
+RENDERING_MODE_NAME_STR = "rendering_mode"
+SEARCH_ZOOM_FACTOR_STR = "search_zoom_factor"
 
 
 class DevelopTab(QWidget):
@@ -114,15 +122,13 @@ class MaskControl(QWidget):
         color = self.color_picker.currentColor()
         color = (color.red(), color.green(), color.blue())
         self.settings.set_in_profile("mask_presentation_color", color)
-        self.settings.mask_representation_changed_emit()
         self.set_color_preview(color)
 
     def change_opacity(self):
         self.settings.set_in_profile("mask_presentation_opacity", self.opacity_spin.value())
-        self.settings.mask_representation_changed_emit()
 
 
-class Apperance(QWidget):
+class Appearance(QWidget):
     def __init__(self, settings: ViewSettings):
         super().__init__()
         self.settings = settings
@@ -130,17 +136,59 @@ class Apperance(QWidget):
         self.layout_list = QComboBox()
         self.layout_list.addItems(self.settings.theme_list())
         self.layout_list.setCurrentText(self.settings.theme_name)
-
         self.layout_list.currentIndexChanged.connect(self.change_theme)
 
+        self.labels_render_cmb = QComboBox()
+        self.labels_render_cmb.addItems(RENDERING_LIST)
+        self._update_render_mode()
+        self.labels_render_cmb.currentTextChanged.connect(self.change_render_mode)
+        settings.connect_to_profile(RENDERING_MODE_NAME_STR, self._update_render_mode)
+
+        self.zoom_factor_spin_box = CustomDoubleSpinBox()
+        self.zoom_factor_spin_box.setValue(settings.get_from_profile(SEARCH_ZOOM_FACTOR_STR, 1.2))
+        self.zoom_factor_spin_box.valueChanged.connect(self.change_zoom_factor)
+        settings.connect_to_profile(SEARCH_ZOOM_FACTOR_STR, self._update_zoom_factor)
+
+        self.scale_bar_ticks = QCheckBox()
+        self.scale_bar_ticks.setChecked(settings.get_from_profile("scale_bar_ticks", True))
+        self.scale_bar_ticks.stateChanged.connect(self.change_scale_bar_ticks)
+        settings.connect_to_profile("scale_bar_ticks", self._update_scale_bar_ticks)
+
         layout = QGridLayout()
-        layout.addWidget(self.layout_list, 0, 0)
-        layout.setColumnStretch(1, 1)
-        layout.setRowStretch(1, 1)
+        layout.addWidget(QLabel("Theme:"), 0, 0)
+        layout.addWidget(self.layout_list, 0, 1)
+        layout.addWidget(QLabel("ROI render mode:"), 1, 0)
+        layout.addWidget(self.labels_render_cmb, 1, 1)
+        layout.addWidget(QLabel("Zoom factor for search ROI:"), 2, 0)
+        layout.addWidget(self.zoom_factor_spin_box, 2, 1)
+        layout.addWidget(QLabel("Show scale bar ticks"), 3, 0)
+        layout.addWidget(self.scale_bar_ticks, 3, 1)
+        layout.setColumnStretch(2, 1)
+        layout.setRowStretch(6, 1)
         self.setLayout(layout)
+
+    def change_scale_bar_ticks(self):
+        self.settings.set_in_profile("scale_bar_ticks", self.scale_bar_ticks.isChecked())
+
+    def _update_scale_bar_ticks(self):
+        self.scale_bar_ticks.setChecked(self.settings.get_from_profile("scale_bar_ticks", True))
+
+    def change_zoom_factor(self):
+        self.settings.set_in_profile(SEARCH_ZOOM_FACTOR_STR, self.zoom_factor_spin_box.value())
+
+    def _update_zoom_factor(self):
+        self.zoom_factor_spin_box.setValue(self.settings.get_from_profile(SEARCH_ZOOM_FACTOR_STR))
 
     def change_theme(self):
         self.settings.theme_name = self.layout_list.currentText()
+
+    def change_render_mode(self, text):
+        self.settings.set_in_profile(RENDERING_MODE_NAME_STR, text)
+
+    def _update_render_mode(self):
+        self.labels_render_cmb.setCurrentText(
+            self.settings.get_from_profile(RENDERING_MODE_NAME_STR, RENDERING_LIST[0])
+        )
 
 
 class ColorControl(QTabWidget):
@@ -150,7 +198,7 @@ class ColorControl(QTabWidget):
 
     def __init__(self, settings: ViewSettings, image_view_names: List[str]):
         super().__init__()
-        self.appearance = Apperance(settings)
+        self.appearance = Appearance(settings)
         self.colormap_selector = PColormapCreator(settings)
         self.color_preview = PColormapList(settings, image_view_names)
         self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
@@ -189,11 +237,9 @@ class AdvancedWindow(QTabWidget):
         if state_store.develop:
             self.addTab(self.develop, "Develop")
         if self.window() == self:
-            try:
+            with suppress(KeyError):
                 geometry = self.settings.get_from_profile("advanced_window_geometry")
                 self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-            except KeyError:
-                pass
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """

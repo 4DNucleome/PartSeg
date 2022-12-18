@@ -13,14 +13,14 @@ import imageio
 import numpy as np
 import pandas as pd
 import tifffile
-from napari.utils import Colormap
+from openpyxl import load_workbook
 
-from PartSegCore.json_hooks import ProfileDict, profile_hook
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from PartSegCore.json_hooks import partseg_object_hook
+from PartSegCore.project_info import ProjectInfoBase
+from PartSegCore.utils import EventedDict, ProfileDict, check_loaded_dict, iterate_names
 from PartSegImage import ImageWriter
 from PartSegImage.image import minimal_dtype
-
-from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
-from .project_info import ProjectInfoBase
 
 
 class SegmentationType(Enum):
@@ -96,9 +96,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_default_extension(cls):
         match = re.search(r"\(\*(\.\w+)", cls.get_name_with_suffix())
-        if match:
-            return match.group(1)
-        return ""
+        return match[1] if match else ""
 
     @classmethod
     def need_segmentation(cls):
@@ -113,7 +111,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         match = re.match(r".*\((.*)\)", cls.get_name())
         if match is None:
             raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match.group(1).split(" ")
+        extensions = match[1].split(" ")
         if not all(x.startswith("*.") for x in extensions):
             raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
         return [x[1:] for x in extensions]
@@ -162,7 +160,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         match = re.match(r".*\((.*)\)", cls.get_name())
         if match is None:
             raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match.group(1).split(" ")
+        extensions = match[1].split(" ")
         if not all(x.startswith("*.") for x in extensions):
             raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
         return [x[1:] for x in extensions]
@@ -190,84 +188,78 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         return False
 
 
-class UpdateLoadedMetadataBase:
-    json_hook = staticmethod(profile_hook)
-
-    @classmethod
-    def load_json_data(cls, data: typing.Union[str, Path, typing.TextIO]):
-        try:
-            if isinstance(data, typing.TextIO):
-                decoded_data = json.load(data, object_hook=cls.json_hook)
-            elif os.path.exists(data):
-                with open(data) as ff:
-                    decoded_data = json.load(ff, object_hook=cls.json_hook)
-            else:
-                decoded_data = json.loads(data, object_hook=cls.json_hook)
-        except ValueError:
-            decoded_data = json.loads(data, object_hook=cls.json_hook)
-        return cls.recursive_update(decoded_data)
-
-    @classmethod
-    def recursive_update(cls, data):
-        if isinstance(data, (tuple, list)):
-            return type(data)([cls.recursive_update(x) for x in data])
-        if isinstance(data, ROIExtractionProfile):
-            return cls.update_segmentation_profile(data)
-        if isinstance(data, Enum):
-            return cls.update_enum(data)
-        if isinstance(data, dict):
-            for key in data.keys():
-                data[key] = cls.recursive_update(data[key])
-                if key == "custom_colormap":
-                    cls.update_colormaps(data[key])
-        if isinstance(data, ProfileDict):
-            data.my_dict = cls.recursive_update(data.my_dict)
-        return data
-
-    @staticmethod
-    def update_colormaps(dkt: dict):
-        for key, val in dkt.items():
-            if isinstance(val, Colormap):
-                val.name = key
-
-    @classmethod
-    def update_enum(cls, enum_data: Enum):
-        return enum_data
-
-    # noinspection PyUnusedLocal
-    @classmethod
-    def update_segmentation_sub_dict(cls, name: str, dkt: dict) -> dict:
-        if "values" not in dkt:
-            return dkt
-        if name == "sprawl_type" and dkt["name"].endswith(" sprawl"):
-            dkt["name"] = dkt["name"][: -len(" sprawl")]
-        for key in dkt["values"].keys():
-            item = dkt["values"][key]
-            if isinstance(item, Enum):
-                dkt["values"][key] = cls.update_enum(item)
-            elif isinstance(item, dict):
-                dkt["values"][key] = cls.update_segmentation_sub_dict(key, item)
-        return dkt
-
-    @classmethod
-    def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
-        for key in list(profile_data.values.keys()):
-            item = profile_data.values[key]
-            if isinstance(item, Enum):
-                profile_data.values[key] = cls.update_enum(item)
-            elif isinstance(item, dict):
-                if key == "noise_removal":
-                    del profile_data.values[key]
-                    key = "noise_filtering"
-                if "values" in item and "gauss_type" in item["values"]:
-                    item["values"]["dimension_type"] = item["values"]["gauss_type"]
-                    del item["values"]["gauss_type"]
-                profile_data.values[key] = cls.update_segmentation_sub_dict(key, item)
-        return profile_data
-
-
 def load_metadata_base(data: typing.Union[str, Path]):
-    return UpdateLoadedMetadataBase.load_json_data(data)
+    try:
+        if isinstance(data, typing.TextIO):
+            decoded_data = json.load(data, object_hook=partseg_object_hook)
+        elif os.path.exists(data):
+            with open(data, encoding="utf-8") as ff:
+                decoded_data = json.load(ff, object_hook=partseg_object_hook)
+        else:
+            decoded_data = json.loads(data, object_hook=partseg_object_hook)
+    except ValueError as e:
+        try:
+            decoded_data = json.loads(str(data), object_hook=partseg_object_hook)
+        except Exception:
+            raise e
+
+    return decoded_data
+
+
+def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[typing.Tuple[str, dict]]]:
+    """
+    Load serialized data. Get valid entries.
+
+    :param data: path to file or string to be decoded.
+    :return:
+    """
+    # TODO extract to function
+    data = load_metadata_base(data)
+    bad_key = []
+    if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
+        bad_key.extend((k, data.pop(k)) for k, v in list(data.items()) if not check_loaded_dict(v))
+    elif isinstance(data, ProfileDict) and not data.verify_data():
+        bad_key = data.pop_errors()
+    return data, bad_key
+
+
+def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapping]:
+    """
+    Find top nodes with ``"__error__"`` key. If node found
+    then its children is not checked.
+
+    :param data: data to be checked
+    :return:  top level entries with "__error__" key
+    """
+    if not isinstance(data, typing.MutableMapping):
+        return []
+    if "__error__" in data:
+        return [data]
+    res = []
+    for v in data.values():
+        res.extend(find_problematic_entries(v))
+    return res
+
+
+def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMapping]:
+    """
+    Find bottom nodes with ``"__error__"`` key. If any
+    children has ``"__error__"`` then such node is not returned.
+
+    :param data: data to be checked.
+    :return: bottom level entries with "__error__" key
+    """
+    if not isinstance(data, typing.MutableMapping):
+        return []
+    if "__error__" not in data and (not isinstance(data, EventedDict) or len(data) == 0):
+        return []
+    res = []
+    data_to_check = data
+    if "__class__" in data and "__values__" in data:
+        data_to_check = data["__values__"]
+    for data_ in data_to_check.values():
+        res.extend(find_problematic_leafs(data_))
+    return res or [data]
 
 
 def proxy_callback(
@@ -293,7 +285,7 @@ def open_tar_file(
         tar_file = TarFile.open(file_data, mode)
         file_path = str(file_data)
     elif isinstance(file_data, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
-        tar_file = TarFile.open(fileobj=file_data, mode="r")
+        tar_file = TarFile.open(fileobj=file_data)
         file_path = ""
     else:
         raise ValueError(f"wrong type of file_ argument: {type(file_data)}")
@@ -389,7 +381,7 @@ class SaveROIAsTIFF(SaveBase):
         roi = project_info.roi_info.roi
         roi_max = max(project_info.roi_info.bound_info)
         roi = roi.astype(minimal_dtype(roi_max))
-        tifffile.imsave(save_location, roi)
+        tifffile.imwrite(save_location, roi)
 
 
 class SaveROIAsNumpy(SaveBase):
@@ -448,3 +440,65 @@ class LoadPoints(LoadBase):
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         return ["text"]
+
+
+class LoadPlanJson(LoadBase):
+    @classmethod
+    def get_short_name(cls):
+        return "plan_json"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ):
+        return load_matadata_part(load_locations[0])
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Calculation plans (*.json)"
+
+
+class LoadPlanExcel(LoadBase):
+    @classmethod
+    def get_short_name(cls):
+        return "plan_excel"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ):
+        data_list, error_list = [], []
+
+        xlsx = load_workbook(filename=load_locations[0], read_only=True)
+        try:
+            for sheet_name in xlsx.sheetnames:
+                if sheet_name.startswith("info"):
+                    data = xlsx[sheet_name].cell(row=2, column=2).value
+                    try:
+                        data, err = load_matadata_part(data)
+                        data_list.append(data)
+                        error_list.extend(err)
+                    except ValueError:  # pragma: no cover
+                        error_list.append(f"Cannot load data from: {sheet_name}")
+        finally:
+            xlsx.close()
+        data_dict = {}
+        for calc_plan in data_list:
+            new_name = iterate_names(calc_plan.name, data_dict)
+            if new_name is None:  # pragma: no cover
+                error_list.append(f"Cannot determine proper name for {calc_plan.name}")
+            calc_plan.name = new_name
+            data_dict[new_name] = calc_plan
+        return data_dict, error_list
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Calculation plans from result (*.xlsx)"

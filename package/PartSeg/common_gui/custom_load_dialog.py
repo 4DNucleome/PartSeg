@@ -1,32 +1,92 @@
 import typing
-from os.path import basename, isdir, isfile
+from os.path import basename, dirname, isdir, isfile
+from pathlib import Path
 
 from qtpy.QtWidgets import QFileDialog
 
 from PartSegCore.io_utils import LoadBase
 
+if typing.TYPE_CHECKING:  # pragma: no cover
+    from PartSeg.common_backend.base_settings import BaseSettings
+
 
 class LoadProperty(typing.NamedTuple):
-    load_location: typing.List[str]
+    load_location: typing.List[typing.Union[str, Path]]
     selected_filter: str
-    load_class: LoadBase
+    load_class: typing.Type[LoadBase]
 
 
-class CustomLoadDialog(QFileDialog):
+IORegister = typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase), str, typing.List[type(LoadBase)]]
+
+
+class IOMethodMock:
+    def __init__(self, name: str):
+        self.name = name
+
+    def get_name(self) -> str:
+        return self.name
+
+    def get_name_with_suffix(self) -> str:
+        return self.get_name()
+
+    def get_short_name(self) -> str:
+        return self.get_name()
+
+    @staticmethod
+    def get_default_extension() -> str:
+        return ""
+
+    @staticmethod
+    def need_segmentation() -> bool:
+        return False
+
+    @staticmethod
+    def need_mask() -> bool:
+        return False
+
+    @staticmethod
+    def get_fields() -> list:
+        return []
+
+    @staticmethod
+    def number_of_files() -> int:
+        return 1
+
+    @staticmethod
+    def save(*args, **kwargs):
+        """For keep compatibility with SaveBase"""
+
+
+class LoadRegisterFileDialog(QFileDialog):
     def __init__(
         self,
-        load_register: typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase)],
+        io_register: IORegister,
+        caption,
         parent=None,
+    ):
+        if isinstance(io_register, str):
+            io_register = {io_register: IOMethodMock(io_register)}
+        if isinstance(io_register, list):
+            io_register = {x.get_name(): x for x in io_register}
+        if not isinstance(io_register, typing.MutableMapping):
+            io_register = {io_register.get_name(): io_register}
+        super().__init__(parent, caption)
+        self.io_register = {x.get_name_with_suffix(): x for x in io_register.values()}
+        self.setNameFilters(list(self.io_register.keys()))
+
+
+class CustomLoadDialog(LoadRegisterFileDialog):
+    def __init__(
+        self,
+        load_register: IORegister,
+        parent=None,
+        caption="Load file",
         history: typing.Optional[typing.List[str]] = None,
     ):
-        if not isinstance(load_register, dict):
-            load_register = {load_register.get_name(): load_register}
-        super().__init__(parent)
-        self.load_register = {x.get_name_with_suffix(): x for x in load_register.values()}
+        super().__init__(load_register, caption, parent)
         self.setOption(QFileDialog.DontUseNativeDialog, True)
         self.setFileMode(QFileDialog.ExistingFile)
         self.setAcceptMode(QFileDialog.AcceptOpen)
-        self.setNameFilters(self.load_register.keys())
         self.files_list = []
         self.setWindowTitle("Open File")
         if history is not None:
@@ -42,7 +102,7 @@ class CustomLoadDialog(QFileDialog):
             return
 
         self.files_list.extend(selected_files)
-        chosen_class: LoadBase = self.load_register[self.selectedNameFilter()]
+        chosen_class: LoadBase = self.io_register[self.selectedNameFilter()]
         if len(self.files_list) < chosen_class.number_of_files():
             self.setNameFilters([chosen_class.get_name()])
             self.setWindowTitle("Open File for:" + ",".join(basename(x) for x in self.files_list))
@@ -51,6 +111,42 @@ class CustomLoadDialog(QFileDialog):
         else:
             super().accept()
 
-    def get_result(self):
-        chosen_class: LoadBase = self.load_register[self.selectedNameFilter()]
+    def get_result(self) -> LoadProperty:
+        chosen_class: typing.Type[LoadBase] = self.io_register[self.selectedNameFilter()]
         return LoadProperty(self.files_list, self.selectedNameFilter(), chosen_class)
+
+
+class PLoadDialog(CustomLoadDialog):
+    def __init__(
+        self,
+        load_register: typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase)],
+        *,
+        settings: "BaseSettings",
+        path: str,
+        default_directory=str(Path.home()),
+        filter_path="",
+        parent=None,
+        caption="Load file",
+    ):
+        super().__init__(
+            load_register=load_register,
+            parent=parent,
+            caption=caption,
+            history=settings.get_path_history(),
+        )
+        self.settings = settings
+        self.path_in_dict = path
+        self.filter_path = filter_path
+        self.setDirectory(self.settings.get(path, default_directory))
+        if self.filter_path:
+            self.selectNameFilter(self.settings.get(self.filter_path, ""))
+
+    def accept(self):
+        super().accept()
+        if self.result() != QFileDialog.Accepted:
+            return
+        directory = dirname(self.selectedFiles()[0])
+        self.settings.add_path_history(directory)
+        self.settings.set(self.path_in_dict, directory)
+        if self.filter_path:
+            self.settings.set(self.filter_path, self.selectedNameFilter())

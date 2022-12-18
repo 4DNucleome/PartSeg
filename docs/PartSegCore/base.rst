@@ -8,12 +8,6 @@ On this page there are described base classes of PartSegCore module
 .. automodule:: PartSegCore.algorithm_describe_base
    :members:
 
-.channel_class
---------------
-.. automodule:: PartSegCore.channel_class
-   :members:
-   :show-inheritance:
-
 .image_operations
 -----------------
 .. automodule:: PartSegCore.image_operations

@@ -8,15 +8,18 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
-from ..algorithm_describe_base import ROIExtractionProfile
-from ..class_generator import BaseSerializableClass, enum_register
-from ..mask_create import MaskProperty
-from ..universal_const import Units
-from . import analysis_algorithm_dict
-from .measurement_calculation import MeasurementProfile
+from nme import register_class, rename_key
+from pydantic import BaseModel as PydanticBaseModel
+
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.analysis import AnalysisAlgorithmSelection
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+from PartSegCore.mask_create import MaskProperty
+from PartSegCore.universal_const import Units
+from PartSegCore.utils import BaseModel
 
 
-class MaskBase:
+class MaskBase(BaseModel):
     """
     Base class for mask in calculation plan.
 
@@ -24,9 +27,6 @@ class MaskBase:
     """
 
     name: str
-
-
-# MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 
 
 class RootType(Enum):
@@ -40,10 +40,8 @@ class RootType(Enum):
         return self.name.replace("_", " ")
 
 
-enum_register.register_class(RootType)
-
-
-class MaskCreate(MaskBase, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskCreate"])
+class MaskCreate(MaskBase):
     """
     Description of mask creation in calculation plan.
 
@@ -57,14 +55,16 @@ class MaskCreate(MaskBase, BaseSerializableClass):
         return f"Mask create: {self.name}\n" + str(self.mask_property).split("\n", 1)[1]
 
 
-class MaskUse(MaskBase, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskUse"])
+class MaskUse(MaskBase):
     """
     Reuse of already defined mask
     Will be deprecated in short time
     """
 
 
-class MaskSum(MaskBase, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskSum"])
+class MaskSum(MaskBase):
     """
     Description of OR operation on mask
 
@@ -77,7 +77,8 @@ class MaskSum(MaskBase, BaseSerializableClass):
     mask2: str
 
 
-class MaskIntersection(MaskBase, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskIntersection"])
+class MaskIntersection(MaskBase):
     """
     Description of AND operation on mask
 
@@ -90,7 +91,8 @@ class MaskIntersection(MaskBase, BaseSerializableClass):
     mask2: str
 
 
-class Save(BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.Save"])
+class Save(BaseModel):
     """
     Save operation description
 
@@ -108,7 +110,12 @@ class Save(BaseSerializableClass):
     values: dict
 
 
-class MeasurementCalculate(BaseSerializableClass):
+@register_class(
+    version="0.0.1",
+    migrations=[("0.0.1", rename_key("statistic_profile", "measurement_profile", optional=True))],
+    old_paths=["PartSeg.utils.analysis.calculation_plan.StatisticCalculate"],
+)
+class MeasurementCalculate(BaseModel):
     """
     Measurement calculation description
 
@@ -118,19 +125,10 @@ class MeasurementCalculate(BaseSerializableClass):
     :ivar str name_prefix: prefix of column names
     """
 
-    __old_names__ = "StatisticCalculate"
     channel: int
     units: Units
     measurement_profile: MeasurementProfile
     name_prefix: str
-    # TODO rename statistic_profile to measurement_profile
-
-    # noinspection PyOverloads,PyMissingConstructor
-    # pylint: disable=W0104
-    # pragma: no cover
-    @typing.overload
-    def __init__(self, channel: int, units: Units, measurement_profile: MeasurementProfile, name_prefix: str):
-        ...
 
     @property
     def name(self):
@@ -164,7 +162,8 @@ def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     return os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
 
 
-class MaskMapper:
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskMapper"])
+class MaskMapper(BaseModel):
     """
     Base class for obtaining mask from computer disc
 
@@ -191,7 +190,8 @@ class MaskMapper:
         return True
 
 
-class MaskSuffix(MaskMapper, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskSuffix"])
+class MaskSuffix(MaskMapper):
     """
     Description of mask form file obtained by adding suffix to image file path
 
@@ -201,12 +201,6 @@ class MaskSuffix(MaskMapper, BaseSerializableClass):
 
     suffix: str
 
-    # noinspection PyMissingConstructor,PyOverloads
-    # pylint: disable=W0104
-    @typing.overload
-    def __init__(self, name: str, suffix: str):  # pragma: no cover
-        ...
-
     def get_mask_path(self, file_path: str) -> str:
         base, ext = os.path.splitext(file_path)
         return base + self.suffix + ext
@@ -215,7 +209,8 @@ class MaskSuffix(MaskMapper, BaseSerializableClass):
         return {"name": self.name, "suffix": self.suffix}
 
 
-class MaskSub(MaskMapper, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskSub"])
+class MaskSub(MaskMapper):
     """
     Description of mask form file obtained by substitution
 
@@ -227,12 +222,6 @@ class MaskSub(MaskMapper, BaseSerializableClass):
     base: str
     rep: str
 
-    # noinspection PyMissingConstructor,PyOverloads
-    # pylint: disable=W0104
-    @typing.overload
-    def __init__(self, name: str, base: str, rep: str):  # pragma: no cover
-        ...
-
     def get_mask_path(self, file_path: str) -> str:
         dir_name, filename = os.path.split(file_path)
         filename = filename.replace(self.base, self.rep)
@@ -242,16 +231,11 @@ class MaskSub(MaskMapper, BaseSerializableClass):
         return {"name": self.name, "base": self.base, "rep": self.rep}
 
 
-class MaskFile(MaskMapper, BaseSerializableClass):
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.MaskFile"])
+class MaskFile(MaskMapper):
     # TODO Check implementation
     path_to_file: str
     name_dict: typing.Optional[dict] = None
-
-    # noinspection PyMissingConstructor,PyOverloads
-    # pylint: disable=W0104
-    @typing.overload
-    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):  # pragma: no cover
-        ...
 
     def is_ready(self) -> bool:
         return os.path.exists(self.path_to_file)
@@ -271,16 +255,16 @@ class MaskFile(MaskMapper, BaseSerializableClass):
         self.path_to_file = value
 
     def parse_map(self, sep=";"):
-        if not os.path.exists(self.path_to_file):
-            logging.error(f"File does not exists: {self.path_to_file}")
+        if not os.path.exists(self.path_to_file):  # pragma: no cover
+            logging.error("File does not exists: %s", self.path_to_file)
             raise ValueError(f"File for mapping mask does not exists: {self.path_to_file}")
-        with open(self.path_to_file) as map_file:
+        with open(self.path_to_file, encoding="utf-8") as map_file:
             dir_name = os.path.dirname(self.path_to_file)
             for i, line in enumerate(map_file):
                 try:
                     file_name, mask_name = line.split(sep)
-                except ValueError:
-                    logging.error(f"Error in parsing map file\nline {i}\n{line}\nfrom file{self.path_to_file}")
+                except ValueError:  # pragma: no cover
+                    logging.error("Error in parsing map file\nline %s\n%s\nfrom file %s", i, line, self.path_to_file)
                     continue
                 file_name = file_name.strip()
                 mask_name = mask_name.strip()
@@ -295,7 +279,6 @@ class Operations(Enum):
     """Global operations"""
 
     reset_to_base = 1
-    # leave_the_biggest = 2
 
 
 class PlanChanges(Enum):
@@ -306,6 +289,7 @@ class PlanChanges(Enum):
     replace_node = 3  #:
 
 
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.CalculationTree"])
 class CalculationTree:
     """
     Structure for describe calculation structure
@@ -313,7 +297,7 @@ class CalculationTree:
 
     def __init__(
         self,
-        operation: typing.Union[BaseSerializableClass, ROIExtractionProfile, MeasurementCalculate, RootType],
+        operation: typing.Union[PydanticBaseModel, ROIExtractionProfile, MeasurementCalculate, RootType],
         children: typing.List["CalculationTree"],
     ):
         if operation == "root":
@@ -326,6 +310,9 @@ class CalculationTree:
 
     def __repr__(self):
         return f"CalculationTree(operation={repr(self.operation)}, children={self.children})"
+
+    def as_dict(self):
+        return {"operation": self.operation, "children": self.children}
 
 
 class NodeType(Enum):
@@ -490,6 +477,9 @@ class CalculationPlan:
         self.changes = []
         self.current_node = None
 
+    def as_dict(self):
+        return {"tree": self.execution_tree, "name": self.name}
+
     def get_root_type(self):
         return self.execution_tree.operation
 
@@ -541,16 +531,18 @@ class CalculationPlan:
     def __deepcopy__(self, memo):
         return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
-    def get_node(self, search_pos=None):
+    def get_node(self, search_pos: typing.Optional[typing.List[int]] = None, parent=False) -> CalculationTree:
         """
         :param search_pos:
         :return: CalculationTree
         """
         node = self.execution_tree
         if search_pos is None:
-            if self.current_node is not None:
+            if self.current_node is not None and not parent:
                 return self.current_node
             search_pos = self.current_pos
+        if parent:
+            search_pos = search_pos[:-1]
         for pos in search_pos:
             node = node.children[pos]
         return node
@@ -595,13 +587,14 @@ class CalculationPlan:
     def get_reused_mask(self) -> set:
         return self._get_reused_mask(self.execution_tree)
 
-    def get_node_type(self) -> NodeType:
+    def get_node_type(self, parent=False) -> NodeType:
         if self.current_pos is None:
             return NodeType.none
         if not self.current_pos:
             return NodeType.root
-        # print("Pos {}".format(self.current_pos))
-        node = self.get_node()
+        node = self.get_node(parent=parent)
+        if isinstance(node.operation, RootType):
+            return NodeType.root
         if isinstance(node.operation, (MaskMapper, MaskIntersection, MaskSum)):
             return NodeType.file_mask
         if isinstance(node.operation, MaskCreate):
@@ -638,7 +631,7 @@ class CalculationPlan:
         if self.current_pos is None:
             return
         node = self.get_node()
-        node.operation = node.operation.replace_(name=name)
+        node.operation = node.operation.copy(update={"name": name})
         self.changes.append((self.current_pos, node, PlanChanges.replace_node))
 
     def has_children(self):
@@ -705,19 +698,19 @@ class CalculationPlan:
             res_plan.current_pos = pos[:-1]
             try:
                 res_plan.add_step(CalculationPlan.correct_name[el["type"]](**el["values"]))
-            except TypeError as e:
+            except TypeError:
                 logging.warning(el["type"])
-                raise e
+                raise
         res_plan.changes = []
         return res_plan
 
     @staticmethod
-    def get_el_name(el):
+    def get_el_name(el):  # noqa C901
         """
         :param el: Plan element
         :return: str
         """
-        if el.__class__.__name__ not in CalculationPlan.correct_name.keys():
+        if el.__class__.__name__ not in CalculationPlan.correct_name:
             print(el, el.__class__.__name__, file=sys.stderr)
             raise ValueError(f"Unknown type {el.__class__.__name__}")
         if isinstance(el, RootType):
@@ -731,9 +724,7 @@ class CalculationPlan:
                 return f"Measurement: {el.name}"
             return f"Measurement: {el.name} with prefix: {el.name_prefix}"
         if isinstance(el, MaskCreate):
-            if el.name != "":
-                return f"Create mask: {el.name}"
-            return "Create mask:"
+            return f"Create mask: {el.name}" if el.name != "" else "Create mask:"
         if isinstance(el, MaskUse):
             return f"Use mask: {el.name}"
         if isinstance(el, MaskSuffix):
@@ -745,8 +736,8 @@ class CalculationPlan:
         if isinstance(el, Save):
             base = el.short_name
             if el.directory:
-                return f"Save {base} in directory with name " + el.suffix
-            return "Save " + base + " with suffix " + el.suffix if el.suffix != "" else "Save " + base
+                return f"Save {base} in directory with name {el.suffix}"
+            return f"Save {base} with suffix {el.suffix}" if el.suffix != "" else f"Save {base}"
 
         if isinstance(el, MaskIntersection):
             if el.name == "":
@@ -760,7 +751,7 @@ class CalculationPlan:
         raise ValueError(f"Unknown type {type(el)}")
 
     def pretty_print(self) -> str:
-        return f"Calcualation Plan: {self.name}\n" + self._pretty_print(self.execution_tree, 0)
+        return f"Calcualation Plan: {self.name}\n{self._pretty_print(self.execution_tree, 0)}"
 
     def _pretty_print(self, elem: CalculationTree, indent) -> str:
         if isinstance(elem.operation, str):
@@ -769,7 +760,7 @@ class CalculationPlan:
             name = self.get_el_name(elem.operation)
         if isinstance(elem.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
             if isinstance(elem.operation, ROIExtractionProfile):
-                txt = elem.operation.pretty_print(analysis_algorithm_dict)
+                txt = elem.operation.pretty_print(AnalysisAlgorithmSelection)
             else:
                 txt = str(elem.operation)
             txt = "\n".join(txt.split("\n")[1:])

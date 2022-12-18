@@ -4,34 +4,61 @@ THis module contains widgets used for error reporting. The report backed is sent
 .. _sentry: https://sentry.io
 """
 import getpass
+import io
+import pprint
 import re
-import sys
 import traceback
 import typing
+from contextlib import suppress
 
+import numpy as np
 import requests
 import sentry_sdk
+from napari.settings import get_settings
+from napari.utils.theme import get_theme
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
+    QApplication,
     QDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QMessageBox,
     QPushButton,
     QTextEdit,
+    QTreeWidget,
+    QTreeWidgetItem,
     QVBoxLayout,
+    QWidget,
 )
 from sentry_sdk.utils import event_from_exception, exc_info_from_error
+from traceback_with_variables import Format, print_exc
 
-from PartSeg import __version__
-from PartSegCore import state_store
+from PartSeg import __version__, state_store
+from PartSeg.common_backend.python_syntax_highlight import Pylighter
+from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
+from PartSegCore.utils import numpy_repr
 
 _email_regexp = re.compile(r"[\w+]+@\w+\.\w+")
 _feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
     organization_slug="cent", project_slug="partseg"
 )
+
+
+def _print_traceback(exception, file_):
+    while True:
+        print_exc(exception, file_=file_, fmt=Format(custom_var_printers=[(np.ndarray, numpy_repr)]))
+        if exception.__cause__ is not None:
+            print("The above exception was the direct cause of the following exception:", file=file_)
+            exception = exception.__cause__
+        elif exception.__context__ is not None:
+            print("During handling of the above exception, another exception occurred:", file=file_)
+            exception = exception.__context__
+        else:
+            break
 
 
 class ErrorDialog(QDialog):
@@ -43,15 +70,18 @@ class ErrorDialog(QDialog):
         super().__init__()
         self.exception = exception
         self.additional_notes = additional_notes
-        self.send_report_btn = QPushButton("Send information")
+        self.send_report_btn = QPushButton("Report error")
         self.send_report_btn.setDisabled(not state_store.report_errors)
+        self.create_issue_btn = QPushButton("Create issue")
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
+        theme = get_theme(get_settings().appearance.theme, as_dict=False)
+        self._highlight = Pylighter(self.error_description.document(), "python", theme.syntax_style)
         self.traceback_summary = additional_info
         if additional_info is None:
-            self.error_description.setText(
-                "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-            )
+            stream = io.StringIO()
+            _print_traceback(exception, file_=stream)
+            self.error_description.setText(stream.getvalue())
         elif isinstance(additional_info, traceback.StackSummary):
             self.error_description.setText("".join(additional_info.format()))
         elif isinstance(additional_info[1], traceback.StackSummary):
@@ -63,6 +93,7 @@ class ErrorDialog(QDialog):
         self.user_name = QLineEdit()
         self.cancel_btn.clicked.connect(self.reject)
         self.send_report_btn.clicked.connect(self.send_information)
+        self.create_issue_btn.clicked.connect(self.create_issue)
 
         layout = QVBoxLayout()
         self.desc = QLabel(description)
@@ -74,7 +105,7 @@ class ErrorDialog(QDialog):
         info_text.setWordWrap(True)
         layout.addWidget(info_text)
         layout.addWidget(self.desc)
-        layout.addWidget(self.error_description)
+        layout.addWidget(self.error_description, 1)
         layout.addWidget(QLabel("Contact information"))
         layout.addWidget(self.contact_info)
         layout.addWidget(QLabel("User name"))
@@ -91,6 +122,7 @@ class ErrorDialog(QDialog):
             )
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.cancel_btn)
+        btn_layout.addWidget(self.create_issue_btn)
         btn_layout.addWidget(self.send_report_btn)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
@@ -101,15 +133,48 @@ class ErrorDialog(QDialog):
             self.exception_tuple = event_from_exception(exec_info)
 
     def exec(self):
+        self.exec_()
+
+    def exec_(self):
         """
         Check if dialog should be shown  base on :py:data:`state_store.show_error_dialog`.
         If yes then show dialog. Otherwise print exception traceback on stderr.
         """
         # TODO check if this check is needed
         if not state_store.show_error_dialog:
-            sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
+            print_exc(self.exception)
             return False
         super().exec_()
+
+    def create_issue(self):
+        """
+        Create issue on github. This method is used when user disable error reporting.
+        """
+        import urllib.parse
+        import webbrowser
+
+        url = "https://github.com/4DNucleome/PartSeg/issues/new?"
+        data = {
+            "title": f"Error report from PartSeg `{repr(self.exception)}`",
+            "body": f"This issue is created from PartSeg error dialog\n\n```"
+            f"python\n{self.error_description.toPlainText()}\n```\n",
+            "labels": "bug",
+        }
+
+        versions_dkt = {"PartSeg": __version__}
+
+        with suppress(ModuleNotFoundError):
+            from importlib.metadata import PackageNotFoundError, version
+
+            for name in ["napari", "numpy", "SimpleITK", "PartSegData", "PartSegCore_compiled_backend"]:
+                try:
+                    versions_dkt[name] = version(name)
+                except PackageNotFoundError:  # pragma: no cover
+                    versions_dkt[name] = "not found"
+
+        data["body"] += "Packages: \n```\n" + "\n".join(f"{k}=={v}" for k, v in versions_dkt.items()) + "\n```\n"
+
+        webbrowser.open(f"{url}{urllib.parse.urlencode(data)}")
 
     def send_information(self):
         """
@@ -157,7 +222,6 @@ class ErrorDialog(QDialog):
                     headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
                 )
 
-        # sentry_sdk.capture_event({"message": text, "level": "error", "exception": self.exception})
         self.accept()
 
 
@@ -204,4 +268,164 @@ class ExceptionList(QListWidget):
         """
         if isinstance(el, ExceptionListItem) and not isinstance(el.exception, SegmentationLimitException):
             dial = ErrorDialog(el.exception, "Error during batch processing", additional_info=el.additional_info)
-            dial.exec()
+            dial.exec_()
+
+
+class DataImportErrorDialog(QDialog):
+    def __init__(
+        self,
+        errors: typing.Dict[str, typing.Union[Exception, typing.List[typing.Tuple[str, dict]]]],
+        parent: QWidget = None,
+        text: str = "During import data part of the entries was filtered out",
+    ):
+        super().__init__(parent)
+        self.setWindowTitle("Data import error")
+        self.setWindowIcon(QIcon(":/icons/error.png"))
+        self.setMinimumWidth(500)
+        self.setMinimumHeight(500)
+        self.setLayout(QVBoxLayout())
+        self.setModal(True)
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)
+        self.errors = errors
+        self.error_view = QTreeWidget()
+        self.layout().addWidget(QLabel(text))
+        self.layout().addWidget(self.error_view)
+        self.error_view.setHeaderLabels(["Keys", "Details"])
+        for file_path, values in self.errors.items():
+            file_item = QTreeWidgetItem(self.error_view, [file_path])
+            file_item.setExpanded(True)
+            file_item.setFirstColumnSpanned(True)
+            if isinstance(values, Exception):
+                QTreeWidgetItem(file_item, [str(values)]).setFirstColumnSpanned(True)
+                continue
+            for key, desc in values:
+                problematic_entries = find_problematic_leafs(desc)
+                item = QTreeWidgetItem(file_item, [key, str(problematic_entries[0]["__error__"]) + "..."])
+                if len(problematic_entries) == 1:
+                    QTreeWidgetItem(item, ["", pprint.pformat(problematic_entries[0])])
+                if len(problematic_entries) > 1:
+                    for entry in problematic_entries:
+                        item2 = QTreeWidgetItem(item, ["", str(entry["__error__"])])
+                        QTreeWidgetItem(item2, ["", pprint.pformat(entry)])
+
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.accept)
+        copy_btn = QPushButton("Copy to clipboard")
+        copy_btn.clicked.connect(self._copy_to_clipboard)
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(close_btn)
+        btn_layout.addWidget(copy_btn)
+        self.layout().addLayout(btn_layout)
+
+    def _copy_to_clipboard(self):
+        res = ""
+        for file_path, values in self.errors.items():
+            res += f"{file_path}\n"
+            if isinstance(values, Exception):
+                res += f"\t{values}\n"
+                continue
+            for key, desc in values:
+                problematic_entries = find_problematic_leafs(desc)
+                for entry in problematic_entries:
+                    res += f"{key}: {entry['__error__']}\n{pprint.pformat(entry)}\n\n"
+
+        QApplication.clipboard().setText(res)
+
+
+class QMessageFromException(QMessageBox):
+    """
+    Specialized QMessageBox to provide information with attached exception
+
+    """
+
+    def __init__(self, icon, title, text, exception, standard_buttons=QMessageBox.Ok, parent=None):
+        super().__init__(icon, title, text, standard_buttons, parent)
+        self.exception = exception
+        stream = io.StringIO()
+        _print_traceback(exception, file_=stream)
+        self.setDetailedText(stream.getvalue())
+
+    @classmethod
+    def critical(
+        cls,
+        parent=None,
+        title="",
+        text="",
+        standard_buttons=QMessageBox.Ok,
+        default_button=QMessageBox.NoButton,
+        exception=None,
+    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+        ob = cls(
+            icon=QMessageBox.Critical,
+            title=title,
+            text=text,
+            exception=exception,
+            parent=parent,
+            standard_buttons=standard_buttons,
+        )
+        ob.setDefaultButton(default_button)
+        return ob.exec_()
+
+    @classmethod
+    def information(
+        cls,
+        parent=None,
+        title="",
+        text="",
+        standard_buttons=QMessageBox.Ok,
+        default_button=QMessageBox.NoButton,
+        exception=None,
+    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+        ob = cls(
+            icon=QMessageBox.Information,
+            title=title,
+            text=text,
+            exception=exception,
+            parent=parent,
+            standard_buttons=standard_buttons,
+        )
+        ob.setDefaultButton(default_button)
+        return ob.exec_()
+
+    @classmethod
+    def question(
+        cls,
+        parent=None,
+        title="",
+        text="",
+        standard_buttons=QMessageBox.Ok,
+        default_button=QMessageBox.NoButton,
+        exception=None,
+    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+        ob = cls(
+            icon=QMessageBox.Question,
+            title=title,
+            text=text,
+            exception=exception,
+            parent=parent,
+            standard_buttons=standard_buttons,
+        )
+        ob.setDefaultButton(default_button)
+        return ob.exec_()
+
+    @classmethod
+    def warning(
+        cls,
+        parent=None,
+        title="",
+        text="",
+        standard_buttons=QMessageBox.Ok,
+        default_button=QMessageBox.NoButton,
+        exception=None,
+    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+        ob = cls(
+            icon=QMessageBox.Warning,
+            title=title,
+            text=text,
+            exception=exception,
+            parent=parent,
+            standard_buttons=standard_buttons,
+        )
+        ob.setDefaultButton(default_button)
+        return ob.exec_()

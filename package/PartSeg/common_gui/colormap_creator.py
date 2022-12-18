@@ -1,4 +1,5 @@
 import bisect
+from contextlib import suppress
 from functools import partial
 from math import ceil
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -41,7 +42,7 @@ from PartSegCore.custom_name_generate import custom_name_generate
 
 def color_from_qcolor(color: QColor) -> Color:
     """Convert :py:class:`PyQt5.QtGui.QColor` to :py:class:`.Color`"""
-    return Color(color.red() / 255, color.green() / 255, color.blue() / 255, color.alpha() / 255)
+    return Color(red=color.red() / 255, green=color.green() / 255, blue=color.blue() / 255, alpha=color.alpha() / 255)
 
 
 def qcolor_from_color(color: Color) -> QColor:
@@ -84,7 +85,7 @@ class ColormapEdit(QWidget):
 
     def refresh(self):
         """Recreate presented image and force repaint event"""
-        self.image = convert_colormap_to_image(self.colormap)
+        self.image = convert_colormap_to_image(self._colormap())
         self.repaint()
 
     def _get_color_ind(self, ratio) -> Optional[int]:
@@ -178,16 +179,30 @@ class ColormapEdit(QWidget):
 
     @property
     def colormap(self) -> Colormap:
+        return self._colormap()
+
+    def _colormap(self) -> Colormap:
         """colormap getter"""
         if len(self.color_list) == 0:
             return Colormap("black")
-        return Colormap(colors=self.color_list, controls=self.position_list)
+
+        color_list = [x.as_tuple() for x in self.color_list]
+        position_list = self.position_list[:]
+        if position_list[0] != 0:
+            position_list.insert(0, 0)
+            color_list.insert(0, color_list[0])
+
+        if position_list[-1] != 1:
+            position_list.append(1)
+            color_list.append(color_list[-1])
+
+        return Colormap(colors=color_list, controls=position_list)
 
     @colormap.setter
     def colormap(self, val: Colormap):
         """colormap setter"""
         self.position_list = val.controls.tolist()
-        self.color_list = val.colors.tolist()
+        self.color_list = [Color.from_tuple(x) for x in val.colors.tolist()]
         self.refresh()
 
     def reverse(self):
@@ -270,7 +285,10 @@ class PColormapCreator(ColormapCreator):
         super().__init__()
         self.settings = settings
         for i, el in enumerate(settings.get_from_profile("custom_colors", [])):
-            self.color_picker.setCustomColor(i, qcolor_from_color(Color(*el)))
+
+            self.color_picker.setCustomColor(
+                i, qcolor_from_color(el if isinstance(el, Color) else Color.from_tuple(el))
+            )
         self.prohibited_names = set(self.settings.colormap_dict.keys())  # Prohibited name is added to reduce
         # probability of colormap cache collision
 
@@ -556,7 +574,7 @@ class PColormapList(ColormapList):
         for el in self.color_names:
             num = self.settings.get_from_profile(f"{el}.channels_count", 0)
             for i in range(num):
-                blocked.add(self.settings.get_channel_info(el, i))
+                blocked.add(self.settings.get_channel_colormap_name(el, i))
         return blocked
 
     def _change_colormap_visibility(self, name, visible):
@@ -564,8 +582,6 @@ class PColormapList(ColormapList):
         if visible:
             colormaps.add(name)
         else:
-            try:
+            with suppress(KeyError):
                 colormaps.remove(name)
-            except KeyError:
-                pass
-        self.settings.chosen_colormap = list(sorted(colormaps))
+        self.settings.chosen_colormap = sorted(colormaps)

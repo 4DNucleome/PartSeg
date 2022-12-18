@@ -40,7 +40,8 @@ import tifffile
 import xlsxwriter
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
+from PartSegCore.analysis.batch_processing.parallel_backend import BatchManager, SubprocessOrder
 from PartSegCore.analysis.calculation_plan import (
     BaseCalculation,
     Calculation,
@@ -63,16 +64,15 @@ from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProjec
 from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
+from PartSegCore.io_utils import WrongFileTypeException
+from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.mask_create import calculate_mask
+from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
+from PartSegCore.roi_info import ROIInfo
+from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, report_empty_fun
+from PartSegCore.utils import iterate_names
 from PartSegImage import Image, TiffImageReader
-
-from ...io_utils import WrongFileTypeException
-from ...project_info import AdditionalLayerDescription, HistoryElement
-from ...roi_info import ROIInfo
-from ...segmentation import RestartableAlgorithm
-from .. import PartEncoder
-from .parallel_backend import BatchManager, SubprocessOrder
 
 
 class ResponseData(NamedTuple):
@@ -220,7 +220,12 @@ class CalculationProcess:
             raise OSError(f"Mask file {mask_path} does not exists")
         with tifffile.TiffFile(mask_path) as mask_file:
             mask = mask_file.asarray()
-            mask = TiffImageReader.update_array_shape(mask, mask_file.series[0].axes)[..., 0]
+            mask = TiffImageReader.update_array_shape(mask, mask_file.series[0].axes)
+            if "C" in TiffImageReader.image_class.axis_order:
+                pos: List[Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]
+                pos[TiffImageReader.image_class.axis_order.index("C")] = 0
+                mask = mask[tuple(pos)]
+
         mask = (mask > 0).astype(np.uint8)
         try:
             mask = self.image.fit_array_to_image(mask)[0]
@@ -239,13 +244,16 @@ class CalculationProcess:
         :param ROIExtractionProfile operation: Specification of segmentation operation
         :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
-        segmentation_class = analysis_algorithm_dict.get(operation.algorithm, None)
+        segmentation_class = AnalysisAlgorithmSelection.get(operation.algorithm)
         if segmentation_class is None:  # pragma: no cover
             raise ValueError(f"Segmentation class {operation.algorithm} do not found")
         segmentation_algorithm: RestartableAlgorithm = segmentation_class()
         segmentation_algorithm.set_image(self.image)
         segmentation_algorithm.set_mask(self.mask)
-        segmentation_algorithm.set_parameters(**operation.values)
+        if segmentation_algorithm.__new_style__:
+            segmentation_algorithm.set_parameters(operation.values)
+        else:
+            segmentation_algorithm.set_parameters(**operation.values)
         result = segmentation_algorithm.calculation_run(report_empty_fun)
         backup_data = self.roi_info, self.additional_layers, self.algorithm_parameters
         self.roi_info = ROIInfo(result.roi, result.roi_annotation, result.alternative_representation)
@@ -343,12 +351,15 @@ class CalculationProcess:
         """
         channel = operation.channel
         if channel == -1:
-            segmentation_class: Type[ROIExtractionAlgorithm] = analysis_algorithm_dict.get(
-                self.algorithm_parameters["algorithm_name"], None
+            segmentation_class: Type[ROIExtractionAlgorithm] = AnalysisAlgorithmSelection.get(
+                self.algorithm_parameters["algorithm_name"]
             )
             if segmentation_class is None:  # pragma: no cover
                 raise ValueError(f"Segmentation class {self.algorithm_parameters['algorithm_name']} do not found")
-            channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
+            if segmentation_class.__new_style__:
+                channel = getattr(self.algorithm_parameters["values"], segmentation_class.get_channel_parameter_name())
+            else:
+                channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
         # FIXME use additional information
         old_mask = self.image.mask
@@ -465,7 +476,7 @@ class CalculationManager:
 
         :param int val: number of workers.
         """
-        logging.debug(f"Number off process {val}")
+        logging.debug("Number off process %s", val)
         self.batch_manager.set_number_of_process(val)
 
     def get_results(self) -> BatchResultDescription:
@@ -484,8 +495,7 @@ class CalculationManager:
             for el in result_list:
                 if isinstance(el, ResponseData):
                     errors = self.writer.add_result(el, calculation, ind=ind)
-                    for err in errors:
-                        new_errors.append((el.path_to_file, err))
+                    new_errors.extend((el.path_to_file, err) for err in errors)
                 elif el != SubprocessOrder.cancel_job:
                     file_info = calculation.file_list[ind] if ind != -1 else "unknown file"
                     self.writer.add_calculation_error(calculation, file_info, el[0])
@@ -494,8 +504,7 @@ class CalculationManager:
 
                 if self.counter_dict[uuid_id] == len(calculation.file_list):
                     errors = self.writer.calculation_finished(calculation)
-                    for err in errors:
-                        new_errors.append(("", err))
+                    new_errors.extend(("", err) for err in errors)
         return BatchResultDescription(new_errors, self.calculation_done, self.counter_dict.copy())
 
 
@@ -546,7 +555,7 @@ class SheetData:
         """
         sorted_row = [x[1] for x in sorted(self.row_list)]
         df = pd.DataFrame(sorted_row, columns=self.columns)
-        df2 = self.data_frame.append(df)
+        df2 = pd.concat((self.data_frame, df), axis=0)
         self.data_frame = df2.reset_index(drop=True)
         self.row_list = []
         return self.name, self.data_frame
@@ -581,7 +590,9 @@ class FileData:
             self.file_type = FileType.text_file
         self.writing = False
         data = SheetData("calculation_info", [("Description", "str"), ("JSON", "str")], raw=True)
-        data.add_data([str(calculation.calculation_plan), json.dumps(calculation.calculation_plan, cls=PartEncoder)], 0)
+        data.add_data(
+            [str(calculation.calculation_plan), json.dumps(calculation.calculation_plan, cls=PartSegEncoder)], 0
+        )
         self.sheet_dict = {}
         self.calculation_info = {}
         self.sheet_set = {"Errors"}
@@ -665,13 +676,10 @@ class FileData:
                 local_header.append(("Mask component", "num"))
             if any(x[1] for x in el):
                 sheet_list.append(
-                    "{}{}{} - {}".format(
-                        calculation.sheet_name,
-                        FileData.component_str,
-                        num,
-                        measurement[i].name_prefix + measurement[i].name,
-                    )
+                    f"{calculation.sheet_name}{FileData.component_str}{num} - "
+                    f"{measurement[i].name_prefix + measurement[i].name}"
                 )
+
                 num += 1
             else:
                 sheet_list.append(None)
@@ -723,9 +731,8 @@ class FileData:
         data = []
         for main_sheet, component_sheets, _ in self.sheet_dict.values():
             data.append(main_sheet.get_data_to_write())
-            for sheet in component_sheets:
-                if sheet is not None:
-                    data.append(sheet.get_data_to_write())
+            data.extend(sheet.get_data_to_write() for sheet in component_sheets if sheet is not None)
+
         self.wrote_queue.put((data, list(self.calculation_info.values()), self._error_info[:]))
 
     def wrote_data_to_file(self):
@@ -742,7 +749,7 @@ class FileData:
                 if self.file_type == FileType.text_file:
                     base_path, ext = path.splitext(self.file_path)
                     for sheet_name, data_frame in data[0]:
-                        data_frame.to_csv(base_path + "_" + sheet_name + ext)
+                        data_frame.to_csv(f"{base_path}_{sheet_name}{ext}")
                     continue
                 file_path = self.file_path
                 i = 0
@@ -757,7 +764,7 @@ class FileData:
                 if i == 100:  # pragma: no cover
                     raise PermissionError(f"Fail to write result excel {self.file_path}")
             except Exception as e:  # pragma: no cover   # pylint: disable=W0703
-                logging.error(f"[batch_backend] {e}")
+                logging.error("[batch_backend] %s", e)
                 self.error_queue.put(prepare_error_data(e))
             finally:
                 self.writing = False
@@ -774,7 +781,7 @@ class FileData:
                 if len(sheet_name) < 32:
                     new_sheet_names.append(sheet_name)
                 else:
-                    new_sheet_names.append(sheet_name[:27] + f"_{ind}_")
+                    new_sheet_names.append(f"{sheet_name[:27]}_{ind}_")
                     ind += 1
             for sheet_name, (_, data_frame) in zip(new_sheet_names, sheets):
                 data_frame.to_excel(writer, sheet_name=sheet_name)
@@ -793,15 +800,12 @@ class FileData:
     @staticmethod
     def write_calculation_plan(writer: pd.ExcelWriter, calculation_plan: CalculationPlan):
         book: xlsxwriter.Workbook = writer.book
-        sheet_base_name = f"info {calculation_plan.name}"[:30]
-        sheet_name = sheet_base_name
-        if sheet_name in book.sheetnames:  # pragma: no cover
-            for i in range(100):
-                sheet_name = f"{sheet_base_name[:26]} ({i})"
-                if sheet_name not in book.sheetnames:
-                    break
-            else:
-                raise ValueError(f"Name collision in sheets with information about calculation plan: {sheet_name}")
+        sheet_name = iterate_names(f"info {calculation_plan.name}"[:30], book.sheetnames, 30)
+        if sheet_name is None:  # pragma: no cover
+            raise ValueError(
+                "Name collision in sheets with information about calculation "
+                f"plan: {f'info {calculation_plan.name}'[:30]}"
+            )
 
         sheet = book.add_worksheet(sheet_name)
         cell_format = book.add_format({"bold": True})
@@ -812,7 +816,7 @@ class FileData:
         sheet.set_row(1, description.count("\n") * 12 + 10)
         sheet.set_column(0, 0, max(map(len, description.split("\n"))))
         sheet.set_column(1, 1, 15)
-        sheet.write("B2", json.dumps(calculation_plan, cls=PartEncoder, indent=2))
+        sheet.write("B2", json.dumps(calculation_plan, cls=PartSegEncoder, indent=2))
 
     def get_errors(self) -> List[ErrorInfo]:
         """

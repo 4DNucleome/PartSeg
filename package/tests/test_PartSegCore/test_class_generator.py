@@ -1,5 +1,6 @@
 # pylint: disable=R0201
 
+import sys
 import typing
 from collections import OrderedDict
 
@@ -7,6 +8,11 @@ import pytest
 
 from PartSegCore.algorithm_describe_base import Register
 from PartSegCore.class_generator import BaseSerializableClass, base_serialize_register
+
+pytestmark = [
+    pytest.mark.skipif(sys.version_info >= (3, 10), reason="class register is not compatible with python 3.10+"),
+    pytest.mark.filterwarnings("ignore:BaseSerializableClass is deprecated"),
+]
 
 copy_register = Register()
 
@@ -31,7 +37,7 @@ def teardown_module():
 
 
 def empty(*_):
-    pass
+    """Empty function to avoid unused variable warning."""
 
 
 def test_readonly():
@@ -161,7 +167,7 @@ def test_typing():
 
 
 def test_forward_ref():
-    class Test(BaseSerializableClass):  # pylint: disable=W0612
+    class Test(BaseSerializableClass):  # pylint: disable=W0612 # skipcq: PTC-W0065
         val: int
         child: typing.Optional["Test"] = None  # noqa F821
 

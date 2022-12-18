@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import HistoryElement
@@ -15,7 +15,7 @@ from PartSegImage import Image
 
 
 def _empty_fun(_a1, _a2):
-    pass
+    """Empty function for calculation run callback"""
 
 
 @dataclass(frozen=True)
@@ -53,9 +53,9 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
 def calculate_segmentation_step(
     profile: ROIExtractionProfile, image: Image, mask: typing.Optional[np.ndarray]
 ) -> typing.Tuple[ROIExtractionResult, str]:
-    algorithm: RestartableAlgorithm = analysis_algorithm_dict[profile.algorithm]()
+    algorithm: RestartableAlgorithm = AnalysisAlgorithmSelection[profile.algorithm]()
     algorithm.set_image(image)
     algorithm.set_mask(mask)
     parameters = profile.values
-    algorithm.set_parameters(**parameters)
+    algorithm.set_parameters(parameters)
     return algorithm.calculation_run(_empty_fun), algorithm.get_info_text()

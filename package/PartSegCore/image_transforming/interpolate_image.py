@@ -3,9 +3,8 @@ from typing import Callable, List, Optional
 from scipy.ndimage import zoom
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
+from PartSegCore.image_transforming.transform_base import TransformBase
 from PartSegImage import Image
-
-from .transform_base import TransformBase
 
 
 class InterpolateImage(TransformBase):
@@ -52,4 +51,6 @@ class InterpolateImage(TransformBase):
     @classmethod
     def calculate_initial(cls, image: Image):
         min_val = min(image.spacing)
-        return {f"scale_{l}": x / min_val for x, l in zip(image.spacing, image.get_dimension_letters().lower())}
+        return {
+            f"scale_{letter}": x / min_val for x, letter in zip(image.spacing, image.get_dimension_letters().lower())
+        }

@@ -1,15 +1,10 @@
 trigger:
   branches:
     include:
-    - '*'
-    exclude:
-    - dependabot/*
-    - documentation
-    - release/*
-    - hotfix/*
-    - bugfix/*
-    - update_requirements
-    - pre-commit-ci-update-config
+    - master
+    - develop
+    - feature_prepare/**
+    - main
   tags:
     include:
     - v*
@@ -22,13 +17,13 @@ stages:
   - stage: GetTestData
     jobs:
     - job: linux
-      pool: {vmImage: 'Ubuntu-18.04'}
+      pool: {vmImage: 'Ubuntu-22.04'}
       steps:
         - script: bash build_utils/download_data.sh
           displayName: "download data"
         - task: UsePythonVersion@0
           inputs:
-            versionSpec: '3.8'
+            versionSpec: '3.9'
           displayName: 'Use Python $(python.version)'
         - script: python build_utils/cut_changelog.py changelog_cut.md
           displayName: "Cut changelog"
@@ -37,13 +32,21 @@ stages:
         - publish: changelog_cut.md
           artifact: ReleaseInfo
 
-  - stage: formating_check
+  - stage: formatting_check
     dependsOn: []
     jobs:
       - job: check_formating
-        pool: {vmImage: 'Ubuntu-20.04'}
+        pool:
+          vmImage: ubuntu-latest
+        variables:
+          PRE_COMMIT_HOME: $(Pipeline.Workspace)/pre-commit-cache
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+          - script: echo "##vso[task.setvariable variable=PY]$(python -VV)"
+          - task: Cache@2
+            inputs:
+              key: pre-commit | .pre-commit-config.yaml | "$(PY)"
+              path: $(PRE_COMMIT_HOME)
           - bash: |
               python -m pip install pre-commit
             displayName: InstallDeps
@@ -54,11 +57,11 @@ stages:
     dependsOn: []
     jobs:
       - job: manifest_check
-        pool: {vmImage: 'Ubuntu-18.04'}
+        pool: {vmImage: 'Ubuntu-latest'}
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.10', architecture: x64}}
           - bash: |
-              python -m pip install check-manifest==0.42 numpy==1.19.1
+              python -m pip install check-manifest==0.48 numpy==1.22.3
             displayName: InstallDeps
           - bash: check-manifest
             displayName: check-manifest
@@ -67,9 +70,15 @@ stages:
     dependsOn: []
     jobs:
       - job: help
-        pool: {vmImage: 'Ubuntu-18.04'}
+        pool: {vmImage: 'ubuntu-latest'}
+        variables:
+          pip_cache_dir: $(Pipeline.Workspace)/.pip
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
+          - template: .azure-pipelines/pip_cache.yaml
+            parameters:
+              key: doc | requirements/requirements_pyinstaller.txt | "$(PY)"
+              path: $(pip_cache_dir)
           - bash: |
               python -m pip install tox
             displayName: Install tox
@@ -82,121 +91,105 @@ stages:
               artifactName: docs
 
       - job: Notebook_check
-        pool: {vmImage: 'Ubuntu-18.04'}
+        pool: {vmImage: 'Ubuntu-22.04'}
         continueOnError: true
         variables:
           DATA_PATH: typy_neuronow2
+          pip_cache_dir: $(Pipeline.Workspace)/.pip
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
+          - template: .azure-pipelines/pip_cache.yaml
+            parameters:
+              key: notebook | requirements/requirements_pyinstaller.txt | "$(PY)"
+              path: $(pip_cache_dir)
           - bash: |
               python -m pip install tox
             displayName: Test notebook
           - bash: tox -e jupyter
             displayName: "Run Notebook"
 
-  - stage: Tests
-    dependsOn: [GetTestData, formating_check]
+  - stage: Tests_linux
+    dependsOn: [GetTestData, formatting_check]
     variables:
       AZURE_PIPELINES: 1
+      pip_cache_dir: $(Pipeline.Workspace)/.pip
     jobs:
-    - job: test
-      condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
-      strategy:
-        matrix:
-          macos:
-            imageName: 'macos-10.14'
-          windows:
-            imageName: 'vs2017-win2016'
-      pool: {vmImage: $(imageName)}
-      steps:
-        - template: .azure-pipelines/tests.yaml
     - job: test_linux
-      pool: { vmImage: 'ubuntu-18.04' }
+      pool: { vmImage: 'ubuntu-22.04' }
       variables:
         AZURE_PIPELINES: 1
         DISPLAY: ':99.0'
+        pip_cache_dir: $(Pipeline.Workspace)/.pip
       steps:
-        - script: |
-            sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
-            /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
-          displayName: "install libs"
+        - template: .azure-pipelines/linux_libs.yaml
         - template: .azure-pipelines/tests.yaml
+          parameters:
+            cache_dir: $(pip_cache_dir)
+
+  - stage: Tests_other
+    dependsOn: [GetTestData, formatting_check]
+    variables:
+      AZURE_PIPELINES: 1
+      pip_cache_dir: $(Pipeline.Workspace)/.pip
+    jobs:
+    - job: test
+      condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature_prepare'))
+      strategy:
+        matrix:
+          macos:
+            imageName: 'macos-11'
+          windows:
+            imageName: 'windows-2019'
+      pool: {vmImage: $(imageName)}
+      steps:
+        - template: .azure-pipelines/tests.yaml
+          parameters:
+            cache_dir: $(pip_cache_dir)
 
   - stage: Builds
-    dependsOn: Tests
-    variables:
-      CIBW_BEFORE_BUILD: pip install numpy cython
-      CIBW_TEST_EXTRAS: pyqt,test
-      CIBW_BUILD: cp3[6-8]*64
-      CIBW_TEST_COMMAND: pytest {project}/package/tests
+    dependsOn: Tests_linux
     jobs:
       - job: sdist
-        pool: {vmImage: 'Ubuntu-18.04'}
+        pool: {vmImage: 'Ubuntu-20.04'}
         steps:
           - task: UsePythonVersion@0
           - bash: pip install -r requirements/requirements_dev.txt
             displayName: sdist requirements
-          - bash: python setup.py sdist -d wheelhouse
-            displayName: sdist
-          - bash: python setup.py bdist_wheel -d wheelhouse
-            displayName: wheel
+          - bash: python -m build .
+            displayName: sdist amd wheel
           - task: PublishBuildArtifacts@1
             inputs:
-              pathToPublish: wheelhouse
+              pathToPublish: dist
               artifactName: wheels
 
       - job: pyinstaller_linux
         variables:
           test_path: dist/PartSeg/PartSeg _test
           DISPLAY: ':99.0'
-        pool: { vmImage: 'ubuntu-18.04' }
+          pip_cache_dir: $(Pipeline.Workspace)/.pip
+        pool: { vmImage: 'Ubuntu-20.04' }
         steps:
-          - { task: UsePythonVersion@0, inputs: { versionSpec: '3.8', architecture: x64 } }
-          - script: |
-              sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
-              /sbin/start-stop-daemon --start --quiet \
-                          --pidfile /tmp/custom_xvfb_99.pid --make-pidfile \
-                          --background --exec /usr/bin/Xvfb \
-                          -- :99 -screen 0 1920x1200x24 -ac +extension GLX
-            displayName: "install libs"
-
-          - bash: |
-              python -m pip install -r requirements/requirements_pyinstaller.txt
-              python -m pip install -e .
-              python  build_utils/create_and_pack_executable.py
-
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathToPublish: dist2
-              artifactName: execs
-          - script: $(test_path)
-            displayName: TestBuild
+          - template: .azure-pipelines/linux_libs.yaml
+          - template: .azure-pipelines/pyinstaller.yaml
+            parameters:
+              test_path: $(test_path)
+              cache_dir: $(pip_cache_dir)
 
       - job: pyinstaller
-        # condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
+        condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature_prepare'))
         strategy:
           matrix:
             macos:
-              imageName: 'macos-10.14'
+              imageName: 'macos-11'
               test_path: dist/PartSeg/PartSeg _test
             windows:
-              imageName: 'vs2017-win2016'
+              imageName: 'windows-2019'
               test_path: dist\PartSeg\PartSeg _test
+        variables:
+          pip_cache_dir: $(Pipeline.Workspace)/.pip
         pool: {vmImage: $(imageName)}
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
-          - bash: |
-              python -m pip install -U pip
-              python -m pip install -r requirements/requirements_pyinstaller.txt
-              python -m pip install .
-            displayName: install libs
-          - bash: |
-              python  build_utils/create_and_pack_executable.py
-            displayName: build
-
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathToPublish: dist2
-              artifactName: execs
-          - script: $(test_path)
-            displayName: TestBuild
+          - template: .azure-pipelines/pyinstaller.yaml
+            parameters:
+              test_path: $(test_path)
+              cache_dir: $(pip_cache_dir)

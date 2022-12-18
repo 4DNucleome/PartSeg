@@ -1,9 +1,8 @@
 import os
-from pathlib import Path
+from contextlib import suppress
 from typing import Type
 
-import numpy as np
-from qtpy.QtCore import QByteArray, QEvent, Qt
+from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -17,13 +16,32 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt import ensure_main_thread
 
 import PartSegData
+from PartSeg import state_store
+from PartSeg._roi_analysis.advanced_window import SegAdvancedWindow
+from PartSeg._roi_analysis.batch_window import BatchWindow
+from PartSeg._roi_analysis.calculation_pipeline_thread import CalculatePipelineThread
+from PartSeg._roi_analysis.image_view import CompareImageView, ResultImageView, SynchronizeView
 from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
-from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
-from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
+from PartSeg.common_backend.except_hook import show_warning
+from PartSeg.common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
+from PartSeg.common_gui.channel_control import ChannelProperty
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
+from PartSeg.common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
+from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
+from PartSeg.common_gui.mask_widget import MaskDialogBase
+from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
+from PartSeg.common_gui.searchable_combo_box import SearchComboBox
+from PartSeg.common_gui.stack_image_view import ColorBar
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
-from PartSegCore import state_store
+from PartSeg.common_gui.universal_gui_part import TextShow
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, algorithm_description, load_functions
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
@@ -33,25 +51,8 @@ from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.project_info import HistoryElement, calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
+from PartSegCore.utils import EventedDict
 from PartSegImage import TiffImageReader
-
-from ..common_backend.except_hook import show_warning
-from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_save_dialog import CustomSaveDialog
-from ..common_gui.equal_column_layout import EqualColumnLayout
-from ..common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
-from ..common_gui.mask_widget import MaskDialogBase
-from ..common_gui.multiple_file_widget import MultipleFileWidget
-from ..common_gui.searchable_combo_box import SearchComboBox
-from ..common_gui.stack_image_view import ColorBar
-from ..common_gui.universal_gui_part import TextShow
-from ..common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog
-from .advanced_window import SegAdvancedWindow
-from .batch_window import BatchWindow
-from .calculation_pipeline_thread import CalculatePipelineThread
-from .image_view import CompareImageView, ResultImageView, SynchronizeView
-from .partseg_settings import PartSettings
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "analysis")
 
@@ -82,7 +83,6 @@ class Options(QWidget):
         self.save_pipe_btn.setToolTip("Save current pipeline. Last element is last executed algorithm")
         self.choose_pipe = SearchComboBox()
         self.choose_pipe.addItem("<none>")
-        self.choose_pipe.addItems(list(self._settings.roi_pipelines.keys()))
         self.choose_pipe.textActivated.connect(self.choose_pipeline)
         self.choose_pipe.setToolTip("Execute chosen pipeline")
         self.save_profile_btn = QPushButton("Save profile")
@@ -90,7 +90,6 @@ class Options(QWidget):
         self.save_profile_btn.clicked.connect(self.save_profile)
         self.choose_profile = SearchComboBox()
         self.choose_profile.addItem("<none>")
-        self.choose_profile.addItems(list(self._settings.roi_profiles.keys()))
         self.choose_profile.setToolTip("Select profile to restore its settings. Execute if interactive is checked")
         # image state
         self.compare_btn = QPushButton("Compare")
@@ -102,11 +101,15 @@ class Options(QWidget):
         self.choose_profile.textActivated.connect(self.change_profile)
         self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)
         self.interactive_use.stateChanged.connect(self.interactive_change)
-        self.algorithm_choose_widget = AlgorithmChoose(settings, algorithm_description.analysis_algorithm_dict)
+        self.algorithm_choose_widget = AlgorithmChoose(settings, algorithm_description.AnalysisAlgorithmSelection)
         self.algorithm_choose_widget.result.connect(self.execution_done)
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
         self.algorithm_choose_widget.algorithm_changed.connect(self.interactive_algorithm_execute)
+        self._settings.roi_profiles_changed.connect(self._update_profiles)
+        self._settings.roi_pipelines_changed.connect(self._update_pipelines)
+        self._update_pipelines()
+        self._update_profiles()
 
         self.label = TextShow()
 
@@ -131,15 +134,25 @@ class Options(QWidget):
         layout.addLayout(layout4)
         layout.addLayout(layout3)
         layout.addWidget(self.algorithm_choose_widget, 1)
-        # layout.addLayout(self.stack_layout)
         layout.addWidget(self.label)
-        # layout.addStretch(1)
         layout2.addWidget(self.hide_left_panel_chk)
         layout2.addWidget(self.synchronize_checkbox)
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
-        # layout.setSpacing(0)
         self.setLayout(layout)
+
+        settings.roi_changed.connect(self._refresh_compare_btn)
+        settings.image_changed.connect(self._reset_compare_btn)
+
+    @ensure_main_thread
+    def _update_profiles(self):
+        self.update_combo_box(self.choose_profile, self._settings.roi_profiles)
+        self.update_tooltips()
+
+    @ensure_main_thread
+    def _update_pipelines(self):
+        self.update_combo_box(self.choose_pipe, self._settings.roi_pipelines)
+        self.update_tooltips()
 
     def compare_action(self):
         if self.compare_btn.text() == "Compare":
@@ -172,8 +185,8 @@ class Options(QWidget):
         if not name:
             QMessageBox.information(self, "No segmentation", "No segmentation executed", QMessageBox.Ok)
             return
-        values = self._settings.get(f"algorithms.{name}", {})
-        if len(values) == 0:
+        values = self._settings.get_algorithm(f"algorithms.{name}", {})
+        if isinstance(values, (dict, EventedDict)) and len(values) == 0:
             QMessageBox.information(self, "Some problem", "Pleas run execution again", QMessageBox.Ok)
             return
         current_segmentation = ROIExtractionProfile(name="Unknown", algorithm=name, values=values)
@@ -193,7 +206,6 @@ class Options(QWidget):
             profile = SegmentationPipeline(name=text, segmentation=current_segmentation, mask_history=mask_history)
             self._settings.roi_pipelines[text] = profile
             self._settings.dump()
-            self.choose_pipe.addItem(text)
             break
 
     def choose_pipeline(self, text):
@@ -203,7 +215,7 @@ class Options(QWidget):
         process_thread = CalculatePipelineThread(self._settings.image, self._settings.mask, pipeline)
         dial = WaitingDialog(process_thread)
 
-        if dial.exec() and process_thread.result:
+        if dial.exec_() and process_thread.result:
             pipeline_result = process_thread.result
             self._settings.mask = pipeline_result.mask
             self._settings.roi = pipeline_result.roi_info.roi
@@ -242,16 +254,7 @@ class Options(QWidget):
                 else:
                     i += 1
         if len(new_names) > 0:
-            combo_box.addItems(list(sorted(new_names)))
-
-    def event(self, event: QEvent):
-        if event.type() == QEvent.WindowActivate:
-            # update combobox for segmentation
-            self.update_combo_box(self.choose_profile, self._settings.roi_profiles)
-            # update combobox for pipeline
-            self.update_combo_box(self.choose_pipe, self._settings.roi_pipelines)
-            self.update_tooltips()
-        return super().event(event)
+            combo_box.addItems(sorted(new_names))
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() in [Qt.Key_Enter, Qt.Key_Return] and event.modifiers() == Qt.ControlModifier:
@@ -263,19 +266,17 @@ class Options(QWidget):
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
             if not ok:
                 return
-            if text in self._settings.roi_profiles and QMessageBox.No == QMessageBox.warning(
+            if text in self._settings.roi_profiles and QMessageBox.StandardButton.No == QMessageBox.warning(
                 self,
                 "Already exists",
                 "Profile with this name already exist. Overwrite?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             ):
                 continue
-            resp = ROIExtractionProfile(text, widget.name, widget.get_values())
+            resp = ROIExtractionProfile(name=text, algorithm=widget.name, values=widget.get_values())
             self._settings.roi_profiles[text] = resp
             self._settings.dump()
-            self.choose_profile.addItem(text)
-            self.update_tooltips()
             break
 
     def change_profile(self, val):
@@ -343,8 +344,13 @@ class Options(QWidget):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         self._settings.set_segmentation_result(segmentation)
-        self.compare_btn.setEnabled(isinstance(segmentation.roi, np.ndarray) and np.any(segmentation.roi))
         self.label.setText(self.sender().get_info_text())
+
+    def _refresh_compare_btn(self):
+        self.compare_btn.setEnabled(bool(self._settings.roi_info.bound_info))
+
+    def _reset_compare_btn(self):
+        self.compare_btn.setText("Compare")
 
     def showEvent(self, _event):
         self.hide_left_panel_chk.setChecked(self._settings.get_from_profile("hide_left_panel", False))
@@ -361,7 +367,6 @@ class MainMenu(BaseMainMenu):
         self.batch_processing_btn = QPushButton("Batch Processing")
 
         layout = QHBoxLayout()
-        # layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 4, 4)
         layout.addWidget(self.open_btn)
         layout.addWidget(self.save_btn)
@@ -376,13 +381,12 @@ class MainMenu(BaseMainMenu):
         self.mask_manager_btn.clicked.connect(self.mask_manager)
         self.batch_processing_btn.clicked.connect(self.batch_window)
         self.setFocusPolicy(Qt.StrongFocus)
-        # self.test_btn.clicked.connect(self.test_fun)
 
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() < 800:
-            self.batch_processing_btn.hide()
+            self.batch_processing_btn.setVisible(False)
         else:
-            self.batch_processing_btn.show()
+            self.batch_processing_btn.setVisible(True)
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.matches(QKeySequence.Save):
@@ -393,33 +397,30 @@ class MainMenu(BaseMainMenu):
 
     def save_file(self):
         base_values = self.settings.get("save_parameters", {})
-        dial = CustomSaveDialog(
-            save_dict, system_widget=False, base_values=base_values, history=self.settings.get_path_history()
+        dial = PSaveDialog(
+            save_dict,
+            system_widget=False,
+            base_values=base_values,
+            settings=self.settings,
+            path=IO_SAVE_DIRECTORY,
+            filter_path="io.save_filter",
         )
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
-        dial.setDirectory(
-            self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home())))
-        )
-        dial.selectNameFilter(self.settings.get("io.save_filter", ""))
-        if dial.exec():
+        if dial.exec_():
             save_location, selected_filter, save_class, values = dial.get_result()
             project_info = self.settings.get_project_info()
-            self.settings.set("io.save_filter", selected_filter)
-            save_dir = os.path.dirname(save_location)
-            self.settings.set("io.save_directory", save_dir)
-            self.settings.add_path_history(save_dir)
             base_values[selected_filter] = values
 
-            def exception_hook(exception):
+            def exception_hook(exception):  # pragma: no cover
                 if isinstance(exception, ValueError):
-                    show_warning("Save error", f"Error during saving\n{exception}")
+                    show_warning("Save error", f"Error during saving\n{exception}", exception=exception)
                 else:
                     raise exception
 
             dial2 = ExecuteFunctionDialog(
                 save_class.save, [save_location, project_info, values], exception_hook=exception_hook
             )
-            dial2.exec()
+            dial2.exec_()
 
     def mask_manager(self):
         if self.settings.roi is None:
@@ -434,36 +435,34 @@ class MainMenu(BaseMainMenu):
                 show_warning(
                     OPEN_ERROR,
                     "No needed files inside archive. Most probably you choose file from segmentation mask",
+                    exception=exception,
                 )
             else:
                 load_data_exception_hook(exception)
 
         try:
-            dial = CustomLoadDialog(load_functions.load_dict, history=self.settings.get_path_history())
-            dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
-            file_path = self.settings.get("io.open_file", "")
+            dial = PLoadDialog(
+                load_functions.load_dict, settings=self.settings, path=OPEN_DIRECTORY, filter_path=OPEN_FILE_FILTER
+            )
+            file_path = self.settings.get(OPEN_FILE, "")
             if os.path.isfile(file_path):
                 dial.selectFile(file_path)
-            dial.selectNameFilter(self.settings.get("io.open_filter", next(iter(load_functions.load_dict.keys()))))
             if dial.exec_():
                 result = dial.get_result()
-                self.settings.set("io.open_filter", result.selected_filter)
-                load_dir = os.path.dirname(result.load_location[0])
-                self.settings.set("io.open_directory", load_dir)
-                self.settings.set("io.open_file", result.load_location[0])
-                self.settings.add_load_files_history(result.load_location, result.load_class.get_name())
+                self.settings.set(OPEN_FILE, result.load_location[0])
+                self.settings.add_last_files(result.load_location, result.load_class.get_name())
                 dial2 = ExecuteFunctionDialog(
                     result.load_class.load,
                     [result.load_location],
                     {"metadata": {"default_spacing": self.settings.image_spacing}},
                     exception_hook=exception_hook,
                 )
-                if dial2.exec():
+                if dial2.exec_():
                     result = dial2.get_result()
                     self.set_data(result)
 
-        except ValueError as e:
-            QMessageBox.warning(self, "Open error", f"{e}")
+        except ValueError as e:  # pragma: no cover
+            show_warning("Open error", f"{e}", exception=e)
 
     def batch_window(self):
         if self.main_window.batch_window is None:
@@ -508,7 +507,7 @@ class MaskDialog(MaskDialogBase):
     def prev_mask(self):
         history: HistoryElement = self.settings.history_pop()
         algorithm_name = self.settings.last_executed_algorithm
-        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
+        algorithm_values = self.settings.get_algorithm(f"algorithms.{algorithm_name}")
         self.settings.fix_history(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
         self.settings.set("current_algorithm", history.roi_extraction_parameters["algorithm_name"])
         self.settings.set(
@@ -536,7 +535,7 @@ class MainWindow(BaseMainWindow):
         # thi isinstance is only for hinting in IDE
         assert isinstance(self.settings, PartSettings)  # nosec
         self.main_menu = MainMenu(self.settings, self)
-        self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
+        self.channel_control2 = ChannelProperty(self.settings, start_name="result_image")
         self.raw_image = CompareImageView(self.settings, self.channel_control2, "raw_image")
         self.measurements = MeasurementWidget(self.settings)
         self.left_stack = StackedWidgetWithSelector()
@@ -550,7 +549,6 @@ class MainWindow(BaseMainWindow):
         self.result_image.text_info_change.connect(self.info_text.setText)
         self.synchronize_tool = SynchronizeView(self.raw_image, self.result_image, self)
         self.options_panel = Options(self.settings, self.channel_control2, self.raw_image, self.synchronize_tool)
-        # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.advanced_window = SegAdvancedWindow(self.settings, reload_list=[self.reload])
         self.batch_window = None  # BatchWindow(self.settings)
@@ -583,6 +581,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
         view_menu.addAction("Toggle left panel").triggered.connect(self.toggle_left_panel)
         view_menu.addAction("Toggle console").triggered.connect(self._toggle_console)
+        view_menu.addAction("Toggle scale bar").triggered.connect(self._toggle_scale_bar)
         action = view_menu.addAction("Screenshot right panel")
         action.triggered.connect(self.screenshot(self.result_image))
         action.setShortcut(QKeySequence.Print)
@@ -607,7 +606,7 @@ class MainWindow(BaseMainWindow):
 
         layout.setSpacing(0)
         layout.addWidget(self.main_menu, 0, 0, 1, 3)
-        layout.addLayout(info_layout, 1, 1, 1, 2)
+        layout.addLayout(info_layout, 3, 1, 1, 2)
         layout.addWidget(self.multiple_files, 2, 0)
         layout.addWidget(self.color_bar, 2, 1)
         layout.addLayout(image_layout, 2, 2, 1, 1)
@@ -616,11 +615,14 @@ class MainWindow(BaseMainWindow):
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
-        try:
+        with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-        except KeyError:
-            pass
+
+    def _toggle_scale_bar(self):
+        self.raw_image.toggle_scale_bar()
+        self.result_image.toggle_scale_bar()
+        super()._toggle_scale_bar()
 
     def toggle_left_panel(self):
         self.options_panel.hide_left_panel(not self.settings.get_from_profile("hide_left_panel"))
@@ -630,7 +632,7 @@ class MainWindow(BaseMainWindow):
         self.options_panel.interactive_algorithm_execute()
 
     def reload(self):
-        self.options_panel.algorithm_choose_widget.reload(algorithm_description.analysis_algorithm_dict)
+        self.options_panel.algorithm_choose_widget.reload(algorithm_description.AnalysisAlgorithmSelection)
 
     def closeEvent(self, event):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
@@ -660,3 +662,8 @@ class MainWindow(BaseMainWindow):
 
     def set_data(self, data):
         self.main_menu.set_data(data)
+
+    def change_theme(self, event):
+        self.raw_image.set_theme(self.settings.theme_name)
+        self.result_image.set_theme(self.settings.theme_name)
+        super().change_theme(event)

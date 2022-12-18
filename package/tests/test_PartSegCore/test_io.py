@@ -8,6 +8,7 @@ import tarfile
 from copy import deepcopy
 from enum import Enum
 from glob import glob
+from pathlib import Path
 from typing import Type
 
 import h5py
@@ -20,15 +21,21 @@ from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.calculation_plan import CalculationPlan, MaskSuffix, MeasurementCalculate
-from PartSegCore.analysis.load_functions import LoadProject, UpdateLoadedMetadataAnalysis
+from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
-from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
-from PartSegCore.class_generator import enum_register
-from PartSegCore.image_operations import RadiusType
-from PartSegCore.io_utils import LoadBase, SaveBase, SaveROIAsNumpy, UpdateLoadedMetadataBase
-from PartSegCore.json_hooks import check_loaded_dict
+from PartSegCore.io_utils import (
+    LoadBase,
+    LoadPlanExcel,
+    LoadPlanJson,
+    SaveBase,
+    SaveROIAsNumpy,
+    find_problematic_entries,
+    find_problematic_leafs,
+    load_metadata_base,
+)
+from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
     LoadROI,
@@ -48,21 +55,25 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
+from PartSegCore.utils import ProfileDict, check_loaded_dict
 from PartSegImage import Image
 
 
 @pytest.fixture(scope="module")
 def analysis_project() -> ProjectTuple:
-    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
-    data[0, 10:40, 10:40, 10:90] = 50
-    data[0, 10:40, 50:90, 10:90] = 50
-    data[0, 15:35, 15:35, 15:85] = 70
-    data[0, 15:35, 55:85, 15:85] = 60
-    data[0, 10:40, 40:50, 10:90] = 40
+    data = np.zeros((1, 1, 50, 100, 100), dtype=np.uint16)
+    data[0, 0, 10:40, 10:40, 10:90] = 50
+    data[0, 0, 10:40, 50:90, 10:90] = 50
+    data[0, 0, 15:35, 15:35, 15:85] = 70
+    data[0, 0, 15:35, 55:85, 15:85] = 60
+    data[0, 0, 10:40, 40:50, 10:90] = 40
     image = Image(
-        data, (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]), ""
+        data,
+        (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
+        "",
+        axes_order="CTZYX",
     )
-    mask = data[0, ..., 0] > 0
+    mask = data[0, 0] > 0
     roi = np.zeros(data.shape, dtype=np.uint8)
     roi[data == 70] = 1
     roi[data == 60] = 2
@@ -89,20 +100,23 @@ def analysis_project() -> ProjectTuple:
 
 @pytest.fixture(scope="module")
 def analysis_project_reversed() -> ProjectTuple:
-    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
-    data[0, 10:40, 10:40, 10:90] = 50
-    data[0, 10:40, 50:90, 10:90] = 50
-    data[0, 15:35, 15:35, 15:85] = 70
-    data[0, 15:35, 55:85, 15:85] = 60
-    data[0, 10:40, 40:50, 10:90] = 40
-    mask = data[0] > 0
+    data = np.zeros((1, 1, 50, 100, 100), dtype=np.uint16)
+    data[0, 0, 10:40, 10:40, 10:90] = 50
+    data[0, 0, 10:40, 50:90, 10:90] = 50
+    data[0, 0, 15:35, 15:35, 15:85] = 70
+    data[0, 0, 15:35, 55:85, 15:85] = 60
+    data[0, 0, 10:40, 40:50, 10:90] = 40
+    mask = data[0, 0] > 0
     roi = np.zeros(data.shape, dtype=np.uint8)
     roi[data == 70] = 1
     roi[data == 60] = 2
 
     data = 100 - data
     image = Image(
-        data, (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]), ""
+        data,
+        (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
+        "",
+        axes_order="CTZYX",
     )
     roi_info = ROIInfo(roi.squeeze()).fit_to_image(image)
     return ProjectTuple("test_data.tiff", image, roi_info=roi_info, mask=mask)
@@ -110,7 +124,13 @@ def analysis_project_reversed() -> ProjectTuple:
 
 @pytest.fixture
 def mask_prop():
-    return MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, False, False)
+    return MaskProperty.simple_mask()
+
+
+class SampleEnumClass(Enum):
+    test0 = 0
+    test1 = 1
+    test2 = 2
 
 
 class TestHistoryElement:
@@ -245,9 +265,9 @@ class TestJsonLoad:
         # noinspection PyBroadException
         try:
             with open(profile_path) as ff:
-                data = json.load(ff, object_hook=part_hook)
+                data = json.load(ff, object_hook=partseg_object_hook)
             assert check_loaded_dict(data)
-        except Exception:  # pylint: disable=W0703
+        except Exception:  # pylint: disable=W0703  # pragma: no cover
             pytest.fail("Fail in loading profile")
 
     def test_measure_load(self, data_test_dir):
@@ -255,44 +275,33 @@ class TestJsonLoad:
         # noinspection PyBroadException
         try:
             with open(profile_path) as ff:
-                data = json.load(ff, object_hook=part_hook)
+                data = json.load(ff, object_hook=partseg_object_hook)
             assert check_loaded_dict(data)
-        except Exception:  # pylint: disable=W0703
+        except Exception:  # pylint: disable=W0703  # pragma: no cover
             pytest.fail("Fail in loading profile")
 
     def test_json_dump(self):
         with pytest.raises(TypeError):
             json.dumps(DimensionType.Layer)
-        data_string = json.dumps(DimensionType.Layer, cls=PartEncoder)
-        assert re.search('"__Enum__":[^,}]+[,}]', data_string) is not None
-        assert re.search('"__subtype__":[^,}]+[,}]', data_string) is not None
+        data_string = json.dumps(DimensionType.Layer, cls=PartSegEncoder)
+        assert re.search('"__class__":[^,}]+[,}]', data_string) is not None
         assert re.search('"value":[^,}]+[,}]', data_string) is not None
 
     def test_json_load(self):
-        class Test(Enum):
-            test0 = 0
-            test1 = 1
-            test2 = 2
-
-        test_json = json.dumps(Test.test0, cls=PartEncoder)
-
-        assert not check_loaded_dict(json.loads(test_json, object_hook=part_hook))
-
-        enum_register.register_class(Test)
-        assert isinstance(json.loads(test_json, object_hook=part_hook), Test)
+        test_json = json.dumps(SampleEnumClass.test0, cls=PartSegEncoder)
+        assert isinstance(json.loads(test_json, object_hook=partseg_object_hook), SampleEnumClass)
 
     def test_modernize_0_9_2_3(self, bundle_test_dir):
         file_path = os.path.join(bundle_test_dir, "segment_profile_0.9.2.3.json")
         assert os.path.exists(file_path)
-        data = UpdateLoadedMetadataBase.load_json_data(file_path)
-        assert "noise_filtering" in data["test_0.9.2.3"].values
-        assert "dimension_type" in data["test_0.9.2.3"].values["noise_filtering"]["values"]
+        data = load_metadata_base(file_path)
+        assert hasattr(data["test_0.9.2.3"].values, "noise_filtering")
+        assert hasattr(data["test_0.9.2.3"].values.noise_filtering.values, "dimension_type")
         file_path = os.path.join(bundle_test_dir, "calculation_plan_0.9.2.3.json")
-        data = UpdateLoadedMetadataAnalysis.load_json_data(file_path)
+        data = load_metadata_base(file_path)
 
     def test_update_name(self):
-        data = UpdateLoadedMetadataAnalysis.load_json_data(update_name_json)
-        print(data)
+        data = load_metadata_base(update_name_json)
         mp = data["problematic set"]
         assert isinstance(mp, MeasurementProfile)
         assert isinstance(mp.chosen_fields[0], MeasurementEntry)
@@ -301,7 +310,7 @@ class TestJsonLoad:
         assert mp.chosen_fields[1].calculation_tree.name == "Components number"
 
     def test_load_workflow(self, bundle_test_dir):
-        data = UpdateLoadedMetadataAnalysis.load_json_data(os.path.join(bundle_test_dir, "workflow.json"))
+        data = load_metadata_base(os.path.join(bundle_test_dir, "workflow.json"))
         plan = data["workflow"]
         assert isinstance(plan, CalculationPlan)
         mask_step = plan.execution_tree.children[0]
@@ -374,6 +383,15 @@ class TestSegmentationMask:
         assert len(glob(os.path.join(tmpdir, "seg_save", "*"))) == 4
         seg2 = LoadROI.load([os.path.join(tmpdir, "segmentation.seg")])
         assert seg2 is not None
+        save_components(
+            seg.image,
+            [],
+            os.path.join(tmpdir, "seg_save2"),
+            seg.roi_info,
+            SaveComponents.get_default_values(),
+        )
+        assert os.path.isdir(os.path.join(tmpdir, "seg_save2"))
+        assert len(glob(os.path.join(tmpdir, "seg_save2", "*"))) == 8
 
     def test_save_segmentation_without_image(self, tmpdir, data_test_dir):
         seg = LoadROIImage.load(
@@ -384,7 +402,7 @@ class TestSegmentationMask:
         SaveROI.save(
             os.path.join(tmpdir, "segmentation1.seg"),
             seg_clean,
-            {"relative_path": False, "spacing": (210 * 10 ** -6, 70 * 10 ** -6, 70 * 10 ** -6)},
+            {"relative_path": False, "spacing": (210 * 10**-6, 70 * 10**-6, 70 * 10**-6)},
         )
 
     def test_loading_new_segmentation(self, tmpdir, data_test_dir):
@@ -392,8 +410,8 @@ class TestSegmentationMask:
         algorithm = ThresholdAlgorithm()
         algorithm.set_image(image_data.image)
         param = algorithm.get_default_values()
-        param["channel"] = 0
-        algorithm.set_parameters(**param)
+        param.channel = 0
+        algorithm.set_parameters(param)
         res = algorithm.calculation_run(lambda x, y: None)
         num = np.max(res.roi) + 1
         data_dict = {str(i): deepcopy(res.parameters) for i in range(1, num)}
@@ -429,7 +447,7 @@ class TestSegmentationMask:
             mask=stack_segmentation1.roi_info.roi,
         )
         SaveROI.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
-        with tarfile.open(tmp_path / "test1.seg", "r") as tf:
+        with tarfile.open(tmp_path / "test1.seg") as tf:
             tf.getmember("mask.tif")
             tf.getmember("segmentation.tif")
             tf.getmember("history/history.json")
@@ -461,7 +479,7 @@ class TestSaveFunctions:
     def read_cmap(file_path):
         with h5py.File(file_path, "r") as fp:
             arr = np.array(fp.get("Chimera/image1/data_zyx"))
-            steps = tuple(map(lambda x: int(x + 0.5), fp.get("Chimera/image1").attrs["step"]))
+            steps = tuple(int(x + 0.5) for x in fp.get("Chimera/image1").attrs["step"])
             return arr, steps
 
     def test_save_cmap(self, tmpdir, analysis_project):
@@ -581,7 +599,7 @@ class TestSaveFunctions:
         parameters = {"squeeze": False}
         SaveAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project, parameters)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
-        assert array.shape == analysis_project.image.shape
+        assert array.shape == (1,) + analysis_project.image.shape
         assert np.all(array == analysis_project.image.get_data())
         parameters = {"squeeze": True}
         SaveAsNumpy.save(os.path.join(tmpdir, "test2.npy"), analysis_project, parameters)
@@ -594,11 +612,102 @@ class TestSaveFunctions:
         array = np.load(os.path.join(tmpdir, "test1.npy"))
         assert np.all(array == analysis_project.roi_info.roi)
 
+    @pytest.mark.parametrize(
+        "klass,ext_li",
+        [
+            (SaveAsNumpy, [".npy"]),
+            (SaveAsTiff, [".tiff", ".tif"]),
+            (SaveCmap, [".cmap"]),
+            (SaveXYZ, [".xyz", ".txt"]),
+            (SaveProject, [".tgz", ".tbz2", ".gz", ".bz2"]),
+            (SaveROIAsNumpy, [".npy"]),
+        ],
+    )
+    def test_get_extensions(self, klass, ext_li):
+        assert klass.get_extensions() == ext_li
+
 
 def test_json_parameters_mask(stack_segmentation1, tmp_path):
     SaveParametersJSON.save(tmp_path / "test.json", stack_segmentation1)
     load_param = LoadROIParameters.load([tmp_path / "test.json"])
     assert len(load_param.roi_extraction_parameters) == 4
+
+
+def test_json_parameters_mask_2(stack_segmentation1, tmp_path):
+    SaveParametersJSON.save(tmp_path / "test.json", stack_segmentation1.roi_extraction_parameters[1])
+    load_param = LoadROIParameters.load([tmp_path / "test.json"])
+    assert len(load_param.roi_extraction_parameters) == 1
+
+
+@pytest.mark.parametrize("file_path", (Path(__file__).parent.parent / "test_data" / "notebook").glob("*.json"))
+def test_load_notebook_json(file_path):
+    load_metadata_base(file_path)
+
+
+@pytest.mark.parametrize(
+    "file_path", list((Path(__file__).parent.parent / "test_data" / "old_saves").glob(os.path.join("*", "*", "*.json")))
+)
+def test_old_saves_load(file_path):
+    data: ProfileDict = load_metadata_base(file_path)
+    assert data.verify_data(), data.pop_errors()
+
+
+def test_load_plan_form_excel(bundle_test_dir):
+    data, err = LoadPlanExcel.load([bundle_test_dir / "sample_batch_output.xlsx"])
+    assert err == []
+    assert len(data) == 3
+    assert isinstance(data["test3"], CalculationPlan)
+    assert isinstance(data["test4"], CalculationPlan)
+    assert isinstance(data["test3 (1)"], CalculationPlan)
+    assert LoadPlanExcel.get_name_with_suffix().endswith("(*.xlsx)")
+    assert LoadPlanExcel.get_short_name() == "plan_excel"
+
+
+def test_load_json_plan(bundle_test_dir):
+    data, err = LoadPlanJson.load([bundle_test_dir / "measurements_profile.json"])
+    assert err == []
+    assert len(data) == 1
+    assert LoadPlanJson.get_name_with_suffix().endswith("(*.json)")
+    assert LoadPlanJson.get_short_name() == "plan_json"
+
+
+def test_find_problematic_leafs_base():
+    assert find_problematic_leafs(1) == []
+    assert find_problematic_leafs({"aaa": 1, "bbb": 2}) == []
+    data = {"aaa": 1, "bbb": 2, "__error__": True}
+    assert find_problematic_leafs(data) == [data]
+
+
+def test_find_problematic_leaf_nested():
+    data = {"aaa": 1, "bbb": 2, "__error__": True, "ccc": {"ddd": 1, "eee": 2, "__error__": True}}
+    assert find_problematic_leafs(data) == [data["ccc"]]
+
+
+def test_find_problematic_leaf_nested_class():
+    data = {
+        "__class__": "CalculationPlan",
+        "aaa": 1,
+        "bbb": 2,
+        "__error__": True,
+        "__values__": {"ddd": 1, "eee": 2, "Zzzz": {"__error__": True, "aa": 1}},
+    }
+    assert find_problematic_leafs(data) == [data["__values__"]["Zzzz"]]
+
+
+def test_find_problematic_entries_base():
+    assert find_problematic_entries(1) == []
+    assert find_problematic_entries({"aaa": 1, "bbb": 2}) == []
+    data = {"aaa": 1, "bbb": 2, "__error__": True}
+    assert find_problematic_entries(data) == [data]
+
+
+def test_find_problematic_entries_nested():
+    data = {"aaa": 1, "bbb": 2, "__error__": True, "ccc": {"ddd": 1, "eee": 2, "__error__": True}}
+    assert find_problematic_entries(data) == [data]
+    data = {"aaa": 1, "bbb": 2, "ccc": {"ddd": 1, "eee": 2, "__error__": True}}
+    assert find_problematic_entries(data) == [data["ccc"]]
+    data = {"aaa": 1, "bbb": 2, "ccc": {"ddd": 1, "eee": 2, "__error__": True}, "kkk": {"__error__": True, "a": 1}}
+    assert find_problematic_entries(data) == [data["ccc"], data["kkk"]]
 
 
 update_name_json = """

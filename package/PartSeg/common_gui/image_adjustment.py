@@ -2,10 +2,9 @@ from typing import Dict, NamedTuple
 
 from qtpy.QtWidgets import QComboBox, QDialog, QGridLayout, QPushButton, QStackedWidget
 
+from PartSeg.common_gui.algorithms_description import FormWidget
 from PartSegCore.image_transforming import TransformBase, image_transform_dict
 from PartSegImage import Image
-
-from .algorithms_description import FormWidget
 
 
 class ImageAdjustTuple(NamedTuple):

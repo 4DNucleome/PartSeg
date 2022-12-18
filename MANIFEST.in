@@ -1,12 +1,16 @@
 global-include *.pyx
 global-include *.pxd
 include package/tests/test_data/ome.xsd.xml
-include package/PartSegCore/sprawl_utils/*.h
-include package/PartSegCore/multiscale_opening/*.h
+include package/tests/test_data/napari_measurements_profile.json
+include package/tests/test_data/notebook/*.json
+include package/tests/test_data/old_saves/*/*/*.json
+include package/tests/test_data/sample_batch_output.xlsx
 include Readme.md
 include changelog.md
 include pyproject.toml
 include requirements/*
+include .napari/*
+include CITATION.cff
 recursive-include package *.py
 include package/tests/test_data/*.json
 exclude .tox/**
@@ -36,3 +40,5 @@ recursive-include package *.pyi
 exclude dist/**
 exclude dist/**.swp
 exclude cliff.toml
+exclude runtime.txt
+exclude .sourcery.yaml

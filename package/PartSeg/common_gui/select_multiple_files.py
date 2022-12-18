@@ -23,9 +23,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegCore.analysis.calculation_plan import MaskMapper
-
-from ..common_backend.base_settings import BaseSettings
 
 
 class AcceptFiles(QDialog):
@@ -67,7 +66,7 @@ class AcceptFiles(QDialog):
 class FileListItem(QListWidgetItem):
     def __init__(self, file_path):
         size = os.stat(file_path).st_size
-        size = float(size) / (1024 ** 2)
+        size = float(size) / (1024**2)
         super().__init__(f"{file_path:s} ({size:.2f} MB)")
         self.setTextAlignment(Qt.AlignRight)
         self.file_path = file_path
@@ -171,8 +170,7 @@ class AddFiles(QWidget):
                 return
             else:
                 res_list.append(os.path.join(base_path, file_path.strip()))
-        missed_files = [x for x in res_list if not os.path.exists(x)]
-        if missed_files:
+        if missed_files := [x for x in res_list if not os.path.exists(x)]:
             if len(missed_files) > 6:
                 missed_files = missed_files[:6] + ["..."]
             missed_files_str = "<br>".join(missed_files)
@@ -247,4 +245,4 @@ class AddFiles(QWidget):
         self.file_list_changed.emit(self.files_to_proceed)
 
     def get_paths(self):
-        return list(sorted(self.files_to_proceed))
+        return sorted(self.files_to_proceed)

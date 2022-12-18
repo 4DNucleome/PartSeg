@@ -15,14 +15,14 @@ register_dict: holds information where register given operation type. Strongly s
 from enum import Enum
 from typing import Type
 
-from . import io_utils
-from .algorithm_describe_base import AlgorithmDescribeBase
-from .analysis import algorithm_description as analysis_algorithm_description
-from .analysis import load_functions, measurement_base, measurement_calculation, save_functions
-from .image_transforming import TransformBase, image_transform_dict
-from .mask import algorithm_description as mask_algorithm_description
-from .mask import io_functions
-from .segmentation import (
+from PartSegCore import io_utils
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase
+from PartSegCore.analysis import algorithm_description as analysis_algorithm_description
+from PartSegCore.analysis import load_functions, measurement_base, measurement_calculation, save_functions
+from PartSegCore.image_transforming import TransformBase, image_transform_dict
+from PartSegCore.mask import algorithm_description as mask_algorithm_description
+from PartSegCore.mask import io_functions
+from PartSegCore.segmentation import (
     noise_filtering,
     restartable_segmentation_algorithms,
     segmentation_algorithm,
@@ -61,12 +61,12 @@ class RegisterEnum(Enum):
 
 # noinspection DuplicatedCode
 register_dict = {
-    RegisterEnum.flow: watershed.flow_dict,
-    RegisterEnum.sprawl: watershed.flow_dict,
-    RegisterEnum.threshold: threshold.threshold_dict,
-    RegisterEnum.noise_filtering: noise_filtering.noise_filtering_dict,
-    RegisterEnum.analysis_algorithm: analysis_algorithm_description.analysis_algorithm_dict,
-    RegisterEnum.mask_algorithm: mask_algorithm_description.mask_algorithm_dict,
+    RegisterEnum.flow: watershed.FlowMethodSelection.__register__,
+    RegisterEnum.sprawl: watershed.FlowMethodSelection.__register__,
+    RegisterEnum.threshold: threshold.ThresholdSelection.__register__,
+    RegisterEnum.noise_filtering: noise_filtering.NoiseFilterSelection.__register__,
+    RegisterEnum.analysis_algorithm: analysis_algorithm_description.AnalysisAlgorithmSelection.__register__,
+    RegisterEnum.mask_algorithm: mask_algorithm_description.MaskAlgorithmSelection.__register__,
     RegisterEnum.analysis_save: save_functions.save_dict,
     RegisterEnum.analysis_load: load_functions.load_dict,
     RegisterEnum.mask_load: io_functions.load_dict,
@@ -75,8 +75,8 @@ register_dict = {
     RegisterEnum.mask_save_components: io_functions.save_components_dict,
     RegisterEnum.mask_save_segmentation: io_functions.save_segmentation_dict,
     RegisterEnum.analysis_measurement: measurement_calculation.MEASUREMENT_DICT,
-    RegisterEnum.roi_analysis_segmentation_algorithm: analysis_algorithm_description.analysis_algorithm_dict,
-    RegisterEnum.roi_mask_segmentation_algorithm: mask_algorithm_description.mask_algorithm_dict,
+    RegisterEnum.roi_analysis_segmentation_algorithm: analysis_algorithm_description.AnalysisAlgorithmSelection.__register__,  # noqa: E501
+    RegisterEnum.roi_mask_segmentation_algorithm: mask_algorithm_description.MaskAlgorithmSelection.__register__,
 }
 
 # noinspection DuplicatedCode
@@ -112,7 +112,7 @@ reload_module_list = [
 ]
 
 
-def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False):
+def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False, old_names=None):
     """
     Function for registering new operations in PartSeg inner structures.
 
@@ -123,4 +123,4 @@ def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, rep
     if target_type == RegisterEnum._qss_register:  # pylint: disable=W0212
         qss_list.append(target)
     else:
-        register_dict[target_type].register(target, replace=replace)
+        register_dict[target_type].register(target, replace=replace, old_names=old_names)

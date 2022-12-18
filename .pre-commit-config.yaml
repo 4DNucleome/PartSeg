@@ -1,14 +1,25 @@
 default_language_version:
-    python: python3.7
+    python: python3.8
 
 repos:
+-   repo: https://github.com/MarcoGorelli/absolufy-imports
+    rev: v0.3.1
+    hooks:
+    -   id: absolufy-imports
+        args: ["--application-directories", "package"]
+        exclude: examples|setup.py|build_utils|docs
 -   repo: https://github.com/psf/black
-    rev: 21.9b0
+    rev: 22.12.0
     hooks:
     - id: black
       pass_filenames: true
+-   repo: https://github.com/PyCQA/autoflake
+    rev: 'v2.0.0'  # Use the revision sha / tag you want to point at
+    hooks:
+    -   id: autoflake
+        args: ["--remove-all-unused-imports", "-i"]
 -   repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+    rev: 6.0.0
     hooks:
     - id: flake8
       pass_filenames: true
@@ -17,7 +28,7 @@ repos:
       additional_dependencies:
       - flake8-tidy-imports
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.4.0
     hooks:
     - id: check-json
     - id: check-yaml
@@ -28,32 +39,31 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.18.0
+    rev: v2.2.0
     hooks:
     - id: setup-cfg-fmt
-      args: ["--max-py-version=3.9"]
+      args: ["--include-version-classifiers", "--max-py-version", "3.10"]
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.181
+    hooks:
+      - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.29.0
+    rev: v3.3.1
     hooks:
     - id: pyupgrade
-      args: ["--py37-plus"]
+      args: ["--py38-plus"]
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0
     hooks:
     -   id: rst-backticks
--   repo: https://github.com/PyCQA/isort
-    rev: '5.9.3'  # Use the revision sha / tag you want to point at
-    hooks:
-    -   id: isort
-
--   repo: https://github.com/myint/autoflake
-    rev: 'v1.4'  # Use the revision sha / tag you want to point at
-    hooks:
-    -   id: autoflake
-        args: ["--remove-all-unused-imports", "-i"]
-
 -   repo: https://github.com/markdownlint/markdownlint
-    rev: v0.11.0  # Use the ref you want to point at
+    rev: v0.12.0  # Use the ref you want to point at
     hooks:
     - id: markdownlint
-      exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md
+      exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v0.991'  # Use the sha / tag you want to point at
+    hooks:
+    -   id: mypy
+        files: ^package/PartSegImage/.+\.py

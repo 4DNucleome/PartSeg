@@ -1,0 +1,13 @@
+parameters:
+- name: key # name of the parameter; required
+  type: string
+- name: path # name of the parameter; required
+  type: string
+
+steps:
+  - bash: echo "##vso[task.setvariable variable=PY]$(python -VV)"
+  - task: CacheBeta@1
+    displayName: Cache pip
+    inputs:
+      key: ${{ parameters.key }}
+      path: ${{ parameters.path }}

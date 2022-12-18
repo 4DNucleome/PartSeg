@@ -2,12 +2,11 @@ import typing
 from textwrap import indent
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.mask_create import MaskProperty
+from PartSegCore.utils import BaseModel
 
-from ..class_generator import BaseSerializableClass
-from ..mask_create import MaskProperty
 
-
-class SegmentationPipelineElement(BaseSerializableClass):
+class SegmentationPipelineElement(BaseModel):
     segmentation: ROIExtractionProfile
     mask_property: MaskProperty
 
@@ -28,7 +27,7 @@ class SegmentationPipelineElement(BaseSerializableClass):
         )
 
 
-class SegmentationPipeline(BaseSerializableClass):
+class SegmentationPipeline(BaseModel):
     name: str
     segmentation: ROIExtractionProfile
     mask_history: typing.List[SegmentationPipelineElement]

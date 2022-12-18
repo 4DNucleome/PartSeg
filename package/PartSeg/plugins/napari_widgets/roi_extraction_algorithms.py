@@ -1,14 +1,10 @@
-import inspect
-import itertools
-import os
 import typing
-from pathlib import Path
+from contextlib import suppress
 
 import numpy as np
-from magicgui.widgets import Widget, create_widget
+import pandas as pd
 from napari import Viewer
-from napari.layers import Image as NapariImage
-from napari.layers import Labels, Layer
+from napari.layers import Layer
 from napari.utils.notifications import show_info
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
@@ -26,90 +22,58 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg import plugins
-from PartSegCore import UNIT_SCALE, Units
-from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
-from PartSegCore.analysis.load_functions import LoadProfileFromJSON
-from PartSegCore.analysis.save_functions import SaveProfilesToJSON
-from PartSegCore.channel_class import Channel
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
-from PartSegCore.segmentation import ROIExtractionResult
-from PartSegImage import Image
-
-from ..._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
-from ...common_backend.base_settings import BaseSettings
-from ...common_gui.algorithms_description import (
+from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY, BaseSettings
+from PartSeg.common_backend.except_hook import show_warning
+from PartSeg.common_gui.algorithms_description import (
     AlgorithmChooseBase,
     FormWidget,
     InteractiveAlgorithmSettingsWidget,
-    QtAlgorithmProperty,
 )
-from ...common_gui.custom_load_dialog import CustomLoadDialog
-from ...common_gui.custom_save_dialog import CustomSaveDialog
-from ...common_gui.searchable_combo_box import SearchComboBox
-from ...common_gui.searchable_list_widget import SearchableListWidget
-from ...common_gui.universal_gui_part import TextShow
-from ._settings import get_settings
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.searchable_combo_box import SearchComboBox
+from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
+from PartSeg.common_gui.universal_gui_part import TextShow
+from PartSeg.plugins.napari_widgets._settings import get_settings
+from PartSeg.plugins.napari_widgets.utils import NapariFormWidgetWithMask, generate_image
+from PartSegCore import UNIT_SCALE, Units
+from PartSegCore.algorithm_describe_base import AlgorithmSelection, ROIExtractionProfile
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
+from PartSegCore.analysis.load_functions import LoadProfileFromJSON
+from PartSegCore.analysis.save_functions import SaveProfilesToJSON
+from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
+from PartSegCore.segmentation import ROIExtractionResult
 
 if typing.TYPE_CHECKING:
     from qtpy.QtGui import QHideEvent, QShowEvent  # pragma: no cover
-
-
 SELECT_TEXT = "<select>"
-IO_SAVE_DIRECTORY = "io.save_directory"
-
-
-class QtNapariAlgorithmProperty(QtAlgorithmProperty):
-    @classmethod
-    def _get_field_from_value_type(cls, ap: AlgorithmProperty) -> typing.Union[QWidget, Widget]:
-        if inspect.isclass(ap.value_type) and issubclass(ap.value_type, Channel):
-            return create_widget(annotation=NapariImage, label="Image", options={})
-        return super()._get_field_from_value_type(ap)
-
-
-class NapariFormWidget(FormWidget):
-    @staticmethod
-    def _element_list(fields) -> typing.Iterable[QtAlgorithmProperty]:
-        mask = AlgorithmProperty("mask", "Mask", None, value_type=typing.Optional[Labels])
-        return map(QtNapariAlgorithmProperty.from_algorithm_property, itertools.chain([mask], fields))
-
-    def reset_choices(self, event=None):
-        for widget in self.widgets_dict.values():
-            if hasattr(widget.get_field(), "reset_choices"):
-                widget.get_field().reset_choices(event)
 
 
 class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidget):
-    @staticmethod
-    def _form_widget(algorithm, start_values) -> FormWidget:
-        return NapariFormWidget(algorithm.get_fields(), start_values=start_values)
+    form_widget: NapariFormWidgetWithMask
+
+    def _form_widget(self, algorithm, start_values) -> FormWidget:
+        return NapariFormWidgetWithMask(
+            algorithm.__argument_class__ if algorithm.__new_style__ else algorithm.get_fields(),
+            start_values=start_values,
+            parent=self,
+        )
 
     def reset_choices(self, event=None):
         self.form_widget.reset_choices(event)
 
-    def get_order_mapping(self):
-        layers = self.get_layers()
-        layer_order_dict = {}
-        for layer in layers.values():
-            if isinstance(layer, NapariImage) and layer not in layer_order_dict:
-                layer_order_dict[layer] = len(layer_order_dict)
-        return layer_order_dict
+    def get_layer_list(self) -> typing.List[str]:
+        return [x.name for x in self.get_layers().values() if x.name != "mask"]
 
-    def get_values(self):
-        return {
-            k: v.name if isinstance(v, NapariImage) else v
-            for k, v in self.form_widget.get_values().items()
-            if not isinstance(v, Labels) and k != "mask"
-        }
-
-    def get_layers(self):
-        return {k: v for k, v in self.form_widget.get_values().items() if isinstance(v, Layer)}
+    def get_layers(self) -> typing.Dict[str, Layer]:
+        values = self.form_widget.get_layers()
+        return {k: v for k, v in values.items() if isinstance(v, Layer)}
 
 
 class NapariAlgorithmChoose(AlgorithmChooseBase):
-    @staticmethod
-    def _algorithm_widget(settings, name, val) -> InteractiveAlgorithmSettingsWidget:
-        return NapariInteractiveAlgorithmSettingsWidget(settings, name, val, [])
+    def _algorithm_widget(self, settings, val) -> InteractiveAlgorithmSettingsWidget:
+        return NapariInteractiveAlgorithmSettingsWidget(settings, val, [], parent=self)
 
     def reset_choices(self, event=None):
         for widget in self.algorithm_dict.values():
@@ -118,7 +82,7 @@ class NapariAlgorithmChoose(AlgorithmChooseBase):
 
 class ROIExtractionAlgorithms(QWidget):
     @staticmethod
-    def get_method_dict():  # pragma: no cover
+    def get_method_dict() -> AlgorithmSelection:  # pragma: no cover
         raise NotImplementedError
 
     @staticmethod
@@ -141,7 +105,7 @@ class ROIExtractionAlgorithms(QWidget):
 
         self.profile_combo_box = SearchComboBox()
         self.profile_combo_box.addItem(SELECT_TEXT)
-        self.profile_combo_box.addItems(self.profile_dict.keys())
+        self.profile_combo_box.addItems(list(self.profile_dict.keys()))
         self.save_btn = QPushButton("Save parameters")
         self.manage_btn = QPushButton("Manage parameters")
         self.target_layer_name = QLineEdit()
@@ -158,18 +122,22 @@ class ROIExtractionAlgorithms(QWidget):
         layout.addLayout(target_layer_layout)
         layout.addWidget(self.profile_combo_box)
         layout.addWidget(self.calculate_btn)
-        layout.addWidget(self.algorithm_chose)
+        layout.addWidget(self.algorithm_chose, 1)
         layout.addWidget(self.info_text)
 
         self.setLayout(layout)
 
         self.algorithm_chose.result.connect(self.set_result)
+        self.algorithm_chose.finished.connect(self._enable_calculation_btn)
         self.algorithm_chose.algorithm_changed.connect(self.algorithm_changed)
         self.save_btn.clicked.connect(self.save_action)
         self.manage_btn.clicked.connect(self.manage_action)
         self.profile_combo_box.textActivated.connect(self.select_profile)
 
         self.update_tooltips()
+
+    def _enable_calculation_btn(self):
+        self.calculate_btn.setEnabled(True)
 
     def manage_action(self):
         dialog = ProfilePreviewDialog(self.profile_dict, self.get_method_dict(), self.settings, parent=self)
@@ -188,7 +156,7 @@ class ROIExtractionAlgorithms(QWidget):
         return self.settings.get_from_profile(f"{self.prefix()}.profiles", {})
 
     def save_action(self):
-        widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
+        widget = typing.cast(NapariInteractiveAlgorithmSettingsWidget, self.algorithm_chose.current_widget())
         profiles = self.profile_dict
         while True:
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
@@ -202,7 +170,7 @@ class ROIExtractionAlgorithms(QWidget):
                 QMessageBox.No,
             ):
                 break  # pragma: no cover
-        resp = ROIExtractionProfile(text, widget.name, widget.get_values())
+        resp = ROIExtractionProfile(name=text, algorithm=widget.name, values=widget.get_values())
         profiles[text] = resp
         self.settings.dump()
         self.profile_combo_box.addItem(text)
@@ -223,49 +191,32 @@ class ROIExtractionAlgorithms(QWidget):
         self.mask_name = ""
 
     def update_mask(self):
-        widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
+        widget = typing.cast(NapariInteractiveAlgorithmSettingsWidget, self.algorithm_chose.current_widget())
         mask = widget.get_layers().get("mask", None)
-        if getattr(mask, "name", "") != self.mask_name:
+        if getattr(mask, "name", "") != self.mask_name or (widget.mask() is None and mask is not None):
             widget.set_mask(getattr(mask, "data", None))
             self.mask_name = getattr(mask, "name", "")
 
     def update_image(self):
-        widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
+        widget = typing.cast(NapariInteractiveAlgorithmSettingsWidget, self.algorithm_chose.current_widget())
         self.settings.last_executed_algorithm = widget.name
-        layers = widget.get_order_mapping()
-        axis_order = Image.axis_order.replace("C", "")
-        channel_names = []
-        for image_layer in layers:
-            if image_layer.name not in channel_names:
-                channel_names.append(image_layer.name)
-        if self.channel_names == channel_names:
+        layer_names: typing.List[str] = widget.get_layer_list()
+        if layer_names == self.channel_names:
             return
+        image = generate_image(self.viewer, *layer_names)
 
-        image_list = []
-        for image_layer in layers:
-            data_scale = image_layer.scale[-3:] / UNIT_SCALE[Units.nm.value]
-            image_list.append(
-                Image(
-                    image_layer.data,
-                    data_scale,
-                    axes_order=axis_order[-image_layer.data.ndim :],
-                    channel_names=[image_layer.name],
-                )
-            )
-        res_image = image_list[0]
-        for image in image_list[1:]:
-            res_image = res_image.merge(image, "C")
-
-        self._scale = np.array(res_image.spacing)
-        self.channel_names = res_image.channel_names
-        widget.image_changed(res_image)
+        self._scale = np.array(image.spacing)
+        self.channel_names = image.channel_names
+        widget.image_changed(image)
+        self.mask_name = ""
 
     def _run_calculation(self):
-        widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
+        widget = typing.cast(NapariInteractiveAlgorithmSettingsWidget, self.algorithm_chose.current_widget())
         self.settings.last_executed_algorithm = widget.name
         self.update_image()
         self.update_mask()
         widget.execute()
+        self.calculate_btn.setDisabled(True)
 
     def showEvent(self, event: "QShowEvent") -> None:
         self.reset_choices(None)
@@ -285,29 +236,46 @@ class ROIExtractionAlgorithms(QWidget):
             if not result.info_text:
                 show_info("There is no ROI in result. Pleas check algorithm parameters.")
             return
+        roi = result.roi
         if self.sender() is not None:
             self.info_text.setPlainText(self.sender().get_info_text())
+            with suppress(Exception):
+                roi = self.sender().current_widget().algorithm_thread.algorithm.image.fit_array_to_image(result.roi)
+
         layer_name = self.target_layer_name.text()
         self.settings.set(f"{self.prefix()}.target_layer_name", layer_name)
+        column_list = []
+        column_set = set()
+        for value in result.roi_annotation.values():
+            for column_name in value.items():
+                if column_name not in column_set:
+                    column_list.append(column_name)
+                    column_set.add(column_name)
+        properties = pd.DataFrame.from_dict(result.roi_annotation, orient="index")
+        properties["index"] = list(result.roi_annotation.keys())
         if layer_name in self.viewer.layers:
             self.viewer.layers[layer_name].data = result.roi
+            self.viewer.layers[layer_name].metadata = {"parameters": result.parameters}
+            self.viewer.layers[layer_name].properties = properties
         else:
             self.viewer.add_labels(
-                result.roi,
+                roi,
                 scale=np.array(self._scale)[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value],
                 name=layer_name,
+                metadata={"parameters": result.parameters},
+                properties=properties,
             )
 
     def refresh_profiles(self):
         self.profile_combo_box.clear()
         self.profile_combo_box.addItem(SELECT_TEXT)
-        self.profile_combo_box.addItems(self.profile_dict.keys())
+        self.profile_combo_box.addItems(list(self.profile_dict.keys()))
 
 
 class ROIAnalysisExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def get_method_dict():
-        return analysis_algorithm_dict
+        return AnalysisAlgorithmSelection
 
     @staticmethod
     def prefix() -> str:
@@ -317,7 +285,7 @@ class ROIAnalysisExtraction(ROIExtractionAlgorithms):
 class ROIMaskExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def get_method_dict():
-        return mask_algorithm_dict
+        return MaskAlgorithmSelection
 
     @staticmethod
     def prefix() -> str:
@@ -328,17 +296,17 @@ class ProfilePreviewDialog(QDialog):
     def __init__(
         self,
         profile_dict: typing.Dict[str, ROIExtractionProfile],
-        algorithm_dict: Register,
+        algorithm_selection: typing.Type[AlgorithmSelection],
         settings: BaseSettings,
         parent=None,
     ):
         super().__init__(parent=parent)
         self.profile_dict = profile_dict
-        self.algorithm_dict = algorithm_dict
+        self.algorithm_selection = algorithm_selection
         self.settings = settings
 
         self.profile_list = SearchableListWidget()
-        self.profile_list.addItems(self.profile_dict.keys())
+        self.profile_list.addItems(list(self.profile_dict.keys()))
         self.profile_list.currentTextChanged.connect(self.profile_selected)
         self.profile_view = QPlainTextEdit()
         self.profile_view.setReadOnly(True)
@@ -373,7 +341,7 @@ class ProfilePreviewDialog(QDialog):
         if self.profile_list.currentItem().text() in self.profile_dict:
             del self.profile_dict[self.profile_list.currentItem().text()]
         self.profile_list.clear()
-        self.profile_list.addItems(self.profile_dict.keys())
+        self.profile_list.addItems(list(self.profile_dict.keys()))
 
     def rename_action(self):
         if self.profile_list.currentItem() is None:
@@ -401,36 +369,26 @@ class ProfilePreviewDialog(QDialog):
         profile.name = text
         self.profile_dict[text] = profile
         self.profile_list.clear()
-        self.profile_list.addItems(self.profile_dict.keys())
+        self.profile_list.addItems(list(self.profile_dict.keys()))
 
     def export_action(self):
         exp = ExportDialog(self.profile_dict, ProfileDictViewer, parent=self)
         if not exp.exec_():
             return  # pragma: no cover
-        dial = CustomSaveDialog(SaveProfilesToJSON, history=self.settings.get_path_history(), parent=self)
-        dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
+        dial = PSaveDialog(SaveProfilesToJSON, settings=self.settings, parent=self, path=IO_SAVE_DIRECTORY)
         if dial.exec_():
             save_location, _selected_filter, save_class, values = dial.get_result()
-            save_dir = os.path.dirname(save_location)
-            self.settings.set(IO_SAVE_DIRECTORY, save_dir)
-            self.settings.add_path_history(save_dir)
             data = {x: self.profile_dict[x] for x in exp.get_export_list()}
             save_class.save(save_location, data, values)
 
     def import_action(self):
-        dial = CustomLoadDialog(LoadProfileFromJSON, history=self.settings.get_path_history(), parent=self)
-        dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
+        dial = PLoadDialog(LoadProfileFromJSON, settings=self.settings, parent=self, path=IO_SAVE_DIRECTORY)
         if not dial.exec_():
             return  # pragma: no cover
         file_list, _, load_class = dial.get_result()
-        save_dir = os.path.dirname(file_list[0])
-        self.settings.set("io.save_directory", save_dir)
-        self.settings.add_path_history(save_dir)
         profs, err = load_class.load(file_list)
         if err:
-            QMessageBox.warning(
-                self, "Import error", "error during importing, part of data were filtered."
-            )  # pragma: no cover
+            show_warning("Import error", "error during importing, part of data were filtered.")  # pragma: no cover
         imp = ImportDialog(profs, self.profile_dict, ProfileDictViewer, parent=self)
         if not imp.exec_():
             return  # pragma: no cover
@@ -438,4 +396,4 @@ class ProfilePreviewDialog(QDialog):
             self.profile_dict[final_name] = profs[original_name]
         self.settings.dump()
         self.profile_list.clear()
-        self.profile_list.addItems(self.profile_dict.keys())
+        self.profile_list.addItems(list(self.profile_dict.keys()))

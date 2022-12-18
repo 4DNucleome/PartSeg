@@ -4,19 +4,8 @@ import multiprocessing
 import os
 import platform
 import sys
+from contextlib import suppress
 from functools import partial
-
-from qtpy.QtCore import Qt
-from qtpy.QtGui import QFontDatabase, QIcon
-from qtpy.QtWidgets import QApplication
-
-from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
-from PartSeg._launcher.check_version import CheckVersionThread
-from PartSeg.common_backend import napari_get_settings
-from PartSeg.common_backend.base_argparser import CustomParser
-from PartSegCore import state_store
-from PartSegData import font_dir, icons_dir
-from PartSegImage import TiffImageReader
 
 multiprocessing.freeze_support()
 
@@ -24,16 +13,12 @@ multiprocessing.freeze_support()
 # noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
     print("start_test_import")
+    from qtpy.QtWidgets import QApplication
 
     app = QApplication([])
     import freetype
     import napari
-    from packaging.version import parse
-
-    if parse(napari.__version__) < parse("0.4.5"):
-        from napari._qt.widgets.qt_console import QtConsole
-    else:
-        from napari_console.qt_console import QtConsole
+    from napari_console.qt_console import QtConsole
 
     from PartSeg import plugins
     from PartSeg._launcher.main_window import MainWindow
@@ -47,12 +32,7 @@ def _test_imports():
     w1 = AnalysisMain("test")
     w2 = MaskMain("test")
     w3 = MainWindow("test")
-    if parse(napari.__version__) < parse("0.4.5"):
-        console = QtConsole()
-    else:
-        console = QtConsole(napari.Viewer())
-    if QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) == -1:
-        raise ValueError("Error with loading Symbola font")
+    console = QtConsole(napari.Viewer())
     del w1
     del w2
     del w3
@@ -61,17 +41,16 @@ def _test_imports():
     print("end_test_import")
 
 
-def main():
-    if len(sys.argv) > 1 and sys.argv[1] == "_test":
-        _test_imports()
-        return
+def create_parser():
+    from PartSeg.common_backend.base_argparser import CustomParser
+
     parser = CustomParser("PartSeg")
     parser.add_argument(
         "--multiprocessing-fork", dest="mf", action="store_true", help=argparse.SUPPRESS
     )  # Windows bug fix
     sp = parser.add_subparsers()
-    sp_a = sp.add_parser("roi_analysis", help="Starts GUI for segmentation analysis")
-    sp_s = sp.add_parser("mask_segmentation", help="Starts GUI for segmentation")
+    sp_a = sp.add_parser("roi_analysis", aliases=["roi"], help="Starts GUI for segmentation analysis")
+    sp_s = sp.add_parser("mask_segmentation", aliases=["mask"], help="Starts GUI for segmentation")
     parser.set_defaults(gui="launcher")
     sp_a.set_defaults(gui="roi_analysis")
     sp_s.set_defaults(gui="roi_mask")
@@ -79,9 +58,28 @@ def main():
     sp_a.add_argument("mask", nargs="?", help="mask to read on begin", default=None)
     sp_a.add_argument("--batch", action="store_true", help=argparse.SUPPRESS)
     sp_s.add_argument("image", nargs="?", help="image to read on begin", default="")
+
+    return parser
+
+
+def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "_test":
+        _test_imports()
+        return
+
+    parser = create_parser()
+
     argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
     args = parser.parse_args(argv)
-    # print(args)
+
+    from qtpy.QtCore import Qt
+    from qtpy.QtGui import QIcon
+    from qtpy.QtWidgets import QApplication
+
+    from PartSeg import state_store
+    from PartSeg._launcher.check_version import CheckVersionThread
+    from PartSeg.common_backend import napari_get_settings
+    from PartSegData import icons_dir
 
     logging.basicConfig(level=logging.INFO)
     if platform.system() == "Darwin":
@@ -93,13 +91,10 @@ def main():
     my_app.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))
 
     napari_get_settings(os.path.join(os.path.dirname(state_store.save_folder), "napari"))
-    try:
+    with suppress(ImportError):
         from napari.qt import get_app
 
         get_app()
-    except ImportError:
-        pass
-    QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
 
     wind = select_window(args)
 
@@ -118,6 +113,9 @@ def main():
 
 
 def select_window(args):
+    from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
+    from PartSegImage import TiffImageReader
+
     if args.gui == "roi_analysis" or args.mf:
         from PartSeg import plugins
 

@@ -1,5 +1,5 @@
 """
-This module contains simple, useful widgets which implementation is to short to create separated files for them
+This module contains simple, useful widgets which implementation is too short to create separated files for them
 """
 
 
@@ -7,10 +7,11 @@ import math
 import typing
 import warnings
 from enum import Enum
-from sys import platform
 
+from magicgui import register_type
+from magicgui.widgets import Combobox
 from qtpy import PYQT5
-from qtpy.QtCore import QPointF, QRect, Qt, QTimer, Signal
+from qtpy.QtCore import QPointF, QRect, Qt, QTimer
 from qtpy.QtGui import QColor, QFontMetrics, QPainter, QPaintEvent, QPalette, QPolygonF
 from qtpy.QtWidgets import (
     QAbstractSpinBox,
@@ -18,8 +19,6 @@ from qtpy.QtWidgets import (
     QDoubleSpinBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
-    QSlider,
     QSpinBox,
     QTextEdit,
     QWidget,
@@ -27,6 +26,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegImage import Channel
 
 enum_type = Enum if PYQT5 else object
 
@@ -34,13 +34,16 @@ enum_type = Enum if PYQT5 else object
 class ChannelComboBox(QComboBox):
     """Combobox for selecting channel index. Channel numeration starts from 1 for user and from 0 for developer"""
 
-    def get_value(self) -> int:
+    def get_value(self) -> Channel:
         """Return current channel. Starting from 0"""
-        return self.currentIndex()
+        return Channel(self.currentIndex())
 
-    def set_value(self, val: int):
+    def set_value(self, val: typing.Union[Channel, int]):
         """Set current channel . Starting from 0"""
-        self.setCurrentIndex(int(val))
+        if isinstance(val, Channel):
+            self.setCurrentIndex(val.value)
+            return
+        self.setCurrentIndex(val)
 
     def change_channels_num(self, num: int):
         """Change number of channels"""
@@ -54,10 +57,25 @@ class ChannelComboBox(QComboBox):
         self.setCurrentIndex(index)
 
 
+class MguiChannelComboBox(Combobox):
+    """Combobox for selecting channel index. Channel numeration starts from 1 for user and from 0 for developer"""
+
+    def change_channels_num(self, num: int):
+        """Change number of channels"""
+        self.choices = [Channel(i) for i in range(num)]  # pylint: disable=attribute-defined-outside-init
+        # TODO understand why pylint do not se choices property in magicgui
+
+    def __init__(self, **kwargs):
+        super().__init__(choices=[Channel(i) for i in range(10)], **kwargs)
+
+
+register_type(Channel, widget_type=MguiChannelComboBox)
+
+
 EnumType = typing.TypeVar("EnumType", bound=Enum)
 
 
-class EnumComboBox(QComboBox):
+class EnumComboBox(QEnumComboBox):
     """
     Combobox for choose :py:class:`enum.Enum` values
 
@@ -65,34 +83,30 @@ class EnumComboBox(QComboBox):
         For proper showing labels overload the ``__str__`` function of given :py:class:`enum.Enum`
     """
 
-    current_choose = Signal(enum_type)
-    """:py:class:`Signal` emitted when currentIndexChanged is emitted.
-    Argument is selected value"""
-
     def __init__(self, enum: type(EnumType), parent=None):
         warnings.warn(
             "EnumComboBox is deprecated, use superqt.QEnumComboBox instead", category=DeprecationWarning, stacklevel=2
         )
-        super().__init__(parent=parent)
-        self.enum = enum
-        self.addItems(list(map(str, enum.__members__.values())))
-        self.currentIndexChanged.connect(self._emit_signal)
+        super().__init__(parent=parent, enum_class=enum)
 
     def get_value(self) -> EnumType:
         """current value as Enum member"""
-        return list(self.enum.__members__.values())[self.currentIndex()]
+        return self.currentEnum()
+
+    @property
+    def current_choose(self):
+        """current value as Enum member"""
+        return self.currentEnumChanged
 
     def _emit_signal(self):
         self.current_choose.emit(self.get_value())
 
     def set_value(self, value: typing.Union[EnumType, int]):
         """Set value with Eunum or int"""
-        if not isinstance(value, (Enum, int)):
-            return
-        if isinstance(value, Enum):
-            self.setCurrentText(str(value))
-        else:
+        if isinstance(value, int):
             self.setCurrentIndex(value)
+        else:
+            self.setCurrentEnum(value)
 
 
 class Spacing(QWidget):
@@ -102,24 +116,20 @@ class Spacing(QWidget):
 
     def __init__(
         self,
-        title,
-        data_sequence,
+        title: str,
+        data_sequence: typing.Sequence[typing.Union[float, int]],
         unit: Units,
         parent=None,
-        input_type=QDoubleSpinBox,
-        decimals=2,
-        data_range=(0, 100000),
-        single_step=1,
+        input_type: QAbstractSpinBox = QDoubleSpinBox,
+        data_range: typing.Tuple[float, float] = (0, 100000),
     ):
         """
-        :type data_sequence: list[(float)]
-        :param data_sequence:
-        :type input_type: () -> (QDoubleSpinBox | QSpinBox)
-        :param parent:
-        :type decimals: int|None
+        :param title: title of the widget
+        :param data_sequence: initial values of the widget
+        :param unit: unit of the values
+        :param parent: parent widget
+        :param input_type: type of the input widget
         :type data_range: (float, float)
-        :type single_step: float
-        :type title: str
         """
         super().__init__(parent)
         layout = QHBoxLayout()
@@ -128,16 +138,13 @@ class Spacing(QWidget):
         if len(data_sequence) == 2:
             data_sequence = (1,) + tuple(data_sequence)
         for name, value in zip(["z", "y", "x"], data_sequence):
-            lab = QLabel(name + ":")
+            lab = QLabel(f"{name}:")
             layout.addWidget(lab)
-            val = input_type()
+            val = QDoubleSpinBox()
             val.setButtonSymbols(QAbstractSpinBox.NoButtons)
-            if isinstance(val, QDoubleSpinBox):
-                val.setDecimals(decimals)
             val.setRange(*data_range)
             val.setValue(value * UNIT_SCALE[unit.value])
             val.setAlignment(Qt.AlignRight)
-            val.setSingleStep(single_step)
             font = val.font()
             fm = QFontMetrics(font)
             val_len = max(fm.width(str(data_range[0])), fm.width(str(data_range[1]))) + fm.width(" " * 8)
@@ -159,45 +166,13 @@ class Spacing(QWidget):
             wid.setValue(val)
 
     def get_unit_str(self):
-        if self.has_units:
-            return self.units.currentText()
-        return ""
+        return self.units.currentText() if self.has_units else ""
 
 
 def right_label(text):
     label = QLabel(text)
     label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
     return label
-
-
-def set_position(elem, previous, dist=10):
-    pos_y = previous.pos().y()
-    if platform.system() == "Darwin" and isinstance(elem, QLineEdit):
-        pos_y += 3
-    if platform.system() == "Darwin" and isinstance(previous, QLineEdit):
-        pos_y -= 3
-    if platform.system() == "Darwin" and isinstance(previous, QSlider):
-        pos_y -= 10
-    if platform.system() == "Darwin" and isinstance(elem, QSpinBox):
-        pos_y += 7
-    if platform.system() == "Darwin" and isinstance(previous, QSpinBox):
-        pos_y -= 7
-    elem.move(previous.pos().x() + previous.size().width() + dist, pos_y)
-
-
-def _verify_bounds(bounds):
-    if bounds is None:
-        return
-    try:
-        if len(bounds) != 2:
-            raise ValueError(f"Wrong bounds format for bounds: {bounds}")
-        if not (isinstance(bounds[1], (int, float)) and isinstance(bounds[0], typing.Iterable)):
-            raise ValueError(f"Wrong bounds format for bounds: {bounds}")
-        for el in bounds[1]:
-            if len(el) != 2 or not isinstance(el[0], (int, float)) or not isinstance(el[1], (int, float)):
-                raise ValueError(f"Wrong bounds format for bounds: {bounds}")
-    except TypeError:
-        raise ValueError(f"Wrong bounds format for bounds: {bounds}")
 
 
 class CustomSpinBox(QSpinBox):
@@ -213,22 +188,10 @@ class CustomSpinBox(QSpinBox):
     """
 
     def __init__(self, *args, bounds=None, **kwargs):
-        _verify_bounds(bounds)
         super().__init__(*args, **kwargs)
-        self.valueChanged.connect(self._value_changed)
-        if bounds is None:
-            self.bounds = ((300, 1), (1000, 10), (10000, 100)), 1000
-        else:
-            self.bounds = bounds
-
-    def _value_changed(self, val: int):
-        val = abs(val)
-        for el in self.bounds[0]:
-            if val < el[0]:
-                self.setSingleStep(el[1])
-                break
-        else:
-            self.setSingleStep(self.bounds[1])
+        self.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+        if bounds is not None:
+            warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)  # pragma: no cover
 
 
 class CustomDoubleSpinBox(QDoubleSpinBox):
@@ -236,7 +199,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
     Spin box for float with dynamic single steep
 
     :param bounds: Bounds for changing single step. Default value:
-        ``((300, 1), (1000, 10), (10000, 100)), 1000``
+        ``((0.2, 0.01), (2, 0.1), (300, 1), (1000, 10), (10000, 100)), 1000``
         Format:
         ``(List[(threshold, single_step)], default_single_step)``
         the single_step is chosen by checking upper bound of threshold of
@@ -245,20 +208,9 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
 
     def __init__(self, *args, bounds=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.valueChanged.connect(self._value_changed)
-        if bounds is None:
-            self.bounds = ((0.2, 0.01), (2, 0.1), (300, 1), (1000, 10), (10000, 100)), 1000
-        else:
-            self.bounds = bounds
-
-    def _value_changed(self, val: float):
-        val = abs(val)
-        for el in self.bounds[0]:
-            if val < el[0]:
-                self.setSingleStep(el[1])
-                break
-        else:
-            self.setSingleStep(self.bounds[1])
+        self.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+        if bounds is not None:
+            warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)  # pragma: no cover
 
 
 class ProgressCircle(QWidget):
@@ -293,11 +245,11 @@ class ProgressCircle(QWidget):
         factor = self.nominator / self.denominator
         radius = size / 2
         if factor > 0.5:
-            painter.drawChord(rect, 0, 16 * 360 * 0.5)
-            painter.drawChord(rect, 16 * 180, 16 * 360 * (factor - 0.5))
+            painter.drawChord(rect, 0, int(16 * 360 * 0.5))
+            painter.drawChord(rect, 16 * 180, int(16 * 360 * (factor - 0.5)))
             zero_point = QPointF(0, radius)
         else:
-            painter.drawChord(rect, 0, 16 * 360 * factor)
+            painter.drawChord(rect, 0, int(16 * 360 * factor))
             zero_point = QPointF(size, radius)
         mid_point = QPointF(radius, radius)
         point = mid_point + QPointF(
@@ -401,7 +353,6 @@ class TextShow(QTextEdit):
         super().__init__(text, parent)
         self.lines = lines
         self.setReadOnly(True)
-        # self.setTextBackgroundColor()
         p: QPalette = self.palette()
         p.setColor(QPalette.Base, p.color(self.backgroundRole()))
         self.setPalette(p)
@@ -417,3 +368,15 @@ class TextShow(QTextEdit):
         height = metrics.height()
         s.setHeight(int(height * (self.lines + 0.5)))
         return s
+
+
+class Hline(QWidget):
+    """Horizontal line"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMinimumHeight(3)
+
+    def paintEvent(self, _):
+        painter = QPainter(self)
+        painter.drawLine(0, 0, self.width(), 0)

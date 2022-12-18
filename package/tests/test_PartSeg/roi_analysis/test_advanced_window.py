@@ -1,7 +1,8 @@
-from PartSeg._roi_analysis.advanced_window import Properties
+# pylint: disable=no-self-use
+from PartSeg._roi_analysis.advanced_window import MeasurementSettings, Properties
 from PartSeg._roi_analysis.advanced_window import QInputDialog as advanced_module_input
 from PartSeg._roi_analysis.advanced_window import QMessageBox as advanced_message_box
-from PartSegCore.analysis import analysis_algorithm_dict
+from PartSegCore.analysis import AnalysisAlgorithmSelection
 
 
 class TestProperties:
@@ -11,7 +12,7 @@ class TestProperties:
         widget.lock_spacing.setChecked(True)
         widget.update_spacing()
         value = widget.spacing[1].value()
-        with qtbot.waitSignal(widget.spacing[2].valueChanged, timeout=10 ** 4):
+        with qtbot.waitSignal(widget.spacing[2].valueChanged, timeout=10**4):
             widget.spacing[2].setValue(value - 20)
         assert widget.spacing[1].value() == value - 20
 
@@ -30,12 +31,12 @@ class TestProperties:
         assert widget.profile_list.count() == 2
         assert widget.pipeline_list.count() == 1
         assert widget.info_label.toPlainText() == ""
-        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10 ** 4):
+        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10**4):
             widget.profile_list.setCurrentRow(1)
         profile = part_settings.roi_profiles[widget.profile_list.item(1).text()]
-        assert widget.info_label.toPlainText() == profile.pretty_print(analysis_algorithm_dict)
+        assert widget.info_label.toPlainText() == profile.pretty_print(AnalysisAlgorithmSelection)
         widget.pipeline_list.setCurrentRow(0)
-        assert widget.info_label.toPlainText() == sample_pipeline.pretty_print(analysis_algorithm_dict)
+        assert widget.info_label.toPlainText() == sample_pipeline.pretty_print(AnalysisAlgorithmSelection)
         widget.hide()
 
     def test_delete_profile(self, qtbot, part_settings, border_rim_profile, lower_threshold_profile):
@@ -46,7 +47,7 @@ class TestProperties:
         qtbot.addWidget(widget)
         widget.update_profile_list()
         assert widget.profile_list.count() == 2
-        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10 ** 4):
+        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10**4):
             widget.profile_list.setCurrentRow(0)
         assert widget.delete_btn.isEnabled()
         with qtbot.waitSignal(widget.delete_btn.clicked):
@@ -93,6 +94,71 @@ class TestProperties:
         assert set(part_settings.roi_profiles.keys()) == {"rim", lower_threshold_profile.name}
         widget.hide()
 
+    def test_multiple_files_visibility(self, qtbot, part_settings):
+        widget = Properties(part_settings)
+        qtbot.addWidget(widget)
+        assert not part_settings.get("multiple_files_widget")
+        assert not widget.multiple_files_chk.isChecked()
+        with qtbot.waitSignal(widget.multiple_files_chk.stateChanged):
+            widget.multiple_files_chk.setChecked(True)
+        assert part_settings.get("multiple_files_widget")
+        part_settings.set("multiple_files_widget", False)
+        assert not widget.multiple_files_chk.isChecked()
+
+
+class TestMeasurementSettings:
+    def test_create(self, qtbot, part_settings):
+        widget = MeasurementSettings(part_settings)
+        qtbot.addWidget(widget)
+
+    def test_base_steep(self, qtbot, part_settings):
+        widget = MeasurementSettings(part_settings)
+        qtbot.addWidget(widget)
+        widget.show()
+        widget.profile_options.setCurrentRow(0)
+        assert widget.profile_options.item(0).text() == "Volume"
+        assert widget.profile_options.item(1).text() == "Diameter"
+        assert widget.profile_options_chosen.count() == 0
+        widget.choose_option()
+        assert widget.profile_options_chosen.count() == 1
+        widget.choose_option()
+        assert widget.profile_options_chosen.count() == 1
+        widget.profile_options.setCurrentRow(1)
+        assert widget.profile_options_chosen.count() == 1
+        widget.choose_option()
+        assert widget.profile_options_chosen.count() == 2
+        widget.profile_options.setCurrentRow(0)
+        widget.proportion_action()
+        assert widget.profile_options_chosen.count() == 2
+        widget.profile_options.setCurrentRow(1)
+        widget.proportion_action()
+        assert widget.profile_options_chosen.count() == 3
+        assert widget.profile_options_chosen.item(2).text() == "ROI Volume/ROI Diameter"
+
+        widget.profile_options_chosen.setCurrentRow(0)
+        assert widget.profile_options_chosen.item(0).text() == "ROI Volume"
+        widget.remove_element()
+        assert widget.profile_options_chosen.count() == 2
+        assert widget.profile_options_chosen.item(0).text() == "ROI Diameter"
+
+        assert not widget.save_butt.isEnabled()
+        with qtbot.waitSignal(widget.profile_name.textChanged):
+            widget.profile_name.setText("test")
+        assert widget.save_butt.isEnabled()
+
+        assert len(part_settings.measurement_profiles) == 2
+        with qtbot.waitSignal(widget.save_butt.clicked):
+            widget.save_butt.click()
+        assert len(part_settings.measurement_profiles) == 3
+
+        with qtbot.waitSignal(widget.profile_name.textChanged):
+            widget.profile_name.setText("")
+        assert not widget.save_butt.isEnabled()
+
+        widget.reset_action()
+        assert widget.profile_options_chosen.count() == 0
+        widget.hide()
+
 
 def check_text(expected, to_return):
     def _check(*_, text=None, **_kwargs):
@@ -103,4 +169,7 @@ def check_text(expected, to_return):
 
 
 def _empty():
-    pass
+    """
+    Empty function for monkeypatching to prevent recursive call
+    in `test_rename_profile` test
+    """

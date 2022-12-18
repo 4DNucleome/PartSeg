@@ -1,9 +1,10 @@
 import os
 import sys
 
-from . import tifffile_fixes  # noqa: F401
-from .image import Image
-from .image_reader import (
+from PartSegImage import tifffile_fixes  # noqa: F401
+from PartSegImage.channel_class import Channel
+from PartSegImage.image import Image
+from PartSegImage.image_reader import (
     CziImageReader,
     GenericImageReader,
     ObsepImageReader,
@@ -11,10 +12,11 @@ from .image_reader import (
     TiffFileException,
     TiffImageReader,
 )
-from .image_writer import BaseImageWriter, IMAGEJImageWriter, ImageWriter
+from PartSegImage.image_writer import BaseImageWriter, IMAGEJImageWriter, ImageWriter
 
 __all__ = (
     "BaseImageWriter",
+    "Channel",
     "Image",
     "TiffImageReader",
     "IMAGEJImageWriter",

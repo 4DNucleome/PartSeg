@@ -7,9 +7,10 @@ from typing import List, Type, Union
 
 import numpy as np
 import pytest
+from pydantic import BaseModel
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
 from PartSegCore.convex_fill import _convex_fill, convex_fill
@@ -18,13 +19,13 @@ from PartSegCore.mask_create import MaskProperty, calculate_mask
 from PartSegCore.roi_info import BoundInfo, ROIInfo
 from PartSegCore.segmentation import ROIExtractionAlgorithm, algorithm_base
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa
-from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
-from PartSegCore.segmentation.watershed import flow_dict
+from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
+from PartSegCore.segmentation.watershed import FlowMethodSelection
 from PartSegImage import Image
 
 
 def get_two_parts_array():
-    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
+    data = np.zeros((1, 50, 100, 100), dtype=np.uint16)
     data[0, 10:40, 10:40, 10:90] = 50
     data[0, 10:40, 50:90, 10:90] = 50
     data[0, 15:35, 15:35, 15:85] = 70
@@ -34,17 +35,17 @@ def get_two_parts_array():
 
 
 def get_two_parts():
-    return Image(get_two_parts_array(), (100, 50, 50), "")
+    return Image(get_two_parts_array(), (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_two_parts_reversed():
     data = get_two_parts_array()
     data = 100 - data
-    return Image(data, (100, 50, 50), "")
+    return Image(data, (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_multiple_part_array(part_num):
-    data = np.zeros((1, 20, 40, 40 * part_num, 1), dtype=np.uint8)
+    data = np.zeros((1, 20, 40, 40 * part_num), dtype=np.uint8)
     data[0, 4:16, 8:32, 8 : 40 * part_num - 8] = 40
     for i in range(part_num):
         data[0, 5:15, 10:30, 40 * i + 10 : 40 * i + 30] = 50
@@ -53,19 +54,19 @@ def get_multiple_part_array(part_num):
 
 
 def get_multiple_part(part_num):
-    return Image(get_multiple_part_array(part_num), (100, 50, 50), "")
+    return Image(get_multiple_part_array(part_num), (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_multiple_part_reversed(part_num):
     data = 100 - get_multiple_part_array(part_num)
-    return Image(data, (100, 50, 50), "")
+    return Image(data, (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_two_parts_side():
     data = get_two_parts_array()
     data[0, 25, 40:45, 50] = 49
     data[0, 25, 45:50, 51] = 49
-    return Image(data, (100, 50, 50), "")
+    return Image(data, (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_two_parts_side_reversed():
@@ -73,21 +74,21 @@ def get_two_parts_side_reversed():
     data[0, 25, 40:45, 50] = 49
     data[0, 25, 45:50, 51] = 49
     data = 100 - data
-    return Image(data, (100, 50, 50), "")
+    return Image(data, (100, 50, 50), "", axes_order="TZYX")
 
 
 def empty(_s: str, _i: int):
     """mock function for callback"""
 
 
-@pytest.mark.parametrize("algorithm_name", analysis_algorithm_dict.keys())
+@pytest.mark.parametrize("algorithm_name", AnalysisAlgorithmSelection.__register__.keys())
 def test_base_parameters(algorithm_name):
-    algorithm_class = analysis_algorithm_dict[algorithm_name]
+    algorithm_class = AnalysisAlgorithmSelection[algorithm_name]
     assert algorithm_class.get_name() == algorithm_name
     algorithm_class: Type[ROIExtractionAlgorithm]
     obj = algorithm_class()
     values = algorithm_class.get_default_values()
-    obj.set_parameters(**values)
+    obj.set_parameters(values)
     parameters = obj.get_segmentation_profile()
     assert parameters.algorithm == algorithm_name
     assert parameters.values == values
@@ -100,8 +101,8 @@ class BaseThreshold:
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == self.get_algorithm_class().get_name()
 
-    def get_parameters(self) -> dict:
-        if hasattr(self, "parameters") and isinstance(self.parameters, dict):
+    def get_parameters(self) -> BaseModel:
+        if hasattr(self, "parameters") and isinstance(self.parameters, (dict, BaseModel)):
             return deepcopy(self.parameters)
         raise NotImplementedError
 
@@ -128,12 +129,12 @@ class BaseOneThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
         alg: ROIExtractionAlgorithm = self.get_algorithm_class()()
         parameters = self.get_parameters()
         alg.set_image(image)
-        alg.set_parameters(**parameters)
+        alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000, 72000], operator.eq, parameters)
 
-        parameters["threshold"]["values"]["threshold"] += self.get_shift()
-        alg.set_parameters(**parameters)
+        parameters.threshold.values.threshold += self.get_shift()
+        alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [192000], operator.eq, parameters)
 
@@ -141,26 +142,26 @@ class BaseOneThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
         image = self.get_side_object()
         alg: ROIExtractionAlgorithm = self.get_algorithm_class()()
         parameters = self.get_parameters()
-        parameters["side_connection"] = True
+        parameters.side_connection = True
         alg.set_image(image)
-        alg.set_parameters(**parameters)
+        alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000 + 5, 72000 + 5], operator.eq, parameters)
 
-        parameters["side_connection"] = False
-        alg.set_parameters(**parameters)
+        parameters.side_connection = False
+        alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000 + 5 + 72000 + 5], operator.eq, parameters)
 
 
 class TestLowerThreshold(BaseOneThreshold):
-    parameters = {
-        "channel": 0,
-        "minimum_size": 30000,
-        "threshold": {"name": "Manual", "values": {"threshold": 45}},
-        "noise_filtering": {"name": "None", "values": {}},
-        "side_connection": False,
-    }
+    parameters = sa.LowerThresholdAlgorithm.__argument_class__(
+        channel=0,
+        minimum_size=30000,
+        threshold={"name": "Manual", "values": {"threshold": 45}},
+        noise_filtering={"name": "None", "values": {}},
+        side_connection=False,
+    )
     shift = -6
 
     @staticmethod
@@ -176,13 +177,13 @@ class TestLowerThreshold(BaseOneThreshold):
 
 
 class TestUpperThreshold(BaseOneThreshold):
-    parameters = {
-        "channel": 0,
-        "minimum_size": 30000,
-        "threshold": {"name": "Manual", "values": {"threshold": 55}},
-        "noise_filtering": {"name": "None", "values": {}},
-        "side_connection": False,
-    }
+    parameters = sa.UpperThresholdAlgorithm.__argument_class__(
+        channel=0,
+        minimum_size=30000,
+        threshold={"name": "Manual", "values": {"threshold": 55}},
+        noise_filtering={"name": "None", "values": {}},
+        side_connection=False,
+    )
     shift = 6
 
     @staticmethod
@@ -201,15 +202,30 @@ class TestRangeThresholdAlgorithm:
     def test_simple(self):
         image = get_two_parts()
         alg = sa.RangeThresholdAlgorithm()
-        parameters = {
-            "lower_threshold": 45,
-            "upper_threshold": 60,
-            "channel": 0,
-            "minimum_size": 8000,
-            "noise_filtering": {"name": "None", "values": {}},
-            "side_connection": False,
-        }
-        alg.set_parameters(**parameters)
+        parameters = sa.RangeThresholdAlgorithm.__argument_class__(
+            threshold={
+                "name": "Base/Core",
+                "values": {
+                    "base_threshold": {
+                        "name": "Manual",
+                        "values": {
+                            "threshold": 45,
+                        },
+                    },
+                    "core_threshold": {
+                        "name": "Manual",
+                        "values": {
+                            "threshold": 60,
+                        },
+                    },
+                },
+            },
+            channel=0,
+            minimum_size=8000,
+            noise_filtering={"name": "None", "values": {}},
+            side_connection=False,
+        )
+        alg.set_parameters(parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
         assert np.max(result.roi) == 2
@@ -219,8 +235,8 @@ class TestRangeThresholdAlgorithm:
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
 
-        parameters["lower_threshold"] -= 6
-        alg.set_parameters(**parameters)
+        parameters.threshold.values.base_threshold.values.threshold -= 6
+        alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         assert np.max(result.roi) == 1
         assert np.bincount(result.roi.flat)[1] == 30 * 80 * 80 - 20 * 50 * 70
@@ -230,15 +246,30 @@ class TestRangeThresholdAlgorithm:
     def test_side_connection(self):
         image = get_two_parts_side()
         alg = sa.RangeThresholdAlgorithm()
-        parameters = {
-            "lower_threshold": 45,
-            "upper_threshold": 60,
-            "channel": 0,
-            "minimum_size": 8000,
-            "noise_filtering": {"name": "None", "values": {}},
-            "side_connection": True,
-        }
-        alg.set_parameters(**parameters)
+        parameters = sa.RangeThresholdAlgorithm.__argument_class__(
+            threshold={
+                "name": "Base/Core",
+                "values": {
+                    "base_threshold": {
+                        "name": "Manual",
+                        "values": {
+                            "threshold": 45,
+                        },
+                    },
+                    "core_threshold": {
+                        "name": "Manual",
+                        "values": {
+                            "threshold": 60,
+                        },
+                    },
+                },
+            },
+            channel=0,
+            minimum_size=8000,
+            noise_filtering={"name": "None", "values": {}},
+            side_connection=True,
+        )
+        alg.set_parameters(parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
         assert np.max(result.roi) == 2
@@ -249,8 +280,8 @@ class TestRangeThresholdAlgorithm:
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
 
-        parameters["side_connection"] = False
-        alg.set_parameters(**parameters)
+        parameters.side_connection = False
+        alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         assert np.max(result.roi) == 1
         assert np.bincount(result.roi.flat)[1] == 30 * 70 * 80 - 20 * 50 * 70 + 10
@@ -259,7 +290,7 @@ class TestRangeThresholdAlgorithm:
 
 
 class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
-    @pytest.mark.parametrize("sprawl_algorithm_name", flow_dict.keys())
+    @pytest.mark.parametrize("sprawl_algorithm_name", FlowMethodSelection.__register__.keys())
     @pytest.mark.parametrize("compare_op", [operator.eq, operator.ge])
     @pytest.mark.parametrize("components", [2] + list(range(3, 15, 2)))
     def test_multiple(self, sprawl_algorithm_name, compare_op, components):
@@ -267,24 +298,26 @@ class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
         parameters = self.get_parameters()
         image = self.get_multiple_part(components)
         alg.set_image(image)
-        sprawl_algorithm = flow_dict[sprawl_algorithm_name]
-        parameters["sprawl_type"] = {"name": sprawl_algorithm_name, "values": sprawl_algorithm.get_default_values()}
+        sprawl_algorithm = FlowMethodSelection[sprawl_algorithm_name]
+        parameters.flow_type = FlowMethodSelection(
+            name=sprawl_algorithm_name, values=sprawl_algorithm.get_default_values()
+        )
         if compare_op(1, 0):
-            parameters["threshold"]["values"]["base_threshold"]["values"]["threshold"] += self.get_shift()
-        alg.set_parameters(**parameters)
+            parameters.threshold.values.base_threshold.values.threshold += self.get_shift()
+        alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [4000] * components, compare_op, parameters)
 
-    @pytest.mark.parametrize("algorithm_name", flow_dict.keys())
+    @pytest.mark.parametrize("algorithm_name", FlowMethodSelection.__register__.keys())
     def test_side_connection(self, algorithm_name):
         image = self.get_side_object()
         alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
-        parameters["side_connection"] = True
+        parameters.side_connection = True
         alg.set_image(image)
-        val = flow_dict[algorithm_name]
-        parameters["sprawl_type"] = {"name": algorithm_name, "values": val.get_default_values()}
-        alg.set_parameters(**parameters)
+        val = FlowMethodSelection[algorithm_name]
+        parameters.flow_type = FlowMethodSelection(name=algorithm_name, values=val.get_default_values())
+        alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000 + 5, 72000 + 5], operator.eq, parameters)
 
@@ -293,20 +326,22 @@ class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
 
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
-    parameters = {
-        "channel": 0,
-        "minimum_size": 30,
-        "threshold": {
-            "name": "Base/Core",
-            "values": {
-                "core_threshold": {"name": "Manual", "values": {"threshold": 55}},
-                "base_threshold": {"name": "Manual", "values": {"threshold": 45}},
+    parameters = sa.LowerThresholdFlowAlgorithm.__argument_class__(
+        **{
+            "channel": 0,
+            "minimum_size": 30,
+            "threshold": {
+                "name": "Base/Core",
+                "values": {
+                    "core_threshold": {"name": "Manual", "values": {"threshold": 55}},
+                    "base_threshold": {"name": "Manual", "values": {"threshold": 45}},
+                },
             },
-        },
-        "noise_filtering": {"name": "None", "values": {}},
-        "side_connection": False,
-        "sprawl_type": {"name": "Euclidean sprawl", "values": {}},
-    }
+            "noise_filtering": {"name": "None", "values": {}},
+            "side_connection": False,
+            "flow_type": {"name": "Euclidean", "values": {}},
+        }
+    )
     shift = -6
     get_base_object = staticmethod(get_two_parts)
     get_side_object = staticmethod(get_two_parts_side)
@@ -317,20 +352,22 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
 
 
 class TestUpperThresholdFlow(BaseFlowThreshold):
-    parameters = {
-        "channel": 0,
-        "minimum_size": 30,
-        "threshold": {
-            "name": "Base/Core",
-            "values": {
-                "core_threshold": {"name": "Manual", "values": {"threshold": 45}},
-                "base_threshold": {"name": "Manual", "values": {"threshold": 55}},
+    parameters = sa.UpperThresholdFlowAlgorithm.__argument_class__(
+        **{
+            "channel": 0,
+            "minimum_size": 30,
+            "threshold": {
+                "name": "Base/Core",
+                "values": {
+                    "core_threshold": {"name": "Manual", "values": {"threshold": 45}},
+                    "base_threshold": {"name": "Manual", "values": {"threshold": 55}},
+                },
             },
-        },
-        "noise_filtering": {"name": "None", "values": {}},
-        "side_connection": False,
-        "sprawl_type": {"name": "Euclidean sprawl", "values": {}},
-    }
+            "noise_filtering": {"name": "None", "values": {}},
+            "side_connection": False,
+            "flow_type": {"name": "Euclidean", "values": {}},
+        }
+    )
     shift = 6
     get_base_object = staticmethod(get_two_parts_reversed)
     get_side_object = staticmethod(get_two_parts_side_reversed)
@@ -623,7 +660,7 @@ class TestPipeline:
         data = np.zeros((1, 50, 100, 100, 2), dtype=np.uint16)
         data[0, 10:40, 20:80, 20:60, 0] = 10
         data[0, 10:40, 20:80, 40:80, 1] = 10
-        return Image(data, (100, 50, 50), "")
+        return Image(data, (100, 50, 50), "", axes_order="TZYXC")
 
     @pytest.mark.parametrize("use_mask", [True, False])
     def test_pipeline_simple(self, use_mask):
@@ -663,9 +700,9 @@ class TestPipeline:
 
 
 class TestNoiseFiltering:
-    @pytest.mark.parametrize("algorithm_name", noise_filtering_dict.keys())
+    @pytest.mark.parametrize("algorithm_name", NoiseFilterSelection.__register__.keys())
     def test_base(self, algorithm_name):
-        noise_remove_algorithm = noise_filtering_dict[algorithm_name]
+        noise_remove_algorithm = NoiseFilterSelection[algorithm_name]
         data = get_two_parts_array()[0, ..., 0]
         noise_remove_algorithm.noise_filter(data, (1, 1, 1), noise_remove_algorithm.get_default_values())
 
@@ -763,7 +800,7 @@ class TestSegmentationInfo:
         assert np.all(si.bound_info[1].lower == 0)
         assert np.all(si.bound_info[1].upper == 9)
         assert len(si.sizes) == 2
-        assert np.all(si.sizes == [0, 10 ** dims])
+        assert np.all(si.sizes == [0, 10**dims])
 
     @pytest.mark.parametrize("comp_num", [2, 4, 8])
     def test_multiple_components(self, comp_num):
@@ -814,3 +851,14 @@ def test_dict_repr(monkeypatch):
     count = [0]
     algorithm_base.dict_repr({1: np.zeros(5), 2: {1: np.zeros(5)}})
     assert count[0] == 2
+
+
+def test_to_double_threshold():
+    data = {
+        "threshold": sa.TwoThreshold(
+            lower_threshold=50,
+            upper_threshold=100,
+        )
+    }
+    data = sa._to_double_threshold(data)
+    assert isinstance(data["threshold"], sa.DoubleThresholdSelection)

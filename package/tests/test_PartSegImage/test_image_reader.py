@@ -1,7 +1,9 @@
+# pylint: disable=R0201
 import math
 import os.path
 import shutil
 from glob import glob
+from io import BytesIO
 
 import numpy as np
 import pytest
@@ -15,11 +17,32 @@ class TestImageClass:
     def test_tiff_image_read(self):
         image = TiffImageReader.read_image(PartSegData.segmentation_mask_default_image)
         assert isinstance(image, Image)
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
+
+    def test_tiff_image_read_buffer(self):
+        with open(PartSegData.segmentation_mask_default_image, "rb") as f_p:
+            buffer = BytesIO(f_p.read())
+        image = TiffImageReader.read_image(buffer)
+        assert isinstance(image, Image)
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
 
     def test_czi_file_read(self, data_test_dir):
         image = CziImageReader.read_image(os.path.join(data_test_dir, "test_czi.czi"))
         assert image.channels == 4
         assert image.layers == 1
+
+        assert image.file_path == os.path.join(data_test_dir, "test_czi.czi")
+
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
+
+    def test_czi_file_read_buffer(self, data_test_dir):
+        with open(os.path.join(data_test_dir, "test_czi.czi"), "rb") as f_p:
+            buffer = BytesIO(f_p.read())
+
+        image = CziImageReader.read_image(buffer)
+        assert image.channels == 4
+        assert image.layers == 1
+        assert image.file_path == ""
 
         assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
 
@@ -50,7 +73,7 @@ class TestImageClass:
     def test_lsm_read(self, data_test_dir):
         image1 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm.lsm"))
         image2 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm.tif"))
-        data = np.load(os.path.join(data_test_dir, "test_lsm.npy"))
+        data = np.moveaxis(np.load(os.path.join(data_test_dir, "test_lsm.npy")), -1, 0)
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())
@@ -58,7 +81,7 @@ class TestImageClass:
     def test_ome_read(self, data_test_dir):  # error in tifffile
         image1 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm2.tif"))
         image2 = TiffImageReader.read_image(os.path.join(data_test_dir, "test_lsm.tif"))
-        data = np.load(os.path.join(data_test_dir, "test_lsm.npy"))
+        data = np.moveaxis(np.load(os.path.join(data_test_dir, "test_lsm.npy")), -1, 0)
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())
@@ -77,19 +100,19 @@ class TestImageClass:
     def test_decode_int(self):
         assert TiffImageReader.decode_int(0) == [0, 0, 0, 0]
         assert TiffImageReader.decode_int(15) == [0, 0, 0, 15]
-        assert TiffImageReader.decode_int(3 + 7 * 256 + 11 * 256 ** 2 + 13 * 256 ** 3) == [13, 11, 7, 3]
+        assert TiffImageReader.decode_int(3 + 7 * 256 + 11 * 256**2 + 13 * 256**3) == [13, 11, 7, 3]
 
     def test_set_spacing(self):
         reader = TiffImageReader()
         reader.set_default_spacing((11, 12, 13))
         assert reader.default_spacing == (11, 12, 13)
         reader.set_default_spacing((5, 7))
-        assert reader.default_spacing == (10 ** -6, 5, 7)
+        assert reader.default_spacing == (10**-6, 5, 7)
 
     def test_obsep_read(self, data_test_dir):
         image = ObsepImageReader.read_image(os.path.join(data_test_dir, "obsep", "test.obsep"))
         assert image.channels == 2
-        assert np.allclose(image.spacing, (500 * 10 ** -9, 64 * 10 ** -9, 64 * 10 ** -9))
+        assert np.allclose(image.spacing, (500 * 10**-9, 64 * 10**-9, 64 * 10**-9))
         assert image.channel_names == ["channel 1", "channel 2"]
 
     def test_obsep_deconv_read(self, data_test_dir, tmp_path):
@@ -97,7 +120,7 @@ class TestImageClass:
             shutil.copy(os.path.join(data_test_dir, "obsep", el), tmp_path)
         image = GenericImageReader.read_image(tmp_path / "test.obsep")
         assert image.channels == 2
-        assert np.allclose(image.spacing, (500 * 10 ** -9, 64 * 10 ** -9, 64 * 10 ** -9))
+        assert np.allclose(image.spacing, (500 * 10**-9, 64 * 10**-9, 64 * 10**-9))
         assert image.channel_names == ["channel 1", "channel 2"]
         shutil.copy(tmp_path / "Cy5.TIF", tmp_path / "Cy5_decon2.TIF")
         image = GenericImageReader.read_image(tmp_path / "test.obsep")
@@ -121,8 +144,7 @@ def test_change_class(data_test_dir):
     assert img.plane_shape == (1024, 1024)
     assert img.layers == 6
     assert img.channels == 3
-    assert img.channel_pos == 1
-    assert img.stack_pos == 4
+    assert img.stack_pos == 3
 
 
 def test_xml2dict():

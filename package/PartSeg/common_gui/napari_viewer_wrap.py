@@ -1,3 +1,4 @@
+from contextlib import suppress
 from typing import List, Optional
 
 from napari import Viewer as NViewer
@@ -49,15 +50,15 @@ class SynchronizeWidget(QWidget):
         channel_num = self.settings.image.channels
         if not self.partseg_viewer_name:
             return [None for _ in range(channel_num)]
-        colormaps_name = [self.settings.get_channel_info(self.partseg_viewer_name, i) for i in range(channel_num)]
+        colormaps_name = [
+            self.settings.get_channel_colormap_name(self.partseg_viewer_name, i) for i in range(channel_num)
+        ]
         return [self.settings.colormap_dict[name][0] for name in colormaps_name]
 
     def _clean_layers(self, layers_list):
         for name in layers_list:
-            try:
+            with suppress(KeyError, ValueError):
                 del self.viewer.layers[name]
-            except (KeyError, ValueError):  # pragma: no cover pylint: disable=W0703
-                pass
 
     def _substitute_image_layer(self, name, data, scale, cmap, name_list):
         if name in name_list and name in self.viewer.layers:
@@ -77,10 +78,8 @@ class SynchronizeWidget(QWidget):
             blending="additive",
             colormap=cmap,
         )
-        try:
+        with suppress(KeyError):
             name_list.remove(layer.name)
-        except KeyError:  # pragma: no cover
-            pass
         return layer
 
     def _substitute_labels_layer(self, name, data, scale, name_list):
@@ -99,10 +98,8 @@ class SynchronizeWidget(QWidget):
             name=name,
             scale=scale,
         )
-        try:
+        with suppress(KeyError):
             name_list.remove(layer.name)
-        except KeyError:  # pragma: no cover
-            pass
         return layer
 
     def _substitute_points_layer(self, name, data, scale, name_list):
@@ -120,10 +117,8 @@ class SynchronizeWidget(QWidget):
             name=name,
             scale=scale,
         )
-        try:
+        with suppress(KeyError):
             name_list.remove(layer.name)
-        except KeyError:  # pragma: no cover
-            pass
         return layer
 
     def _sync_image(self):

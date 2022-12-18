@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import typing
+from contextlib import suppress
 from io import BytesIO
 from pathlib import Path
 from pickle import PicklingError  # nosec
@@ -30,7 +31,15 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from PartSegCore import state_store
+from PartSeg import parsed_version, state_store
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg._roi_analysis.prepare_plan_widget import CalculatePlaner
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.error_report import ExceptionList, ExceptionListItem
+from PartSeg.common_gui.searchable_combo_box import SearchComboBox
+from PartSeg.common_gui.select_multiple_files import AddFiles
+from PartSeg.common_gui.universal_gui_part import Spacing, right_label
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
 from PartSegCore.analysis.calculation_plan import Calculation, MaskFile
@@ -38,15 +47,6 @@ from PartSegCore.io_utils import SaveBase
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.universal_const import Units
 from PartSegData import icons_dir
-
-from .. import parsed_version
-from ..common_gui.custom_save_dialog import CustomSaveDialog
-from ..common_gui.error_report import ExceptionList, ExceptionListItem
-from ..common_gui.searchable_combo_box import SearchComboBox
-from ..common_gui.select_multiple_files import AddFiles
-from ..common_gui.universal_gui_part import Spacing, right_label
-from .partseg_settings import PartSettings
-from .prepare_plan_widget import CalculatePlaner
 
 __author__ = "Grzegorz Bokota"
 
@@ -65,7 +65,7 @@ class SaveExcel(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        pass
+        """empty function to satisfy interface"""
 
     @classmethod
     def get_name(cls) -> str:
@@ -147,12 +147,14 @@ class ProgressView(QWidget):
 
     def task_cancel_remove(self):
         index = self.task_view.selectionModel().currentIndex()
-        task: CalculationProcessItem = self.task_que.item(index.row(), index.column())
+        task: CalculationProcessItem = typing.cast(
+            CalculationProcessItem, self.task_que.item(index.row(), index.column())
+        )
         if task.is_finished():
             self.calculation_manager.remove_calculation(task.calculation)
-            self.task_que.takeRow(index.row())
         else:
             self.calculation_manager.cancel_calculation(task.calculation)
+        self.task_que.takeRow(index.row())
         print(task)
 
     def new_task(self):
@@ -231,7 +233,7 @@ class FileChoose(QWidget):
         self.run_button = QPushButton("Process")
         self.run_button.setDisabled(True)
         self.calculation_choose = SearchComboBox()
-        self.calculation_choose.addItem("<no workflow>")
+        self.calculation_choose.addItem("<no calculation>")
         self.calculation_choose.currentIndexChanged[str].connect(self.change_situation)
         self.result_file = QLineEdit(self)
         self.result_file.setAlignment(Qt.AlignRight)
@@ -241,6 +243,7 @@ class FileChoose(QWidget):
 
         self.run_button.clicked.connect(self.prepare_calculation)
         self.files_widget.file_list_changed.connect(self.change_situation)
+        self.settings.batch_plans_changed.connect(self._refresh_batch_list)
 
         layout = QVBoxLayout()
         layout.addWidget(self.files_widget)
@@ -255,6 +258,8 @@ class FileChoose(QWidget):
         layout.addWidget(self.progress)
         self.setLayout(layout)
 
+        self._refresh_batch_list()
+
     def prepare_calculation(self):
         plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
         dial = CalculationPrepare(
@@ -264,15 +269,15 @@ class FileChoose(QWidget):
             try:
                 self.batch_manager.add_calculation(dial.get_data())
                 self.progress.new_task()
-            except PicklingError as e:
+            except PicklingError as e:  # pragma: no cover
                 if state_store.develop:
-                    QMessageBox.warning(self, "Pickle error", "Please restart PartSeg.")
+                    QMessageBox.critical(self, "Pickle error", "Please restart PartSeg.")
                 else:
                     raise e
 
-    def showEvent(self, _):
+    def _refresh_batch_list(self):
         current_calc = str(self.calculation_choose.currentText())
-        new_list = ["<no calculation>"] + list(sorted(self.settings.batch_plans.keys()))
+        new_list = ["<no calculation>"] + sorted(self.settings.batch_plans.keys())
         try:
             index = new_list.index(current_calc)
         except ValueError:
@@ -283,14 +288,14 @@ class FileChoose(QWidget):
 
     def change_situation(self):
         if (
-            str(self.calculation_choose.currentText()) != "<no calculation>"
-            and len(self.files_widget.files_to_proceed) != 0
-            and str(self.result_file.text()) != ""
+            str(self.calculation_choose.currentText()) == "<no calculation>"
+            or len(self.files_widget.files_to_proceed) == 0
+            or not str(self.result_file.text())
         ):
-            self.run_button.setEnabled(True)
-        else:
             self.run_button.setDisabled(True)
 
+        else:
+            self.run_button.setEnabled(True)
         if self.calculation_choose.currentText() in self.settings.batch_plans:
             plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
             self.files_widget.mask_list = plan.get_list_file_mask()
@@ -298,13 +303,9 @@ class FileChoose(QWidget):
             self.files_widget.mask_list = []
 
     def chose_result_file(self):
-        dial = CustomSaveDialog(SaveExcel, system_widget=False, history=self.settings.get_path_history())
-        dial.setDirectory(
-            self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home())))
-        )
+        dial = PSaveDialog(SaveExcel, system_widget=False, settings=self.settings, path=IO_SAVE_DIRECTORY)
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            self.settings.add_path_history(os.path.dirname(file_path))
             if os.path.splitext(file_path)[1] == "":
                 file_path += ".xlsx"
             self.result_file.setText(file_path)
@@ -326,11 +327,9 @@ class BatchWindow(QTabWidget):
         self.addTab(self.calculate_planer, "Prepare workflow")
         self.addTab(self.file_choose, "Input files")
         self.working = False
-        try:
+        with suppress(KeyError):
             geometry = self.settings.get_from_profile("batch_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-        except KeyError:
-            pass
 
     def focusInEvent(self, event):
         self.calculate_planer.showEvent(event)
@@ -553,8 +552,7 @@ class CalculationPrepare(QDialog):
             for mask_num, mask_mapper in enumerate(self.mask_mapper_list):
                 if mask_mapper.is_ready():
                     mask_path = mask_mapper.get_mask_path(file_path)
-                    exist = os.path.exists(mask_path)
-                    if exist:
+                    if os.path.exists(mask_path):
                         sub_widget = QTreeWidgetItem(widget)
                         sub_widget.setText(0, f"Mask {mask_mapper.name} ok")
                         sub_widget.setIcon(0, ok_icon)
@@ -563,10 +561,9 @@ class CalculationPrepare(QDialog):
                         sub_widget = QTreeWidgetItem(widget)
                         sub_widget.setText(
                             0,
-                            "Mask {} do not exists (path: {})".format(
-                                mask_mapper.name, os.path.relpath(mask_path, all_prefix)
-                            ),
+                            f"Mask {mask_mapper.name} do not exists (path: {os.path.relpath(mask_path, all_prefix)})",
                         )
+
                         sub_widget.setIcon(0, bad_icon)
                         self.state_list[file_num, mask_num] = 2
                 else:

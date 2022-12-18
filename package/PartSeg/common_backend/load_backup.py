@@ -5,33 +5,32 @@ from glob import glob
 import packaging.version
 from qtpy.QtWidgets import QMessageBox, QWidget
 
-from PartSegCore import state_store
-
-from .. import __version__
-from . import napari_get_settings
+from PartSeg import parsed_version, state_store
+from PartSeg._launcher.check_version import IGNORE_FILE
+from PartSeg.common_backend import napari_get_settings
 
 
 def import_config():
+    """
+    Check if settings folder for current version already exists.
+
+    Otherwise, when settings for previous PartSeg version exists,
+    ask user if he would to import settings from the newest one.
+    """
     if os.path.exists(state_store.save_folder):
         return
-    version = packaging.version.parse(packaging.version.parse(__version__).base_version)
+    version = packaging.version.parse(parsed_version.base_version)
     base_folder = os.path.dirname(state_store.save_folder)
     possible_folders = glob(os.path.join(base_folder, "*"))
-    versions = list(
-        sorted(
-            (
-                x
-                for x in [packaging.version.parse(os.path.basename(y)) for y in possible_folders]
-                if isinstance(x, packaging.version.Version)
-            ),
-            reverse=True,
-        )
+    versions = sorted(
+        (
+            x
+            for x in [packaging.version.parse(os.path.basename(y)) for y in possible_folders]
+            if isinstance(x, packaging.version.Version)
+        ),
+        reverse=True,
     )
-    before_version = None
-    for x in versions:
-        if x < version:
-            before_version = x
-            break
+    before_version = next((x for x in versions if x < version), None)
     if before_version is not None:
         before_name = str(before_version)
         widget = QWidget()
@@ -45,8 +44,10 @@ def import_config():
         )
         if resp == QMessageBox.Yes:
             shutil.copytree(os.path.join(base_folder, before_name), state_store.save_folder)
+            if os.path.exists(os.path.join(state_store.save_folder, IGNORE_FILE)):
+                os.remove(os.path.join(state_store.save_folder, IGNORE_FILE))
             napari_settings = napari_get_settings(state_store.save_folder)
             if hasattr(napari_settings, "load") and napari_settings.load is not None:
                 napari_settings.load()
-            else:
+            elif hasattr(napari_settings, "_load") and napari_settings._load is not None:  # pylint: disable=W0212
                 napari_settings._load()  # pylint: disable=W0212

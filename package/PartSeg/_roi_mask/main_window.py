@@ -1,6 +1,6 @@
 import os
+from contextlib import suppress
 from functools import partial
-from pathlib import Path
 from typing import Type
 
 import numpy as np
@@ -10,7 +10,6 @@ from qtpy.QtWidgets import (
     QAbstractSpinBox,
     QCheckBox,
     QDoubleSpinBox,
-    QFileDialog,
     QFormLayout,
     QGridLayout,
     QHBoxLayout,
@@ -28,37 +27,37 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 import PartSegData
-from PartSegCore import UNIT_SCALE, Units, state_store
+from PartSeg import state_store
+from PartSeg._roi_mask.batch_proceed import BatchProceed, BatchTask
+from PartSeg._roi_mask.image_view import StackImageView
+from PartSeg._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
+from PartSeg._roi_mask.simple_measurements import SimpleMeasurements
+from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY, ROI_NOT_FIT
+from PartSeg.common_gui.advanced_tabs import AdvancedWindow
+from PartSeg.common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
+from PartSeg.common_gui.channel_control import ChannelProperty
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
+from PartSeg.common_gui.exception_hooks import load_data_exception_hook
+from PartSeg.common_gui.flow_layout import FlowLayout
+from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainMenu, BaseMainWindow
+from PartSeg.common_gui.mask_widget import MaskDialogBase
+from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
+from PartSeg.common_gui.napari_image_view import LabelEnum
+from PartSeg.common_gui.select_multiple_files import AddFiles
+from PartSeg.common_gui.stack_image_view import ColorBar
+from PartSeg.common_gui.universal_gui_part import right_label
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
+from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.mask import io_functions
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import LoadROI, LoadROIFromTIFF, LoadROIParameters, MaskProjectTuple, SaveROI
 from PartSegCore.project_info import HistoryElement, HistoryProblem, calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image, TiffImageReader
-
-from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
-from ..common_backend.base_settings import ROI_NOT_FIT
-from ..common_gui.advanced_tabs import AdvancedWindow
-from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_load_dialog import CustomLoadDialog
-from ..common_gui.custom_save_dialog import CustomSaveDialog
-from ..common_gui.exception_hooks import load_data_exception_hook
-from ..common_gui.flow_layout import FlowLayout
-from ..common_gui.main_window import BaseMainMenu, BaseMainWindow
-from ..common_gui.mask_widget import MaskDialogBase
-from ..common_gui.multiple_file_widget import MultipleFileWidget
-from ..common_gui.napari_image_view import LabelEnum
-from ..common_gui.select_multiple_files import AddFiles
-from ..common_gui.stack_image_view import ColorBar
-from ..common_gui.universal_gui_part import right_label
-from ..common_gui.waiting_dialog import ExecuteFunctionDialog
-from .batch_proceed import BatchProceed, BatchTask
-from .image_view import StackImageView
-from .simple_measurements import SimpleMeasurements
-from .stack_settings import StackSettings, get_mask
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 
@@ -138,7 +137,6 @@ class MainMenu(BaseMainMenu):
         self.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        # layout.setSpacing(0)
         layout.addWidget(self.load_image_btn)
         layout.addWidget(self.load_segmentation_btn)
         layout.addWidget(self.save_catted_parts)
@@ -169,24 +167,24 @@ class MainMenu(BaseMainMenu):
         self.advanced_window.show()
 
     def reload(self):
-        self.parent().parent().options_panel.algorithm_options.algorithm_choose_widget.reload(mask_algorithm_dict)
+        self.parent().parent().options_panel.algorithm_options.algorithm_choose_widget.reload(MaskAlgorithmSelection)
 
     def load_image(self):
         # TODO move segmentation with image load to load_segmentaion
-        dial = CustomLoadDialog(io_functions.load_dict)
-        dial.setDirectory(self.settings.get("io.load_image_directory", str(Path.home())))
-        default_file_path = self.settings.get("io.load_image_file", "")
+        dial = PLoadDialog(
+            io_functions.load_dict,
+            settings=self.settings,
+            path=OPEN_DIRECTORY,
+            filter_path=OPEN_FILE_FILTER,
+        )
+        default_file_path = self.settings.get(OPEN_FILE, "")
         if os.path.isfile(default_file_path):
             dial.selectFile(default_file_path)
-        dial.selectNameFilter(self.settings.get("io.load_data_filter", io_functions.load_dict.get_default()))
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         load_property = dial.get_result()
-        self.settings.set("io.load_image_directory", os.path.dirname(load_property.load_location[0]))
-        self.settings.set("io.load_image_file", load_property.load_location[0])
-        self.settings.set("io.load_data_filter", load_property.selected_filter)
-        self.settings.add_load_files_history(load_property.load_location, load_property.load_class.get_name())
+        self.settings.set(OPEN_FILE, load_property.load_location[0])
+        self.settings.add_last_files(load_property.load_location, load_property.load_class.get_name())
 
         execute_dialog = ExecuteFunctionDialog(
             load_property.load_class.load,
@@ -195,7 +193,7 @@ class MainMenu(BaseMainMenu):
             text="Load data",
             exception_hook=load_data_exception_hook,
         )
-        if execute_dialog.exec():
+        if execute_dialog.exec_():
             result = execute_dialog.get_result()
             if result is None:
                 return
@@ -225,20 +223,19 @@ class MainMenu(BaseMainMenu):
         return True
 
     def load_segmentation(self):
-        dial = CustomLoadDialog(
+        settings_path = OPEN_DIRECTORY if self.settings.get("sync_dirs", False) else "io.open_segmentation_directory"
+        dial = PLoadDialog(
             {
                 LoadROI.get_name(): LoadROI,
                 LoadROIParameters.get_name(): LoadROIParameters,
                 LoadROIFromTIFF.get_name(): LoadROIFromTIFF,
-            }
+            },
+            settings=self.settings,
+            path=settings_path,
         )
-        dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         load_property = dial.get_result()
-        self.settings.set("io.open_segmentation_directory", os.path.dirname(load_property.load_location[0]))
-        self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
 
         def exception_hook(exception):
             mess = QMessageBox(self)
@@ -263,47 +260,58 @@ class MainMenu(BaseMainMenu):
             text="Load segmentation",
             exception_hook=exception_hook,
         )
-        if dial.exec():
-            result = dial.get_result()
-            if result is None:
-                QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
+        if not dial.exec_():
+            return
+        result: MaskProjectTuple = dial.get_result()
+        if result is None:
+            QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
+            return
+        if result.roi_info.roi is not None:
+            try:
+                self.settings.set_project_info(dial.get_result())
                 return
-            if result.roi is not None:
-                try:
-                    self.settings.set_project_info(dial.get_result())
+            except ValueError as e:
+                if e.args != (ROI_NOT_FIT,):
+                    raise
+                text = (
+                    f"Segmentation of shape {result.roi_info.roi.shape}\n({result.file_path})\n"
+                    f"do not fit to image of shape {self.settings.image.shape}\n({self.settings.image.file_path})"
+                )
+                if all(x is None for x in result.roi_extraction_parameters.values()):
+                    QMessageBox.warning(self, "Segmentation do not fit", f"{text} and no parameters for extraction")
                     return
-                except ValueError as e:
-                    if e.args != (ROI_NOT_FIT,):
-                        raise
-                    self.segmentation_dialog.set_additional_text(
-                        "Segmentation do not fit to image, maybe you would lie to load parameters only."
-                    )
-                except HistoryProblem:
-                    QMessageBox().warning(
-                        self,
-                        "Load Problem",
-                        "You set to save selected components when loading "
-                        "another segmentation but history is incomatybile",
-                    )
 
-            else:
-                self.segmentation_dialog.set_additional_text("")
-            self.segmentation_dialog.set_parameters_dict(result.roi_extraction_parameters)
-            self.segmentation_dialog.show()
+                self.segmentation_dialog.set_additional_text(text + "\nmaybe you would like to load parameters only.")
+            except HistoryProblem:
+                QMessageBox().warning(
+                    self,
+                    "Load Problem",
+                    "You set to save selected components when loading "
+                    "another segmentation but history is incompatibility",
+                )
+
+        else:
+            self.segmentation_dialog.set_additional_text("")
+        self.segmentation_dialog.set_parameters_dict(result.roi_extraction_parameters)
+        self.segmentation_dialog.show()
 
     def save_segmentation(self):
         if self.settings.roi is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
-        dial = CustomSaveDialog(io_functions.save_segmentation_dict, False, history=self.settings.get_path_history())
-        dial.setDirectory(self.settings.get("io.save_segmentation_directory", str(Path.home())))
-        dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
+        settings_path = OPEN_DIRECTORY if self.settings.get("sync_dirs", False) else "io.save_segmentation_directory"
+        dial = PSaveDialog(
+            io_functions.save_segmentation_dict,
+            system_widget=False,
+            settings=self.settings,
+            path=settings_path,
+        )
+
+        dial.selectFile(f"{os.path.splitext(os.path.basename(self.settings.image_path))[0]}.seg")
+
         if not dial.exec_():
             return
         save_location, _selected_filter, save_class, values = dial.get_result()
-        self.settings.set("io.save_segmentation_directory", os.path.dirname(str(save_location)))
-        self.settings.add_path_history(os.path.dirname(str(save_location)))
-        # self.settings.save_directory = os.path.dirname(str(file_path))
 
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
@@ -315,7 +323,7 @@ class MainMenu(BaseMainMenu):
             text="Save segmentation",
             exception_hook=exception_hook,
         )
-        dial.exec()
+        dial.exec_()
 
     def save_result(self):
         if self.settings.image_path is not None and QMessageBox.Yes == QMessageBox.question(
@@ -327,13 +335,13 @@ class MainMenu(BaseMainMenu):
         if self.settings.roi is None or len(self.settings.sizes) == 1:
             QMessageBox.warning(self, "No components", "No components to save")
             return
-        dial = CustomSaveDialog(
+        dial = PSaveDialog(
             io_functions.save_components_dict,
-            False,
-            history=self.settings.get_path_history(),
-            file_mode=QFileDialog.Directory,
+            system_widget=False,
+            settings=self.settings,
+            file_mode=PSaveDialog.Directory,
+            path="io.save_components_directory",
         )
-        dial.setDirectory(self.settings.get("io.save_components_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
         if not dial.exec_():
             return
@@ -343,7 +351,7 @@ class MainMenu(BaseMainMenu):
         for el in potential_names:
             if os.path.exists(el):
                 conflict.append(el)
-        if len(conflict) > 0:
+        if conflict:
             # TODO modify because of long lists
             conflict_str = "\n".join(conflict)
             if QMessageBox.No == QMessageBox.warning(
@@ -354,10 +362,6 @@ class MainMenu(BaseMainMenu):
                 QMessageBox.No,
             ):
                 self.save_result()
-                return
-
-        self.settings.set("io.save_components_directory", os.path.dirname(str(res.save_destination)))
-        self.settings.add_path_history(os.path.dirname(str(res.save_destination)))
 
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
@@ -368,7 +372,7 @@ class MainMenu(BaseMainMenu):
             text="Save components",
             exception_hook=exception_hook,
         )
-        dial.exec()
+        dial.exec_()
 
 
 class ComponentCheckBox(QCheckBox):
@@ -397,7 +401,6 @@ class ChosenComponents(QWidget):
 
     def __init__(self):
         super().__init__()
-        # self.setLayout(FlowLayout())
         self.check_box = {}
         self.check_all_btn = QPushButton("Select all")
         self.check_all_btn.clicked.connect(self.check_all)
@@ -440,7 +443,6 @@ class ChosenComponents(QWidget):
         chosen_components = set(chosen_components)
         self.blockSignals(True)
         self.remove_components()
-        chosen_components = set(chosen_components)
         for el in components_index:
             check = ComponentCheckBox(el)
             if el in chosen_components:
@@ -462,59 +464,53 @@ class ChosenComponents(QWidget):
 
     def get_state(self, num: int) -> bool:
         # TODO Check what situation create report of id ID: af9b57f074264169b4353aa1e61d8bc2
-        if num >= len(self.check_box):
-            return False
-        return self.check_box[num].isChecked()
+        return False if num >= len(self.check_box) else self.check_box[num].isChecked()
 
     def get_chosen(self):
         return [num for num, check in self.check_box.items() if check.isChecked()]
 
     def get_mask(self):
         res = [0]
-        for _, check in sorted(self.check_box.items()):
-            res.append(check.isChecked())
+        res.extend(check.isChecked() for _, check in sorted(self.check_box.items()))
         return np.array(res, dtype=np.uint8)
 
 
 class AlgorithmOptions(QWidget):
     def __init__(self, settings: StackSettings, image_view: StackImageView):
-        control_view = image_view.get_control_view()
         super().__init__()
         self.settings = settings
+        self.view_name = image_view.name
         self.show_result = QEnumComboBox(enum_class=LabelEnum)  # QCheckBox("Show result")
-        self.show_result.setCurrentEnum(control_view.show_label)
+        self._set_show_label_from_settings()
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
         self.opacity.setSingleStep(0.1)
-        self.opacity.setValue(control_view.opacity)
+        self._set_opacity_from_settings()
         self.only_borders = QCheckBox("Only borders")
-        self.only_borders.setChecked(control_view.only_borders)
+        self._set_border_mode_from_settings()
         self.borders_thick = QSpinBox()
-        self.borders_thick.setRange(1, 11)
-        self.borders_thick.setSingleStep(2)
-        self.borders_thick.setValue(control_view.borders_thick)
-        # noinspection PyUnresolvedReferences
-        self.borders_thick.valueChanged.connect(self.border_value_check)
+        self.borders_thick.setRange(1, 25)
+        self.borders_thick.setSingleStep(1)
+        self._set_border_thick_from_settings()
         self.execute_in_background_btn = QPushButton("Execute in background")
         self.execute_in_background_btn.setToolTip("Run calculation in background. Put result in multiple files panel")
         self.execute_btn = QPushButton("Execute")
         self.execute_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.execute_all_btn = QPushButton("Execute all")
         self.execute_all_btn.setToolTip(
-            "Execute in batch mode segmentation with current parameter. " "File list need to be specified in image tab."
+            "Execute in batch mode segmentation with current parameter. File list need to be specified in image tab."
         )
         self.execute_all_btn.setDisabled(True)
         self.save_parameters_btn = QPushButton("Save parameters")
         self.block_execute_all_btn = False
-        self.algorithm_choose_widget = AlgorithmChoose(settings, mask_algorithm_dict)
+        self.algorithm_choose_widget = AlgorithmChoose(settings, MaskAlgorithmSelection)
         self.algorithm_choose_widget.result.connect(self.execution_result_set)
         self.algorithm_choose_widget.finished.connect(self.execution_finished)
         self.algorithm_choose_widget.progress_signal.connect(self.progress_info)
 
-        # self.stack_layout = QStackedLayout()
         self.keep_chosen_components_chk = QCheckBox("Save selected components")
         self.keep_chosen_components_chk.setToolTip(
-            "Save chosen components when loading segmentation form file\n" "or from multiple file widget."
+            "Save chosen components when loading segmentation form file\n or from multiple file widget."
         )
         self.keep_chosen_components_chk.stateChanged.connect(self.set_keep_chosen_components)
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
@@ -525,7 +521,7 @@ class AlgorithmOptions(QWidget):
         )
         self.show_parameters.clicked.connect(self.show_parameters_widget.show)
         self.choose_components = ChosenComponents()
-        self.choose_components.check_change_signal.connect(control_view.components_change)
+        self.choose_components.check_change_signal.connect(image_view.refresh_selected)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
         self.choose_components.mouse_enter.connect(image_view.component_mark)
         # WARNING works only with one channels algorithms
@@ -547,7 +543,6 @@ class AlgorithmOptions(QWidget):
 
         self.setContentsMargins(0, 0, 0, 0)
         main_layout = QVBoxLayout()
-        # main_layout.setSpacing(0)
         opt_layout = QHBoxLayout()
         opt_layout.setContentsMargins(0, 0, 0, 0)
         opt_layout.addWidget(self.show_result)
@@ -571,8 +566,6 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.progress_info_lab)
         main_layout.addWidget(self.algorithm_choose_widget, 1)
-        # main_layout.addWidget(self.algorithm_choose)
-        # main_layout.addLayout(self.stack_layout, 1)
         main_layout.addWidget(self.choose_components)
         down_layout = QHBoxLayout()
         down_layout.addWidget(self.keep_chosen_components_chk)
@@ -580,7 +573,6 @@ class AlgorithmOptions(QWidget):
         main_layout.addLayout(down_layout)
         main_layout.addStretch()
         main_layout.setContentsMargins(0, 0, 0, 0)
-        # main_layout.setSpacing(0)
         self.setLayout(main_layout)
 
         # noinspection PyUnresolvedReferences
@@ -589,32 +581,62 @@ class AlgorithmOptions(QWidget):
         self.execute_all_btn.clicked.connect(self.execute_all_action)
         self.save_parameters_btn.clicked.connect(self.save_parameters)
         # noinspection PyUnresolvedReferences
-        self.opacity.valueChanged.connect(control_view.set_opacity)
+        self.opacity.valueChanged.connect(self._set_opacity)
         # noinspection PyUnresolvedReferences
-        self.show_result.currentEnumChanged.connect(control_view.set_show_label)
-        self.only_borders.stateChanged.connect(control_view.set_borders)
+        self.show_result.currentEnumChanged.connect(self._set_show_label)
+        self.only_borders.stateChanged.connect(self._set_border_mode)
         # noinspection PyUnresolvedReferences
-        self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
+        self.borders_thick.valueChanged.connect(self._set_border_thick)
         image_view.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
+        settings.connect_to_profile(f"{self.view_name}.image_state.only_border", self._set_border_mode_from_settings)
+        settings.connect_to_profile(f"{self.view_name}.image_state.border_thick", self._set_border_thick_from_settings)
+        settings.connect_to_profile(f"{self.view_name}.image_state.opacity", self._set_opacity_from_settings)
+        settings.connect_to_profile(f"{self.view_name}.image_state.show_label", self._set_show_label_from_settings)
+
+    def _set_border_mode(self, value: bool):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.only_border", value)
+
+    def _set_border_thick(self, value: int):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.border_thick", value)
+
+    def _set_opacity(self, value: float):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.opacity", value)
+
+    def _set_show_label(self, value: LabelEnum):
+        self.settings.set_in_profile(f"{self.view_name}.image_state.show_label", value)
+
+    def _set_border_mode_from_settings(self):
+        self.only_borders.setChecked(self.settings.get_from_profile(f"{self.view_name}.image_state.only_border", True))
+
+    def _set_border_thick_from_settings(self):
+        self.borders_thick.setValue(self.settings.get_from_profile(f"{self.view_name}.image_state.border_thick", 1))
+
+    def _set_opacity_from_settings(self):
+        self.opacity.setValue(self.settings.get_from_profile(f"{self.view_name}.image_state.opacity", 1.0))
+
+    def _set_show_label_from_settings(self):
+        self.show_result.setCurrentEnum(
+            self.settings.get_from_profile(f"{self.view_name}.image_state.show_label", LabelEnum.Show_results)
+        )
 
     @Slot(int)
     def set_keep_chosen_components(self, val):
         self.settings.set_keep_chosen_components(val)
 
     def save_parameters(self):
-        dial = CustomSaveDialog(io_functions.save_parameters_dict, False, history=self.settings.get_path_history())
+        dial = PSaveDialog(
+            io_functions.save_parameters_dict, system_widget=False, settings=self.settings, path=IO_SAVE_DIRECTORY
+        )
         if not dial.exec_():
             return
         res = dial.get_result()
-        self.settings.add_path_history(os.path.dirname(str(res.save_destination)))
-        res.save_class.save(res.save_destination, self.algorithm_choose_widget.current_parameters())
-
-    def border_value_check(self, value):
-        if value % 2 == 0:
-            self.borders_thick.setValue(value + 1)
+        res.save_class.save(
+            save_location=res.save_destination,
+            project_info=self.algorithm_choose_widget.current_parameters(),
+        )
 
     def file_list_change(self, val):
         self.file_list = val
@@ -659,17 +681,16 @@ class AlgorithmOptions(QWidget):
         self._execute_in_background_init()
 
     def execute_all_action(self):
-        dial = CustomSaveDialog(
-            {SaveROI.get_name(): SaveROI},
-            history=self.settings.get_path_history(),
+        dial = PSaveDialog(
+            SaveROI,
+            settings=self.settings,
             system_widget=False,
+            path="io.save_batch",
+            file_mode=PSaveDialog.Directory,
         )
-        dial.setFileMode(QFileDialog.Directory)
-        dial.setDirectory(self.settings.get("io.save_batch", self.settings.get("io.save_segmentation_directory", "")))
         if not dial.exec_():
             return
         folder_path = str(dial.selectedFiles()[0])
-        self.settings.set("io.save_batch", folder_path)
 
         widget = self.algorithm_choose_widget.current_widget()
 
@@ -710,7 +731,7 @@ class AlgorithmOptions(QWidget):
             # TODO Fix This
             blank = blank[0]
         self.progress_bar.setHidden(False)
-        widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
+        widget: InteractiveAlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.set_mask(blank)
         self.progress_bar.setRange(0, widget.algorithm.get_steps_num())
         widget.execute()
@@ -755,6 +776,13 @@ class ImageInformation(QWidget):
         self.multiple_files = QCheckBox("Show multiple files panel")
         self.multiple_files.setChecked(settings.get("multiple_files_widget", True))
         self.multiple_files.stateChanged.connect(self.set_multiple_files)
+        self.sync_dirs = QCheckBox("Sync directories in file dialog")
+        self.sync_dirs.setToolTip(
+            "If checked then 'Load Image', 'Load segmentation' and 'Save segmentation' "
+            "will open file dialog in the same directory"
+        )
+        self.sync_dirs.setChecked(settings.get("sync_dirs", False))
+        self.sync_dirs.stateChanged.connect(self.set_sync_dirs)
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
@@ -782,12 +810,25 @@ class ImageInformation(QWidget):
         layout.addWidget(self.add_files)
         layout.addStretch(1)
         layout.addWidget(self.multiple_files)
+        layout.addWidget(self.sync_dirs)
         self.setLayout(layout)
         self._settings.image_changed[str].connect(self.set_image_path)
+        self._settings.connect_("multiple_files_widget", self._set_multiple_files)
+        self._settings.connect_("sync_dirs", self._set_sync_dirs)
 
     @Slot(int)
     def set_multiple_files(self, val):
         self._settings.set("multiple_files_widget", val)
+
+    @Slot(int)
+    def set_sync_dirs(self, val):
+        self._settings.set("sync_dirs", val)
+
+    def _set_multiple_files(self):
+        self.multiple_files.setChecked(self._settings.get("multiple_files_widget", True))
+
+    def _set_sync_dirs(self):
+        self.sync_dirs.setChecked(self._settings.get("sync_dirs", False))
 
     def update_spacing(self, index=None):
         units_value = self.units.currentEnum()
@@ -798,7 +839,6 @@ class ImageInformation(QWidget):
             el.setValue(val * UNIT_SCALE[units_value.value])
             el.blockSignals(False)
         if self._settings.is_image_2d():
-            # self.spacing[2].setValue(0)
             self.spacing[2].setDisabled(True)
         else:
             self.spacing[2].setDisabled(False)
@@ -808,9 +848,7 @@ class ImageInformation(QWidget):
         self.update_spacing()
 
     def image_spacing_change(self):
-        self._settings.image_spacing = [
-            el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing[::-1])
-        ]
+        self._settings.image_spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for el in self.spacing[::-1]]
 
     def showEvent(self, _a0):
         units_value = self._settings.get("units_value", Units.nm)
@@ -828,7 +866,7 @@ class Options(QTabWidget):
         super().__init__(parent)
         self._settings = settings
         self.algorithm_options = AlgorithmOptions(settings, image_view)
-        self.image_properties = ImageInformation(settings, parent)
+        self.image_properties = ImageInformation(settings)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
         self.algorithm_options.batch_process.multiple_result.connect(
             partial(self.image_properties.multiple_files.setChecked, True)
@@ -843,6 +881,9 @@ class Options(QTabWidget):
 
 
 class MainWindow(BaseMainWindow):
+
+    settings: StackSettings
+
     @classmethod
     def get_setting_class(cls) -> Type[StackSettings]:
         return StackSettings
@@ -887,6 +928,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
         view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
         view_menu.addAction("Toggle console").triggered.connect(self._toggle_console)
+        view_menu.addAction("Toggle scale bar").triggered.connect(self._toggle_scale_bar)
         action = view_menu.addAction("Screenshot")
         action.triggered.connect(self.screenshot(self.image_view))
         action.setShortcut(QKeySequence.Print)
@@ -921,11 +963,13 @@ class MainWindow(BaseMainWindow):
             self.settings.image = im
         elif initial_image is not False:
             self.settings.image = initial_image
-        try:
+        with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
-        except KeyError:
-            pass
+
+    def _toggle_scale_bar(self):
+        self.image_view.toggle_scale_bar()
+        super()._toggle_scale_bar()
 
     def closeEvent(self, event: QCloseEvent):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))

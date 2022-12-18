@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from tifffile import imwrite
 
-from .image import Image, minimal_dtype
+from PartSegImage.image import Image, minimal_dtype
 
 
 class BaseImageWriter(ABC):
@@ -29,6 +29,21 @@ class ImageWriter(BaseImageWriter):
     def prepare_metadata(cls, image: Image, channels: int):
         spacing = image.get_um_spacing()
         shift = image.get_um_shift()
+        plane_li = [
+            {
+                "TheT": t,
+                "TheZ": z,
+                "TheC": c,
+                "PositionZ": shift[0] if len(shift) == 3 else 0,
+                "PositionY": shift[-2],
+                "PositionX": shift[-1],
+                "PositionZUnit": "µm",
+                "PositionYUnit": "µm",
+                "PositionXUnit": "µm",
+            }
+            for t, z, c in product(range(image.times), range(image.layers), range(channels))
+        ]
+
         metadata = {
             "Pixels": {
                 "PhysicalSizeZ": spacing[0] if len(spacing) == 3 else 1,
@@ -38,25 +53,11 @@ class ImageWriter(BaseImageWriter):
                 "PhysicalSizeYUnit": "µm",
                 "PhysicalSizeXUnit": "µm",
             },
-            "Plane": [],
+            "Plane": plane_li,
             "Creator": "PartSeg",
         }
         if image.name:
             metadata["Name"] = image.name
-        for t, z, c in product(range(image.times), range(image.layers), range(channels)):
-            metadata["Plane"].append(
-                {
-                    "TheT": t,
-                    "TheZ": z,
-                    "TheC": c,
-                    "PositionZ": shift[0] if len(shift) == 3 else 0,
-                    "PositionY": shift[-2],
-                    "PositionX": shift[-1],
-                    "PositionZUnit": "µm",
-                    "PositionYUnit": "µm",
-                    "PositionXUnit": "µm",
-                }
-            )
 
         return metadata
 
@@ -68,7 +69,6 @@ class ImageWriter(BaseImageWriter):
         :param image: image for save
         :param save_path: save location
         """
-        # print(f"[save] {save_path}")
         data = image.get_image_for_save()
 
         metadata = cls.prepare_metadata(image, image.channels)
@@ -122,21 +122,18 @@ class IMAGEJImageWriter(BaseImageWriter):
         :param image: image for save
         :param save_path: save location
         """
-        # print(f"[save] {save_path}")
         data = image.get_image_for_save()
         spacing = image.get_um_spacing()
-        metadata = {"mode": "color", "unit": "\\u00B5m"}
+        metadata: typing.Dict[str, typing.Any] = {"mode": "color", "unit": "\\u00B5m"}
         if len(spacing) == 3:
-            metadata.update({"spacing": spacing[0]})
+            metadata["spacing"] = spacing[0]
         if image.channel_names is not None:
             metadata["Labels"] = image.channel_names * image.layers
         coloring = image.get_imagej_colors()
         if coloring is not None:
             metadata["LUTs"] = coloring
-        ranges = image.get_ranges()
-        ranges = np.array(ranges).reshape(len(ranges) * 2)
-        # print(ranges)
-        metadata["Ranges"] = ranges
+        ranges_li = image.get_ranges()
+        metadata["Ranges"] = np.array(ranges_li).reshape(len(ranges_li) * 2)
 
         resolution = [1 / x for x in spacing[-2:]]
         cls._save(data, save_path, resolution, metadata)
@@ -153,10 +150,10 @@ class IMAGEJImageWriter(BaseImageWriter):
             return
         mask_max = np.max(mask)
         mask = mask.astype(minimal_dtype(mask_max))
-        metadata = {"mode": "color", "unit": "\\u00B5m"}
+        metadata: typing.Dict[str, typing.Union[str, float]] = {"mode": "color", "unit": "\\u00B5m"}
         spacing = image.get_um_spacing()
         if len(spacing) == 3:
-            metadata.update({"spacing": spacing[0]})
+            metadata["spacing"] = spacing[0]
         resolution = [1 / x for x in spacing[-2:]]
         cls._save(mask, save_path, resolution, metadata)
 

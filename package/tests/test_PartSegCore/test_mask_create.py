@@ -10,29 +10,97 @@ from PartSegImage import Image
 
 class TestMaskProperty:
     def test_compare(self):
-        ob1 = MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, False, True)
-        ob2 = MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, False, True, False)
-        ob3 = MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, False, True, True)
+        ob1 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=True,
+        )
+        ob2 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=True,
+            reversed_mask=False,
+        )
+        ob3 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=True,
+            reversed_mask=True,
+        )
         assert ob1 == ob2
         assert ob1 != ob3
         assert ob2 != ob3
 
     def test_str(self):
-        text = str(MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, False, True))
-        assert "dilate radius" not in text
-        assert "max holes size" not in text
-        text = str(MaskProperty(RadiusType.R2D, 0, RadiusType.NO, -1, False, True))
-        assert "dilate radius" in text
-        assert "max holes size" not in text
-        text = str(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, False, True))
-        assert "dilate radius" not in text
-        assert "max holes size" in text
-        text = str(MaskProperty(RadiusType.R3D, 0, RadiusType.R2D, -1, False, True))
-        assert "dilate radius" in text
-        assert "max holes size" in text
+        dilate_text = "dilate radius"
+        hole_text = "max holes size"
+        text = str(
+            MaskProperty(
+                dilate=RadiusType.NO,
+                dilate_radius=0,
+                fill_holes=RadiusType.NO,
+                max_holes_size=0,
+                save_components=False,
+                clip_to_mask=True,
+            )
+        )
+        assert dilate_text not in text
+        assert hole_text not in text
+        text = str(
+            MaskProperty(
+                dilate=RadiusType.R2D,
+                dilate_radius=0,
+                fill_holes=RadiusType.NO,
+                max_holes_size=0,
+                save_components=False,
+                clip_to_mask=True,
+            )
+        )
+        assert dilate_text in text
+        assert hole_text not in text
+        text = str(
+            MaskProperty(
+                dilate=RadiusType.NO,
+                dilate_radius=0,
+                fill_holes=RadiusType.R2D,
+                max_holes_size=0,
+                save_components=False,
+                clip_to_mask=True,
+            )
+        )
+        assert dilate_text not in text
+        assert hole_text in text
+        text = str(
+            MaskProperty(
+                dilate=RadiusType.R3D,
+                dilate_radius=0,
+                fill_holes=RadiusType.R2D,
+                max_holes_size=0,
+                save_components=False,
+                clip_to_mask=True,
+            )
+        )
+        assert dilate_text in text
+        assert hole_text in text
 
     def test_simple_mask(self):
-        assert MaskProperty.simple_mask() == MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, False, False)
+        assert MaskProperty.simple_mask() == MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+        )
 
 
 class TestFillHoles:
@@ -89,21 +157,38 @@ class TestCalculateMask:
     def test_single(self):
         mask = np.zeros((10, 10, 10), dtype=np.uint8)
         mask[2:8, 2:8, 2:8] = 1
-        mask2 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, False, True), mask, None, (1, 1, 1))
+        mp = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=-1,
+            save_components=False,
+            clip_to_mask=True,
+        )
+        mask2 = calculate_mask(mp, mask, None, (1, 1, 1))
         assert np.all(mask2 == mask)
         mask3 = np.copy(mask)
         mask3[mask > 0] = 2
-        mask2 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, False, True), mask, None, (1, 1, 1))
+        mask2 = calculate_mask(mp, mask, None, (1, 1, 1))
         assert np.all(mask2 == mask)
 
     def test_dilate(self):
         mask = np.zeros((1, 10, 10, 10), dtype=np.uint8)
         mask[0, 2:8, 2:8, 2:8] = 1
-        mask2 = calculate_mask(MaskProperty(RadiusType.R3D, -1, RadiusType.NO, -1, False, True), mask, None, (1, 1, 1))
+        mp = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=-1,
+            fill_holes=RadiusType.NO,
+            max_holes_size=-1,
+            save_components=False,
+            clip_to_mask=True,
+        )
+        mask2 = calculate_mask(mp, mask, None, (1, 1, 1))
         mask3 = np.zeros((1, 10, 10, 10), dtype=np.uint8)
         mask3[0, 3:7, 3:7, 3:7] = 1
         assert np.all(mask2 == mask3)
-        mask2 = calculate_mask(MaskProperty(RadiusType.R2D, -1, RadiusType.NO, -1, False, True), mask, None, (1, 1, 1))
+        mp.dilate = RadiusType.R2D
+        mask2 = calculate_mask(mp, mask, None, (1, 1, 1))
         mask3 = np.zeros((1, 10, 10, 10), dtype=np.uint8)
         mask3[0, 2:8, 3:7, 3:7] = 1
         assert np.all(mask2 == mask3)
@@ -113,18 +198,36 @@ class TestCalculateMask:
         mask[0, 2:8, 2:8, 2:8] = 1
         mask2 = np.copy(mask)
         mask2[0, 4:6, 4:6, 4:6] = 0
-        mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, False, True), mask2, None, (1, 1, 1))
+        mp = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R3D,
+            max_holes_size=-1,
+            save_components=False,
+            clip_to_mask=True,
+        )
+        mask3 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask3 == mask)
-        mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, 7, False, True), mask2, None, (1, 1, 1))
+        mp.max_holes_size = 7
+        mask3 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask3 == mask2)
-        mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, 8, False, True), mask2, None, (1, 1, 1))
+        mp.max_holes_size = 8
+        mask3 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask3 == mask)
 
     def test_fil_holes_3d_torus(self):
         mask = np.zeros((1, 10, 10, 10), dtype=np.uint8)
         mask[0, 2:8, 2:8, 2:8] = 1
         mask[0, :, 4:6, 4:6] = 0
-        mask2 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, False, True), mask, None, (1, 1, 1))
+        mp = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R3D,
+            max_holes_size=-1,
+            save_components=False,
+            clip_to_mask=True,
+        )
+        mask2 = calculate_mask(mp, mask, None, (1, 1, 1))
         assert np.all(mask2 == mask)
 
     def test_fil_holes_2d(self):
@@ -132,11 +235,21 @@ class TestCalculateMask:
         mask[2:8, 2:8, 2:8] = 1
         mask2 = np.copy(mask)
         mask2[:, 4:6, 4:6] = 0
-        mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, False, True), mask2, None, (1, 1, 1))
+        mp = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R2D,
+            max_holes_size=-1,
+            save_components=False,
+            clip_to_mask=True,
+        )
+        mask3 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask3 == mask)
-        mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, 3, False, True), mask2, None, (1, 1, 1))
+        mp.max_holes_size = 3
+        mask3 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask3 == mask2)
-        mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, 4, False, True), mask2, None, (1, 1, 1))
+        mp.max_holes_size = 4
+        mask3 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask3 == mask)
 
     def test_save_components(self):
@@ -144,13 +257,22 @@ class TestCalculateMask:
         mask[2:8, 2:8, 2:8] = 1
         mask2 = np.copy(mask)
         mask2[2:8, 4:6, 4:6] = 2
-        mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, False, True), mask2, None, (1, 1, 1))
+        mp = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=-1,
+            save_components=False,
+            clip_to_mask=True,
+        )
+        mask3 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask3 == mask)
-        mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, True, True), mask2, None, (1, 1, 1))
+        mp.save_components = True
+        mask3 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask3 == mask2)
         mask4 = np.copy(mask2)
         mask4[mask4 == 2] = 3
-        mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, True, True), mask4, None, (1, 1, 1))
+        mask3 = calculate_mask(mp, mask4, None, (1, 1, 1))
         assert np.all(mask3 == mask4)
 
     def test_save_component_fill_holes(self):
@@ -161,26 +283,35 @@ class TestCalculateMask:
         mask2 = np.copy(mask)
         mask2[5, 5, 5] = 0
         mask2[3, 3, 3] = 0
-        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask2, None, (1, 1, 1))
+        mp = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R2D,
+            max_holes_size=-1,
+            save_components=True,
+            clip_to_mask=True,
+        )
+        mp2 = mp.copy(update={"fill_holes": RadiusType.R3D})
+        mask1 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
-        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, True, True), mask2, None, (1, 1, 1))
+        mask1 = calculate_mask(mp2, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
         mask[2:-2, 4:-4, 4:-4] = 3
         mask2 = np.copy(mask)
         mask2[5, 5, 5] = 0
         mask2[3, 3, 3] = 0
-        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask2, None, (1, 1, 1))
+        mask1 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
-        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, True, True), mask2, None, (1, 1, 1))
+        mask1 = calculate_mask(mp2, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
         mask[2:7, 2:-2, 2:-2] = 1
         mask[4:-4, 4:-4, 4:-4] = 2
         mask2 = np.copy(mask)
         mask2[5, 5, 5] = 0
         mask2[3, 3, 3] = 0
-        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask2, None, (1, 1, 1))
+        mask1 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
-        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, True, True), mask2, None, (1, 1, 1))
+        mask1 = calculate_mask(mp2, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
 
     @pytest.mark.xfail(reason="problem with alone pixels")
@@ -192,9 +323,17 @@ class TestCalculateMask:
         mask2 = np.copy(mask)
         mask2[5, 5, 5] = 0
         mask2[3, 3, 3] = 0
-        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask2, None, (1, 1, 1))
+        mp = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R2D,
+            max_holes_size=-1,
+            save_components=True,
+            clip_to_mask=True,
+        )
+        mask1 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
-        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, True, True), mask2, None, (1, 1, 1))
+        mask1 = calculate_mask(mp, mask2, None, (1, 1, 1))
         assert np.all(mask == mask1)
 
     def test_reverse(self):
@@ -203,22 +342,41 @@ class TestCalculateMask:
         mask2 = np.ones((10, 10, 10), dtype=np.uint8)
         mask2[mask > 0] = 0
         mask3 = calculate_mask(
-            MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, False, True, True), mask, None, (1, 1, 1)
+            MaskProperty(
+                dilate=RadiusType.NO,
+                dilate_radius=0,
+                fill_holes=RadiusType.R2D,
+                max_holes_size=-1,
+                save_components=False,
+                clip_to_mask=True,
+                reversed_mask=True,
+            ),
+            mask,
+            None,
+            (1, 1, 1),
         )
         assert np.all(mask3 == mask2)
 
     def test_clip(self):
         mask = np.zeros((10, 10, 10), dtype=np.uint8)
         mask[3:7, 3:7, 3:7] = 1
-        mask2 = calculate_mask(MaskProperty(RadiusType.R3D, 1, RadiusType.NO, -1, False, True), mask, mask, (1, 1, 1))
+        mp = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=1,
+            fill_holes=RadiusType.NO,
+            max_holes_size=-1,
+            save_components=False,
+            clip_to_mask=True,
+        )
+        mask2 = calculate_mask(mp, mask, mask, (1, 1, 1))
         assert np.all(mask == mask2)
         mask2[:, 4:6, 4:6] = 0
-        mask3 = calculate_mask(MaskProperty(RadiusType.R3D, 1, RadiusType.NO, -1, False, True), mask, mask2, (1, 1, 1))
+        mask3 = calculate_mask(mp, mask, mask2, (1, 1, 1))
         assert np.all(mask3 == mask2)
         mask2[:] = 0
         mask2[4:6, 4:6, 4:6] = 1
         mask3 = calculate_mask(
-            MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, False, True, True), mask2, mask, (1, 1, 1)
+            mp.copy(update={"dilate": RadiusType.NO, "dilate_radius": 0, "reversed_mask": True}), mask2, mask, (1, 1, 1)
         )
         mask[mask2 == 1] = 0
         assert np.all(mask3 == mask)
@@ -228,9 +386,15 @@ class TestCalculateMask:
         mask[2:7, 2:-2, 2:-2] = 3
         mask[7:-2, 2:-2, 2:-2] = 2
         mask[4:-4, 4:-4, 4:-4] = 1
-        mask1 = calculate_mask(
-            MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask, None, (1, 1, 1), [1, 3]
+        mp = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=-1,
+            save_components=True,
+            clip_to_mask=True,
         )
+        mask1 = calculate_mask(mp, mask, None, (1, 1, 1), [1, 3])
         assert np.all(np.unique(mask1) == [0, 1, 3])
 
     @pytest.mark.parametrize("dilate", [RadiusType.NO, RadiusType.R2D, RadiusType.R3D])

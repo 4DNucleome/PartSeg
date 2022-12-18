@@ -7,21 +7,36 @@ from copy import deepcopy
 
 import numpy as np
 import SimpleITK
+from nme import REGISTER, class_to_str, register_class, rename_key
+from pydantic import Field, validator
 
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.mask_partition_utils import BorderRim as BorderRimBase
+from PartSegCore.mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
+from PartSegCore.project_info import AdditionalLayerDescription
+from PartSegCore.segmentation.algorithm_base import (
+    ROIExtractionAlgorithm,
+    ROIExtractionResult,
+    SegmentationLimitException,
+)
+from PartSegCore.segmentation.mu_mid_point import BaseMuMid, MuMidSelection
+from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
+from PartSegCore.segmentation.threshold import (
+    BaseThreshold,
+    DoubleThreshold,
+    DoubleThresholdParams,
+    DoubleThresholdSelection,
+    ManualThreshold,
+    SingleThresholdParams,
+    ThresholdSelection,
+)
+from PartSegCore.segmentation.watershed import BaseWatershed, FlowMethodSelection, calculate_distances_array, get_neigh
+from PartSegCore.universal_const import Units
+from PartSegCore.utils import BaseModel, bisect
 from PartSegCore_compiled_backend.multiscale_opening import PyMSO, calculate_mu_mid
+from PartSegImage import Channel
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
-from ..channel_class import Channel
-from ..mask_partition_utils import BorderRim as BorderRimBase
-from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
-from ..project_info import AdditionalLayerDescription
-from ..universal_const import Units
-from ..utils import bisect
-from .algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult, SegmentationLimitException
-from .mu_mid_point import BaseMuMid, mu_mid_dict
-from .noise_filtering import noise_filtering_dict
-from .threshold import BaseThreshold, double_threshold_dict, threshold_dict
-from .watershed import BaseWatershed, calculate_distances_array, flow_dict, get_neigh
+REQUIRE_MASK_STR = "Need mask"
 
 
 def blank_operator(_x, _y):
@@ -39,8 +54,8 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
 
     def __init__(self, **kwargs):
         super().__init__()
-        self.parameters = defaultdict(lambda: None)
-        self.new_parameters = {}
+        self.parameters: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
+        self.new_parameters = self.__argument_class__() if self.__new_style__ else {}  # pylint: disable=E1102
 
     def set_image(self, image):
         self.parameters = defaultdict(lambda: None)
@@ -54,7 +69,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
         return "No info [Report this ass error]"
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
+        return ROIExtractionProfile(name="", algorithm=self.get_name(), values=deepcopy(self.new_parameters))
 
     @classmethod
     def support_time(cls):
@@ -65,11 +80,19 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
         return True
 
 
+class BorderRimParameters(BorderRimBase.__argument_class__):
+    @staticmethod
+    def header():
+        return REQUIRE_MASK_STR
+
+
 class BorderRim(RestartableAlgorithm):
     """
     This class wrap the :py:class:`PartSegCore.mask_partition_utils.BorderRim``
     class in segmentation algorithm interface. It allow user to check how rim look with given set of parameters
     """
+
+    __argument_class__ = BorderRimParameters
 
     @classmethod
     def get_name(cls):
@@ -80,20 +103,22 @@ class BorderRim(RestartableAlgorithm):
         self.distance = 0
         self.units = Units.nm
 
-    @classmethod
-    def get_fields(cls):
-        return ["Need mask"] + BorderRimBase.get_fields()
-
     def get_info_text(self):
-        if self.mask is None:
-            return "Need mask"
-        return ""
+        return REQUIRE_MASK_STR if self.mask is None else ""
 
     def calculation_run(self, _report_fun) -> ROIExtractionResult:
         if self.mask is not None:
-            result = BorderRimBase.border_mask(mask=self.mask, voxel_size=self.image.spacing, **self.new_parameters)
+            result = BorderRimBase.border_mask(
+                mask=self.mask, voxel_size=self.image.spacing, **self.new_parameters.dict()
+            )
             return ROIExtractionResult(roi=result, parameters=self.get_segmentation_profile())
         raise SegmentationLimitException("Border Rim needs mask")
+
+
+class MaskDistanceSplitParameters(MaskDistanceSplitBase.__argument_class__):
+    @staticmethod
+    def header():
+        return REQUIRE_MASK_STR
 
 
 class MaskDistanceSplit(RestartableAlgorithm):
@@ -102,10 +127,12 @@ class MaskDistanceSplit(RestartableAlgorithm):
     class in segmentation algorithm interface. It allow user to check how split look with given set of parameters
     """
 
+    __argument_class__ = MaskDistanceSplitParameters
+
     def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> ROIExtractionResult:
         if self.mask is not None:
             result = MaskDistanceSplitBase.split(
-                mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters
+                mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters.dict()
             )
             return ROIExtractionResult(roi=result, parameters=self.get_segmentation_profile())
         raise SegmentationLimitException("Mask Distance Split needs mask")
@@ -114,9 +141,30 @@ class MaskDistanceSplit(RestartableAlgorithm):
     def get_name(cls) -> str:
         return "Mask Distance Splitting"
 
-    @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return ["Need mask"] + MaskDistanceSplitBase.get_fields()
+
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
+class ThresholdBaseAlgorithmParameters(BaseModel):
+    channel: Channel = Channel(0)
+    noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
+    minimum_size: int = Field(8000, title="Minimum size (px)", ge=0, le=10**6)
+    side_connection: bool = Field(
+        False,
+        title="Connect only sides",
+        description="During calculation of connected components includes only side by side connected pixels",
+    )
+
+    @validator("noise_filtering")
+    def _noise_filter_validate(cls, v):  # pylint: disable=R0201
+        if not isinstance(v, dict):
+            return v
+        algorithm = NoiseFilterSelection[v["name"]]
+        if not algorithm.__new_style__ or not algorithm.__argument_class__.__fields__:
+            return v
+        return algorithm.__argument_class__(**REGISTER.migrate_data(class_to_str(algorithm.__argument_class__), {}, v))
+
+
+class ThresholdBaseAlgorithmParametersAnnot(ThresholdBaseAlgorithmParameters):
+    threshold: typing.Any = None
 
 
 class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
@@ -125,28 +173,11 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     Created for reduce code repetition.
     """
 
-    threshold_operator = staticmethod(blank_operator)
+    __argument_class__ = ThresholdBaseAlgorithmParameters
 
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
-            AlgorithmProperty(
-                "noise_filtering",
-                "Filter",
-                next(iter(noise_filtering_dict.keys())),
-                possible_values=noise_filtering_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
-            AlgorithmProperty(
-                "side_connection",
-                "Connect only sides",
-                False,
-                (True, False),
-                help_text="During calculation of connected components includes" " only side by side connected pixels",
-            ),
-        ]
+    new_parameters: ThresholdBaseAlgorithmParametersAnnot
+
+    threshold_operator = staticmethod(blank_operator)
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -182,7 +213,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         :return: algorithm result description
         """
         sizes = np.bincount(roi.flat)
-        annotation = {i: {"voxels": size} for i, size in enumerate(sizes[1:], 1) if size > 0}
+        annotation = {i: {"component": i, "voxels": size} for i, size in enumerate(sizes[1:], 1) if size > 0}
         return ROIExtractionResult(
             roi=roi,
             parameters=self.get_segmentation_profile(),
@@ -199,57 +230,62 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             map(str, self._sizes_array[1 : self.components_num + 1])
         )
 
+    def _lack_of_components(self):
+        res = self.prepare_result(self.threshold_image.astype(np.uint8))
+        info_text = (
+            "Something wrong with chosen threshold. Please check it. "
+            "May be too low or too high. The channel brightness range is "
+            f"{self.cleaned_image.min()}-{self.cleaned_image.max()} "
+            f"and chosen threshold is {self.threshold_info}"
+        )
+        return dataclasses.replace(res, info_text=info_text)
+
     def calculation_run(self, report_fun: typing.Callable[[str, int], typing.Any]) -> ROIExtractionResult:
         """
         main calculation function
 
         :param report_fun: function used to trace progress
         """
+        # TODO Refactor
         self.old_threshold_info = self.threshold_info
         restarted = False
-        if self.channel is None or self.parameters["channel"] != self.new_parameters["channel"]:
-            self.parameters["channel"] = self.new_parameters["channel"]
-            self.channel = self.get_channel(self.new_parameters["channel"])
+        if self.channel is None or self.parameters["channel"] != self.new_parameters.channel:
+            self.parameters["channel"] = self.new_parameters.channel
+            self.channel = self.get_channel(self.new_parameters.channel)
             restarted = True
-        if restarted or self.parameters["noise_filtering"] != self.new_parameters["noise_filtering"]:
-            self.parameters["noise_filtering"] = deepcopy(self.new_parameters["noise_filtering"])
-            noise_filtering_parameters = self.new_parameters["noise_filtering"]
-            self.cleaned_image = noise_filtering_dict[noise_filtering_parameters["name"]].noise_filter(
-                self.channel, self.image.spacing, noise_filtering_parameters["values"]
+        if restarted or self.parameters["noise_filtering"] != self.new_parameters.noise_filtering:
+            self.parameters["noise_filtering"] = deepcopy(self.new_parameters.noise_filtering)
+            noise_filtering_parameters = self.new_parameters.noise_filtering
+            self.cleaned_image = NoiseFilterSelection[noise_filtering_parameters.name].noise_filter(
+                self.channel, self.image.spacing, noise_filtering_parameters.values
             )
             restarted = True
-        if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
+        if restarted or self.new_parameters.threshold != self.parameters["threshold"]:
             if self.parameters["threshold"] is None:
                 restarted = True
-            self.parameters["threshold"] = deepcopy(self.new_parameters["threshold"])
+            self.parameters["threshold"] = deepcopy(self.new_parameters.threshold)
             self.threshold_image = self._threshold(self.cleaned_image)
-            if isinstance(self.threshold_info, (list, tuple)) and (
-                self.old_threshold_info is None or self.old_threshold_info[0] != self.threshold_info[0]
-            ):
-                restarted = True
-            elif self.old_threshold_info != self.threshold_info:
+            if (
+                isinstance(self.threshold_info, (list, tuple))
+                and (self.old_threshold_info is None or self.old_threshold_info[0] != self.threshold_info[0])
+            ) or self.old_threshold_info != self.threshold_info:
                 restarted = True
             if self.threshold_image.max() == 0:
-                res = self.prepare_result(self.threshold_image.astype(np.uint8))
-                info_text = (
-                    "Something wrong with chosen threshold. Please check it. "
-                    "May be too low or too high. The channel brightness range is "
-                    f"{self.cleaned_image.min()}-{self.cleaned_image.max()} "
-                    f"and chosen threshold is {self.threshold_info}"
-                )
-                return dataclasses.replace(res, info_text=info_text)
-        if restarted or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
-            self.parameters["side_connection"] = self.new_parameters["side_connection"]
+                return self._lack_of_components()
+        if restarted or self.new_parameters.side_connection != self.parameters["side_connection"]:
+            self.parameters["side_connection"] = self.new_parameters.side_connection
             connect = SimpleITK.ConnectedComponent(
-                SimpleITK.GetImageFromArray(self.threshold_image), not self.new_parameters["side_connection"]
+                SimpleITK.GetImageFromArray(self.threshold_image), not self.new_parameters.side_connection
             )
             self.segmentation = SimpleITK.GetArrayFromImage(SimpleITK.RelabelComponent(connect))
             self._sizes_array = np.bincount(self.segmentation.flat)
+            if len(self._sizes_array) < 2:
+                return self._lack_of_components()
             restarted = True
-        if restarted or self.new_parameters["minimum_size"] != self.parameters["minimum_size"]:
-            self.parameters["minimum_size"] = self.new_parameters["minimum_size"]
-            minimum_size = self.new_parameters["minimum_size"]
-            ind = bisect(self._sizes_array[1:], minimum_size, lambda x, y: x > y)
+        if restarted or self.new_parameters.minimum_size != self.parameters["minimum_size"]:
+            self.parameters["minimum_size"] = self.new_parameters.minimum_size
+            minimum_size = self.new_parameters.minimum_size
+            ind = bisect(self._sizes_array[1:], minimum_size, operator.gt)
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
@@ -264,37 +300,28 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     def clean(self):
         super().clean()
-        self.parameters = defaultdict(lambda: None)
+        self.parameters: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
         self.cleaned_image = None
         self.mask = None
 
     def _threshold(self, image, thr=None):
         if thr is None:
-            thr: BaseThreshold = threshold_dict[self.new_parameters["threshold"]["name"]]
+            thr: BaseThreshold = ThresholdSelection[self.new_parameters.threshold.name]
         mask, thr_val = thr.calculate_mask(
-            image, self.mask, self.new_parameters["threshold"]["values"], self.threshold_operator
+            image, self.mask, self.new_parameters.threshold.values, self.threshold_operator
         )
         self.threshold_info = thr_val
         return mask
 
 
+class OneThresholdAlgorithmParameters(ThresholdBaseAlgorithmParameters):
+    threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), position=2)
+
+
 class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
     """Base class for PartSeg analysis algorithm which apply one threshold. Created for reduce code repetition."""
 
-    @classmethod
-    def get_fields(cls):
-        fields = super().get_fields()
-        fields.insert(
-            2,
-            AlgorithmProperty(
-                "threshold",
-                "Threshold",
-                next(iter(threshold_dict.keys())),
-                possible_values=threshold_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-        )
-        return fields
+    __argument_class__ = OneThresholdAlgorithmParameters
 
 
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
@@ -325,6 +352,41 @@ class UpperThresholdAlgorithm(OneThresholdAlgorithm):
         return "Upper threshold"
 
 
+class TwoThreshold(BaseModel):
+    # keep for backward compatibility
+    lower_threshold: float = Field(1000, ge=0, le=10**6)
+    upper_threshold: float = Field(10000, ge=0, le=10**6)
+
+
+def _to_two_thresholds(dkt):
+    dkt["threshold"] = TwoThreshold(
+        lower_threshold=dkt.pop("lower_threshold"), upper_threshold=dkt.pop("upper_threshold")
+    )
+    return dkt
+
+
+def _to_double_threshold(dkt):
+    dkt["threshold"] = DoubleThresholdSelection(
+        name=DoubleThreshold.get_name(),
+        values=DoubleThresholdParams(
+            core_threshold=ThresholdSelection(
+                name=ManualThreshold.get_name(),
+                values=SingleThresholdParams(threshold=dkt["threshold"].lower_threshold),
+            ),
+            base_threshold=ThresholdSelection(
+                name=ManualThreshold.get_name(),
+                values=SingleThresholdParams(threshold=dkt["threshold"].upper_threshold),
+            ),
+        ),
+    )
+    return dkt
+
+
+@register_class(version="0.0.2", migrations=[("0.0.1", _to_two_thresholds), ("0.0.2", _to_double_threshold)])
+class RangeThresholdAlgorithmParameters(ThresholdBaseAlgorithmParameters):
+    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), position=2)
+
+
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
     """
     Implementation of upper threshold algorithm.
@@ -332,33 +394,15 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
     The area of interest are voxels from filtered channel with value between the lower and upper threshold
     """
 
-    def set_parameters(self, **kwargs):
-        super().set_parameters(**kwargs)
-        self.new_parameters["threshold"] = (
-            self.new_parameters["lower_threshold"],
-            self.new_parameters["upper_threshold"],
-        )
-
-    def get_segmentation_profile(self) -> ROIExtractionProfile:
-        resp = super().get_segmentation_profile()
-        low, upp = resp.values["threshold"]
-        del resp.values["threshold"]
-        resp.values["lower_threshold"] = low
-        resp.values["upper_threshold"] = upp
-        return resp
+    __argument_class__ = RangeThresholdAlgorithmParameters
 
     def _threshold(self, image, thr=None):
-        self.threshold_info = self.new_parameters["threshold"]
-        return (
-            (image > self.new_parameters["threshold"][0]) * np.array(image < self.new_parameters["threshold"][1])
-        ).astype(np.uint8)
-
-    @classmethod
-    def get_fields(cls):
-        fields = super().get_fields()
-        fields.insert(2, AlgorithmProperty("lower_threshold", "Lower threshold", 10000, (0, 10 ** 6), 100))
-        fields.insert(3, AlgorithmProperty("upper_threshold", "Upper threshold", 10000, (0, 10 ** 6), 100))
-        return fields
+        if thr is None:
+            thr: BaseThreshold = DoubleThresholdSelection[self.new_parameters.threshold.name]
+        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters.threshold.values, operator.ge)
+        mask[mask == 2] = 0
+        self.threshold_info = thr_val
+        return mask
 
     @classmethod
     def get_name(cls):
@@ -372,47 +416,25 @@ class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
 
     def _threshold(self, image, thr=None):
         if thr is None:
-            thr: BaseThreshold = double_threshold_dict[self.new_parameters["threshold"]["name"]]
+            thr: BaseThreshold = DoubleThresholdSelection[self.new_parameters.threshold.name]
         mask, thr_val = thr.calculate_mask(
-            image, self.mask, self.new_parameters["threshold"]["values"], self.threshold_operator
+            image, self.mask, self.new_parameters.threshold.values, self.threshold_operator
         )
         self.threshold_info = thr_val
         self.sprawl_area = (mask >= 1).astype(np.uint8)
         return (mask == 2).astype(np.uint8)
 
 
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("sprawl_type", "flow_type"))])
+class BaseThresholdFlowAlgorithmParameters(ThresholdBaseAlgorithmParameters):
+    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), position=2)
+    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default(), position=3)
+    minimum_size: int = Field(8000, title="Minimum core\nsize (px)", ge=0, le=10**6)
+
+
 class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
-    @classmethod
-    def get_fields(cls):
-        fields = super().get_fields()
-        fields.insert(
-            2,
-            AlgorithmProperty(
-                "threshold",
-                "Threshold",
-                next(iter(double_threshold_dict.keys())),
-                possible_values=double_threshold_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-        )
-        fields.insert(
-            3,
-            AlgorithmProperty(
-                "sprawl_type",
-                "Flow type",
-                next(iter(flow_dict.keys())),
-                possible_values=flow_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-        )
-        for i, el in enumerate(fields):
-            if el.name == "minimum_size":
-                index = i
-                break
-        else:
-            raise ValueError("No minimum size field")
-        fields[index] = AlgorithmProperty("minimum_size", "Minimum core\nsize (px)", 8000, (0, 10 ** 6), 1000)
-        return fields
+    __argument_class__ = BaseThresholdFlowAlgorithmParameters
+    new_parameters: BaseThresholdFlowAlgorithmParameters
 
     def get_info_text(self):
         return (
@@ -455,22 +477,22 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
         if (
             restarted
             or self.old_threshold_info[1] != self.threshold_info[1]
-            or self.new_parameters["sprawl_type"] != self.parameters["sprawl_type"]
+            or self.new_parameters.flow_type != self.parameters["flow_type"]
         ):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
                 return self.prepare_result(self.finally_segment)
-            path_sprawl: BaseWatershed = flow_dict[self.new_parameters["sprawl_type"]["name"]]
-            self.parameters["sprawl_type"] = self.new_parameters["sprawl_type"]
+            path_sprawl: BaseWatershed = FlowMethodSelection[self.new_parameters.flow_type.name]
+            self.parameters["flow_type"] = self.new_parameters.flow_type
             new_segment = path_sprawl.sprawl(
                 self.sprawl_area,
                 np.copy(finally_segment),  # TODO add tests for discover this problem
                 self.channel,
                 self.components_num,
                 self.image.spacing,
-                self.new_parameters["side_connection"],
+                self.new_parameters.side_connection,
                 self.threshold_operator,
-                self.new_parameters["sprawl_type"]["values"],
+                self.new_parameters.flow_type.values,
                 self.threshold_info[1],
                 self.threshold_info[0],
             )
@@ -480,7 +502,8 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 parameters=self.get_segmentation_profile(),
                 additional_layers=self.get_additional_layers(full_segmentation=self.sprawl_area),
                 roi_annotation={
-                    i: {"core voxels": self._sizes_array[i], "voxels": v} for i, v in enumerate(self.final_sizes[1:], 1)
+                    i: {"component": i, "core voxels": self._sizes_array[i], "voxels": v}
+                    for i, v in enumerate(self.final_sizes[1:], 1)
                 },
                 alternative_representation={"core_objects": finally_segment},
             )
@@ -502,27 +525,22 @@ class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
         return "Upper threshold with watershed"
 
 
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("noise_removal", "noise_filtering", optional=True))])
+class OtsuSegmentParameters(BaseModel):
+    channel: Channel = 0
+    noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Noise Removal")
+    components: int = Field(2, title="Number of Components", ge=0, lt=100)
+    valley: bool = Field(True, title="Valley emphasis")
+    hist_num: int = Field(128, title="Number of histogram bins", ge=8, le=2**16)
+
+
 class OtsuSegment(RestartableAlgorithm):
+    __argument_class__ = OtsuSegmentParameters
+    new_parameters: OtsuSegmentParameters
+
     @classmethod
     def get_name(cls):
         return "Multiple Otsu"
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
-            AlgorithmProperty(
-                "noise_filtering",
-                "Noise Removal",
-                next(iter(noise_filtering_dict.keys())),
-                possible_values=noise_filtering_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty("components", "Number of Components", 2, (0, 100)),
-            # AlgorithmProperty("mask", "Use mask in calculation", True),
-            AlgorithmProperty("valley", "Valley emphasis", True),
-            AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16)),
-        ]
 
     def __init__(self):
         super().__init__()
@@ -530,23 +548,24 @@ class OtsuSegment(RestartableAlgorithm):
         self.threshold_info = []
 
     def calculation_run(self, report_fun):
-        channel = self.get_channel(self.new_parameters["channel"])
-        noise_filtering_parameters = self.new_parameters["noise_filtering"]
-        cleaned_image = noise_filtering_dict[noise_filtering_parameters["name"]].noise_filter(
-            channel, self.image.spacing, noise_filtering_parameters["values"]
+        channel = self.get_channel(self.new_parameters.channel)
+        noise_filtering_parameters = self.new_parameters.noise_filtering
+        cleaned_image = NoiseFilterSelection[noise_filtering_parameters.name].noise_filter(
+            channel, self.image.spacing, noise_filtering_parameters.values
         )
         cleaned_image_sitk = SimpleITK.GetImageFromArray(cleaned_image)
         res = SimpleITK.OtsuMultipleThresholds(
             cleaned_image_sitk,
-            self.new_parameters["components"],
+            self.new_parameters.components,
             0,
-            self.new_parameters["hist_num"],
-            self.new_parameters["valley"],
+            self.new_parameters.hist_num,
+            self.new_parameters.valley,
         )
         res = SimpleITK.GetArrayFromImage(res)
         self._sizes_array = np.bincount(res.flat)[1:]
         self.threshold_info = []
-        for i in range(1, self.new_parameters["components"] + 1):
+        annotations = {}
+        for i in range(1, self.new_parameters.components + 1):
             val = cleaned_image[res == i]
             if val.size:
                 self.threshold_info.append(np.min(val))
@@ -554,10 +573,15 @@ class OtsuSegment(RestartableAlgorithm):
                 self.threshold_info.append(self.threshold_info[-1])
             else:
                 self.threshold_info.append(0)
+            annotations[i] = {"lower threshold": self.threshold_info[-1]}
+            if i > 1:
+                annotations[i - 1]["upper threshold"] = self.threshold_info[-1]
+        annotations[self.new_parameters.components]["upper threshold"] = np.max(cleaned_image)
         return ROIExtractionResult(
             roi=res,
             parameters=self.get_segmentation_profile(),
             additional_layers={"denoised_image": AdditionalLayerDescription(data=cleaned_image, layer_type="image")},
+            roi_annotation=annotations,
         )
 
     def get_info_text(self):
@@ -569,26 +593,15 @@ class OtsuSegment(RestartableAlgorithm):
         )
 
 
+class BaseMultiScaleOpeningParameters(TwoLevelThresholdBaseAlgorithm.__argument_class__):
+    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default())
+    mu_mid: MuMidSelection = Field(MuMidSelection.get_default(), title="Mu mid value")
+    step_limits: int = Field(100, title="Limits of Steps", ge=1, le=1000)
+
+
 class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no cover
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "threshold",
-                "Threshold",
-                next(iter(double_threshold_dict.keys())),
-                possible_values=double_threshold_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty(
-                "mu_mid",
-                "Mu mid value",
-                next(iter(mu_mid_dict.keys())),
-                possible_values=mu_mid_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), value_type=int),
-        ] + super().get_fields()
+    __argument_class__ = BaseMultiScaleOpeningParameters
+    new_parameters: BaseMultiScaleOpeningParameters
 
     def get_info_text(self):
         return (
@@ -605,7 +618,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
         super().__init__()
         self.finally_segment = None
         self.final_sizes = []
-        self.threshold_info = [None, None]
+        self.threshold_info = [float("nan"), float("nan")]
         self.steps = 0
         self.mso = PyMSO()
         self.mso.set_use_background(True)
@@ -618,13 +631,11 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
 
     def set_image(self, image):
         super().set_image(image)
-        self.threshold_info = [None, None]
+        self.threshold_info = [float("nan"), float("nan")]
 
     def calculation_run(self, report_fun) -> ROIExtractionResult:
-        if self.new_parameters["side_connection"] != self.parameters["side_connection"]:
-            neigh, dist = calculate_distances_array(
-                self.image.spacing, get_neigh(self.new_parameters["side_connection"])
-            )
+        if self.new_parameters.side_connection != self.parameters["side_connection"]:
+            neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters.side_connection))
             self.mso.set_neighbourhood(neigh, dist)
         segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
@@ -650,13 +661,13 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
         if (
             restarted
             or self.old_threshold_info[1] != self.threshold_info[1]
-            or self.new_parameters["mu_mid"] != self.parameters["mu_mid"]
+            or self.new_parameters.mu_mid != self.parameters["mu_mid"]
         ):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
                 return self.prepare_result(self.finally_segment)
-            mu_calc: BaseMuMid = mu_mid_dict[self.new_parameters["mu_mid"]["name"]]
-            self.parameters["mu_mid"] = self.new_parameters["mu_mid"]
+            mu_calc: BaseMuMid = MuMidSelection[self.new_parameters.mu_mid.name]
+            self.parameters["mu_mid"] = self.new_parameters.mu_mid
             sprawl_area = (self.sprawl_area > 0).astype(np.uint8)
             sprawl_area[finally_segment > 0] = 0
             mid_val = mu_calc.value(
@@ -664,16 +675,16 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
                 self.channel,
                 self.threshold_info[0],
                 self.threshold_info[1],
-                self.new_parameters["mu_mid"]["values"],
+                self.new_parameters.mu_mid.values,
             )
             mu_array = calculate_mu_mid(self.channel, self.threshold_info[0], mid_val, self.threshold_info[1])
             self.mso.set_mu_array(mu_array)
             restarted = True
 
-        if restarted or self.new_parameters["step_limits"] != self.parameters["step_limits"]:
-            self.parameters["step_limits"] = self.new_parameters["step_limits"]
+        if restarted or self.new_parameters.step_limits != self.parameters["step_limits"]:
+            self.parameters["step_limits"] = self.new_parameters.step_limits
             count_steps_factor = 20 if self.image.is_2d else 3
-            self.mso.run_MSO(self.new_parameters["step_limits"], count_steps_factor)
+            self.mso.run_MSO(self.new_parameters.step_limits, count_steps_factor)
             self.steps = self.mso.steps_done()
             new_segment = self.mso.get_result_catted()
             new_segment[new_segment > 0] -= 1
@@ -702,8 +713,7 @@ final_algorithm_list = [
     UpperThresholdAlgorithm,
     RangeThresholdAlgorithm,
     LowerThresholdFlowAlgorithm,
-    UpperThresholdFlowAlgorithm,  # LowerThresholdMultiScaleOpening,
-    # UpperThresholdMultiScaleOpening,
+    UpperThresholdFlowAlgorithm,
     OtsuSegment,
     BorderRim,
     MaskDistanceSplit,

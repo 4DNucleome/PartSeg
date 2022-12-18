@@ -1,21 +1,13 @@
-import sys
-import warnings
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Protocol, Tuple, Union, runtime_checkable
 
 import numpy as np
 
-from PartSegCore.class_generator import BaseSerializableClass
 from PartSegCore.mask_create import MaskProperty, calculate_mask
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.utils import numpy_repr
+from PartSegCore.utils import BaseModel, numpy_repr
 from PartSegImage import Image
-
-if sys.version_info.minor < 8:
-    from typing_extensions import Protocol, runtime_checkable
-else:
-    from typing import Protocol, runtime_checkable
 
 
 @dataclass
@@ -39,11 +31,14 @@ class AdditionalLayerDescription:
         )
 
 
-class HistoryElement(BaseSerializableClass):
+class HistoryElement(BaseModel):
     roi_extraction_parameters: Dict[str, Any]
     annotations: Optional[Dict[int, Any]]
     mask_property: MaskProperty
     arrays: BytesIO
+
+    class Config:
+        arbitrary_types_allowed = True
 
     @classmethod
     def create(
@@ -103,11 +98,6 @@ class ProjectInfoBase(Protocol):
     history: List[HistoryElement] = []
     errors: str = ""
     points: Optional[np.ndarray] = None
-
-    @property
-    def roi(self):
-        warnings.warn("roi is deprecated", DeprecationWarning, 2)
-        return self.roi_info.roi
 
     def get_raw_copy(self):
         """

@@ -2,9 +2,11 @@
 
 import itertools
 import os
+import sys
 from functools import partial, reduce
 from math import isclose, pi
 from operator import eq, lt
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -15,12 +17,11 @@ from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
     HARALIC_FEATURES,
-    INTENSITY_CORRELATION,
-    MANDERS_COEFIICIENT,
     MEASUREMENT_DICT,
     ColocalizationMeasurement,
     ComponentsInfo,
     ComponentsNumber,
+    CorrelationEnum,
     Diameter,
     DistanceMaskROI,
     DistancePoint,
@@ -52,18 +53,19 @@ from PartSegCore.autofit import density_mass_center
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.universal_const import UNIT_SCALE, Units
-from PartSegImage import Image
+from PartSegCore.utils import BaseModel
+from PartSegImage import Channel, Image
 
 
 def get_cube_array():
-    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
+    data = np.zeros((1, 50, 100, 100), dtype=np.uint16)
     data[0, 10:40, 20:80, 20:80] = 50
     data[0, 15:35, 30:70, 30:70] = 70
     return data
 
 
 def get_cube_image():
-    return Image(get_cube_array(), (100, 50, 50), "")
+    return Image(get_cube_array(), (100, 50, 50), "", axes_order="TZYX")
 
 
 @pytest.fixture(name="cube_image")
@@ -71,18 +73,8 @@ def cube_image_fixture():
     return get_cube_image()
 
 
-@pytest.fixture
-def cube_mask_40(cube_image):
-    return cube_image.get_channel(0)[0] > 40
-
-
-@pytest.fixture
-def cube_mask_60(cube_image):
-    return cube_image.get_channel(0)[0] > 60
-
-
 def get_square_image():
-    return Image(get_cube_array()[:, 25:26], (100, 50, 50), "")
+    return Image(get_cube_array()[:, 25:26], (100, 50, 50), "", axes_order="TZYX")
 
 
 @pytest.fixture(name="square_image")
@@ -91,20 +83,81 @@ def square_image_fixture():
 
 
 def get_two_components_array():
-    data = np.zeros((1, 20, 30, 60, 1), dtype=np.uint16)
+    data = np.zeros((1, 20, 30, 60), dtype=np.uint16)
     data[0, 3:-3, 2:-2, 2:19] = 60
     data[0, 3:-3, 2:-2, 22:-2] = 50
     return data
 
 
 def get_two_components_image():
-    return Image(get_two_components_array(), (100, 50, 50), "")
+    return Image(get_two_components_array(), (100, 50, 50), "", axes_order="TZYX")
 
 
 def get_two_component_mask():
     mask = np.zeros(get_two_components_image().get_channel(0).shape[1:], dtype=np.uint8)
     mask[3:-3, 2:-2, 2:-2] = 1
     return mask
+
+
+class TestLeaf:
+    def test_channel_calc(self, monkeypatch):
+        class SampleModel(BaseModel):
+            value: int = 1
+            ch: Channel = 1
+
+        mock = MagicMock()
+        mock.__new_style__ = True
+        mock.__argument_class__ = BaseModel
+        mock.get_fields = MagicMock(return_value=[])
+        leaf = Leaf(name="aa")
+        assert leaf.get_channel_num({"aa": mock}) == set()
+        leaf = Leaf(name="aa", channel=Channel(1))
+        assert leaf.get_channel_num({"aa": mock}) == {Channel(1)}
+
+        mock.__argument_class__ = SampleModel
+        leaf = Leaf(name="aa", parameters={"value": 15, "ch": 3})
+        assert leaf.get_channel_num({"aa": mock}) == {Channel(3)}
+        leaf = Leaf(name="aa", parameters={"value": 15, "ch": 3}, channel=Channel(1))
+        assert leaf.get_channel_num({"aa": mock}) == {Channel(1), Channel(3)}
+
+    def test_is_per_component(self):
+        assert Leaf(name="aa", per_component=PerComponent.Yes).is_per_component()
+        assert Leaf(name="aa", per_component=PerComponent.Per_Mask_component).is_per_component()
+        assert not Leaf(name="aa", per_component=PerComponent.No).is_per_component()
+        assert not Leaf(name="aa", per_component=PerComponent.Mean).is_per_component()
+
+    def test_pretty_print(self, monkeypatch):
+        mock = MagicMock()
+        mock.get_fields = MagicMock(return_value=[])
+        leaf = Leaf(name="aa")
+        text = leaf.pretty_print({"aa": mock})
+        assert "ROI" not in text
+        assert "Mask" not in text
+        assert "per component" not in text
+        assert "mean component" not in text
+        assert "to the power" not in text
+        assert "per component" in Leaf(name="aa", per_component=PerComponent.Yes).pretty_print({"aa": mock})
+        assert "mean component" in Leaf(name="aa", per_component=PerComponent.Mean).pretty_print({"aa": mock})
+        assert "to the power" not in Leaf(name="aa", power=1).pretty_print({"aa": mock})
+        assert "to the power 2" in Leaf(name="aa", power=2).pretty_print({"aa": mock})
+        assert "per mask component" in Leaf(name="aa", per_component=PerComponent.Per_Mask_component).pretty_print(
+            {"aa": mock}
+        )
+        monkeypatch.setattr(mock, "__module__", "PartSegCore.test")
+        assert Leaf(name="aa").pretty_print({"aa": mock})[0] != "["
+        monkeypatch.setattr(mock, "__module__", "PartSegPlugin.submodule")
+        assert Leaf(name="aa").pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
+        monkeypatch.setattr(sys, "frozen", True, raising=False)
+        monkeypatch.setattr(mock, "__module__", "plugins.PartSegPlugin.submodule")
+        assert Leaf(name="aa").pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
+
+    def test_per_mask_component_create(self):
+        with pytest.raises(ValueError):
+            Leaf(name="aa", per_component=PerComponent.Per_Mask_component, area=AreaType.Mask)
+
+        leaf = Leaf(name="aa")
+        with pytest.raises(ValueError):
+            leaf.replace_(per_component=PerComponent.Per_Mask_component, area=AreaType.Mask)
 
 
 class TestDiameter:
@@ -183,9 +236,11 @@ class TestPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60 * 60 * 50 + 40 * 40 * 20
-        assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40 * 40 * 70
-        assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60 * 60 - 40 * 40) * 50
+        assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60**2 * 50 + 40 * 40 * 20
+
+        assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40**2 * 70
+
+        assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60**2 - 40**2) * 50
 
     def test_empty(self):
         image = get_cube_image()
@@ -227,11 +282,11 @@ class TestVolume:
     def test_scale(self):
         image = get_cube_image()
         mask1 = image.get_channel(0) > 40
-        assert Volume.calculate_property(mask1, image.spacing, 2) == 2 ** 3 * (100 * 30) * (50 * 60) * (50 * 60)
+        assert Volume.calculate_property(mask1, image.spacing, 2) == 2**3 * (100 * 30) * (50 * 60) * (50 * 60)
 
         image = get_square_image()
         mask1 = image.get_channel(0) > 40
-        assert Volume.calculate_property(mask1, image.spacing, 2) == 2 ** 2 * (50 * 60) * (50 * 60)
+        assert Volume.calculate_property(mask1, image.spacing, 2) == 2**2 * (50 * 60) * (50 * 60)
 
     def test_empty(self):
         image = get_cube_image()
@@ -266,7 +321,7 @@ class TestVoxels:
         mask3 = mask1 * ~mask2
         assert Voxels.calculate_property(mask1) == 60 * 60
         assert Voxels.calculate_property(mask2) == 40 * 40
-        assert Voxels.calculate_property(mask3) == 60 * 60 - 40 * 40
+        assert Voxels.calculate_property(mask3) == 60**2 - 40**2
 
     def test_empty(self):
         image = get_cube_image()
@@ -282,7 +337,7 @@ class TestComponentsNumber:
         leaf = ComponentsNumber.get_starting_leaf()
         assert isinstance(leaf, Leaf)
         assert leaf.area is None
-        assert leaf.per_component is PerComponent.No
+        assert leaf.per_component is None
         assert leaf.channel is None
 
     def test_cube(self):
@@ -413,11 +468,11 @@ class TestMoment:
         image_array = np.zeros((10, 16, 16))
         image_array[5, 8, 8] = 1
         image_array[5, 10, 8] = 3
-        assert Moment.calculate_property(mask, image_array, spacing) == 9 ** 2 + 3 ** 2 * 3
+        assert Moment.calculate_property(mask, image_array, spacing) == 9**2 + 3**2 * 3
         image_array = np.zeros((10, 16, 16))
         image_array[5, 6, 8] = 3
         image_array[5, 10, 8] = 3
-        assert Moment.calculate_property(mask, image_array, spacing) == 3 * 2 * 12 ** 2
+        assert Moment.calculate_property(mask, image_array, spacing) == 3 * 2 * 12**2
 
     def test_density_mass_center(self):
         spacing = (10, 6, 6)
@@ -546,7 +601,7 @@ class TestSurface:
     def test_scale(self):
         image = get_cube_image()
         mask1 = image.get_channel(0)[0] > 40
-        assert Surface.calculate_property(mask1, image.spacing, 3) == 3 ** 2 * 6 * (60 * 50) ** 2
+        assert Surface.calculate_property(mask1, image.spacing, 3) == 3**2 * 6 * (60 * 50) ** 2
 
         image = get_square_image()
         mask1 = image.get_channel(0)[0] > 40
@@ -588,7 +643,7 @@ class TestRimVolume:
                 distance=10 * 50,
                 units=Units.nm,
             )
-            == np.count_nonzero(mask3) * result_scale * scale ** exp
+            == np.count_nonzero(mask3) * result_scale * scale**exp
         )
         assert (
             RimVolume.calculate_property(
@@ -740,21 +795,21 @@ class TestSphericity:
         mask1_volume = np.count_nonzero(mask1) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
-            mask1_volume / (4 / 3 * pi * mask1_radius ** 3),
+            mask1_volume / (4 / 3 * pi * mask1_radius**3),
         )
 
         mask2_radius = np.sqrt(2 * (50 * 39) ** 2 + (100 * 19) ** 2) / 2
         mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
-            mask2_volume / (4 / 3 * pi * mask2_radius ** 3),
+            mask2_volume / (4 / 3 * pi * mask2_radius**3),
         )
 
         mask3_radius = mask1_radius
         mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
-            mask3_volume / (4 / 3 * pi * mask3_radius ** 3),
+            mask3_volume / (4 / 3 * pi * mask3_radius**3),
         )
 
     def test_square(self):
@@ -766,21 +821,21 @@ class TestSphericity:
         mask1_volume = np.count_nonzero(mask1) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
-            mask1_volume / (pi * mask1_radius ** 2),
+            mask1_volume / (pi * mask1_radius**2),
         )
 
         mask2_radius = np.sqrt(2 * (50 * 39) ** 2) / 2
         mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
-            mask2_volume / (pi * mask2_radius ** 2),
+            mask2_volume / (pi * mask2_radius**2),
         )
 
         mask3_radius = mask1_radius
         mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(
             Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
-            mask3_volume / (pi * mask3_radius ** 2),
+            mask3_volume / (pi * mask3_radius**2),
         )
 
 
@@ -817,7 +872,7 @@ class TestDistanceMaskSegmentation:
                 voxel_size=cube_image.voxel_size,
                 result_scalar=1,
                 distance_from_mask=d_mask,
-                distance_to_segmentation=d_seg,
+                distance_to_roi=d_seg,
             )
             == 0
         )
@@ -842,7 +897,7 @@ class TestDistanceMaskSegmentation:
                 voxel_size=cube_image.voxel_size,
                 result_scalar=1,
                 distance_from_mask=d_mask,
-                distance_to_segmentation=d_seg,
+                distance_to_roi=d_seg,
             )
             == dist
         )
@@ -855,7 +910,7 @@ class TestDistanceMaskSegmentation:
     )
     def test_two_components_center(self, comp1, comp2, two_comp_img, area_gen):
         channel = two_comp_img.get_channel(0)
-        mask = np.zeros(two_comp_img.shape[1:-1], dtype=np.uint8)
+        mask = np.zeros(two_comp_img.shape[1:], dtype=np.uint8)
         mask[2:-2, 2:-2, 2:-2] = 1
         area_array = area_gen(two_comp_img.get_channel(0)[0])
         if comp1 == DistancePoint.Geometrical_center:
@@ -874,13 +929,13 @@ class TestDistanceMaskSegmentation:
                 voxel_size=two_comp_img.voxel_size,
                 result_scalar=1,
                 distance_from_mask=comp1,
-                distance_to_segmentation=comp2,
+                distance_to_roi=comp2,
             ),
             np.sqrt(np.sum(((mask_mid - area_mid) * (100, 50, 50)) ** 2)),
         )
 
     def test_two_components_border(self, two_comp_img):
-        mask = np.zeros(two_comp_img.shape[1:-1], dtype=np.uint8)
+        mask = np.zeros(two_comp_img.shape[1:], dtype=np.uint8)
         mask[2:-2, 2:-2, 2:-2] = 1
 
         assert (
@@ -1236,7 +1291,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 40 * 40) * result_scale
+            == (60**2 - 40**2) * result_scale
         )
 
         assert (
@@ -1249,7 +1304,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 30 * 30) * result_scale
+            == (60 * 60 - 30**2) * result_scale
         )
 
         assert (
@@ -1309,7 +1364,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 44 * 44) * result_scale
+            == (60**2 - 44 * 44) * result_scale
         )
 
         assert (
@@ -1409,10 +1464,10 @@ class TestSplitOnPartPixelBrightnessSum:
         ],
     )
     def test_cube_equal_volume(self, nr, sum_val, diff_array):
-        data = np.zeros((1, 60, 100, 100, 1), dtype=np.uint16)
+        data = np.zeros((1, 60, 100, 100), dtype=np.uint16)
         data[0, 10:50, 20:80, 20:80] = 50
         data[0, 15:45, 30:70, 30:70] = 70
-        image = Image(data, (100, 50, 50), "")
+        image = Image(data, (100, 50, 50), "", axes_order="TZYX")
         image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
@@ -1434,10 +1489,10 @@ class TestSplitOnPartPixelBrightnessSum:
         "nr, sum_val, diff_array, equal_volume",
         [
             (3, (60 * 60 - 40 * 40) * 50, False, False),
-            (2, (60 * 60 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
+            (2, (60**2 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
             (3, 0, True, False),
-            (2, (40 * 40 - 30 * 30) * 70, True, False),
-            (3, (60 * 60 - 50 * 50) * 50, False, True),
+            (2, (40**2 - 30**2) * 70, True, False),
+            (3, (60 * 60 - 50**2) * 50, False, True),
             (2, (60 * 60 - 44 * 44) * 50, False, True),
             (3, 0, True, True),
             (2, 0, True, True),
@@ -1472,18 +1527,21 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask without segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
+                name="Mask without segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1502,18 +1560,21 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask without segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
+                name="Mask without segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1532,21 +1593,25 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                name="Mask PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Mask without segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(
+                name="Mask without segmentation PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
                     area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1564,18 +1629,23 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Surface", Surface.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Surface",
+                calculation_tree=Surface.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Segmentation Surface",
-                Surface.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Surface",
+                calculation_tree=Surface.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask without segmentation Surface",
-                Surface.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
+                name="Mask without segmentation Surface",
+                calculation_tree=Surface.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1593,58 +1663,71 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask without segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                "Mask PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                "Segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                "Mask without segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(
+                name="Mask without segmentation Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(
                     area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                 ),
             ),
             MeasurementEntry(
-                "Mask Volume/PixelBrightnessSum",
-                Node(
-                    Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
-                    "/",
-                    PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                name="Mask PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No
                 ),
             ),
             MeasurementEntry(
-                "Segmentation Volume/PixelBrightnessSum",
-                Node(
-                    Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
-                    "/",
-                    PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Segmentation PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
                 ),
             ),
             MeasurementEntry(
-                "Mask without segmentation Volume/PixelBrightnessSum",
-                Node(
-                    Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
-                    "/",
-                    PixelBrightnessSum.get_starting_leaf().replace_(
+                name="Mask without segmentation PixelBrightnessSum",
+                calculation_tree=PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                name="Mask Volume/PixelBrightnessSum",
+                calculation_tree=Node(
+                    left=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                    op="/",
+                    right=PixelBrightnessSum.get_starting_leaf().replace_(
+                        area=AreaType.Mask, per_component=PerComponent.No
+                    ),
+                ),
+            ),
+            MeasurementEntry(
+                name="Segmentation Volume/PixelBrightnessSum",
+                calculation_tree=Node(
+                    left=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                    op="/",
+                    right=PixelBrightnessSum.get_starting_leaf().replace_(
+                        area=AreaType.ROI, per_component=PerComponent.No
+                    ),
+                ),
+            ),
+            MeasurementEntry(
+                name="Mask without segmentation Volume/PixelBrightnessSum",
+                calculation_tree=Node(
+                    left=Volume.get_starting_leaf().replace_(
+                        area=AreaType.Mask_without_ROI, per_component=PerComponent.No
+                    ),
+                    op="/",
+                    right=PixelBrightnessSum.get_starting_leaf().replace_(
                         area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                     ),
                 ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1664,26 +1747,33 @@ class TestStatisticProfile:
 
         statistics = [
             MeasurementEntry(
-                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+                name="Mask Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Mask Volume power 2",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No, power=2),
-            ),
-            MeasurementEntry(
-                "Mask Volume 2",
-                Node(
-                    Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No, power=2),
-                    "/",
-                    Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                name="Mask Volume power 2",
+                calculation_tree=Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No, power=2
                 ),
             ),
             MeasurementEntry(
-                "Mask Volume power -1",
-                Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No, power=-1),
+                name="Mask Volume 2",
+                calculation_tree=Node(
+                    left=Volume.get_starting_leaf().replace_(
+                        area=AreaType.Mask, per_component=PerComponent.No, power=2
+                    ),
+                    op="/",
+                    right=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                ),
+            ),
+            MeasurementEntry(
+                name="Mask Volume power -1",
+                calculation_tree=Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask, per_component=PerComponent.No, power=-1
+                ),
             ),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1703,49 +1793,64 @@ class TestStatisticProfile:
         segmentation[image.get_channel(0) == 60] = 2
         statistics = [
             MeasurementEntry(
-                "Volume", Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No)
+                name="Volume",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
-                "Volume per component",
-                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="Volume per component",
+                calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
             MeasurementEntry(
-                "Diameter",
-                Diameter.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Diameter",
+                calculation_tree=Diameter.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Diameter per component",
-                Diameter.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="Diameter per component",
+                calculation_tree=Diameter.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.Yes
+                ),
             ),
             MeasurementEntry(
-                "MaximumPixelBrightness",
-                MaximumPixelBrightness.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="MaximumPixelBrightness",
+                calculation_tree=MaximumPixelBrightness.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "MaximumPixelBrightness per component",
-                MaximumPixelBrightness.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="MaximumPixelBrightness per component",
+                calculation_tree=MaximumPixelBrightness.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.Yes
+                ),
             ),
             MeasurementEntry(
-                "Sphericity",
-                Sphericity.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="Sphericity",
+                calculation_tree=Sphericity.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "Sphericity per component",
-                Sphericity.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
+                name="Sphericity per component",
+                calculation_tree=Sphericity.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.Yes
+                ),
             ),
             MeasurementEntry(
-                "LongestMainAxisLength",
-                FirstPrincipalAxisLength.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                name="LongestMainAxisLength",
+                calculation_tree=FirstPrincipalAxisLength.get_starting_leaf().replace_(
+                    area=AreaType.ROI, per_component=PerComponent.No
+                ),
             ),
             MeasurementEntry(
-                "LongestMainAxisLength per component",
-                FirstPrincipalAxisLength.get_starting_leaf().replace_(
+                name="LongestMainAxisLength per component",
+                calculation_tree=FirstPrincipalAxisLength.get_starting_leaf().replace_(
                     area=AreaType.ROI, per_component=PerComponent.Yes
                 ),
             ),
         ]
 
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1765,8 +1870,8 @@ class TestStatisticProfile:
             ),
         ]
         assert result["LongestMainAxisLength"][0] == 55 * 50 * UNIT_SCALE[Units.nm.value]
-        assert result["LongestMainAxisLength per component"][0][0] == 35 * 50 * UNIT_SCALE[Units.nm.value]
-        assert result["LongestMainAxisLength per component"][0][1] == 26 * 50 * UNIT_SCALE[Units.nm.value]
+        assert np.isclose(result["LongestMainAxisLength per component"][0][0], 35 * 50 * UNIT_SCALE[Units.nm.value])
+        assert np.isclose(result["LongestMainAxisLength per component"][0][1], 26 * 50 * UNIT_SCALE[Units.nm.value])
 
     def test_all_variants(self, bundle_test_dir):
         """This test check if all calculations finished, not values."""
@@ -1799,21 +1904,28 @@ class TestStatisticProfile:
         leaf4 = PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
         statistics = [
             MeasurementEntry(
-                "ROI Volume per component",
-                leaf1,
+                name="ROI Volume per component",
+                calculation_tree=leaf1,
             ),
             MeasurementEntry(
-                "Mask Volume per component",
-                leaf2,
+                name="Mask Volume per component",
+                calculation_tree=leaf2,
             ),
-            MeasurementEntry("ROI Volume per component/Mask Volume per component", Node(leaf1, "/", leaf2)),
-            MeasurementEntry("Mask Volume per component/ROI Volume per component", Node(leaf2, "/", leaf1)),
             MeasurementEntry(
-                "Mask Volume per component/Mask without ROI Volume per component", Node(leaf2, "/", leaf3)
+                name="ROI Volume per component/Mask Volume per component",
+                calculation_tree=Node(left=leaf1, op="/", right=leaf2),
             ),
-            MeasurementEntry("Density per component", Node(leaf4, "/", leaf1)),
+            MeasurementEntry(
+                name="Mask Volume per component/ROI Volume per component",
+                calculation_tree=Node(left=leaf2, op="/", right=leaf1),
+            ),
+            MeasurementEntry(
+                name="Mask Volume per component/Mask without ROI Volume per component",
+                calculation_tree=Node(left=leaf2, op="/", right=leaf3),
+            ),
+            MeasurementEntry(name="Density per component", calculation_tree=Node(left=leaf4, op="/", right=leaf1)),
         ]
-        profile = MeasurementProfile("statistic", statistics)
+        profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
         result = profile.calculate(
             image,
             0,
@@ -1987,6 +2099,23 @@ class TestMeasurementResult:
         assert np.all(df.index == [1, 2, 3])
         assert np.all(df.values == [[1, 4], [1, 5], [1, 6]])
 
+    def test_mask_aggregation(self):
+        info = ComponentsInfo(np.arange(1, 4), np.arange(1, 3), {1: [1], 2: [2], 3: [1]})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = [4, 5, 8], "np", (PerComponent.Yes, AreaType.ROI)
+        df = storage.to_dataframe(True)
+        df2 = df.groupby("Mask component").mean()
+        assert df2.loc[1]["bb (np)"] == 6
+
+    def test_mask_aggregation_np_mask(self):
+        info = ComponentsInfo(np.arange(1, 4), np.arange(0), {1: [], 2: [], 3: []})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = [4, 5, 8], "np", (PerComponent.Yes, AreaType.ROI)
+        df = storage.to_dataframe(True)
+        assert "Mask component" not in df.columns
+
 
 class TestHaralick:
     def test_base(self):
@@ -2018,10 +2147,10 @@ class TestHaralick:
 @pytest.fixture
 def roi_to_roi_extract():
     parameters = LowerThresholdAlgorithm.get_default_values()
-    parameters["threshold"]["values"]["threshold"] = 1
-    parameters["minimum_size"] = 1
-    parameters["channel"] = 1
-    return ROIExtractionProfile("default", LowerThresholdAlgorithm.get_name(), parameters)
+    parameters.threshold.values.threshold = 1
+    parameters.minimum_size = 1
+    parameters.channel = 1
+    return ROIExtractionProfile(name="default", algorithm=LowerThresholdAlgorithm.get_name(), values=parameters)
 
 
 @pytest.mark.parametrize("roi_dist", DistancePoint.__members__.values())
@@ -2068,7 +2197,7 @@ class TestDistanceROIROI:
         data[1, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2] = 5
         image = Image(data, image_spacing=(1, 1, 1), axes_order="CYX")
-        roi = (data[0:1] > 1).astype(np.uint8)
+        roi = (data[:1] > 1).astype(np.uint8)
         res = DistanceROIROI.calculate_property(
             channel=data[2:3],
             image=image,
@@ -2089,7 +2218,7 @@ class TestROINeighbourhoodROI:
         data[0, 2:-2, 2:-2, 2:-12] = 5
         data[1, 2:-2, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2, 2:-2] = 5
-        image = Image(data, image_spacing=(100 * (10 ** -9),) * 3, axes_order="CZYX")
+        image = Image(data, image_spacing=(100 * (10**-9),) * 3, axes_order="CZYX")
         roi = (data[0] > 1).astype(np.uint8)
         kwargs = {
             "image": image,
@@ -2104,7 +2233,7 @@ class TestROINeighbourhoodROI:
         kwargs["distance"] = 1000
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
         data[1, 3:-3, 3:-3, 3:10] = 5
-        image = Image(data, image_spacing=(100 * (10 ** -9),) * 3, axes_order="CZYX")
+        image = Image(data, image_spacing=(100 * (10**-9),) * 3, axes_order="CZYX")
         kwargs["image"] = image
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
         kwargs["distance"] = 100
@@ -2115,8 +2244,8 @@ class TestROINeighbourhoodROI:
         data[0, 2:-2, 2:-12] = 5
         data[1, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2] = 5
-        image = Image(data, image_spacing=(100 * (10 ** -9),) * 2, axes_order="CYX")
-        roi = (data[0:1] > 1).astype(np.uint8)
+        image = Image(data, image_spacing=(100 * (10**-9),) * 2, axes_order="CYX")
+        roi = (data[:1] > 1).astype(np.uint8)
         kwargs = {
             "image": image,
             "area_array": roi,
@@ -2130,7 +2259,7 @@ class TestROINeighbourhoodROI:
         kwargs["distance"] = 1000
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
         data[1, 3:-3, 3:10] = 5
-        image = Image(data, image_spacing=(100 * (10 ** -9),) * 2, axes_order="CYX")
+        image = Image(data, image_spacing=(100 * (10**-9),) * 2, axes_order="CYX")
         kwargs["image"] = image
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
         kwargs["distance"] = 100
@@ -2155,13 +2284,14 @@ def test_all_methods(method, dtype):
         channel=data,
         channel_num=0,
         channel_0=data,
+        channel_1=data,
         voxel_size=(1, 1, 1),
         result_scalar=1,
         roi_alternative={},
         roi_annotation={},
         bounds_info=roi_info.bound_info,
         _component_num=1,
-        **method.get_default_values(),
+        **dict(method.get_default_values()),
     )
     if method.get_units(3) != "str":
         float(res)
@@ -2172,30 +2302,30 @@ def test_all_methods(method, dtype):
 )
 @pytest.mark.parametrize("area", [AreaType.ROI, AreaType.Mask])
 def test_per_component(method, area):
-    data = np.zeros((10, 20, 20), dtype=np.uint8)
+    data = np.zeros((10, 20, 20, 2), dtype=np.uint8)
     data[1:-1, 3:-3, 3:-3] = 2
     data[1:-1, 4:-4, 4:-4] = 3
     data[1:-1, 6, 6] = 5
-    roi = (data > 2).astype(np.uint8)
-    mask = (data > 0).astype(np.uint8)
-    image = Image(data, image_spacing=(10 ** -8,) * 3, axes_order="ZYX")
+    roi = (data[..., 0] > 2).astype(np.uint8)
+    mask = (data[..., 0] > 0).astype(np.uint8)
+    image = Image(data, image_spacing=(10**-8,) * 3, axes_order="ZYXC")
     image.set_mask(mask, axes="ZYX")
 
     statistics = [
         MeasurementEntry(
-            "Measurement",
-            method.get_starting_leaf().replace_(
-                per_component=PerComponent.No, area=area, dict=method.get_default_values()
+            name="Measurement",
+            calculation_tree=method.get_starting_leaf().replace_(
+                per_component=PerComponent.No, area=area, parameters=method.get_default_values()
             ),
         ),
         MeasurementEntry(
-            "Measurement per component",
-            method.get_starting_leaf().replace_(
-                per_component=PerComponent.Yes, area=area, dict=method.get_default_values()
+            name="Measurement per component",
+            calculation_tree=method.get_starting_leaf().replace_(
+                per_component=PerComponent.Yes, area=area, parameters=method.get_default_values()
             ),
         ),
     ]
-    profile = MeasurementProfile("statistic", statistics)
+    profile = MeasurementProfile(name="statistic", chosen_fields=statistics)
     result = profile.calculate(
         image,
         0,
@@ -2204,42 +2334,97 @@ def test_per_component(method, area):
     )
     assert len(result["Measurement per component"][0]) == 1
     assert isinstance(result["Measurement"][0], (float, int))
-    assert result["Measurement per component"][0][0] == result["Measurement"][0]
+    assert isclose(result["Measurement per component"][0][0], result["Measurement"][0])
 
 
-@pytest.mark.parametrize("method", ColocalizationMeasurement.get_fields()[-1].possible_values)
-def test_colocalization(method):
+@pytest.mark.parametrize("method", CorrelationEnum.__members__.values())
+@pytest.mark.parametrize("randomize", [True, False])
+def test_colocalization(method, randomize):
     area_array = np.ones((10, 10))
-    data = np.random.rand(10, 10)
-    factor = 0.5 if method == INTENSITY_CORRELATION else 1
+    data = np.random.RandomState(10).rand(10, 10)
+    factor = 0.5 if method == CorrelationEnum.intensity else 1
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=data,
         colocalization=method,
+        randomize=randomize,
     )
-    assert value == factor
+    assert value == factor or randomize
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=data * 100,
         colocalization=method,
+        randomize=randomize,
     )
-    assert isclose(value, factor)
+    assert isclose(value, factor) or randomize
 
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=data + 100,
         colocalization=method,
+        randomize=randomize,
     )
 
-    assert isclose(value, factor) or (method == MANDERS_COEFIICIENT and value < 1)
+    assert isclose(value, factor) or (method == CorrelationEnum.manders and value < 1) or randomize
 
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=-data,
         colocalization=method,
+        randomize=randomize,
     )
-    assert value == -factor
+    assert value == -factor or randomize
+
+
+def test_per_mask_component():
+    data = np.zeros((10, 20, 20), dtype=np.uint8)
+    data[2:-2, 2:-12, 2:-12] = 1
+    data[2:-2, 12:-2, 2:-12] = 2
+    data[2:-2, 2:-12, 12:-2] = 3
+    data[2:-2, 12:-2, 12:-2] = 4
+    mask = np.zeros(data.shape, dtype=np.uint8)
+    mask[2:-2, 2:-2, 2:-12] = 1
+    mask[2:-2, 2:-2, 12:-2] = 2
+    image = Image(data, image_spacing=(10**-8,) * 3, axes_order="ZYX", mask=mask)
+    profile = MeasurementProfile(
+        name="test",
+        chosen_fields=[
+            MeasurementEntry(
+                name="Volume",
+                calculation_tree=Leaf(name=Volume.get_name(), area=AreaType.ROI, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                name="Volume per component",
+                calculation_tree=Leaf(name=Volume.get_name(), area=AreaType.ROI, per_component=PerComponent.Yes),
+            ),
+            MeasurementEntry(
+                name="Volume per mask component",
+                calculation_tree=Leaf(
+                    name=Volume.get_name(), area=AreaType.ROI, per_component=PerComponent.Per_Mask_component
+                ),
+            ),
+            MeasurementEntry(
+                name="Mask Volume per component",
+                calculation_tree=Leaf(name=Volume.get_name(), area=AreaType.Mask, per_component=PerComponent.Yes),
+            ),
+        ],
+        name_prefix="",
+    )
+    result = profile.calculate(image=image, channel_num=0, roi=data, result_units=Units.nm)
+    assert len(result) == 4
+    assert isinstance(result["Volume"][0], float)
+    assert isinstance(result["Volume per component"][0], list)
+    assert len(result["Volume per component"][0]) == 4
+    assert len(result["Volume per mask component"][0]) == 2
+    assert len(result["Mask Volume per component"][0]) == 2
+    assert np.isclose(result["Volume"][0], result["Volume per component"][0][0] * 4)
+    assert np.isclose(result["Volume"][0], result["Volume per mask component"][0][0] * 2)
+    df = result.to_dataframe(all_components=True)
+    assert len(df) == 4
+    assert df["Mask component"][1] == df["Mask component"][2] == 1
+    assert df["Mask component"][3] == df["Mask component"][4] == 2
+    assert df["Volume (nm**3)"][1] == df["Volume (nm**3)"][2] == df["Volume (nm**3)"][3] == df["Volume (nm**3)"][4]

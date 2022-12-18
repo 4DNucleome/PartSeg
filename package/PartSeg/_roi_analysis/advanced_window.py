@@ -1,8 +1,8 @@
 import json
 import os
+from contextlib import suppress
 from copy import deepcopy
-from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -12,7 +12,6 @@ from qtpy.QtWidgets import (
     QCheckBox,
     QDialog,
     QDoubleSpinBox,
-    QFileDialog,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -29,21 +28,26 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from superqt import QEnumComboBox
+from superqt import QEnumComboBox, ensure_main_thread
 
+from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
+from PartSeg._roi_analysis.partseg_settings import PartSettings
+from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer, StringViewer
+from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
+from PartSeg.common_gui.error_report import DataImportErrorDialog
+from PartSeg.common_gui.lock_checkbox import LockCheckBox
+from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.analysis import SegmentationPipeline
+from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
+from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
-
-from ..common_gui.custom_save_dialog import FormDialog
-from ..common_gui.lock_checkbox import LockCheckBox
-from ..common_gui.searchable_list_widget import SearchableListWidget
-from .measurement_widget import MeasurementWidget
-from .partseg_settings import PartSettings
-from .profile_export import ExportDialog, ImportDialog, ProfileDictViewer, StringViewer
 
 
 def h_line():
@@ -69,7 +73,7 @@ class Properties(QWidget):
         self.delete_btn.setDisabled(True)
         self.delete_btn.clicked.connect(self.delete_profile)
         self.multiple_files_chk = QCheckBox("Show multiple files panel")
-        self.multiple_files_chk.setChecked(self._settings.get("multiple_files_widget", False))
+        self._update_measurement_chk()
         self.multiple_files_chk.stateChanged.connect(self.multiple_files_visibility)
         self.rename_btn = QPushButton("Rename profile")
         self.rename_btn.clicked.connect(self.rename_profile)
@@ -87,6 +91,11 @@ class Properties(QWidget):
         self.lock_spacing.stateChanged.connect(self.synchronize_spacing)
         # noinspection PyUnresolvedReferences
         self.spacing[2].valueChanged.connect(self.synchronize_spacing)
+
+        self._settings.roi_profiles_changed.connect(self.update_profile_list)
+        self._settings.roi_pipelines_changed.connect(self.update_profile_list)
+        self._settings.connect_("multiple_files_widget", self._update_measurement_chk)
+
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
@@ -102,7 +111,7 @@ class Properties(QWidget):
         spacing_layout = QHBoxLayout()
         spacing_layout.addWidget(self.lock_spacing)
         for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
-            spacing_layout.addWidget(QLabel(txt + ":"))
+            spacing_layout.addWidget(QLabel(f"{txt}:"))
             spacing_layout.addWidget(el)
         spacing_layout.addWidget(self.units)
         spacing_layout.addStretch(1)
@@ -129,6 +138,7 @@ class Properties(QWidget):
 
         layout.addLayout(profile_layout, 1)
         self.setLayout(layout)
+        self.update_profile_list()
 
     @Slot(int)
     def multiple_files_visibility(self, val: int):
@@ -153,21 +163,22 @@ class Properties(QWidget):
                 self.delete_btn.setText("Delete pipeline")
                 self.rename_btn.setText("Rename pipeline")
             else:
-                return
-        except KeyError:
+                return  # pragma: no cover
+        except KeyError:  # pragma: no cover
             return
 
         # TODO update with knowledge from profile dict
         self.delete_btn.setEnabled(True)
         self.rename_btn.setEnabled(True)
-        self.info_label.setPlainText(profile.pretty_print(analysis_algorithm_dict))
+        self.info_label.setPlainText(profile.pretty_print(AnalysisAlgorithmSelection.__register__))
 
     def synchronize_spacing(self):
         if self.lock_spacing.isChecked():
             self.spacing[1].setValue(self.spacing[2].value())
 
     def image_spacing_change(self):
-        spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing)]
+        spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for el in self.spacing]
+
         if not self.spacing[0].isEnabled():
             spacing = spacing[1:]
         self._settings.image_spacing = spacing
@@ -206,15 +217,16 @@ class Properties(QWidget):
         self.info_label.setPlainText("")
 
     def showEvent(self, _event):
-        self.update_profile_list()
         self.update_spacing()
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate and self.isVisible():
-            self.update_profile_list()
             self.update_spacing()
-            self.multiple_files_chk.setChecked(self._settings.get("multiple_files_widget", False))
         return super().event(event)
+
+    @ensure_main_thread
+    def _update_measurement_chk(self):
+        self.multiple_files_chk.setChecked(self._settings.get("multiple_files_widget", False))
 
     def delete_profile(self):
         text, dkt = "", {}
@@ -233,82 +245,72 @@ class Properties(QWidget):
         exp = ExportDialog(self._settings.roi_profiles, ProfileDictViewer)
         if not exp.exec_():
             return
-        dial = QFileDialog(self, "Export profile segment")
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDirectory(self._settings.get("io.save_directory", str(Path.home())))
-        dial.setNameFilter("Segment profile (*.json)")
-        dial.setDefaultSuffix("json")
+        dial = PSaveDialog(
+            "Segment profile (*.json)",
+            settings=self._settings,
+            path=IO_SAVE_DIRECTORY,
+            caption="Export profile segment",
+        )
         dial.selectFile("segment_profile.json")
-        dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self._settings.set("io.save_directory", os.path.dirname(file_path))
-            self._settings.add_path_history(os.path.dirname(file_path))
             data = {x: self._settings.roi_profiles[x] for x in exp.get_export_list()}
-            with open(file_path, "w") as ff:
+            with open(file_path, "w", encoding="utf-8") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
 
     def import_profiles(self):
-        dial = QFileDialog(self, "Import profile segment")
-        dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setAcceptMode(QFileDialog.AcceptOpen)
-        dial.setDirectory(self._settings.get("io.save_directory", str(Path.home())))
-        dial.setNameFilter("Segment profile (*.json)")
-        dial.setHistory(dial.history() + self._settings.get_path_history())
+        dial = PLoadDialog(
+            LoadPlanJson,
+            settings=self._settings,
+            path=IO_SAVE_DIRECTORY,
+            caption="Import profile segment",
+        )
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            save_dir = os.path.dirname(file_path)
-            self._settings.set("io.save_directory", save_dir)
-            self._settings.add_path_history(save_dir)
-            profs, err = self._settings.load_part(file_path)
+            res = dial.get_result()
+            profs, err = res.load_class.load(res.load_location)
             if err:
-                QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
+                DataImportErrorDialog({res.load_location[0]: err}).exec_()
+            if not profs:
+                return
             profiles_dict = self._settings.roi_profiles
-            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
+            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer, ROIExtractionProfile)
             if not imp.exec_():
                 return
             for original_name, final_name in imp.get_import_list():
                 profiles_dict[final_name] = profs[original_name]
             self._settings.dump()
-            self.update_profile_list()
 
     def export_pipeline(self):
         exp = ExportDialog(self._settings.roi_pipelines, ProfileDictViewer)
         if not exp.exec_():
             return
-        dial = QFileDialog(self, "Export pipeline segment")
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDirectory(self._settings.get("io.save_directory", ""))
-        dial.setNameFilter("Segment pipeline (*.json)")
-        dial.setDefaultSuffix("json")
+        dial = PSaveDialog(
+            "Segment pipeline (*.json)",
+            settings=self._settings,
+            path=IO_SAVE_DIRECTORY,
+            caption="Export pipeline segment",
+        )
         dial.selectFile("segment_pipeline.json")
-        dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             data = {x: self._settings.roi_pipelines[x] for x in exp.get_export_list()}
-            with open(file_path, "w") as ff:
+            with open(file_path, "w", encoding="utf-8") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
-            self._settings.set("io.save_directory", os.path.dirname(file_path))
-            self._settings.add_path_history(os.path.dirname(file_path))
 
     def import_pipeline(self):
-        dial = QFileDialog(self, "Import pipeline segment")
-        dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setAcceptMode(QFileDialog.AcceptOpen)
-        dial.setDirectory(self._settings.get("io.save_directory", ""))
-        dial.setNameFilter("Segment pipeline (*.json)")
-        dial.setHistory(dial.history() + self._settings.get_path_history())
+        dial = PLoadDialog(
+            LoadPlanJson,
+            settings=self._settings,
+            path=IO_SAVE_DIRECTORY,
+            caption="Import pipeline segment",
+        )
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            self._settings.set("io.save_directory", os.path.dirname(file_path))
-            self._settings.add_path_history(os.path.dirname(file_path))
-            profs, err = self._settings.load_part(file_path)
+            res = dial.get_result()
+            profs, err = res.load_class.load(res.load_location)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             profiles_dict = self._settings.roi_pipelines
-            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
+            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer, SegmentationPipeline)
             if not imp.exec_():
                 return
             for original_name, final_name in imp.get_import_list():
@@ -329,15 +331,15 @@ class Properties(QWidget):
         text, ok = QInputDialog.getText(self, "New profile name", f"New name for {profile_name}", text=profile_name)
         if ok:
             text = text.strip()
-            if text in profiles_dict.keys():
+            if text in profiles_dict:
                 res = QMessageBox.warning(
                     self,
                     "Already exist",
                     f"Profile with name {text} already exist. Would you like to overwrite?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
                 )
-                if res == QMessageBox.No:
+                if res == QMessageBox.StandardButton.No:
                     self.rename_profile()
                     return
             profiles_dict[text] = profiles_dict.pop(profile_name)
@@ -387,7 +389,7 @@ class MeasurementSettings(QWidget):
         self.soft_reset_butt = QPushButton("Remove user parameters")
         self.profile_name = QLineEdit(self)
 
-        self.delete_profile_butt = QPushButton("Delete ")
+        self.delete_profile_butt = QPushButton("Delete")
         self.export_profiles_butt = QPushButton("Export")
         self.import_profiles_butt = QPushButton("Import")
         self.edit_profile_butt = QPushButton("Edit")
@@ -420,6 +422,7 @@ class MeasurementSettings(QWidget):
         self.profile_list.itemSelectionChanged.connect(self.profile_chosen)
         self.profile_options.itemSelectionChanged.connect(self.create_selection_changed)
         self.profile_options_chosen.itemSelectionChanged.connect(self.create_selection_chosen_changed)
+        self.settings.measurement_profiles_changed.connect(self._refresh_profiles)
 
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Measurement set:"))
@@ -435,7 +438,6 @@ class MeasurementSettings(QWidget):
         layout.addLayout(profile_layout)
         layout.addLayout(profile_buttons_layout)
         heading_layout = QHBoxLayout()
-        # heading_layout.addWidget(QLabel("Create profile"), 1)
         heading_layout.addWidget(h_line(), 6)
         layout.addLayout(heading_layout)
         name_layout = QHBoxLayout()
@@ -481,9 +483,24 @@ class MeasurementSettings(QWidget):
             lw = MeasurementListWidgetItem(profile.get_starting_leaf())
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
-        self.profile_list.addItems(list(sorted(self.settings.measurement_profiles.keys())))
+        self._refresh_profiles()
+
+    def _refresh_profiles(self):
+        item = self.profile_list.currentItem()
+        items = list(self.settings.measurement_profiles.keys())
+        try:
+            index = items.index(item.text())
+        except (ValueError, AttributeError):
+            index = -1
+
+        self.profile_list.clear()
+        self.profile_list.addItems(items)
+        self.profile_list.setCurrentRow(index)
+
         if self.profile_list.count() == 0:
             self.export_profiles_butt.setDisabled(True)
+        else:
+            self.export_profiles_butt.setEnabled(True)
 
     def remove_element(self):
         elem = self.profile_options_chosen.currentItem()
@@ -500,12 +517,8 @@ class MeasurementSettings(QWidget):
             self.save_butt_with_name.setDisabled(True)
 
     def delete_profile(self):
-        row = self.profile_list.currentRow()
         item = self.profile_list.currentItem()
         del self.settings.measurement_profiles[str(item.text())]
-        self.profile_list.takeItem(row)
-        if self.profile_list.count() == 0:
-            self.delete_profile_butt.setDisabled(True)
 
     def profile_chosen(self):
         self.delete_profile_butt.setEnabled(True)
@@ -538,14 +551,14 @@ class MeasurementSettings(QWidget):
             self.chosen_element = item
             item.setIcon(QIcon(os.path.join(icons_dir, "task-accepted.png")))
         elif (
-            self.profile_options.currentItem() == self.chosen_element
+            self.profile_options.currentItem() is self.chosen_element
             and self.measurement_area_choose.currentEnum() == self.chosen_element_area.area
             and self.per_component.currentEnum() == self.chosen_element_area.per_component
         ):
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
-            item: MeasurementListWidgetItem = self.profile_options.currentItem()
+            item = cast(MeasurementListWidgetItem, self.profile_options.currentItem())
             leaf = self.get_parameters(
                 deepcopy(item.stat),
                 self.measurement_area_choose.currentEnum(),
@@ -573,7 +586,6 @@ class MeasurementSettings(QWidget):
             self.choose_butt.setDisabled(True)
 
     def create_selection_chosen_changed(self):
-        # print(self.profile_options_chosen.count())
         self.remove_button.setEnabled(True)
         if self.profile_options_chosen.count() == 0:
             self.move_down.setDisabled(True)
@@ -615,30 +627,35 @@ class MeasurementSettings(QWidget):
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
 
-    def get_parameters(self, node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float):
+    def form_dialog(self, arguments):
+        return FormDialog(arguments, settings=self.settings, parent=self)
+
+    def get_parameters(
+        self, node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float
+    ) -> Union[Leaf, Node, None]:
         if isinstance(node, Node):
             return node
         node = node.replace_(power=power)
         if node.area is None:
             node = node.replace_(area=area)
         if node.per_component is None:
-            node = node.replace_(per_component=component)
-        try:
-            arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
-            if len(arguments) > 0 and len(node.dict) == 0:
-                dial = FormDialog(arguments, settings=self.settings)
-                if dial.exec():
-                    node = node._replace(dict=dial.get_values())
+            try:
+                node = node.replace_(per_component=component)
+            except ValueError as e:  # pragma: no cover
+                QMessageBox().warning(self, "Problem in add measurement", str(e))
+        with suppress(KeyError):
+            arguments = MEASUREMENT_DICT[str(node.name)]._get_fields()  # pylint: disable=protected-access
+            if len(arguments) > 0 and not dict(node.parameters):
+                dial = self.form_dialog(arguments)
+                if dial.exec_():
+                    node = node.copy(update={"parameters": dial.get_values()})
                 else:
-                    return
-        except KeyError:
-            pass
+                    return None
         return node
 
     def choose_option(self):
         selected_item = self.profile_options.currentItem()
-        # selected_row = self.profile_options.currentRow()
-        if not isinstance(selected_item, MeasurementListWidgetItem):
+        if not isinstance(selected_item, MeasurementListWidgetItem):  # pragma: no cover
             raise ValueError(f"Current item (type: {type(selected_item)} is not instance of MeasurementListWidgetItem")
         node = deepcopy(selected_item.stat)
         # noinspection PyTypeChecker
@@ -653,7 +670,6 @@ class MeasurementSettings(QWidget):
 
     def discard_option(self):
         selected_item: MeasurementListWidgetItem = self.profile_options_chosen.currentItem()
-        #  selected_row = self.profile_options_chosen.currentRow()
         lw = MeasurementListWidgetItem(deepcopy(selected_item.stat))
         lw.setToolTip(selected_item.toolTip())
         self.create_selection_chosen_changed()
@@ -671,56 +687,52 @@ class MeasurementSettings(QWidget):
         self.profile_name.setText(item.text())
         for ch in profile.chosen_fields:
             self.profile_options_chosen.addItem(MeasurementListWidgetItem(ch.calculation_tree))
-        # self.gauss_img.setChecked(profile.use_gauss_image)
         self.save_butt.setEnabled(True)
         self.save_butt_with_name.setEnabled(True)
 
     def save_action(self):
-        for i in range(self.profile_list.count()):
-            if self.profile_name.text() == self.profile_list.item(i).text():
-                ret = QMessageBox.warning(
-                    self,
-                    "Profile exist",
-                    "Profile exist\nWould you like to overwrite it?",
-                    QMessageBox.No | QMessageBox.Yes,
-                )
-                if ret == QMessageBox.No:
-                    return
+        if self.profile_name.text() in self.settings.measurement_profiles:
+            ret = QMessageBox.warning(
+                self,
+                "Profile exist",
+                "Profile exist\nWould you like to overwrite it?",
+                QMessageBox.No | QMessageBox.Yes,
+            )
+            if ret == QMessageBox.No:
+                return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
-            element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
-            selected_values.append(MeasurementEntry(element.text(), element.stat))
-        stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
-        if stat_prof.name not in self.settings.measurement_profiles:
-            self.profile_list.addItem(stat_prof.name)
+            element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+            selected_values.append(MeasurementEntry(name=element.text(), calculation_tree=element.stat))
+        stat_prof = MeasurementProfile(name=self.profile_name.text(), chosen_fields=selected_values)
         self.settings.measurement_profiles[stat_prof.name] = stat_prof
         self.settings.dump()
         self.export_profiles_butt.setEnabled(True)
+        self.save_butt.setDisabled(True)
 
     def named_save_action(self):
-        for i in range(self.profile_list.count()):
-            if self.profile_name.text() == self.profile_list.item(i).text():
-                ret = QMessageBox.warning(
-                    self,
-                    "Profile exist",
-                    "Profile exist\nWould you like to overwrite it?",
-                    QMessageBox.No | QMessageBox.Yes,
-                )
-                if ret == QMessageBox.No:
-                    return
+        if self.profile_name.text() in self.settings.measurement_profiles:
+            ret = QMessageBox.warning(
+                self,
+                "Profile exist",
+                "Profile exist\nWould you like to overwrite it?",
+                QMessageBox.No | QMessageBox.Yes,
+            )
+            if ret == QMessageBox.No:
+                return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
             txt = str(self.profile_options_chosen.item(i).text())
             selected_values.append((txt, str, txt))
-        val_dialog = MultipleInput("Set fields name", list(selected_values))
+        val_dialog = MultipleInput("Set fields name", list(selected_values), parent=self)
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
-                element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
-                selected_values.append(MeasurementEntry(val_dialog.result[element.text()], element.stat))
-            stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
-            if stat_prof.name not in self.settings.measurement_profiles:
-                self.profile_list.addItem(stat_prof.name)
+                element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+                selected_values.append(
+                    MeasurementEntry(name=val_dialog.result[element.text()], calculation_tree=element.stat)
+                )
+            stat_prof = MeasurementProfile(name=self.profile_name.text(), chosen_fields=selected_values)
             self.settings.measurement_profiles[stat_prof.name] = stat_prof
             self.export_profiles_butt.setEnabled(True)
 
@@ -755,44 +767,42 @@ class MeasurementSettings(QWidget):
         self.create_selection_changed()
 
     def export_measurement_profiles(self):
-        exp = ExportDialog(self.settings.measurement_profiles, StringViewer)
+        exp = ExportDialog(self.settings.measurement_profiles, StringViewer, parent=self)
         if not exp.exec_():
             return
-        dial = QFileDialog(self, "Export settings profiles")
-        dial.setDirectory(self.settings.get("io.export_directory", ""))
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setNameFilter("measurement profile (*.json)")
-        dial.setDefaultSuffix("json")
+        dial = PSaveDialog(
+            "Measurement profile (*.json)",
+            settings=self.settings,
+            path="io.export_directory",
+            caption="Export settings profiles",
+        )
         dial.selectFile("measurements_profile.json")
 
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            self.settings.set("io.export_directory", file_path)
             data = {x: self.settings.measurement_profiles[x] for x in exp.get_export_list()}
-            with open(file_path, "w") as ff:
+            with open(file_path, "w", encoding="utf-8") as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
-            self.settings.set("io.save_directory", os.path.dirname(file_path))
 
     def import_measurement_profiles(self):
-        dial = QFileDialog(self, "Import settings profiles")
-        dial.setDirectory(self.settings.get("io.export_directory", ""))
-        dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setNameFilter("measurement profile (*.json)")
+        dial = PLoadDialog(
+            LoadPlanJson,
+            settings=self.settings,
+            path="io.export_directory",
+            caption="Import settings profiles",
+            parent=self,
+        )
         if dial.exec_():
-            file_path = str(dial.selectedFiles()[0])
-            self.settings.set("io.export_directory", file_path)
-            stat, err = self.settings.load_part(file_path)
+            res = dial.get_result()
+            stat, err = res.load_class.load(res.load_location)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             measurement_dict = self.settings.measurement_profiles
-            imp = ImportDialog(stat, measurement_dict, StringViewer)
+            imp = ImportDialog(stat, measurement_dict, StringViewer, MeasurementProfile)
             if not imp.exec_():
                 return
             for original_name, final_name in imp.get_import_list():
                 measurement_dict[final_name] = stat[original_name]
-            self.profile_list.clear()
-            self.profile_list.addItems(list(sorted(measurement_dict.keys())))
             self.settings.dump()
 
 
@@ -807,18 +817,16 @@ class SegAdvancedWindow(AdvancedWindow):
 
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = Properties(settings)
-        # self.colormap_settings = ColorSelector(settings, ["result_control"])
         self.measurement = MeasurementWidget(settings)
         self.measurement_settings = MeasurementSettings(settings)
         self.insertTab(0, self.advanced_settings, "Properties")
-        # self.addTab(self.colormap_settings, "Color maps")
         self.addTab(self.measurement_settings, "Measurements settings")
         self.addTab(self.measurement, "Measurements")
         self.setCurrentWidget(self.advanced_settings)
 
 
 class MultipleInput(QDialog):
-    def __init__(self, text, help_text, objects_list=None):
+    def __init__(self, text, help_text, objects_list=None, parent=None):
         if objects_list is None:
             objects_list = help_text
             help_text = ""
@@ -846,7 +854,7 @@ class MultipleInput(QDialog):
             return res
 
         field_dict = {str: QLineEdit, float: create_input_float, int: create_input_int}
-        super().__init__()
+        super().__init__(parent=parent)
         ok_butt = QPushButton("Ok", self)
         cancel_butt = QPushButton("Cancel", self)
         self.object_dict = {}
@@ -891,11 +899,11 @@ class MultipleInput(QDialog):
         for name, (type_of, item) in self.object_dict.items():
             if type_of == str:
                 val = str(item.text())
-                if val.strip() != "":
-                    res[name] = val
-                else:
+                if not val.strip():
                     QMessageBox.warning(self, "Not all fields filled", "")
                     return
+                else:
+                    res[name] = val
             else:
                 val = type_of(item.value())
                 res[name] = val

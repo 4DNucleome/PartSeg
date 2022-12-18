@@ -11,7 +11,7 @@ from PartSeg._roi_mask.main_window import ChosenComponents
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSeg.common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.analysis import analysis_algorithm_dict
+from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.io_utils import MaskInfo, create_history_element_from_project
 from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.save_functions import SaveProject
@@ -40,7 +40,9 @@ class TestStackSettings:
         roi[0, 2, 2:-2, 2:-2] = 2
         roi[0, 3, 2:-2, 2:-2] = 3
         roi_info = ROIInfo(roi).fit_to_image(stack_image.image)
-        roi_extraction_parameters = defaultdict(lambda: ROIExtractionProfile("aa", "aa", {1: "aa"}))
+        roi_extraction_parameters = defaultdict(
+            lambda: ROIExtractionProfile(name="aa", algorithm="aa", values={1: "aa"})
+        )
         new_state = StackSettings.transform_state(
             state=stack_image,
             new_roi_info=roi_info,
@@ -51,7 +53,9 @@ class TestStackSettings:
         assert new_state.selected_components == [2]
 
     def test_transform_state(self, stack_segmentation1):
-        roi_extraction_parameters = defaultdict(lambda: ROIExtractionProfile("aa", "aa", {1: "aa"}))
+        roi_extraction_parameters = defaultdict(
+            lambda: ROIExtractionProfile(name="aa", algorithm="aa", values={1: "aa"})
+        )
         new_state = StackSettings.transform_state(
             state=stack_segmentation1,
             new_roi_info=stack_segmentation1.roi_info,
@@ -61,7 +65,9 @@ class TestStackSettings:
         assert new_state.selected_components == [1, 2, 4]
         assert new_state.roi_extraction_parameters[1] == stack_segmentation1.roi_extraction_parameters[1]
         assert new_state.roi_extraction_parameters[2] == stack_segmentation1.roi_extraction_parameters[3]
-        assert new_state.roi_extraction_parameters[3] == ROIExtractionProfile("aa", "aa", {1: "aa"})
+        assert new_state.roi_extraction_parameters[3] == ROIExtractionProfile(
+            name="aa", algorithm="aa", values={1: "aa"}
+        )
         assert np.all((new_state.roi_info.roi == 2) == (stack_segmentation1.roi_info.roi == 3))
 
     def test_add_project(self, stack_settings, stack_segmentation1, data_test_dir):
@@ -190,7 +196,8 @@ class TestStackSettings:
     def test_set_segmentation_result(self, stack_settings, stack_segmentation1, stack_image):
         stack_settings.set_project_info(stack_image)
         seg = ROIExtractionResult(
-            roi=stack_segmentation1.roi_info.roi, parameters=ROIExtractionProfile("test", "test2", {})
+            roi=stack_segmentation1.roi_info.roi,
+            parameters=ROIExtractionProfile(name="test", algorithm="test2", values={}),
         )
         stack_settings.set_segmentation_result(seg)
         assert stack_settings.last_executed_algorithm == "test2"
@@ -295,7 +302,7 @@ class TestBaseSettings:
         settings = BaseSettings(tmp_path)
         assert settings.image_shape == ()
         settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC")
-        assert settings.image_shape == (1, 1, 10, 10, 2)
+        assert settings.image_shape == (1, 1, 10, 10)
 
     def test_verify_image(self):
         assert BaseSettings.verify_image(Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC"))
@@ -310,6 +317,15 @@ class TestBaseSettings:
         assert im.layers == 2
         with pytest.raises(TimeAndStackException):
             BaseSettings.verify_image(Image(np.zeros((2, 2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TZXY"))
+
+    def test_algorithm_redirect(self, tmp_path):
+        settings = BaseSettings(tmp_path)
+        settings.set_algorithm("algorithms.aa", 2)
+        with pytest.warns(FutureWarning, match="Use `set_algorithm_state` instead"):
+            assert settings.get("algorithms.aa") == 2
+        with pytest.warns(FutureWarning, match="Use `set_algorithm_state` instead"):
+            settings.set("algorithms.aa", 3)
+        assert settings.get_algorithm("algorithms.aa") == 3
 
 
 class TestPartSettings:
@@ -337,7 +353,7 @@ class TestPartSettings:
     def test_get_project_info(self, qtbot, tmp_path, image):
         settings = PartSettings(tmp_path)
         settings.last_executed_algorithm = "aa"
-        settings.set("algorithms.aa", 1)
+        settings.set_algorithm("algorithms.aa", 1)
         settings.image = image
         pt = settings.get_project_info()
         assert pt.algorithm_parameters["algorithm_name"] == "aa"
@@ -347,7 +363,7 @@ class TestPartSettings:
         settings = PartSettings(tmp_path)
         settings.image = image
         settings.last_executed_algorithm = algorithm_parameters["algorithm_name"]
-        algorithm = analysis_algorithm_dict[algorithm_parameters["algorithm_name"]]()
+        algorithm = AnalysisAlgorithmSelection[algorithm_parameters["algorithm_name"]]()
         algorithm.set_image(settings.image)
         algorithm.set_parameters(**algorithm_parameters["values"])
         result = algorithm.calculation_run(lambda x, y: None)

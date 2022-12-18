@@ -12,11 +12,17 @@ import typing
 
 import numpy as np
 import SimpleITK
+from pydantic import Field
 from scipy.ndimage import distance_transform_edt
 
-from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase
+from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegCore.utils import BaseModel
 
-from .universal_const import UNIT_SCALE, Units
+
+class BorderRimParameters(BaseModel):
+    distance: float = Field(500, ge=0, le=10**6)
+    units: Units = Units.nm
 
 
 class BorderRim(AlgorithmDescribeBase):
@@ -29,15 +35,10 @@ class BorderRim(AlgorithmDescribeBase):
     The algorithm is:
 
     1. For each image voxel calculate distance from background (0 labeled voxels in mask) with respect of voxel size
-    2. Select this voxels which are closer than gvien distance.
+    2. Select these voxels which are closer than given distance.
     """
 
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty("distance", "Distance", 500.0, options_range=(0, 10000), value_type=float),
-            AlgorithmProperty("units", "Units", Units.nm, value_type=Units),
-        ]
+    __argument_class__ = BorderRimParameters
 
     @classmethod
     def get_name(cls) -> str:
@@ -69,6 +70,15 @@ class BorderRim(AlgorithmDescribeBase):
         return mask
 
 
+class MaskDistanceSplitParameters(BaseModel):
+    num_of_parts: int = Field(2, title="Number of Parts", ge=1, le=1024)
+    equal_volume: bool = Field(
+        False,
+        title="Equal Volume",
+        description="If split should be done in respect of parts volume of parts thickness.",
+    )
+
+
 class MaskDistanceSplit(AlgorithmDescribeBase):
     """
     This class contains implementation of splitting mask on parts based on distance from borders.
@@ -96,21 +106,11 @@ class MaskDistanceSplit(AlgorithmDescribeBase):
 
     """
 
+    __argument_class__ = MaskDistanceSplitParameters
+
     @classmethod
     def get_name(cls) -> str:
         return "Mask Distance Split"
-
-    @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return [
-            AlgorithmProperty("num_of_parts", "Number of Parts", 2, (1, 1024)),
-            AlgorithmProperty(
-                "equal_volume",
-                "Equal Volume",
-                False,
-                help_text="If split should be done in respect of parts volume of parts thickness.",
-            ),
-        ]
 
     @staticmethod
     def split(mask: np.ndarray, num_of_parts: int, equal_volume: bool, voxel_size, **_):

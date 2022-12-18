@@ -73,7 +73,7 @@ class FlowLayout(QLayout):
         self.itemList.append(layout)
 
     def addStretch(self):
-        pass
+        """To satisfy the QLayout API"""
 
     def count(self):
         return len(self.itemList)
@@ -137,11 +137,8 @@ class FlowLayout(QLayout):
                     QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical
                 )
             else:
-                # wid = item.layout()
                 space_x = self.spacing()  # + wid.layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton,
-                #                            Qt.Horizontal)
                 space_y = self.spacing()  # + wid.layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton,
-                #                            Qt.Vertical)
             next_x = x + item.sizeHint().width() + space_x
             if next_x - space_x > rect.right() and line_height > 0:
                 x = rect.x()

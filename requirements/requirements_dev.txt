@@ -3,4 +3,5 @@ numpy >= 1.16.0
 pre-commit
 tox
 wheel
+build
 -r requirements_test.txt

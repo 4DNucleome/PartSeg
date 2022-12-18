@@ -2,16 +2,16 @@ name: Tests
 
 on:
   push:
-    branches-ignore:
-      - 'release/**'
-      - 'dependabot/**'
-      - 'hotfix/**'
-      - 'bugfix/**'
-      - update_requirements
-      - pre-commit-ci-update-config
+    branches:
+      - master
+      - develop
+      - feature_prepare/**
+      - main
+
   pull_request:
     branches:
       - '**'
+  workflow_dispatch:
 
 concurrency:
   group: test-${{ github.ref }}
@@ -20,173 +20,130 @@ concurrency:
 jobs:
   download_data:
     name: Download test data
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
+        with:
+          name: test_data
+          path: test_data
+          retention-days: 5
+
+  test_pyqt5:
+    name: PyQt5
+    uses: ./.github/workflows/base_test_workflow.yml
+    needs: download_data
+    with:
+      test_data: True
+      python_version: >-
+        ["3.8", "3.10"]
+      os: >-
+        ["windows-2019", "ubuntu-20.04", "macos-11"]
+      qt_backend: >-
+        ["PyQt5"]
+
+  test_pyside2:
+    name: PySide2
+    uses: ./.github/workflows/base_test_workflow.yml
+    needs: download_data
+    with:
+      test_data: True
+      python_version: >-
+        ["3.8", "3.10"]
+      os: >-
+        ["ubuntu-20.04"]
+      qt_backend: >-
+        ["PySide2"]
+
+  base-test:
+    name: Base Test
+    uses: ./.github/workflows/base_test_workflow.yml
+    needs: download_data
+    with:
+      test_data: True
+      python_version: >-
+        ["3.9"]
+      os: >-
+        ["windows-2019", "ubuntu-20.04", "macos-12"]
+
+  test_coverage:
+    needs: download_data
+    uses: ./.github/workflows/base_test_workflow.yml
+    with:
+      test_data: True
+      python_version: >-
+        ["3.9"]
+      os: >-
+        ["ubuntu-20.04"]
+      qt_backend: >-
+        ["PyQt5"]
+      tox_args: "-e py38-PyQt5-coverage"
+      coverage: true
+
+  test_minimal:
+    name: Test PartSeg minimal
+    needs: download_data
+    uses: ./.github/workflows/base_test_workflow.yml
+    with:
+      test_data: True
+      python_version: >-
+        ["3.8"]
+      os: >-
+        ["ubuntu-20.04"]
+      qt_backend: >-
+        ["PyQt5"]
+      tox_args: "-e py38-PyQt5-minimal"
+
+  test_conda:
+    name: Test PartSeg conda
+    runs-on: ubuntu-20.04
+    needs: download_data
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: latest
+          channels: conda-forge
+          channel-priority: strict
+          python-version: 3.9
+
+      - uses: tlambert03/setup-qt-libs@v1
+
+      - name: Download test data
+        uses: actions/download-artifact@v3
         with:
           name: test_data
           path: test_data
 
-  test:
-    name: PartSeg on ${{ matrix.os }} py ${{ matrix.python_version }}
-    if: startsWith(github.ref, 'refs/heads/feature') != true
-    runs-on: ${{ matrix.os }}
-    needs: download_data
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2019, macos-10.15, ubuntu-20.04]
-        python_version: ['3.7', '3.8', '3.9']
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-python@v1
-      name: Install Python ${{ matrix.python_version }}
-      with:
-        python-version: ${{ matrix.python_version }}
-
-    - name: Install ubuntu libraries
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
-
-    - name: Install Windows OpenGL
-      if: runner.os == 'Windows'
-      run: |
-        git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-        powershell gl-ci-helpers/appveyor/install_opengl.ps1
-        if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
-
-    - name: Download test data
-      uses: actions/download-artifact@v1
-      with:
-        name: test_data
-    - shell: bash
-      run: ls
-
-    - name: Install dependencies
-      run: |
-        python -m pip install -r requirements/requirements_dev.txt tox-gh-actions
-
-    - name: Test with tox
-      # run tests using pip install --pre
-      uses: GabrielBB/xvfb-action@v1
-      timeout-minutes: 60
-      with:
-        run: tox
-      env:
-        NAPARI: None
-
-
-  test_feature:
-    name: PartSeg on ${{ matrix.os }} py ${{ matrix.python_version }}
-    runs-on: ${{ matrix.os }}
-    needs: download_data
-    if: startsWith(github.ref, 'refs/heads/feature')
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ windows-2019, macos-10.15, ubuntu-20.04 ]
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-python@v1
-        name: Install Python '3.8'
-        with:
-          python-version: '3.8'
-
-      - name: Install ubuntu libraries
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
-
-      - name: Install Windows OpenGL
-        if: runner.os == 'Windows'
-        run: |
-          git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-          powershell gl-ci-helpers/appveyor/install_opengl.ps1
-          if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
-
-      - name: Download test data
-        uses: actions/download-artifact@v1
-        with:
-          name: test_data
-      - shell: bash
-        run: ls
-
       - name: Install dependencies
-        run: |
-          python -m pip install -r requirements/requirements_dev.txt tox-gh-actions
-      - name: Test with tox
-        # run tests using pip install --pre
-        uses: GabrielBB/xvfb-action@v1
+        run: conda install -y tox tox-conda
+
+      - name: create environment
+        run: bash build_utils/create_environment_yml.sh
+
+      - name: Upload environment file
+        uses: actions/upload-artifact@v3
         with:
-          run: tox -e py38-PyQt5-all
-        timeout-minutes: 60
+          name: environment
+          path: environment.yml
+          retention-days: 5
 
-  test_coverage:
-    name: Test PartSeg coverage
-    runs-on: ubuntu-20.04
-    needs: download_data
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-python@v1
-        name: Install Python '3.8'
-        with:
-          python-version: '3.8'
-
-      - name: Download test data
-        uses: actions/download-artifact@v1
-        with:
-          name: test_data
-      - shell: bash
-        run: ls
-
-      - name: Install ubuntu libraries
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
-
-      - name: Install dependencies
-        run: |
-          python -m pip install -r requirements/requirements_dev.txt tox-gh-actions
       - name: Test with tox
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: tox -e py38-PyQt5-coverage
+          run: conda run --no-capture-output tox -e py39-PySide2-conda
         timeout-minutes: 60
 
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: true
+  check-package:
+    name: Build & inspect our package.
+    runs-on: ubuntu-latest
 
-
-  test_minimal:
-    name: Test PartSeg minimal
-    runs-on: ubuntu-20.04
-    needs: download_data
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-python@v1
-        name: Install Python '3.7'
+      - uses: actions/checkout@v3
         with:
-          python-version: '3.7'
-      - name: Install ubuntu libraries
-        run: sudo apt-get install -y libxkbcommon-x11-0
-
-      - name: Download test data
-        uses: actions/download-artifact@v1
-        with:
-          name: test_data
-
-      - name: Install dependencies
-        run: |
-          python -m pip install -r requirements/requirements_dev.txt
-      - name: Test with tox
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: tox -e py37-PyQt5-minimal
-        timeout-minutes: 60
+          fetch-depth: 0
+      - uses: hynek/build-and-inspect-python-package@v1

@@ -21,12 +21,15 @@ import sys
 import time
 import traceback
 import uuid
+from contextlib import suppress
 from enum import Enum
 from queue import Empty, Queue
 from threading import RLock, Timer
 from typing import Any, Callable, Dict, List, Tuple
 
 __author__ = "Grzegorz Bokota"
+
+from PartSegCore.plugins import register_if_need
 
 
 class SubprocessOrder(Enum):
@@ -152,14 +155,15 @@ class BatchManager:
             self.join_all()
 
     def cancel_work(self, global_parameters):
-        del self.calculation_dict[global_parameters.uuid]
+        with suppress(KeyError):
+            del self.calculation_dict[global_parameters.uuid]
 
     def join_all(self):
-        logging.debug(f"Join begin {len(self.process_list)} {self.number_off_process}")
+        logging.debug("Join begin %s %s", len(self.process_list), self.number_off_process)
         with self.locker:
             if len(self.process_list) > self.number_off_process:
                 to_remove = []
-                logging.debug(f"Process list start {self.process_list}")
+                logging.debug("Process list start %s", self.process_list)
                 for p in self.process_list:
                     if not p.is_alive():
                         p.join()
@@ -168,14 +172,17 @@ class BatchManager:
                 for p in to_remove:
                     self.process_list.remove(p)
                 self.number_off_alive_process -= len(to_remove)
-                logging.debug(f"Process list end {self.process_list}")
+                logging.debug("Process list end %s", self.process_list)
             # FIXME self.number_off_alive_process,  self.number_off_process negative values
             if len(self.process_list) > self.number_off_process and len(self.process_list) > 0:
                 logging.info(
-                    "Wait on process, time {}, {}, {}, {}".format(
-                        time.time(), self.number_off_alive_process, len(self.process_list), self.number_off_process
-                    )
+                    "Wait on process, time %s, %s, %s, %s",
+                    time.time(),
+                    self.number_off_alive_process,
+                    len(self.process_list),
+                    self.number_off_process,
                 )
+
                 Timer(1, self.join_all).start()
 
     @property
@@ -231,30 +238,28 @@ class BatchWorker:
 
     def run(self):
         """Worker main loop"""
-        logging.debug(f"Process started {os.getpid()}")
+        logging.debug("Process started %s", os.getpid())
         while True:
             if not self.order_queue.empty():
-                try:
+                with suppress(Empty):
                     order = self.order_queue.get_nowait()
-                    logging.debug(f"Order message: {order}")
+                    logging.debug("Order message: %s", order)
                     if order == SubprocessOrder.kill:
                         break
-                except Empty:  # pragma: no cover
-                    pass
             if not self.task_queue.empty():
                 try:
                     task = self.task_queue.get_nowait()
                     self.calculate_task(task)
-                except Empty:
+                except Empty:  # pragma: no cover
                     time.sleep(0.1)
                     continue
                 except (MemoryError, OSError):  # pragma: no cover
                     pass
                 except Exception as ex:  # pragma: no cover # pylint: disable=W0703
-                    logging.warning(f"Unsupported exception {ex}")
+                    logging.warning("Unsupported exception %s", ex)
             else:
                 time.sleep(0.1)
-        logging.info(f"Process {os.getpid()} ended")
+        logging.info("Process %s ended", os.getpid())
 
 
 def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: Dict[uuid.UUID, Any]):
@@ -266,5 +271,10 @@ def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, cal
     :param result_queue: Queue for calculation result
     :param calculation_dict: dict with global parameters
     """
+    register_if_need()
+    with suppress(ImportError):
+        from PartSeg.plugins import register_if_need as register
+
+        register()
     worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
     worker.run()
