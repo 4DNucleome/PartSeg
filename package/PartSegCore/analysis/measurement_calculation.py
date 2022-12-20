@@ -1725,6 +1725,18 @@ def calc_diam(array, voxel_size):  # pragma: no cover
     return np.sqrt(diam)
 
 
+class VoxelSize(MeasurementMethodBase):
+    text_info = "Voxel size", "Voxel size"
+
+    @classmethod
+    def calculate_property(cls, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
+        return " x ".join([str(x * result_scalar) for x in voxel_size])
+
+    @classmethod
+    def get_units(cls, ndim) -> symbols:
+        return symbols("{}")
+
+
 MEASUREMENT_DICT = Register(suggested_base_class=MeasurementMethodBase)
 """Register with all measurements algorithms"""
 
@@ -1756,3 +1768,4 @@ MEASUREMENT_DICT.register(SplitOnPartVolume, old_names=["split on part volume"])
 MEASUREMENT_DICT.register(SplitOnPartPixelBrightnessSum, old_names=["split on part pixel brightness sum"])
 MEASUREMENT_DICT.register(Voxels)
 MEASUREMENT_DICT.register(Haralick)
+MEASUREMENT_DICT.register(VoxelSize)
