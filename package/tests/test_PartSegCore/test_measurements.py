@@ -2293,12 +2293,17 @@ def test_all_methods(method, dtype):
         _component_num=1,
         **dict(method.get_default_values()),
     )
-    if method.get_units(3) != "str":
+    if "str" not in str(method.get_units(3)):
         float(res)
 
 
 @pytest.mark.parametrize(
-    "method", (x for x in MEASUREMENT_DICT.values() if x.get_starting_leaf().per_component is None)
+    "method",
+    (
+        x
+        for x in MEASUREMENT_DICT.values()
+        if x.get_starting_leaf().per_component is None and "str" not in str(x.get_units(3))
+    ),
 )
 @pytest.mark.parametrize("area", [AreaType.ROI, AreaType.Mask])
 def test_per_component(method, area):

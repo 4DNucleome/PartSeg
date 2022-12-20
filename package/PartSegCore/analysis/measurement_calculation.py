@@ -1734,7 +1734,7 @@ class VoxelSize(MeasurementMethodBase):
 
     @classmethod
     def get_units(cls, ndim) -> symbols:
-        return symbols("{}")
+        return symbols("str {}")
 
 
 MEASUREMENT_DICT = Register(suggested_base_class=MeasurementMethodBase)

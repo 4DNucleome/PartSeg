@@ -391,7 +391,7 @@ class Calculation(BaseCalculation):
         sheet_name,
         calculation_plan,
         voxel_size,
-        overwrite_voxel_size,
+        overwrite_voxel_size=False,
     ):
         super().__init__(
             base_prefix,
