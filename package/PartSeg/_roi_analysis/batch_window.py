@@ -43,7 +43,7 @@ from PartSeg.common_gui.select_multiple_files import AddFiles
 from PartSeg.common_gui.universal_gui_part import Spacing, right_label
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
-from PartSegCore.analysis.calculation_plan import Calculation, MaskFile
+from PartSegCore.analysis.calculation_plan import Calculation, CalculationPlan, MaskFile
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.universal_const import Units
@@ -364,17 +364,19 @@ class CalculationPrepare(QDialog):
     :type mask_mapper_list: list[MaskMapper]
     """
 
-    def __init__(self, file_list, calculation_plan, measurement_file_path, settings, batch_manager):
+    def __init__(
+        self,
+        file_list: typing.List[os.PathLike],
+        calculation_plan: CalculationPlan,
+        measurement_file_path: os.PathLike,
+        settings: PartSettings,
+        batch_manager: CalculationManager,
+    ):
         """
-
         :param file_list: list of files to proceed
-        :type file_list: list[str]
         :param calculation_plan: calculation plan for this run
-        :type calculation_plan: CalculationPlan
         :param measurement_file_path: path to measurement result file
-        :type measurement_file_path: str
         :param settings: settings object
-        :type settings: PartSettings
         :type batch_manager: CalculationManager
         """
         super().__init__()
@@ -403,7 +405,7 @@ class CalculationPrepare(QDialog):
         self.result_prefix_btn.clicked.connect(self.choose_result_prefix)
         self.sheet_name = QLineEdit("Sheet1")
         self.sheet_name.textChanged.connect(self.verify_data)
-        self.measurement_file_path_view = QLineEdit(measurement_file_path)
+        self.measurement_file_path_view = QLineEdit(str(measurement_file_path))
         self.measurement_file_path_view.setReadOnly(True)
 
         self.overwrite_voxel_size_check = QCheckBox("Overwrite voxel size")
@@ -476,9 +478,9 @@ class CalculationPrepare(QDialog):
 
     def choose_result_prefix(self):
         dial = QFileDialog()
-        dial.setOption(QFileDialog.DontUseNativeDialog, True)
-        dial.setAcceptMode(QFileDialog.AcceptOpen)
-        dial.setFileMode(QFileDialog.Directory)
+        dial.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+        dial.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
+        dial.setFileMode(QFileDialog.FileMode.Directory)
         dial.setDirectory(self.result_prefix.text())
         dial.setHistory(dial.history() + self.settings.get_path_history())
         if dial.exec_():
@@ -492,7 +494,7 @@ class CalculationPrepare(QDialog):
             base_path = str(self.base_prefix.text()).strip()
             if base_path != "":
                 dial.setDirectory(base_path)
-            dial.setFileMode(QFileDialog.ExistingFile)
+            dial.setFileMode(QFileDialog.FileMode.ExistingFile)
             if dial.exec_():
                 path = str(dial.selectedFiles())
                 self.mask_path_list[i].setText(path)
@@ -533,6 +535,10 @@ class CalculationPrepare(QDialog):
             if 2 in val:
                 self.execute_btn.setDisabled(True)
                 text += "<b><font color='red'>Some mask do not exists</font><b><br>"
+
+        if not all(os.path.exists(f) for f in self.file_list):
+            self.execute_btn.setDisabled(True)
+            text += "<b><font color='red'>Some files do not exists</font><b><br>"
 
         text = text[:-4]
         self.info_label.setText(text)
