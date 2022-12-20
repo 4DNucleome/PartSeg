@@ -173,6 +173,8 @@ class CalculationProcess:
         for project in projects:
             project: ProjectTuple
             self.image = project.image
+            if calculation.overwrite_voxel_size:
+                self.image.set_spacing(calculation.voxel_size)
             if operation == RootType.Mask_project:
                 self.mask = project.mask
             if operation == RootType.Project:

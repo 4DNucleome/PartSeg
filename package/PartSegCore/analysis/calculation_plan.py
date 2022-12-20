@@ -348,6 +348,7 @@ class BaseCalculation:
         sheet_name: str,
         calculation_plan: "CalculationPlan",
         voxel_size: typing.Sequence[float],
+        overwrite_voxel_size: bool = False,
     ):
         self.base_prefix = base_prefix
         self.result_prefix = result_prefix
@@ -356,10 +357,12 @@ class BaseCalculation:
         self.calculation_plan = calculation_plan
         self.uuid = uuid.uuid4()
         self.voxel_size = voxel_size
+        self.overwrite_voxel_size = overwrite_voxel_size
 
     def __repr__(self):
         return (
             f"{self.__class__.__name__}(calculation_plan={self.calculation_plan}, voxel_size={self.voxel_size}, "
+            f"overwrite_voxel_size={self.overwrite_voxel_size}), "
             f"base_prefix={self.base_prefix}, result_prefix={self.base_prefix}, "
             f"measurement_file_path{self.measurement_file_path}, sheet_name={self.sheet_name})"
         )
@@ -380,9 +383,25 @@ class Calculation(BaseCalculation):
     """
 
     def __init__(
-        self, file_list, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size
+        self,
+        file_list,
+        base_prefix,
+        result_prefix,
+        measurement_file_path,
+        sheet_name,
+        calculation_plan,
+        voxel_size,
+        overwrite_voxel_size,
     ):
-        super().__init__(base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size)
+        super().__init__(
+            base_prefix,
+            result_prefix,
+            measurement_file_path,
+            sheet_name,
+            calculation_plan,
+            voxel_size,
+            overwrite_voxel_size,
+        )
         self.file_list: typing.List[str] = file_list
 
     def get_base_calculation(self) -> BaseCalculation:
@@ -394,6 +413,7 @@ class Calculation(BaseCalculation):
             self.sheet_name,
             self.calculation_plan,
             self.voxel_size,
+            self.overwrite_voxel_size,
         )
         base.uuid = self.uuid
         return base
@@ -436,6 +456,11 @@ class FileCalculation:
     def voxel_size(self):
         """default voxel size (for files which do not contains this information in metadata"""
         return self.calculation.voxel_size
+
+    @property
+    def overwrite_voxel_size(self):
+        """overwrite voxel size"""
+        return self.calculation.overwrite_voxel_size
 
     def __repr__(self):
         return f"FileCalculation(file_path={self.file_path}, calculation={self.calculation})"

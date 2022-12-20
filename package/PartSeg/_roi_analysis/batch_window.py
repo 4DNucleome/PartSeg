@@ -12,6 +12,7 @@ import sentry_sdk
 from qtpy.QtCore import QByteArray, Qt, QTimer
 from qtpy.QtGui import QIcon, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
+    QCheckBox,
     QDialog,
     QFileDialog,
     QGridLayout,
@@ -236,7 +237,7 @@ class FileChoose(QWidget):
         self.calculation_choose.addItem("<no calculation>")
         self.calculation_choose.currentIndexChanged[str].connect(self.change_situation)
         self.result_file = QLineEdit(self)
-        self.result_file.setAlignment(Qt.AlignRight)
+        self.result_file.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.result_file.setReadOnly(True)
         self.chose_result = QPushButton("Save result as", self)
         self.chose_result.clicked.connect(self.chose_result_file)
@@ -405,6 +406,8 @@ class CalculationPrepare(QDialog):
         self.measurement_file_path_view = QLineEdit(measurement_file_path)
         self.measurement_file_path_view.setReadOnly(True)
 
+        self.overwrite_voxel_size_check = QCheckBox("Overwrite voxel size")
+
         self.mask_path_list = []
         self.mask_mapper_list = self.calculation_plan.get_list_file_mask()
         mask_file_list = [(i, el) for i, el in enumerate(self.mask_mapper_list) if isinstance(el, MaskFile)]
@@ -438,18 +441,19 @@ class CalculationPrepare(QDialog):
         layout = QGridLayout()
         layout.addWidget(self.info_label, 0, 0, 1, 5)
         layout.addWidget(self.voxel_size, 1, 0, 1, 5)
-        layout.addWidget(right_label("Measurement sheet name:"), 3, 3)
-        layout.addWidget(self.sheet_name, 3, 4)
-        layout.addWidget(right_label("Measurement file path:"), 2, 3)
-        layout.addWidget(self.measurement_file_path_view, 2, 4)
+        layout.addWidget(self.overwrite_voxel_size_check, 2, 0, 1, 5)
+        layout.addWidget(right_label("Measurement sheet name:"), 4, 3)
+        layout.addWidget(self.sheet_name, 4, 4)
+        layout.addWidget(right_label("Measurement file path:"), 3, 3)
+        layout.addWidget(self.measurement_file_path_view, 3, 4)
 
-        layout.addWidget(right_label("Data prefix:"), 2, 0)
-        layout.addWidget(self.base_prefix, 2, 1)
-        layout.addWidget(self.base_prefix_btn, 2, 2)
-        layout.addWidget(right_label("Save prefix:"), 3, 0)
-        layout.addWidget(self.result_prefix, 3, 1)
-        layout.addWidget(self.result_prefix_btn, 3, 2)
-        layout.addLayout(mask_path_layout, 4, 0, 1, 0)
+        layout.addWidget(right_label("Data prefix:"), 3, 0)
+        layout.addWidget(self.base_prefix, 3, 1)
+        layout.addWidget(self.base_prefix_btn, 3, 2)
+        layout.addWidget(right_label("Save prefix:"), 4, 0)
+        layout.addWidget(self.result_prefix, 4, 1)
+        layout.addWidget(self.result_prefix_btn, 4, 2)
+        layout.addLayout(mask_path_layout, 5, 0, 1, 0)
 
         layout.addWidget(self.file_list_widget, 5, 0, 3, 6)
         btn_layout = QHBoxLayout()
@@ -506,6 +510,7 @@ class CalculationPrepare(QDialog):
             "sheet_name": str(self.sheet_name.text()),
             "calculation_plan": self.calculation_plan,
             "voxel_size": self.voxel_size.get_values(),
+            "overwrite_voxel_size": self.overwrite_voxel_size_check.isChecked(),
         }
         return Calculation(**res)
 
