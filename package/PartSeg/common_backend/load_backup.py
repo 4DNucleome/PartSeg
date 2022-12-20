@@ -9,11 +9,13 @@ from PartSeg import parsed_version, state_store
 from PartSeg._launcher.check_version import IGNORE_FILE
 from PartSeg.common_backend import napari_get_settings
 
+
 def _parse_version(name):
     try:
         return packaging.version.parse(name)
     except packaging.version.InvalidVersion:
         return None
+
 
 def import_config():
     """
