@@ -573,7 +573,7 @@ class CalculationPrepare(QDialog):
             2: "Mask {} file does not exists",
         }
 
-        warn_state = self.state_list.max(axis=1, initial=0)
+        warn_state = np.amax(self.state_list, axis=1, initial=0)
 
         all_prefix = os.path.commonprefix(self.file_list)
         if not os.path.exists(all_prefix):
