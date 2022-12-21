@@ -7,7 +7,7 @@ from functools import partial
 from io import BytesIO
 from pathlib import Path
 from typing import Callable, Optional
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -412,13 +412,30 @@ class TestLoadBackup:
 
         load_backup.import_config()
 
+    @patch("PartSeg.common_backend.load_backup.QMessageBox.question", return_value=QMessageBox.Yes)
+    def test_backup_wrong_name(self, msg_box, monkeypatch, tmp_path, qtbot):
+        monkeypatch.setattr("PartSeg.state_store.save_folder", (tmp_path / "0.13.13"))
+        monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
+        (tmp_path / "0.13.12").mkdir()
+        (tmp_path / "0.13.12" / "test.txt").touch()
+        (tmp_path / "0.13.11").mkdir()
+
+        (tmp_path / "0.13.12_").mkdir()
+        (tmp_path / "0.13.11_test").mkdir()
+        (tmp_path / "buka").mkdir()
+
+        load_backup.import_config()
+
+        msg_box.assert_called_once()
+
+        assert (tmp_path / "0.13.13" / "test.txt").exists()
+
     @pytest.mark.parametrize("response", [load_backup.QMessageBox.Yes, load_backup.QMessageBox.No])
     @pytest.mark.parametrize("ignore", [True, False])
     def test_older_exist(self, monkeypatch, tmp_path, response, ignore):
         def create_file(file_path: Path):
             file_path.parent.mkdir(exist_ok=True)
-            with open(file_path, "w") as f:
-                print(1, file=f)
+            file_path.write_text("1")
 
         def question(*args, **kwargs):
             return response

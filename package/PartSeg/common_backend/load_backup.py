@@ -10,6 +10,13 @@ from PartSeg._launcher.check_version import IGNORE_FILE
 from PartSeg.common_backend import napari_get_settings
 
 
+def _parse_version(name):
+    try:
+        return packaging.version.parse(name)
+    except packaging.version.InvalidVersion:
+        return None
+
+
 def import_config():
     """
     Check if settings folder for current version already exists.
@@ -25,7 +32,7 @@ def import_config():
     versions = sorted(
         (
             x
-            for x in [packaging.version.parse(os.path.basename(y)) for y in possible_folders]
+            for x in [_parse_version(os.path.basename(y)) for y in possible_folders]
             if isinstance(x, packaging.version.Version)
         ),
         reverse=True,
