@@ -94,3 +94,14 @@ class TestCalculationPrepare:
         dial.choose_result_prefix()
 
         assert dial.result_prefix.text() == str(tmp_path / "test_dir")
+
+    def test_overwrite_voxel_size(self, calculation_prepare, tmp_path):
+        files = [tmp_path / "test1.tif", tmp_path / "test2.tif"]
+        for file in files:
+            file.write_text("test")
+        dial = calculation_prepare(file_list=files)
+        assert "ignored" not in dial.info_label.text()
+        dial.overwrite_voxel_size_check.setChecked(True)
+        assert "ignored" in dial.info_label.text()
+        dial.overwrite_voxel_size_check.setChecked(False)
+        assert "ignored" not in dial.info_label.text()

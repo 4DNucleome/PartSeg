@@ -388,7 +388,8 @@ class CalculationPrepare(QDialog):
         self.settings = settings
         self.batch_manager = batch_manager
         self.info_label = QLabel(
-            "Information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font><b>"
+            f"Information, <i><font color='{self._warning_color()}'>warnings</font></i>, "
+            "<b><font color='red'>errors</font><b>"
         )
         self.voxel_size = Spacing("Voxel size", settings.image.spacing, settings.get("units_value", Units.nm))
         all_prefix = os.path.commonprefix(file_list)
@@ -410,6 +411,7 @@ class CalculationPrepare(QDialog):
         self.measurement_file_path_view.setReadOnly(True)
 
         self.overwrite_voxel_size_check = QCheckBox("Overwrite voxel size")
+        self.overwrite_voxel_size_check.stateChanged.connect(self._overwrite_voxel_size_check_changed)
 
         self.mask_path_list = []
         self.mask_mapper_list = self.calculation_plan.get_list_file_mask()
@@ -467,6 +469,16 @@ class CalculationPrepare(QDialog):
         self.setLayout(layout)
         self.verify_data()
 
+    def _warning_color(self):
+        return "yellow" if self.settings.theme_name == "dark" else "blue"
+
+    def _overwrite_voxel_size_check_changed(self):
+        self.verify_data()
+        if self.overwrite_voxel_size_check.isChecked():
+            text = self.info_label.text()
+            text += "<br><strong>Overwrite voxel size is checked. File metadata will be ignored</strong>"
+            self.info_label.setText(text)
+
     def choose_data_prefix(self):
         dial = QFileDialog()
         dial.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
@@ -519,20 +531,22 @@ class CalculationPrepare(QDialog):
 
     def verify_data(self):
         self.execute_btn.setEnabled(True)
+        warning_color = self._warning_color()
         text = (
-            "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font></b><br>"
+            f"information, <i><font color='{warning_color}'>warnings</font></i>,"
+            f" <b><font color='red'>errors</font></b><br>"
             "The voxel size is for file in which metadata do not contains this information<br>"
         )
         if not self.batch_manager.is_valid_sheet_name(
             str(self.measurement_file_path_view.text()), str(self.sheet_name.text())
         ):
-            text += "<i><font color='blue'>Sheet name already in use</i></font><br>"
+            text += f"<i><font color='{warning_color}'>Sheet name already in use</i></font><br>"
             self.execute_btn.setDisabled(True)
         if self.state_list.size > 0:
             val = np.unique(self.state_list)
             if 1 in val:
                 self.execute_btn.setDisabled(True)
-                text += "<i><font color='blue'>Some mask map file are not set</font></i><br>"
+                text += f"<i><font color='{warning_color}'>Some mask map file are not set</font></i><br>"
             if 2 in val:
                 self.execute_btn.setDisabled(True)
                 text += "<b><font color='red'>Some mask do not exists</font><b><br>"
