@@ -642,8 +642,11 @@ class ImageView(QWidget):
         if mask_layer is not None and mask_layer not in self.viewer.layers:
             self.viewer.add_layer(mask_layer)
         roi_layer = self.image_info[image.file_path].roi
-        if roi_layer is not None and roi_layer not in self.viewer.layers:
-            self.viewer.add_layer(roi_layer)
+        if roi_layer is not None:
+            if roi_layer not in self.viewer.layers:
+                self.viewer.add_layer(roi_layer)
+            else:
+                self.viewer.layers.move_multiple([self.viewer.layers.index(roi_layer)], -1)
         self.viewer.reset_view()
         if self.viewer.layers:
             if hasattr(self.viewer.layers, "selection"):
