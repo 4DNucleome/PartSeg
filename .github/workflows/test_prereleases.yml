@@ -118,6 +118,7 @@ jobs:
       run: |
         pip-compile --upgrade -o requirements.txt setup.cfg --extra pyinstaller
         pip-sync
+        pip install https://files.pythonhosted.org/packages/52/34/f8cd1af7fc3a7f986dc2a46d45afcd2f3c61802657ef22e036e2c1e317c5/psygnal-0.7.0-py3-none-any.whl
         pip install .
     - name: upload requirements
       uses: actions/upload-artifact@v3
