@@ -155,7 +155,7 @@ def napari_image_repr(image: Image) -> str:
 
 def safe_repr(val):
     if isinstance(val, np.ndarray):
-        numpy_repr(val)
+        return numpy_repr(val)
     if isinstance(val, Image):
         return napari_image_repr(val)
     return _safe_repr(val)
