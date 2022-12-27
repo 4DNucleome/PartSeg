@@ -11,6 +11,7 @@ import zmq
 import itertools
 import pkg_resources
 import debugpy._vendored
+import importlib.metadata
 
 sys.setrecursionlimit(5000)
 sys.path.append(os.path.abspath("__file__"))
@@ -87,6 +88,14 @@ hiddenimports = (
     ]
     + [x.module_name for x in imageio_known_plugins.values()]
 )
+
+
+# psygnal handle
+for package_path in importlib.metadata.files("psygnal"):
+    if package_path.suffix in {".so", ".pyd"} and "psygnal" not in package_path.name:
+        hiddenimports.append(package_path.name.split(".")[0])
+
+hiddenimports.append("mypy_extensions")
 
 
 try:
