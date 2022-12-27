@@ -17,7 +17,7 @@ appdirs==1.4.4
     #   npe2
 asttokens==2.2.1
     # via stack-data
-attrs==22.1.0
+attrs==22.2.0
     # via jsonschema
 babel==2.11.0
     # via sphinx
@@ -76,7 +76,7 @@ hsluv==5.0.3
     # via vispy
 idna==3.4
     # via requests
-imagecodecs==2022.9.26
+imagecodecs==2022.12.24
     # via PartSeg (setup.cfg)
 imageio==2.23.0
     # via
@@ -90,7 +90,7 @@ importlib-metadata==5.2.0
     # via sphinx
 in-n-out==0.1.6
     # via app-model
-ipykernel==6.19.3
+ipykernel==6.19.4
     # via
     #   PartSeg (setup.cfg)
     #   napari-console
@@ -114,7 +114,7 @@ jupyter-client==7.4.8
     # via
     #   ipykernel
     #   qtconsole
-jupyter-core==5.1.0
+jupyter-core==5.1.1
     # via
     #   jupyter-client
     #   qtconsole
@@ -136,6 +136,8 @@ matplotlib-inline==0.1.6
     #   ipython
 mpmath==1.2.1
     # via sympy
+mypy-extensions==0.4.3
+    # via psygnal
 napari==0.4.17
     # via PartSeg (setup.cfg)
 napari-console==0.0.7
@@ -157,7 +159,7 @@ nme==0.1.6
     # via PartSeg (setup.cfg)
 npe2==0.6.1
     # via napari
-numpy==1.24.0
+numpy==1.24.1
     # via
     #   PartSeg (setup.cfg)
     #   czifile
@@ -226,7 +228,7 @@ psutil==5.9.4
     # via
     #   ipykernel
     #   napari
-psygnal==0.6.1
+psygnal==0.7.0
     # via
     #   PartSeg (setup.cfg)
     #   app-model
