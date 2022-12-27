@@ -150,7 +150,10 @@ def _setup_sentry():  # pragma: no cover
 
 
 def napari_image_repr(image: Image) -> str:
-    return f"<Image of shape: {image.data.shape}, dtype: {image.data.dtype}, slice {image._slice_indices}>"
+    return (
+        f"<Image of shape: {image.data.shape}, dtype: {image.data.dtype}, "
+        f"slice {getattr(image, '_slice_indices', None)}>"
+    )
 
 
 def safe_repr(val):
