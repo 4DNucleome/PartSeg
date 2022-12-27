@@ -6,6 +6,7 @@ on:
       - master
       - develop
       - main
+      - bugfix/fix_napari_widgets_tests
   pull_request:
     branches:
       - '**'
