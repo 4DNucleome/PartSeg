@@ -3,7 +3,6 @@ name: Tests
 on:
   push:
     branches:
-      - master
       - develop
       - feature_prepare/**
       - main
@@ -32,54 +31,56 @@ jobs:
           path: test_data
           retention-days: 5
 
-  test_pyqt5:
-    name: PyQt5
-    uses: ./.github/workflows/base_test_workflow.yml
-    needs: download_data
-    with:
-      test_data: True
-      python_version: >-
-        ["3.8", "3.10"]
-      os: >-
-        ["windows-2019", "ubuntu-20.04", "macos-11"]
-      qt_backend: >-
-        ["PyQt5"]
-
-  test_pyside2:
-    name: PySide2
-    uses: ./.github/workflows/base_test_workflow.yml
-    needs: download_data
-    with:
-      test_data: True
-      python_version: >-
-        ["3.8", "3.10"]
-      os: >-
-        ["ubuntu-20.04"]
-      qt_backend: >-
-        ["PySide2"]
-
   base-test:
-    name: Base Test
+    name: Base Test on ${{ matrix.platform }} py${{ matrix.python_version }} ${{ matrix.backend }}
+    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.8", "3.9", "3.10"]
+        os: ["ubuntu-20.04"]
+        qt_backend: ["PyQt5"]
+        include:
+          - python_version: "3.9"
+            os: "macos-11"
+            qt_backend: "PyQt5"
+          - python_version: "3.9"
+            os: "windows-2019"
+            qt_backend: "PyQt5"
+          - python_version: "3.9"
+            os: "ubuntu-20.04"
+            qt_backend: "PySide2"
     with:
       test_data: True
-      python_version: >-
-        ["3.9"]
-      os: >-
-        ["windows-2019", "ubuntu-20.04", "macos-12"]
+      python_version: ${{ matrix.python_version }}
+      os: ${{ matrix.os }}
+      qt_backend: ${{ matrix.qt_backend }}
+
+  base-test-main:
+    name: Base Test on ${{ matrix.platform }} py${{ matrix.python_version }} ${{ matrix.backend }}
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/base_test_workflow.yml
+    needs: download_data
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.8", "3.9", "3.10"]
+        os: ["ubuntu-20.04", "macos-11", "windows-2019"]
+        qt_backend: ["PySide2", "PyQt5"]
+    with:
+      test_data: True
+      python_version: ${{ matrix.python_version }}
+      os: ${{ matrix.os }}
+      qt_backend: ${{ matrix.qt_backend }}
 
   test_coverage:
     needs: download_data
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       test_data: True
-      python_version: >-
-        ["3.9"]
-      os: >-
-        ["ubuntu-20.04"]
-      qt_backend: >-
-        ["PyQt5"]
+      python_version: "3.8"
       tox_args: "-e py38-PyQt5-coverage"
       coverage: true
 
@@ -89,12 +90,7 @@ jobs:
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       test_data: True
-      python_version: >-
-        ["3.8"]
-      os: >-
-        ["ubuntu-20.04"]
-      qt_backend: >-
-        ["PyQt5"]
+      python_version: "3.8"
       tox_args: "-e py38-PyQt5-minimal"
 
   test_conda:

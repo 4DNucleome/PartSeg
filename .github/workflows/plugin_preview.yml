@@ -6,6 +6,10 @@ on:
     branches:
       - '**'
 
+concurrency:
+  group: test-preview-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   preview-page:
     name: Preview Page Deploy

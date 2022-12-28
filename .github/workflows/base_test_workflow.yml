@@ -5,8 +5,9 @@ on:
         required: true
         type: string
       os:
-        required: true
+        required: false
         type: string
+        default: "ubuntu-20.04"
       tox_args:
         required: false
         type: string
@@ -14,13 +15,11 @@ on:
       napari:
         required: false
         type: string
-        default: >-
-          ["latest"]
+        default: "latest"
       qt_backend:
         required: false
         type: string
-        default: >-
-          ["PyQt5", "PySide2"]
+        default: "PyQt5"
       test_data:
         required: false
         type: boolean
@@ -33,21 +32,14 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }} py ${{ matrix.python_version }} ${{ matrix.napari_version }} ${{ matrix.qt_backend }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ${{fromJson(inputs.os)}}
-        python_version: ${{fromJson(inputs.python_version)}}
-        napari_version: ${{fromJson(inputs.napari)}}
-        qt_backend: ${{fromJson(inputs.qt_backend)}}
+    name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }}
+    runs-on: ${{ inputs.os }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
-        name: Install Python ${{ matrix.python_version }}
+        name: Install Python ${{ inputs.python_version }}
         with:
-          python-version: ${{ matrix.python_version }}
+          python-version: ${{ inputs.python_version }}
           cache: 'pip'
           cache-dependency-path: 'requirements/requirements_pyinstaller.txt'
 
@@ -82,8 +74,8 @@ jobs:
           run: python -m tox ${{ inputs.tox_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: ${{ matrix.napari_version }}
-          BACKEND: ${{ matrix.qt_backend }}
+          NAPARI: ${{ inputs.napari }}
+          BACKEND: ${{ inputs.qt_backend }}
 
       - uses: codecov/codecov-action@v3
         if: ${{ inputs.coverage }}
