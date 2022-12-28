@@ -1,3 +1,4 @@
+from qtpy import QT5
 from qtpy.QtCore import QThread
 from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton
 
@@ -42,8 +43,10 @@ class WaitingDialog(QDialog):
         else:
             self.accept()
 
-    def exec(self):
-        self.exec_()
+    if QT5:
+
+        def exec(self):
+            self.exec_()
 
     def exec_(self):
         self.thread_to_wait.start()

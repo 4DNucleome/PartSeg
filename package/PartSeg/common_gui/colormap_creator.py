@@ -35,6 +35,7 @@ from qtpy.QtWidgets import (
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.icon_selector import IconSelector
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
+from PartSeg.common_gui.qt_util import get_mouse_x, get_mouse_y
 from PartSeg.common_gui.universal_gui_part import InfoLabel
 from PartSegCore.color_image.base_colors import Color
 from PartSegCore.custom_name_generate import custom_name_generate
@@ -96,14 +97,16 @@ class ColormapEdit(QWidget):
             return ind - 1
         return None
 
-    def _get_ratio(self, e: QMouseEvent, margin=10):
+    def _get_ratio(self, event: QMouseEvent, margin=10):
         frame_margin = 10
         width = self.width() - 2 * frame_margin
-        if e.x() < margin or e.x() > self.width() - margin:
+        mouse_x = get_mouse_x(event)
+        mouse_y = get_mouse_y(event)
+        if mouse_x < margin or mouse_x > self.width() - margin:
             return
-        if e.y() < margin or e.y() > self.height() - margin:
+        if mouse_y < margin or mouse_y > self.height() - margin:
             return
-        return (e.x() - frame_margin) / width
+        return (mouse_x - frame_margin) / width
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
         ratio = self._get_ratio(e, 5)

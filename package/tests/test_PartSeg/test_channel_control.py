@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 from napari.utils.colormaps import make_colorbar
-from qtpy import PYQT5
+from qtpy import PYQT5, PYQT6
 from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QImage
 
@@ -17,7 +17,7 @@ from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
 
-if PYQT5:
+if PYQT5 or PYQT6:
 
     def array_from_image(image: QImage):
         size = image.size().width() * image.size().height()

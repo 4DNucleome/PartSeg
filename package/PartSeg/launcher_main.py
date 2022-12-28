@@ -72,6 +72,7 @@ def main():
     argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
     args = parser.parse_args(argv)
 
+    from qtpy import QT5
     from qtpy.QtCore import Qt
     from qtpy.QtGui import QIcon
     from qtpy.QtWidgets import QApplication
@@ -85,7 +86,8 @@ def main():
     if platform.system() == "Darwin":
         multiprocessing.set_start_method("spawn")
 
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    if QT5:
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     my_app = QApplication(sys.argv)
     my_app.setApplicationName("PartSeg")
     my_app.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))
