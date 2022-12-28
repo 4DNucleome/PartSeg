@@ -31,23 +31,6 @@ jobs:
           path: test_data
           retention-days: 5
 
-  test_main_branch:
-    name: PyQt5
-    if: github.event_name == 'push'
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: ["ubuntu-20.04", "macos-11", "windows-2019"]
-        python: ["3.8", "3.10"]
-    uses: ./.github/workflows/base_test_workflow.yml
-    needs: download_data
-    with:
-      test_data: True
-      python_version: ${{ matrix.python }}
-      os: ${{ matrix.platform }}
-      qt_backend: >-
-        ["PyQt5"]
-
   base-test:
     name: Base Test on ${{ matrix.platform }} py${{ matrix.python }} ${{ matrix.backend }}
     if: github.event_name == 'pull_request'
