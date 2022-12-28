@@ -53,10 +53,10 @@ jobs:
             os: "ubuntu-20.04"
             qt_backend: "PySide2"
           - python_version: "3.9"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
             qt_backend: "PySide6"
           - python_version: "3.9"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
             qt_backend: "PyQt6"
     with:
       test_data: True
