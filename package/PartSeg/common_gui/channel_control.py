@@ -46,7 +46,7 @@ if QT5:
 else:
 
     def _has_focus_state(state: QStyle.StateFlag) -> bool:
-        return QStyle.StateFlag.State_HasFocus in state
+        return QStyle.StateFlag.State_HasFocus in QStyle.StateFlag(state)
 
 
 class ColorStyledDelegate(QStyledItemDelegate):
