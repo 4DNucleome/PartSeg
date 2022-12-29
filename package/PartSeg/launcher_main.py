@@ -62,7 +62,7 @@ def create_parser():
     return parser
 
 
-def main():
+def main():  # pragma: no cover
     if len(sys.argv) > 1 and sys.argv[1] == "_test":
         _test_imports()
         return
