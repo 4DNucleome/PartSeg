@@ -138,6 +138,15 @@ class TestColorComboBox:
         box.change_colors(starting_colors[1:])
         assert box.count() == len(starting_colors) - 1
 
+    def test_item_delegate(self, qtbot):
+        dkt = ColormapDict({})
+        box = ColorComboBox(0, starting_colors, dkt)
+        qtbot.add_widget(box)
+        box.show()
+        box.showPopup()
+        qtbot.wait(100)
+        box.hide()
+
 
 class TestColorComboBoxGroup:
     def test_change_channels_num(self, qtbot, image2):
