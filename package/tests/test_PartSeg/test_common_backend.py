@@ -495,7 +495,7 @@ class TestBaseSettings:
 
         assert settings.is_image_2d()
         assert settings.has_channels
-        with qtbot.waitSignal(settings.image_changed[str]):
+        with qtbot.waitSignal(settings.image_path_changed):
             settings.image_path = str(tmp_path / "test2.tiff")
         assert image.file_path == str(tmp_path / "test2.tiff")
 

@@ -62,16 +62,20 @@ def create_parser():
     return parser
 
 
-def main():
+def main():  # pragma: no cover
     if len(sys.argv) > 1 and sys.argv[1] == "_test":
         _test_imports()
         return
 
     parser = create_parser()
 
-    argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
+    argv = [x for x in sys.argv[1:] if not x.startswith(("parent", "pipe"))]
     args = parser.parse_args(argv)
 
+    try:
+        from qtpy import QT5
+    except ImportError:  # pragma: no cover
+        QT5 = True
     from qtpy.QtCore import Qt
     from qtpy.QtGui import QIcon
     from qtpy.QtWidgets import QApplication
@@ -85,7 +89,8 @@ def main():
     if platform.system() == "Darwin":
         multiprocessing.set_start_method("spawn")
 
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    if QT5:
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     my_app = QApplication(sys.argv)
     my_app.setApplicationName("PartSeg")
     my_app.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))

@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 from napari.utils.colormaps import make_colorbar
-from qtpy import PYQT5
 from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QImage
 
@@ -17,7 +16,13 @@ from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
 
-if PYQT5:
+try:
+    from qtpy import PYQT5, PYQT6
+except ImportError:  # pragma: no cover
+    PYQT5 = True
+    PYQT6 = False
+
+if PYQT5 or PYQT6:
 
     def array_from_image(image: QImage):
         size = image.size().width() * image.size().height()
@@ -132,6 +137,15 @@ class TestColorComboBox:
         assert box.count() == len(starting_colors) - 1
         box.change_colors(starting_colors[1:])
         assert box.count() == len(starting_colors) - 1
+
+    def test_item_delegate(self, qtbot):
+        dkt = ColormapDict({})
+        box = ColorComboBox(0, starting_colors, dkt)
+        qtbot.add_widget(box)
+        box.show()
+        box.showPopup()
+        qtbot.wait(100)
+        box.hide()
 
 
 class TestColorComboBoxGroup:

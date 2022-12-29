@@ -235,7 +235,7 @@ class FileChoose(QWidget):
         self.run_button.setDisabled(True)
         self.calculation_choose = SearchComboBox()
         self.calculation_choose.addItem("<no calculation>")
-        self.calculation_choose.currentIndexChanged[str].connect(self.change_situation)
+        self.calculation_choose.currentTextChanged.connect(self.change_situation)
         self.result_file = QLineEdit(self)
         self.result_file.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.result_file.setReadOnly(True)

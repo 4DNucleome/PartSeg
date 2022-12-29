@@ -56,6 +56,10 @@ This application is designed to help biologist with segmentation based on thresh
 Installation troubleshooting information could be found in wiki: [wiki](https://github.com/4DNucleome/PartSeg/wiki/Instalation-troubleshoot).
 If this information does not solve problem you can open [issue](https://github.com/4DNucleome/PartSeg/issues).
 
+### Qt 6 support
+
+PartSeg development branch support (and stable since 0.15.0) has experimental Qt6 support. Test are passing but not whole GUI code is covered by tests. Inf you Find any problem please report it.
+
 ## Running
 
 If you downloaded binaries, run the `PartSeg` (or `PartSeg.exe` for Windows) file inside the `PartSeg` folder
