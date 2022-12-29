@@ -53,7 +53,7 @@ class ColorStyledDelegate(QStyledItemDelegate):
         painter.drawImage(rect, image_dict[model.data()])
         rect2 = QRect(style.rect.x() + style.rect.width() - 140, style.rect.y() + 2, 140, style.rect.height() - 4)
         painter.drawText(rect2, Qt.AlignmentFlag.AlignLeft, model.data())
-        if int(style.state.value & QStyle.StateFlag.State_HasFocus.value):
+        if QStyle.StateFlag.State_HasFocus in style.state:
             painter.save()
             pen = QPen()
             pen.setWidth(5)

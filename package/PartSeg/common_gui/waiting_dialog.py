@@ -27,7 +27,7 @@ class WaitingDialog(QDialog):
         thread.finished.connect(self.accept_if_no_reject)
         self.thread_to_wait = thread
         self.setLayout(layout)
-        self.setResult(QDialog.Accepted)
+        self.setResult(QDialog.DialogCode.Accepted)
         if isinstance(thread, ProgressTread):
             thread.range_changed.connect(self.progress.setRange)
             thread.step_changed.connect(self.progress.setValue)
