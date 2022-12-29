@@ -441,7 +441,7 @@ class ColorComboBoxGroup(QWidget):
 
     coloring_update = Signal()
     """information about global change of coloring"""
-    change_channel = Signal([str, int])
+    change_channel = Signal(str, int)
     """information which channel change"""
 
     def __init__(
