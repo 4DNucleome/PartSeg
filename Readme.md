@@ -60,7 +60,6 @@ If this information does not solve problem you can open [issue](https://github.c
 
 PartSeg development branch support (and stable since 0.15.0) has experimental Qt6 support. Test are passing but not whole GUI code is covered by tests. Inf you Find any problem please report it.
 
-
 ## Running
 
 If you downloaded binaries, run the `PartSeg` (or `PartSeg.exe` for Windows) file inside the `PartSeg` folder
