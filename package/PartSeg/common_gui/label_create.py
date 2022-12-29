@@ -2,6 +2,7 @@
 This module contains widgets to create and manage labels scheme
 """
 from copy import deepcopy
+from typing import List, Sequence
 
 import numpy as np
 from qtpy.QtCore import Qt, Signal, Slot
@@ -43,7 +44,7 @@ class _LabelShow(QWidget):
 
     def set_labels(self, label):
         if label.ndim != 2 and label.shape[1] not in (3, 4):
-            raise ValueError("Wrong array shape")
+            raise ValueError("Wrong array shape")  # pragma: no cover
         label = add_alpha_channel(label)
         self.image = NumpyQImage(label.reshape((1,) + label.shape))
         self.repaint()
@@ -63,7 +64,7 @@ class LabelShow(QWidget):
     edit_labels_with_name = Signal(str, list)
     selected = Signal(str)
 
-    def __init__(self, name: str, label: list, removable, parent=None):
+    def __init__(self, name: str, label: List[Sequence[float]], removable, parent=None):
         super().__init__(parent)
         self.label = label
         self.name = name
@@ -95,7 +96,7 @@ class LabelShow(QWidget):
         self.setLayout(layout)
         self.remove_btn.clicked.connect(self.remove_fun)
         self.edit_btn.clicked.connect(self.edit_fun)
-        self.radio_btn.clicked.connect(self.selected_fun)
+        self.radio_btn.toggled.connect(self.selected_fun)
 
     def set_checked(self, val):
         self.radio_btn.setChecked(val)
@@ -114,7 +115,8 @@ class LabelShow(QWidget):
 
     @Slot(bool)
     def selected_fun(self):
-        self.selected.emit(self.name)
+        if self.radio_btn.isChecked():
+            self.selected.emit(self.name)
 
 
 class LabelChoose(QWidget):

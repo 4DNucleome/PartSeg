@@ -70,6 +70,7 @@ from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, 
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, QMessageFromException, _print_traceback
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
+from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelShow
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
 from PartSeg.common_gui.multiple_file_widget import (
@@ -1758,3 +1759,34 @@ class TestQMessageFromException:
             getattr(QMessageFromException, method)(None, "Test", "test", exception=e)
 
             assert called
+
+
+class TestLabelCreate:
+    # Test all class from PartSeg.common_gui.label_create module
+    def test_base_color_show(self, qtbot):
+        q = ColorShow((0, 0, 0))
+        qtbot.addWidget(q)
+        q.set_color((1, 1, 1))
+
+    def test_base_label_show(self, qtbot):
+        q = LabelShow("test", [(0, 0, 0), (10, 10, 10)], removable=True)
+        qtbot.addWidget(q)
+        assert not q.radio_btn.isChecked()
+        assert q.remove_btn.isEnabled()
+        with qtbot.wait_signal(q.remove_labels):
+            q.remove_btn.click()
+        with qtbot.wait_signal(q.selected):
+            q.set_checked(True)
+        assert q.radio_btn.isChecked()
+        assert not q.remove_btn.isEnabled()
+        with qtbot.wait_signal(q.edit_labels):
+            q.edit_btn.click()
+
+    def test_base_label_chose(self, qtbot, part_settings):
+        q = LabelChoose(part_settings)
+        qtbot.addWidget(q)
+        q.refresh()
+        assert q.layout().count() == 2
+        part_settings.label_color_dict["test"] = [(0, 0, 0), (10, 10, 10)]
+        q.refresh()
+        assert q.layout().count() == 3
