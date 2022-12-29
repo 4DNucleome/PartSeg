@@ -69,7 +69,7 @@ def main():
 
     parser = create_parser()
 
-    argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
+    argv = [x for x in sys.argv[1:] if not x.startswith(("parent", "pipe"))]
     args = parser.parse_args(argv)
 
     from qtpy import QT5
