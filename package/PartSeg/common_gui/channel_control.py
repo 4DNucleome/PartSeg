@@ -32,11 +32,6 @@ image_dict = {}  # dict to store QImages generated from colormap
 
 ColorMapDict = typing.MutableMapping[str, typing.Tuple[Colormap, bool]]
 
-try:
-    from qtpy import QT5
-except ImportError:  # pragma: no cover
-    QT5 = True
-
 
 def _has_focus_state(state: QStyle.StateFlag) -> bool:
     return int(state & QStyle.State(QStyle.StateFlag.State_HasFocus))
