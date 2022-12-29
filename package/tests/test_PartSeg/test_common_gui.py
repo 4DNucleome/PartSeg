@@ -18,7 +18,8 @@ from magicgui import register_type
 from magicgui.widgets import Container, Widget, create_widget
 from nme import register_class
 from pydantic import Field
-from qtpy.QtCore import QPoint, QSize, Qt
+from qtpy.QtCore import QPoint, QRect, QSize, Qt
+from qtpy.QtGui import QPaintEvent
 from qtpy.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -45,6 +46,7 @@ from PartSeg.common_gui.advanced_tabs import (
     SEARCH_ZOOM_FACTOR_STR,
     AdvancedWindow,
     Appearance,
+    ColorControl,
 )
 from PartSeg.common_gui.algorithms_description import (
     AlgorithmChoose,
@@ -90,6 +92,7 @@ from PartSeg.common_gui.universal_gui_part import (
     Hline,
     InfoLabel,
     MguiChannelComboBox,
+    ProgressCircle,
     Spacing,
 )
 from PartSegCore import Units
@@ -1790,3 +1793,20 @@ class TestLabelCreate:
         part_settings.label_color_dict["test"] = [(0, 0, 0), (10, 10, 10)]
         q.refresh()
         assert q.layout().count() == 3
+
+
+def test_color_control(qtbot, part_settings):
+    w = ColorControl(part_settings, ["test"])
+    qtbot.addWidget(w)
+    assert w.count() == 6
+    w._set_label_editor()
+    assert w.currentWidget() == w.label_editor
+    w._set_colormap_editor()
+    assert w.currentWidget() == w.colormap_editor
+
+
+def test_progress_circle(qtbot):
+    w = ProgressCircle()
+    qtbot.addWidget(w)
+    w.set_fraction(0.5)
+    w.paintEvent(QPaintEvent(QRect(0, 0, 100, 100)))

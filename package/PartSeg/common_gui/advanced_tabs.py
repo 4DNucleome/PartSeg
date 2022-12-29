@@ -200,10 +200,10 @@ class ColorControl(QTabWidget):
     def __init__(self, settings: ViewSettings, image_view_names: List[str]):
         super().__init__()
         self.appearance = Appearance(settings)
-        self.colormap_selector = PColormapCreator(settings)
+        self.colormap_editor = PColormapCreator(settings)
         self.color_preview = PColormapList(settings, image_view_names)
-        self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
-        self.color_preview.edit_signal.connect(self._set_color_preview)
+        self.color_preview.edit_signal.connect(self.colormap_editor.set_colormap)
+        self.color_preview.edit_signal.connect(self._set_colormap_editor)
         self.label_editor = LabelEditor(settings)
         self.label_view = LabelChoose(settings)
         self.label_view.edit_signal.connect(self.label_editor.set_colors)
@@ -211,7 +211,7 @@ class ColorControl(QTabWidget):
         self.mask_control = MaskControl(settings)
         self.addTab(self.appearance, "Appearance")
         self.addTab(self.color_preview, "Color maps")
-        self.addTab(self.colormap_selector, "Color Map creator")
+        self.addTab(self.colormap_editor, "Color Map creator")
         self.addTab(self.label_view, "Select labels")
         self.addTab(self.label_editor, "Create labels")
         self.addTab(self.mask_control, "Mask marking")
@@ -219,8 +219,8 @@ class ColorControl(QTabWidget):
     def _set_label_editor(self):
         self.setCurrentWidget(self.label_editor)
 
-    def _set_color_preview(self):
-        self.setCurrentWidget(self.colormap_selector)
+    def _set_colormap_editor(self):
+        self.setCurrentWidget(self.colormap_editor)
 
 
 class AdvancedWindow(QTabWidget):
