@@ -812,7 +812,7 @@ class ImageInformation(QWidget):
         layout.addWidget(self.multiple_files)
         layout.addWidget(self.sync_dirs)
         self.setLayout(layout)
-        self._settings.image_changed[str].connect(self.set_image_path)
+        self._settings.image_path_changed.connect(self.set_image_path)
         self._settings.connect_("multiple_files_widget", self._set_multiple_files)
         self._settings.connect_("sync_dirs", self._set_sync_dirs)
 

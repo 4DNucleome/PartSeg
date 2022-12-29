@@ -2,6 +2,7 @@
 This module contains widgets to create and manage labels scheme
 """
 from copy import deepcopy
+from typing import List, Sequence
 
 import numpy as np
 from qtpy.QtCore import Qt, Signal, Slot
@@ -43,7 +44,7 @@ class _LabelShow(QWidget):
 
     def set_labels(self, label):
         if label.ndim != 2 and label.shape[1] not in (3, 4):
-            raise ValueError("Wrong array shape")
+            raise ValueError("Wrong array shape")  # pragma: no cover
         label = add_alpha_channel(label)
         self.image = NumpyQImage(label.reshape((1,) + label.shape))
         self.repaint()
@@ -59,10 +60,11 @@ class LabelShow(QWidget):
     """Present single label color scheme"""
 
     remove_labels = Signal(str)
-    edit_labels = Signal([str, list], [list])
+    edit_labels = Signal(list)
+    edit_labels_with_name = Signal(str, list)
     selected = Signal(str)
 
-    def __init__(self, name: str, label: list, removable, parent=None):
+    def __init__(self, name: str, label: List[Sequence[float]], removable, parent=None):
         super().__init__(parent)
         self.label = label
         self.name = name
@@ -94,7 +96,7 @@ class LabelShow(QWidget):
         self.setLayout(layout)
         self.remove_btn.clicked.connect(self.remove_fun)
         self.edit_btn.clicked.connect(self.edit_fun)
-        self.radio_btn.clicked.connect(self.selected_fun)
+        self.radio_btn.toggled.connect(self.selected_fun)
 
     def set_checked(self, val):
         self.radio_btn.setChecked(val)
@@ -108,16 +110,18 @@ class LabelShow(QWidget):
 
     @Slot()
     def edit_fun(self):
-        self.edit_labels.emit(self.name, deepcopy(self.label))
-        self.edit_labels[list].emit(deepcopy(self.label))
+        self.edit_labels_with_name.emit(self.name, deepcopy(self.label))
+        self.edit_labels.emit(deepcopy(self.label))
 
     @Slot(bool)
     def selected_fun(self):
-        self.selected.emit(self.name)
+        if self.radio_btn.isChecked():
+            self.selected.emit(self.name)
 
 
 class LabelChoose(QWidget):
-    edit_signal = Signal([str, list], [list])
+    edit_signal = Signal(list)
+    edit_with_name_signal = Signal(str, list)
 
     def __init__(self, settings):
         super().__init__()
@@ -148,8 +152,8 @@ class LabelChoose(QWidget):
                 w: LabelShow = el.widget()
                 w.selected.disconnect()
                 w.remove_labels.disconnect()
-                w.edit_labels[str, list].disconnect()
-                w.edit_labels[list].disconnect()
+                w.edit_labels_with_name.disconnect()
+                w.edit_labels.disconnect()
                 el.widget().deleteLater()
 
         chosen_name = self.settings.current_labels
@@ -159,8 +163,8 @@ class LabelChoose(QWidget):
                 label.set_checked(True)
             label.selected.connect(self.change_scheme)
             label.remove_labels.connect(self.remove)
-            label.edit_labels[list].connect(self.edit_signal[list].emit)
-            label.edit_labels[str, list].connect(self.edit_signal[str, list].emit)
+            label.edit_labels.connect(self.edit_signal.emit)
+            label.edit_labels_with_name.connect(self.edit_with_name_signal.emit)
             self.layout().addWidget(label)
         self.layout().addStretch(1)
 
@@ -180,10 +184,10 @@ class ColorShow(QLabel):
         painter = QPainter(self)
         painter.fillRect(event.rect(), self._qcolor)
 
-    def enterEvent(self, QEvent):  # pylint: disable=R0201
-        QApplication.setOverrideCursor(Qt.DragMoveCursor)
+    def enterEvent(self, _event):  # pylint: disable=R0201
+        QApplication.setOverrideCursor(Qt.CursorShape.DragMoveCursor)
 
-    def leaveEvent(self, QEvent):  # pylint: disable=R0201
+    def leaveEvent(self, _event):  # pylint: disable=R0201
         QApplication.restoreOverrideCursor()
 
     def set_color(self, color):
@@ -204,8 +208,10 @@ class LabelEditor(QWidget):
         # probability of colormap cache collision
 
         self.color_picker = QColorDialog()
-        self.color_picker.setWindowFlag(Qt.Widget)
-        self.color_picker.setOptions(QColorDialog.DontUseNativeDialog | QColorDialog.NoButtons)
+        self.color_picker.setWindowFlag(Qt.WindowType.Widget)
+        self.color_picker.setOptions(
+            QColorDialog.ColorDialogOption.DontUseNativeDialog | QColorDialog.ColorDialogOption.NoButtons
+        )
         self.add_color_btn = QPushButton("Add color")
         self.add_color_btn.clicked.connect(self.add_color)
         self.remove_color_btn = QPushButton("Remove last color")

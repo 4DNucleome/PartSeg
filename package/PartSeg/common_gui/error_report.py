@@ -42,6 +42,11 @@ from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.utils import numpy_repr
 
+try:
+    from qtpy import QT5
+except ImportError:  # pragma: no cover
+    QT5 = True
+
 _email_regexp = re.compile(r"[\w+]+@\w+\.\w+")
 _feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
     organization_slug="cent", project_slug="partseg"
@@ -132,8 +137,10 @@ class ErrorDialog(QDialog):
             exec_info = exc_info_from_error(exception)
             self.exception_tuple = event_from_exception(exec_info)
 
-    def exec(self):
-        self.exec_()
+    if QT5:
+
+        def exec(self):
+            self.exec_()
 
     def exec_(self):
         """
@@ -352,12 +359,12 @@ class QMessageFromException(QMessageBox):
         parent=None,
         title="",
         text="",
-        standard_buttons=QMessageBox.Ok,
-        default_button=QMessageBox.NoButton,
+        standard_buttons=QMessageBox.StandardButton.Ok,
+        default_button=QMessageBox.StandardButton.NoButton,
         exception=None,
-    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+    ) -> QMessageBox.StandardButton:  # pylint: disable=arguments-differ
         ob = cls(
-            icon=QMessageBox.Critical,
+            icon=QMessageBox.Icon.Critical,
             title=title,
             text=text,
             exception=exception,
@@ -373,12 +380,12 @@ class QMessageFromException(QMessageBox):
         parent=None,
         title="",
         text="",
-        standard_buttons=QMessageBox.Ok,
-        default_button=QMessageBox.NoButton,
+        standard_buttons=QMessageBox.StandardButton.Ok,
+        default_button=QMessageBox.StandardButton.NoButton,
         exception=None,
-    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+    ) -> QMessageBox.StandardButton:  # pylint: disable=arguments-differ
         ob = cls(
-            icon=QMessageBox.Information,
+            icon=QMessageBox.Icon.Information,
             title=title,
             text=text,
             exception=exception,
@@ -394,12 +401,12 @@ class QMessageFromException(QMessageBox):
         parent=None,
         title="",
         text="",
-        standard_buttons=QMessageBox.Ok,
-        default_button=QMessageBox.NoButton,
+        standard_buttons=QMessageBox.StandardButton.Ok,
+        default_button=QMessageBox.StandardButton.NoButton,
         exception=None,
-    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+    ) -> QMessageBox.StandardButton:  # pylint: disable=arguments-differ
         ob = cls(
-            icon=QMessageBox.Question,
+            icon=QMessageBox.Icon.Question,
             title=title,
             text=text,
             exception=exception,
@@ -415,12 +422,12 @@ class QMessageFromException(QMessageBox):
         parent=None,
         title="",
         text="",
-        standard_buttons=QMessageBox.Ok,
-        default_button=QMessageBox.NoButton,
+        standard_buttons=QMessageBox.StandardButton.Ok,
+        default_button=QMessageBox.StandardButton.NoButton,
         exception=None,
-    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+    ) -> QMessageBox.StandardButton:  # pylint: disable=arguments-differ
         ob = cls(
-            icon=QMessageBox.Warning,
+            icon=QMessageBox.Icon.Warning,
             title=title,
             text=text,
             exception=exception,

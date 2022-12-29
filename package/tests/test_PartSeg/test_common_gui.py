@@ -18,7 +18,8 @@ from magicgui import register_type
 from magicgui.widgets import Container, Widget, create_widget
 from nme import register_class
 from pydantic import Field
-from qtpy.QtCore import QPoint, QSize, Qt
+from qtpy.QtCore import QPoint, QRect, QSize, Qt
+from qtpy.QtGui import QPaintEvent
 from qtpy.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -45,6 +46,7 @@ from PartSeg.common_gui.advanced_tabs import (
     SEARCH_ZOOM_FACTOR_STR,
     AdvancedWindow,
     Appearance,
+    ColorControl,
 )
 from PartSeg.common_gui.algorithms_description import (
     AlgorithmChoose,
@@ -70,6 +72,7 @@ from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, 
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, QMessageFromException, _print_traceback
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
+from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelShow
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
 from PartSeg.common_gui.multiple_file_widget import (
@@ -89,6 +92,7 @@ from PartSeg.common_gui.universal_gui_part import (
     Hline,
     InfoLabel,
     MguiChannelComboBox,
+    ProgressCircle,
     Spacing,
 )
 from PartSegCore import Units
@@ -1758,3 +1762,51 @@ class TestQMessageFromException:
             getattr(QMessageFromException, method)(None, "Test", "test", exception=e)
 
             assert called
+
+
+class TestLabelCreate:
+    # Test all class from PartSeg.common_gui.label_create module
+    def test_base_color_show(self, qtbot):
+        q = ColorShow((0, 0, 0))
+        qtbot.addWidget(q)
+        q.set_color((1, 1, 1))
+
+    def test_base_label_show(self, qtbot):
+        q = LabelShow("test", [(0, 0, 0), (10, 10, 10)], removable=True)
+        qtbot.addWidget(q)
+        assert not q.radio_btn.isChecked()
+        assert q.remove_btn.isEnabled()
+        with qtbot.wait_signal(q.remove_labels):
+            q.remove_btn.click()
+        with qtbot.wait_signal(q.selected):
+            q.set_checked(True)
+        assert q.radio_btn.isChecked()
+        assert not q.remove_btn.isEnabled()
+        with qtbot.wait_signal(q.edit_labels):
+            q.edit_btn.click()
+
+    def test_base_label_chose(self, qtbot, part_settings):
+        q = LabelChoose(part_settings)
+        qtbot.addWidget(q)
+        q.refresh()
+        assert q.layout().count() == 2
+        part_settings.label_color_dict["test"] = [(0, 0, 0), (10, 10, 10)]
+        q.refresh()
+        assert q.layout().count() == 3
+
+
+def test_color_control(qtbot, part_settings):
+    w = ColorControl(part_settings, ["test"])
+    qtbot.addWidget(w)
+    assert w.count() == 6
+    w._set_label_editor()
+    assert w.currentWidget() == w.label_editor
+    w._set_colormap_editor()
+    assert w.currentWidget() == w.colormap_editor
+
+
+def test_progress_circle(qtbot):
+    w = ProgressCircle()
+    qtbot.addWidget(w)
+    w.set_fraction(0.5)
+    w.paintEvent(QPaintEvent(QRect(0, 0, 100, 100)))

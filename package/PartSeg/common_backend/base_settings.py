@@ -49,9 +49,10 @@ class ImageSettings(QObject):
     Base class for all PartSeg settings. Keeps information about current Image.
     """
 
-    image_changed = Signal([Image], [int], [str])
+    image_changed = Signal(Image)
+    image_path_changed = Signal(str)
+    image_channel_count_changed = Signal(int)
     image_spacing_changed = Signal()
-    """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
     roi_changed = Signal(ROIInfo)
     """
     :py:class:`.Signal`
@@ -165,12 +166,12 @@ class ImageSettings(QObject):
             return
         self._image = value
         if value.file_path is not None:
-            self.image_changed[str].emit(value.file_path)
+            self.image_path_changed.emit(value.file_path)
         self._image_changed()
         self._roi_info = ROIInfo(None)
 
         self.image_changed.emit(self._image)
-        self.image_changed[int].emit(self._image.channels)
+        self.image_channel_count_changed.emit(self._image.channels)
 
     @property
     def has_channels(self):
@@ -191,7 +192,7 @@ class ImageSettings(QObject):
     @image_path.setter
     def image_path(self, value):
         self._image.file_path = value
-        self.image_changed[str].emit(self._image_path)
+        self.image_path_changed.emit(self._image_path)
 
     @property
     def channels(self):

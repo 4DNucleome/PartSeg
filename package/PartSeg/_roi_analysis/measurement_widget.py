@@ -346,7 +346,7 @@ class MeasurementWidget(MeasurementWidgetBase):
         self.channels_chose = ChannelComboBox()
         self.butt_layout3.insertWidget(0, QLabel("Channel:"))
         self.butt_layout3.insertWidget(1, self.channels_chose)
-        self.settings.image_changed[int].connect(self.image_changed)
+        self.settings.image_channel_count_changed.connect(self.image_changed)
 
     def _get_mask(self):
         return self.settings.mask
