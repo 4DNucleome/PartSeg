@@ -42,7 +42,7 @@ repos:
     rev: v2.2.0
     hooks:
     - id: setup-cfg-fmt
-      args: ["--include-version-classifiers"]
+      args: ["--include-version-classifiers", "--max-py-version", "3.11"]
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.0.194
     hooks:
