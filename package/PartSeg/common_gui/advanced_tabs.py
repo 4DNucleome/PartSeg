@@ -5,7 +5,6 @@ In this moment controlling colormaps tabs and developer PartSegCore
 import importlib
 import sys
 from contextlib import suppress
-from functools import partial
 from typing import List
 
 from qtpy.QtCore import QByteArray, Qt
@@ -88,8 +87,10 @@ class MaskControl(QWidget):
         super().__init__()
         self.settings = settings
         self.color_picker = QColorDialog()
-        self.color_picker.setWindowFlag(Qt.Widget)
-        self.color_picker.setOptions(QColorDialog.DontUseNativeDialog | QColorDialog.NoButtons)
+        self.color_picker.setWindowFlag(Qt.WindowType.Widget)
+        self.color_picker.setOptions(
+            QColorDialog.ColorDialogOption.DontUseNativeDialog | QColorDialog.ColorDialogOption.NoButtons
+        )
         self.opacity_spin = QDoubleSpinBox()
         self.opacity_spin.setRange(0, 1)
         self.opacity_spin.setSingleStep(0.1)
@@ -202,11 +203,11 @@ class ColorControl(QTabWidget):
         self.colormap_selector = PColormapCreator(settings)
         self.color_preview = PColormapList(settings, image_view_names)
         self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
-        self.color_preview.edit_signal.connect(partial(self.setCurrentWidget, self.colormap_selector))
+        self.color_preview.edit_signal.connect(self._set_color_preview)
         self.label_editor = LabelEditor(settings)
         self.label_view = LabelChoose(settings)
-        self.label_view.edit_signal.connect(partial(self.setCurrentWidget, self.label_editor))
-        self.label_view.edit_signal[list].connect(self.label_editor.set_colors)
+        self.label_view.edit_signal.connect(self.label_editor.set_colors)
+        self.label_view.edit_signal.connect(self._set_label_editor)
         self.mask_control = MaskControl(settings)
         self.addTab(self.appearance, "Appearance")
         self.addTab(self.color_preview, "Color maps")
@@ -214,6 +215,12 @@ class ColorControl(QTabWidget):
         self.addTab(self.label_view, "Select labels")
         self.addTab(self.label_editor, "Create labels")
         self.addTab(self.mask_control, "Mask marking")
+
+    def _set_label_editor(self):
+        self.setCurrentWidget(self.label_editor)
+
+    def _set_color_preview(self):
+        self.setCurrentWidget(self.colormap_selector)
 
 
 class AdvancedWindow(QTabWidget):

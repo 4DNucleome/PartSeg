@@ -42,6 +42,11 @@ from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.utils import numpy_repr
 
+try:
+    from qtpy import QT5
+except ImportError:
+    QT5 = True
+
 _email_regexp = re.compile(r"[\w+]+@\w+\.\w+")
 _feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
     organization_slug="cent", project_slug="partseg"
@@ -132,8 +137,10 @@ class ErrorDialog(QDialog):
             exec_info = exc_info_from_error(exception)
             self.exception_tuple = event_from_exception(exec_info)
 
-    def exec(self):
-        self.exec_()
+    if QT5:
+
+        def exec(self):
+            self.exec_()
 
     def exec_(self):
         """

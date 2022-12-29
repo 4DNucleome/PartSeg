@@ -30,6 +30,11 @@ from PartSegImage import Channel
 
 enum_type = Enum if PYQT5 else object
 
+try:
+    from qtpy import QT5
+except ImportError:
+    QT5 = True
+
 
 class ChannelComboBox(QComboBox):
     """Combobox for selecting channel index. Channel numeration starts from 1 for user and from 0 for developer"""
@@ -256,9 +261,12 @@ class ProgressCircle(QWidget):
             math.cos(math.pi * (factor * 2)) * radius, -math.sin(math.pi * (factor * 2)) * radius
         )
         polygon = QPolygonF()
-        polygon += mid_point
-        polygon += zero_point
-        polygon += point
+        if QT5:
+            polygon += mid_point
+            polygon += zero_point
+            polygon += point
+        else:
+            polygon += [mid_point, zero_point, point]
         painter.drawPolygon(polygon)
         painter.restore()
 
