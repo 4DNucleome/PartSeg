@@ -32,7 +32,7 @@ enum_type = Enum if PYQT5 else object
 
 try:
     from qtpy import QT5
-except ImportError:
+except ImportError:  # pragma: no cover
     QT5 = True
 
 

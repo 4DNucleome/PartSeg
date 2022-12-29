@@ -34,7 +34,7 @@ ColorMapDict = typing.MutableMapping[str, typing.Tuple[Colormap, bool]]
 
 try:
     from qtpy import QT5
-except ImportError:
+except ImportError:  # pragma: no cover
     QT5 = True
 
 

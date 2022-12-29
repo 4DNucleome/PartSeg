@@ -18,7 +18,7 @@ from PartSegImage import TiffImageReader
 
 try:
     from qtpy import PYQT5, PYQT6
-except ImportError:
+except ImportError:  # pragma: no cover
     PYQT5 = True
     PYQT6 = False
 

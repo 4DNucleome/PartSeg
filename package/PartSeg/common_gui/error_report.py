@@ -44,7 +44,7 @@ from PartSegCore.utils import numpy_repr
 
 try:
     from qtpy import QT5
-except ImportError:
+except ImportError:  # pragma: no cover
     QT5 = True
 
 _email_regexp = re.compile(r"[\w+]+@\w+\.\w+")

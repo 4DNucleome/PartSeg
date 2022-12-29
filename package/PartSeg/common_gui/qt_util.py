@@ -2,7 +2,7 @@ from qtpy.QtGui import QMouseEvent
 
 try:
     from qtpy import QT5
-except ImportError:
+except ImportError:  # pragma: no cover
     QT5 = True
 
 if QT5:

@@ -72,7 +72,10 @@ def main():
     argv = [x for x in sys.argv[1:] if not x.startswith(("parent", "pipe"))]
     args = parser.parse_args(argv)
 
-    from qtpy import QT5
+    try:
+        from qtpy import QT5
+    except ImportError:  # pragma: no cover
+        QT5 = True
     from qtpy.QtCore import Qt
     from qtpy.QtGui import QIcon
     from qtpy.QtWidgets import QApplication
