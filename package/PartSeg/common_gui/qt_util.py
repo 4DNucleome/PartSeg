@@ -1,5 +1,9 @@
-from qtpy import QT5
 from qtpy.QtGui import QMouseEvent
+
+try:
+    from qtpy import QT5
+except ImportError:
+    QT5 = True
 
 if QT5:
 

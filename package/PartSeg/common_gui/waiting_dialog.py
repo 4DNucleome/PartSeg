@@ -1,8 +1,12 @@
-from qtpy import QT5
 from qtpy.QtCore import QThread
 from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton
 
 from PartSeg.common_backend.progress_thread import ExecuteFunctionThread, ProgressTread
+
+try:
+    from qtpy import QT5
+except ImportError:
+    QT5 = True
 
 
 class WaitingDialog(QDialog):
