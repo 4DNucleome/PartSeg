@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 from napari.utils.colormaps import make_colorbar
-from qtpy import PYQT5, PYQT6
 from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QImage
 
@@ -16,6 +15,12 @@ from PartSeg.common_gui.napari_image_view import ImageView
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
+
+try:
+    from qtpy import PYQT5, PYQT6
+except ImportError:
+    PYQT5 = True
+    PYQT6 = False
 
 if PYQT5 or PYQT6:
 
