@@ -38,15 +38,8 @@ except ImportError:  # pragma: no cover
     QT5 = True
 
 
-if QT5:
-
-    def _has_focus_state(state: QStyle.StateFlag) -> bool:
-        return int(state & QStyle.StateFlag.State_HasFocus)
-
-else:
-
-    def _has_focus_state(state: QStyle.StateFlag) -> bool:
-        return QStyle.StateFlag.State_HasFocus in QStyle.StateFlag(state)
+def _has_focus_state(state: QStyle.StateFlag) -> bool:
+    return int(state & QStyle.State(QStyle.StateFlag.State_HasFocus))
 
 
 class ColorStyledDelegate(QStyledItemDelegate):
