@@ -227,8 +227,10 @@ class ColormapCreator(QWidget):
     def __init__(self):
         super().__init__()
         self.color_picker = QColorDialog()
-        self.color_picker.setWindowFlag(Qt.Widget)
-        self.color_picker.setOptions(QColorDialog.DontUseNativeDialog | QColorDialog.NoButtons)
+        self.color_picker.setWindowFlag(Qt.WindowType.Widget)
+        self.color_picker.setOptions(
+            QColorDialog.ColorDialogOption.DontUseNativeDialog | QColorDialog.ColorDialogOption.NoButtons
+        )
         self.show_colormap = ColormapEdit()
         self.clear_btn = QPushButton("Clear")
         self.save_btn = QPushButton("Save")
