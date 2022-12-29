@@ -32,6 +32,22 @@ image_dict = {}  # dict to store QImages generated from colormap
 
 ColorMapDict = typing.MutableMapping[str, typing.Tuple[Colormap, bool]]
 
+try:
+    from qtpy import QT5
+except ImportError:
+    QT5 = True
+
+
+if QT5:
+
+    def _has_focus_state(state: QStyle.StateFlag) -> bool:
+        return int(state & QStyle.StateFlag.State_HasFocus)
+
+else:
+
+    def _has_focus_state(state: QStyle.StateFlag) -> bool:
+        return QStyle.StateFlag.State_HasFocus in state
+
 
 class ColorStyledDelegate(QStyledItemDelegate):
     """
@@ -53,7 +69,7 @@ class ColorStyledDelegate(QStyledItemDelegate):
         painter.drawImage(rect, image_dict[model.data()])
         rect2 = QRect(style.rect.x() + style.rect.width() - 140, style.rect.y() + 2, 140, style.rect.height() - 4)
         painter.drawText(rect2, Qt.AlignmentFlag.AlignLeft, model.data())
-        if QStyle.StateFlag.State_HasFocus in style.state:
+        if _has_focus_state(style.state):
             painter.save()
             pen = QPen()
             pen.setWidth(5)
