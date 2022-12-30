@@ -1,5 +1,6 @@
 # PartSeg
 
+![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen.svg)
 ![Tests](https://github.com/4DNucleome/PartSeg/workflows/Tests/badge.svg?branch=develop)
 [![PyPI version](https://badge.fury.io/py/PartSeg.svg)](https://badge.fury.io/py/PartSeg)
 [![Anaconda version](https://anaconda.org/conda-forge/partseg/badges/version.svg)](https://anaconda.org/conda-forge/partseg)
@@ -11,9 +12,7 @@
 [![Licence: BSD3](https://img.shields.io/github/license/4DNucleome/PartSeg)](https://github.com/4DNucleome/PartSeg/blob/master/License.txt)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen.svg)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/alerts/)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/context:python)
+[![CodeQL](https://github.com/4DNucleome/PartSeg/actions/workflows/codeql-analysis.yml/badge.svg?branch=develop)](https://github.com/4DNucleome/PartSeg/actions/workflows/codeql-analysis.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/f9b0f1eb2c92486d9efd99ed5b2ef326)](https://www.codacy.com/gh/4DNucleome/PartSeg/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=4DNucleome/PartSeg&amp;utm_campaign=Badge_Grade)
 [![codecov](https://codecov.io/gh/4DNucleome/PartSeg/branch/develop/graph/badge.svg?token=nbAbkOAe1C)](https://codecov.io/gh/4DNucleome/PartSeg)
 [![DeepSource](https://deepsource.io/gh/4DNucleome/PartSeg.svg/?label=active+issues&show_trend=true&token=RuuHPIzqyqGaU-bKtOKPFWTg)](https://deepsource.io/gh/4DNucleome/PartSeg/?ref=repository-badge)
