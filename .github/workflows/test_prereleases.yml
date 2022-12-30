@@ -79,6 +79,7 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: latest
+          BACKEND: PyQt5
 
       # If something goes wrong, we can open an issue in the repo
       - name: Report Failures
