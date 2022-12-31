@@ -154,7 +154,7 @@ class PSaveDialog(CustomSaveDialog):
         *,
         settings: "BaseSettings",
         path: str,
-        default_directory=str(Path.home()),
+        default_directory: str = None,
         filter_path="",
         system_widget=True,
         base_values: typing.Optional[dict] = None,
@@ -162,6 +162,8 @@ class PSaveDialog(CustomSaveDialog):
         caption="Save file",
         file_mode=QFileDialog.AnyFile,
     ):
+        if default_directory is None:
+            default_directory = str(Path.home())
         super().__init__(
             save_register=save_register,
             system_widget=system_widget,

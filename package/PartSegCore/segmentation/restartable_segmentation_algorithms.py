@@ -297,6 +297,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                 info_text = ""
             res = self.prepare_result(finally_segment)
             return dataclasses.replace(res, info_text=info_text)
+        return None
 
     def clean(self):
         super().clean()
@@ -507,6 +508,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 },
                 alternative_representation={"core_objects": finally_segment},
             )
+        return None
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
@@ -690,6 +692,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
             new_segment[new_segment > 0] -= 1
             self.final_sizes = np.bincount(new_segment.flat)
             return self.prepare_result(new_segment)
+        return None
 
 
 class LowerThresholdMultiScaleOpening(BaseMultiScaleOpening):

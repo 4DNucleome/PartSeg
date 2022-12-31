@@ -40,7 +40,7 @@ def register_napari_plugins():
 def get_plugins():
     if getattr(sys, "frozen", False):
         new_path = [os.path.join(os.path.dirname(os.path.dirname(__path__[0])), "plugins")]
-        packages = pkgutil.iter_modules(new_path, "plugins" + ".")
+        packages = pkgutil.iter_modules(new_path, "plugins.")
         register_napari_plugins()
     else:
         packages = pkgutil.iter_modules(__path__, f"{__name__}.")

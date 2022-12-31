@@ -1,6 +1,5 @@
 import os
 import re
-from collections import defaultdict
 from functools import partial
 from pathlib import Path
 from queue import Queue
@@ -79,7 +78,12 @@ class BatchProceed(QThread):
                 # noinspection PyTypeChecker
                 segmentation = algorithm.calculation_run(partial(self.progress_info, name))
                 state2 = StackSettings.transform_state(
-                    project_tuple, segmentation.roi_info, defaultdict(lambda: segmentation.parameters), []
+                    project_tuple,
+                    segmentation.roi_info,
+                    {i: segmentation.parameters for i in segmentation.roi_info.bound_info}
+                    if segmentation.roi_info is not None
+                    else {},
+                    [],
                 )
                 if isinstance(task.save_prefix, tuple):
                     self.progress_info(name, "saving", algorithm.get_steps_num())
@@ -87,8 +91,7 @@ class BatchProceed(QThread):
                     re_end = re.compile(r"(.*_version)(\d+)\.seg$")
                     os.makedirs(task.save_prefix[0], exist_ok=True)
                     while os.path.exists(os.path.join(task.save_prefix[0], name)):
-                        match = re_end.match(name)
-                        if match:
+                        if match := re_end.match(name):
                             num = int(match[2]) + 1
                             name = match[1] + str(num) + ".seg"
                         else:

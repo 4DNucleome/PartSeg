@@ -11,3 +11,4 @@ def napari_get_reader(path: str):
     for extension in LoadStackImage.get_extensions():
         if path.endswith(extension):
             return functools.partial(partseg_loader, LoadStackImage)
+    return None

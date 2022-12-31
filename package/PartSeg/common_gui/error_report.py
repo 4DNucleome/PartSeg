@@ -152,6 +152,7 @@ class ErrorDialog(QDialog):
             print_exc(self.exception)
             return False
         super().exec_()
+        return None
 
     def create_issue(self):
         """

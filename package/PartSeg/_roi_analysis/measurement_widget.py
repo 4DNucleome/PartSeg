@@ -375,7 +375,7 @@ class MeasurementWidget(MeasurementWidgetBase):
                 QMessageBox.warning(
                     self,
                     "Measurement error",
-                    "Cannot calculate this measurement because " f"image do not have channel {num+1}",
+                    f"Cannot calculate this measurement because image do not have channel {num+1}",
                 )
                 return
 

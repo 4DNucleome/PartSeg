@@ -123,11 +123,13 @@ class PLoadDialog(CustomLoadDialog):
         *,
         settings: "BaseSettings",
         path: str,
-        default_directory=str(Path.home()),
+        default_directory: str = None,
         filter_path="",
         parent=None,
         caption="Load file",
     ):
+        if default_directory is None:
+            default_directory = str(Path.home())
         super().__init__(
             load_register=load_register,
             parent=parent,

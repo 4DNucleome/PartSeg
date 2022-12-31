@@ -68,7 +68,7 @@ class FileListItem(QListWidgetItem):
         size = os.stat(file_path).st_size
         size = float(size) / (1024**2)
         super().__init__(f"{file_path:s} ({size:.2f} MB)")
-        self.setTextAlignment(Qt.AlignRight)
+        self.setTextAlignment(Qt.AlignmentFlag.AlignRight)
         self.file_path = file_path
 
 

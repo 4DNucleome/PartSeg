@@ -778,7 +778,7 @@ class Voxels(MeasurementMethodBase):
 
 
 # From Malandain, G., & Boissonnat, J. (2002). Computing the diameter of a point set,
-# 12(6), 489–509. https://doi.org/10.1142/S0218195902001006
+# 12(6), 489-509. https://doi.org/10.1142/S0218195902001006
 
 
 def double_normal(point_index: int, point_positions: np.ndarray, points_array: np.ndarray):
@@ -835,7 +835,7 @@ class Diameter(MeasurementMethodBase):
     """
     Class for calculate diameter of ROI in fast way.
     From Malandain, G., & Boissonnat, J. (2002). Computing the diameter of a point set,
-    12(6), 489–509. https://doi.org/10.1142/S0218195902001006
+    12(6), 489-509. https://doi.org/10.1142/S0218195902001006
 
     """
 
