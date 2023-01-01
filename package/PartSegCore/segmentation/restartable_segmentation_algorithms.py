@@ -253,9 +253,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             return True
         return False
 
-    def _update_cleaned_image(self, restarted) -> bool:
+    def _update_cleaned_image(self, restarted: bool) -> bool:
         """Update cleaned image if selected channel or or noise filter is changed"""
-        if restarted is None or self.parameters["noise_filtering"] != self.new_parameters.noise_filtering:
+        if restarted or self.parameters["noise_filtering"] != self.new_parameters.noise_filtering:
             self.parameters["noise_filtering"] = deepcopy(self.new_parameters.noise_filtering)
             noise_filtering_parameters = self.new_parameters.noise_filtering
             self.cleaned_image = NoiseFilterSelection[noise_filtering_parameters.name].noise_filter(
@@ -264,7 +264,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             return True
         return False
 
-    def _calculate_threshold(self, restarted):
+    def _calculate_threshold(self, restarted: bool):
         """Calculate threshold if cleaned image is changed"""
         if restarted or self.new_parameters.threshold != self.parameters["threshold"]:
             self.parameters["threshold"] = deepcopy(self.new_parameters.threshold)
@@ -272,7 +272,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             return True
         return False
 
-    def _calculate_components(self, restarted):
+    def _calculate_components(self, restarted: bool):
         """Calculate components if threshold image is changed"""
         if restarted or self.new_parameters.side_connection != self.parameters["side_connection"]:
             self.parameters["side_connection"] = self.new_parameters.side_connection
@@ -284,9 +284,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             return True
         return False
 
-    def _filter_by_size(self, restarted) -> typing.Optional[np.ndarray]:
+    def _filter_by_size(self, restarted: bool) -> typing.Optional[np.ndarray]:
         """Filter components by size if size filter is changed"""
-        if restarted or self.new_parameters.size_filter != self.parameters["size_filter"]:
+        if restarted or self.new_parameters.minimum_size != self.parameters["size_filter"]:
             self.parameters["minimum_size"] = self.new_parameters.minimum_size
             minimum_size = self.new_parameters.minimum_size
             ind = bisect(self._sizes_array[1:], minimum_size, operator.gt)
