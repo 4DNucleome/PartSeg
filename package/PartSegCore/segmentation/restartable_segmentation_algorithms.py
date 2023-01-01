@@ -1,7 +1,7 @@
 import dataclasses
 import operator
 import typing
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from copy import deepcopy
 
@@ -78,6 +78,11 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
     @classmethod
     def support_z(cls):
         return True
+
+    @abstractmethod
+    def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> typing.Optional[ROIExtractionResult]:
+        """Restartable calculation may return None if there is no need to recalculate"""
+        raise NotImplementedError()
 
 
 class BorderRimParameters(BorderRimBase.__argument_class__):
@@ -240,7 +245,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         )
         return dataclasses.replace(res, info_text=info_text)
 
-    def calculation_run(self, report_fun: typing.Callable[[str, int], typing.Any]) -> ROIExtractionResult:
+    def calculation_run(
+        self, report_fun: typing.Callable[[str, int], typing.Any]
+    ) -> typing.Optional[ROIExtractionResult]:
         """
         main calculation function
 
@@ -461,7 +468,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
         super().set_image(image)
         self.threshold_info = [None, None]
 
-    def calculation_run(self, report_fun) -> ROIExtractionResult:
+    def calculation_run(self, report_fun) -> typing.Optional[ROIExtractionResult]:
         segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
             self.final_sizes = []
@@ -635,7 +642,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
         super().set_image(image)
         self.threshold_info = [float("nan"), float("nan")]
 
-    def calculation_run(self, report_fun) -> ROIExtractionResult:
+    def calculation_run(self, report_fun) -> typing.Optional[ROIExtractionResult]:
         if self.new_parameters.side_connection != self.parameters["side_connection"]:
             neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters.side_connection))
             self.mso.set_neighbourhood(neigh, dist)
