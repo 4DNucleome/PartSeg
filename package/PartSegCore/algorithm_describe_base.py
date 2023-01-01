@@ -119,6 +119,7 @@ def _partial_abstractmethod(funcobj):
 
 class AlgorithmDescribeBaseMeta(ABCMeta):
     def __new__(cls, name, bases, attrs, **kwargs):
+        calculation_method = kwargs.pop("calculation_method", None)
         cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
         if (
             not inspect.isabstract(cls2)
@@ -127,7 +128,48 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         ):
             raise RuntimeError("class need to have __argument_class__ set or get_fields functions defined")
         cls2.__new_style__ = getattr(cls2.get_fields, "__is_partial_abstractmethod__", False)
+        cls2.__abstract_getters__ = []
+        cls2.__calculation_method__ = calculation_method
+        if hasattr(cls2, "__abstractmethods__") and cls2.__abstractmethods__:
+            # get all abstract methods that starts with `get_`
+            abstract_names = [
+                method[4:]
+                for method in cls2.__abstractmethods__
+                if method.startswith("get_") and not method.endswith("_fields")
+            ]
+            cls2.__abstract_getters__ = abstract_names
+
         return cls2
+
+    def from_function(self, func=None, **kwargs):
+        """generate new class from function"""
+
+        # Test if all abstract methods values are provided in kwargs
+
+        if set(self.__abstract_getters__) != set(kwargs.keys()):
+            raise ValueError("Not all abstract methods values are provided")
+
+        def _getter_by_name(name):
+            def _func():
+                return kwargs[name]
+
+            return _func
+
+        def _class_generator(func):
+            class _Class(self):
+                def __call__(self, *args, **kwargs):
+                    return func(*args, **kwargs)
+
+            for name in self.__abstract_getters__:
+                setattr(_Class, f"get_{name}", _getter_by_name(name))
+
+            setattr(_Class, self.__calculation_method__, func)
+
+            return _Class
+
+        if func is None:
+            return _class_generator
+        return _class_generator(func)
 
 
 class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):

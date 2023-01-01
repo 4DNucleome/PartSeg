@@ -1,5 +1,6 @@
 # pylint: disable=R0201
 import typing
+from abc import abstractmethod
 from enum import Enum
 
 import pytest
@@ -341,8 +342,42 @@ class TestAlgorithmDescribeBase:
         with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
             assert SampleSubAlgorithm.get_default_values() == {"name": 1, "name2": 3.0}
 
+    def test_generate_class_from_function_lack_of_methods(self):
+        def sample_function(params: dict) -> dict:
+            return params
+
+        with pytest.raises(ValueError, match="Not all abstract methods values are provided"):
+            ClassForTestFromFunc.from_function(sample_function)
+
+        with pytest.raises(ValueError, match="Not all abstract methods values are provided"):
+            ClassForTestFromFunc.from_function(sample_function, name="sample")
+
+        with pytest.raises(ValueError, match="Not all abstract methods values are provided"):
+            ClassForTestFromFunc.from_function(sample_function, info="sample")
+
+    def test_generate_class_from_function(self):
+        def sample_function(params: dict) -> dict:
+            return params
+
+        new_cls = ClassForTestFromFunc.from_function(sample_function, name="sample1", info="sample2")
+        assert issubclass(new_cls, ClassForTestFromFunc)
+        assert new_cls.get_name() == "sample1"
+        assert new_cls.get_info() == "sample2"
+
 
 def test_roi_extraction_profile():
     ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
     with pytest.warns(FutureWarning):
         ROIExtractionProfile("aaa", "aaa", {})
+
+
+class ClassForTestFromFunc(AlgorithmDescribeBase, calculation_method="calculate"):
+    @classmethod
+    @abstractmethod
+    def get_info(cls) -> bool:
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    def calculate(cls, params: dict) -> dict:
+        raise NotImplementedError()
