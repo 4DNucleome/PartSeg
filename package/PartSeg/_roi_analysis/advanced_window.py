@@ -902,10 +902,9 @@ class MultipleInput(QDialog):
                 if not val.strip():
                     QMessageBox.warning(self, "Not all fields filled", "")
                     return
-                res[name] = val
             else:
                 val = type_of(item.value())
-                res[name] = val
+            res[name] = val
         self.result = res
         self.accept()
 
