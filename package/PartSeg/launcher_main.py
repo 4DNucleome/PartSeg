@@ -134,7 +134,8 @@ def select_window(args):
         wind = MainWindow(title=title)
         if args.batch:
             wind.main_menu.batch_window()
-    elif args.gui == "roi_mask":
+        return wind
+    if args.gui == "roi_mask":
         from PartSeg import plugins
 
         plugins.register()
@@ -144,14 +145,12 @@ def select_window(args):
         if args.image:
             image = TiffImageReader.read_image(args.image)
             MainWindow = partial(MainWindow, initial_image=image)
-        wind = MainWindow(title=title)
-    else:
-        from PartSeg._launcher.main_window import MainWindow
+        return MainWindow(title=title)
 
-        title = f"{APP_NAME} Launcher"
-        wind = MainWindow(title=title)
+    from PartSeg._launcher.main_window import MainWindow
 
-    return wind
+    title = f"{APP_NAME} Launcher"
+    return MainWindow(title=title)
 
 
 if __name__ == "__main__":

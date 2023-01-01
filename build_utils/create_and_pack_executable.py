@@ -22,9 +22,9 @@ def create_archive(working_dir):
     if platform.system() == "Darwin":
         arch_file = tarfile.open(os.path.join(working_dir, "dist2", f"{file_name}.tgz"), "w:gz")
         arch_file.write = arch_file.add
+        return arch_file
     else:
-        arch_file = zipfile.ZipFile(os.path.join(working_dir, "dist2", f"{file_name}.zip"), "w", zipfile.ZIP_DEFLATED)
-    return arch_file
+        return zipfile.ZipFile(os.path.join(working_dir, "dist2", f"{file_name}.zip"), "w", zipfile.ZIP_DEFLATED)
 
 
 def fix_qt_location(working_dir, dir_name):
