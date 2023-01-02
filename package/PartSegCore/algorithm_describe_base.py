@@ -128,16 +128,19 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         ):
             raise RuntimeError("class need to have __argument_class__ set or get_fields functions defined")
         cls2.__new_style__ = getattr(cls2.get_fields, "__is_partial_abstractmethod__", False)
-        cls2.__abstract_getters__ = []
+        cls2.__abstract_getters__ = {}
         cls2.__calculation_method__ = calculation_method
+        cls2.__support_from_function__ = True
         if hasattr(cls2, "__abstractmethods__") and cls2.__abstractmethods__:
             # get all abstract methods that starts with `get_`
-            abstract_names = [
-                method[4:]
-                for method in cls2.__abstractmethods__
-                if method.startswith("get_") and not method.endswith("_fields")
-            ]
-            cls2.__abstract_getters__ = abstract_names
+            for method_name in cls2.__abstractmethods__:
+                if method_name.startswith("get_"):
+                    if "return" not in getattr(cls2, method_name).__annotations__:
+                        raise RuntimeError(f"Method {method_name} should have return annotation")
+
+                    cls2.__abstract_getters__[method_name[4:]] = getattr(cls2, method_name).__annotations__["return"]
+                elif method_name != calculation_method:
+                    cls2.__support_from_function__ = False
 
         return cls2
 
@@ -146,8 +149,31 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
         # Test if all abstract methods values are provided in kwargs
 
-        if set(self.__abstract_getters__) != set(kwargs.keys()):
-            raise ValueError("Not all abstract methods values are provided")
+        if not self.__support_from_function__:
+            raise RuntimeError("This class does not support from_function method")
+
+        abstract_getters_set = set(self.__abstract_getters__)
+        kwargs_set = set(kwargs.keys())
+
+        if abstract_getters_set != kwargs_set:
+            # Provide a nice error message with information about what is missing and is obsolete
+            missing_text = ", ".join(sorted(abstract_getters_set - kwargs_set))
+            if missing_text:
+                missing_text = f"Not all abstract methods are provided, missing: {missing_text}."
+            else:
+                missing_text = ""
+            extra_text = ", ".join(sorted(kwargs_set - abstract_getters_set))
+            if extra_text:
+                extra_text = f"There are extra attributes in call: {extra_text}."
+            else:
+                extra_text = ""
+
+            raise ValueError(f"{missing_text} {extra_text}")
+
+        # check if all values have correct type
+        for key, value in kwargs.items():
+            if not isinstance(value, self.__abstract_getters__[key]):
+                raise TypeError(f"Value for {key} should be {self.__abstract_getters__[key]}")
 
         def _getter_by_name(name):
             def _func():
@@ -155,15 +181,15 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
             return _func
 
-        def _class_generator(func):
+        def _class_generator(func_):
             class _Class(self):
-                def __call__(self, *args, **kwargs):
-                    return func(*args, **kwargs)
+                def __call__(self, *args, **kwargs_):
+                    return func_(*args, **kwargs_)
 
             for name in self.__abstract_getters__:
                 setattr(_Class, f"get_{name}", _getter_by_name(name))
 
-            setattr(_Class, self.__calculation_method__, func)
+            setattr(_Class, self.__calculation_method__, func_)
 
             return _Class
 

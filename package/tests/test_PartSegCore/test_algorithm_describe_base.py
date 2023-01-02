@@ -346,14 +346,49 @@ class TestAlgorithmDescribeBase:
         def sample_function(params: dict) -> dict:
             return params
 
-        with pytest.raises(ValueError, match="Not all abstract methods values are provided"):
+        with pytest.raises(ValueError, match="missing: info, name"):
             ClassForTestFromFunc.from_function(sample_function)
 
-        with pytest.raises(ValueError, match="Not all abstract methods values are provided"):
+        with pytest.raises(ValueError, match="missing: info"):
             ClassForTestFromFunc.from_function(sample_function, name="sample")
 
-        with pytest.raises(ValueError, match="Not all abstract methods values are provided"):
+        with pytest.raises(ValueError, match="missing: name"):
             ClassForTestFromFunc.from_function(sample_function, info="sample")
+
+        with pytest.raises(ValueError, match="missing: info, name.*call: info2"):
+            ClassForTestFromFunc.from_function(sample_function, info2="sample")
+
+        with pytest.raises(ValueError, match="call: additions"):
+            ClassForTestFromFunc.from_function(sample_function, info="sample", name="sample2", additions="sample3")
+
+    def test_missing_return_annotation(self):
+        with pytest.raises(RuntimeError, match="Method get_sample should have return annotation"):
+
+            class SampleClass(AlgorithmDescribeBase):
+                @classmethod
+                @abstractmethod
+                def get_sample(cls):
+                    raise NotImplementedError()
+
+    def test_not_supported_from_function(self):
+        def sample_function(params: dict) -> dict:
+            return params
+
+        class SampleClass(AlgorithmDescribeBase):
+            @classmethod
+            @abstractmethod
+            def sample(cls) -> dict:
+                raise NotImplementedError()
+
+        with pytest.raises(RuntimeError, match="This class does not support from_function method"):
+            SampleClass.from_function(sample_function)
+
+    def test_wrong_type(self):
+        def func(params: dict) -> dict:
+            return params
+
+        with pytest.raises(TypeError, match="Value for info should be <class 'str'>"):
+            ClassForTestFromFunc.from_function(func, info=1, name="sample")
 
     def test_generate_class_from_function(self):
         def sample_function(params: dict) -> dict:
@@ -374,7 +409,7 @@ def test_roi_extraction_profile():
 class ClassForTestFromFunc(AlgorithmDescribeBase, calculation_method="calculate"):
     @classmethod
     @abstractmethod
-    def get_info(cls) -> bool:
+    def get_info(cls) -> str:
         raise NotImplementedError()
 
     @classmethod

@@ -175,12 +175,12 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
 
     @classmethod
     @abstractmethod
-    def support_time(cls):
+    def support_time(cls) -> bool:
         raise NotImplementedError()
 
     @classmethod
     @abstractmethod
-    def support_z(cls):
+    def support_z(cls) -> bool:
         raise NotImplementedError()
 
     def set_mask(self, mask):
@@ -204,7 +204,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_info_text(self):
+    def get_info_text(self) -> str:
         raise NotImplementedError()
 
     def get_channel(self, channel_idx):
