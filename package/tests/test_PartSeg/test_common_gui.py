@@ -1717,7 +1717,7 @@ def test_print_traceback_context():
         try:
             raise ValueError("foo")
         except ValueError:
-            raise RuntimeError("bar")
+            raise RuntimeError("bar") from None
     except RuntimeError as e2:
         stream = io.StringIO()
         _print_traceback(e2, file_=stream)

@@ -221,7 +221,7 @@ class MultipleFileWidget(QWidget):
                 errors_message.setText("There are errors during load files")
                 errors_message.setInformativeText("During load files cannot found some of files on disc")
                 errors_message.setStandardButtons(QMessageBox.Ok)
-                text = "\n".join(f"File: {x[0]}" + "\n" + str(x[1]) for x in self.error_list)
+                text = "\n".join(f"File: {x[0]}\n{x[1]}" for x in self.error_list)
                 errors_message.setDetailedText(text)
                 errors_message.exec_()
 

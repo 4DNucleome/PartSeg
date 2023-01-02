@@ -299,8 +299,8 @@ class StackSettings(BaseSettings):
         state = self.get_project_info()
         try:
             new_roi_info = new_roi_info.fit_to_image(self.image)
-        except ValueError:
-            raise ValueError("ROI do not fit to image")
+        except ValueError as e:
+            raise ValueError("ROI do not fit to image") from e
         if save_chosen:
             state2 = self.transform_state(state, new_roi_info, segmentation_parameters, list_of_components, save_chosen)
             self.chosen_components_widget.set_chose(

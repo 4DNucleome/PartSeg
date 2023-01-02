@@ -103,9 +103,9 @@ class ColormapEdit(QWidget):
         mouse_x = get_mouse_x(event)
         mouse_y = get_mouse_y(event)
         if mouse_x < margin or mouse_x > self.width() - margin:
-            return
+            return None
         if mouse_y < margin or mouse_y > self.height() - margin:
-            return
+            return None
         return (mouse_x - frame_margin) / width
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
@@ -239,7 +239,7 @@ class ColormapCreator(QWidget):
         self.info_label = InfoLabel(
             [
                 "<strong>Tip:</strong> Select color and double click on a color bar below. "
-                + "Repeat to add another colors.",
+                "Repeat to add another colors.",
                 "<strong>Tip:</strong> Double click on a marker to remove it.",
                 "<strong>Tip:</strong> Press and hold mouse left button on a marker to drag and drop it on color bar.",
             ],

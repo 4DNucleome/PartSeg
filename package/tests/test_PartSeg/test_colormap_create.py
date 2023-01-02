@@ -287,7 +287,7 @@ class TestColormapList:
         assert image_view.channel_control.channels_count == image.channels
         assert len(color_list.blocked()) == image.channels
         block_count = 0
-        for el in settings.colormap_dict.keys():
+        for el in settings.colormap_dict:
             widget = color_list.get_colormap_widget(el)
             assert widget.is_checked or el not in starting_colors
             if not widget.checked.isEnabled():
@@ -300,7 +300,7 @@ class TestColormapList:
         assert color_list.get_colormap_widget("gray").checked.isEnabled() is False
         # this lines test if after refresh of widget checkbox stays checkable
         block_count = 0
-        for el in settings.colormap_dict.keys():
+        for el in settings.colormap_dict:
             widget = color_list.get_colormap_widget(el)
             assert widget.is_checked or el not in starting_colors
             if not widget.checked.isEnabled():

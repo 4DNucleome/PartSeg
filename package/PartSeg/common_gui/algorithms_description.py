@@ -263,7 +263,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             [typing.Union[QWidget, Widget]],
             typing.Any,
         ],
-        typing.Callable[[QWidget, typing.Any], None],  # noqa E231
+        typing.Callable[[QWidget, typing.Any], None],
     ]:
         """
         For each widget type return proper functions. This functions need instance as first argument
@@ -478,11 +478,11 @@ class SubAlgorithmWidget(QWidget):
         super().__init__()
         if not isinstance(algorithm_property.possible_values, typing.MutableMapping):
             raise ValueError(
-                "algorithm_property.possible_values should be dict." f"It is {type(algorithm_property.possible_values)}"
+                f"algorithm_property.possible_values should be dict. It is {type(algorithm_property.possible_values)}"
             )
         if not isinstance(algorithm_property.default_value, str):
             raise ValueError(
-                "algorithm_property.default_value should be str." f"It is {type(algorithm_property.default_value)}"
+                f"algorithm_property.default_value should be str. It is {type(algorithm_property.default_value)}"
             )
         self.starting_values = {}
         self.property = algorithm_property

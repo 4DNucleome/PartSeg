@@ -166,9 +166,7 @@ class Image:
                 data_shape.pop(axes_order.index("C"))
 
         mask = cls._fit_array_to_image(data_shape, mask)
-        mask = cls.reorder_axes(mask, axes_order.replace("C", ""))
-
-        return mask
+        return cls.reorder_axes(mask, axes_order.replace("C", ""))
 
     @staticmethod
     def _prepare_channel_names(channel_names, channels_num) -> typing.List[str]:

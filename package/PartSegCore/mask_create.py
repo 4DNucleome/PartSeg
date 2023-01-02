@@ -47,9 +47,9 @@ class MaskProperty(BaseModel):
     def __repr__(self):
         return (
             f"Mask MaskProperty(dilate={self.dilate}, dilate radius={self.dilate_radius}, "
-            + f"fill holes={self.fill_holes}, max holes size={self.max_holes_size}, "
-            + f"save components={self.save_components}, clip to mask={self.clip_to_mask}, "
-            + f"reversed mask={self.reversed_mask})"
+            f"fill holes={self.fill_holes}, max holes size={self.max_holes_size}, "
+            f"save components={self.save_components}, clip to mask={self.clip_to_mask}, "
+            f"reversed mask={self.reversed_mask})"
         )
 
     def __eq__(self, other):

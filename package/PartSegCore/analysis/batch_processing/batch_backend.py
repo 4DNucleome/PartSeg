@@ -232,8 +232,8 @@ class CalculationProcess:
         try:
             mask = self.image.fit_array_to_image(mask)[0]
             # TODO fix this time bug fix
-        except ValueError:  # pragma: no cover
-            raise ValueError("Mask do not fit to given image")
+        except ValueError as e:  # pragma: no cover
+            raise ValueError("Mask do not fit to given image") from e
         old_mask = self.mask
         self.mask = mask
         self.iterate_over(children)

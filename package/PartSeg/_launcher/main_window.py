@@ -116,7 +116,7 @@ class PartSegGUILauncher(QWidget):
                 "The files has prepared backup copies in  state directory (Help > State directory)"
             )
             errors_message.setStandardButtons(QMessageBox.Ok)
-            text = "\n".join(f"File: {x[0]}" + "\n" + str(x[1]) for x in self.prepare.errors)
+            text = "\n".join(f"File: {x[0]}\n{x[1]}" for x in self.prepare.errors)
 
             errors_message.setDetailedText(text)
             errors_message.exec_()
