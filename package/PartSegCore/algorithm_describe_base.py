@@ -221,6 +221,12 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
         return resp
 
     @classmethod
+    def from_function(cls, func=None, **kwargs):
+        if "name" not in kwargs:
+            kwargs["name"] = func.__name__.replace("_", " ").capitalize()
+        return AlgorithmDescribeBaseMeta.from_function(cls, func, **kwargs)
+
+    @classmethod
     @abstractmethod
     def get_name(cls) -> str:
         """

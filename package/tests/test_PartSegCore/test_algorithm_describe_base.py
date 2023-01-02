@@ -346,20 +346,20 @@ class TestAlgorithmDescribeBase:
         def sample_function(params: dict) -> dict:
             return params
 
-        with pytest.raises(ValueError, match="missing: info, name"):
+        with pytest.raises(ValueError, match="missing: alpha, info"):
             ClassForTestFromFunc.from_function(sample_function)
 
         with pytest.raises(ValueError, match="missing: info"):
-            ClassForTestFromFunc.from_function(sample_function, name="sample")
+            ClassForTestFromFunc.from_function(sample_function, alpha=1.0)
 
-        with pytest.raises(ValueError, match="missing: name"):
+        with pytest.raises(ValueError, match="missing: alpha"):
             ClassForTestFromFunc.from_function(sample_function, info="sample")
 
-        with pytest.raises(ValueError, match="missing: info, name.*call: info2"):
+        with pytest.raises(ValueError, match="missing: alpha, info.*call: info2"):
             ClassForTestFromFunc.from_function(sample_function, info2="sample")
 
         with pytest.raises(ValueError, match="call: additions"):
-            ClassForTestFromFunc.from_function(sample_function, info="sample", name="sample2", additions="sample3")
+            ClassForTestFromFunc.from_function(sample_function, info="sample", alpha=1.0, additions="sample3")
 
     def test_missing_return_annotation(self):
         with pytest.raises(RuntimeError, match="Method get_sample should have return annotation"):
@@ -388,16 +388,17 @@ class TestAlgorithmDescribeBase:
             return params
 
         with pytest.raises(TypeError, match="Value for info should be <class 'str'>"):
-            ClassForTestFromFunc.from_function(func, info=1, name="sample")
+            ClassForTestFromFunc.from_function(func, info=1, name="sample", alpha=1.0)
 
     def test_generate_class_from_function(self):
         def sample_function(params: dict) -> dict:
             return params
 
-        new_cls = ClassForTestFromFunc.from_function(sample_function, name="sample1", info="sample2")
+        new_cls = ClassForTestFromFunc.from_function(sample_function, name="sample1", info="sample2", alpha=2.0)
         assert issubclass(new_cls, ClassForTestFromFunc)
         assert new_cls.get_name() == "sample1"
         assert new_cls.get_info() == "sample2"
+        assert new_cls.get_alpha() == 2.0
 
 
 def test_roi_extraction_profile():
@@ -406,7 +407,14 @@ def test_roi_extraction_profile():
         ROIExtractionProfile("aaa", "aaa", {})
 
 
-class ClassForTestFromFunc(AlgorithmDescribeBase, calculation_method="calculate"):
+class ClassForTestFromFuncBase(AlgorithmDescribeBase):
+    @classmethod
+    @abstractmethod
+    def get_alpha(cls) -> float:
+        raise NotImplementedError()
+
+
+class ClassForTestFromFunc(ClassForTestFromFuncBase, calculation_method="calculate"):
     @classmethod
     @abstractmethod
     def get_info(cls) -> str:
