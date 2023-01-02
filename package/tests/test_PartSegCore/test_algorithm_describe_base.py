@@ -400,6 +400,20 @@ class TestAlgorithmDescribeBase:
         assert new_cls.get_info() == "sample2"
         assert new_cls.get_alpha() == 2.0
 
+    def test_additional_function_parameter_error(self):
+        def sample_function(params: dict, beta: float) -> dict:
+            """for test purpose only"""
+
+        with pytest.raises(ValueError, match="Parameter beta is not defined"):
+            ClassForTestFromFunc.from_function(sample_function, info="sample", alpha=1.0)
+
+    def test_positional_only_argument(self):
+        def sample_function(params: dict, /) -> dict:
+            """for test purpose only"""
+
+        with pytest.raises(ValueError, match="Function .*sample_function.* should not have positional only parameters"):
+            ClassForTestFromFunc.from_function(sample_function, info="sample", alpha=1.0)
+
 
 def test_roi_extraction_profile():
     ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
@@ -422,5 +436,5 @@ class ClassForTestFromFunc(ClassForTestFromFuncBase, calculation_method="calcula
 
     @classmethod
     @abstractmethod
-    def calculate(cls, params: dict) -> dict:
+    def calculate(cls, params: BaseModel, scalar: float) -> dict:
         raise NotImplementedError()

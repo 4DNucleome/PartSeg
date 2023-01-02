@@ -144,14 +144,7 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
         return cls2
 
-    def from_function(self, func=None, **kwargs):
-        """generate new class from function"""
-
-        # Test if all abstract methods values are provided in kwargs
-
-        if not self.__support_from_function__:
-            raise RuntimeError("This class does not support from_function method")
-
+    def _validate_if_all_abstract_getters_are_defined(self, kwargs):
         abstract_getters_set = set(self.__abstract_getters__)
         kwargs_set = set(kwargs.keys())
 
@@ -170,6 +163,41 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
             raise ValueError(f"{missing_text} {extra_text}")
 
+    def _validate_function_parameters(self, func) -> set:
+        """
+        Validate if all parameters without default values are defined in self.__calculation_method__
+
+        :param func: function to validate
+        :return: set of parameters that should be dropped
+        """
+        signature = inspect.signature(func)
+        base_method_signature = inspect.signature(getattr(self, self.__calculation_method__))
+
+        for parameters in signature.parameters.values():
+            if parameters.kind in {inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.POSITIONAL_ONLY}:
+                raise ValueError(f"Function {func} should not have positional only parameters")
+            if (
+                parameters.default is inspect.Parameter.empty
+                and parameters.name not in base_method_signature.parameters
+            ):
+                raise ValueError(f"Parameter {parameters.name} is not defined in {self.__calculation_method__} method")
+
+        return {
+            parameters.name
+            for parameters in base_method_signature.parameters.values()
+            if parameters.name not in signature.parameters
+        }
+
+    def from_function(self, func=None, **kwargs):
+        """generate new class from function"""
+
+        # Test if all abstract methods values are provided in kwargs
+
+        if not self.__support_from_function__:
+            raise RuntimeError("This class does not support from_function method")
+
+        self._validate_if_all_abstract_getters_are_defined(kwargs)
+
         # check if all values have correct type
         for key, value in kwargs.items():
             if not isinstance(value, self.__abstract_getters__[key]):
@@ -182,14 +210,24 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             return _func
 
         def _class_generator(func_):
+
+            drop_attr = self._validate_function_parameters(func_)
+
+            @wraps(func_)
+            def _calculate_method(self, **kwargs_):
+                for name in drop_attr:
+                    kwargs_.pop(name, None)
+                return func_(self, **kwargs_)
+
             class _Class(self):
+                @wraps(func_)
                 def __call__(self, *args, **kwargs_):
                     return func_(*args, **kwargs_)
 
             for name in self.__abstract_getters__:
                 setattr(_Class, f"get_{name}", _getter_by_name(name))
 
-            setattr(_Class, self.__calculation_method__, func_)
+            setattr(_Class, self.__calculation_method__, _calculate_method)
 
             return _Class
 
