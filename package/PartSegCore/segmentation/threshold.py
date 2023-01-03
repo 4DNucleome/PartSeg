@@ -2,6 +2,7 @@ import typing
 import warnings
 from abc import ABC
 
+import mahotas
 import numpy as np
 import SimpleITK as sitk
 from nme import register_class, rename_key, update_argument
@@ -35,7 +36,7 @@ class MultipleOtsuThresholdParams(BaseModel):
     bins: int = Field(128, title="Number of histogram bins", ge=8, le=2**16)
 
 
-class BaseThreshold(AlgorithmDescribeBase, ABC):
+class BaseThreshold(AlgorithmDescribeBase, ABC, calculation_method="calculate_mask"):
     @classmethod
     def calculate_mask(
         cls,
@@ -274,6 +275,35 @@ class MultipleOtsuThreshold(BaseThreshold):
         return "Multiple Otsu"
 
 
+class MahotasThreshold(BaseModel):
+    ignore_zeros: bool = False
+
+
+@BaseThreshold.from_function()
+def riddler_calvard(data: np.ndarray, arguments: MahotasThreshold):
+    """
+    Riddler-Calvard thresholding algorithm from mahotas
+
+    Parameters
+    ----------
+    data : ndarray
+        Image data.
+    arguments : MahotasThreshold
+        method parameter
+
+    Returns
+    -------
+    mask : ndarray
+        Computed mask
+    References
+    ----------
+    .. [1] C. A. Riddler, and G. S. Calvard, "Picture thresholding using an iterative selection method,"
+    """
+
+    threshold = mahotas.rc(data, ignore_zeros=arguments.ignore_zeros)
+    return (data > threshold).astype(np.uint8), threshold
+
+
 class ThresholdSelection(AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold):
     pass
 
@@ -292,6 +322,7 @@ ThresholdSelection.register(KittlerIllingworthThreshold)
 ThresholdSelection.register(MomentsThreshold)
 ThresholdSelection.register(MaximumEntropyThreshold)
 ThresholdSelection.register(MultipleOtsuThreshold)
+ThresholdSelection.register(riddler_calvard)
 
 
 class DoubleThresholdParams(BaseModel):
