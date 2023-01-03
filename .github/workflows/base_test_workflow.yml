@@ -82,3 +82,10 @@ jobs:
         with:
           file: ./coverage.xml
           fail_ci_if_error: true
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: ./coverage.xml
+          retention-days: 5
