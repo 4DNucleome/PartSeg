@@ -344,7 +344,7 @@ class TestAlgorithmDescribeBase:
 
     def test_generate_class_from_function_lack_of_methods(self):
         def sample_function(params: dict) -> dict:
-            return params
+            """For test purpose"""
 
         with pytest.raises(ValueError, match="missing: alpha, info"):
             ClassForTestFromFunc.from_function(sample_function)
@@ -364,7 +364,7 @@ class TestAlgorithmDescribeBase:
     def test_missing_return_annotation(self):
         with pytest.raises(RuntimeError, match="Method get_sample should have return annotation"):
 
-            class SampleClass(AlgorithmDescribeBase):
+            class SampleClass(AlgorithmDescribeBase):  # pylint: disable=unused-variable
                 @classmethod
                 @abstractmethod
                 def get_sample(cls):
@@ -372,7 +372,7 @@ class TestAlgorithmDescribeBase:
 
     def test_not_supported_from_function(self):
         def sample_function(params: dict) -> dict:
-            return params
+            """For test purpose"""
 
         class SampleClass(AlgorithmDescribeBase):
             @classmethod
@@ -385,7 +385,7 @@ class TestAlgorithmDescribeBase:
 
     def test_wrong_type(self):
         def func(params: dict) -> dict:
-            return params
+            """For test purpose"""
 
         with pytest.raises(TypeError, match="Value for info should be <class 'str'>"):
             ClassForTestFromFunc.from_function(func, info=1, name="sample", alpha=1.0)
@@ -401,9 +401,24 @@ class TestAlgorithmDescribeBase:
         assert new_cls.get_info() == "sample2"
         assert new_cls.get_alpha() == 2.0
         assert new_cls.calculate(params={"b": 2}, scalar=1) == {"b": 2, "a": 1}
+        assert new_cls.calculate(params={"b": 2}) == {"b": 2, "a": 1}
+        with pytest.raises(ValueError, match="Parameter params is defined twice"):
+            new_cls.calculate({"a": 1}, params={})
         assert new_cls.__argument_class__ == dict
         assert new_cls.__name__ == "SampleFunction"
         assert new_cls(params={"b": 2}, scalar=1) == {"b": 2, "a": 1}
+        assert new_cls({"b": 2}) == {"b": 2, "a": 1}
+
+    def test_generate_class_from_function_without_params(self):
+        @ClassForTestFromFunc.from_function(info="sample2", alpha=2.0)
+        def sample_function(scalar: int) -> dict:
+            return {"a": scalar}
+
+        assert issubclass(sample_function, ClassForTestFromFunc)
+        assert sample_function.get_name() == "Sample Function"
+        assert sample_function.__name__ == "SampleFunction"
+        assert sample_function.calculate(scalar=1, params={"b": 2}) == {"a": 1}
+        assert sample_function.__argument_class__.__name__ == "BaseModel"
 
     def test_additional_function_parameter_error(self):
         def sample_function(params: dict, beta: float) -> dict:
