@@ -392,6 +392,7 @@ class TestAlgorithmDescribeBase:
 
     def test_generate_class_from_function(self):
         def sample_function(params: dict) -> dict:
+            params["a"] = 1
             return params
 
         new_cls = ClassForTestFromFunc.from_function(sample_function, name="sample1", info="sample2", alpha=2.0)
@@ -399,6 +400,8 @@ class TestAlgorithmDescribeBase:
         assert new_cls.get_name() == "sample1"
         assert new_cls.get_info() == "sample2"
         assert new_cls.get_alpha() == 2.0
+        assert new_cls.calculate(params={"b": 2}, scalar=1) == {"b": 2, "a": 1}
+        assert new_cls.__argument_class__ == dict
 
     def test_additional_function_parameter_error(self):
         def sample_function(params: dict, beta: float) -> dict:

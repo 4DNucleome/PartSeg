@@ -120,6 +120,7 @@ def _partial_abstractmethod(funcobj):
 class AlgorithmDescribeBaseMeta(ABCMeta):
     def __new__(cls, name, bases, attrs, **kwargs):
         calculation_method = kwargs.pop("calculation_method", None)
+        calculation_method_params_name = kwargs.pop("calculation_method__params_name", None)
         cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
         if (
             not inspect.isabstract(cls2)
@@ -130,7 +131,13 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         cls2.__new_style__ = getattr(cls2.get_fields, "__is_partial_abstractmethod__", False)
         cls2.__abstract_getters__ = {}
         cls2.__calculation_method__ = calculation_method
-        cls2.__support_from_function__ = True
+        cls2.__calculation_method_params_name__ = calculation_method_params_name
+        if cls2.__calculation_method_params_name__ is None:
+            cls2.__calculation_method_params_name__ = cls._get_calculation_method_params_name(cls2)
+
+        cls2.__support_from_function__ = (
+            cls2.__calculation_method__ is not None and cls2.__calculation_method_params_name__ is not None
+        )
         if hasattr(cls2, "__abstractmethods__") and cls2.__abstractmethods__:
             # get all abstract methods that starts with `get_`
             for method_name in cls2.__abstractmethods__:
@@ -143,6 +150,17 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
                     cls2.__support_from_function__ = False
 
         return cls2
+
+    @staticmethod
+    def _get_calculation_method_params_name(cls2) -> typing.Optional[str]:
+        if cls2.__calculation_method__ is None:
+            return None
+        signature = inspect.signature(getattr(cls2, cls2.__calculation_method__))
+        if "arguments" in signature.parameters:
+            return "arguments"
+        if "params" in signature.parameters:
+            return "params"
+        raise RuntimeError(f"Cannot determine arguments parameter name in {cls2.__calculation_method__}")
 
     def _validate_if_all_abstract_getters_are_defined(self, kwargs):
         abstract_getters_set = set(self.__abstract_getters__)
@@ -188,6 +206,12 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             if parameters.name not in signature.parameters
         }
 
+    def _get_argument_class_from_signature(self, func):
+        signature = inspect.signature(func)
+        if self.__calculation_method_params_name__ not in signature.parameters:
+            return BaseModel
+        return signature.parameters[self.__calculation_method_params_name__].annotation
+
     def from_function(self, func=None, **kwargs):
         """generate new class from function"""
 
@@ -214,22 +238,17 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             drop_attr = self._validate_function_parameters(func_)
 
             @wraps(func_)
-            def _calculate_method(self, **kwargs_):
+            def _calculate_method(**kwargs_):
                 for name in drop_attr:
                     kwargs_.pop(name, None)
-                return func_(self, **kwargs_)
+                return func_(**kwargs_)
 
-            class _Class(self):
-                @wraps(func_)
-                def __call__(self, *args, **kwargs_):
-                    return func_(*args, **kwargs_)
+            class_dkt = {f"get_{name}": _getter_by_name(name) for name in self.__abstract_getters__}
 
-            for name in self.__abstract_getters__:
-                setattr(_Class, f"get_{name}", _getter_by_name(name))
+            class_dkt[self.__calculation_method__] = _calculate_method
+            class_dkt["__argument_class__"] = self._get_argument_class_from_signature(func_)
 
-            setattr(_Class, self.__calculation_method__, _calculate_method)
-
-            return _Class
+            return type("aaa", (self,), class_dkt)
 
         if func is None:
             return _class_generator
