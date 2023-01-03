@@ -141,6 +141,17 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         cls2.__support_from_function__ = (
             cls2.__calculation_method__ is not None and cls2.__calculation_method_params_name__ is not None
         )
+
+        cls2.__abstract_getters__, cls2.__support_from_function__ = cls._get_abstract_getters(
+            cls2, cls2.__support_from_function__, calculation_method
+        )
+        return cls2
+
+    @staticmethod
+    def _get_abstract_getters(
+        cls2, support_from_function, calculation_method
+    ) -> typing.Tuple[typing.Dict[str, typing.Any], bool]:
+        abstract_getters = {}
         if hasattr(cls2, "__abstractmethods__") and cls2.__abstractmethods__:
             # get all abstract methods that starts with `get_`
             for method_name in cls2.__abstractmethods__:
@@ -148,11 +159,10 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
                     if "return" not in getattr(cls2, method_name).__annotations__:
                         raise RuntimeError(f"Method {method_name} should have return annotation")
 
-                    cls2.__abstract_getters__[method_name[4:]] = getattr(cls2, method_name).__annotations__["return"]
+                    abstract_getters[method_name[4:]] = getattr(cls2, method_name).__annotations__["return"]
                 elif method_name != calculation_method:
-                    cls2.__support_from_function__ = False
-
-        return cls2
+                    support_from_function = False
+        return abstract_getters, support_from_function
 
     @staticmethod
     def _get_calculation_method_params_name(cls2) -> typing.Optional[str]:

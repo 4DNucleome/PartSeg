@@ -308,7 +308,7 @@ def riddler_calvard(
 
     try:
         threshold = mahotas.rc(data, ignore_zeros=arguments.ignore_zeros)
-    except TypeError as e:
+    except TypeError as e:  # pragma: no cover
         if "This function only accepts integer types" in e.args[0]:
             raise SegmentationLimitException(*e.args) from e
         raise
