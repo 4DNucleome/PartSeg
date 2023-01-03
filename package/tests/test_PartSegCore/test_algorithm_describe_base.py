@@ -402,6 +402,8 @@ class TestAlgorithmDescribeBase:
         assert new_cls.get_alpha() == 2.0
         assert new_cls.calculate(params={"b": 2}, scalar=1) == {"b": 2, "a": 1}
         assert new_cls.__argument_class__ == dict
+        assert new_cls.__name__ == "SampleFunction"
+        assert new_cls(params={"b": 2}, scalar=1) == {"b": 2, "a": 1}
 
     def test_additional_function_parameter_error(self):
         def sample_function(params: dict, beta: float) -> dict:

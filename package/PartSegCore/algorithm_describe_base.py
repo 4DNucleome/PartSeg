@@ -129,9 +129,12 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         ):
             raise RuntimeError("class need to have __argument_class__ set or get_fields functions defined")
         cls2.__new_style__ = getattr(cls2.get_fields, "__is_partial_abstractmethod__", False)
+        cls2.__from_function__ = getattr(cls2, "__from_function__", False)
         cls2.__abstract_getters__ = {}
-        cls2.__calculation_method__ = calculation_method
-        cls2.__calculation_method_params_name__ = calculation_method_params_name
+        cls2.__calculation_method__ = calculation_method or getattr(cls2, "__calculation_method__", None)
+        cls2.__calculation_method_params_name__ = calculation_method_params_name or getattr(
+            cls2, "__calculation_method_params_name__", None
+        )
         if cls2.__calculation_method_params_name__ is None:
             cls2.__calculation_method_params_name__ = cls._get_calculation_method_params_name(cls2)
 
@@ -247,8 +250,9 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
             class_dkt[self.__calculation_method__] = _calculate_method
             class_dkt["__argument_class__"] = self._get_argument_class_from_signature(func_)
+            class_dkt["__from_function__"] = True
 
-            return type("aaa", (self,), class_dkt)
+            return type(func_.__name__.replace("_", " ").title().replace(" ", ""), (self,), class_dkt)
 
         if func is None:
             return _class_generator
@@ -265,6 +269,11 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     __argument_class__: typing.Optional[typing.Type[PydanticBaseModel]] = None
     __new_style__: bool
 
+    def __new__(cls, *args, **kwargs):
+        if cls.__from_function__:
+            return getattr(cls, cls.__calculation_method__)(*args, **kwargs)
+        return super().__new__(cls)
+
     @classmethod
     def get_doc_from_fields(cls):
         resp = "{\n"
@@ -278,10 +287,31 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
         return resp
 
     @classmethod
-    def from_function(cls, func=None, **kwargs):
-        if "name" not in kwargs:
-            kwargs["name"] = func.__name__.replace("_", " ").capitalize()
-        return AlgorithmDescribeBaseMeta.from_function(cls, func, **kwargs)
+    @typing.overload
+    def from_function(cls, func: typing.Callable[..., typing.Any], **kwargs) -> typing.Type["AlgorithmDescribeBase"]:
+        ...
+
+    @classmethod
+    @typing.overload
+    def from_function(
+        cls, **kwargs
+    ) -> typing.Callable[[typing.Callable[..., typing.Any]], typing.Type["AlgorithmDescribeBase"]]:
+        ...
+
+    @classmethod
+    def from_function(
+        cls, func=None, **kwargs
+    ) -> typing.Union[
+        typing.Type["AlgorithmDescribeBase"], typing.Callable[[typing.Callable], typing.Type["AlgorithmDescribeBase"]]
+    ]:
+        def _from_function(func_) -> typing.Type["AlgorithmDescribeBase"]:
+            if "name" not in kwargs:
+                kwargs["name"] = func_.__name__.replace("_", " ").title()
+            return AlgorithmDescribeBaseMeta.from_function(cls, func_, **kwargs)
+
+        if func is None:
+            return _from_function
+        return _from_function(func)
 
     @classmethod
     @abstractmethod
