@@ -215,6 +215,10 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             return BaseModel
         return signature.parameters[self.__calculation_method_params_name__].annotation
 
+    def _get_parameters_from_signature(self):
+        signature = inspect.signature(getattr(self, self.__calculation_method__))
+        return [parameters.name for parameters in signature.parameters.values()]
+
     def from_function(self, func=None, **kwargs):
         """generate new class from function"""
 
@@ -239,9 +243,15 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         def _class_generator(func_):
 
             drop_attr = self._validate_function_parameters(func_)
+            parameters_order = self._get_parameters_from_signature()
 
             @wraps(func_)
-            def _calculate_method(**kwargs_):
+            def _calculate_method(*args, **kwargs_):
+                for attr, name in zip(args, parameters_order):
+                    if name in kwargs_:
+                        raise ValueError(f"Parameter {name} is defined twice")
+                    kwargs_[name] = attr
+
                 for name in drop_attr:
                     kwargs_.pop(name, None)
                 return func_(**kwargs_)

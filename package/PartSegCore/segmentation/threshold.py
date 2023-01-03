@@ -280,7 +280,9 @@ class MahotasThreshold(BaseModel):
 
 
 @BaseThreshold.from_function()
-def riddler_calvard(data: np.ndarray, arguments: MahotasThreshold):
+def riddler_calvard(
+    data: np.ndarray, mask: np.ndarray, arguments: MahotasThreshold, operator: typing.Callable[[object, object], bool]
+):
     """
     Riddler-Calvard thresholding algorithm from mahotas
 
@@ -288,8 +290,12 @@ def riddler_calvard(data: np.ndarray, arguments: MahotasThreshold):
     ----------
     data : ndarray
         Image data.
+    mask : ndarray
+        Mask data.
     arguments : MahotasThreshold
         method parameter
+    operator : callable
+        operator to use for thresholding
 
     Returns
     -------
@@ -300,8 +306,20 @@ def riddler_calvard(data: np.ndarray, arguments: MahotasThreshold):
     .. [1] C. A. Riddler, and G. S. Calvard, "Picture thresholding using an iterative selection method,"
     """
 
-    threshold = mahotas.rc(data, ignore_zeros=arguments.ignore_zeros)
-    return (data > threshold).astype(np.uint8), threshold
+    try:
+        threshold = mahotas.rc(data, ignore_zeros=arguments.ignore_zeros)
+    except TypeError as e:
+        if "This function only accepts integer types" in e.args[0]:
+            raise SegmentationLimitException(*e.args) from e
+        raise
+    if operator(1, 0):
+        res = (data >= threshold).astype(np.uint8)
+    else:
+        res = (data < threshold).astype(np.uint8)
+
+    if mask is not None:
+        res = res * (mask > 0)
+    return res, threshold
 
 
 class ThresholdSelection(AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold):
