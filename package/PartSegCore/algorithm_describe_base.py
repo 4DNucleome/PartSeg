@@ -120,7 +120,7 @@ def _partial_abstractmethod(funcobj):
 class AlgorithmDescribeBaseMeta(ABCMeta):
     def __new__(cls, name, bases, attrs, **kwargs):
         calculation_method = kwargs.pop("calculation_method", None)
-        calculation_method_params_name = kwargs.pop("calculation_method__params_name", None)
+        calculation_method_params_name = kwargs.pop("calculation_method_params_name", None)
         cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
         if (
             not inspect.isabstract(cls2)
@@ -173,6 +173,8 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             return "arguments"
         if "params" in signature.parameters:
             return "params"
+        if "parameters" in signature.parameters:
+            return "parameters"
         raise RuntimeError(f"Cannot determine arguments parameter name in {cls2.__calculation_method__}")
 
     def _validate_if_all_abstract_getters_are_defined(self, kwargs):

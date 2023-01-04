@@ -1,6 +1,6 @@
 # pylint: disable=R0201
 import typing
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
 
 import pytest
@@ -10,6 +10,7 @@ from pydantic import Field, ValidationError
 
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
+    AlgorithmDescribeBaseMeta,
     AlgorithmProperty,
     AlgorithmSelection,
     ROIExtractionProfile,
@@ -433,6 +434,29 @@ class TestAlgorithmDescribeBase:
 
         with pytest.raises(ValueError, match="Function .*sample_function.* should not have positional only parameters"):
             ClassForTestFromFunc.from_function(sample_function, info="sample", alpha=1.0)
+
+    def test_fom_function_as_decorator(self):
+        class SampleClass(ABC, metaclass=AlgorithmDescribeBaseMeta):
+            @classmethod
+            @abstractmethod
+            def get_sample(cls) -> str:
+                raise NotImplementedError()
+
+            @classmethod
+            def get_fields(cls):
+                raise NotImplementedError()
+
+        class SampleClass2(SampleClass, calculation_method="calculate"):
+            @classmethod
+            @abstractmethod
+            def calculate(cls, a: int, arguments: dict) -> str:
+                raise NotImplementedError()
+
+        @SampleClass2.from_function(sample="aaa")
+        def calc(a: int) -> str:
+            return f"aaa {a}"
+
+        assert calc.calculate(a=1, arguments={}) == "aaa 1"
 
 
 def test_roi_extraction_profile():
