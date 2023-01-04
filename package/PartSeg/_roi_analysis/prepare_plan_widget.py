@@ -1123,9 +1123,10 @@ class CalculateInfo(QWidget):
                 self, "Name collision", "Profile with this name exists, please provide a new name.", text=data.name
             )
             if not ok:
-                return
+                return None
             return self._save_roi_profile(typing.cast(ROIExtractionProfile, data.copy(update={"name": text})))
         self.settings.roi_profiles[data.name] = data
+        return None
 
     def _save_measurement_profile(self, data: MeasurementProfile):
         if data.name in self.settings.measurement_profiles:
@@ -1133,9 +1134,10 @@ class CalculateInfo(QWidget):
                 self, "Name collision", "Profile with this name exists, please provide a new name.", text=data.name
             )
             if not ok:
-                return
+                return None
             return self._save_measurement_profile(typing.cast(MeasurementProfile, data.copy(update={"name": text})))
         self.settings.measurement_profiles[data.name] = data
+        return None
 
     def update_plan_list(self):
         new_plan_list = sorted(self.settings.batch_plans.keys())

@@ -56,7 +56,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
             return
         for name in compute_class.get_channels_num():
             if name not in self.napari_viewer.layers:
-                show_info("Cannot calculate this measurement because " f"image do not have layer {name}")
+                show_info(f"Cannot calculate this measurement because image do not have layer {name}")
                 return
         units = self.units_choose.currentEnum()
         image = generate_image(self.napari_viewer, self.channels_chose.value.name, *compute_class.get_channels_num())

@@ -326,7 +326,7 @@ class ImageView(QWidget):
     def _coordinates(self):
         active_layer = self._active_layer()
         if active_layer is None:
-            return
+            return None
         if (
             hasattr(self.viewer, "cursor")
             and hasattr(self.viewer.cursor, "position")
@@ -927,7 +927,7 @@ class ImageView(QWidget):
             upper_bound_list.append(self._data_to_world(image_info.roi, bound_info.upper))
 
         if not lower_bound_list:
-            return
+            return None
 
         lower_bound = np.min(lower_bound_list, axis=0)
         upper_bound = np.min(upper_bound_list, axis=0)

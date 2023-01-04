@@ -1,7 +1,7 @@
 import dataclasses
 import operator
 import typing
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from copy import deepcopy
 
@@ -78,6 +78,11 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
     @classmethod
     def support_z(cls):
         return True
+
+    @abstractmethod
+    def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> typing.Optional[ROIExtractionResult]:
+        """Restartable calculation may return None if there is no need to recalculate"""
+        raise NotImplementedError()
 
 
 class BorderRimParameters(BorderRimBase.__argument_class__):
@@ -240,38 +245,35 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         )
         return dataclasses.replace(res, info_text=info_text)
 
-    def calculation_run(self, report_fun: typing.Callable[[str, int], typing.Any]) -> ROIExtractionResult:
-        """
-        main calculation function
-
-        :param report_fun: function used to trace progress
-        """
-        # TODO Refactor
-        self.old_threshold_info = self.threshold_info
-        restarted = False
+    def _get_channel(self) -> bool:
+        """Get channel from image if number of channel is changed from previous run, or image is changed"""
         if self.channel is None or self.parameters["channel"] != self.new_parameters.channel:
             self.parameters["channel"] = self.new_parameters.channel
             self.channel = self.get_channel(self.new_parameters.channel)
-            restarted = True
+            return True
+        return False
+
+    def _update_cleaned_image(self, restarted: bool) -> bool:
+        """Update cleaned image if selected channel or or noise filter is changed"""
         if restarted or self.parameters["noise_filtering"] != self.new_parameters.noise_filtering:
             self.parameters["noise_filtering"] = deepcopy(self.new_parameters.noise_filtering)
             noise_filtering_parameters = self.new_parameters.noise_filtering
             self.cleaned_image = NoiseFilterSelection[noise_filtering_parameters.name].noise_filter(
                 self.channel, self.image.spacing, noise_filtering_parameters.values
             )
-            restarted = True
+            return True
+        return False
+
+    def _calculate_threshold(self, restarted: bool):
+        """Calculate threshold if cleaned image is changed"""
         if restarted or self.new_parameters.threshold != self.parameters["threshold"]:
-            if self.parameters["threshold"] is None:
-                restarted = True
             self.parameters["threshold"] = deepcopy(self.new_parameters.threshold)
             self.threshold_image = self._threshold(self.cleaned_image)
-            if (
-                isinstance(self.threshold_info, (list, tuple))
-                and (self.old_threshold_info is None or self.old_threshold_info[0] != self.threshold_info[0])
-            ) or self.old_threshold_info != self.threshold_info:
-                restarted = True
-            if self.threshold_image.max() == 0:
-                return self._lack_of_components()
+            return True
+        return False
+
+    def _calculate_components(self, restarted: bool):
+        """Calculate components if threshold image is changed"""
         if restarted or self.new_parameters.side_connection != self.parameters["side_connection"]:
             self.parameters["side_connection"] = self.new_parameters.side_connection
             connect = SimpleITK.ConnectedComponent(
@@ -279,17 +281,45 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             )
             self.segmentation = SimpleITK.GetArrayFromImage(SimpleITK.RelabelComponent(connect))
             self._sizes_array = np.bincount(self.segmentation.flat)
-            if len(self._sizes_array) < 2:
-                return self._lack_of_components()
-            restarted = True
-        if restarted or self.new_parameters.minimum_size != self.parameters["minimum_size"]:
+            return True
+        return False
+
+    def _filter_by_size(self, restarted: bool) -> typing.Optional[np.ndarray]:
+        """Filter components by size if size filter is changed"""
+        if restarted or self.new_parameters.minimum_size != self.parameters["size_filter"]:
             self.parameters["minimum_size"] = self.new_parameters.minimum_size
             minimum_size = self.new_parameters.minimum_size
             ind = bisect(self._sizes_array[1:], minimum_size, operator.gt)
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
-            if ind == 0:
+            return finally_segment
+        return None
+
+    def calculation_run(
+        self, report_fun: typing.Callable[[str, int], typing.Any]
+    ) -> typing.Optional[ROIExtractionResult]:
+        """
+        main calculation function
+
+        :param report_fun: function used to trace progress
+        """
+        # TODO Refactor
+        self.old_threshold_info = self.threshold_info
+        restarted = self._get_channel()
+        restarted = self._update_cleaned_image(restarted)
+        restarted = self._calculate_threshold(restarted)
+        if self.threshold_image.max() == 0:
+            return self._lack_of_components()
+
+        restarted = self._calculate_components(restarted)
+        if len(self._sizes_array) < 2:
+            return self._lack_of_components()
+
+        finally_segment = self._filter_by_size(restarted)
+
+        if finally_segment is not None:
+            if self.components_num == 0:
                 info_text = (
                     f"Please check the minimum size parameter. The biggest element has size {self._sizes_array[1]}"
                 )
@@ -297,6 +327,8 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                 info_text = ""
             res = self.prepare_result(finally_segment)
             return dataclasses.replace(res, info_text=info_text)
+
+        return None
 
     def clean(self):
         super().clean()
@@ -460,7 +492,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
         super().set_image(image)
         self.threshold_info = [None, None]
 
-    def calculation_run(self, report_fun) -> ROIExtractionResult:
+    def calculation_run(self, report_fun) -> typing.Optional[ROIExtractionResult]:
         segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
             self.final_sizes = []
@@ -507,6 +539,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 },
                 alternative_representation={"core_objects": finally_segment},
             )
+        return None
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
@@ -633,7 +666,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
         super().set_image(image)
         self.threshold_info = [float("nan"), float("nan")]
 
-    def calculation_run(self, report_fun) -> ROIExtractionResult:
+    def calculation_run(self, report_fun) -> typing.Optional[ROIExtractionResult]:
         if self.new_parameters.side_connection != self.parameters["side_connection"]:
             neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters.side_connection))
             self.mso.set_neighbourhood(neigh, dist)
@@ -690,6 +723,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
             new_segment[new_segment > 0] -= 1
             self.final_sizes = np.bincount(new_segment.flat)
             return self.prepare_result(new_segment)
+        return None
 
 
 class LowerThresholdMultiScaleOpening(BaseMultiScaleOpening):

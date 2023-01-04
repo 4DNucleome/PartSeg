@@ -342,7 +342,7 @@ class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
         if self.raise_:
             raise RuntimeError("ee")
         if self.return_none:
-            return
+            return None
         report_fun("text", 1)
         return ROIExtractionResult(
             roi=np.zeros((10, 10), dtype=np.uint8), parameters=ROIExtractionProfile(name="a", algorithm="a", values={})
