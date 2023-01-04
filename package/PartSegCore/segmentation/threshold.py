@@ -36,7 +36,7 @@ class MultipleOtsuThresholdParams(BaseModel):
     bins: int = Field(128, title="Number of histogram bins", ge=8, le=2**16)
 
 
-class BaseThreshold(AlgorithmDescribeBase, ABC, calculation_method="calculate_mask"):
+class BaseThreshold(AlgorithmDescribeBase, ABC, method_from_fun="calculate_mask"):
     @classmethod
     def calculate_mask(
         cls,

@@ -446,7 +446,7 @@ class TestAlgorithmDescribeBase:
             def get_fields(cls):
                 raise NotImplementedError()
 
-        class SampleClass2(SampleClass, calculation_method="calculate"):
+        class SampleClass2(SampleClass, method_from_fun="calculate"):
             @classmethod
             @abstractmethod
             def calculate(cls, a: int, arguments: dict) -> str:
@@ -459,9 +459,7 @@ class TestAlgorithmDescribeBase:
         assert calc.calculate(a=1, arguments={}) == "aaa 1"
 
     def test_class_without_user_provided_attributes(self):
-        class SampleClass(
-            AlgorithmDescribeBase, calculation_method="calculate", calculation_method_params_name="parameters"
-        ):
+        class SampleClass(AlgorithmDescribeBase, method_from_fun="calculate", additional_parameters="parameters"):
             @classmethod
             @abstractmethod
             def calculate(cls, a: int, b: int) -> int:
@@ -487,7 +485,7 @@ class ClassForTestFromFuncBase(AlgorithmDescribeBase):
         raise NotImplementedError()
 
 
-class ClassForTestFromFunc(ClassForTestFromFuncBase, calculation_method="calculate"):
+class ClassForTestFromFunc(ClassForTestFromFuncBase, method_from_fun="calculate"):
     @classmethod
     @abstractmethod
     def get_info(cls) -> str:

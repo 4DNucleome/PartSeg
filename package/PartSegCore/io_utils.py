@@ -56,7 +56,7 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
     return tar_info
 
 
-class SaveBase(AlgorithmDescribeBase, ABC, calculation_method="save"):
+class SaveBase(AlgorithmDescribeBase, ABC, method_from_fun="save"):
     need_functions = [
         "save",
         "get_short_name",
@@ -119,7 +119,7 @@ class SaveBase(AlgorithmDescribeBase, ABC, calculation_method="save"):
         return [x[1:] for x in extensions]
 
 
-class LoadBase(AlgorithmDescribeBase, ABC, calculation_method="load", calculation_method_params_name="parameters"):
+class LoadBase(AlgorithmDescribeBase, ABC, method_from_fun="load", additional_parameters="parameters"):
     need_functions = [
         "load",
         "get_short_name",

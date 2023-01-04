@@ -118,7 +118,7 @@ def _partial_abstractmethod(funcobj):
 
 
 class AlgorithmDescribeBaseMeta(ABCMeta):
-    def __new__(cls, name, bases, attrs, calculation_method=None, calculation_method_params_name=None, **kwargs):
+    def __new__(cls, name, bases, attrs, method_from_fun=None, additional_parameters=None, **kwargs):
         cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
         if (
             not inspect.isabstract(cls2)
@@ -129,19 +129,19 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         cls2.__new_style__ = getattr(cls2.get_fields, "__is_partial_abstractmethod__", False)
         cls2.__from_function__ = getattr(cls2, "__from_function__", False)
         cls2.__abstract_getters__ = {}
-        cls2.__calculation_method__ = calculation_method or getattr(cls2, "__calculation_method__", None)
-        cls2.__calculation_method_params_name__ = calculation_method_params_name or getattr(
-            cls2, "__calculation_method_params_name__", None
+        cls2.__method_name__ = method_from_fun or getattr(cls2, "__method_name__", None)
+        cls2.__additional_parameters_name__ = additional_parameters or getattr(
+            cls2, "__additional_parameters_name__", None
         )
-        if cls2.__calculation_method_params_name__ is None:
-            cls2.__calculation_method_params_name__ = cls._get_calculation_method_params_name(cls2)
+        if cls2.__additional_parameters_name__ is None:
+            cls2.__additional_parameters_name__ = cls._get_calculation_method_params_name(cls2)
 
         cls2.__support_from_function__ = (
-            cls2.__calculation_method__ is not None and cls2.__calculation_method_params_name__ is not None
+            cls2.__method_name__ is not None and cls2.__additional_parameters_name__ is not None
         )
 
         cls2.__abstract_getters__, cls2.__support_from_function__ = cls._get_abstract_getters(
-            cls2, cls2.__support_from_function__, calculation_method
+            cls2, cls2.__support_from_function__, method_from_fun
         )
         return cls2
 
@@ -164,16 +164,16 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
     @staticmethod
     def _get_calculation_method_params_name(cls2) -> typing.Optional[str]:
-        if cls2.__calculation_method__ is None:
+        if cls2.__method_name__ is None:
             return None
-        signature = inspect.signature(getattr(cls2, cls2.__calculation_method__))
+        signature = inspect.signature(getattr(cls2, cls2.__method_name__))
         if "arguments" in signature.parameters:
             return "arguments"
         if "params" in signature.parameters:
             return "params"
         if "parameters" in signature.parameters:
             return "parameters"
-        raise RuntimeError(f"Cannot determine arguments parameter name in {cls2.__calculation_method__}")
+        raise RuntimeError(f"Cannot determine arguments parameter name in {cls2.__method_name__}")
 
     @staticmethod
     def _validate_if_all_abstract_getters_are_defined(abstract_getters, kwargs):
@@ -254,12 +254,12 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
             return _func
 
-        parameters_order = self._get_parameters_from_signature(getattr(self, self.__calculation_method__))
+        parameters_order = self._get_parameters_from_signature(getattr(self, self.__method_name__))
 
         def _class_generator(func_):
 
             drop_attr = self._validate_function_parameters(
-                func_, getattr(self, self.__calculation_method__), self.__calculation_method__
+                func_, getattr(self, self.__method_name__), self.__method_name__
             )
 
             @wraps(func_)
@@ -275,9 +275,9 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
             class_dkt = {f"get_{name}": _getter_by_name(name) for name in self.__abstract_getters__}
 
-            class_dkt[self.__calculation_method__] = _calculate_method
+            class_dkt[self.__method_name__] = _calculate_method
             class_dkt["__argument_class__"] = self._get_argument_class_from_signature(
-                func_, self.__calculation_method_params_name__
+                func_, self.__additional_parameters_name__
             )
             class_dkt["__from_function__"] = True
 
@@ -300,7 +300,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     def __new__(cls, *args, **kwargs):
         if cls.__from_function__:
-            return getattr(cls, cls.__calculation_method__)(*args, **kwargs)
+            return getattr(cls, cls.__method_name__)(*args, **kwargs)
         return super().__new__(cls)
 
     @classmethod

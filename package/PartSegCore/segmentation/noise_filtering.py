@@ -22,7 +22,7 @@ class DimensionType(Enum):
         return self.name.replace("_", " ")
 
 
-class NoiseFilteringBase(AlgorithmDescribeBase, ABC, calculation_method="noise_filter"):
+class NoiseFilteringBase(AlgorithmDescribeBase, ABC, method_from_fun="noise_filter"):
     """Base class for noise filtering operations"""
 
     @classmethod
