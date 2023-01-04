@@ -177,8 +177,9 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             return "parameters"
         raise RuntimeError(f"Cannot determine arguments parameter name in {cls2.__calculation_method__}")
 
-    def _validate_if_all_abstract_getters_are_defined(self, kwargs):
-        abstract_getters_set = set(self.__abstract_getters__)
+    @staticmethod
+    def _validate_if_all_abstract_getters_are_defined(abstract_getters, kwargs):
+        abstract_getters_set = set(abstract_getters)
         kwargs_set = set(kwargs.keys())
 
         if abstract_getters_set != kwargs_set:
@@ -227,8 +228,9 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             return BaseModel
         return signature.parameters[self.__calculation_method_params_name__].annotation
 
-    def _get_parameters_from_signature(self):
-        signature = inspect.signature(getattr(self, self.__calculation_method__))
+    @staticmethod
+    def _get_parameters_from_signature(func):
+        signature = inspect.signature(func)
         return [parameters.name for parameters in signature.parameters.values()]
 
     def from_function(self, func=None, **kwargs):
@@ -239,7 +241,7 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         if not self.__support_from_function__:
             raise RuntimeError("This class does not support from_function method")
 
-        self._validate_if_all_abstract_getters_are_defined(kwargs)
+        self._validate_if_all_abstract_getters_are_defined(self.__abstract_getters__, kwargs)
 
         # check if all values have correct type
         for key, value in kwargs.items():
@@ -252,7 +254,7 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
             return _func
 
-        parameters_order = self._get_parameters_from_signature()
+        parameters_order = self._get_parameters_from_signature(getattr(self, self.__calculation_method__))
 
         def _class_generator(func_):
 
