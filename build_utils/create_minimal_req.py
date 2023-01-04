@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # nosec
 from configparser import ConfigParser
 
 config = ConfigParser()
@@ -14,7 +14,7 @@ with open(os.path.join(os.path.dirname(__file__), "minimal-req.in"), "w") as f_p
     f_p.write("\nnpe2==0.1.1")
     f_p.write("\n")
 
-subprocess.run(
+subprocess.run(  # nosec
     [
         "pip-compile",
         "--resolver=backtracking",
@@ -22,5 +22,6 @@ subprocess.run(
         "-o",
         os.path.join(os.path.dirname(__file__), "minimal-req.txt"),
         "-q",
-    ]
+    ],
+    check=True,
 )
