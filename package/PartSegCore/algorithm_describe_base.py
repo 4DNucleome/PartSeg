@@ -252,10 +252,11 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
             return _func
 
+        parameters_order = self._get_parameters_from_signature()
+
         def _class_generator(func_):
 
             drop_attr = self._validate_function_parameters(func_)
-            parameters_order = self._get_parameters_from_signature()
 
             @wraps(func_)
             def _calculate_method(*args, **kwargs_):

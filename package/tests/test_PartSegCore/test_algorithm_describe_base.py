@@ -407,8 +407,8 @@ class TestAlgorithmDescribeBase:
             new_cls.calculate({"a": 1}, params={})
         assert new_cls.__argument_class__ == dict
         assert new_cls.__name__ == "SampleFunction"
-        assert new_cls(params={"b": 2}, scalar=1) == {"b": 2, "a": 1}
-        assert new_cls({"b": 2}) == {"b": 2, "a": 1}
+        assert new_cls(params={"b": 2}, scalar=1) == {"b": 2, "a": 1}  # pylint: disable=not-callable
+        assert new_cls({"b": 2}) == {"b": 2, "a": 1}  # pylint: disable=not-callable
 
     def test_generate_class_from_function_without_params(self):
         @ClassForTestFromFunc.from_function(info="sample2", alpha=2.0)
