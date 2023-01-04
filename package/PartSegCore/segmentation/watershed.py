@@ -22,7 +22,7 @@ from PartSegCore_compiled_backend.sprawl_utils.find_split import (
 )
 
 
-class BaseWatershed(AlgorithmDescribeBase, ABC):
+class BaseWatershed(AlgorithmDescribeBase, ABC, calculation_method="sprawl"):
     """base class for all sprawl interface"""
 
     __argument_class__ = BaseModel

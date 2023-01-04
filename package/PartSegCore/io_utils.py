@@ -56,7 +56,7 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
     return tar_info
 
 
-class SaveBase(AlgorithmDescribeBase, ABC):
+class SaveBase(AlgorithmDescribeBase, ABC, calculation_method="save"):
     need_functions = [
         "save",
         "get_short_name",
@@ -100,10 +100,12 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def need_segmentation(cls):
+        """If method requires segmentation (ROI) to work, or could work with image only"""
         return True
 
     @classmethod
     def need_mask(cls):
+        """If `mask` is required for perform save"""
         return False
 
     @classmethod
@@ -117,7 +119,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         return [x[1:] for x in extensions]
 
 
-class LoadBase(AlgorithmDescribeBase, ABC):
+class LoadBase(AlgorithmDescribeBase, ABC, calculation_method="load"):
     need_functions = [
         "load",
         "get_short_name",
@@ -157,8 +159,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_extensions(cls) -> typing.List[str]:
-        match = re.match(r".*\((.*)\)", cls.get_name())
-        if match is None:
+        if match := re.match(r".*\((.*)\)", cls.get_name()) is None:
             raise ValueError(f"No extensions found in {cls.get_name()}")
         extensions = match[1].split(" ")
         if not all(x.startswith("*.") for x in extensions):
@@ -201,7 +202,7 @@ def load_metadata_base(data: typing.Union[str, Path]):
         try:
             decoded_data = json.loads(str(data), object_hook=partseg_object_hook)
         except Exception:
-            raise e
+            raise e from None
 
     return decoded_data
 
