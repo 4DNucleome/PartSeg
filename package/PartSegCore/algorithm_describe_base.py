@@ -118,9 +118,7 @@ def _partial_abstractmethod(funcobj):
 
 
 class AlgorithmDescribeBaseMeta(ABCMeta):
-    def __new__(cls, name, bases, attrs, **kwargs):
-        calculation_method = kwargs.pop("calculation_method", None)
-        calculation_method_params_name = kwargs.pop("calculation_method_params_name", None)
+    def __new__(cls, name, bases, attrs, calculation_method=None, calculation_method_params_name=None, **kwargs):
         cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
         if (
             not inspect.isabstract(cls2)
@@ -197,7 +195,8 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
             raise ValueError(f"{missing_text} {extra_text}")
 
-    def _validate_function_parameters(self, func) -> set:
+    @staticmethod
+    def _validate_function_parameters(func, method, method_name) -> set:
         """
         Validate if all parameters without default values are defined in self.__calculation_method__
 
@@ -205,7 +204,7 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         :return: set of parameters that should be dropped
         """
         signature = inspect.signature(func)
-        base_method_signature = inspect.signature(getattr(self, self.__calculation_method__))
+        base_method_signature = inspect.signature(method)
 
         for parameters in signature.parameters.values():
             if parameters.kind in {inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.POSITIONAL_ONLY}:
@@ -214,7 +213,7 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
                 parameters.default is inspect.Parameter.empty
                 and parameters.name not in base_method_signature.parameters
             ):
-                raise ValueError(f"Parameter {parameters.name} is not defined in {self.__calculation_method__} method")
+                raise ValueError(f"Parameter {parameters.name} is not defined in {method_name} method")
 
         return {
             parameters.name
@@ -222,11 +221,12 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             if parameters.name not in signature.parameters
         }
 
-    def _get_argument_class_from_signature(self, func):
+    @staticmethod
+    def _get_argument_class_from_signature(func, argument_name: str):
         signature = inspect.signature(func)
-        if self.__calculation_method_params_name__ not in signature.parameters:
+        if argument_name not in signature.parameters:
             return BaseModel
-        return signature.parameters[self.__calculation_method_params_name__].annotation
+        return signature.parameters[argument_name].annotation
 
     @staticmethod
     def _get_parameters_from_signature(func):
@@ -258,7 +258,9 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
         def _class_generator(func_):
 
-            drop_attr = self._validate_function_parameters(func_)
+            drop_attr = self._validate_function_parameters(
+                func_, getattr(self, self.__calculation_method__), self.__calculation_method__
+            )
 
             @wraps(func_)
             def _calculate_method(*args, **kwargs_):
@@ -274,7 +276,9 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             class_dkt = {f"get_{name}": _getter_by_name(name) for name in self.__abstract_getters__}
 
             class_dkt[self.__calculation_method__] = _calculate_method
-            class_dkt["__argument_class__"] = self._get_argument_class_from_signature(func_)
+            class_dkt["__argument_class__"] = self._get_argument_class_from_signature(
+                func_, self.__calculation_method_params_name__
+            )
             class_dkt["__from_function__"] = True
 
             return type(func_.__name__.replace("_", " ").title().replace(" ", ""), (self,), class_dkt)
