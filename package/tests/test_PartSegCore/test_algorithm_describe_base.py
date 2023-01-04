@@ -458,6 +458,21 @@ class TestAlgorithmDescribeBase:
 
         assert calc.calculate(a=1, arguments={}) == "aaa 1"
 
+    def test_class_without_user_provided_attributes(self):
+        class SampleClass(
+            AlgorithmDescribeBase, calculation_method="calculate", calculation_method_params_name="parameters"
+        ):
+            @classmethod
+            @abstractmethod
+            def calculate(cls, a: int, b: int) -> int:
+                raise NotImplementedError()
+
+        @SampleClass.from_function()
+        def calc(a: int, b: int) -> int:
+            return a + b
+
+        assert calc.calculate(a=1, b=2) == 3
+
 
 def test_roi_extraction_profile():
     ROIExtractionProfile(name="aaa", algorithm="aaa", values={})

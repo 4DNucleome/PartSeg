@@ -119,7 +119,7 @@ class SaveBase(AlgorithmDescribeBase, ABC, calculation_method="save"):
         return [x[1:] for x in extensions]
 
 
-class LoadBase(AlgorithmDescribeBase, ABC, calculation_method="load"):
+class LoadBase(AlgorithmDescribeBase, ABC, calculation_method="load", calculation_method_params_name="parameters"):
     need_functions = [
         "load",
         "get_short_name",
@@ -159,7 +159,7 @@ class LoadBase(AlgorithmDescribeBase, ABC, calculation_method="load"):
 
     @classmethod
     def get_extensions(cls) -> typing.List[str]:
-        if match := re.match(r".*\((.*)\)", cls.get_name()) is None:
+        if (match := re.match(r".*\((.*)\)", cls.get_name())) is None:
             raise ValueError(f"No extensions found in {cls.get_name()}")
         extensions = match[1].split(" ")
         if not all(x.startswith("*.") for x in extensions):
