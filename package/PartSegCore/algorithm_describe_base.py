@@ -205,15 +205,23 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         """
         signature = inspect.signature(func)
         base_method_signature = inspect.signature(method)
+        take_all = False
 
-        for parameters in signature.parameters.values():
-            if parameters.kind in {inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.POSITIONAL_ONLY}:
+        for parameter in signature.parameters.values():
+            if parameter.kind in {inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.POSITIONAL_ONLY}:
                 raise ValueError(f"Function {func} should not have positional only parameters")
             if (
-                parameters.default is inspect.Parameter.empty
-                and parameters.name not in base_method_signature.parameters
+                parameter.default is inspect.Parameter.empty
+                and parameter.name not in base_method_signature.parameters
+                and parameter.kind != inspect.Parameter.VAR_KEYWORD
             ):
-                raise ValueError(f"Parameter {parameters.name} is not defined in {method_name} method")
+                raise ValueError(f"Parameter {parameter.name} is not defined in {method_name} method")
+
+            if parameter.kind == inspect.Parameter.VAR_KEYWORD:
+                take_all = True
+
+        if take_all:
+            return set()
 
         return {
             parameters.name

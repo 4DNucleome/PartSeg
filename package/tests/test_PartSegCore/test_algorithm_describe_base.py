@@ -471,6 +471,14 @@ class TestAlgorithmDescribeBase:
 
         assert calc.calculate(a=1, b=2) == 3
 
+    def test_functions_with_kwargs(self):
+        @ClassForTestFromFunc.from_function(info="sample2", alpha=2.0)
+        def sample_function(params: dict, **kwargs) -> dict:
+            params["scalar"] = kwargs["scalar"]
+            return params
+
+        assert sample_function.calculate(params={"b": 2}, scalar=1) == {"b": 2, "scalar": 1}
+
 
 def test_roi_extraction_profile():
     ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
