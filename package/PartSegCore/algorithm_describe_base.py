@@ -19,6 +19,11 @@ if typing.TYPE_CHECKING:
     from pydantic.fields import ModelField
 
 
+T = typing.TypeVar("T", bound="AlgorithmDescribeBase")
+
+type_T = typing.Type[T]
+
+
 class AlgorithmDescribeNotFound(Exception):
     """
     When algorithm description not found
@@ -325,22 +330,18 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     @typing.overload
-    def from_function(cls, func: typing.Callable[..., typing.Any], **kwargs) -> typing.Type["AlgorithmDescribeBase"]:
+    def from_function(cls: type_T, func: typing.Callable[..., typing.Any], **kwargs) -> type_T:
         ...
 
     @classmethod
     @typing.overload
-    def from_function(
-        cls, **kwargs
-    ) -> typing.Callable[[typing.Callable[..., typing.Any]], typing.Type["AlgorithmDescribeBase"]]:
+    def from_function(cls: type_T, **kwargs) -> typing.Callable[[typing.Callable[..., typing.Any]], type_T]:
         ...
 
     @classmethod
     def from_function(
-        cls, func=None, **kwargs
-    ) -> typing.Union[
-        typing.Type["AlgorithmDescribeBase"], typing.Callable[[typing.Callable], typing.Type["AlgorithmDescribeBase"]]
-    ]:
+        cls: type_T, func=None, **kwargs
+    ) -> typing.Union[type_T, typing.Callable[[typing.Callable], type_T]]:
         def _from_function(func_) -> typing.Type["AlgorithmDescribeBase"]:
             if "name" not in kwargs:
                 kwargs["name"] = func_.__name__.replace("_", " ").title()
