@@ -1,3 +1,4 @@
+import contextlib
 from typing import Optional
 
 from qtpy.QtCore import QObject, QSignalBlocker, Slot
@@ -97,10 +98,8 @@ class ResultImageView(ImageView):
         self.roi_alternative_select.clear()
         values = ["ROI"] + list(alternatives)
         self.roi_alternative_select.addItems(values)
-        try:
+        with contextlib.suppress(ValueError):
             self.roi_alternative_select.setCurrentIndex(values.index(text))
-        except ValueError:
-            pass
         self.roi_alternative_select.blockSignals(block)
 
     def resizeEvent(self, event: QResizeEvent):
