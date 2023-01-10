@@ -123,10 +123,7 @@ class Leaf(BaseModel):
             resp.add(self.channel)
         try:
             measurement_method = measurement_dict[self.name]
-            if measurement_method.__new_style__:
-                fields = base_model_to_algorithm_property(measurement_method.__argument_class__)
-            else:
-                fields = measurement_method.get_fields()
+            fields = base_model_to_algorithm_property(measurement_method.__argument_class__) if measurement_method.__new_style__ else measurement_method.get_fields()
             for el in fields:
                 if isinstance(el, str):
                     continue

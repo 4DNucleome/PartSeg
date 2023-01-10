@@ -125,10 +125,7 @@ class SaveROIOptions(BaseModel):
 def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile, parameters: SaveROIOptions):
     segmentation_buff = BytesIO()
     # noinspection PyTypeChecker
-    if project.image is not None:
-        spacing = project.image.spacing
-    else:
-        spacing = parameters.spacing
+    spacing = project.image.spacing if project.image is not None else parameters.spacing
     segmentation_image = Image(project.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", ""))
     try:
         ImageWriter.save(segmentation_image, segmentation_buff, compression=None)
@@ -271,10 +268,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
                 mask = mask.astype(bool)
         else:
             mask = None
-        if "alternative.npz" in tar_file.getnames():
-            alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
-        else:
-            alternative = {}
+        alternative = np.load(tar_to_buff(tar_file, "alternative.npz")) if "alternative.npz" in tar_file.getnames() else {}
         roi_info = ROIInfo(reduce_array(roi), annotations=metadata.get("annotations", {}), alternative=alternative)
         step_changed(5)
         history = []
@@ -333,13 +327,7 @@ class LoadROI(LoadBase):
         segmentation_tuple = load_stack_segmentation(
             load_locations[0], range_changed=range_changed, step_changed=step_changed
         )
-        if segmentation_tuple.roi_extraction_parameters is None:
-            parameters = defaultdict(lambda: None)
-        else:
-            parameters = defaultdict(
-                lambda: None,
-                [(int(k), v) for k, v in segmentation_tuple.roi_extraction_parameters.items()],
-            )
+        parameters = defaultdict(lambda: None) if segmentation_tuple.roi_extraction_parameters is None else defaultdict(lambda: None, [(int(k), v) for k, v in segmentation_tuple.roi_extraction_parameters.items()])
         return dataclasses.replace(segmentation_tuple, roi_extraction_parameters=parameters)
 
     @classmethod
@@ -374,13 +362,7 @@ class LoadROIParameters(LoadBase):
             ext = os.path.splitext(file_data)[1]
             if ext == ".json":
                 project_metadata = load_metadata(file_data)
-                if isinstance(project_metadata, ROIExtractionProfile):
-                    parameters = {1: project_metadata}
-                else:
-                    parameters = defaultdict(
-                        lambda: None,
-                        [(int(k), v) for k, v in project_metadata["parameters"].items()],
-                    )
+                parameters = {1: project_metadata} if isinstance(project_metadata, ROIExtractionProfile) else defaultdict(lambda: None, [(int(k), v) for k, v in project_metadata["parameters"].items()])
                 return MaskProjectTuple(file_path=file_data, image=None, roi_extraction_parameters=parameters)
 
         tar_file, _ = open_tar_file(file_data)

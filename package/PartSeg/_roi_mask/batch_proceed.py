@@ -55,10 +55,7 @@ class BatchProceed(QThread):
             task: BatchTask = self.queue.get()
             if isinstance(task.data, str):
                 file_path = task.data
-                if os.path.splitext(task.data)[1] == ".seg":
-                    project_tuple = LoadROIImage.load([task.data])
-                else:
-                    project_tuple = LoadStackImage.load([task.data])
+                project_tuple = LoadROIImage.load([task.data]) if os.path.splitext(task.data)[1] == ".seg" else LoadStackImage.load([task.data])
             elif isinstance(task.data, MaskProjectTuple):
                 project_tuple: MaskProjectTuple = task.data
                 file_path = project_tuple.image.file_path

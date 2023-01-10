@@ -98,10 +98,7 @@ class BatchManager:
         """
         self.calculation_dict[global_parameters.uuid] = global_parameters, fun
         self.work_task += len(individual_parameters_list)
-        if hasattr(global_parameters, "uuid"):
-            task_uuid = global_parameters.uuid
-        else:
-            task_uuid = uuid.uuid4()
+        task_uuid = global_parameters.uuid if hasattr(global_parameters, "uuid") else uuid.uuid4()
         for el in individual_parameters_list:
             self.task_queue.put((el, task_uuid))
         if self.number_off_available_process > self.number_off_process:

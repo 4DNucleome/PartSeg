@@ -120,10 +120,7 @@ class Image:
         if (isinstance(data, list) and any(x.ndim + 1 != len(axes_order) for x in data)) or (
             not isinstance(data, list) and data.ndim != len(axes_order)
         ):
-            if isinstance(data, list):
-                ndim = ", ".join([f"{x.ndim} + 1" for x in data])
-            else:
-                ndim = str(data.ndim)
+            ndim = ", ".join([f"{x.ndim} + 1" for x in data]) if isinstance(data, list) else str(data.ndim)
             raise ValueError(
                 "Data should have same number of dimensions "
                 f"like length of axes_order (axis :{len(axes_order)}, ndim: {ndim}"

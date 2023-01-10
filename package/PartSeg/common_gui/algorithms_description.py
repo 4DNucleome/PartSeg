@@ -427,10 +427,7 @@ class FormWidget(QWidget):
             for el in typing.cast(FieldsList, ap.get_field()).field_list:
                 self._add_to_layout(layout, el, start_values.get(ap.name, {}), settings, add_to_widget_dict=False)
             return
-        if isinstance(ap.get_field(), Widget):
-            widget = typing.cast(Widget, ap.get_field()).native
-        else:
-            widget = ap.get_field()
+        widget = typing.cast(Widget, ap.get_field()).native if isinstance(ap.get_field(), Widget) else ap.get_field()
         if ap.is_multiline():
             layout.addRow(label)
             layout.addRow(widget)
@@ -512,10 +509,7 @@ class SubAlgorithmWidget(QWidget):
 
     @staticmethod
     def _get_form_widget(algorithm_property, start_values=None):
-        if isinstance(algorithm_property, AlgorithmProperty):
-            calc_class = algorithm_property.possible_values[algorithm_property.default_value]
-        else:
-            calc_class = algorithm_property
+        calc_class = algorithm_property.possible_values[algorithm_property.default_value] if isinstance(algorithm_property, AlgorithmProperty) else algorithm_property
         widget = FormWidget(calc_class, start_values=start_values)
         widget.layout().setContentsMargins(0, 0, 0, 0)
         return widget

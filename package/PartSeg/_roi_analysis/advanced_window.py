@@ -869,10 +869,7 @@ class MultipleInput(QDialog):
             name_label = QLabel(name)
             name_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             layout.addWidget(name_label, i, 0)
-            if len(info) == 3:
-                item = field_dict[type_of](type_of(info[2]), self)
-            else:
-                item = field_dict[type_of](self)
+            item = field_dict[type_of](type_of(info[2]), self) if len(info) == 3 else field_dict[type_of](self)
             self.object_dict[name] = (type_of, item)
             layout.addWidget(item, i, 1)
         main_layout = QVBoxLayout()

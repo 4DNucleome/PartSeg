@@ -230,7 +230,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         if has_mask_components:
             if has_segmentation_components:
                 translation = self.components_info.components_translation
-                return [(x, y) for x in translation.keys() for y in translation[x]]
+                return [(x, y) for x in translation for y in translation[x]]
             return [(0, x) for x in self.components_info.mask_components]
         return [(x, 0) for x in self.components_info.roi_components]
 
@@ -310,10 +310,7 @@ class MeasurementProfile(BaseModel):
 
         left_par, left_area = self._get_par_component_and_area_type(tree.left)
         right_par, right_area = self._get_par_component_and_area_type(tree.left)
-        if PerComponent.Yes in [left_par, right_par]:
-            res_par = PerComponent.Yes
-        else:
-            res_par = PerComponent.No
+        res_par = PerComponent.Yes if PerComponent.Yes in [left_par, right_par] else PerComponent.No
         area_set = {left_area, right_area}
         if len(area_set) == 1:
             res_area = area_set.pop()
@@ -426,10 +423,7 @@ class MeasurementProfile(BaseModel):
         # TODO use cache for per component calculate
         # kw["_cache"] = False
         val = []
-        if method.area_type(node.area) == AreaType.ROI and node.per_component != PerComponent.Per_Mask_component:
-            components = segmentation_mask_map.roi_components
-        else:
-            components = segmentation_mask_map.mask_components
+        components = segmentation_mask_map.roi_components if method.area_type(node.area) == AreaType.ROI and node.per_component != PerComponent.Per_Mask_component else segmentation_mask_map.mask_components
         for i in components:
             kw2 = self._clip_arrays(kw, node, method, i)
             val.append(method.calculate_property(**kw2))
@@ -746,10 +740,7 @@ def hash_fun_call_name(
     :param channel: channel number on which calculation is performed
     :return: unique string for such set of arguments
     """
-    if hasattr(fun, "__module__"):
-        fun_name = f"{fun.__module__}.{fun.__name__}"
-    else:
-        fun_name = fun.__name__
+    fun_name = f"{fun.__module__}.{fun.__name__}" if hasattr(fun, "__module__") else fun.__name__
     return f"{fun_name}: {arguments} # {area} & {per_component} * {channel} ^ {components_num}"
 
 

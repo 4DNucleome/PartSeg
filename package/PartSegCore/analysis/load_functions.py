@@ -85,10 +85,7 @@ def load_project(
                     mask = mask.astype(bool)
             else:
                 mask = None
-        if "alternative.npz" in tar_file.getnames():
-            alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
-        else:
-            alternative = {}
+        alternative = np.load(tar_to_buff(tar_file, "alternative.npz")) if "alternative.npz" in tar_file.getnames() else {}
         history = []
         with suppress(KeyError):
             history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()

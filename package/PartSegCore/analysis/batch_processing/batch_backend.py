@@ -288,10 +288,7 @@ class CalculationProcess:
         old_mask = self.mask
         mask1 = self.mask_dict[operation.mask1]
         mask2 = self.mask_dict[operation.mask2]
-        if isinstance(operation, MaskSum):
-            mask = np.logical_or(mask1, mask2).astype(np.uint8)
-        else:
-            mask = np.logical_and(mask1, mask2).astype(np.uint8)
+        mask = np.logical_or(mask1, mask2).astype(np.uint8) if isinstance(operation, MaskSum) else np.logical_and(mask1, mask2).astype(np.uint8)
         self.mask = mask
         self.iterate_over(children)
         self.mask = old_mask
@@ -358,10 +355,7 @@ class CalculationProcess:
             )
             if segmentation_class is None:  # pragma: no cover
                 raise ValueError(f"Segmentation class {self.algorithm_parameters['algorithm_name']} do not found")
-            if segmentation_class.__new_style__:
-                channel = getattr(self.algorithm_parameters["values"], segmentation_class.get_channel_parameter_name())
-            else:
-                channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
+            channel = getattr(self.algorithm_parameters["values"], segmentation_class.get_channel_parameter_name()) if segmentation_class.__new_style__ else self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
         # FIXME use additional information
         old_mask = self.image.mask

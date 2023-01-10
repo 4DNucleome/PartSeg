@@ -186,10 +186,7 @@ class GenericImageReader(BaseImageReaderBuffer):
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         if ext is None:
-            if isinstance(image_path, (str, Path)):
-                ext = os.path.splitext(image_path)[1]
-            else:
-                ext = ".tif"
+            ext = os.path.splitext(image_path)[1] if isinstance(image_path, (str, Path)) else ".tif"
         ext = ext.lower()
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)

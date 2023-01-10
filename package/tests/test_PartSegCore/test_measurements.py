@@ -913,14 +913,8 @@ class TestDistanceMaskSegmentation:
         mask = np.zeros(two_comp_img.shape[1:], dtype=np.uint8)
         mask[2:-2, 2:-2, 2:-2] = 1
         area_array = area_gen(two_comp_img.get_channel(0)[0])
-        if comp1 == DistancePoint.Geometrical_center:
-            mask_mid = np.mean(np.nonzero(mask), axis=1)
-        else:
-            mask_mid = np.average(np.nonzero(mask), axis=1, weights=channel[0][mask > 0])
-        if comp2 == DistancePoint.Geometrical_center:
-            area_mid = np.mean(np.nonzero(area_array), axis=1)
-        else:
-            area_mid = np.average(np.nonzero(area_array), axis=1, weights=channel[0][area_array])
+        mask_mid = np.mean(np.nonzero(mask), axis=1) if comp1 == DistancePoint.Geometrical_center else np.average(np.nonzero(mask), axis=1, weights=channel[0][mask > 0])
+        area_mid = np.mean(np.nonzero(area_array), axis=1) if comp2 == DistancePoint.Geometrical_center else np.average(np.nonzero(area_array), axis=1, weights=channel[0][area_array])
         assert isclose(
             DistanceMaskROI.calculate_property(
                 channel=channel,

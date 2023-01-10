@@ -257,10 +257,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_channel_parameter_name(cls):
-        if cls.__new_style__:
-            fields = base_model_to_algorithm_property(cls.__argument_class__)
-        else:
-            fields = cls.get_fields()
+        fields = base_model_to_algorithm_property(cls.__argument_class__) if cls.__new_style__ else cls.get_fields()
         for el in fields:
             if el.value_type == Channel:
                 return el.name

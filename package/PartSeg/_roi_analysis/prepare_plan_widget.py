@@ -670,10 +670,7 @@ class SelectMaskOp(ProtectedGroupBox):
                 return  # pragma: no cover
             names = dial.get_result()
 
-            if self.mask_operation.currentEnum() == MaskOperation.mask_intersection:  # Mask intersection
-                mask_construct = MaskIntersection
-            else:
-                mask_construct = MaskSum
+            mask_construct = MaskIntersection if self.mask_operation.currentEnum() == MaskOperation.mask_intersection else MaskSum
             mask_ob = mask_construct(name=name, mask1=names[0], mask2=names[1])
         else:
             raise ValueError("Unknown widget")  # pragma: no cover
@@ -987,10 +984,7 @@ class PlanPreview(QTreeWidget):
         if isinstance(node_plan.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
-            if isinstance(node_plan.operation, ROIExtractionProfile):
-                txt = node_plan.operation.pretty_print(AnalysisAlgorithmSelection)
-            else:
-                txt = str(node_plan.operation)
+            txt = node_plan.operation.pretty_print(AnalysisAlgorithmSelection) if isinstance(node_plan.operation, ROIExtractionProfile) else str(node_plan.operation)
             for line in txt.split("\n")[1:]:
                 QTreeWidgetItem(desc, [line])
         if deep:
@@ -1039,10 +1033,7 @@ class PlanPreview(QTreeWidget):
                 if isinstance(el.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
                     child = node.child(0)
                     child.takeChildren()
-                    if isinstance(el.operation, ROIExtractionProfile):
-                        txt = el.operation.pretty_print(AnalysisAlgorithmSelection)
-                    else:
-                        txt = str(el.operation)
+                    txt = el.operation.pretty_print(AnalysisAlgorithmSelection) if isinstance(el.operation, ROIExtractionProfile) else str(el.operation)
                     for line in txt.split("\n")[1:]:
                         QTreeWidgetItem(child, [line])
 

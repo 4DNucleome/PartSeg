@@ -319,12 +319,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         finally_segment = self._filter_by_size(restarted)
 
         if finally_segment is not None:
-            if self.components_num == 0:
-                info_text = (
-                    f"Please check the minimum size parameter. The biggest element has size {self._sizes_array[1]}"
-                )
-            else:
-                info_text = ""
+            info_text = f"Please check the minimum size parameter. The biggest element has size {self._sizes_array[1]}" if self.components_num == 0 else ""
             res = self.prepare_result(finally_segment)
             return dataclasses.replace(res, info_text=info_text)
 

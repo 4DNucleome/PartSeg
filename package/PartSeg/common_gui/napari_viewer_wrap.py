@@ -189,10 +189,7 @@ class SynchronizeWidget(QWidget):
             except ValueError:
                 data = value.data
                 local_scale = None
-            if value.layer_type == "labels":
-                layer = self._substitute_labels_layer(value.name, data, local_scale, additional_layers)
-            else:
-                layer = self._substitute_image_layer(value.name, data, local_scale, None, additional_layers)
+            layer = self._substitute_labels_layer(value.name, data, local_scale, additional_layers) if value.layer_type == "labels" else self._substitute_image_layer(value.name, data, local_scale, None, additional_layers)
             current_layers.append(layer.name)
         self._clean_layers(additional_layers)
         self.layer_name_dict["additional"] = current_layers

@@ -42,10 +42,7 @@ class InterpolateImage(TransformBase):
                 x / arguments[f"scale_{y}"] for x, y in zip(image.spacing, image.get_dimension_letters().lower())
             ]
         array = zoom(image.get_data(), scale_factor, mode="mirror")
-        if image.mask is not None:
-            mask = zoom(image.mask, scale_factor[:-1], mode="mirror")
-        else:
-            mask = None
+        mask = zoom(image.mask, scale_factor[:-1], mode="mirror") if image.mask is not None else None
         return image.substitute(data=array, image_spacing=spacing, mask=mask)
 
     @classmethod

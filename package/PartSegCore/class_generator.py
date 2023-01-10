@@ -189,10 +189,7 @@ def add_classes(types_list, translate_dict, global_state):
             if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.abc.Iterable):
                 if sub_types := [x for x in type_.__args__ if not isinstance(x, omit_list)]:
                     add_classes(sub_types, translate_dict, global_state)
-                    if type_._name is None:  # pylint: disable=W0212
-                        type_str = str(type_.__origin__)
-                    else:
-                        type_str = f"typing.{str(type_._name)}"  # pylint: disable=W0212
+                    type_str = str(type_.__origin__) if type_._name is None else f"typing.{str(type_._name)}"  # pylint: disable=W0212
                     type_str += "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
                     translate_dict[type_] = type_str
                     continue
@@ -310,13 +307,7 @@ class BaseMeta(type):
                         field_name=field_name, default_names=", ".join(defaults_dict.keys())
                     )
                 )
-        if "__readonly__" in attrs:
-            readonly = attrs["__readonly__"]
-        else:
-            readonly = next(
-                (el.__readonly__ for el in bases if hasattr(el, "__readonly__")),
-                False,
-            )
+        readonly = attrs["__readonly__"] if "__readonly__" in attrs else next((el.__readonly__ for el in bases if hasattr(el, "__readonly__")), False)
 
         if "__old_names__" in attrs:
             old_names = attrs["__old_names__"]

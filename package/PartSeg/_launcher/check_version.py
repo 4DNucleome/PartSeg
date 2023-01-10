@@ -67,24 +67,7 @@ class CheckVersionThread(QThread):
         my_version = packaging.version.parse(self.base_release)
         remote_version = packaging.version.parse(self.release)
         if remote_version > my_version:
-            if getattr(sys, "frozen", False):
-                message = QMessageBox(
-                    QMessageBox.Information,
-                    "New release",
-                    f"You use outdated version of PartSeg. "
-                    f"Your version is {my_version} and current is {remote_version}. "
-                    f"You can download next release form {self.url}",
-                    QMessageBox.Ok | QMessageBox.Ignore,
-                )
-            else:
-                message = QMessageBox(
-                    QMessageBox.Information,
-                    "New release",
-                    f"You use outdated version of PartSeg. "
-                    f"Your version is {my_version} and current is {remote_version}. "
-                    "You can update it from pypi (pip install -U PartSeg)",
-                    QMessageBox.Ok | QMessageBox.Ignore,
-                )
+            message = QMessageBox(QMessageBox.Information, "New release", f"You use outdated version of PartSeg. Your version is {my_version} and current is {remote_version}. You can download next release form {self.url}", QMessageBox.Ok | QMessageBox.Ignore) if getattr(sys, "frozen", False) else QMessageBox(QMessageBox.Information, "New release", f"You use outdated version of PartSeg. Your version is {my_version} and current is {remote_version}. You can update it from pypi (pip install -U PartSeg)", QMessageBox.Ok | QMessageBox.Ignore)
 
             if message.exec_() == QMessageBox.Ignore:
                 os.makedirs(state_store.save_folder, exist_ok=True)

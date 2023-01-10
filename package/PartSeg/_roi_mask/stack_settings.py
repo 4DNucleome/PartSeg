@@ -332,9 +332,6 @@ def get_mask(
     if segmentation is None or len(selected) == 0:
         return mask
     segmentation = reduce_array(segmentation, selected)
-    if mask is None:
-        resp = np.ones(segmentation.shape, dtype=np.uint8)
-    else:
-        resp = np.copy(mask)
+    resp = np.ones(segmentation.shape, dtype=np.uint8) if mask is None else np.copy(mask)
     resp[segmentation > 0] = 0
     return resp

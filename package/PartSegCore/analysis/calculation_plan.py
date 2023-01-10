@@ -779,22 +779,12 @@ class CalculationPlan:
         return f"Calcualation Plan: {self.name}\n{self._pretty_print(self.execution_tree, 0)}"
 
     def _pretty_print(self, elem: CalculationTree, indent) -> str:
-        if isinstance(elem.operation, str):
-            name = elem.operation
-        else:
-            name = self.get_el_name(elem.operation)
+        name = elem.operation if isinstance(elem.operation, str) else self.get_el_name(elem.operation)
         if isinstance(elem.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
-            if isinstance(elem.operation, ROIExtractionProfile):
-                txt = elem.operation.pretty_print(AnalysisAlgorithmSelection)
-            else:
-                txt = str(elem.operation)
+            txt = elem.operation.pretty_print(AnalysisAlgorithmSelection) if isinstance(elem.operation, ROIExtractionProfile) else str(elem.operation)
             txt = "\n".join(txt.split("\n")[1:])
             name += "\n" + textwrap.indent(txt, " " * (indent + 4))
 
-        if elem.children:
-            suffix = "\n" + "\n".join(self._pretty_print(x, indent + 2) for x in elem.children)
-
-        else:
-            suffix = ""
+        suffix = "\n" + "\n".join(self._pretty_print(x, indent + 2) for x in elem.children) if elem.children else ""
 
         return " " * indent + name + suffix
