@@ -125,8 +125,6 @@ def _reset_napari_settings(monkeypatch, tmp_path):
     monkeypatch.setattr(settings.NapariSettings, "save", _mock_save)
     settings._SETTINGS = None
 
-    return
-
 
 @pytest.fixture(autouse=True)
 def _block_message_box(monkeypatch, request):
@@ -175,4 +173,3 @@ def _mock_throttler(monkeypatch):
 
         if hasattr(qt_main_window, "QSignalThrottler"):
             monkeypatch.setattr(qt_main_window, "QSignalThrottler", DummyThrottler)
-    return
