@@ -109,7 +109,7 @@ def test_name_collision():
         field1: str
 
     empty(Test4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="class already registered"):
 
         class Test4(BaseSerializableClass):  # pylint: disable=E0102
             field1: str

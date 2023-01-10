@@ -122,7 +122,7 @@ def analysis_project_reversed() -> ProjectTuple:
     return ProjectTuple("test_data.tiff", image, roi_info=roi_info, mask=mask)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mask_prop():
     return MaskProperty.simple_mask()
 
@@ -613,7 +613,7 @@ class TestSaveFunctions:
         assert np.all(array == analysis_project.roi_info.roi)
 
     @pytest.mark.parametrize(
-        "klass,ext_li",
+        ("klass", "ext_li"),
         [
             (SaveAsNumpy, [".npy"]),
             (SaveAsTiff, [".tiff", ".tif"]),

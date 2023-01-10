@@ -20,7 +20,7 @@ def empty(*_):
 
 
 @pytest.fixture(autouse=True)
-def fix_threshold_flow(monkeypatch):
+def _fix_threshold_flow(monkeypatch):
     values = ThresholdFlowAlgorithm.get_default_values()
     values.threshold.values.core_threshold.values.threshold = 10
     values.threshold.values.base_threshold.values.threshold = 5
@@ -65,8 +65,8 @@ def test_segmentation_algorithm(image, algorithm: Type[ROIExtractionAlgorithm], 
     instance.clean()
 
 
-@pytest.mark.parametrize("ndim", (2, 3))
-@pytest.mark.parametrize("dtype", (np.uint8, bool))
+@pytest.mark.parametrize("ndim", [2, 3])
+@pytest.mark.parametrize("dtype", [np.uint8, bool])
 def test_close_small_holes(ndim, dtype):
     data = np.zeros((10,) * ndim, dtype=dtype)
     data[(slice(1, -1),) * ndim] = 1

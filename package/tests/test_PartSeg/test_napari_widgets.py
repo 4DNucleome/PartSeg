@@ -25,7 +25,7 @@ from PartSegCore.segmentation import ROIExtractionResult
 
 
 @pytest.fixture(autouse=True)
-def clean_settings(tmp_path):
+def _clean_settings(tmp_path):
     old_settings = _settings._settings
     _settings._settings = None
     yield
@@ -166,8 +166,8 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
     assert measurement.calculate_btn.enabled
 
 
-@pytest.mark.enablethread
-@pytest.mark.enabledialog
+@pytest.mark.enablethread()
+@pytest.mark.enabledialog()
 def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
     from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
 
@@ -225,8 +225,8 @@ def test_mask_create(make_napari_viewer, qtbot):
     assert "Mask" in viewer.layers
 
 
-@pytest.fixture
-def shutdown_timers(monkeypatch):
+@pytest.fixture()
+def _shutdown_timers(monkeypatch):
     register = []
     old_start = QTimer.start
 
@@ -246,7 +246,7 @@ def shutdown_timers(monkeypatch):
             assert not timer.isActive()
 
 
-@pytest.mark.enablethread
+@pytest.mark.enablethread()
 def test_search_labels(make_napari_viewer, qtbot, shutdown_timers):
     viewer = make_napari_viewer()
     data = np.zeros((10, 10), dtype=np.uint8)

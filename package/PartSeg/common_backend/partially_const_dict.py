@@ -54,7 +54,7 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
 
     def __delitem__(self, key: str):
         if key in self.const_item_dict:
-            raise ValueError(f"cannot delete base item {key}")
+            raise ValueError(f"Cannot delete base item {key}")
         item = self.editable_items[key]
         del self.editable_items[key]
         del self._order_dict[key]

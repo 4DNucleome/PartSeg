@@ -545,7 +545,7 @@ class TestCalculationProcess:
         assert isinstance(res[0], ResponseData)
 
     @pytest.mark.parametrize(
-        "file_name,root_type",
+        ("file_name", "root_type"),
         [
             (os.path.join("stack1_components", "stack1_component1.tif"), RootType.Image),
             ("stack1_component1_1.tgz", RootType.Image),
