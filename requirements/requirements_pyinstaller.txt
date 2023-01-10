@@ -48,7 +48,7 @@ czifile==2019.7.2
     # via PartSeg (setup.cfg)
 dask[array]==2022.12.1
     # via napari
-debugpy==1.6.4
+debugpy==1.6.5
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -78,7 +78,7 @@ idna==3.4
     # via requests
 imagecodecs==2022.12.24
     # via PartSeg (setup.cfg)
-imageio==2.23.0
+imageio==2.24.0
     # via
     #   PartSeg (setup.cfg)
     #   napari
@@ -95,7 +95,7 @@ ipykernel==6.19.4
     #   PartSeg (setup.cfg)
     #   napari-console
     #   qtconsole
-ipython==8.7.0
+ipython==8.8.0
     # via
     #   PartSeg (setup.cfg)
     #   ipykernel
@@ -114,7 +114,7 @@ jupyter-client==7.4.8
     # via
     #   ipykernel
     #   qtconsole
-jupyter-core==5.1.1
+jupyter-core==5.1.2
     # via
     #   jupyter-client
     #   qtconsole
@@ -153,7 +153,7 @@ nest-asyncio==1.5.6
     # via
     #   ipykernel
     #   jupyter-client
-networkx==2.8.8
+networkx==3.0
     # via scikit-image
 nme==0.1.6
     # via PartSeg (setup.cfg)
@@ -184,7 +184,7 @@ oiffile==2022.9.29
     # via PartSeg (setup.cfg)
 openpyxl==3.0.10
     # via PartSeg (setup.cfg)
-packaging==22.0
+packaging==23.0
     # via
     #   PartSeg (setup.cfg)
     #   build
@@ -260,7 +260,7 @@ pyinstaller-hooks-contrib==2022.14
     # via pyinstaller
 pyopengl==3.1.6
     # via napari
-pyopengl-accelerate==3.1.5
+pyopengl-accelerate==3.1.6
     # via PartSeg (setup.cfg)
 pyqt5==5.15.7
     # via PartSeg (setup.cfg)
@@ -311,11 +311,11 @@ requests==2.28.1
     # via
     #   PartSeg (setup.cfg)
     #   sphinx
-rich==13.0.0
+rich==13.0.1
     # via npe2
 scikit-image==0.19.3
     # via napari
-scipy==1.9.3
+scipy==1.10.0
     # via
     #   PartSeg (setup.cfg)
     #   napari
@@ -335,7 +335,7 @@ sphinx==4.5.0
     # via
     #   napari
     #   numpydoc
-sphinxcontrib-applehelp==1.0.2
+sphinxcontrib-applehelp==1.0.3
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
     # via sphinx
@@ -414,7 +414,7 @@ wrapt==1.14.1
     # via napari
 xlrd==2.0.1
     # via PartSeg (setup.cfg)
-xlsxwriter==3.0.5
+xlsxwriter==3.0.6
     # via PartSeg (setup.cfg)
 zipp==3.11.0
     # via importlib-metadata
