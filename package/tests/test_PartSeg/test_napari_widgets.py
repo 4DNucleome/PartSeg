@@ -247,7 +247,8 @@ def _shutdown_timers(monkeypatch):
 
 
 @pytest.mark.enablethread()
-def test_search_labels(make_napari_viewer, qtbot, shutdown_timers):
+@pytest.mark.usefixtures("_shutdown_timers")
+def test_search_labels(make_napari_viewer, qtbot):
     viewer = make_napari_viewer()
     data = np.zeros((10, 10), dtype=np.uint8)
     data[2:5, 2:-2] = 1
