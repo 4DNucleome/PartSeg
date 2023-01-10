@@ -163,7 +163,7 @@ class TestImageView:
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10**5, 10**5, 10**5))
 
     @pytest.mark.windows_ci_skip()
-    def test_mask_control_visibility(self, base_settings, image_view, qtbot, tmp_path):
+    def test_mask_control_visibility(self, base_settings, image_view, qtbot):
         image_view.show()
         assert not image_view.mask_chk.isVisible()
         image_view.set_mask()
@@ -176,7 +176,7 @@ class TestImageView:
         assert not image_view.mask_chk.isVisible()
         image_view.hide()
 
-    def test_points_rendering(self, base_settings, image_view, tmp_path):
+    def test_points_rendering(self, base_settings, image_view):
         assert image_view.points_layer is None
         base_settings.points = [(0, 5, 5, 5)]
         assert image_view.points_layer is not None
@@ -185,7 +185,7 @@ class TestImageView:
         assert not image_view.points_layer.visible
 
     @pytest.mark.windows_ci_skip()
-    def test_points_button_visibility(self, base_settings, image_view, qtbot, tmp_path):
+    def test_points_button_visibility(self, base_settings, image_view):
         image_view.show()
         assert not image_view.points_view_button.isVisible()
         base_settings.points = [(0, 5, 5, 5)]
@@ -194,7 +194,7 @@ class TestImageView:
         assert not image_view.points_view_button.isVisible()
         image_view.hide()
 
-    def test_dim_menu(self, base_settings, image_view, monkeypatch):
+    def test_dim_menu(self, image_view, monkeypatch):
         called = []
 
         from PartSeg.common_gui import napari_image_view
@@ -304,14 +304,14 @@ class TestImageView:
 
     @pytest.mark.no_patch_add_layer()
     @pytest.mark.enablethread()
-    def test_add_layer_util_check_init(self, base_settings, image_view, qtbot):
+    def test_add_layer_util_check_init(self, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0
 
         qtbot.waitUntil(has_layers)
 
     @pytest.mark.no_patch_add_layer()
-    def test_add_layer_util(self, base_settings, image_view, qtbot):
+    def test_add_layer_util(self, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0
 
