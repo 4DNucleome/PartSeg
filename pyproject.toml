@@ -33,7 +33,7 @@ exclude = '''
 
 [tool.ruff]
 line-length = 120
-select = ["E", "F", "I", "UP", "C", "A" ,"YTT", "W", "B", "A", "C4", "ISC", "ICN", "Q", "SIM", "PLC", "PLE", "PLR", "PLW", "RUF0", "PT"]
+select = ["E", "F", "I", "UP", "C", "A" ,"YTT", "W", "B", "A", "C4", "ISC", "ICN", "Q", "SIM", "PLC", "PLE", "PLR", "PLW", "RUF", "PT"]
 ignore = ["A003", "SIM108"]
 exclude = ["examples/call_simple_threshold.py"]
 target-version = "py38"
