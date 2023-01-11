@@ -1258,7 +1258,7 @@ class DistanceMaskROI(MeasurementMethodBase):
         return area_pos
 
     @classmethod
-    def calculate_property(
+    def calculate_property(  # pylint: disable=W0221
         cls,
         channel,
         area_array,
@@ -1564,7 +1564,7 @@ class Haralick(MeasurementMethodBase):
         return True
 
     @classmethod
-    def calculate_property(
+    def calculate_property(  # pylint: disable=W0221
         cls, area_array, channel, distance, feature, _cache=False, **kwargs
     ):  # pylint: disable=W0221
         if isinstance(feature, str):
