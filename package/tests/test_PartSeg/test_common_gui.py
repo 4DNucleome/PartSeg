@@ -979,6 +979,9 @@ class TestFormWidget:
                 self.nullable = nullable
                 super().__init__(**kwargs)
 
+            def __setitem__(self, key, value):
+                """to satisfy the Container"""
+
         register_type(DummyClass, widget_type=DummyWidget)
 
         form_widget = FormWidget([AlgorithmProperty("dummy", "dummy", DummyClass(1))])
@@ -992,7 +995,7 @@ class TestFormWidget:
         layout = w.layout()
         assert isinstance(layout.itemAt(0).widget(), Hline)
         assert isinstance(layout.itemAt(1).widget(), QLabel)
-        assert isinstance(layout.itemAt(2, QFormLayout.FieldRole).widget(), QSpinBox)
+        assert isinstance(layout.itemAt(2, QFormLayout.ItemRole.FieldRole).widget(), QSpinBox)
         assert isinstance(layout.itemAt(4).widget(), Hline)
 
 
