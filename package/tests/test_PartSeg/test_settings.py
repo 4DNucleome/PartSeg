@@ -24,7 +24,7 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 
 
-@pytest.fixture
+@pytest.fixture()
 def stack_settings(qtbot, tmp_path):
     settings = StackSettings(tmp_path)
     chose = ChosenComponents()
@@ -73,17 +73,15 @@ class TestStackSettings:
     def test_add_project(self, stack_settings, stack_segmentation1, data_test_dir):
         stack_settings.set_project_info(stack_segmentation1)
         project1_res = stack_settings.get_project_info()
-        assert (
-            isinstance(project1_res.selected_components, typing.Iterable) and len(project1_res.selected_components) == 2
-        )
+        assert isinstance(project1_res.selected_components, typing.Iterable)
+        assert len(project1_res.selected_components) == 2
         assert project1_res.file_path == "test_path"
         project2 = LoadStackImage.load([os.path.join(data_test_dir, "test_lsm.tif")])
         stack_settings.set_project_info(project2)
         project2_res = stack_settings.get_project_info()
         assert project2_res.roi_info.roi is None
-        assert (
-            isinstance(project2_res.selected_components, typing.Iterable) and len(project2_res.selected_components) == 0
-        )
+        assert isinstance(project2_res.selected_components, typing.Iterable)
+        assert len(project2_res.selected_components) == 0
         assert project2_res.file_path == os.path.join(data_test_dir, "test_lsm.tif")
 
     def test_set_project(self, stack_settings, stack_segmentation1, stack_segmentation2):

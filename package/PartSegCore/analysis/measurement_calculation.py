@@ -230,7 +230,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         if has_mask_components:
             if has_segmentation_components:
                 translation = self.components_info.components_translation
-                return [(x, y) for x in translation.keys() for y in translation[x]]
+                return [(x, y) for x in translation for y in translation[x]]
             return [(0, x) for x in self.components_info.mask_components]
         return [(x, 0) for x in self.components_info.roi_components]
 
@@ -1258,7 +1258,7 @@ class DistanceMaskROI(MeasurementMethodBase):
         return area_pos
 
     @classmethod
-    def calculate_property(
+    def calculate_property(  # pylint: disable=W0221
         cls,
         channel,
         area_array,
@@ -1564,7 +1564,7 @@ class Haralick(MeasurementMethodBase):
         return True
 
     @classmethod
-    def calculate_property(
+    def calculate_property(  # pylint: disable=W0221
         cls, area_array, channel, distance, feature, _cache=False, **kwargs
     ):  # pylint: disable=W0221
         if isinstance(feature, str):
@@ -1666,7 +1666,7 @@ class ColocalizationMeasurement(MeasurementMethodBase):
         raise RuntimeError(f"Not supported colocalization method {colocalization}")  # pragma: no cover
 
     @classmethod
-    def calculate_property(
+    def calculate_property(  # pylint: disable=W0221
         cls, area_array, colocalization, randomize=False, randomize_repeat=10, channel_fst=0, channel_scd=1, **kwargs
     ):  # pylint: disable=W0221
         mask_binary = area_array > 0

@@ -156,15 +156,15 @@ class TestEnumComboBox:
             widget.set_value(Enum2.test2)
 
 
-@pytest.fixture
-def mock_accept_files(monkeypatch):
+@pytest.fixture()
+def _mock_accept_files(monkeypatch):
     def accept(*_):
         return True
 
     monkeypatch.setattr(select_multiple_files.AcceptFiles, "exec_", accept)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_warning(monkeypatch):
     warning_show = [0]
 
@@ -175,7 +175,7 @@ def mock_warning(monkeypatch):
     return warning_show
 
 
-@pytest.mark.usefixtures("mock_accept_files")
+@pytest.mark.usefixtures("_mock_accept_files")
 class TestAddFiles:
     def test_update_files_list(self, qtbot, tmp_path, part_settings):
         for i in range(20):
@@ -518,8 +518,8 @@ class TestMultipleFileWidget:
     def check_load_files(parameter, custom_name):
         return not custom_name and os.path.basename(parameter.file_path) == "img_4.tif"
 
-    @pytest.mark.enablethread
-    @pytest.mark.enabledialog
+    @pytest.mark.enablethread()
+    @pytest.mark.enabledialog()
     def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path):
         widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
         qtbot.add_widget(widget)
@@ -550,8 +550,8 @@ class TestMultipleFileWidget:
         assert part_settings.get_last_files_multiple() == file_list
         assert widget.file_view.topLevelItemCount() == 5
 
-    @pytest.mark.enablethread
-    @pytest.mark.enabledialog
+    @pytest.mark.enablethread()
+    @pytest.mark.enabledialog()
     def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path):
         widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
         qtbot.add_widget(widget)
@@ -586,8 +586,8 @@ class TestBaseMainWindow:
         window = BaseMainWindow(config_folder=tmp_path)
         qtbot.add_widget(window)
 
-    @pytest.mark.enablethread
-    @pytest.mark.enabledialog
+    @pytest.mark.enablethread()
+    @pytest.mark.enabledialog()
     def test_recent(self, tmp_path, qtbot, monkeypatch):
         load_mock = MagicMock()
         load_mock.load = MagicMock(return_value=1)
@@ -628,7 +628,7 @@ class TestQtPopup:
     def test_move_to_error_no_parent(self, qtbot):
         popup = QtPopup(None)
         qtbot.add_widget(popup)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="possible if the popup has a parent"):
             popup.move_to()
 
     @pytest.mark.parametrize("pos", ["top", "bottom", "left", "right", (10, 10, 10, 10), (15, 10, 10, 10)])
@@ -646,10 +646,10 @@ class TestQtPopup:
         widget = QWidget()
         window.setCentralWidget(widget)
         popup = QtPopup(widget)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="position must be one of"):
             popup.move_to("dummy_text")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Wrong type of position"):
             popup.move_to({})
 
     def test_click(self, qtbot, monkeypatch):
@@ -979,6 +979,9 @@ class TestFormWidget:
                 self.nullable = nullable
                 super().__init__(**kwargs)
 
+            def __setitem__(self, key, value):
+                """to satisfy the Container"""
+
         register_type(DummyClass, widget_type=DummyWidget)
 
         form_widget = FormWidget([AlgorithmProperty("dummy", "dummy", DummyClass(1))])
@@ -992,7 +995,7 @@ class TestFormWidget:
         layout = w.layout()
         assert isinstance(layout.itemAt(0).widget(), Hline)
         assert isinstance(layout.itemAt(1).widget(), QLabel)
-        assert isinstance(layout.itemAt(2, QFormLayout.FieldRole).widget(), QSpinBox)
+        assert isinstance(layout.itemAt(2, QFormLayout.ItemRole.FieldRole).widget(), QSpinBox)
         assert isinstance(layout.itemAt(4).widget(), Hline)
 
 
@@ -1048,11 +1051,11 @@ class TestQtAlgorithmProperty:
         assert isinstance(res, QtAlgorithmProperty)
         qtbot.add_widget(res.get_field())
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="unknown parameter type"):
             QtAlgorithmProperty.from_algorithm_property(1)
 
     @pytest.mark.parametrize(
-        "data_type,default_value,expected_type,next_value",
+        ("data_type", "default_value", "expected_type", "next_value"),
         [
             (Channel, Channel(1), ChannelComboBox, Channel(2)),
             (bool, True, QCheckBox, False),
@@ -1093,13 +1096,13 @@ class TestQtAlgorithmProperty:
 
     def test_numeric_type_default_value_error(self):
         ap = AlgorithmProperty(name="test", user_name="Test", default_value="a", value_type=int)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incompatible types"):
             QtAlgorithmProperty.from_algorithm_property(ap)
         ap.default_value = 1.0
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incompatible types"):
             QtAlgorithmProperty.from_algorithm_property(ap)
         ap = AlgorithmProperty(name="test", user_name="Test", default_value="a", value_type=float)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incompatible types"):
             QtAlgorithmProperty.from_algorithm_property(ap)
 
     def test_per_dimension(self, qtbot):
@@ -1239,7 +1242,7 @@ class TestMaskWidget:
         assert widget.get_dilate_radius() == [1, 11, 11]
 
     @pytest.mark.parametrize(
-        "name,func,value",
+        ("name", "func", "value"),
         [
             ("fill_holes", "setCurrentEnum", RadiusType.R2D),
             ("max_holes_size", "setValue", 10),
@@ -1307,7 +1310,7 @@ def test_info_label(qtbot, monkeypatch):
     qtbot.wait(30)
 
 
-@pytest.mark.parametrize("platform,program", [("linux", "xdg-open"), ("linux2", "xdg-open"), ("darwin", "open")])
+@pytest.mark.parametrize(("platform", "program"), [("linux", "xdg-open"), ("linux2", "xdg-open"), ("darwin", "open")])
 def test_show_directory_dialog(qtbot, monkeypatch, platform, program):
     called = []
 
@@ -1505,7 +1508,7 @@ class TestBaseAlgorithmSettingsWidget:
         qtbot.addWidget(widget)
 
     @pytest.mark.parametrize(
-        "exc, expected",
+        ("exc", "expected"),
         [
             (SegmentationLimitException("Test text"), "During segmentation process algorithm meet"),
             (

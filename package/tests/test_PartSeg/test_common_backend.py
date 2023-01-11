@@ -369,9 +369,9 @@ class TestPartiallyConstDict:
         dkt = TestDict(data)
         assert set(dkt) == {"custom_a", "b", "c", "d"}
         assert len(dkt) == 4
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot write base item"):
             dkt["b"] = 1
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot write base item"):
             dkt["custom_a"] = 1
         with qtbot.waitSignal(dkt.item_added):
             dkt["e"] = 7
@@ -382,7 +382,7 @@ class TestPartiallyConstDict:
             dkt["w"] = dkt["k"]
         assert "w" not in dkt
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot delete base item"):
             del dkt["b"]
         with qtbot.waitSignal(dkt.item_removed):
             del dkt["e"]
@@ -456,13 +456,13 @@ class TestLoadBackup:
             assert not (tmp_path / "0.13.13").exists()
 
 
-@pytest.fixture
+@pytest.fixture()
 def image(tmp_path):
     data = np.random.random((10, 10, 2))
     return Image(data=data, image_spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
 
 
-@pytest.fixture
+@pytest.fixture()
 def roi():
     data = np.zeros((10, 10), dtype=np.uint8)
     data[2:-2, 2:5] = 1
@@ -490,7 +490,7 @@ class TestBaseSettings:
         with qtbot.waitSignal(settings.image_spacing_changed):
             settings.image_spacing = (1, 8, 8)
         assert image.spacing == (8, 8)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="parameter should have length 2 or 3"):
             settings.image_spacing = (6,)
 
         assert settings.is_image_2d()
@@ -521,7 +521,7 @@ class TestBaseSettings:
         assert settings.theme_name == "dark"
         assert hasattr(settings.theme, "text")
         assert isinstance(settings.style_sheet, str)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unsupported theme"):
             settings.theme_name = "aaaa"
         with qtbot.assertNotEmitted(settings.theme_changed):
             settings.theme_name = "dark"
@@ -551,7 +551,7 @@ class TestBaseSettings:
     def test_view_settings_labels(self, tmp_path, image, roi, qtbot):
         settings = base_settings.ViewSettings()
         assert settings.current_labels == "default"
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unknown label"):
             settings.current_labels = "a"
         settings.label_color_dict["aaaa"] = [(1, 1, 1)]
         with qtbot.waitSignal(settings.labels_changed):
@@ -656,7 +656,7 @@ class TestBaseSettings:
         mask = np.ones((10, 10), dtype=np.uint8)
         assert image.mask is None
         assert settings.mask is None
-        with qtbot.assertNotEmitted(settings.mask_changed), pytest.raises(ValueError):
+        with qtbot.assertNotEmitted(settings.mask_changed), pytest.raises(ValueError, match="mask do not fit to image"):
             settings.mask = mask[:2]
         with qtbot.waitSignal(settings.mask_changed):
             settings.mask = mask
