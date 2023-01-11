@@ -37,7 +37,7 @@ else:
 
 class TestChannelProperty:
     def test_fail_construct(self, base_settings):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="non empty start_name"):
             ChannelProperty(base_settings, start_name="")
 
     def test_collapse(self, base_settings, qtbot):
@@ -56,7 +56,7 @@ class TestChannelProperty:
         mock = MagicMock()
         mock.viewer_name = "test"
         ch_prop.register_widget(mock)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="name test already register"):
             ch_prop.register_widget(mock)
         assert ch_prop.minimum_value.value() == 100
         assert ch_prop.maximum_value.value() == 300
@@ -66,7 +66,7 @@ class TestChannelProperty:
         base_settings.set_in_profile("test.range_1", (20, 50))
         assert ch_prop.minimum_value.value() == 200
         assert ch_prop.maximum_value.value() == 500
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="name test7 not in register"):
             ch_prop.change_current("test7", 1)
 
 
@@ -261,7 +261,7 @@ class TestColorComboBoxGroup:
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.filter_radius.setValue(0.5)
 
-    @pytest.mark.windows_ci_skip
+    @pytest.mark.windows_ci_skip()
     @pytest.mark.parametrize("filter_value", NoiseFilterType.__members__.values())
     def test_image_view_integration_filter(self, qtbot, tmp_path, filter_value):
         settings = BaseSettings(tmp_path)
@@ -292,7 +292,7 @@ class TestColorComboBoxGroup:
             filter_value == NoiseFilterType.No and np.any(image4 == 255)
         )
 
-    @pytest.mark.windows_ci_skip
+    @pytest.mark.windows_ci_skip()
     def test_image_view_integration(self, qtbot, tmp_path):
         settings = BaseSettings(tmp_path)
         ch_property = ChannelProperty(settings, "test")

@@ -18,14 +18,14 @@ class TestLabelColorDict:
 
     def test_delete_default(self):
         dkt = LabelColorDict({})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot delete base item"):
             del dkt["default"]
         assert "default" in dkt
 
     def test_add_element(self):
         dkt = LabelColorDict({})
         labels = [[1, 2, 3], [120, 230, 100]]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot write base item"):
             dkt["default"] = labels
         dkt["custom_test"] = labels
         assert "custom_test" in dkt

@@ -13,4 +13,4 @@ algorithm = ThresholdPreview()
 algorithm.set_image(image)
 algorithm.set_parameters(profile.values)
 
-res = algorithm.calculation_run(lambda x, y: x)
+res = algorithm.calculation_run(lambda _x, _y: None)
