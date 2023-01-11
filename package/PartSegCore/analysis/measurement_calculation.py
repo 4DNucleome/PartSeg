@@ -1666,7 +1666,7 @@ class ColocalizationMeasurement(MeasurementMethodBase):
         raise RuntimeError(f"Not supported colocalization method {colocalization}")  # pragma: no cover
 
     @classmethod
-    def calculate_property(
+    def calculate_property(  # pylint: disable=W0221
         cls, area_array, colocalization, randomize=False, randomize_repeat=10, channel_fst=0, channel_scd=1, **kwargs
     ):  # pylint: disable=W0221
         mask_binary = area_array > 0
