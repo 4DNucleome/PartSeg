@@ -21,7 +21,7 @@ if typing.TYPE_CHECKING:
 
 T = typing.TypeVar("T", bound="AlgorithmDescribeBase")
 
-type_T = typing.Type[T]
+TypeT = typing.Type[T]
 
 
 class AlgorithmDescribeNotFound(Exception):
@@ -330,18 +330,18 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     @typing.overload
-    def from_function(cls: type_T, func: typing.Callable[..., typing.Any], **kwargs) -> type_T:
+    def from_function(cls: TypeT, func: typing.Callable[..., typing.Any], **kwargs) -> TypeT:
         ...
 
     @classmethod
     @typing.overload
-    def from_function(cls: type_T, **kwargs) -> typing.Callable[[typing.Callable[..., typing.Any]], type_T]:
+    def from_function(cls: TypeT, **kwargs) -> typing.Callable[[typing.Callable[..., typing.Any]], TypeT]:
         ...
 
     @classmethod
     def from_function(
-        cls: type_T, func=None, **kwargs
-    ) -> typing.Union[type_T, typing.Callable[[typing.Callable], type_T]]:
+        cls: TypeT, func=None, **kwargs
+    ) -> typing.Union[TypeT, typing.Callable[[typing.Callable], TypeT]]:
         def _from_function(func_) -> typing.Type["AlgorithmDescribeBase"]:
             if "name" not in kwargs:
                 kwargs["name"] = func_.__name__.replace("_", " ").title()
