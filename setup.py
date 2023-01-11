@@ -21,7 +21,7 @@ def readme():
     with open(os.path.join(this_directory, "Readme.md")) as f:
         text = f.read()
         text = reg.sub(r"\1(https://raw.githubusercontent.com/4DNucleome/PartSeg/master/\2)", text)
-        with contextlib.suppress(IndexError):
+        with contextlib.suppress(ImportError):
             from setuptools_scm import get_version
 
             text = reg2.sub(f"PartSeg-{get_version()}", text)
