@@ -175,7 +175,7 @@ def mock_warning(monkeypatch):
     return warning_show
 
 
-@pytest.mark.usefixtures("mock_accept_files")
+@pytest.mark.usefixtures("_mock_accept_files")
 class TestAddFiles:
     def test_update_files_list(self, qtbot, tmp_path, part_settings):
         for i in range(20):
