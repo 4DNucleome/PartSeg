@@ -777,7 +777,7 @@ class FileData:
     def write_to_excel(
         cls, file_path: str, data: Tuple[List[Tuple[str, pd.DataFrame]], List[CalculationPlan], List[Tuple[str, str]]]
     ):
-        with pd.ExcelWriter(file_path) as writer:
+        with pd.ExcelWriter(file_path) as writer:  # pylint: disable=abstract-class-instantiated
             new_sheet_names = []
             ind = 0
             sheets, plans, errors = data
