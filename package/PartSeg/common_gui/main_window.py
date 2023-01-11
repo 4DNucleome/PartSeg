@@ -232,7 +232,7 @@ class BaseMainWindow(QMainWindow):
         viewer.theme = self.settings.theme_name
         viewer.create_initial_layers(image=True, roi=True, additional_layers=False, points=True)
         self.viewer_list.append(viewer)
-        viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
+        viewer.window.qt_viewer.destroyed.connect(lambda _x: self.close_viewer(viewer))
 
     def additional_layers_show(self, with_channels=False):
         if not self.settings.additional_layers:
@@ -242,7 +242,7 @@ class BaseMainWindow(QMainWindow):
         viewer.theme = self.settings.theme_name
         viewer.create_initial_layers(image=with_channels, roi=False, additional_layers=True, points=False)
         self.viewer_list.append(viewer)
-        viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
+        viewer.window.qt_viewer.destroyed.connect(lambda _x: self.close_viewer(viewer))
 
     def close_viewer(self, obj):
         for i, el in enumerate(self.viewer_list):

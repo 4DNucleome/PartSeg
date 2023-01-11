@@ -4,7 +4,7 @@ from PartSeg._roi_mask.batch_proceed import BatchProceed, BatchTask
 from PartSegCore.mask.io_functions import SaveROIOptions
 
 
-@pytest.fixture
+@pytest.fixture()
 def batch_task(stack_image, mask_threshold_profile):
     return BatchTask(stack_image, mask_threshold_profile, None)
 

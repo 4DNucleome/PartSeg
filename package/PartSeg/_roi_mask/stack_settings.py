@@ -158,7 +158,7 @@ class StackSettings(BaseSettings):
 
         components = sorted(data.roi_info.bound_info)
         for i in components:
-            _skip = data.roi_extraction_parameters[int(i)]  # noqa: F841
+            _skip = data.roi_extraction_parameters[int(i)]
         self.mask = data.mask
         if self.keep_chosen_components:
             if not self.compare_history(data.history) and self.chosen_components():

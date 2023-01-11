@@ -19,7 +19,7 @@ from PartSegCore.segmentation.restartable_segmentation_algorithms import (
 
 
 @pytest.mark.parametrize(
-    "mask1,mask2,enabled",
+    ("mask1", "mask2", "enabled"),
     [
         ("mask1", "mask2", True),
         ("mask1", "", False),
@@ -56,7 +56,7 @@ def test_two_mask_dialog_strip(qtbot):
 
 
 @pytest.mark.parametrize(
-    "mask,enabled",
+    ("mask", "enabled"),
     [
         ("mask", False),
         ("", False),
@@ -163,7 +163,7 @@ class TestFileMaskWidget:
         assert widget.first_text.text() == "file_path"
 
 
-@pytest.fixture
+@pytest.fixture()
 def calculation_plan(measurement_profiles):
     roi_extraction = AnalysisAlgorithmSelection.get_default()
     return prepare_plan_widget.CalculationPlan(
@@ -266,7 +266,7 @@ class TestOtherOperations:
         assert widget.save_btn.text() == "Save"
         assert widget.choose_save_method.currentIndex() == 0
 
-    @pytest.mark.parametrize("root_type,replace", [(NodeType.root, False), (NodeType.mask, True)])
+    @pytest.mark.parametrize(("root_type", "replace"), [(NodeType.root, False), (NodeType.mask, True)])
     def test_set_current_node(self, qtbot, root_type, replace):
         widget = prepare_plan_widget.OtherOperations()
         qtbot.addWidget(widget)
@@ -601,7 +601,7 @@ class TestSelectMaskOp:
             widget._add_mask()
 
     @pytest.mark.parametrize(
-        "enum,klass",
+        ("enum", "klass"),
         [
             (prepare_plan_widget.MaskOperation.mask_intersection, prepare_plan_widget.MaskIntersection),
             (prepare_plan_widget.MaskOperation.mask_sum, prepare_plan_widget.MaskSum),

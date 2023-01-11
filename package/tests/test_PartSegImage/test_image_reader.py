@@ -64,7 +64,7 @@ class TestImageClass:
             os.path.join(data_test_dir, "stack1_components", "stack1_component1_mask.tif"),
         )
         assert isinstance(image, Image)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incompatible shape"):
             TiffImageReader.read_image(
                 os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif"),
                 os.path.join(data_test_dir, "stack1_components", "stack1_component2_mask.tif"),
