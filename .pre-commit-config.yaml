@@ -31,7 +31,7 @@ repos:
     - id: setup-cfg-fmt
       args: ["--include-version-classifiers", "--max-py-version", "3.11"]
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.218
+    rev: v0.0.222
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
@@ -40,7 +40,7 @@ repos:
     - id: pyupgrade
       args: ["--py38-plus"]
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
     -   id: rst-backticks
 -   repo: https://github.com/markdownlint/markdownlint
