@@ -145,7 +145,7 @@ jobs:
           retention-days: 5
 
       - name: Test with tox
-        uses: GabrielBB/xvfb-action@v1
+        uses: aganders3/headless-gui@v1
         with:
           run: conda run --no-capture-output tox -e py39-PySide2-conda
         timeout-minutes: 60
