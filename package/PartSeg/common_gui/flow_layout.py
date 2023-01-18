@@ -96,7 +96,7 @@ class FlowLayout(QLayout):
         self.itemList.insert(index, element)
 
     def expandingDirections(self):  # pylint: disable=R0201
-        return Qt.Orientations(Qt.Orientation(0))
+        return Qt.Orientation(0)
 
     def hasHeightForWidth(self):  # pylint: disable=R0201
         return True

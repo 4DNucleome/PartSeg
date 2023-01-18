@@ -13,25 +13,12 @@ repos:
     hooks:
     - id: black
       pass_filenames: true
--   repo: https://github.com/PyCQA/autoflake
-    rev: 'v2.0.0'  # Use the revision sha / tag you want to point at
-    hooks:
-    -   id: autoflake
-        args: ["--remove-all-unused-imports", "-i"]
--   repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
-    hooks:
-    - id: flake8
-      pass_filenames: true
-      # this seems to need to be here in addition to setup.cfg
-      exclude: vendored|__init__.py|examples
-      additional_dependencies:
-      - flake8-tidy-imports
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
     - id: check-json
     - id: check-yaml
+    - id: check-toml
     - id: check-merge-conflict
     - id: end-of-file-fixer
     - id: trailing-whitespace
@@ -42,9 +29,9 @@ repos:
     rev: v2.2.0
     hooks:
     - id: setup-cfg-fmt
-      args: ["--include-version-classifiers", "--max-py-version", "3.10"]
+      args: ["--include-version-classifiers", "--max-py-version", "3.11"]
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.194
+    rev: v0.0.223
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
@@ -53,7 +40,7 @@ repos:
     - id: pyupgrade
       args: ["--py38-plus"]
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
     -   id: rst-backticks
 -   repo: https://github.com/markdownlint/markdownlint

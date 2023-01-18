@@ -326,7 +326,7 @@ class ImageView(QWidget):
     def _coordinates(self):
         active_layer = self._active_layer()
         if active_layer is None:
-            return
+            return None
         if (
             hasattr(self.viewer, "cursor")
             and hasattr(self.viewer.cursor, "position")
@@ -348,12 +348,16 @@ class ImageView(QWidget):
             moved_coords = image_info.translated_coords(cords)
             bright_array.extend(layer.data[tuple(moved_coords)] for layer in image_info.layers if layer.visible)
 
-            if image_info.roi_info.roi is not None and image_info.roi is not None:
-                if val := image_info.roi_info.roi[tuple(moved_coords)]:
-                    components.append(val)
-            if self.roi_alternative_selection in image_info.roi_info.alternative:
-                if val := image_info.roi_info.alternative[self.roi_alternative_selection][tuple(moved_coords)]:
-                    alt_components.append(val)
+            if (
+                image_info.roi_info.roi is not None
+                and image_info.roi is not None
+                and (val := image_info.roi_info.roi[tuple(moved_coords)])
+            ):
+                components.append(val)
+            if self.roi_alternative_selection in image_info.roi_info.alternative and (
+                val := image_info.roi_info.alternative[self.roi_alternative_selection][tuple(moved_coords)]
+            ):
+                alt_components.append(val)
 
         if not bright_array and not components:
             self.text_info_change.emit("")
@@ -787,9 +791,8 @@ class ImageView(QWidget):
         return " ".join(text_list)
 
     def event(self, event: QEvent):
-        if event.type() == QEvent.ToolTip and self.components:
-            if text := self.get_tool_tip_text():
-                QToolTip.showText(event.globalPos(), text, self)
+        if event.type() == QEvent.Type.ToolTip and self.components and (text := self.get_tool_tip_text()):
+            QToolTip.showText(event.globalPos(), text, self)
         return super().event(event)
 
     def _search_component(self):
@@ -927,7 +930,7 @@ class ImageView(QWidget):
             upper_bound_list.append(self._data_to_world(image_info.roi, bound_info.upper))
 
         if not lower_bound_list:
-            return
+            return None
 
         lower_bound = np.min(lower_bound_list, axis=0)
         upper_bound = np.min(upper_bound_list, axis=0)

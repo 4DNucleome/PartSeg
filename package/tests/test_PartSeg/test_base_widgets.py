@@ -23,7 +23,7 @@ class TestBaseMainWindow:
         qtbot.addWidget(main_window)
 
     def test_lack_of_config_folder(self, qtbot):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="wrong config folder"):
             BaseMainWindow()
 
     def test_lack_of_config_with_settings(self, qtbot, tmp_path):
@@ -81,7 +81,7 @@ class TestBaseMainWindow:
         qtbot.addWidget(main_window)
         assert len(main_window.get_colormaps()) == part_settings.image.channels
 
-    @pytest.mark.windows_ci_skip
+    @pytest.mark.windows_ci_skip()
     def test_napari_viewer(self, qtbot, part_settings):
         main_window = BaseMainWindow(settings=part_settings)
         qtbot.addWidget(main_window)
@@ -105,7 +105,7 @@ class TestBaseMainWindow:
         assert not main_window.viewer_list
         information_mock.assert_called_once()
 
-    @pytest.mark.windows_ci_skip
+    @pytest.mark.windows_ci_skip()
     def test_napari_viewer_additional_layers(self, qtbot, part_settings, monkeypatch):
         main_window = BaseMainWindow(settings=part_settings)
         qtbot.addWidget(main_window)

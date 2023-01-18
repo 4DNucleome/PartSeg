@@ -77,7 +77,7 @@ class AlgorithmProperty:
         return (
             f"{self.__class__.__module__}.{self.__class__.__name__}(name='{self.name}',"
             f" user_name='{self.user_name}', "
-            + f"default_value={self.default_value}, type={self.value_type}, range={self.range},"
+            f"default_value={self.default_value}, type={self.value_type}, range={self.range},"
             f"possible_values={self.possible_values})"
         )
 
@@ -273,7 +273,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         try:
             name = value.get_name()
         except NotImplementedError:
-            raise ValueError(f"Class {value} need to implement get_name class method")
+            raise ValueError(f"Class {value} need to implement get_name class method") from None
         if name in self and not replace:
             raise ValueError(
                 f"Object {self[name]} with this name: {name} already exist and register is not in replace mode"
@@ -310,7 +310,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         try:
             val = value.get_name()
         except NotImplementedError:
-            raise ValueError(f"Method get_name of class {value} need to be implemented")
+            raise ValueError(f"Method get_name of class {value} need to be implemented") from None
         if not isinstance(val, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(val)}")
         if key != val:
@@ -321,7 +321,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
                 if not isinstance(val, list):
                     raise ValueError(f"Function get_fields of class {value} need return list not {type(val)}")
             except NotImplementedError:
-                raise ValueError(f"Method get_fields of class {value} need to be implemented")
+                raise ValueError(f"Method get_fields of class {value} need to be implemented") from None
         for el in self.class_methods:
             self.check_function(value, el, True)
         for el in self.methods:
@@ -338,7 +338,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         try:
             return next(iter(self.keys()))
         except StopIteration:
-            raise ValueError("Register does not contain any algorithm.")
+            raise ValueError("Register does not contain any algorithm.") from None
 
 
 class AddRegisterMeta(ModelMetaclass):
@@ -486,8 +486,9 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
                 + self._pretty_print(values, algorithm.get_fields_dict())
             )
         return (
-            ((f"ROI extraction profile name: {self.name}" + "\nAlgorithm: ") + self.algorithm) + "\n"
-        ) + self._pretty_print(values, algorithm.get_fields_dict())
+            f"ROI extraction profile name: {self.name}\nAlgorithm: {self.algorithm}\n"
+            f"{self._pretty_print(values, algorithm.get_fields_dict())}"
+        )
 
     @classmethod
     def _pretty_print(

@@ -386,7 +386,7 @@ class TiffImageReader(BaseImageReaderBuffer):
             try:
                 image_data = image_file.asarray()
             except ValueError as e:  # pragma: no cover
-                raise TiffFileException(*e.args)
+                raise TiffFileException(*e.args) from e
             image_data = self.update_array_shape(image_data, axes)
 
         if not isinstance(image_path, (str, Path)):

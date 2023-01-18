@@ -220,8 +220,8 @@ class MSOWatershed(BaseWatershed):
         mso.set_use_background(False)
         try:
             mu_array = calculate_mu(data.copy("C"), lower_bound, upper_bound, MuType.base_mu)
-        except OverflowError:
-            raise SegmentationLimitException("Wrong range for ")
+        except OverflowError as e:
+            raise SegmentationLimitException("Wrong range for ") from e
         if arguments.reflective:
             mu_array[mu_array < 0.5] = 1 - mu_array[mu_array < 0.5]
         mso.set_mu_array(mu_array)
@@ -229,7 +229,7 @@ class MSOWatershed(BaseWatershed):
             mso.run_MSO(arguments.step_limits)
         except RuntimeError as e:
             if e.args[0] == "to many steps: constrained dilation":
-                raise SegmentationLimitException(*e.args)
+                raise SegmentationLimitException(*e.args) from e
             raise
 
         result = mso.get_result_catted()

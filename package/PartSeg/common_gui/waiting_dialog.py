@@ -3,6 +3,11 @@ from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButt
 
 from PartSeg.common_backend.progress_thread import ExecuteFunctionThread, ProgressTread
 
+try:
+    from qtpy import QT5
+except ImportError:  # pragma: no cover
+    QT5 = True
+
 
 class WaitingDialog(QDialog):
     def __init__(self, thread: QThread, text="", parent=None, exception_hook=None):
@@ -22,7 +27,7 @@ class WaitingDialog(QDialog):
         thread.finished.connect(self.accept_if_no_reject)
         self.thread_to_wait = thread
         self.setLayout(layout)
-        self.setResult(QDialog.Accepted)
+        self.setResult(QDialog.DialogCode.Accepted)
         if isinstance(thread, ProgressTread):
             thread.range_changed.connect(self.progress.setRange)
             thread.step_changed.connect(self.progress.setValue)
@@ -42,8 +47,10 @@ class WaitingDialog(QDialog):
         else:
             self.accept()
 
-    def exec(self):
-        self.exec_()
+    if QT5:
+
+        def exec(self):
+            self.exec_()
 
     def exec_(self):
         self.thread_to_wait.start()
