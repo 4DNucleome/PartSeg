@@ -292,7 +292,7 @@ class TestRangeThresholdAlgorithm:
 class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
     @pytest.mark.parametrize("sprawl_algorithm_name", FlowMethodSelection.__register__.keys())
     @pytest.mark.parametrize("compare_op", [operator.eq, operator.ge])
-    @pytest.mark.parametrize("components", [2] + list(range(3, 15, 2)))
+    @pytest.mark.parametrize("components", [2, *list(range(3, 15, 2))])
     def test_multiple(self, sprawl_algorithm_name, compare_op, components):
         alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
@@ -327,20 +327,18 @@ class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
     parameters = sa.LowerThresholdFlowAlgorithm.__argument_class__(
-        **{
-            "channel": 0,
-            "minimum_size": 30,
-            "threshold": {
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 55}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 45}},
-                },
+        channel=0,
+        minimum_size=30,
+        threshold={
+            "name": "Base/Core",
+            "values": {
+                "core_threshold": {"name": "Manual", "values": {"threshold": 55}},
+                "base_threshold": {"name": "Manual", "values": {"threshold": 45}},
             },
-            "noise_filtering": {"name": "None", "values": {}},
-            "side_connection": False,
-            "flow_type": {"name": "Euclidean", "values": {}},
-        }
+        },
+        noise_filtering={"name": "None", "values": {}},
+        side_connection=False,
+        flow_type={"name": "Euclidean", "values": {}},
     )
     shift = -6
     get_base_object = staticmethod(get_two_parts)
@@ -353,20 +351,18 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
 
 class TestUpperThresholdFlow(BaseFlowThreshold):
     parameters = sa.UpperThresholdFlowAlgorithm.__argument_class__(
-        **{
-            "channel": 0,
-            "minimum_size": 30,
-            "threshold": {
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 45}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 55}},
-                },
+        channel=0,
+        minimum_size=30,
+        threshold={
+            "name": "Base/Core",
+            "values": {
+                "core_threshold": {"name": "Manual", "values": {"threshold": 45}},
+                "base_threshold": {"name": "Manual", "values": {"threshold": 55}},
             },
-            "noise_filtering": {"name": "None", "values": {}},
-            "side_connection": False,
-            "flow_type": {"name": "Euclidean", "values": {}},
-        }
+        },
+        noise_filtering={"name": "None", "values": {}},
+        side_connection=False,
+        flow_type={"name": "Euclidean", "values": {}},
     )
     shift = 6
     get_base_object = staticmethod(get_two_parts_reversed)

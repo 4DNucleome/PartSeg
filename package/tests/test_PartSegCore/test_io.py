@@ -489,7 +489,7 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert (1,) + arr.shape == analysis_project.roi_info.roi.shape
+        assert (1, *arr.shape) == analysis_project.roi_info.roi.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": True, "clip": False, "units": Units.nm, "reverse": False}
@@ -498,13 +498,13 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 34, 84)
-        assert (1,) + arr.shape == analysis_project.roi_info.roi.shape
+        assert (1, *arr.shape) == analysis_project.roi_info.roi.shape
         assert steps == (5, 5, 10)
         arr, steps = self.read_cmap(os.path.join(tmpdir, "test2_comp2.cmap"))
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 55, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert (1,) + arr.shape == analysis_project.roi_info.roi.shape
+        assert (1, *arr.shape) == analysis_project.roi_info.roi.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": False, "clip": True, "units": Units.nm, "reverse": False}
@@ -538,7 +538,7 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert (1,) + arr.shape == analysis_project_reversed.roi_info.roi.shape
+        assert (1, *arr.shape) == analysis_project_reversed.roi_info.roi.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": True, "clip": True, "units": Units.nm, "reverse": True}
@@ -593,18 +593,18 @@ class TestSaveFunctions:
     def test_save_tiff(self, tmpdir, analysis_project):
         SaveAsTiff.save(os.path.join(tmpdir, "test1.tiff"), analysis_project)
         array = tifffile.imread(os.path.join(tmpdir, "test1.tiff"))
-        assert analysis_project.roi_info.roi.shape == (1,) + array.shape
+        assert analysis_project.roi_info.roi.shape == (1, *array.shape)
 
     def test_save_numpy(self, tmpdir, analysis_project):
         parameters = {"squeeze": False}
         SaveAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project, parameters)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
-        assert array.shape == (1,) + analysis_project.image.shape
+        assert array.shape == (1, *analysis_project.image.shape)
         assert np.all(array == analysis_project.image.get_data())
         parameters = {"squeeze": True}
         SaveAsNumpy.save(os.path.join(tmpdir, "test2.npy"), analysis_project, parameters)
         array = np.load(os.path.join(tmpdir, "test2.npy"))
-        assert (1,) + array.shape == analysis_project.roi_info.roi.shape
+        assert (1, *array.shape) == analysis_project.roi_info.roi.shape
         assert np.all(array == analysis_project.image.get_data().squeeze())
 
     def test_save_segmentation_numpy(self, tmpdir, analysis_project):

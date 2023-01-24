@@ -58,20 +58,18 @@ class TestCalculationProcess:
     @staticmethod
     def create_calculation_plan():
         parameters = LowerThresholdFlowAlgorithm.__argument_class__(
-            **{
-                "channel": 1,
-                "minimum_size": 200,
-                "threshold": {
-                    "name": "Base/Core",
-                    "values": {
-                        "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
-                        "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
-                    },
+            channel=1,
+            minimum_size=200,
+            threshold={
+                "name": "Base/Core",
+                "values": {
+                    "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
+                    "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
                 },
-                "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-                "side_connection": False,
-                "flow_type": {"name": "Euclidean", "values": {}},
-            }
+            },
+            noise_filtering={"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+            side_connection=False,
+            flow_type={"name": "Euclidean", "values": {}},
         )
 
         segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
@@ -107,20 +105,18 @@ class TestCalculationProcess:
     @staticmethod
     def create_calculation_plan2():
         parameters = LowerThresholdFlowAlgorithm.__argument_class__(
-            **{
-                "channel": 0,
-                "minimum_size": 200,
-                "threshold": {
-                    "name": "Base/Core",
-                    "values": {
-                        "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
-                        "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
-                    },
+            channel=0,
+            minimum_size=200,
+            threshold={
+                "name": "Base/Core",
+                "values": {
+                    "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
+                    "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
                 },
-                "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-                "side_connection": False,
-                "flow_type": {"name": "Euclidean", "values": {}},
-            }
+            },
+            noise_filtering={"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+            side_connection=False,
+            flow_type={"name": "Euclidean", "values": {}},
         )
 
         segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
@@ -180,20 +176,18 @@ class TestCalculationProcess:
     @staticmethod
     def create_calculation_plan3():
         parameters = LowerThresholdFlowAlgorithm.__argument_class__(
-            **{
-                "channel": 1,
-                "minimum_size": 200,
-                "threshold": {
-                    "name": "Base/Core",
-                    "values": {
-                        "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
-                        "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
-                    },
+            channel=1,
+            minimum_size=200,
+            threshold={
+                "name": "Base/Core",
+                "values": {
+                    "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
+                    "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
                 },
-                "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-                "side_connection": False,
-                "flow_type": {"name": "Euclidean", "values": {}},
-            }
+            },
+            noise_filtering={"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+            side_connection=False,
+            flow_type={"name": "Euclidean", "values": {}},
         )
 
         segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)

@@ -466,7 +466,7 @@ class ImageView(QWidget):
         ):
             image_info.roi.colormap = Colormap([[0, 0, 0, 0], [0, 0, 0, 0]])
 
-        res = [list(colors[(x - 1) % colors.shape[0]]) + [1] for x in range(image_info.roi_count + 1)]
+        res = [[*list(colors[(x - 1) % colors.shape[0]]), 1] for x in range(image_info.roi_count + 1)]
         res[0] = [0, 0, 0, 0]
         if len(res) < 2:
             res += [[0, 0, 0, 0] for _ in range(2 - len(res))]
