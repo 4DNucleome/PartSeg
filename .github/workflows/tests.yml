@@ -105,6 +105,7 @@ jobs:
       test_data: True
       python_version: "3.8"
       tox_args: "-e py38-PyQt5-minimal"
+      coverage: true
 
   test_conda:
     name: Test PartSeg conda
