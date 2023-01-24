@@ -47,7 +47,7 @@ except ImportError:
 
 if sys.version_info[:3] != (3, 9, 7):
     from PartSegCore.project_info import ProjectInfoBase
-else:
+else:  # pragma: no cover
     ProjectInfoBase = object
 
 

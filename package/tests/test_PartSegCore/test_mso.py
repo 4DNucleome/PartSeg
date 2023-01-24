@@ -560,3 +560,12 @@ class TestMuMid:
         assert np.all(res == (data != 20).astype(float) + (data == 20) * 0.25)
         res = calculate_mu_mid(data, 5, 25, 35)
         assert np.all(res == (data == 0).astype(float) + (data == 20) * 0.25 + (data == 30) * 0.5)
+
+
+def test_calculate_distances_array():
+    neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+    assert neigh.shape == (26, 3)
+    assert dist.shape == (26,)
+    neigh, dist = calculate_distances_array((1, 1), NeighType.vertex)
+    assert neigh.shape == (8, 3)
+    assert dist.shape == (8,)
