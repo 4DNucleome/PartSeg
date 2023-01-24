@@ -45,10 +45,10 @@ try:
 except ImportError:
     from napari.plugins._builtins import napari_write_points
 
-if sys.version_info[:3] == (3, 9, 7):
-    ProjectInfoBase = object
-else:
+if sys.version_info[:3] != (3, 9, 7):
     from PartSegCore.project_info import ProjectInfoBase
+else:
+    ProjectInfoBase = object
 
 
 def empty_fun(_a0=None, _a1=None):
