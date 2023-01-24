@@ -62,7 +62,7 @@ class SaveModeling(SaveBase):
             upper_bound = np.max([upper_bound + 3, np.array(project_info.roi_info.roi) - 1], axis=0)
             cut_area = tuple(slice(x, y) for x, y in zip(lower_bound, upper_bound))
             # WARNING time
-            image = project_info.image.cut_image((slice(None),) + cut_area)
+            image = project_info.image.cut_image((slice(None), *cut_area))
             roi_info = ROIInfo(project_info.roi_info.roi[cut_area])
 
             mask = project_info.mask[cut_area] if project_info.mask else None

@@ -528,7 +528,7 @@ class SheetData:
         if raw:
             self.columns = pd.MultiIndex.from_tuples(columns)
         else:
-            self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
+            self.columns = pd.MultiIndex.from_tuples([("name", "units"), *columns])
         self.data_frame = pd.DataFrame([], columns=self.columns)
         self.row_list: List[Any] = []
 

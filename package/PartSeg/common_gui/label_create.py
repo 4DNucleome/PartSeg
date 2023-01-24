@@ -46,7 +46,7 @@ class _LabelShow(QWidget):
         if label.ndim != 2 and label.shape[1] not in (3, 4):
             raise ValueError("Wrong array shape")  # pragma: no cover
         label = add_alpha_channel(label)
-        self.image = NumpyQImage(label.reshape((1,) + label.shape))
+        self.image = NumpyQImage(label.reshape((1, *label.shape)))
         self.repaint()
 
     def paintEvent(self, event: QPaintEvent):

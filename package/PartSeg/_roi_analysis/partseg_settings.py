@@ -129,12 +129,7 @@ class PartSettings(BaseSettings):
             self.algorithm_changed.emit()
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
-        return super().get_save_list() + [
-            SaveSettingsDescription("segmentation_pipeline_save.json", self._segmentation_pipelines_dict),
-            SaveSettingsDescription("segmentation_profiles_save.json", self._segmentation_profiles_dict),
-            SaveSettingsDescription("statistic_profiles_save.json", self._measurement_profiles_dict),
-            SaveSettingsDescription("batch_plans_save.json", self._batch_plans_dict),
-        ]
+        return [*super().get_save_list(), SaveSettingsDescription("segmentation_pipeline_save.json", self._segmentation_pipelines_dict), SaveSettingsDescription("segmentation_profiles_save.json", self._segmentation_profiles_dict), SaveSettingsDescription("statistic_profiles_save.json", self._measurement_profiles_dict), SaveSettingsDescription("batch_plans_save.json", self._batch_plans_dict)]
 
     @property
     def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:

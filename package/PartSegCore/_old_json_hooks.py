@@ -133,7 +133,7 @@ def profile_hook(dkt):  # noqa: C901
         if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.ColorMap":
             positions, colors = list(zip(*dkt["colormap"]))
             if any(isinstance(c, Color) for c in colors):
-                colors = [c.as_tuple() if isinstance(c, Color) else c + (1,) for c in colors]
+                colors = [c.as_tuple() if isinstance(c, Color) else (*c, 1) for c in colors]
 
             return Colormap(colors, controls=positions)
         if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.ColorPosition":

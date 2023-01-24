@@ -305,7 +305,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         mask=mask,
         roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
         history=history,
-        spacing=([10**-9] + list(spacing)) if spacing is not None else None,
+        spacing=([10 ** (-9), *list(spacing)]) if spacing is not None else None,
     )
 
 

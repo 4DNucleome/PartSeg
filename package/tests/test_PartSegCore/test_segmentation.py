@@ -292,7 +292,7 @@ class TestRangeThresholdAlgorithm:
 class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
     @pytest.mark.parametrize("sprawl_algorithm_name", FlowMethodSelection.__register__.keys())
     @pytest.mark.parametrize("compare_op", [operator.eq, operator.ge])
-    @pytest.mark.parametrize("components", [2] + list(range(3, 15, 2)))
+    @pytest.mark.parametrize("components", [2, *list(range(3, 15, 2))])
     def test_multiple(self, sprawl_algorithm_name, compare_op, components):
         alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
