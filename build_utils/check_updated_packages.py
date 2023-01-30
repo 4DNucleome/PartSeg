@@ -5,8 +5,8 @@ import sys
 from configparser import ConfigParser
 from pathlib import Path
 
-name_re = re.compile(r"\w+")
-changed_name_re = re.compile(r"\+(\w+)")
+name_re = re.compile(r"[\w-]+")
+changed_name_re = re.compile(r"\+([\w-]+)")
 
 
 src_dir = Path(__file__).parent.parent
@@ -14,7 +14,6 @@ src_dir = Path(__file__).parent.parent
 parser = argparse.ArgumentParser()
 parser.add_argument("--main-packages", action="store_true")
 args = parser.parse_args()
-
 
 out = subprocess.run(  # nosec
     ["git", "diff", str(src_dir / "requirements" / "requirements_pyinstaller.txt")], capture_output=True, check=True
