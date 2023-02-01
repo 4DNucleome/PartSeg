@@ -324,8 +324,9 @@ class TestAlgorithmDescribeBase:
 
             @classmethod
             def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-                return super().get_fields() + [
-                    AlgorithmProperty("name2", "Name 2", 3.0, options_range=(1, 10), help_text="deeeed")
+                return [
+                    *super().get_fields(),
+                    AlgorithmProperty("name2", "Name 2", 3.0, options_range=(1, 10), help_text="deeeed"),
                 ]
 
         assert SampleSubAlgorithm.get_name() == "sample2"

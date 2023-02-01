@@ -57,7 +57,7 @@ class BaseImageReader:
         spacing = tuple(spacing)
         if len(spacing) == 2:
             # one micrometer
-            spacing = (10**-6,) + spacing
+            spacing = (10 ** (-6), *spacing)
         if len(spacing) != 3:
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing

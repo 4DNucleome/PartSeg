@@ -105,6 +105,7 @@ jobs:
       test_data: True
       python_version: "3.8"
       tox_args: "-e py38-PyQt5-minimal"
+      coverage: true
 
   test_conda:
     name: Test PartSeg conda
@@ -145,7 +146,7 @@ jobs:
           retention-days: 5
 
       - name: Test with tox
-        uses: GabrielBB/xvfb-action@v1
+        uses: aganders3/headless-gui@v1
         with:
           run: conda run --no-capture-output tox -e py39-PySide2-conda
         timeout-minutes: 60

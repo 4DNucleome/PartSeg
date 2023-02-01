@@ -1287,6 +1287,11 @@ class TestSpacing:
 
         qtbot.addWidget(widget)
 
+    def test_create_2d(self, qtbot):
+        widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9), unit=Units.nm)
+
+        qtbot.addWidget(widget)
+
     def test_get_values(self, qtbot):
         widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9, 10**-9), unit=Units.nm)
         qtbot.addWidget(widget)

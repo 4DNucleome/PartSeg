@@ -378,8 +378,11 @@ class OtherOperations(ProtectedGroupBox):
             show_warning(self, "Save problem", "Not found save class")
             return
         dial = FormDialog(
-            [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
-            + save_class.get_fields()
+            [
+                AlgorithmProperty("suffix", "File suffix", ""),
+                AlgorithmProperty("directory", "Sub directory", ""),
+                *save_class.get_fields(),
+            ]
         )
         if not dial.exec_():
             return

@@ -587,8 +587,8 @@ class Image:
 
     def normalized_scaling(self, factor=DEFAULT_SCALE_FACTOR) -> Spacing:
         if self.is_2d:
-            return (1, 1) + tuple(np.multiply(self.spacing, factor))
-        return (1,) + tuple(np.multiply(self.spacing, factor))
+            return (1, 1, *tuple(np.multiply(self.spacing, factor)))
+        return (1, *tuple(np.multiply(self.spacing, factor)))
 
     @property
     def shift(self):
@@ -604,7 +604,7 @@ class Image:
         if 0 in value:
             return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
-            value = (1.0,) + tuple(value)
+            value = (1.0, *tuple(value))
         if len(value) != len(self._image_spacing):  # pragma: no cover
             raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)

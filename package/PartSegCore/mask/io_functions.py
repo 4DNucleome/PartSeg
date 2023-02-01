@@ -45,10 +45,10 @@ try:
 except ImportError:
     from napari.plugins._builtins import napari_write_points
 
-if sys.version_info[:3] == (3, 9, 7):
-    ProjectInfoBase = object
-else:
+if sys.version_info[:3] != (3, 9, 7):
     from PartSegCore.project_info import ProjectInfoBase
+else:  # pragma: no cover
+    ProjectInfoBase = object
 
 
 def empty_fun(_a0=None, _a1=None):
@@ -305,7 +305,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         mask=mask,
         roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
         history=history,
-        spacing=([10**-9] + list(spacing)) if spacing is not None else None,
+        spacing=([10 ** (-9), *list(spacing)]) if spacing is not None else None,
     )
 
 
