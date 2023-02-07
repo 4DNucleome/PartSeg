@@ -313,7 +313,6 @@ class ProtectedGroupBox(QGroupBox):
 
 
 class OtherOperations(ProtectedGroupBox):
-
     save_operation = Signal(object)
 
     def __init__(self, parent=None):
@@ -507,7 +506,6 @@ class ROIExtractionOp(ProtectedGroupBox):
 
 
 class SelectMeasurementOp(ProtectedGroupBox):
-
     set_of_measurement_add = Signal(object)
     set_of_measurement_selected = Signal(object)
 
@@ -602,7 +600,6 @@ class StretchWrap(QWidget):
 
 
 class SelectMaskOp(ProtectedGroupBox):
-
     mask_step_add = Signal(object)
 
     def __init__(self, settings: PartSettings, parent: QWidget = None):
@@ -685,7 +682,6 @@ class SelectMaskOp(ProtectedGroupBox):
 
 
 class CreatePlan(QWidget):
-
     plan_node_changed = Signal()
 
     def __init__(self, settings: PartSettings):

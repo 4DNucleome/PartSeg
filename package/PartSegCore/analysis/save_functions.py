@@ -218,7 +218,6 @@ class SaveCmap(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-
         if project_info.image.shape[project_info.image.time_pos] != 1:
             raise NotSupportedImage("This save method o not support time data")
         data = project_info.image.get_data_by_axis(c=parameters["channel"], t=0)

@@ -881,7 +881,6 @@ class Options(QTabWidget):
 
 
 class MainWindow(BaseMainWindow):
-
     settings: StackSettings
 
     @classmethod

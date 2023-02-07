@@ -439,7 +439,6 @@ class TiffImageReader(BaseImageReaderBuffer):
     def read_resolution_from_tags(self, image_file):
         tags = image_file.pages[0].tags
         try:
-
             if image_file.is_imagej:
                 scalar = name_to_scalar[image_file.imagej_metadata["unit"]]
             else:
