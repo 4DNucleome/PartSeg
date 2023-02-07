@@ -9,7 +9,7 @@ repos:
         args: ["--application-directories", "package"]
         exclude: examples|setup.py|build_utils|docs|toxfile.py
 -   repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.1.0
     hooks:
     - id: black
       pass_filenames: true
@@ -31,7 +31,7 @@ repos:
     - id: setup-cfg-fmt
       args: ["--include-version-classifiers", "--max-py-version", "3.11"]
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.238
+    rev: v0.0.243
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
