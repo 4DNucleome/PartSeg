@@ -54,6 +54,8 @@ max-complexity = 15
 "package/tests/**" = ["ARG"]
 "package/PartSegCore/sphinx/*" = ["ARG"]
 "package/tests/**.py" = ["PLR2004"]
+"package/PartSegCore/_old_json_hooks.py" = ["PLR0912", "PLR0911"]
+"package/PartSegCore/class_generator.py" = ["PLR0912"]
 
 [tool.check-manifest]
 ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]
