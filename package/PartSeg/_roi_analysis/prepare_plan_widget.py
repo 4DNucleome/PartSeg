@@ -729,6 +729,14 @@ class CreatePlan(QWidget):
         self.update_element_chk.stateChanged.connect(self.roi_extraction.set_replace)
         self.update_element_chk.stateChanged.connect(self.select_measurement.set_replace)
 
+        self.setup_ui()
+
+        self.node_type = NodeType.root
+        self.node_name = ""
+        self.plan.changed_node.connect(self.node_type_changed)
+        self.node_type_changed()
+
+    def setup_ui(self):
         plan_box = QGroupBox("Prepare workflow:")
         lay = QVBoxLayout()
         lay.addWidget(self.plan)
@@ -756,11 +764,6 @@ class CreatePlan(QWidget):
         layout.addWidget(self.select_measurement, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
         self.setLayout(layout)
-
-        self.node_type = NodeType.root
-        self.node_name = ""
-        self.plan.changed_node.connect(self.node_type_changed)
-        self.node_type_changed()
 
     @property
     def mask_set(self):

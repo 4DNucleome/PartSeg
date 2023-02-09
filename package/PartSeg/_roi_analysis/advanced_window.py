@@ -107,7 +107,9 @@ class Properties(QWidget):
         self.units.setCurrentEnum(units_value)
         # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
+        self.setup_ui()
 
+    def setup_ui(self):
         spacing_layout = QHBoxLayout()
         spacing_layout.addWidget(self.lock_spacing)
         for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
@@ -358,7 +360,7 @@ class MeasurementSettings(QWidget):
     :type settings: Settings
     """
 
-    def __init__(self, settings: PartSettings, parent=None):
+    def __init__(self, settings: PartSettings, parent=None):  # noqa: PLR0915
         super().__init__(parent)
         self.chosen_element: Optional[MeasurementListWidgetItem] = None
         self.chosen_element_area: Optional[Tuple[AreaType, float]] = None
@@ -423,7 +425,9 @@ class MeasurementSettings(QWidget):
         self.profile_options.itemSelectionChanged.connect(self.create_selection_changed)
         self.profile_options_chosen.itemSelectionChanged.connect(self.create_selection_chosen_changed)
         self.settings.measurement_profiles_changed.connect(self._refresh_profiles)
+        self.setup_ui()
 
+    def setup_ui(self):  # noqa: PLR0915
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Measurement set:"))
         profile_layout = QHBoxLayout()
@@ -826,7 +830,7 @@ class SegAdvancedWindow(AdvancedWindow):
 
 
 class MultipleInput(QDialog):
-    def __init__(self, text, help_text, objects_list=None, parent=None):
+    def __init__(self, text, help_text, objects_list=None, parent=None):  # noqa: PLR0915
         if objects_list is None:
             objects_list = help_text
             help_text = ""
@@ -862,12 +866,12 @@ class MultipleInput(QDialog):
         ok_butt.clicked.connect(self.accept_response)
         cancel_butt.clicked.connect(self.close)
         layout = QGridLayout()
-        layout.setAlignment(Qt.AlignVCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         for i, info in enumerate(objects_list):
             name = info[0]
             type_of = info[1]
             name_label = QLabel(name)
-            name_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            name_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             layout.addWidget(name_label, i, 0)
             if len(info) == 3:
                 item = field_dict[type_of](type_of(info[2]), self)

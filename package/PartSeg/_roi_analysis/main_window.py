@@ -113,6 +113,12 @@ class Options(QWidget):
 
         self.label = TextShow()
 
+        self.setup_ui()
+
+        settings.roi_changed.connect(self._refresh_compare_btn)
+        settings.image_changed.connect(self._reset_compare_btn)
+
+    def setup_ui(self):
         layout = QVBoxLayout()
         layout2 = QHBoxLayout()
         layout2.setSpacing(1)
@@ -140,9 +146,6 @@ class Options(QWidget):
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
         self.setLayout(layout)
-
-        settings.roi_changed.connect(self._refresh_compare_btn)
-        settings.image_changed.connect(self._reset_compare_btn)
 
     @ensure_main_thread
     def _update_profiles(self):
@@ -525,7 +528,7 @@ class MainWindow(BaseMainWindow):
 
     initial_image_path = PartSegData.segmentation_analysis_default_image
 
-    def __init__(
+    def __init__(  # noqa: PLR0915
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
         super().__init__(config_folder, title, settings, load_functions.load_dict, signal_fun)
