@@ -277,17 +277,14 @@ class CziImageReader(BaseImageReaderBuffer):
 
 
 class ObsepImageReader(BaseImageReader):
-    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
-        directory = Path(os.path.dirname(image_path))
-        xml_doc = ElementTree.parse(image_path).getroot()
-        channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
-        if not channels:
-            raise ValueError("Information about channel images not found")
+    def _search_for_files(
+        self, directory: Path, channels: typing.List[ElementTree], suffix: str = ""
+    ) -> typing.List[Image]:
         possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
         channel_list = []
         for channel in channels:
             try:
-                name = next(iter(channel)).attrib["val"]
+                name = next(iter(channel)).attrib["val"] + suffix
             except StopIteration as e:  # pragma: no cover
                 raise ValueError("Missed information about channel name in obsep file") from e
             for ex in possible_extensions:
@@ -297,18 +294,18 @@ class ObsepImageReader(BaseImageReader):
             else:  # pragma: no cover
                 raise ValueError(f"Not found file for key {name}")
             channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
-        for channel in channels:
-            try:
-                name = next(iter(channel)).attrib["val"] + "_deconv"
-            except StopIteration as e:  # pragma: no cover
-                raise ValueError("Missed information about channel name in obsep file") from e
-            for ex in possible_extensions:
-                if (directory / (name + ex)).exists():
-                    name += ex
-                    break
-            if (directory / name).exists():
-                channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
+        return channel_list
 
+    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
+        directory = Path(os.path.dirname(image_path))
+        xml_doc = ElementTree.parse(image_path).getroot()
+        channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
+        if not channels:
+            raise ValueError("Information about channel images not found")
+        channel_list = [
+            *self._search_for_files(directory, channels),
+            *self._search_for_files(directory, channels, "_deconv"),
+        ]
         image = channel_list[0]
         for el in channel_list[1:]:
             image = image.merge(el, "C")
