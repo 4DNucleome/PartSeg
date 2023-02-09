@@ -17,6 +17,10 @@ from PartSegImage.image import Image
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
 
+if typing.TYPE_CHECKING:
+    from xml.etree.ElementTree import Element
+
+
 def _empty(_, __):
     """Empty function for callback"""
 
@@ -278,7 +282,11 @@ class CziImageReader(BaseImageReaderBuffer):
 
 class ObsepImageReader(BaseImageReader):
     def _search_for_files(
-        self, directory: Path, channels: typing.List[ElementTree], suffix: str = ""
+        self,
+        directory: Path,
+        channels: typing.List["Element"],
+        suffix: str = "",
+        required: bool = False,
     ) -> typing.List[Image]:
         possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
         channel_list = []
@@ -292,7 +300,9 @@ class ObsepImageReader(BaseImageReader):
                     name += ex
                     break
             else:  # pragma: no cover
-                raise ValueError(f"Not found file for key {name}")
+                if required:
+                    raise ValueError(f"Not found file for key {name}")
+                continue
             channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
         return channel_list
 
@@ -303,7 +313,7 @@ class ObsepImageReader(BaseImageReader):
         if not channels:
             raise ValueError("Information about channel images not found")
         channel_list = [
-            *self._search_for_files(directory, channels),
+            *self._search_for_files(directory, channels, required=True),
             *self._search_for_files(directory, channels, "_deconv"),
         ]
         image = channel_list[0]
