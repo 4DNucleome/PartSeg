@@ -18,7 +18,7 @@ INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
 
 if typing.TYPE_CHECKING:
-    from xml.etree.ElementTree import Element
+    from xml.etree.ElementTree import Element  # nosec
 
 
 def _empty(_, __):
