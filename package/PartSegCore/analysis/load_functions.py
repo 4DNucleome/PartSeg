@@ -48,6 +48,28 @@ __all__ = [
 ]
 
 
+def _load_history(tar_file):
+    history = []
+    with suppress(KeyError):
+        history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
+        history_json = load_metadata(history_buff)
+        for el in history_json:
+            history_buffer = BytesIO()
+            history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
+            history_buffer.seek(0)
+            el = update_algorithm_dict(el)
+            segmentation_parameters = {"algorithm_name": el["algorithm_name"], "values": el["values"]}
+            history.append(
+                HistoryElement(
+                    roi_extraction_parameters=segmentation_parameters,
+                    mask_property=el["mask_property"],
+                    arrays=history_buffer,
+                    annotations=el.get("annotations", {}),
+                )
+            )
+    return history
+
+
 def load_project_from_tar(tar_file, file_path):
     if check_segmentation_type(tar_file) != SegmentationType.analysis:
         raise WrongFileTypeException()
@@ -84,24 +106,7 @@ def load_project_from_tar(tar_file, file_path):
         alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
     else:
         alternative = {}
-    history = []
-    with suppress(KeyError):
-        history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
-        history_json = load_metadata(history_buff)
-        for el in history_json:
-            history_buffer = BytesIO()
-            history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
-            history_buffer.seek(0)
-            el = update_algorithm_dict(el)
-            segmentation_parameters = {"algorithm_name": el["algorithm_name"], "values": el["values"]}
-            history.append(
-                HistoryElement(
-                    roi_extraction_parameters=segmentation_parameters,
-                    mask_property=el["mask_property"],
-                    arrays=history_buffer,
-                    annotations=el.get("annotations", {}),
-                )
-            )
+    history = _load_history(tar_file)
     image.set_mask(mask)
     roi_info = ROIInfo(roi, annotations=metadata.get("roi_annotations"), alternative=alternative)
     if version <= project_version_info:
