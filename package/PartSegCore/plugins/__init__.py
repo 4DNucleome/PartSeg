@@ -7,7 +7,6 @@ import pkg_resources
 
 
 def get_plugins():
-
     packages = pkgutil.iter_modules(__path__, __name__ + ".")
     packages2 = itertools.chain(
         pkg_resources.iter_entry_points("PartSegCore.plugins"),

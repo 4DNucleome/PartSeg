@@ -50,7 +50,7 @@ class BatchProceed(QThread):
     def progress_info(self, name: str, text: str, num: int):
         self.progress_signal.emit(text, num, name, self.index)
 
-    def run_calculation(self):
+    def run_calculation(self):  # noqa: PLR0912  # FIXME
         while not self.queue.empty():
             task: BatchTask = self.queue.get()
             if isinstance(task.data, str):

@@ -124,7 +124,6 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         )
 
     def __setitem__(self, k: str, v: MeasurementResultInputType) -> None:
-
         self._data_dict[k] = v[0]
         self._units_dict[k] = v[1]
         self._type_dict[k] = v[2]
@@ -361,7 +360,6 @@ class MeasurementProfile(BaseModel):
 
     @staticmethod
     def _prepare_leaf_kw(node, kwargs, method, area_type):
-
         area_type_dict = {
             AreaType.Mask: "mask",
             AreaType.Mask_without_ROI: "mask_without_segmentation",
@@ -384,7 +382,6 @@ class MeasurementProfile(BaseModel):
         return kw
 
     def _clip_arrays(self, kw, node: Leaf, method: MeasurementMethodBase, component_index: int):
-
         if node.area != AreaType.ROI or method.need_full_data():
             bounds = tuple(slice(None, None) for _ in kw["area_array"].shape)
         elif node.per_component == PerComponent.Per_Mask_component:

@@ -100,9 +100,19 @@ class ErrorDialog(QDialog):
         self.send_report_btn.clicked.connect(self.send_information)
         self.create_issue_btn.clicked.connect(self.create_issue)
 
-        layout = QVBoxLayout()
         self.desc = QLabel(description)
         self.desc.setWordWrap(True)
+
+        self.setup_ui()
+
+        if isinstance(additional_info, tuple):
+            self.exception_tuple = additional_info[0], None
+        else:
+            exec_info = exc_info_from_error(exception)
+            self.exception_tuple = event_from_exception(exec_info)
+
+    def setup_ui(self):
+        layout = QVBoxLayout()
         info_text = QLabel(
             "If you see these dialog it not means that you do something wrong. "
             "In such case you should see some message box not error report dialog."
@@ -131,11 +141,6 @@ class ErrorDialog(QDialog):
         btn_layout.addWidget(self.send_report_btn)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
-        if isinstance(additional_info, tuple):
-            self.exception_tuple = additional_info[0], None
-        else:
-            exec_info = exc_info_from_error(exception)
-            self.exception_tuple = event_from_exception(exec_info)
 
     if QT5:
 

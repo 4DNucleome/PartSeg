@@ -233,72 +233,62 @@ def save_stack_segmentation(
     step_changed(6)
 
 
-def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=None, step_changed=None):
-    if range_changed is None:
-        range_changed = empty_fun
-    if step_changed is None:
-        step_changed = empty_fun
-    range_changed(0, 7)
-    tar_file = open_tar_file(file_data)[0]
-    try:
-        if check_segmentation_type(tar_file) != SegmentationType.mask:
-            raise WrongFileTypeException()
-        files = tar_file.getnames()
-        step_changed(1)
-        metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
-        step_changed(2)
-        if "segmentation.npy" in files:
-            segmentation_file_name = "segmentation.npy"
-            segmentation_load_fun = np.load
-        else:
-            segmentation_file_name = "segmentation.tif"
-            segmentation_load_fun = TiffImageReader.read_image
-        segmentation_buff = BytesIO()
-        segmentation_tar = tar_file.extractfile(tar_file.getmember(segmentation_file_name))
-        segmentation_buff.write(segmentation_tar.read())
-        step_changed(3)
-        segmentation_buff.seek(0)
-        roi = segmentation_load_fun(segmentation_buff)
-        if isinstance(roi, Image):
-            spacing = roi.spacing
-            roi = roi.get_channel(0)
-        else:
-            spacing = None
-        step_changed(4)
-        if "mask.tif" in tar_file.getnames():
-            mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
-            if np.max(mask) == 1:
-                mask = mask.astype(bool)
-        else:
-            mask = None
-        if "alternative.npz" in tar_file.getnames():
-            alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
-        else:
-            alternative = {}
-        roi_info = ROIInfo(reduce_array(roi), annotations=metadata.get("annotations", {}), alternative=alternative)
-        step_changed(5)
-        history = []
-        with suppress(KeyError):
-            history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
-            history_json = load_metadata(history_buff)
-            for el in history_json:
-                history_buffer = BytesIO()
-                history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
-                history_buffer.seek(0)
-                history.append(
-                    HistoryElement(
-                        roi_extraction_parameters=el["segmentation_parameters"],
-                        mask_property=el["mask_property"],
-                        arrays=history_buffer,
-                        annotations=el.get("annotations", {}),
-                    )
+def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, step_changed=None):
+    if check_segmentation_type(tar_file) != SegmentationType.mask:
+        raise WrongFileTypeException()
+    files = tar_file.getnames()
+    step_changed(1)
+    metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+    step_changed(2)
+    if "segmentation.npy" in files:
+        segmentation_file_name = "segmentation.npy"
+        segmentation_load_fun = np.load
+    else:
+        segmentation_file_name = "segmentation.tif"
+        segmentation_load_fun = TiffImageReader.read_image
+    segmentation_buff = BytesIO()
+    segmentation_tar = tar_file.extractfile(tar_file.getmember(segmentation_file_name))
+    segmentation_buff.write(segmentation_tar.read())
+    step_changed(3)
+    segmentation_buff.seek(0)
+    roi = segmentation_load_fun(segmentation_buff)
+    if isinstance(roi, Image):
+        spacing = roi.spacing
+        roi = roi.get_channel(0)
+    else:
+        spacing = None
+    step_changed(4)
+    if "mask.tif" in tar_file.getnames():
+        mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
+        if np.max(mask) == 1:
+            mask = mask.astype(bool)
+    else:
+        mask = None
+    if "alternative.npz" in tar_file.getnames():
+        alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
+    else:
+        alternative = {}
+    roi_info = ROIInfo(reduce_array(roi), annotations=metadata.get("annotations", {}), alternative=alternative)
+    step_changed(5)
+    history = []
+    with suppress(KeyError):
+        history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
+        history_json = load_metadata(history_buff)
+        for el in history_json:
+            history_buffer = BytesIO()
+            history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
+            history_buffer.seek(0)
+            history.append(
+                HistoryElement(
+                    roi_extraction_parameters=el["segmentation_parameters"],
+                    mask_property=el["mask_property"],
+                    arrays=history_buffer,
+                    annotations=el.get("annotations", {}),
                 )
-        step_changed(6)
-    finally:
-        if isinstance(file_data, (str, Path)):
-            tar_file.close()
+            )
+    step_changed(6)
     return MaskProjectTuple(
-        file_path=file_data if isinstance(file_data, str) else "",
+        file_path=file_path,
         image=metadata["base_file"] if "base_file" in metadata else None,
         roi_info=roi_info,
         selected_components=metadata["components"],
@@ -307,6 +297,22 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         history=history,
         spacing=([10 ** (-9), *list(spacing)]) if spacing is not None else None,
     )
+
+
+def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=None, step_changed=None):
+    if range_changed is None:
+        range_changed = empty_fun
+    if step_changed is None:
+        step_changed = empty_fun
+    range_changed(0, 7)
+    tar_file = open_tar_file(file_data)[0]
+    try:
+        return load_stack_segmentation_from_tar(
+            tar_file, file_data if isinstance(file_data, str) else "", step_changed=step_changed
+        )
+    finally:
+        if isinstance(file_data, (str, Path)):
+            tar_file.close()
 
 
 class LoadROI(LoadBase):

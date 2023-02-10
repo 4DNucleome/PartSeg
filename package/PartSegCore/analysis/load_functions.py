@@ -48,69 +48,65 @@ __all__ = [
 ]
 
 
-def load_project(
-    file: typing.Union[str, Path, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]
-) -> ProjectTuple:
-    """Load project from archive"""
-    tar_file, file_path = open_tar_file(file)
-    try:
-        if check_segmentation_type(tar_file) != SegmentationType.analysis:
-            raise WrongFileTypeException()
-        image_buffer = BytesIO()
-        image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
-        image_buffer.write(image_tar.read())
-        image_buffer.seek(0)
-        reader = GenericImageReader()
-        image = reader.read(image_buffer, ext=".tif")
-        image.file_path = file_path
-
-        algorithm_str = tar_file.extractfile("algorithm.json").read()
-        algorithm_dict = load_metadata(algorithm_str)
-        algorithm_dict = update_algorithm_dict(algorithm_dict)
-        algorithm_dict.get("project_file_version")
-        metadata = json.loads(tar_file.extractfile("metadata.json").read(), object_hook=partseg_object_hook)
-        try:
-            version = parse_version(metadata["project_version_info"])
-        except KeyError:
-            version = Version("1.0")
-        if version == Version("1.0"):
-            seg_dict = np.load(tar_to_buff(tar_file, "segmentation.npz"))
-            mask = seg_dict["mask"] if "mask" in seg_dict else None
-            roi = seg_dict["segmentation"]
-        else:
-            roi = tifffile.imread(tar_to_buff(tar_file, "segmentation.tif"))
-            if "mask.tif" in tar_file.getnames():
-                mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
-                if np.max(mask) == 1:
-                    mask = mask.astype(bool)
-            else:
-                mask = None
-        if "alternative.npz" in tar_file.getnames():
-            alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
-        else:
-            alternative = {}
-        history = []
-        with suppress(KeyError):
-            history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
-            history_json = load_metadata(history_buff)
-            for el in history_json:
-                history_buffer = BytesIO()
-                history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
-                history_buffer.seek(0)
-                el = update_algorithm_dict(el)
-                segmentation_parameters = {"algorithm_name": el["algorithm_name"], "values": el["values"]}
-                history.append(
-                    HistoryElement(
-                        roi_extraction_parameters=segmentation_parameters,
-                        mask_property=el["mask_property"],
-                        arrays=history_buffer,
-                        annotations=el.get("annotations", {}),
-                    )
+def _load_history(tar_file):
+    history = []
+    with suppress(KeyError):
+        history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
+        history_json = load_metadata(history_buff)
+        for el in history_json:
+            history_buffer = BytesIO()
+            history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
+            history_buffer.seek(0)
+            el = update_algorithm_dict(el)
+            segmentation_parameters = {"algorithm_name": el["algorithm_name"], "values": el["values"]}
+            history.append(
+                HistoryElement(
+                    roi_extraction_parameters=segmentation_parameters,
+                    mask_property=el["mask_property"],
+                    arrays=history_buffer,
+                    annotations=el.get("annotations", {}),
                 )
+            )
+    return history
 
-    finally:
-        if isinstance(file, (str, Path)):
-            tar_file.close()
+
+def load_project_from_tar(tar_file, file_path):
+    if check_segmentation_type(tar_file) != SegmentationType.analysis:
+        raise WrongFileTypeException()
+    image_buffer = BytesIO()
+    image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
+    image_buffer.write(image_tar.read())
+    image_buffer.seek(0)
+    reader = GenericImageReader()
+    image = reader.read(image_buffer, ext=".tif")
+    image.file_path = file_path
+
+    algorithm_str = tar_file.extractfile("algorithm.json").read()
+    algorithm_dict = load_metadata(algorithm_str)
+    algorithm_dict = update_algorithm_dict(algorithm_dict)
+    algorithm_dict.get("project_file_version")
+    metadata = json.loads(tar_file.extractfile("metadata.json").read(), object_hook=partseg_object_hook)
+    try:
+        version = parse_version(metadata["project_version_info"])
+    except KeyError:
+        version = Version("1.0")
+    if version == Version("1.0"):
+        seg_dict = np.load(tar_to_buff(tar_file, "segmentation.npz"))
+        mask = seg_dict["mask"] if "mask" in seg_dict else None
+        roi = seg_dict["segmentation"]
+    else:
+        roi = tifffile.imread(tar_to_buff(tar_file, "segmentation.tif"))
+        if "mask.tif" in tar_file.getnames():
+            mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
+            if np.max(mask) == 1:
+                mask = mask.astype(bool)
+        else:
+            mask = None
+    if "alternative.npz" in tar_file.getnames():
+        alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
+    else:
+        alternative = {}
+    history = _load_history(tar_file)
     image.set_mask(mask)
     roi_info = ROIInfo(roi, annotations=metadata.get("roi_annotations"), alternative=alternative)
     if version <= project_version_info:
@@ -122,7 +118,6 @@ def load_project(
             history=history,
             algorithm_parameters=algorithm_dict,
         )
-
     print("This project is from new version of PartSeg:", version, project_version_info, file=sys.stderr)
     return ProjectTuple(
         file_path=file_path,
@@ -133,6 +128,18 @@ def load_project(
         algorithm_parameters=algorithm_dict,
         errors="This project is from new version of PartSeg. It may load incorrect.",
     )
+
+
+def load_project(
+    file: typing.Union[str, Path, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]
+) -> ProjectTuple:
+    """Load project from archive"""
+    tar_file, file_path = open_tar_file(file)
+    try:
+        return load_project_from_tar(tar_file, file_path)
+    finally:
+        if isinstance(file, (str, Path)):
+            tar_file.close()
 
 
 class LoadProject(LoadBase):

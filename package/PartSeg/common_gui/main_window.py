@@ -194,7 +194,6 @@ class BaseMainWindow(QMainWindow):
         self.console_dock.setVisible(not self.console_dock.isVisible())
 
     def _refresh_recent(self):
-
         self.recent_file_menu.clear()
         for name_list, method in self.settings.get_last_files():
             action = self.recent_file_menu.addAction(f"{name_list[0]}, {method}")
@@ -266,7 +265,6 @@ class BaseMainWindow(QMainWindow):
             event.acceptProposedAction()
 
     def read_drop(self, paths: List[str]):
-
         """Function to process loading files by drag and drop."""
         self._read_drop(paths, self._load_dict)
 

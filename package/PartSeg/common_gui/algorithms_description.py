@@ -234,7 +234,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return res
 
     @staticmethod
-    def get_change_signal(widget: typing.Union[QWidget, Widget]):
+    def get_change_signal(widget: typing.Union[QWidget, Widget]):  # noqa PLR0901
         if isinstance(widget, Widget):
             return widget.changed
         if isinstance(widget, QComboBox):
@@ -256,14 +256,14 @@ class QtAlgorithmProperty(AlgorithmProperty):
         raise ValueError(f"Unsupported type: {type(widget)}")
 
     @staticmethod
-    def get_getter_and_setter_function(
+    def get_getter_and_setter_function(  # noqa PLR0901
         widget: typing.Union[QWidget, Widget],
     ) -> typing.Tuple[
         typing.Callable[
             [typing.Union[QWidget, Widget]],
             typing.Any,
         ],
-        typing.Callable[[QWidget, typing.Any], None],
+        typing.Callable[[typing.Union[QWidget, Widget], typing.Any], None],
     ]:
         """
         For each widget type return proper functions. This functions need instance as first argument
@@ -841,11 +841,11 @@ class AlgorithmChoose(AlgorithmChooseBase):
         self.value_changed.emit()
 
 
-def _value_get(self):
+def _value_get(self: Widget):
     return self.value
 
 
-def _value_set(self, value):
+def _value_set(self: Widget, value: typing.Any):
     if isinstance(self, ComboBox) and issubclass(self.annotation, Layer) and isinstance(value, str):
         for el in self.choices:
             if el.name == value:

@@ -53,6 +53,7 @@ class MocksCalculation:
 
 # TODO add check of per component measurements
 
+
 # noinspection DuplicatedCode
 class TestCalculationProcess:
     @staticmethod

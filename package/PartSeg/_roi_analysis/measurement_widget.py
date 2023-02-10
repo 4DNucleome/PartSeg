@@ -132,7 +132,7 @@ class MeasurementWidgetBase(QWidget):
     :type segment: Segment
     """
 
-    def __init__(self, settings: PartSettings, segment=None):
+    def __init__(self, settings: PartSettings, segment=None):  # noqa: PLR0915
         super().__init__()
         self.settings = settings
         self.segment = segment

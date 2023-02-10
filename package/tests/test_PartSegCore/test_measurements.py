@@ -400,7 +400,7 @@ class TestMaximumPixelBrightness:
 @pytest.mark.parametrize("threshold", [80, 60, 40, 0])
 @pytest.mark.parametrize("image", [get_square_image(), get_cube_image()], ids=["square", "cube"])
 @pytest.mark.parametrize(
-    "calc_class,np_method",
+    ("calc_class", "np_method"),
     [
         (MinimumPixelBrightness, np.min),
         (MaximumPixelBrightness, np.max),
@@ -512,10 +512,10 @@ class TestMainAxis:
 
     @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
     @pytest.mark.parametrize(
-        "method,scalar,last",
+        ("method", "scalar", "last"),
         [(FirstPrincipalAxisLength, 20, 0), (SecondPrincipalAxisLength, 10, 0), (ThirdPrincipalAxisLength, 10, 1)],
     )
-    @pytest.mark.parametrize("threshold,len_scalar", [(40, 59), (60, 39)])
+    @pytest.mark.parametrize(("threshold", "len_scalar"), [(40, 59), (60, 39)])
     @pytest.mark.parametrize("result_scalar", [1, 0.5, 3])
     def test_cube(self, image, method, scalar, threshold, len_scalar, last, result_scalar):
         image = image.substitute(image_spacing=(10, 10, 20))
