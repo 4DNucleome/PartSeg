@@ -618,20 +618,17 @@ class CalculationPlan:
         if not self.current_pos:
             return NodeType.root
         node = self.get_node(parent=parent)
-        if isinstance(node.operation, RootType):
-            return NodeType.root
-        if isinstance(node.operation, (MaskMapper, MaskIntersection, MaskSum)):
-            return NodeType.file_mask
-        if isinstance(node.operation, MaskCreate):
-            return NodeType.mask
-        if isinstance(node.operation, MeasurementCalculate):
-            return NodeType.measurement
-        if isinstance(node.operation, ROIExtractionProfile):
-            return NodeType.segment
-        if isinstance(node.operation, Save):
-            return NodeType.save
-        if isinstance(node.operation, MaskUse):
-            return NodeType.file_mask
+        for klass, node_type in [
+            (RootType, NodeType.root),
+            ((MaskMapper, MaskIntersection, MaskSum), NodeType.file_mask),
+            (MaskCreate, NodeType.mask),
+            (MeasurementCalculate, NodeType.measurement),
+            (ROIExtractionProfile, NodeType.segment),
+            (Save, NodeType.save),
+            (MaskUse, NodeType.file_mask),
+        ]:
+            if isinstance(node.operation, klass):
+                return node_type
         if isinstance(node.operation, Operations) and node.operation == Operations.reset_to_base:
             return NodeType.mask
         raise ValueError(f"[get_node_type] unknown node type {node.operation}")

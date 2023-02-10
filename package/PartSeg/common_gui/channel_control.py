@@ -328,6 +328,9 @@ class ChannelProperty(QWidget):
         self.collapse_widget.add_hide_element(self.filter_radius)
         self.collapse_widget.add_hide_element(self.gamma_value)
 
+        self.setup_ui()
+
+    def setup_ui(self):
         layout = QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.collapse_widget, 0, 0, 1, 4)

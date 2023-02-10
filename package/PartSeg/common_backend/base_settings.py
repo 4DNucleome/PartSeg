@@ -645,11 +645,7 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param value: value to store. The value need to be json serializable.
         """
-        if (
-            key_path.startswith("algorithms.")
-            or key_path.startswith("algorithm_widget_state.")
-            or key_path == "current_algorithm"
-        ):
+        if key_path.startswith(("algorithm_widget_state.", "algorithms.")) or key_path == "current_algorithm":
             warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
             self.set_algorithm(key_path, value)
             return
@@ -663,11 +659,7 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param default: default value if key is missed
         """
-        if (
-            key_path.startswith("algorithms.")
-            or key_path.startswith("algorithm_widget_state.")
-            or key_path == "current_algorithm"
-        ):
+        if key_path.startswith(("algorithms.", "algorithm_widget_state.")) or key_path == "current_algorithm":
             warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
             return self.get_algorithm(key_path, default)
         return self._roi_dict.get(f"{self._current_roi_dict}.{key_path}", default)
