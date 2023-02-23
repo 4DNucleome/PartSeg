@@ -127,7 +127,7 @@ magicgui==0.6.1
     #   napari
 mahotas==1.4.13
     # via PartSeg (setup.cfg)
-markdown-it-py==2.1.0
+markdown-it-py==2.2.0
     # via rich
 markupsafe==2.1.2
     # via jinja2
