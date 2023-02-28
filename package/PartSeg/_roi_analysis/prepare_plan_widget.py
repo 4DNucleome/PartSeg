@@ -1009,8 +1009,9 @@ class PlanPreview(QTreeWidget):
         widget = self.topLevelItem(0)  # type : QTreeWidgetItem
         for index in path:
             if str(widget.child(0).text(0)) == "Description":
-                index += 1
-            widget = widget.child(index)
+                widget = widget.child(index + 1)
+            else:
+                widget = widget.child(index)
         return widget
 
     def update_view(self, reset=False):
