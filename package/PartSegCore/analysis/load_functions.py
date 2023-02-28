@@ -57,14 +57,14 @@ def _load_history(tar_file):
             history_buffer = BytesIO()
             history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
             history_buffer.seek(0)
-            el = update_algorithm_dict(el)
-            segmentation_parameters = {"algorithm_name": el["algorithm_name"], "values": el["values"]}
+            el_up = update_algorithm_dict(el)
+            segmentation_parameters = {"algorithm_name": el_up["algorithm_name"], "values": el_up["values"]}
             history.append(
                 HistoryElement(
                     roi_extraction_parameters=segmentation_parameters,
-                    mask_property=el["mask_property"],
+                    mask_property=el_up["mask_property"],
                     arrays=history_buffer,
-                    annotations=el.get("annotations", {}),
+                    annotations=el_up.get("annotations", {}),
                 )
             )
     return history

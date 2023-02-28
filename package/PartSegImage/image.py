@@ -212,12 +212,12 @@ class Image:
         for name in new_channel_names:
             match = reg.match(name)
             new_name = name
-            if match and name in base_channel_names:
-                name = "channel"
+            base_name = name
+            if match and base_name in base_channel_names:
                 new_name = f"channel {len(base_channel_names) + 1}"
             i = 1
             while new_name in base_channel_names:
-                new_name = f"{name} ({i})"
+                new_name = f"{base_name} ({i})"
                 i += 1
                 if i > 10000:  # pragma: no cover
                     raise ValueError("fail when try to fix channel name")

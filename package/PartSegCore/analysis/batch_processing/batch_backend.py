@@ -136,7 +136,7 @@ class CalculationProcess:
         self.results: CalculationResultList = []
 
     @staticmethod
-    def load_data(operation, calculation: FileCalculation):
+    def load_data(operation, calculation: FileCalculation) -> Union[ProjectTuple, List[ProjectTuple]]:
         metadata = {"default_spacing": calculation.voxel_size}
         ext = path.splitext(calculation.file_path)[1]
         if operation == RootType.Image:
@@ -173,7 +173,6 @@ class CalculationProcess:
         if isinstance(projects, ProjectTuple):
             projects = [projects]
         for project in projects:
-            project: ProjectTuple
             self.image = project.image
             if calculation.overwrite_voxel_size:
                 self.image.set_spacing(calculation.voxel_size)

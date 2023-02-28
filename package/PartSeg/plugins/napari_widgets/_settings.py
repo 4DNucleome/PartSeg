@@ -7,7 +7,7 @@ _settings = None
 
 
 def get_settings() -> PartSettings:
-    global _settings  # pylint: disable=W0603
+    global _settings  # pylint: disable=W0603  # noqa: PLW0603
     if _settings is None:
         napari_settings = napari_get_settings()
         if hasattr(napari_settings, "path"):
