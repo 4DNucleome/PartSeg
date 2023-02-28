@@ -44,7 +44,7 @@ comm==0.1.2
     # via ipykernel
 czifile==2019.7.2
     # via PartSeg (setup.cfg)
-dask[array]==2023.2.0
+dask[array]==2023.2.1
     # via napari
 debugpy==1.6.6
     # via ipykernel
@@ -74,7 +74,7 @@ idna==3.4
     # via requests
 imagecodecs==2023.1.23
     # via PartSeg (setup.cfg)
-imageio==2.25.1
+imageio==2.26.0
     # via
     #   PartSeg (setup.cfg)
     #   napari
@@ -127,7 +127,7 @@ magicgui==0.6.1
     #   napari
 mahotas==1.4.13
     # via PartSeg (setup.cfg)
-markdown-it-py==2.1.0
+markdown-it-py==2.2.0
     # via rich
 markupsafe==2.1.2
     # via jinja2
@@ -221,13 +221,13 @@ pint==0.20.1
     # via napari
 platformdirs==3.0.0
     # via jupyter-core
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.37
     # via ipython
 psutil==5.9.4
     # via
     #   ipykernel
     #   napari
-psygnal==0.7.2
+psygnal==0.8.1
     # via
     #   PartSeg (setup.cfg)
     #   app-model
@@ -411,13 +411,13 @@ vispy==0.11.0
     #   napari-svg
 wcwidth==0.2.6
     # via prompt-toolkit
-wrapt==1.14.1
+wrapt==1.15.0
     # via napari
 xlrd==2.0.1
     # via PartSeg (setup.cfg)
 xlsxwriter==3.0.8
     # via PartSeg (setup.cfg)
-zipp==3.14.0
+zipp==3.15.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
