@@ -85,6 +85,8 @@ hiddenimports = (
         "magicgui.backends._qtpy",
         "freetype",
         "psygnal._signal",
+        "psygnal._dataclass_utils",
+        "psygnal._weak_callback",
     ]
     + [x.module_name for x in imageio_known_plugins.values()]
 )
