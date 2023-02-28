@@ -223,7 +223,9 @@ class ImportDialog(QDialog):
 
         self.list_view.itemSelectionChanged.connect(self.preview)
         self.list_view.itemChanged.connect(self.checked_change)
+        self.setup_ui(ommit_count)
 
+    def setup_ui(self, ommit_count):
         layout = QVBoxLayout()
         info_layout = QHBoxLayout()
         info_layout.addWidget(self.list_view, 2)

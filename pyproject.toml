@@ -34,7 +34,9 @@ exclude = '''
 [tool.ruff]
 line-length = 120
 select = ["E", "F", "I", "UP", "C", "A" ,"YTT", "W", "B", "A", "C4", "ISC", "ICN", "Q", "SIM", "PLC", "PLE", "PLR", "PLW", "RUF", "PT", "ARG", "PIE"]
-ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004"]
+ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
+    "PLR0913" # should be reenabled in future version
+]
 exclude = ["examples/call_simple_threshold.py"]
 target-version = "py38"
 fix = true
@@ -52,6 +54,8 @@ max-complexity = 15
 "package/tests/**" = ["ARG"]
 "package/PartSegCore/sphinx/*" = ["ARG"]
 "package/tests/**.py" = ["PLR2004"]
+"package/PartSegCore/_old_json_hooks.py" = ["PLR0912", "PLR0911"]
+"package/PartSegCore/class_generator.py" = ["PLR0912"]
 
 [tool.check-manifest]
 ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]

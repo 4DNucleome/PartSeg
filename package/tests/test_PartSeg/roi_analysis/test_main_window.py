@@ -51,7 +51,6 @@ def analysis_options(qtbot, part_settings):
 
 class TestAnalysisOptions:
     def test_create(self, qtbot, analysis_options):
-
         assert analysis_options.choose_profile.count() == 1
         assert analysis_options.choose_profile.currentText() == "<none>"
         assert analysis_options.choose_pipe.count() == 1

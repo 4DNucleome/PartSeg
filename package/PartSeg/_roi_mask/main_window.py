@@ -476,7 +476,7 @@ class ChosenComponents(QWidget):
 
 
 class AlgorithmOptions(QWidget):
-    def __init__(self, settings: StackSettings, image_view: StackImageView):
+    def __init__(self, settings: StackSettings, image_view: StackImageView):  # noqa: PLR0915
         super().__init__()
         self.settings = settings
         self.view_name = image_view.name
@@ -881,7 +881,6 @@ class Options(QTabWidget):
 
 
 class MainWindow(BaseMainWindow):
-
     settings: StackSettings
 
     @classmethod
@@ -890,7 +889,7 @@ class MainWindow(BaseMainWindow):
 
     initial_image_path = PartSegData.segmentation_mask_default_image
 
-    def __init__(
+    def __init__(  # noqa: PLR0915
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
         super().__init__(config_folder, title, settings, io_functions.load_dict, signal_fun)

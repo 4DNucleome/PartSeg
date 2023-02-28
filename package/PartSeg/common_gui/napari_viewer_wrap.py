@@ -135,7 +135,6 @@ class SynchronizeWidget(QWidget):
         current_layers = []
         scale = image.normalized_scaling()
         for i in range(image.channels):
-
             channel_name = image.channel_names[i]
             layer = self._substitute_image_layer(
                 channel_name, image.get_channel(i), scale, colormap_list[i], image_layers

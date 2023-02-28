@@ -114,10 +114,18 @@ class ProgressView(QWidget):
         self.number_of_process.setToolTip("Number of process used in batch calculation")
         self.number_of_process.valueChanged.connect(self.process_num_timer_start)
         self.progress_item_dict = {}
+        self.setup_ui()
+        self.preview_timer = QTimer()
+        self.preview_timer.setInterval(1000)
+        self.preview_timer.timeout.connect(self.update_info)
+        self.task_view.selectionModel().currentChanged.connect(self.task_selection_change)
+        self.cancel_remove_btn.clicked.connect(self.task_cancel_remove)
+
+    def setup_ui(self):
         layout = QGridLayout()
-        layout.addWidget(self.whole_label, 0, 0, Qt.AlignRight)
+        layout.addWidget(self.whole_label, 0, 0, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.whole_progress, 0, 1, 1, 2)
-        layout.addWidget(self.part_label, 1, 0, Qt.AlignRight)
+        layout.addWidget(self.part_label, 1, 0, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.part_progress, 1, 1, 1, 2)
         lab = QLabel("Number of process:")
         lab.setToolTip("Number of process used in batch calculation")
@@ -129,11 +137,6 @@ class ProgressView(QWidget):
         layout.setColumnMinimumWidth(2, 10)
         layout.setColumnStretch(2, 1)
         self.setLayout(layout)
-        self.preview_timer = QTimer()
-        self.preview_timer.setInterval(1000)
-        self.preview_timer.timeout.connect(self.update_info)
-        self.task_view.selectionModel().currentChanged.connect(self.task_selection_change)
-        self.cancel_remove_btn.clicked.connect(self.task_cancel_remove)
 
     def task_selection_change(self, new, old):
         task: CalculationProcessItem = self.task_que.item(new.row(), new.column())
@@ -278,7 +281,7 @@ class FileChoose(QWidget):
 
     def _refresh_batch_list(self):
         current_calc = str(self.calculation_choose.currentText())
-        new_list = ["<no calculation>"] + sorted(self.settings.batch_plans.keys())
+        new_list = ["<no calculation>", *sorted(self.settings.batch_plans.keys())]
         try:
             index = new_list.index(current_calc)
         except ValueError:
@@ -417,6 +420,20 @@ class CalculationPrepare(QDialog):
         self.mask_mapper_list = self.calculation_plan.get_list_file_mask()
         mask_file_list = [(i, el) for i, el in enumerate(self.mask_mapper_list) if isinstance(el, MaskFile)]
 
+        self.state_list = np.zeros((len(self.file_list), len(self.mask_mapper_list)), dtype=np.uint8)
+
+        self.file_list_widget = QTreeWidget()
+        self.file_list_widget.header().close()
+
+        self.execute_btn = QPushButton("Execute")
+        self.execute_btn.clicked.connect(self.accept)
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.clicked.connect(self.close)
+
+        self.setup_ui(mask_file_list)
+        self.verify_data()
+
+    def setup_ui(self, mask_file_list):
         mask_path_layout = QGridLayout()
         for i, (pos, mask_file) in enumerate(mask_file_list):
             if mask_file.name == "":
@@ -432,16 +449,6 @@ class CalculationPrepare(QDialog):
             set_path.clicked.connect(self.set_mapping_mask(i, pos))
             mask_path_layout.addWidget(mask_path, i, 1)
             mask_path_layout.addWidget(set_path, i, 2)
-
-        self.state_list = np.zeros((len(self.file_list), len(self.mask_mapper_list)), dtype=np.uint8)
-
-        self.file_list_widget = QTreeWidget()
-        self.file_list_widget.header().close()
-
-        self.execute_btn = QPushButton("Execute")
-        self.execute_btn.clicked.connect(self.accept)
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.clicked.connect(self.close)
 
         layout = QGridLayout()
         layout.addWidget(self.info_label, 0, 0, 1, 5)
@@ -467,7 +474,6 @@ class CalculationPrepare(QDialog):
         btn_layout.addWidget(self.cancel_btn)
         layout.addLayout(btn_layout, 8, 0, 1, 0)
         self.setLayout(layout)
-        self.verify_data()
 
     def _warning_color(self):
         return "yellow" if self.settings.theme_name == "dark" else "blue"

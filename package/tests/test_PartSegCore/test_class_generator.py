@@ -23,7 +23,7 @@ def setup_module():
 
     from PartSegCore import class_generator
 
-    global copy_register  # pylint: disable=W0603
+    global copy_register  # pylint: disable=W0603  # noqa: PLW0603
     copy_register = deepcopy(class_generator.base_serialize_register)
 
 

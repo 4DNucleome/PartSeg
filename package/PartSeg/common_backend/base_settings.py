@@ -110,7 +110,7 @@ class ImageSettings(QObject):
         if len(value) not in [2, 3]:
             raise ValueError(f"value parameter should have length 2 or 3. Current length is {len(value)}.")
         if len(value) == 2:
-            self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
+            self._image.set_spacing((self._image.spacing[0], *list(value)))
         else:
             self._image.set_spacing(value)
         self.image_spacing_changed.emit()
@@ -596,7 +596,7 @@ class BaseSettings(ViewSettings):
         for name in self.save_locations_keys:
             val = self.get(f"io.{name}", str(Path.home()))
             if val not in res:
-                res = res + [val]
+                res = [*res, val]
         return res
 
     @staticmethod
@@ -605,7 +605,7 @@ class BaseSettings(ViewSettings):
             data_list.remove(value)
         except ValueError:
             data_list = data_list[: keep_len - 1]
-        return [value] + data_list
+        return [value, *data_list]
 
     def get_last_files(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
         return self.get(FILE_HISTORY, [])
@@ -645,11 +645,7 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param value: value to store. The value need to be json serializable.
         """
-        if (
-            key_path.startswith("algorithms.")
-            or key_path.startswith("algorithm_widget_state.")
-            or key_path == "current_algorithm"
-        ):
+        if key_path.startswith(("algorithm_widget_state.", "algorithms.")) or key_path == "current_algorithm":
             warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
             self.set_algorithm(key_path, value)
             return
@@ -663,11 +659,7 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param default: default value if key is missed
         """
-        if (
-            key_path.startswith("algorithms.")
-            or key_path.startswith("algorithm_widget_state.")
-            or key_path == "current_algorithm"
-        ):
+        if key_path.startswith(("algorithms.", "algorithm_widget_state.")) or key_path == "current_algorithm":
             warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
             return self.get_algorithm(key_path, default)
         return self._roi_dict.get(f"{self._current_roi_dict}.{key_path}", default)

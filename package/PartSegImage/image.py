@@ -212,12 +212,12 @@ class Image:
         for name in new_channel_names:
             match = reg.match(name)
             new_name = name
-            if match and name in base_channel_names:
-                name = "channel"
+            base_name = name
+            if match and base_name in base_channel_names:
                 new_name = f"channel {len(base_channel_names) + 1}"
             i = 1
             while new_name in base_channel_names:
-                new_name = f"{name} ({i})"
+                new_name = f"{base_name} ({i})"
                 i += 1
                 if i > 10000:  # pragma: no cover
                     raise ValueError("fail when try to fix channel name")
@@ -587,8 +587,8 @@ class Image:
 
     def normalized_scaling(self, factor=DEFAULT_SCALE_FACTOR) -> Spacing:
         if self.is_2d:
-            return (1, 1) + tuple(np.multiply(self.spacing, factor))
-        return (1,) + tuple(np.multiply(self.spacing, factor))
+            return (1, 1, *tuple(np.multiply(self.spacing, factor)))
+        return (1, *tuple(np.multiply(self.spacing, factor)))
 
     @property
     def shift(self):
@@ -604,7 +604,7 @@ class Image:
         if 0 in value:
             return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
-            value = (1.0,) + tuple(value)
+            value = (1.0, *tuple(value))
         if len(value) != len(self._image_spacing):  # pragma: no cover
             raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)

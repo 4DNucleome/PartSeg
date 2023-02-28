@@ -313,7 +313,6 @@ class ProtectedGroupBox(QGroupBox):
 
 
 class OtherOperations(ProtectedGroupBox):
-
     save_operation = Signal(object)
 
     def __init__(self, parent=None):
@@ -378,8 +377,11 @@ class OtherOperations(ProtectedGroupBox):
             show_warning(self, "Save problem", "Not found save class")
             return
         dial = FormDialog(
-            [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
-            + save_class.get_fields()
+            [
+                AlgorithmProperty("suffix", "File suffix", ""),
+                AlgorithmProperty("directory", "Sub directory", ""),
+                *save_class.get_fields(),
+            ]
         )
         if not dial.exec_():
             return
@@ -504,7 +506,6 @@ class ROIExtractionOp(ProtectedGroupBox):
 
 
 class SelectMeasurementOp(ProtectedGroupBox):
-
     set_of_measurement_add = Signal(object)
     set_of_measurement_selected = Signal(object)
 
@@ -599,7 +600,6 @@ class StretchWrap(QWidget):
 
 
 class SelectMaskOp(ProtectedGroupBox):
-
     mask_step_add = Signal(object)
 
     def __init__(self, settings: PartSettings, parent: QWidget = None):
@@ -682,7 +682,6 @@ class SelectMaskOp(ProtectedGroupBox):
 
 
 class CreatePlan(QWidget):
-
     plan_node_changed = Signal()
 
     def __init__(self, settings: PartSettings):
@@ -730,6 +729,14 @@ class CreatePlan(QWidget):
         self.update_element_chk.stateChanged.connect(self.roi_extraction.set_replace)
         self.update_element_chk.stateChanged.connect(self.select_measurement.set_replace)
 
+        self.setup_ui()
+
+        self.node_type = NodeType.root
+        self.node_name = ""
+        self.plan.changed_node.connect(self.node_type_changed)
+        self.node_type_changed()
+
+    def setup_ui(self):
         plan_box = QGroupBox("Prepare workflow:")
         lay = QVBoxLayout()
         lay.addWidget(self.plan)
@@ -757,11 +764,6 @@ class CreatePlan(QWidget):
         layout.addWidget(self.select_measurement, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
         self.setLayout(layout)
-
-        self.node_type = NodeType.root
-        self.node_name = ""
-        self.plan.changed_node.connect(self.node_type_changed)
-        self.node_type_changed()
 
     @property
     def mask_set(self):
@@ -1007,8 +1009,9 @@ class PlanPreview(QTreeWidget):
         widget = self.topLevelItem(0)  # type : QTreeWidgetItem
         for index in path:
             if str(widget.child(0).text(0)) == "Description":
-                index += 1
-            widget = widget.child(index)
+                widget = widget.child(index + 1)
+            else:
+                widget = widget.child(index)
         return widget
 
     def update_view(self, reset=False):

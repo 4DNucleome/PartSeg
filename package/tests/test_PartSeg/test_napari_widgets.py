@@ -42,7 +42,6 @@ def test_dummy_for_gc():
 
 @pytest.mark.parametrize("widget_class", [ROIAnalysisExtraction, ROIMaskExtraction])
 def test_extraction_widget(make_napari_viewer, widget_class, monkeypatch, qtbot):
-
     viewer = make_napari_viewer()
     viewer.add_image(np.ones((10, 10)))
     widget = widget_class(napari_viewer=viewer)

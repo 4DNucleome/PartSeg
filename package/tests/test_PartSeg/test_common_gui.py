@@ -251,7 +251,6 @@ class TestAddFiles:
         widget.selected_files.setCurrentRow(2)
 
         def check_res(val):
-
             return val == [str(tmp_path / "test_2.txt")]
 
         with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res):
@@ -1287,6 +1286,11 @@ class TestSpacing:
 
         qtbot.addWidget(widget)
 
+    def test_create_2d(self, qtbot):
+        widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9), unit=Units.nm)
+
+        qtbot.addWidget(widget)
+
     def test_get_values(self, qtbot):
         widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9, 10**-9), unit=Units.nm)
         qtbot.addWidget(widget)
@@ -1745,7 +1749,6 @@ class TestQMessageFromException:
 
     @pytest.mark.parametrize("method", ["critical", "information", "question", "warning"])
     def test_methods(self, monkeypatch, qtbot, method):
-
         called = False
 
         def exec_mock(self):
