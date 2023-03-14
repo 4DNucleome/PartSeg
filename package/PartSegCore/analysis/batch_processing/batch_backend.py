@@ -217,7 +217,7 @@ class CalculationProcess:
         :param List[CalculationTree] children: list of nodes to iterate over with applied mask
         """
         mask_path = operation.get_mask_path(self.calculation.file_path)
-        if mask_path == "":  # pragma: no cover
+        if not mask_path:  # pragma: no cover
             raise ValueError("Empty path to mask.")
         if not os.path.exists(mask_path):
             raise OSError(f"Mask file {mask_path} does not exists")

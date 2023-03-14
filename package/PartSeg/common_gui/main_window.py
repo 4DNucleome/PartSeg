@@ -60,7 +60,7 @@ class BaseMainMenu(QWidget):
         return data_list[0]
 
     def _set_project_info_base(self, project_info_base: ProjectInfoBase):
-        if project_info_base.errors != "":  # pragma: no cover
+        if project_info_base.errors:  # pragma: no cover
             resp = QMessageBox.question(
                 self,
                 "Load problem",

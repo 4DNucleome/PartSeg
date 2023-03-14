@@ -19,7 +19,7 @@ class DirectoryDialog(QDialog):
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
         layout = QGridLayout()
-        if additional_text != "":
+        if additional_text:
             layout.addWidget(QLabel(f"{additional_text}<br><br>Path:"), 0, 0, 1, 2)
         else:
             layout.addWidget(QLabel("Path:"), 0, 0, 1, 2)

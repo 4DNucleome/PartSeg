@@ -330,7 +330,7 @@ class MeasurementProfile(BaseModel):
 
     def __str__(self):
         text = f"Set name: {self.name}\n"
-        if self.name_prefix != "":
+        if self.name_prefix:
             text += f"Name prefix: {self.name_prefix}\n"
         text += "Measurements list:\n"
         for el in self.chosen_fields:

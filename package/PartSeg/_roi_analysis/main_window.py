@@ -344,7 +344,7 @@ class Options(QWidget):
         widget.execute()
 
     def execution_done(self, segmentation: ROIExtractionResult):
-        if segmentation.info_text != "":
+        if segmentation.info_text:
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         self._settings.set_segmentation_result(segmentation)
         self.label.setText(self.sender().get_info_text())
