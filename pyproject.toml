@@ -42,11 +42,13 @@ select = [
     "A", # flake8-builtins
     "YTT", # flake8-2020
     "S", # flake8-bandit
+    # "BLE", # flake8-blind-except
     "B", # lake8-bugbear
     "A", #flake8-builtins
     "C4", # flake8-comprehensions
     "ISC", # flake8-implicit-str-concat
     "ICN", # flake8-import-conventions
+    "G", # flake8-logging-format
     "PIE", # flake8-pie
     "PT", # flake8-pytest-style
     "Q", # flake8-quotes

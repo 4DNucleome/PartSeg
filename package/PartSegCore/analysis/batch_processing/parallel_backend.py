@@ -136,7 +136,7 @@ class BatchManager:
         :param num: target number of process
         """
         process_diff = num - self.number_off_available_process
-        logging.debug(f"[set_number_of_process] process diff: {process_diff}")
+        logging.debug("[set_number_of_process] process diff: %s", process_diff)
         self.number_off_available_process = num
         if not self.has_work:
             return

@@ -43,7 +43,7 @@ def create_bundle(spec_path, working_dir):
         "--workpath",
         os.path.join(working_dir, "build"),
     ]
-    logger.info("run PyInstaller" + " ".join(pyinstaller_args))
+    logger.info("run PyInstaller %s", " ".join(pyinstaller_args))
 
     pyinstaller_run(pyinstaller_args)
 
