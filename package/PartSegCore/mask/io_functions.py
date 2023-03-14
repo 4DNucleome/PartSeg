@@ -155,7 +155,7 @@ def _save_mask_roi_metadata(
         file_path = project.image
     else:
         file_path = ""
-    if not file_path:
+    if file_path:
         if parameters.relative_path and isinstance(file_data, str):
             metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
         else:
