@@ -140,11 +140,19 @@ class TestAnalysisOptions:
         sender_mock = MagicMock()
         sender_mock.get_info_text.return_value = "test"
         mock = Mock(return_value=sender_mock)
+        info_mock = Mock()
 
         monkeypatch.setattr(analysis_options, "sender", mock)
+        monkeypatch.setattr(analysis_main_window.QMessageBox, "information", info_mock)
 
         res = ROIExtractionResult(
-            np.zeros(part_settings.image.shape, dtype="uint8"),
-            analysis_options.algorithm_choose_widget.algorithm_dict["Lower threshold"].get_segmentation_profile(),
+            roi=np.zeros(part_settings.image.shape, dtype="uint8"),
+            parameters=analysis_options.algorithm_choose_widget.algorithm_dict[
+                "Lower threshold"
+            ].get_segmentation_profile(),
+            info_text="info",
         )
         analysis_options.execution_done(res)
+
+        assert analysis_options.label.toPlainText() == "test"
+        info_mock.assert_called_once_with(analysis_options, "Algorithm info", "info")
