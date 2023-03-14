@@ -1673,7 +1673,7 @@ class ColocalizationMeasurement(MeasurementMethodBase):
             return cls._calculate_masked(data_1, data_2, colocalization)
         res_list = []
         for _ in range(randomize_repeat):
-            rand_data2 = np.random.permutation(data_2)
+            rand_data2 = np.random.default_rng().permutation(data_2)
             res_list.append(cls._calculate_masked(data_1, rand_data2, colocalization))
         return np.mean(res_list)
 

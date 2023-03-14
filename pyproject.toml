@@ -33,7 +33,28 @@ exclude = '''
 
 [tool.ruff]
 line-length = 120
-select = ["E", "F", "I", "UP", "C", "A" ,"YTT", "W", "B", "A", "C40", "ISC", "ICN", "Q", "SIM", "PLC", "PLE", "PLR", "PLW", "RUF", "PT", "ARG", "PIE"]
+select = [
+    "F", # Pyflakes
+    "E", "W", # pycodestyle
+    "C90", # mccabe
+    "I", # isort
+    "UP", # pyupgrade
+    "A", # flake8-builtins
+    "YTT", # flake8-2020
+    "B", # lake8-bugbear
+    "A", #flake8-builtins
+    "C4", # flake8-comprehensions
+    "ISC", # flake8-implicit-str-concat
+    "ICN", # flake8-import-conventions
+    "PIE", # flake8-pie
+    "PT", # flake8-pytest-style
+    "Q", # flake8-quotes
+    "SIM", # flake8-simplify
+    "ARG", # flake8-unused-arguments
+    "PLC", "PLE", "PLR", "PLW", # pylint
+    "NPY", # NumPy-specific rules
+    "RUF", # Ruff-specific rules
+]
 ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
     "PLR0913" # should be reenabled in future version
 ]
