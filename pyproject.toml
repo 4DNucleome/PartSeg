@@ -57,6 +57,7 @@ select = [
     "SIM", # flake8-simplify
     "TID", # flake8-tidy-imports
     "ARG", # flake8-unused-arguments
+    "PGH", # pygrep-hooks
     "PLC", "PLE", "PLR", "PLW", # pylint
     "NPY", # NumPy-specific rules
     "RUF", # Ruff-specific rules
