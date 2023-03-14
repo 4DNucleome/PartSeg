@@ -16,7 +16,7 @@ def napari_get_settings(path=None) -> "NapariSettings":
 
     try:
         return _napari_get_settings(path)
-    except RuntimeError:
+    except Exception:
         return _napari_get_settings()
 
 
