@@ -16,7 +16,7 @@ class BaseSmoothing(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class NoneSmoothing(BaseSmoothing):

@@ -52,6 +52,7 @@ select = [
     "PIE", # flake8-pie
     "PT", # flake8-pytest-style
     "Q", # flake8-quotes
+    "RSE", # flake8-raise
     "SIM", # flake8-simplify
     "ARG", # flake8-unused-arguments
     "PLC", "PLE", "PLR", "PLW", # pylint

@@ -41,11 +41,11 @@ def numpy_repr(val: np.ndarray):
 class CallbackBase(ABC):
     @abstractmethod
     def is_alive(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def __call__(self, *args, **kwarg):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class CallbackFun(CallbackBase):

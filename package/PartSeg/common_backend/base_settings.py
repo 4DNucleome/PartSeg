@@ -783,10 +783,10 @@ class BaseSettings(ViewSettings):
     def verify_image(image: Image, silent=True) -> Union[Image, bool]:
         if image.is_time:
             if image.is_stack:
-                raise TimeAndStackException()
+                raise TimeAndStackException
             if silent:
                 return image.swap_time_and_stack()
-            raise SwapTimeStackException()
+            raise SwapTimeStackException
         return True
 
 

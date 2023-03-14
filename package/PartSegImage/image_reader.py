@@ -78,7 +78,7 @@ class BaseImageReader:
             should be deduced from path
         :return: image structure
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def read_image(
@@ -158,7 +158,7 @@ class BaseImageReaderBuffer(BaseImageReader):
             should be deduced from path
         :return: image structure
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def read_image(

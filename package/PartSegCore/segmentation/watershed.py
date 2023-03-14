@@ -56,7 +56,7 @@ class BaseWatershed(AlgorithmDescribeBase, ABC):
         :param upper_bound: data value upper bound
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class PathWatershed(BaseWatershed):
