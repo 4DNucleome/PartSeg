@@ -41,6 +41,7 @@ select = [
     "UP", # pyupgrade
     "A", # flake8-builtins
     "YTT", # flake8-2020
+    "S", # flake8-bandit
     "B", # lake8-bugbear
     "A", #flake8-builtins
     "C4", # flake8-comprehensions
@@ -72,7 +73,7 @@ max-complexity = 15
 
 [tool.ruff.per-file-ignores]
 "docs/conf.py" = ["A001"]
-"package/tests/**" = ["ARG", "PLC1901"]
+"package/tests/**" = ["ARG", "PLC1901", "S101"]
 "package/PartSegCore/sphinx/*" = ["ARG"]
 "package/tests/**.py" = ["PLR2004"]
 "package/PartSegCore/_old_json_hooks.py" = ["PLR0912", "PLR0911"]

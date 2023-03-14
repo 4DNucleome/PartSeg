@@ -221,20 +221,22 @@ class ErrorDialog(QDialog):
                 "name": user_name or getpass.getuser(),
             }
 
-            r = requests.post(
-                url=_feedback_url,
-                data=data,
-                headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
-            )
-            if r.status_code != 200:
-                data["email"] = "unknown@unknown.com"
-                data["name"] = getpass.getuser()
-                requests.post(
+            with suppress(requests.exceptions.Timeout):
+                r = requests.post(
                     url=_feedback_url,
                     data=data,
                     headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+                    timeout=3,
                 )
-
+                if r.status_code != 200:
+                    data["email"] = "unknown@unknown.com"
+                    data["name"] = getpass.getuser()
+                    requests.post(
+                        url=_feedback_url,
+                        data=data,
+                        headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+                        timeout=3,
+                    )
         self.accept()
 
 

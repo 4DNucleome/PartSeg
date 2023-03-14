@@ -21,7 +21,8 @@ plugins_loaded = set()
 def register():
     for el in get_plugins():
         if hasattr(el, "register") and el.__name__ not in plugins_loaded:
-            assert isinstance(el.register, typing.Callable)  # nosec
+            if not isinstance(el.register, typing.Callable):  # pragma: no cover
+                raise TypeError(f"Plugin {el.__name__} has no register method")
             el.register()
             plugins_loaded.add(el.__name__)
 

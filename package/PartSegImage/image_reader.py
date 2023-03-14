@@ -198,10 +198,12 @@ class GenericImageReader(BaseImageReaderBuffer):
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
-            assert not isinstance(image_path, BytesIO)  # nosec
+            if isinstance(image_path, BytesIO):  # pragma: no cover
+                raise NotImplementedError("Oif format is not supported for BytesIO")
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext == ".obsep":
-            assert not isinstance(image_path, BytesIO)  # nosec
+            if isinstance(image_path, BytesIO):  # pragma: no cover
+                raise NotImplementedError("Obsep format is not supported for BytesIO")
             return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
