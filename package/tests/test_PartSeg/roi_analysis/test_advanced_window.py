@@ -172,6 +172,8 @@ def test_multiple_input(qtbot, monkeypatch):
             ("A", str),
             ("B", int, 5),
             ("C", float, 5.0),
+            ("D", int),
+            ("E", float),
         ],
     )
     qtbot.addWidget(widget)
@@ -183,7 +185,7 @@ def test_multiple_input(qtbot, monkeypatch):
     widget.object_dict["A"][1].setText("test")
     widget.accept_response()
     mock.assert_not_called()
-    assert widget.result == {"A": "test", "B": 5, "C": 5.0}
+    assert widget.result == {"A": "test", "B": 5, "C": 5.0, "D": 0, "E": 0.0}
 
 
 def check_text(expected, to_return):

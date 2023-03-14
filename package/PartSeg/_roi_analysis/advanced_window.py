@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Type, Union, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -48,6 +48,8 @@ from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, Measu
 from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
+
+_DialogType = Union[Type[str], Type[int], Type[float]]
 
 
 def h_line():
@@ -835,11 +837,11 @@ class MultipleInput(QDialog):
         self,
         text: str,
         help_text: str = "",
-        objects_list: List[Union[Tuple[str, type], Tuple[str, type, str]]] = None,
+        objects_list: List[Union[Tuple[str, _DialogType], Tuple[str, _DialogType, str]]] = None,
         parent: Optional[QWidget] = None,
     ):
-        if objects_list is None:
-            objects_list = []
+        if objects_list is None:  # pragma: no cover
+            raise ValueError("objects_list cannot be None")
 
         field_dict = {str: QLineEdit, float: _create_input_float, int: _create_input_int}
         super().__init__(parent=parent)
