@@ -146,14 +146,13 @@ class CalculationProcess:
                 if ext in load_class.get_extensions():
                     return load_class.load([calculation.file_path], metadata=metadata)
             raise ValueError("File type not supported")
-        elif operation == RootType.Project:
+        if operation == RootType.Project:
             return LoadProject.load([calculation.file_path], metadata=metadata)
-        else:  # operation == RootType.Mask_project
-            try:
-                return LoadProject.load([calculation.file_path], metadata=metadata)
-            except (KeyError, WrongFileTypeException):
-                # TODO identify exceptions
-                return LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
+        try:
+            return LoadProject.load([calculation.file_path], metadata=metadata)
+        except (KeyError, WrongFileTypeException):
+            # TODO identify exceptions
+            return LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
 
     def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
         """

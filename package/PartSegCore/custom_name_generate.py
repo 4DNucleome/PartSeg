@@ -9,3 +9,4 @@ def custom_name_generate(prohibited_names: Set[str], dict_names: Dict[str, Any])
         if rand_name not in prohibited_names and rand_name not in dict_names:
             return rand_name
         raise RuntimeError("Cannot generate proper names")  # pragma: no cover
+    return None

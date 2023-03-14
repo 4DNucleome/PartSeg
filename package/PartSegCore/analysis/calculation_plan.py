@@ -709,6 +709,7 @@ class CalculationPlan:
                 return el.operation
             if isinstance(el.operation, MaskFile):
                 num -= 1
+        return None
 
     @classmethod
     def dict_load(cls, data_dict):
