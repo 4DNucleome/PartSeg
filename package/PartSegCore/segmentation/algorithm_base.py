@@ -79,7 +79,7 @@ class ROIExtractionResult:
         if "ROI" in self.alternative_representation:
             raise ValueError("alternative_representation field cannot contain field with ROI key")
         for key, value in self.additional_layers.items():
-            if value.name == "":
+            if not value.name:
                 value.name = key
         if self.roi_info is None:
             object.__setattr__(

@@ -84,7 +84,7 @@ class ProfileSelect(QComboBox):
         self._update_choices()
 
     def get_value(self):
-        if self._settings is not None and hasattr(self._settings, "roi_profiles") and self.currentText() != "":
+        if self._settings is not None and hasattr(self._settings, "roi_profiles") and self.currentText():
             return self._settings.roi_profiles[self.currentText()]
         return None
 
@@ -646,7 +646,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     def show_info(self, text):
         self.info_label.setText(text)
-        self.info_label.setVisible(text != "")
+        self.info_label.setVisible(bool(text))
 
     def image_changed(self, image: Image):
         self.form_widget.image_changed(image)

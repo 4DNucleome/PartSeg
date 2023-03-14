@@ -739,7 +739,7 @@ class AlgorithmOptions(QWidget):
 
     def progress_info(self, text, num, file_name="", file_num=0):
         self.progress_info_lab.setVisible(True)
-        if file_name != "":
+        if file_name:
             self.progress_info_lab.setText(file_name + "\n" + text)
         else:
             self.progress_info_lab.setText(text)

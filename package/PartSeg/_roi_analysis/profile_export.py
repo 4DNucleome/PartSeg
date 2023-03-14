@@ -255,7 +255,7 @@ class ImportDialog(QDialog):
         end_reg = re.compile(r"(.*) \((\d+)\)$")
 
         def in_func():
-            if not rename_radio.isChecked() or str(new_name_field.text()).strip() != "":
+            if not rename_radio.isChecked() or str(new_name_field.text()).strip():
                 return
 
             match = end_reg.match(ob_name)

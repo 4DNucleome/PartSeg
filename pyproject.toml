@@ -33,7 +33,7 @@ exclude = '''
 
 [tool.ruff]
 line-length = 120
-select = ["E", "F", "I", "UP", "C", "A" ,"YTT", "W", "B", "A", "C4", "ISC", "ICN", "Q", "SIM", "PLC", "PLE", "PLR", "PLW", "RUF", "PT", "ARG", "PIE"]
+select = ["E", "F", "I", "UP", "C", "A" ,"YTT", "W", "B", "A", "C40", "ISC", "ICN", "Q", "SIM", "PLC", "PLE", "PLR", "PLW", "RUF", "PT", "ARG", "PIE"]
 ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
     "PLR0913" # should be reenabled in future version
 ]
@@ -51,7 +51,7 @@ max-complexity = 15
 
 [tool.ruff.per-file-ignores]
 "docs/conf.py" = ["A001"]
-"package/tests/**" = ["ARG"]
+"package/tests/**" = ["ARG", "PLC1901"]
 "package/PartSegCore/sphinx/*" = ["ARG"]
 "package/tests/**.py" = ["PLR2004"]
 "package/PartSegCore/_old_json_hooks.py" = ["PLR0912", "PLR0911"]
