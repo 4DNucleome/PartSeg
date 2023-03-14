@@ -1,10 +1,11 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
 from qtpy.QtCore import Qt
 
 from PartSeg._roi_analysis import main_window as analysis_main_window
+from PartSegCore.segmentation import ROIExtractionResult
 
 
 class TestAnalysisMainWindow:
@@ -134,3 +135,16 @@ class TestAnalysisOptions:
         assert analysis_options.choose_profile.count() == 2
         assert analysis_options.choose_profile.itemText(1) == "profile"
         info.assert_called_once()
+
+    def test_execution_done(self, analysis_options, part_settings, monkeypatch):
+        sender_mock = MagicMock()
+        sender_mock.get_info_text.return_value = "test"
+        mock = Mock(return_value=sender_mock)
+
+        monkeypatch.setattr(analysis_options, "sender", mock)
+
+        res = ROIExtractionResult(
+            np.zeros(part_settings.image.shape, dtype="uint8"),
+            analysis_options.algorithm_choose_widget.algorithm_dict["Lower threshold"].get_segmentation_profile(),
+        )
+        analysis_options.execution_done(res)
