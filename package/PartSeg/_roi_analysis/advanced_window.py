@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -729,7 +729,7 @@ class MeasurementSettings(QWidget):
         for i in range(self.profile_options_chosen.count()):
             txt = str(self.profile_options_chosen.item(i).text())
             selected_values.append((txt, str, txt))
-        val_dialog = MultipleInput("Set fields name", list(selected_values), parent=self)
+        val_dialog = MultipleInput("Set fields name", objects_list=list(selected_values), parent=self)
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
@@ -831,34 +831,17 @@ class SegAdvancedWindow(AdvancedWindow):
 
 
 class MultipleInput(QDialog):
-    def __init__(self, text, help_text, objects_list=None, parent=None):  # noqa: PLR0915
+    def __init__(
+        self,
+        text: str,
+        help_text: str = "",
+        objects_list: List[Union[Tuple[str, type], Tuple[str, type, str]]] = None,
+        parent: Optional[QWidget] = None,
+    ):
         if objects_list is None:
-            objects_list = help_text
-            help_text = ""
+            objects_list = []
 
-        def create_input_float(obj, ob2=None):
-            if ob2 is not None:
-                val = obj
-                obj = ob2
-            else:
-                val = 0
-            res = QDoubleSpinBox(obj)
-            res.setRange(-1000000, 1000000)
-            res.setValue(val)
-            return res
-
-        def create_input_int(obj, ob2=None):
-            if ob2 is not None:
-                val = obj
-                obj = ob2
-            else:
-                val = 0
-            res = QSpinBox(obj)
-            res.setRange(-1000000, 1000000)
-            res.setValue(val)
-            return res
-
-        field_dict = {str: QLineEdit, float: create_input_float, int: create_input_int}
+        field_dict = {str: QLineEdit, float: _create_input_float, int: _create_input_int}
         super().__init__(parent=parent)
         ok_butt = QPushButton("Ok", self)
         cancel_butt = QPushButton("Cancel", self)
@@ -916,3 +899,27 @@ class MultipleInput(QDialog):
     @property
     def get_response(self):
         return self.result
+
+
+def _create_input_float(obj, ob2=None):
+    if ob2 is not None:
+        val = obj
+        obj = ob2
+    else:
+        val = 0
+    res = QDoubleSpinBox(obj)
+    res.setRange(-1000000, 1000000)
+    res.setValue(val)
+    return res
+
+
+def _create_input_int(obj, ob2=None):
+    if ob2 is not None:
+        val = obj
+        obj = ob2
+    else:
+        val = 0
+    res = QSpinBox(obj)
+    res.setRange(-1000000, 1000000)
+    res.setValue(val)
+    return res

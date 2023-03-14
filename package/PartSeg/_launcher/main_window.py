@@ -25,7 +25,7 @@ class Prepare(QThread):
         self.errors = []
 
     def run(self):
-        if not self.module:
+        if not self.module:  # pragma: no cover
             return
 
         from PartSeg import plugins
