@@ -55,6 +55,7 @@ select = [
     "RSE", # flake8-raise
     "RET", # flake8-return
     "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
     "ARG", # flake8-unused-arguments
     "PLC", "PLE", "PLR", "PLW", # pylint
     "NPY", # NumPy-specific rules
