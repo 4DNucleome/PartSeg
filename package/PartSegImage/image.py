@@ -187,7 +187,7 @@ class Image:
         if isinstance(data, list) and not axes_order.startswith("C"):  # pragma: no cover
             raise ValueError("When passing data as list of numpy arrays then Channel must be first axis.")
         if "C" not in axes_order:
-            if not isinstance(data, np.ndarray):
+            if not isinstance(data, np.ndarray):  # pragma: no cover
                 raise TypeError("If `axes_order` does not contain `C` then data must be numpy array.")
             return [cls.reorder_axes(data, axes_order)]
         if axes_order.startswith("C"):
@@ -197,7 +197,7 @@ class Image:
             return [cls.reorder_axes(x, axes_order[1:]) for x in data]
 
         if not isinstance(data, np.ndarray):
-            raise TypeError("If `data` is list of arrays then `axes_order` must start with `C`")
+            raise TypeError("If `data` is list of arrays then `axes_order` must start with `C`")  # pragma: no cover
         pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(data.ndim)]
         c_pos = axes_order.index("C")
         res = []

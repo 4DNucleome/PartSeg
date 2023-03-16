@@ -21,7 +21,7 @@ class Channel:
         if isinstance(value, Channel):
             value = value.value
         if not isinstance(value, (str, int)):
-            raise TypeError(f"wrong type {value} {type(value)}")
+            raise TypeError(f"wrong type {value} {type(value)}")  # pragma: no cover
         self._value: Union[str, int] = value
 
     @property
