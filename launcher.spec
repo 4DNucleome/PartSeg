@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
 import sys
@@ -88,7 +88,7 @@ hiddenimports = (
         "psygnal._dataclass_utils",
         "psygnal._weak_callback",
     ]
-    + [x.module_name for x in imageio_known_plugins.values()]
+    + [x.module_name for x in imageio_known_plugins.values()] # + [x for x in collect_submodules("skimage") if "tests" not in x]
 )
 
 
@@ -172,6 +172,7 @@ a = Analysis(
     + collect_data_files("vispy")
     + collect_data_files("napari")
     + collect_data_files("freetype")
+    + collect_data_files("skimage")
     + pyzmq_data
     + plugins_data
     + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")],
