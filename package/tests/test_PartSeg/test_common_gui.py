@@ -70,7 +70,13 @@ from PartSeg.common_gui.custom_load_dialog import (
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
-from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, QMessageFromException, _print_traceback
+from PartSeg.common_gui.error_report import (
+    _FEEDBACK_URL,
+    DataImportErrorDialog,
+    ErrorDialog,
+    QMessageFromException,
+    _print_traceback,
+)
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
 from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelShow
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
@@ -1682,6 +1688,40 @@ class TestErrorDialog:
         dialog.create_issue()
         assert "title=Error" in mock_web.call_args.args[0]
         assert "body=This" in mock_web.call_args.args[0]
+
+    @patch("requests.post")
+    @patch("sentry_sdk.push_scope")
+    def test_send_report(self, sentry_mock, request_mock, qtbot):
+        dialog = ErrorDialog(ValueError("aaa"), "Test text")
+        qtbot.addWidget(dialog)
+        assert dialog.additional_info.toPlainText() == ""
+        dialog.send_report()
+        sentry_mock.assert_called_once()
+        request_mock.assert_not_called()
+
+    @patch("requests.post")
+    @patch("sentry_sdk.push_scope")
+    @pytest.mark.parametrize(
+        ("email", "expected", "return_code", "post_call_count"),
+        [
+            ("test@test.pl", "test@test.pl", 200, 1),
+            ("test#test.pl", "unknown@unknown.com", 200, 1),
+            ("test@test.pl", "unknown@unknown.com", 300, 2),
+        ],
+    )
+    def test_send_report_with_message(
+        self, sentry_mock, request_mock, qtbot, email, expected, return_code, post_call_count
+    ):
+        request_mock.return_value = MagicMock(status_code=return_code)
+        dialog = ErrorDialog(ValueError("aaa"), "Test text")
+        qtbot.addWidget(dialog)
+        dialog.additional_info.setText("Test message")
+        dialog.contact_info.setText(email)
+        dialog.send_report()
+        sentry_mock.assert_called_once()
+        assert request_mock.call_count == post_call_count
+        assert request_mock.call_args.kwargs["url"] == _FEEDBACK_URL
+        assert request_mock.call_args.kwargs["data"]["email"] == expected
 
 
 class TestMguiChannelComboBox:
