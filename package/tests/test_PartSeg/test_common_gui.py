@@ -1709,7 +1709,7 @@ class TestErrorDialog:
             ("test@test.pl", "unknown@unknown.com", 300, 2),
         ],
     )
-    def test_send_report_with_message(
+    def test_send_report_with_message(  # pylint: disable=too-many-arguments
         self, sentry_mock, request_mock, qtbot, email, expected, return_code, post_call_count
     ):
         request_mock.return_value = MagicMock(status_code=return_code)
