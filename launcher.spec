@@ -61,7 +61,7 @@ if napari_version <= parse_version("0.4.16"):
 from imageio.config.plugins import known_plugins as imageio_known_plugins
 
 hiddenimports = (
-    ["imagecodecs._" + x for x in imagecodecs._extensions()]
+    [f"imagecodecs.{y}" for y in (x if x[0] == "_" else f"_{x}" for x in imagecodecs._extensions())]
     + ["imagecodecs._shared"]
     + plugins
     + ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"]
@@ -87,8 +87,9 @@ hiddenimports = (
         "psygnal._signal",
         "psygnal._dataclass_utils",
         "psygnal._weak_callback",
+        "imagecodecs._imagecodecs"
     ]
-    + [x.module_name for x in imageio_known_plugins.values()] # + [x for x in collect_submodules("skimage") if "tests" not in x]
+    + [x.module_name for x in imageio_known_plugins.values()] + [x for x in collect_submodules("skimage") if "tests" not in x]
 )
 
 
