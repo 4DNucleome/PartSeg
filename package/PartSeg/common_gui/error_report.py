@@ -5,6 +5,7 @@ THis module contains widgets used for error reporting. The report backed is sent
 """
 import getpass
 import io
+import os
 import pprint
 import re
 import traceback
@@ -218,7 +219,7 @@ class ErrorDialog(QDialog):
                 "comments": self.additional_info.toPlainText(),
                 "event_id": event_id,
                 "email": contact_text if _EMAIL_REGEXP.match(contact_text) else "unknown@unknown.com",
-                "name": user_name or getpass.getuser(),
+                "name": user_name or get_user(),
             }
 
             with suppress(requests.exceptions.Timeout):
@@ -230,7 +231,7 @@ class ErrorDialog(QDialog):
                 )
                 if r.status_code != 200:
                     data["email"] = "unknown@unknown.com"
-                    data["name"] = getpass.getuser()
+                    data["name"] = get_user()
                     requests.post(
                         url=_FEEDBACK_URL,
                         data=data,
@@ -444,3 +445,11 @@ class QMessageFromException(QMessageBox):
         )
         ob.setDefaultButton(default_button)
         return ob.exec_()
+
+
+def get_user():
+    try:
+        return getpass.getuser()
+    except ModuleNotFoundError:  # pragma: no cover
+        # On windows `pwd` module is not available
+        return os.getlogin()
