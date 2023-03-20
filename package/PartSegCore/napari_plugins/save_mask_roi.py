@@ -17,7 +17,7 @@ def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
     if ext in SaveROI.get_extensions():
         project = MaskProjectTuple(file_path="", image=None, roi_info=ROIInfo(data))
         SaveROI.save(
-            path, project, parameters=SaveROIOptions(spacing=np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-3:])
+            path, project, parameters=SaveROIOptions(spacing=list(np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-3:]))
         )
         return path
     return None
