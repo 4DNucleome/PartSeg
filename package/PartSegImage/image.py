@@ -91,7 +91,7 @@ class Image:
 
     def __new__(cls, *args, **kwargs):
         if hasattr(cls, "return_order"):  # pragma: no cover
-            warnings.warn("Using return_order is deprecated since PartSeg 0.11.0", DeprecationWarning)
+            warnings.warn("Using return_order is deprecated since PartSeg 0.11.0", DeprecationWarning, stacklevel=2)
             cls.axis_order = cls.return_order
         cls.array_axis_order = cls.axis_order.replace("C", "")
         return super().__new__(cls)

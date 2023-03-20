@@ -447,7 +447,7 @@ class QMessageFromException(QMessageBox):
         return ob.exec_()
 
 
-def get_user():
+def get_user() -> str:
     try:
         return getpass.getuser()
     except ModuleNotFoundError:  # pragma: no cover

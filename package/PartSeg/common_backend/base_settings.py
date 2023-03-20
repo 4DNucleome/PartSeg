@@ -118,7 +118,7 @@ class ImageSettings(QObject):
     @property
     def segmentation(self) -> np.ndarray:  # pragma: no cover
         """current roi"""
-        warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning)
+        warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi
 
     @property
@@ -128,7 +128,7 @@ class ImageSettings(QObject):
 
     @property
     def segmentation_info(self) -> ROIInfo:  # pragma: no cover
-        warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning)
+        warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi_info
 
     @property
