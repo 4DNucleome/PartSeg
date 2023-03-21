@@ -709,6 +709,7 @@ class CalculationPlan:
                 return el.operation
             if isinstance(el.operation, MaskFile):
                 num -= 1
+        return None
 
     @classmethod
     def dict_load(cls, data_dict):
@@ -727,7 +728,7 @@ class CalculationPlan:
         return res_plan
 
     @staticmethod
-    def get_el_name(el):  # noqa C901
+    def get_el_name(el):  # noqa: C901, PLR0911, PLR0912
         """
         :param el: Plan element
         :return: str

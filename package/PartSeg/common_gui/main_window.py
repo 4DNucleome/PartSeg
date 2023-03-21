@@ -327,7 +327,7 @@ class BaseMainWindow(QMainWindow):
 
     @staticmethod
     def get_project_info(file_path, image):
-        raise NotADirectoryError()
+        raise NotImplementedError
 
     def image_adjust_exec(self):
         dial = ImageAdjustmentDialog(self.settings.image)

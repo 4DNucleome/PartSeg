@@ -35,7 +35,7 @@ class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
         :param arguments: additional arguments defined by :py:meth:`get_fields`
         :return: channel array with removed noise
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class NoneNoiseFiltering(NoiseFilteringBase):

@@ -2,12 +2,6 @@ default_language_version:
     python: python3.8
 
 repos:
--   repo: https://github.com/MarcoGorelli/absolufy-imports
-    rev: v0.3.1
-    hooks:
-    -   id: absolufy-imports
-        args: ["--application-directories", "package"]
-        exclude: examples|setup.py|build_utils|docs|toxfile.py
 -   repo: https://github.com/psf/black
     rev: 23.1.0
     hooks:

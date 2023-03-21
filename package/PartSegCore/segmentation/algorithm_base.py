@@ -176,12 +176,12 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
     @classmethod
     @abstractmethod
     def support_time(cls):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
     def support_z(cls):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def set_mask(self, mask):
         """Set mask which will limit segmentation area"""
@@ -201,11 +201,11 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
 
     @abstractmethod
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def get_info_text(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_channel(self, channel_idx):
         if self.support_time():

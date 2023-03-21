@@ -120,7 +120,7 @@ class BaseThreshold:
         raise NotImplementedError
 
     def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class BaseOneThreshold(BaseThreshold, ABC):  # pylint: disable=W0223

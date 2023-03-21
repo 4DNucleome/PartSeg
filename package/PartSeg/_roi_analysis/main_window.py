@@ -522,6 +522,8 @@ class MaskDialog(MaskDialogBase):
 
 
 class MainWindow(BaseMainWindow):
+    settings: PartSettings
+
     @classmethod
     def get_setting_class(cls) -> Type[PartSettings]:
         return PartSettings
@@ -536,7 +538,6 @@ class MainWindow(BaseMainWindow):
         self.files_num = 2
         self.setMinimumWidth(600)
         # thi isinstance is only for hinting in IDE
-        assert isinstance(self.settings, PartSettings)  # nosec
         self.main_menu = MainMenu(self.settings, self)
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_image")
         self.raw_image = CompareImageView(self.settings, self.channel_control2, "raw_image")

@@ -42,7 +42,7 @@ def check_segmentation_type(tar_file: TarFile) -> SegmentationType:
         return SegmentationType.analysis
     if "metadata.json" in names:
         return SegmentationType.mask
-    raise WrongFileTypeException()
+    raise WrongFileTypeException
 
 
 def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
@@ -68,7 +68,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_short_name(cls):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def save(
@@ -87,7 +87,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         :param range_changed: report function for inform about steps num
         :param step_changed: report function for progress
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def get_name_with_suffix(cls):
@@ -130,7 +130,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_short_name(cls):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def load(
@@ -149,7 +149,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         :param metadata: additional information needed by function. Like default spacing for load image
         :return: Project info or list of project info
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def get_name_with_suffix(cls):

@@ -161,7 +161,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
         :return: name of algorithm
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     @_partial_abstractmethod
@@ -178,7 +178,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
                 stacklevel=2,
             )
             return base_model_to_algorithm_property(cls.__argument_class__)
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def _get_fields(cls):

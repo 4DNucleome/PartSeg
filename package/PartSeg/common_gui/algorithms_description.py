@@ -234,7 +234,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return res
 
     @staticmethod
-    def get_change_signal(widget: typing.Union[QWidget, Widget]):  # noqa PLR0901
+    def get_change_signal(widget: typing.Union[QWidget, Widget]):  # noqa: PLR0911
         if isinstance(widget, Widget):
             return widget.changed
         if isinstance(widget, QComboBox):
@@ -256,7 +256,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         raise ValueError(f"Unsupported type: {type(widget)}")
 
     @staticmethod
-    def get_getter_and_setter_function(  # noqa PLR0901
+    def get_getter_and_setter_function(  # noqa: PLR0911
         widget: typing.Union[QWidget, Widget],
     ) -> typing.Tuple[
         typing.Callable[
