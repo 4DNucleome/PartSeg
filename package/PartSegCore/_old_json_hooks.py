@@ -97,7 +97,7 @@ def part_hook(dkt):
     return profile_hook(dkt)
 
 
-def profile_hook(dkt):  # noqa: C901
+def profile_hook(dkt):
     """
     hook for json loading
 

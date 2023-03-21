@@ -76,7 +76,7 @@ class MaskCreate(QWidget):
         self.settings.set("mask_create_name", layer_name)
         mask_property = self.mask_widget.get_mask_property()
         if mask_property.clip_to_mask and self.mask_select.value is None:
-            warnings.warn("Select base mask", RuntimeWarning)
+            warnings.warn("Select base mask", RuntimeWarning, stacklevel=1)
             return
         base_mask = None if self.mask_select.value is None else self.mask_select.value.data
         scale = np.array(self.roi_select.value.scale)

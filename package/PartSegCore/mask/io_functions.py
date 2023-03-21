@@ -105,7 +105,7 @@ class MaskProjectTuple(ProjectInfoBase):
 
     @property
     def roi(self):
-        warnings.warn("roi is deprecated", DeprecationWarning, 2)
+        warnings.warn("roi is deprecated", DeprecationWarning, stacklevel=2)
         return self.roi_info.roi
 
 
@@ -235,7 +235,7 @@ def save_stack_segmentation(
 
 def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, step_changed=None):
     if check_segmentation_type(tar_file) != SegmentationType.mask:
-        raise WrongFileTypeException()
+        raise WrongFileTypeException  # pragma: no cover
     files = tar_file.getnames()
     step_changed(1)
     metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))

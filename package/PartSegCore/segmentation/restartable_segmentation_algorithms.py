@@ -40,7 +40,7 @@ REQUIRE_MASK_STR = "Need mask"
 
 
 def blank_operator(_x, _y):
-    raise NotImplementedError()
+    raise NotImplementedError
 
 
 class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
@@ -82,7 +82,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
     @abstractmethod
     def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> typing.Optional[ROIExtractionResult]:
         """Restartable calculation may return None if there is no need to recalculate"""
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class BorderRimParameters(BorderRimBase.__argument_class__):

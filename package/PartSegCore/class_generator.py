@@ -272,7 +272,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     global_state["__name__"] = f"serialize_{typename}"
     try:
         # pylint: disable=W0122
-        exec(class_definition, global_state)  # nosec
+        exec(class_definition, global_state)  # nosec  # noqa: S102
     except AttributeError:
         print(class_definition, file=sys.stderr)
         raise

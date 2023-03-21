@@ -44,7 +44,7 @@ class BaseThreshold(AlgorithmDescribeBase, ABC):
         arguments: BaseModel,
         operator: typing.Callable[[object, object], bool],
     ):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class ManualThreshold(BaseThreshold):
