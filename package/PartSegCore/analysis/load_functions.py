@@ -47,6 +47,8 @@ __all__ = [
     "LoadMaskSegmentation",
 ]
 
+from PartSegImage.image import FRAME_THICKNESS
+
 
 def _load_history(tar_file):
     history = []
@@ -306,11 +308,16 @@ def load_mask_project(
     res = []
     base, ext = os.path.splitext(load_locations[0])
     path_template = base + "_component{}" + ext
+    range_changed(0, len(components))
     for i in components:
-        single_roi = roi == i
+        step_changed(i)
+        bound = data.roi_info.bound_info[i]
+        single_roi = roi[tuple(bound.get_slices(FRAME_THICKNESS))] == i
         if not np.any(single_roi):
             continue
-        im = image.cut_image(roi == i, replace_mask=True, zero_out_cut_area=zero_out_cut_area)
+        im = image.cut_image(bound.get_slices(), replace_mask=True, zero_out_cut_area=zero_out_cut_area).cut_image(
+            single_roi, replace_mask=True, zero_out_cut_area=zero_out_cut_area
+        )
         im.file_path = path_template.format(i)
         res.append(ProjectTuple(im.file_path, im, mask=im.mask))
     return res
