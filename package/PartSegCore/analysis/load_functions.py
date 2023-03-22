@@ -340,6 +340,16 @@ class LoadMaskSegmentation(LoadBase):
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.List[ProjectTuple]:
+        if range_changed is None:
+
+            def range_changed(_x, _y):
+                return None
+
+        if step_changed is None:
+
+            def step_changed(_):
+                return None
+
         return load_mask_project(load_locations, range_changed, step_changed, metadata)
 
 
