@@ -374,8 +374,8 @@ class ImageView(QWidget):
         if bright_array:
             text += str(bright_array[0]) if len(bright_array) == 1 else str(bright_array)
         self.components = components
-        text += _print_list(components, "component")
-        text += _print_list(alt_components, "alt")
+        text += _print_list(components, " component")
+        text += _print_list(alt_components, " alt")
         self.text_info_change.emit(text)
 
     def mask_opacity(self) -> float:

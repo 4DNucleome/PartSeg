@@ -15,6 +15,7 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, ROIE
 from PartSegCore.segmentation.border_smoothing import NoneSmoothing, OpeningSmoothing, SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import BaseThreshold, DoubleThresholdSelection, ThresholdSelection
+from PartSegCore.segmentation.utils import close_small_holes
 from PartSegCore.segmentation.watershed import BaseWatershed, FlowMethodSelection
 from PartSegCore.utils import BaseModel, bisect
 from PartSegImage import Channel
@@ -565,15 +566,3 @@ final_algorithm_list = [
     CellFromNucleusFlow,
     SplitImageOnParts,
 ]
-
-
-def close_small_holes(image, max_hole_size):
-    if image.dtype == bool:
-        image = image.astype(np.uint8)
-    if len(image.shape) == 2:
-        rev_conn = sitk.ConnectedComponent(sitk.BinaryNot(sitk.GetImageFromArray(image)), True)
-        return sitk.GetArrayFromImage(sitk.BinaryNot(sitk.RelabelComponent(rev_conn, max_hole_size)))
-    for layer in image:
-        rev_conn = sitk.ConnectedComponent(sitk.BinaryNot(sitk.GetImageFromArray(layer)), True)
-        layer[...] = sitk.GetArrayFromImage(sitk.BinaryNot(sitk.RelabelComponent(rev_conn, max_hole_size)))
-    return image

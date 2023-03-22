@@ -10,9 +10,9 @@ from PartSegCore.segmentation.restartable_segmentation_algorithms import final_a
 from PartSegCore.segmentation.segmentation_algorithm import (
     CellFromNucleusFlow,
     ThresholdFlowAlgorithm,
-    close_small_holes,
 )
 from PartSegCore.segmentation.segmentation_algorithm import final_algorithm_list as algorithm_list
+from PartSegCore.segmentation.utils import close_small_holes
 
 
 def empty(*_):

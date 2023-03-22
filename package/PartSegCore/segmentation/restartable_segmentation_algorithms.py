@@ -445,6 +445,7 @@ class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
     def __init__(self):
         super().__init__()
         self.sprawl_area = None
+        self._original_output = None
 
     def _threshold(self, image, thr=None):
         if thr is None:
@@ -454,6 +455,7 @@ class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
         )
         self.threshold_info = thr_val
         self.sprawl_area = (mask >= 1).astype(np.uint8)
+        self._original_output = mask
         return (mask == 2).astype(np.uint8)
 
 
@@ -532,7 +534,10 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             return ROIExtractionResult(
                 roi=new_segment,
                 parameters=self.get_segmentation_profile(),
-                additional_layers=self.get_additional_layers(full_segmentation=self.sprawl_area),
+                additional_layers={
+                    "original": AdditionalLayerDescription(data=self._original_output, layer_type="labels"),
+                    **self.get_additional_layers(full_segmentation=self.sprawl_area),
+                },
                 roi_annotation={
                     i: {"component": i, "core voxels": self._sizes_array[i], "voxels": v}
                     for i, v in enumerate(self.final_sizes[1:], 1)

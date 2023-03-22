@@ -9,6 +9,7 @@ from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
+from PartSegCore.segmentation.utils import close_small_holes
 from PartSegCore.utils import BaseModel
 
 
@@ -392,6 +393,13 @@ class MaximumDistanceWatershedParams(BaseModel):
     threshold: ThresholdSelection = ThresholdSelection.get_default()
     dilate_radius: int = Field(5, title="Dilate Radius", ge=1, le=100, description="To merge small objects")
     minimum_size: int = Field(100, title="Minimum Size", ge=1, le=1000000, description="To remove small objects")
+    minimum_radius: float = Field(
+        10.0,
+        title="Minimum Radius",
+        ge=0.0,
+        le=100.0,
+        description="Minimum distance of local maxima from the border. To avoid artifacts",
+    )
 
 
 class MaximumDistanceWatershed(BaseThreshold):
@@ -416,7 +424,9 @@ class MaximumDistanceWatershed(BaseThreshold):
         mask1 = sitk.GetArrayFromImage(
             sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(mask1)), arguments.minimum_size)
         )
-        data = sitk.GetArrayFromImage(sitk.DanielssonDistanceMap(sitk.GetImageFromArray((mask1 == 0).astype(np.uint8))))
+        mask2 = close_small_holes((mask1 > 0), 10)
+        data = sitk.GetArrayFromImage(sitk.DanielssonDistanceMap(sitk.GetImageFromArray((mask2 == 0).astype(np.uint8))))
+        data[data < arguments.minimum_radius] = 0
 
         maxima = sitk.GetArrayFromImage(
             sitk.RelabelComponent(
@@ -429,6 +439,7 @@ class MaximumDistanceWatershed(BaseThreshold):
                 (arguments.dilate_radius * 2 + 1) ** dim_num,
             )
         )
+        mask1[mask1 > 0] = 1
         mask1[maxima > 0] = 2
         if operator(0, 1):
             meth = np.max
