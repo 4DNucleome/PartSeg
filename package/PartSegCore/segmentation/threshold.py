@@ -388,6 +388,55 @@ class MultipleOtsu(BaseThreshold):
         return res2, (thr1, thr2)
 
 
+class MaximumDistanceWatershedParams(BaseModel):
+    threshold: ThresholdSelection = ThresholdSelection.get_default()
+    dilate_radius: int = Field(5, title="Dilate Radius", ge=1, le=100, description="To merge small objects")
+    minimum_size: int = Field(100, title="Minimum Size", ge=1, le=1000000, description="To remove small objects")
+
+
+class MaximumDistanceWatershed(BaseThreshold):
+    __argument_class__ = MaximumDistanceWatershedParams
+
+    @classmethod
+    def get_name(cls):
+        return "Maximum Distance Watershed"
+
+    @classmethod
+    @update_argument("arguments")
+    def calculate_mask(
+        cls,
+        data: np.ndarray,
+        mask: typing.Optional[np.ndarray],
+        arguments: MaximumDistanceWatershedParams,
+        operator: typing.Callable[[object, object], bool],
+    ):
+        thr: BaseThreshold = ThresholdSelection[arguments.threshold.name]
+        dim_num = sum(x > 1 for x in data.shape)
+        mask1, thr_val = thr.calculate_mask(data, mask, arguments.threshold.values, operator)
+        mask1 = sitk.GetArrayFromImage(
+            sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(mask1)), arguments.minimum_size)
+        )
+        data = sitk.GetArrayFromImage(sitk.DanielssonDistanceMap(sitk.GetImageFromArray((mask1 == 0).astype(np.uint8))))
+
+        maxima = sitk.GetArrayFromImage(
+            sitk.RelabelComponent(
+                sitk.ConnectedComponent(
+                    sitk.BinaryDilate(
+                        sitk.RegionalMaxima(sitk.GetImageFromArray(data)),
+                        [arguments.dilate_radius] * 3,
+                    )
+                ),
+                (arguments.dilate_radius * 2 + 1) ** dim_num,
+            )
+        )
+        mask1[maxima > 0] = 2
+        if operator(0, 1):
+            meth = np.max
+        else:
+            meth = np.min
+        return mask1, (thr_val, meth(data[mask1 == 2]))
+
+
 class DoubleThresholdSelection(
     AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold
 ):
@@ -397,6 +446,7 @@ class DoubleThresholdSelection(
 DoubleThresholdSelection.register(DoubleThreshold)
 DoubleThresholdSelection.register(DoubleOtsu)
 DoubleThresholdSelection.register(MultipleOtsu)
+DoubleThresholdSelection.register(MaximumDistanceWatershed)
 
 
 def __getattr__(name):  # pragma: no cover
