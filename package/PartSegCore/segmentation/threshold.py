@@ -434,7 +434,7 @@ class MaximumDistanceWatershed(BaseThreshold):
             meth = np.max
         else:
             meth = np.min
-        return mask1, (thr_val, meth(data[mask1 == 2]))
+        return mask1, (thr_val, float(meth(data[mask1 == 2]) if np.any(mask1 == 2) else meth(data[mask1 == 1])))
 
 
 class DoubleThresholdSelection(
