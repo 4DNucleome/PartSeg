@@ -5,6 +5,7 @@ from PartSegCore.segmentation.segmentation_algorithm import (
     AutoThresholdAlgorithm,
     CellFromNucleusFlow,
     MorphologicalWatershed,
+    SplitImageOnParts,
     ThresholdAlgorithm,
     ThresholdFlowAlgorithm,
     ThresholdPreview,
@@ -25,6 +26,7 @@ MaskAlgorithmSelection.register(ThresholdPreview)
 MaskAlgorithmSelection.register(AutoThresholdAlgorithm)
 MaskAlgorithmSelection.register(CellFromNucleusFlow)
 MaskAlgorithmSelection.register(MorphologicalWatershed)
+MaskAlgorithmSelection.register(SplitImageOnParts)
 
 
 def __getattr__(name):  # pragma: no cover

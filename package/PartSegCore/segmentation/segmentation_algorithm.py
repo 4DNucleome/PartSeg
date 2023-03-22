@@ -1,5 +1,7 @@
 import operator
 from abc import ABC
+from itertools import product
+from math import ceil
 from typing import Callable, Optional
 
 import numpy as np
@@ -513,6 +515,47 @@ class CellFromNucleusFlow(StackAlgorithm):
         return "Cell from nucleus flow"
 
 
+class SplitImageOnPartsParameters(BaseModel):
+    side_length: int = Field(1000, ge=100, le=10**5)
+
+
+class SplitImageOnParts(StackAlgorithm):
+    __argument_class__ = SplitImageOnPartsParameters
+    new_parameters: SplitImageOnPartsParameters
+
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
+        report_fun("Splitting image", 0)
+        image = self.image
+        size = self.new_parameters.side_length
+        count_components = ceil(image.shape[-1] / size) * ceil(image.shape[-2] / size)
+        if count_components > 254:
+            dtype = np.uint16
+        else:
+            dtype = np.uint8
+        mask = np.zeros(image.shape, dtype=dtype)
+        x_step = ceil(image.shape[-1] / size)
+        y_step = ceil(image.shape[-2] / size)
+        for cnt, (i, j) in enumerate(product(range(x_step), range(y_step)), start=1):
+            mask[..., j * size : (j + 1) * size, i * size : (i + 1) * size] = cnt
+
+        report_fun("Done", 1)
+        return ROIExtractionResult(
+            roi=mask,
+            parameters=self.get_segmentation_profile(),
+        )
+
+    def get_info_text(self):
+        return ""
+
+    @staticmethod
+    def get_steps_num():
+        return 2
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Split image on parts"
+
+
 final_algorithm_list = [
     ThresholdAlgorithm,
     ThresholdFlowAlgorithm,
@@ -520,6 +563,7 @@ final_algorithm_list = [
     ThresholdPreview,
     AutoThresholdAlgorithm,
     CellFromNucleusFlow,
+    SplitImageOnParts,
 ]
 
 
