@@ -49,7 +49,7 @@ def cut_image(image: Image, size: int, save_dir: str):
             image_cut,
             os.path.join(
                 save_dir,
-                os.path.splitext(os.path.basename(image.file_path))[0] + f"_component{cnt}.tif",
+                f"{os.path.splitext(os.path.basename(image.file_path))[0]}_component{cnt}.tif",
             ),
         )
 
@@ -72,7 +72,7 @@ def main():
             generate_mask(
                 project_tuple,
                 args.size,
-                os.path.splitext(os.path.join(args.save_dir, os.path.basename(file_path)))[0] + "_mask.seg",
+                f"{os.path.splitext(os.path.join(args.save_dir, os.path.basename(file_path)))[0]}_mask.seg",
             )
         else:
             cut_image(project_tuple.image, args.size, args.save_dir)
