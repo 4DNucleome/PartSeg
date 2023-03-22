@@ -3,6 +3,7 @@ import logging
 import os
 from argparse import ArgumentParser
 from glob import glob
+from itertools import product
 from math import ceil
 
 import numpy as np
@@ -10,6 +11,13 @@ import numpy as np
 from PartSegCore.mask.io_functions import LoadStackImage, MaskProjectTuple, SaveROI, SaveROIOptions
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image, ImageWriter
+
+try:
+    from tqdm import tqdm
+except ImportError:
+
+    def tqdm(x, total):  # noqa: ARG001
+        return x
 
 
 def generate_mask(project_tuple: MaskProjectTuple, size: int, save_path: str):
@@ -21,31 +29,29 @@ def generate_mask(project_tuple: MaskProjectTuple, size: int, save_path: str):
     else:
         dtype = np.uint8
     mask = np.zeros(image.shape, dtype=dtype)
-    cnt = 1
-    for i in range(ceil(image.shape[-1] / size)):
-        for j in range(ceil(image.shape[-2] / size)):
-            mask[..., j * size : (j + 1) * size, i * size : (i + 1) * size] = cnt
-            cnt += 1
+    x_step = ceil(image.shape[-1] / size)
+    y_step = ceil(image.shape[-2] / size)
+    for cnt, (i, j) in enumerate(tqdm(product(range(x_step), range(y_step)), total=x_step * y_step), start=1):
+        mask[..., j * size : (j + 1) * size, i * size : (i + 1) * size] = cnt
     project_tuple = dataclasses.replace(project_tuple, roi_info=ROIInfo(mask))
     logging.info("Save mask to %s", save_path)
     SaveROI.save(save_path, project_tuple, SaveROIOptions(relative_path=True, mask_data=True))
 
 
 def cut_image(image: Image, size: int, save_dir: str):
-    num = 1
-    for i in range(ceil(image.shape[-1] / size)):
-        for j in range(ceil(image.shape[-2] / size)):
-            image_cut = image.cut_image(
-                [slice(None), slice(None), slice(j * size, (j + 1) * size), slice(i * size, (i + 1) * size)]
-            )
-            ImageWriter.save(
-                image_cut,
-                os.path.join(
-                    save_dir,
-                    os.path.splitext(os.path.basename(image.file_path))[0] + f"_component{num}.tif",
-                ),
-            )
-            num += 1
+    x_step = ceil(image.shape[-1] / size)
+    y_step = ceil(image.shape[-2] / size)
+    for cnt, (i, j) in enumerate(tqdm(product(range(x_step), range(y_step)), total=x_step * y_step), start=1):
+        image_cut = image.cut_image(
+            [slice(None), slice(None), slice(j * size, (j + 1) * size), slice(i * size, (i + 1) * size)]
+        )
+        ImageWriter.save(
+            image_cut,
+            os.path.join(
+                save_dir,
+                os.path.splitext(os.path.basename(image.file_path))[0] + f"_component{cnt}.tif",
+            ),
+        )
 
 
 def main():
