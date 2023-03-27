@@ -595,7 +595,10 @@ class CalculationPrepare(QDialog):
 
         warn_state = np.amax(self.state_list, axis=1, initial=0)
 
-        all_prefix = os.path.commonprefix(self.file_list)
+        if len(self.file_list) == 1:
+            all_prefix = os.path.dirname(self.file_list[0])
+        else:
+            all_prefix = os.path.commonprefix(self.file_list)
         if not os.path.exists(all_prefix):
             all_prefix = os.path.dirname(all_prefix)
         for file_num, file_path in enumerate(self.file_list):
