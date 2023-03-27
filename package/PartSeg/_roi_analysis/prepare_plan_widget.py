@@ -437,6 +437,8 @@ class ROIExtractionOp(ProtectedGroupBox):
         self._refresh_profiles()
         self._refresh_pipelines()
         self._update_btn_text()
+        self.settings.roi_profiles_changed.connect(self._refresh_profiles)
+        self.settings.roi_pipelines_changed.connect(self._refresh_pipelines)
 
     def set_replace(self, replace: bool):
         super().set_replace(replace)
@@ -541,6 +543,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
 
         self.add_measurement_btn.setDisabled(True)
         self._refresh_measurement()
+        self.settings.measurement_profiles_changed.connect(self._refresh_measurement)
 
     def set_replace(self, replace: bool):
         super().set_replace(replace)
