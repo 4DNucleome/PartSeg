@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import sys
@@ -17,6 +18,7 @@ from packaging.version import parse as parse_version
 from tifffile import TiffFile
 
 from PartSegCore.algorithm_describe_base import Register, ROIExtractionProfile
+from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple, project_version_info
 from PartSegCore.io_utils import (
     LoadBase,
@@ -86,12 +88,13 @@ def load_project_from_tar(tar_file, file_path):
     algorithm_str = tar_file.extractfile("algorithm.json").read()
     algorithm_dict = load_metadata(algorithm_str)
     algorithm_dict = update_algorithm_dict(algorithm_dict)
-    algorithm_dict.get("project_file_version")
+    with contextlib.suppress(KeyError):
+        algorithm_dict["algorithm_name"] = AnalysisAlgorithmSelection[algorithm_dict["algorithm_name"]].get_name()
+
     metadata = json.loads(tar_file.extractfile("metadata.json").read(), object_hook=partseg_object_hook)
-    try:
-        version = parse_version(metadata["project_version_info"])
-    except KeyError:
-        version = Version("1.0")
+
+    version = parse_version(metadata.get("project_version_info", "1.0"))
+
     if version == Version("1.0"):
         seg_dict = np.load(tar_to_buff(tar_file, "segmentation.npz"))
         mask = seg_dict["mask"] if "mask" in seg_dict else None
