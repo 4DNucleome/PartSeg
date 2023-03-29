@@ -47,7 +47,7 @@ __all__ = [
     "LoadMaskSegmentation",
 ]
 
-from PartSegImage.image import FRAME_THICKNESS
+from PartSegImage.image import FRAME_THICKNESS, Image
 
 
 def _load_history(tar_file):
@@ -294,13 +294,15 @@ def _mask_data_outside_mask(file_path):
 
 def load_mask_project(
     load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-    range_changed: typing.Callable[[int, int], typing.Any] = None,
-    step_changed: typing.Callable[[int], typing.Any] = None,
+    range_changed: typing.Callable[[int, int], typing.Any],
+    step_changed: typing.Callable[[int], typing.Any],
     metadata: typing.Optional[dict] = None,
 ):
     data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
     zero_out_cut_area = _mask_data_outside_mask(load_locations[0])
     image = data.image
+    if not isinstance(image, Image):
+        raise ValueError("Image is not instance of Image class.")
     roi = data.roi_info.roi
     components = data.selected_components
     if not components:
