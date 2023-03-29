@@ -1,9 +1,10 @@
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 from scipy.ndimage import zoom
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.image_transforming.transform_base import TransformBase
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 
@@ -24,8 +25,12 @@ class InterpolateImage(TransformBase):
 
     @classmethod
     def transform(
-        cls, image: Image, arguments: dict, callback_function: Optional[Callable[[str, int], None]] = None
-    ) -> Image:
+        cls,
+        image: Image,
+        roi_info: ROIInfo,
+        arguments: dict,
+        callback_function: Optional[Callable[[str, int], None]] = None,
+    ) -> Tuple[Image, Optional[ROIInfo]]:
         keys = [x for x in arguments if x.startswith("scale")]
         keys_order = Image.axis_order.lower()
         scale_factor = [1.0] * len(keys_order)
@@ -46,7 +51,7 @@ class InterpolateImage(TransformBase):
             mask = zoom(image.mask, scale_factor[:-1], mode="mirror")
         else:
             mask = None
-        return image.substitute(data=array, image_spacing=spacing, mask=mask)
+        return image.substitute(data=array, image_spacing=spacing, mask=mask), None
 
     @classmethod
     def calculate_initial(cls, image: Image):

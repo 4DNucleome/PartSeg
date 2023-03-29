@@ -72,6 +72,9 @@ fix = true
 [tool.ruff.isort]
 known-first-party=['PartSeg', 'PartSegData','PartSegCore','PartSegImage', 'PartSegCore_compiled_backend']
 
+[tool.ruff.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
 
 [tool.ruff.mccabe]
 # Unlike Flake8, default to a complexity level of 10.

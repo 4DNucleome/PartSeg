@@ -326,7 +326,7 @@ class BaseMainWindow(QMainWindow):
         AboutDialog().exec_()
 
     @staticmethod
-    def get_project_info(file_path, image):
+    def get_project_info(file_path, image, roi_info=None):
         raise NotImplementedError
 
     def image_adjust_exec(self):
@@ -334,11 +334,13 @@ class BaseMainWindow(QMainWindow):
         if dial.exec_():
             algorithm = dial.result_val.algorithm
             dial2 = ExecuteFunctionDialog(
-                algorithm.transform, [], {"image": self.settings.image, "arguments": dial.result_val.values}
+                algorithm.transform,
+                [],
+                {"image": self.settings.image, "arguments": dial.result_val.values, "roi_info": self.settings.roi_info},
             )
             if dial2.exec_():
-                result: Image = dial2.get_result()
-                self.settings.set_project_info(self.get_project_info(result.file_path, result))
+                image, roi_info = dial2.get_result()
+                self.settings.set_project_info(self.get_project_info(image.file_path, image, roi_info))
 
     def closeEvent(self, event: QCloseEvent):
         for el in self.viewer_list:
@@ -367,6 +369,9 @@ class BaseMainWindow(QMainWindow):
         return _screenshot
 
     def image_read(self):
+        if self.settings.image_path is None:
+            self.setWindowTitle(f"{self.title_base}")
+            return
         folder_name, file_name = os.path.split(self.settings.image_path)
         self.setWindowTitle(f"{self.title_base}: {os.path.join(os.path.basename(folder_name), file_name)}")
         self.statusBar().showMessage(self.settings.image_path)
