@@ -987,7 +987,14 @@ class MainWindow(BaseMainWindow):
 
     @staticmethod
     def get_project_info(file_path, image, roi_info=None):
-        return MaskProjectTuple(file_path=file_path, image=image, roi_info=roi_info)
+        if roi_info is None:
+            roi_info = ROIInfo(None)
+        return MaskProjectTuple(
+            file_path=file_path,
+            image=image,
+            roi_info=roi_info,
+            roi_extraction_parameters={i: None for i in roi_info.bound_info},
+        )
 
     def set_data(self, data):
         self.main_menu.set_data(data)
