@@ -109,3 +109,6 @@ ignore_missing_imports = true
 
 [tool.check-wheel-contents]
 toplevel = ["PartSeg", "PartSegCore", "PartSegImage"]
+
+[tool.mypy]
+ignore_missing_imports = true
