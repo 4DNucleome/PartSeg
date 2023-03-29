@@ -6,4 +6,4 @@ from PartSegCore.image_transforming.transform_base import TransformBase
 
 image_transform_dict = Register(InterpolateImage, SwapTimeStack, ImageProjection)
 
-__all__ = ("image_transform_dict", "TransformBase", "ImageProjection")
+__all__ = ("image_transform_dict", "InterpolateImage", "TransformBase", "ImageProjection")

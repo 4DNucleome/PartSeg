@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Callable, List, Optional, Tuple
 
 import numpy as np
+from pydantic import Field
 
 from PartSegCore.image_transforming.transform_base import TransformBase
 from PartSegCore.roi_info import ROIInfo
@@ -17,7 +18,7 @@ class ProjectionType(Enum):
 
 
 class ImageProjectionParams(BaseModel):
-    projection_type: ProjectionType = ProjectionType.MAX
+    projection_type: ProjectionType = Field(ProjectionType.MAX, suffix="Mask and ROI projection will allways use max")
     keep_mask = False
     keep_roi = False
 
@@ -53,7 +54,7 @@ class ImageProjection(TransformBase):
 
         roi = None
         if arguments.keep_roi and roi_info.roi is not None:
-            roi = ROIInfo(np.max(roi_info.roi, axis=axis).reshape(target_shape))
+            roi = ROIInfo(np.max(image.fit_array_to_image(roi_info.roi), axis=axis).reshape(target_shape))
         return (
             image.__class__(
                 data=new_channels, image_spacing=tuple(spacing), channel_names=image.channel_names, mask=new_mask
@@ -67,7 +68,7 @@ class ImageProjection(TransformBase):
 
     @classmethod
     def calculate_initial(cls, image: Image):
-        pass
+        return cls.get_default_values()
 
     @classmethod
     def get_name(cls) -> str:

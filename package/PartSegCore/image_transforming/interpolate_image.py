@@ -27,7 +27,7 @@ class InterpolateImage(TransformBase):
     def transform(
         cls,
         image: Image,
-        roi_info: ROIInfo,
+        roi_info: Optional[ROIInfo],
         arguments: dict,
         callback_function: Optional[Callable[[str, int], None]] = None,
     ) -> Tuple[Image, Optional[ROIInfo]]:
