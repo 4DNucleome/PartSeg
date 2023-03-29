@@ -301,8 +301,10 @@ def load_mask_project(
     data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
     zero_out_cut_area = _mask_data_outside_mask(load_locations[0])
     image = data.image
-    if not isinstance(image, Image):
+    if not isinstance(image, Image):  # pragma: no cover
         raise ValueError("Image is not instance of Image class.")
+    if data.roi_info.roi is None:  # pragma: no cover
+        raise ValueError("No ROI found in the image.")
     roi = data.roi_info.roi
     components = data.selected_components
     if not components:

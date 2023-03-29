@@ -525,6 +525,8 @@ class SplitImageOnParts(StackAlgorithm):
     new_parameters: SplitImageOnPartsParameters
 
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
+        if self.image is None:  # pragma: no cover
+            raise ValueError("No image")
         report_fun("Splitting image", 0)
         image = self.image
         size = self.new_parameters.side_length

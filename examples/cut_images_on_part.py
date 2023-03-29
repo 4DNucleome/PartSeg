@@ -22,7 +22,7 @@ except ImportError:
 
 def generate_mask(project_tuple: MaskProjectTuple, size: int, save_path: str):
     image = project_tuple.image
-    if not isinstance(image, Image):
+    if not isinstance(image, Image):  # pragma: no cover
         raise ValueError(f"project_tuple.image must be instance of Image, not {type(image)}")
     count_components = ceil(image.shape[-1] / size) * ceil(image.shape[-2] / size)
     logging.info("Generate mask with %s components", count_components)
