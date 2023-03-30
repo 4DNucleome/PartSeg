@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, Union
 
 from scipy.ndimage import zoom
 
@@ -14,9 +14,10 @@ class InterpolateImage(TransformBase):
         return ["It can be very slow.", AlgorithmProperty("scale", "Scale", 1.0)]
 
     @classmethod
-    def get_fields_per_dimension(cls, component_list: List[str]):
-        return ["it can be very slow"] + [
-            AlgorithmProperty(f"scale_{i.lower()}", f"Scale {i}", 1.0) for i in reversed(component_list)
+    def get_fields_per_dimension(cls, component_list: List[str]) -> List[Union[str, AlgorithmProperty]]:
+        return [
+            "it can be very slow",
+            *[AlgorithmProperty(f"scale_{i.lower()}", f"Scale {i}", 1.0) for i in reversed(component_list)],
         ]
 
     @classmethod
