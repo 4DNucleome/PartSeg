@@ -43,6 +43,22 @@ class TestMaskMainWindow:
         res = MainWindow.get_project_info(str(tmp_path / "test.tiff"), image, ROIInfo(roi))
         assert res.roi_extraction_parameters == {1: None}
 
+    @pytest.mark.pyside_skip()
+    def test_window_title(self, tmpdir, image, image2, qtbot):
+        main_window = MainWindow(tmpdir, initial_image=False)
+        qtbot.addWidget(main_window)
+        assert main_window.windowTitle() == "PartSeg"
+        main_window.settings.image = image
+        assert main_window.windowTitle() == "PartSeg: test_window_title0/test.tiff"
+
+        image2.file_path = None
+        main_window.settings.image = image2
+        assert main_window.windowTitle() == "PartSeg"
+
+        image.file_path = ""
+        main_window.settings.image = image
+        assert main_window.windowTitle() == "PartSeg: "
+
 
 class TestImageInformation:
     def test_create(self, stack_settings, qtbot):
