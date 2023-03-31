@@ -49,7 +49,7 @@ class TestMaskMainWindow:
         qtbot.addWidget(main_window)
         assert main_window.windowTitle() == "PartSeg"
         main_window.settings.image = image
-        assert main_window.windowTitle() == "PartSeg: test_window_title0/test.tiff"
+        assert main_window.windowTitle().replace("\\", "/") == "PartSeg: test_window_title0/test.tiff"
 
         image2.file_path = None
         main_window.settings.image = image2
