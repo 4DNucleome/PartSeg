@@ -37,7 +37,7 @@ class ImageProjection(TransformBase):
         cls,
         image: Image,
         roi_info: ROIInfo,
-        arguments: ImageProjectionParams,
+        arguments: ImageProjectionParams,  # type: ignore[override]
         callback_function: Optional[Callable[[str, int], None]] = None,
     ) -> Tuple[Image, Optional[ROIInfo]]:
         project_operator = getattr(np, arguments.projection_type.value)
