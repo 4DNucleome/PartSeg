@@ -662,6 +662,8 @@ class MainWindow(BaseMainWindow):
 
     @staticmethod
     def get_project_info(file_path, image, roi_info=None):
+        if roi_info is None:
+            roi_info = ROIInfo(None)
         return ProjectTuple(file_path=file_path, image=image, roi_info=roi_info)
 
     def set_data(self, data):
