@@ -12,6 +12,7 @@ import numpy as np
 import sentry_sdk
 import sentry_sdk.serializer
 import sentry_sdk.utils
+from napari.layers import Image
 from sentry_sdk.utils import safe_repr as _safe_repr
 
 from PartSeg import __version__, state_store
@@ -148,5 +149,16 @@ def _setup_sentry():  # pragma: no cover
         )
 
 
+def napari_image_repr(image: Image) -> str:
+    return (
+        f"<Image of shape: {image.data.shape}, dtype: {image.data.dtype}, "
+        f"slice {getattr(image, '_slice_indices', None)}>"
+    )
+
+
 def safe_repr(val):
-    return numpy_repr(val) if isinstance(val, np.ndarray) else _safe_repr(val)
+    if isinstance(val, np.ndarray):
+        return numpy_repr(val)
+    if isinstance(val, Image):
+        return napari_image_repr(val)
+    return _safe_repr(val)
