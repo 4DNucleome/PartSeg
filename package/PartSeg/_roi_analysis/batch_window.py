@@ -310,7 +310,7 @@ class FileChoose(QWidget):
         dial = PSaveDialog(SaveExcel, system_widget=False, settings=self.settings, path=IO_SAVE_DIRECTORY)
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            if os.path.splitext(file_path)[1] == "":
+            if not os.path.splitext(file_path)[1]:
                 file_path += ".xlsx"
             self.result_file.setText(file_path)
             self.change_situation()
@@ -436,7 +436,7 @@ class CalculationPrepare(QDialog):
     def setup_ui(self, mask_file_list):
         mask_path_layout = QGridLayout()
         for i, (pos, mask_file) in enumerate(mask_file_list):
-            if mask_file.name == "":
+            if not mask_file.name:
                 mask_path_layout.addWidget(right_label(f"Path to file {i + 1} with mask mapping"))
             else:
                 mask_path_layout.addWidget(
@@ -511,7 +511,7 @@ class CalculationPrepare(QDialog):
             dial = QFileDialog(self, "Select file")
             dial.setHistory(dial.history() + self.settings.get_path_history())
             base_path = str(self.base_prefix.text()).strip()
-            if base_path != "":
+            if base_path:
                 dial.setDirectory(base_path)
             dial.setFileMode(QFileDialog.FileMode.ExistingFile)
             if dial.exec_():

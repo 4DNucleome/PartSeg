@@ -146,14 +146,13 @@ class CalculationProcess:
                 if ext in load_class.get_extensions():
                     return load_class.load([calculation.file_path], metadata=metadata)
             raise ValueError("File type not supported")
-        elif operation == RootType.Project:
+        if operation == RootType.Project:
             return LoadProject.load([calculation.file_path], metadata=metadata)
-        else:  # operation == RootType.Mask_project
-            try:
-                return LoadProject.load([calculation.file_path], metadata=metadata)
-            except (KeyError, WrongFileTypeException):
-                # TODO identify exceptions
-                return LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
+        try:
+            return LoadProject.load([calculation.file_path], metadata=metadata)
+        except (KeyError, WrongFileTypeException):
+            # TODO identify exceptions
+            return LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
 
     def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
         """
@@ -217,7 +216,7 @@ class CalculationProcess:
         :param List[CalculationTree] children: list of nodes to iterate over with applied mask
         """
         mask_path = operation.get_mask_path(self.calculation.file_path)
-        if mask_path == "":  # pragma: no cover
+        if not mask_path:  # pragma: no cover
             raise ValueError("Empty path to mask.")
         if not os.path.exists(mask_path):
             raise OSError(f"Mask file {mask_path} does not exists")

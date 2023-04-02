@@ -115,7 +115,7 @@ class TestExceptHook:
             error_list.append(value)
 
         def import_raise(_value):
-            raise ImportError()
+            raise ImportError
 
         monkeypatch.setattr(sys, "__excepthook__", excepthook_catch)
         monkeypatch.setattr(sys, "exit", exit_catch)

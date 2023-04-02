@@ -377,7 +377,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
         List incomplete.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def get_starting_leaf(cls) -> Leaf:
@@ -391,7 +391,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_units(cls, ndim) -> symbols:
         """Return units for measurement. They are shown to user"""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def need_channel(cls):

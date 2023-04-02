@@ -105,7 +105,7 @@ class MaskProjectTuple(ProjectInfoBase):
 
     @property
     def roi(self):
-        warnings.warn("roi is deprecated", DeprecationWarning, 2)
+        warnings.warn("roi is deprecated", DeprecationWarning, stacklevel=2)
         return self.roi_info.roi
 
 
@@ -119,7 +119,7 @@ class SaveROIOptions(BaseModel):
         description="When loading data in ROI analysis, if not checked"
         " then data outside ROI will be replaced with zeros.",
     )
-    spacing: typing.List[float] = Field((10**-6, 10**-6, 10**-6), hidden=True)
+    spacing: typing.List[float] = Field([10**-6, 10**-6, 10**-6], hidden=True)
 
 
 def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile, parameters: SaveROIOptions):
@@ -155,7 +155,7 @@ def _save_mask_roi_metadata(
         file_path = project.image
     else:
         file_path = ""
-    if file_path != "":
+    if file_path:
         if parameters.relative_path and isinstance(file_data, str):
             metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
         else:
@@ -235,7 +235,7 @@ def save_stack_segmentation(
 
 def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, step_changed=None):
     if check_segmentation_type(tar_file) != SegmentationType.mask:
-        raise WrongFileTypeException()
+        raise WrongFileTypeException  # pragma: no cover
     files = tar_file.getnames()
     step_changed(1)
     metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))

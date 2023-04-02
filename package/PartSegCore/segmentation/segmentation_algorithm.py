@@ -223,10 +223,10 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
         return 7
 
     def _threshold_image(self, image: np.ndarray) -> np.ndarray:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _threshold_and_exclude(self, image, report_fun):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def calculation_run(self, report_fun):
         report_fun("Noise removal", 0)

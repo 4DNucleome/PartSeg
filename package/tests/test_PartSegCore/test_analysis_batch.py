@@ -636,7 +636,7 @@ class TestCalculationProcess:
             time.sleep(0.1)
             res = manager.get_results()
             if res.errors:
-                warnings.warn(str(res.errors))  # pragma: no cover
+                warnings.warn(str(res.errors), stacklevel=1)  # pragma: no cover
         if sys.platform == "darwin":
             time.sleep(2)  # pragma: no cover
         else:

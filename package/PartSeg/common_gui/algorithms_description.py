@@ -84,7 +84,7 @@ class ProfileSelect(QComboBox):
         self._update_choices()
 
     def get_value(self):
-        if self._settings is not None and hasattr(self._settings, "roi_profiles") and self.currentText() != "":
+        if self._settings is not None and hasattr(self._settings, "roi_profiles") and self.currentText():
             return self._settings.roi_profiles[self.currentText()]
         return None
 
@@ -234,7 +234,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return res
 
     @staticmethod
-    def get_change_signal(widget: typing.Union[QWidget, Widget]):  # noqa PLR0901
+    def get_change_signal(widget: typing.Union[QWidget, Widget]):  # noqa: PLR0911
         if isinstance(widget, Widget):
             return widget.changed
         if isinstance(widget, QComboBox):
@@ -256,7 +256,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         raise ValueError(f"Unsupported type: {type(widget)}")
 
     @staticmethod
-    def get_getter_and_setter_function(  # noqa PLR0901
+    def get_getter_and_setter_function(  # noqa: PLR0911
         widget: typing.Union[QWidget, Widget],
     ) -> typing.Tuple[
         typing.Callable[
@@ -646,7 +646,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     def show_info(self, text):
         self.info_label.setText(text)
-        self.info_label.setVisible(text != "")
+        self.info_label.setVisible(bool(text))
 
     def image_changed(self, image: Image):
         self.form_widget.image_changed(image)

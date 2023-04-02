@@ -118,7 +118,7 @@ class ImageSettings(QObject):
     @property
     def segmentation(self) -> np.ndarray:  # pragma: no cover
         """current roi"""
-        warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning)
+        warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi
 
     @property
@@ -128,7 +128,7 @@ class ImageSettings(QObject):
 
     @property
     def segmentation_info(self) -> ROIInfo:  # pragma: no cover
-        warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning)
+        warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi_info
 
     @property
@@ -498,7 +498,7 @@ class BaseSettings(ViewSettings):
 
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (
-            result.file_path is not None and result.file_path != "" and result.file_path != self.image.file_path
+            result.file_path is not None and result.file_path and result.file_path != self.image.file_path
         ):  # pragma: no cover
             if self._parent is not None:
                 # TODO change to non disrupting popup
@@ -783,10 +783,10 @@ class BaseSettings(ViewSettings):
     def verify_image(image: Image, silent=True) -> Union[Image, bool]:
         if image.is_time:
             if image.is_stack:
-                raise TimeAndStackException()
+                raise TimeAndStackException
             if silent:
                 return image.swap_time_and_stack()
-            raise SwapTimeStackException()
+            raise SwapTimeStackException
         return True
 
 

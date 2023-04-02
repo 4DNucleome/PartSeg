@@ -72,7 +72,7 @@ def _load_history(tar_file):
 
 def load_project_from_tar(tar_file, file_path):
     if check_segmentation_type(tar_file) != SegmentationType.analysis:
-        raise WrongFileTypeException()
+        raise WrongFileTypeException
     image_buffer = BytesIO()
     image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
     image_buffer.write(image_tar.read())

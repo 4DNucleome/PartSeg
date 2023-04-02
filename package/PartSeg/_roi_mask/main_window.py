@@ -739,7 +739,7 @@ class AlgorithmOptions(QWidget):
 
     def progress_info(self, text, num, file_name="", file_num=0):
         self.progress_info_lab.setVisible(True)
-        if file_name != "":
+        if file_name:
             self.progress_info_lab.setText(file_name + "\n" + text)
         else:
             self.progress_info_lab.setText(text)
@@ -986,8 +986,15 @@ class MainWindow(BaseMainWindow):
         super().closeEvent(event)
 
     @staticmethod
-    def get_project_info(file_path, image):
-        return MaskProjectTuple(file_path=file_path, image=image)
+    def get_project_info(file_path, image, roi_info=None):
+        if roi_info is None:
+            roi_info = ROIInfo(None)
+        return MaskProjectTuple(
+            file_path=file_path,
+            image=image,
+            roi_info=roi_info,
+            roi_extraction_parameters={i: None for i in roi_info.bound_info},
+        )
 
     def set_data(self, data):
         self.main_menu.set_data(data)
