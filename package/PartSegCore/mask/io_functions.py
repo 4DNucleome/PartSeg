@@ -119,7 +119,7 @@ class SaveROIOptions(BaseModel):
         description="When loading data in ROI analysis, if not checked"
         " then data outside ROI will be replaced with zeros.",
     )
-    spacing: typing.List[float] = Field((10**-6, 10**-6, 10**-6), hidden=True)
+    spacing: typing.List[float] = Field([10**-6, 10**-6, 10**-6], hidden=True)
 
 
 def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile, parameters: SaveROIOptions):

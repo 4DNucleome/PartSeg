@@ -552,7 +552,8 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     user_name = field.field_info.title
     value_range = None
     possible_values = None
-    value_type = field.type_
+
+    value_type = getattr(field, "annotation", field.type_)
     default_value = field.field_info.default
     help_text = field.field_info.description
     if user_name is None:
@@ -593,6 +594,8 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
         res.append(obj.header())
     for name, value in obj.__fields__.items():
         ap = _field_to_algorithm_property(name, value)
+        if value.field_info.extra.get("hidden", False):
+            continue
         pos = len(res)
         if "position" in value.field_info.extra:
             pos = value.field_info.extra["position"]

@@ -267,6 +267,16 @@ def test_base_model_to_algorithm_property_hline():
     assert isinstance(fields[2], str)
 
 
+def test_hidden_field():
+    class Model(BaseModel):
+        field1: int = Field(1, hidden=True)
+        field2: int = 1
+
+    fields = base_model_to_algorithm_property(Model)
+    assert len(fields) == 1
+    assert fields[0].name == "field2"
+
+
 class TestAlgorithmDescribeBase:
     def test_old_style_algorithm(self):
         class SampleAlgorithm(AlgorithmDescribeBase):
