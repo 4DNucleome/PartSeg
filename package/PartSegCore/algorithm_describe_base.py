@@ -552,7 +552,8 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     user_name = field.field_info.title
     value_range = None
     possible_values = None
-    value_type = field.annotation
+
+    value_type = getattr(field, "annotation", field.type_)
     default_value = field.field_info.default
     help_text = field.field_info.description
     if user_name is None:
