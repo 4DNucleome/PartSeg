@@ -476,7 +476,7 @@ class ChosenComponents(QWidget):
 
 
 class AlgorithmOptions(QWidget):
-    def __init__(self, settings: StackSettings, image_view: StackImageView):
+    def __init__(self, settings: StackSettings, image_view: StackImageView):  # noqa: PLR0915
         super().__init__()
         self.settings = settings
         self.view_name = image_view.name
@@ -739,7 +739,7 @@ class AlgorithmOptions(QWidget):
 
     def progress_info(self, text, num, file_name="", file_num=0):
         self.progress_info_lab.setVisible(True)
-        if file_name != "":
+        if file_name:
             self.progress_info_lab.setText(file_name + "\n" + text)
         else:
             self.progress_info_lab.setText(text)
@@ -881,7 +881,6 @@ class Options(QTabWidget):
 
 
 class MainWindow(BaseMainWindow):
-
     settings: StackSettings
 
     @classmethod
@@ -890,7 +889,7 @@ class MainWindow(BaseMainWindow):
 
     initial_image_path = PartSegData.segmentation_mask_default_image
 
-    def __init__(
+    def __init__(  # noqa: PLR0915
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
         super().__init__(config_folder, title, settings, io_functions.load_dict, signal_fun)
@@ -987,8 +986,15 @@ class MainWindow(BaseMainWindow):
         super().closeEvent(event)
 
     @staticmethod
-    def get_project_info(file_path, image):
-        return MaskProjectTuple(file_path=file_path, image=image)
+    def get_project_info(file_path, image, roi_info=None):
+        if roi_info is None:
+            roi_info = ROIInfo(None)
+        return MaskProjectTuple(
+            file_path=file_path,
+            image=image,
+            roi_info=roi_info,
+            roi_extraction_parameters={i: None for i in roi_info.bound_info},
+        )
 
     def set_data(self, data):
         self.main_menu.set_data(data)

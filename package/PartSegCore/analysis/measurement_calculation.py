@@ -124,7 +124,6 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         )
 
     def __setitem__(self, k: str, v: MeasurementResultInputType) -> None:
-
         self._data_dict[k] = v[0]
         self._units_dict[k] = v[1]
         self._type_dict[k] = v[2]
@@ -331,7 +330,7 @@ class MeasurementProfile(BaseModel):
 
     def __str__(self):
         text = f"Set name: {self.name}\n"
-        if self.name_prefix != "":
+        if self.name_prefix:
             text += f"Name prefix: {self.name_prefix}\n"
         text += "Measurements list:\n"
         for el in self.chosen_fields:
@@ -361,7 +360,6 @@ class MeasurementProfile(BaseModel):
 
     @staticmethod
     def _prepare_leaf_kw(node, kwargs, method, area_type):
-
         area_type_dict = {
             AreaType.Mask: "mask",
             AreaType.Mask_without_ROI: "mask_without_segmentation",
@@ -384,7 +382,6 @@ class MeasurementProfile(BaseModel):
         return kw
 
     def _clip_arrays(self, kw, node: Leaf, method: MeasurementMethodBase, component_index: int):
-
         if node.area != AreaType.ROI or method.need_full_data():
             bounds = tuple(slice(None, None) for _ in kw["area_array"].shape)
         elif node.per_component == PerComponent.Per_Mask_component:
@@ -1676,7 +1673,7 @@ class ColocalizationMeasurement(MeasurementMethodBase):
             return cls._calculate_masked(data_1, data_2, colocalization)
         res_list = []
         for _ in range(randomize_repeat):
-            rand_data2 = np.random.permutation(data_2)
+            rand_data2 = np.random.default_rng().permutation(data_2)
             res_list.append(cls._calculate_masked(data_1, rand_data2, colocalization))
         return np.mean(res_list)
 

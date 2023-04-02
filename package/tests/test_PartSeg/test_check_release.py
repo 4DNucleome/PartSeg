@@ -71,7 +71,7 @@ def test_no_update(monkeypatch, qtbot):
     monkeypatch.setattr("PartSeg.state_store.save_folder", False)
 
     def urlopen_mock(url):
-        raise RuntimeError()
+        raise RuntimeError
 
     monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
     chk_thr = check_version.CheckVersionThread()
@@ -82,7 +82,7 @@ def test_error_report(monkeypatch, qtbot):
     sentry_val = [False]
 
     def urlopen_mock(url):
-        raise RuntimeError()
+        raise RuntimeError
 
     def sentry_mock(e):
         sentry_val[0] = True
@@ -102,7 +102,7 @@ def test_ignore_file_exists(monkeypatch, qtbot, tmp_path):
     monkeypatch.setattr(state_store, "save_folder", tmp_path)
 
     def urlopen_mock(url):
-        raise RuntimeError()
+        raise RuntimeError
 
     monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
 

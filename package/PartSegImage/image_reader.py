@@ -17,6 +17,10 @@ from PartSegImage.image import Image
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
 
+if typing.TYPE_CHECKING:
+    from xml.etree.ElementTree import Element  # nosec
+
+
 def _empty(_, __):
     """Empty function for callback"""
 
@@ -57,7 +61,7 @@ class BaseImageReader:
         spacing = tuple(spacing)
         if len(spacing) == 2:
             # one micrometer
-            spacing = (10**-6,) + spacing
+            spacing = (10 ** (-6), *spacing)
         if len(spacing) != 3:
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
@@ -74,7 +78,7 @@ class BaseImageReader:
             should be deduced from path
         :return: image structure
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def read_image(
@@ -154,7 +158,7 @@ class BaseImageReaderBuffer(BaseImageReader):
             should be deduced from path
         :return: image structure
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def read_image(
@@ -194,10 +198,12 @@ class GenericImageReader(BaseImageReaderBuffer):
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
-            assert not isinstance(image_path, BytesIO)  # nosec
+            if isinstance(image_path, BytesIO):  # pragma: no cover
+                raise NotImplementedError("Oif format is not supported for BytesIO")
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext == ".obsep":
-            assert not isinstance(image_path, BytesIO)  # nosec
+            if isinstance(image_path, BytesIO):  # pragma: no cover
+                raise NotImplementedError("Obsep format is not supported for BytesIO")
             return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
@@ -277,17 +283,18 @@ class CziImageReader(BaseImageReaderBuffer):
 
 
 class ObsepImageReader(BaseImageReader):
-    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
-        directory = Path(os.path.dirname(image_path))
-        xml_doc = ElementTree.parse(image_path).getroot()
-        channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
-        if not channels:
-            raise ValueError("Information about channel images not found")
+    def _search_for_files(
+        self,
+        directory: Path,
+        channels: typing.List["Element"],
+        suffix: str = "",
+        required: bool = False,
+    ) -> typing.List[Image]:
         possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
         channel_list = []
         for channel in channels:
             try:
-                name = next(iter(channel)).attrib["val"]
+                name = next(iter(channel)).attrib["val"] + suffix
             except StopIteration as e:  # pragma: no cover
                 raise ValueError("Missed information about channel name in obsep file") from e
             for ex in possible_extensions:
@@ -295,20 +302,22 @@ class ObsepImageReader(BaseImageReader):
                     name += ex
                     break
             else:  # pragma: no cover
-                raise ValueError(f"Not found file for key {name}")
+                if required:
+                    raise ValueError(f"Not found file for key {name}")
+                continue
             channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
-        for channel in channels:
-            try:
-                name = next(iter(channel)).attrib["val"] + "_deconv"
-            except StopIteration as e:  # pragma: no cover
-                raise ValueError("Missed information about channel name in obsep file") from e
-            for ex in possible_extensions:
-                if (directory / (name + ex)).exists():
-                    name += ex
-                    break
-            if (directory / name).exists():
-                channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
+        return channel_list
 
+    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
+        directory = Path(os.path.dirname(image_path))
+        xml_doc = ElementTree.parse(image_path).getroot()
+        channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
+        if not channels:
+            raise ValueError("Information about channel images not found")
+        channel_list = [
+            *self._search_for_files(directory, channels, required=True),
+            *self._search_for_files(directory, channels, "_deconv"),
+        ]
         image = channel_list[0]
         for el in channel_list[1:]:
             image = image.merge(el, "C")
@@ -439,7 +448,6 @@ class TiffImageReader(BaseImageReaderBuffer):
     def read_resolution_from_tags(self, image_file):
         tags = image_file.pages[0].tags
         try:
-
             if image_file.is_imagej:
                 scalar = name_to_scalar[image_file.imagej_metadata["unit"]]
             else:

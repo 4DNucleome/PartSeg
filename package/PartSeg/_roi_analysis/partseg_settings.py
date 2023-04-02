@@ -129,7 +129,8 @@ class PartSettings(BaseSettings):
             self.algorithm_changed.emit()
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
-        return super().get_save_list() + [
+        return [
+            *super().get_save_list(),
             SaveSettingsDescription("segmentation_pipeline_save.json", self._segmentation_pipelines_dict),
             SaveSettingsDescription("segmentation_profiles_save.json", self._segmentation_profiles_dict),
             SaveSettingsDescription("statistic_profiles_save.json", self._measurement_profiles_dict),

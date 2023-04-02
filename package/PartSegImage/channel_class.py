@@ -20,7 +20,8 @@ class Channel:
     def __init__(self, value: Union[str, int]):
         if isinstance(value, Channel):
             value = value.value
-        assert isinstance(value, (str, int)), f"wrong type {value} {type(value)}"  # nosec
+        if not isinstance(value, (str, int)):
+            raise TypeError(f"wrong type {value} {type(value)}")  # pragma: no cover
         self._value: Union[str, int] = value
 
     @property

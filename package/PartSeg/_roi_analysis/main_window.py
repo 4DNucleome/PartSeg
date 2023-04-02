@@ -113,6 +113,12 @@ class Options(QWidget):
 
         self.label = TextShow()
 
+        self.setup_ui()
+
+        settings.roi_changed.connect(self._refresh_compare_btn)
+        settings.image_changed.connect(self._reset_compare_btn)
+
+    def setup_ui(self):
         layout = QVBoxLayout()
         layout2 = QHBoxLayout()
         layout2.setSpacing(1)
@@ -140,9 +146,6 @@ class Options(QWidget):
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
         self.setLayout(layout)
-
-        settings.roi_changed.connect(self._refresh_compare_btn)
-        settings.image_changed.connect(self._reset_compare_btn)
 
     @ensure_main_thread
     def _update_profiles(self):
@@ -341,7 +344,7 @@ class Options(QWidget):
         widget.execute()
 
     def execution_done(self, segmentation: ROIExtractionResult):
-        if segmentation.info_text != "":
+        if segmentation.info_text:
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         self._settings.set_segmentation_result(segmentation)
         self.label.setText(self.sender().get_info_text())
@@ -519,13 +522,15 @@ class MaskDialog(MaskDialogBase):
 
 
 class MainWindow(BaseMainWindow):
+    settings: PartSettings
+
     @classmethod
     def get_setting_class(cls) -> Type[PartSettings]:
         return PartSettings
 
     initial_image_path = PartSegData.segmentation_analysis_default_image
 
-    def __init__(
+    def __init__(  # noqa: PLR0915
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
         super().__init__(config_folder, title, settings, load_functions.load_dict, signal_fun)
@@ -533,7 +538,6 @@ class MainWindow(BaseMainWindow):
         self.files_num = 2
         self.setMinimumWidth(600)
         # thi isinstance is only for hinting in IDE
-        assert isinstance(self.settings, PartSettings)  # nosec
         self.main_menu = MainMenu(self.settings, self)
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_image")
         self.raw_image = CompareImageView(self.settings, self.channel_control2, "raw_image")
@@ -657,8 +661,10 @@ class MainWindow(BaseMainWindow):
         super().closeEvent(event)
 
     @staticmethod
-    def get_project_info(file_path, image):
-        return ProjectTuple(file_path=file_path, image=image)
+    def get_project_info(file_path, image, roi_info=None):
+        if roi_info is None:
+            roi_info = ROIInfo(None)
+        return ProjectTuple(file_path=file_path, image=image, roi_info=roi_info)
 
     def set_data(self, data):
         self.main_menu.set_data(data)

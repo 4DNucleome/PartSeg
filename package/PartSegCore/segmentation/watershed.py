@@ -56,7 +56,7 @@ class BaseWatershed(AlgorithmDescribeBase, ABC):
         :param upper_bound: data value upper bound
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class PathWatershed(BaseWatershed):
@@ -287,7 +287,7 @@ def calculate_distances_array(spacing, neigh_type: NeighType):
         neighbourhood_array = neighbourhood2d
         if neigh_type == NeighType.sides:
             neighbourhood_array = neighbourhood_array[:4]
-        normalized_spacing = [0] + normalized_spacing
+        normalized_spacing = [0, *normalized_spacing]
     else:
         neighbourhood_array = neighbourhood[: neigh_type.value]
     normalized_spacing = np.array(normalized_spacing)

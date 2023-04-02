@@ -41,6 +41,7 @@ class ImageAdjustmentDialog(QDialog):
         layout.addWidget(self.cancel_btn, 2, 0)
         layout.addWidget(self.process_btn, 2, 2)
         self.setLayout(layout)
+        self.setWindowTitle("Image adjustment")
 
     def process(self):
         values = self.stacked.currentWidget().get_values()

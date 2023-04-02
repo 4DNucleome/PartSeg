@@ -114,6 +114,7 @@ jobs:
       test_data: True
       python_version: "3.8"
       tox_args: "-e py38-PyQt5-minimal"
+      coverage: true
 
   test_conda:
     name: Test PartSeg conda
@@ -124,10 +125,12 @@ jobs:
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          miniconda-version: latest
+          miniforge-version: latest
+          miniforge-variant: mambaforge
+          use-mamba: true
           channels: conda-forge
           channel-priority: strict
-          python-version: 3.9
+          python-version: "3.9"
 
       - uses: tlambert03/setup-qt-libs@v1
 
@@ -138,12 +141,15 @@ jobs:
           path: test_data
 
       - name: Install dependencies
-        run: conda install -y tox-conda>=0.10.0
+        shell: "bash -el {0}"
+        run: mamba install -y "tox-conda>=0.10.0"
 
       - name: List environment packages
+        shell: "bash -el {0}"
         run: conda list
 
       - name: create environment
+        shell: "bash -el {0}"
         run: bash build_utils/create_environment_yml.sh
 
       - name: Upload environment file
@@ -154,9 +160,9 @@ jobs:
           retention-days: 5
 
       - name: Test with tox
-        uses: GabrielBB/xvfb-action@v1
+        uses: aganders3/headless-gui@v1
         with:
-          run: conda run --no-capture-output tox -e py39-PySide2-conda
+          run: conda run -n test --no-capture-output tox -e py39-PySide2-conda
         timeout-minutes: 60
 
   check-package:

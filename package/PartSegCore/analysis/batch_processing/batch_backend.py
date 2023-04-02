@@ -137,6 +137,25 @@ class CalculationProcess:
         self.algorithm_parameters: dict = {}
         self.results: CalculationResultList = []
 
+    @staticmethod
+    def load_data(operation, calculation: FileCalculation) -> Union[ProjectTuple, List[ProjectTuple]]:
+        metadata = {"default_spacing": calculation.voxel_size}
+        ext = path.splitext(calculation.file_path)[1]
+        if operation == RootType.Image:
+            for load_class in load_dict.values():
+                if load_class.partial() or load_class.number_of_files() != 1:
+                    continue
+                if ext in load_class.get_extensions():
+                    return load_class.load([calculation.file_path], metadata=metadata)
+            raise ValueError("File type not supported")
+        if operation == RootType.Project:
+            return LoadProject.load([calculation.file_path], metadata=metadata)
+        try:
+            return LoadProject.load([calculation.file_path], metadata=metadata)
+        except (KeyError, WrongFileTypeException):
+            # TODO identify exceptions
+            return LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
+
     def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
         """
         Main function for calculation process
@@ -150,30 +169,11 @@ class CalculationProcess:
         self.measurement = []
         self.results = []
         operation = calculation.calculation_plan.execution_tree.operation
-        ext = path.splitext(calculation.file_path)[1]
-        metadata = {"default_spacing": calculation.voxel_size}
-        if operation == RootType.Image:
-            for load_class in load_dict.values():
-                if load_class.partial() or load_class.number_of_files() != 1:
-                    continue
-                if ext in load_class.get_extensions():
-                    projects = load_class.load([calculation.file_path], metadata=metadata)
-                    break
-            else:  # pragma: no cover
-                raise ValueError("File type not supported")
-        elif operation == RootType.Project:
-            projects = LoadProject.load([calculation.file_path], metadata=metadata)
-        else:  # operation == RootType.Mask_project
-            try:
-                projects = LoadProject.load([calculation.file_path], metadata=metadata)
-            except (KeyError, WrongFileTypeException):
-                # TODO identify exceptions
-                projects = LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
+        projects = self.load_data(operation, calculation)
 
         if isinstance(projects, ProjectTuple):
             projects = [projects]
         for project in projects:
-            project: ProjectTuple
             self.image = project.image
             if calculation.overwrite_voxel_size:
                 self.image.set_spacing(calculation.voxel_size)
@@ -218,7 +218,7 @@ class CalculationProcess:
         :param List[CalculationTree] children: list of nodes to iterate over with applied mask
         """
         mask_path = operation.get_mask_path(self.calculation.file_path)
-        if mask_path == "":  # pragma: no cover
+        if not mask_path:  # pragma: no cover
             raise ValueError("Empty path to mask.")
         if not os.path.exists(mask_path):
             raise OSError(f"Mask file {mask_path} does not exists")
@@ -530,7 +530,7 @@ class SheetData:
         if raw:
             self.columns = pd.MultiIndex.from_tuples(columns)
         else:
-            self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
+            self.columns = pd.MultiIndex.from_tuples([("name", "units"), *columns])
         self.data_frame = pd.DataFrame([], columns=self.columns)
         self.row_list: List[Any] = []
 

@@ -96,7 +96,7 @@ class ResultImageView(ImageView):
         block = self.roi_alternative_select.signalsBlocked()
         self.roi_alternative_select.blockSignals(True)
         self.roi_alternative_select.clear()
-        values = ["ROI"] + list(alternatives)
+        values = ["ROI", *list(alternatives)]
         self.roi_alternative_select.addItems(values)
         with contextlib.suppress(ValueError):
             self.roi_alternative_select.setCurrentIndex(values.index(text))

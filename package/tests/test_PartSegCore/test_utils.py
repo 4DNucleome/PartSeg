@@ -133,9 +133,7 @@ class TestEventedDict:
         assert dkt["baz"]["bar"]["foo"] == 1
 
     def test_serialize(self, tmp_path):
-        dkt = EventedDict(
-            **{"a": {"b": {"c": 1, "d": 2, "e": 3}, "f": 1}, "g": {"h": {"i": 1, "j": 2}, "k": [6, 7, 8]}}
-        )
+        dkt = EventedDict(a={"b": {"c": 1, "d": 2, "e": 3}, "f": 1}, g={"h": {"i": 1, "j": 2}, "k": [6, 7, 8]})
         with (tmp_path / "test_dict.json").open("w") as f_p:
             json.dump(dkt, f_p, cls=PartSegEncoder)
 

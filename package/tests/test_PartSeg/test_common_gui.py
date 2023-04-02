@@ -70,7 +70,13 @@ from PartSeg.common_gui.custom_load_dialog import (
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
-from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, QMessageFromException, _print_traceback
+from PartSeg.common_gui.error_report import (
+    _FEEDBACK_URL,
+    DataImportErrorDialog,
+    ErrorDialog,
+    QMessageFromException,
+    _print_traceback,
+)
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
 from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelShow
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
@@ -251,7 +257,6 @@ class TestAddFiles:
         widget.selected_files.setCurrentRow(2)
 
         def check_res(val):
-
             return val == [str(tmp_path / "test_2.txt")]
 
         with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res):
@@ -1287,6 +1292,11 @@ class TestSpacing:
 
         qtbot.addWidget(widget)
 
+    def test_create_2d(self, qtbot):
+        widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9), unit=Units.nm)
+
+        qtbot.addWidget(widget)
+
     def test_get_values(self, qtbot):
         widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9, 10**-9), unit=Units.nm)
         qtbot.addWidget(widget)
@@ -1679,6 +1689,40 @@ class TestErrorDialog:
         assert "title=Error" in mock_web.call_args.args[0]
         assert "body=This" in mock_web.call_args.args[0]
 
+    @patch("requests.post")
+    @patch("sentry_sdk.push_scope")
+    def test_send_report(self, sentry_mock, request_mock, qtbot):
+        dialog = ErrorDialog(ValueError("aaa"), "Test text")
+        qtbot.addWidget(dialog)
+        assert dialog.additional_info.toPlainText() == ""
+        dialog.send_report()
+        sentry_mock.assert_called_once()
+        request_mock.assert_not_called()
+
+    @patch("requests.post")
+    @patch("sentry_sdk.push_scope")
+    @pytest.mark.parametrize(
+        ("email", "expected", "return_code", "post_call_count"),
+        [
+            ("test@test.pl", "test@test.pl", 200, 1),
+            ("test#test.pl", "unknown@unknown.com", 200, 1),
+            ("test@test.pl", "unknown@unknown.com", 300, 2),
+        ],
+    )
+    def test_send_report_with_message(  # pylint: disable=too-many-arguments
+        self, sentry_mock, request_mock, qtbot, email, expected, return_code, post_call_count
+    ):
+        request_mock.return_value = MagicMock(status_code=return_code)
+        dialog = ErrorDialog(ValueError("aaa"), "Test text")
+        qtbot.addWidget(dialog)
+        dialog.additional_info.setText("Test message")
+        dialog.contact_info.setText(email)
+        dialog.send_report()
+        sentry_mock.assert_called_once()
+        assert request_mock.call_count == post_call_count
+        assert request_mock.call_args.kwargs["url"] == _FEEDBACK_URL
+        assert request_mock.call_args.kwargs["data"]["email"] == expected
+
 
 class TestMguiChannelComboBox:
     def test_create(self, qtbot):
@@ -1745,7 +1789,6 @@ class TestQMessageFromException:
 
     @pytest.mark.parametrize("method", ["critical", "information", "question", "warning"])
     def test_methods(self, monkeypatch, qtbot, method):
-
         called = False
 
         def exec_mock(self):

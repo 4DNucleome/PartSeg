@@ -618,20 +618,17 @@ class CalculationPlan:
         if not self.current_pos:
             return NodeType.root
         node = self.get_node(parent=parent)
-        if isinstance(node.operation, RootType):
-            return NodeType.root
-        if isinstance(node.operation, (MaskMapper, MaskIntersection, MaskSum)):
-            return NodeType.file_mask
-        if isinstance(node.operation, MaskCreate):
-            return NodeType.mask
-        if isinstance(node.operation, MeasurementCalculate):
-            return NodeType.measurement
-        if isinstance(node.operation, ROIExtractionProfile):
-            return NodeType.segment
-        if isinstance(node.operation, Save):
-            return NodeType.save
-        if isinstance(node.operation, MaskUse):
-            return NodeType.file_mask
+        for klass, node_type in [
+            (RootType, NodeType.root),
+            ((MaskMapper, MaskIntersection, MaskSum), NodeType.file_mask),
+            (MaskCreate, NodeType.mask),
+            (MeasurementCalculate, NodeType.measurement),
+            (ROIExtractionProfile, NodeType.segment),
+            (Save, NodeType.save),
+            (MaskUse, NodeType.file_mask),
+        ]:
+            if isinstance(node.operation, klass):
+                return node_type
         if isinstance(node.operation, Operations) and node.operation == Operations.reset_to_base:
             return NodeType.mask
         raise ValueError(f"[get_node_type] unknown node type {node.operation}")
@@ -712,6 +709,7 @@ class CalculationPlan:
                 return el.operation
             if isinstance(el.operation, MaskFile):
                 num -= 1
+        return None
 
     @classmethod
     def dict_load(cls, data_dict):
@@ -730,7 +728,7 @@ class CalculationPlan:
         return res_plan
 
     @staticmethod
-    def get_el_name(el):  # noqa C901
+    def get_el_name(el):  # noqa: C901, PLR0911, PLR0912
         """
         :param el: Plan element
         :return: str
@@ -745,11 +743,11 @@ class CalculationPlan:
         if isinstance(el, ROIExtractionProfile):
             return f"Segmentation: {el.name}"
         if isinstance(el, MeasurementCalculate):
-            if el.name_prefix == "":
+            if not el.name_prefix:
                 return f"Measurement: {el.name}"
             return f"Measurement: {el.name} with prefix: {el.name_prefix}"
         if isinstance(el, MaskCreate):
-            return f"Create mask: {el.name}" if el.name != "" else "Create mask:"
+            return f"Create mask: {el.name}" if el.name else "Create mask:"
         if isinstance(el, MaskUse):
             return f"Use mask: {el.name}"
         if isinstance(el, MaskSuffix):
@@ -762,14 +760,14 @@ class CalculationPlan:
             base = el.short_name
             if el.directory:
                 return f"Save {base} in directory with name {el.suffix}"
-            return f"Save {base} with suffix {el.suffix}" if el.suffix != "" else f"Save {base}"
+            return f"Save {base} with suffix {el.suffix}" if el.suffix else f"Save {base}"
 
         if isinstance(el, MaskIntersection):
-            if el.name == "":
+            if not el.name:
                 return f"Mask intersection of mask {el.mask1} and {el.mask2}"
             return f"Mask {el.name} intersection of mask {el.mask1} and {el.mask2}"
         if isinstance(el, MaskSum):
-            if el.name == "":
+            if not el.name:
                 return f"Mask sum of mask {el.mask1} and {el.mask2}"
             return f"Mask {el.name} sum of mask {el.mask1} and {el.mask2}"
 
