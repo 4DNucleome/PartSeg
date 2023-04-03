@@ -26,10 +26,10 @@ from PartSegCore.segmentation import ROIExtractionResult
 
 @pytest.fixture(autouse=True)
 def _clean_settings(tmp_path):
-    old_settings = _settings._settings
-    _settings._settings = None
+    old_settings = _settings._SETTINGS
+    _settings._SETTINGS = None
     yield
-    _settings._settings = old_settings
+    _settings._SETTINGS = old_settings
 
 
 def no_action(*_):  # skipcq: PTC-W0049
