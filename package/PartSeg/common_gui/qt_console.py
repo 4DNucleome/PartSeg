@@ -1,6 +1,7 @@
 """
 Code from https://github.com/napari/napari-console
 """
+# pylint: disable=no-value-for-parameter,unexpected-keyword-arg
 import re
 import sys
 from typing import TYPE_CHECKING
@@ -50,7 +51,7 @@ if sys.platform.startswith("win"):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
-class QtConsole(RichJupyterWidget):
+class QtConsole(RichJupyterWidget):  # pylint: disable=abstract-method
     """Qt view for the console, an integrated iPython terminal in napari.
     Parameters
     ----------
