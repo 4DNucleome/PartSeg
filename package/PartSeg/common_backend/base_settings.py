@@ -77,7 +77,7 @@ class ImageSettings(QObject):
         raise AttributeError("full_segmentation not supported")
 
     @full_segmentation.setter
-    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=R0201
+    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=no-self-use
         raise AttributeError("full_segmentation not supported")
 
     @property
@@ -85,7 +85,7 @@ class ImageSettings(QObject):
         raise AttributeError("noise_remove_image_part not supported")
 
     @noise_remove_image_part.setter
-    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=R0201
+    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=no-self-use
         raise AttributeError("noise_remove_image_part not supported")
 
     @property
@@ -93,7 +93,7 @@ class ImageSettings(QObject):
         return self._additional_layers
 
     @additional_layers.setter
-    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=R0201
+    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=no-self-use
         raise AttributeError("additional_layers assign not supported")
 
     @property
@@ -303,7 +303,7 @@ class ViewSettings(ImageSettings):
         """Sequence of available themes"""
         try:
             return napari.utils.theme.available_themes()
-        except:  # noqa: E722  # pylint: disable=W0702  # pragma: no cover
+        except:  # noqa: E722  # pylint: disable=bare-except  # pragma: no cover
             return ("light",)
 
     @property
@@ -707,7 +707,7 @@ class BaseSettings(ViewSettings):
         if self.napari_settings.save is not None:
             self.napari_settings.save()
         else:
-            self.napari_settings._save()  # pylint: disable=W0212
+            self.napari_settings._save()  # pylint: disable=protected-access
         if folder_path is None:
             folder_path = self.json_folder_path
         if not os.path.exists(folder_path):
@@ -718,7 +718,7 @@ class BaseSettings(ViewSettings):
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
                 with open(os.path.join(folder_path, el.file_name), "w", encoding="utf-8") as ff:
                     ff.write(dump_string)
-            except Exception as e:  # pylint: disable=W0703
+            except Exception as e:  # pylint: disable=broad-except
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
             logger.error(errors_list)
@@ -759,7 +759,7 @@ class BaseSettings(ViewSettings):
                 if error is not None:
                     errors_dict[file_path] = error
                 el.values.update(data)
-            except Exception as e:  # pylint: disable=W0703
+            except Exception as e:  # pylint: disable=broad-except
                 error = True
                 logger.error(e)
                 errors_dict[file_path] = e

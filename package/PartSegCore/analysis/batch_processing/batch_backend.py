@@ -111,7 +111,7 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     index, file_path = file_info
     try:
         return index, calc.do_calculation(FileCalculation(file_path, calculation))
-    except Exception as e:  # pylint: disable=W0703
+    except Exception as e:  # pylint: disable=broad-except
         return index, [prepare_error_data(e)]
 
 
@@ -765,7 +765,7 @@ class FileData:
                         file_path = f"{base}({i}){ext}"
                 if i == 100:  # pragma: no cover
                     raise PermissionError(f"Fail to write result excel {self.file_path}")
-            except Exception as e:  # pragma: no cover   # pylint: disable=W0703
+            except Exception as e:  # pragma: no cover   # pylint: disable=broad-except
                 logging.error("[batch_backend] %s", e)
                 self.error_queue.put(prepare_error_data(e))
             finally:

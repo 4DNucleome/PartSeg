@@ -1,5 +1,4 @@
 import os
-import sre_constants
 from functools import partial
 from glob import glob
 from pathlib import Path
@@ -142,14 +141,14 @@ class AddFiles(QWidget):
 
     def _load_file(self):
         file_path = self.selected_files.item(self.selected_files.currentRow()).file_path
-        self.settings._load_files_call([file_path])  # pylint: disable=W0212
+        self.settings._load_files_call([file_path])  # pylint: disable=protected-access
 
     def _load_file_with_mask(self, mask_mapper: MaskMapper):
         file_path = self.selected_files.item(self.selected_files.currentRow()).file_path
         mask_path = mask_mapper.get_mask_path(file_path)
-        self.settings._load_files_call([file_path, mask_path])  # pylint: disable=W0212
+        self.settings._load_files_call([file_path, mask_path])  # pylint: disable=protected-access
 
-    def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=R0201
+    def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=no-self-use
         if event.mimeData().hasFormat("text/plain"):
             event.acceptProposedAction()
 
@@ -183,11 +182,9 @@ class AddFiles(QWidget):
             self.update_files_list(res_list)
 
     def find_all(self):
-        try:
-            paths = glob(str(self.paths_input.text()))
-        except sre_constants.error as e:
-            QMessageBox().warning(self, "Bad path", f"During search of files an error '{e.msg}` occurred")
-            return
+        # When it fails again then there is a need to provide test
+        # with input that causes crash
+        paths = glob(str(self.paths_input.text()))
 
         paths = sorted(x for x in (set(paths) - self.files_to_proceed) if not os.path.isdir(x))
         if len(paths) > 0:

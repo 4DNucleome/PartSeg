@@ -191,7 +191,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     @classmethod
     def get_default_values(cls):
         if cls.__new_style__:
-            return cls.__argument_class__()  # pylint: disable=E1102
+            return cls.__argument_class__()  # pylint: disable=not-callable
         return {
             el.name: {
                 "name": el.default_value,
@@ -451,7 +451,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
     values: typing.Any
 
     @validator("values")
-    def validate_values(cls, v, values):  # pylint: disable=R0201
+    def validate_values(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, dict):
             return v
         if "algorithm" not in values:

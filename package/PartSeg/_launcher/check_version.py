@@ -56,7 +56,7 @@ class CheckVersionThread(QThread):
             self.url = data["info"]["home_page"]
         except (KeyError, urllib.error.URLError):  # pragma: no cover
             pass
-        except Exception as e:  # pylint: disable=W0703
+        except Exception as e:  # pylint: disable=broad-except
             with sentry_sdk.push_scope() as scope:
                 scope.set_tag("auto_report", "true")
                 scope.set_tag("check_version", "true")

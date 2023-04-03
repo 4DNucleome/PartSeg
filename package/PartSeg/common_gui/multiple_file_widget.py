@@ -66,7 +66,7 @@ class MultipleFilesTreeWidget(QTreeWidget):
     def set_show_compare(self, compare: bool):
         self.compare = compare
 
-    def mouseMoveEvent(self, event):  # pylint: disable=R0201
+    def mouseMoveEvent(self, event):  # pylint: disable=no-self-use
         QApplication.setOverrideCursor(Qt.ArrowCursor)
         super().mouseMoveEvent(event)
 
@@ -335,7 +335,7 @@ class MultipleFileWidget(QWidget):
         metric = QFontMetrics(self.file_view.font())
         width = self.file_view.width() - 45
         for i, text in enumerate(self.file_list):
-            clipped_text = metric.elidedText(text, Qt.ElideLeft, width)
+            clipped_text = metric.elidedText(text, Qt.TextElideMode.ElideLeft, width)
             item: QTreeWidgetItem = self.file_view.topLevelItem(i)
             item.setText(0, clipped_text)
 
@@ -345,10 +345,10 @@ class MultipleFileWidget(QWidget):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.x() > self.width() - 20:
-            QApplication.setOverrideCursor(Qt.SplitHCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.SplitHCursor)
         else:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
-        if self.last_point is None or not (event.buttons() & Qt.LeftButton):
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+        if self.last_point is None or not (event.buttons() & Qt.MouseButton.LeftButton):
             return
         new_width = event.x() + 10
         new_width = max(new_width, 150)
@@ -356,8 +356,8 @@ class MultipleFileWidget(QWidget):
 
         self.setMinimumWidth(new_width)
 
-    def leaveEvent(self, _):  # pylint: disable=R0201
-        QApplication.setOverrideCursor(Qt.ArrowCursor)
+    def leaveEvent(self, _):  # pylint: disable=no-self-use
+        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def mouseReleaseEvent(self, event: QMouseEvent):
         self.last_point = None

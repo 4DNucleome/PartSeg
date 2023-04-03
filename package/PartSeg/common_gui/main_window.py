@@ -260,7 +260,7 @@ class BaseMainWindow(QMainWindow):
     def showEvent(self, a0: QShowEvent):
         self.show_signal.emit()
 
-    def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=R0201
+    def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=no-self-use
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 

@@ -88,7 +88,7 @@ class Leaf(BaseModel):
     channel: Optional[Channel] = None
 
     @validator("parameters")
-    def _validate_parameters(cls, v, values):  # pylint: disable=R0201
+    def _validate_parameters(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, dict) or "name" not in values:
             return v
         from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
@@ -104,7 +104,7 @@ class Leaf(BaseModel):
         return method.__argument_class__(**v)
 
     @validator("per_component")
-    def _validate_per_component(cls, v, values):  # pylint: disable=R0201
+    def _validate_per_component(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, PerComponent) or "area" not in values or values["area"] is None:
             return v
         if v == PerComponent.Per_Mask_component and values["area"] != AreaType.ROI:

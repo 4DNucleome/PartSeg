@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 from copy import copy
 from unittest.mock import patch
 

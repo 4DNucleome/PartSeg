@@ -24,7 +24,7 @@ def partseg_object_hook(dkt: dict):
             dkt_migrated = nme.REGISTER.migrate_data(cls_str, {}, dkt)
             cls = nme.REGISTER.get_class(cls_str)
             return cls(**dkt_migrated)
-        except Exception:  # pylint: disable=W0703
+        except Exception:  # pylint: disable=broad-except
             dkt["__subtype__"] = cls_str
             dkt["__Enum__" if is_enum else "__Serializable__"] = True
 

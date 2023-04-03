@@ -229,7 +229,7 @@ class BatchWorker:
         try:
             res = fun(data, global_data)
             self.result_queue.put((task_uuid, res))
-        except Exception as e:  # pragma: no cover # pylint: disable=W0703
+        except Exception as e:  # pragma: no cover # pylint: disable=broad-except
             traceback.print_exc()
             exc_type, _exc_obj, exc_tb = sys.exc_info()
             f_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -255,7 +255,7 @@ class BatchWorker:
                     continue
                 except (MemoryError, OSError):  # pragma: no cover
                     pass
-                except Exception as ex:  # pragma: no cover # pylint: disable=W0703
+                except Exception as ex:  # pragma: no cover # pylint: disable=broad-except
                     logging.warning("Unsupported exception %s", ex)
             else:
                 time.sleep(0.1)

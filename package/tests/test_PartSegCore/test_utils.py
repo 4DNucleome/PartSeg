@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import json
 from unittest.mock import MagicMock
 
@@ -34,7 +34,7 @@ def test_callback_method():
     call_list = []
 
     class A:
-        def fun(self):  # pylint: disable=R0201
+        def fun(self):  # pylint: disable=no-self-use
             call_list.append(1)
 
     a = A()
@@ -54,7 +54,7 @@ def test_get_callback():
         raise NotImplementedError
 
     class A:
-        def fun(self):  # pylint: disable=R0201
+        def fun(self):  # pylint: disable=no-self-use
             raise NotImplementedError
 
     a = A()
