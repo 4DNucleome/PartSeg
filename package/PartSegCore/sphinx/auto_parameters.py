@@ -14,7 +14,7 @@ from PartSegCore.class_generator import extract_type_info, extract_type_name
 # noinspection PyUnusedLocal
 def algorithm_parameters_doc(app: Sphinx, what, name: str, obj, options, lines: list):
     if inspect.isclass(obj) and issubclass(obj, AlgorithmDescribeBase) and not inspect.isabstract(obj):
-        fields = [x for x in obj._get_fields() if isinstance(x, AlgorithmProperty)]  # pylint: disable=W0212
+        fields = [x for x in obj._get_fields() if isinstance(x, AlgorithmProperty)]  # pylint: disable=protected-access
         if fields:
             lines.extend(["", "This algorithm has following parameters:", ""])
         for el in fields:
