@@ -533,6 +533,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             restarted
             or self.old_threshold_info[1] != self.threshold_info[1]
             or self.new_parameters.flow_type != self.parameters["flow_type"]
+            or self.new_parameters.remove_object_touching_border != self.parameters["remove_object_touching_border"]
         ):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
@@ -553,6 +554,8 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             )
             if self.new_parameters.remove_object_touching_border:
                 new_segment = remove_object_touching_border(new_segment)
+
+            self.parameters["remove_object_touching_border"] = self.new_parameters.remove_object_touching_border
 
             self.final_sizes = np.bincount(new_segment.flat)
             return ROIExtractionResult(
