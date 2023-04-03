@@ -389,7 +389,8 @@ class TiffImageReader(BaseImageReaderBuffer):
 
             else:
                 mask_data = None
-                self.callback_function("max", total_pages_num)
+                if total_pages_num > 1:
+                    self.callback_function("max", total_pages_num)
 
             image_file.report_func = report_func
             try:
