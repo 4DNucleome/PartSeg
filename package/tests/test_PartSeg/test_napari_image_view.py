@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import gc
 from functools import partial
 from unittest.mock import MagicMock

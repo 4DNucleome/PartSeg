@@ -159,7 +159,7 @@ class ThresholdBaseAlgorithmParameters(BaseModel):
     )
 
     @validator("noise_filtering")
-    def _noise_filter_validate(cls, v):  # pylint: disable=R0201
+    def _noise_filter_validate(cls, v):  # pylint: disable=no-self-use
         if not isinstance(v, dict):
             return v
         algorithm = NoiseFilterSelection[v["name"]]
