@@ -237,7 +237,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
                 return
         if self.__new_style__:
             kwargs = REGISTER.migrate_data(class_to_str(self.__argument_class__), {}, kwargs)
-            self.new_parameters = self.__argument_class__(**kwargs)  # pylint: disable=E1102
+            self.new_parameters = self.__argument_class__(**kwargs)  # pylint: disable=not-callable
             return
 
         base_names = [x.name for x in self.get_fields() if isinstance(x, AlgorithmProperty)]
