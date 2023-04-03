@@ -112,11 +112,13 @@ from PartSegCore.algorithm_describe_base import (
 )
 from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.calculation_plan import MaskSuffix
-from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
+from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
+from PartSegCore.mask.io_functions import MaskProjectTuple, SaveROI, SaveROIOptions
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
 from PartSegCore.utils import BaseModel
@@ -141,6 +143,38 @@ class Enum2(Enum):
 
     def __str__(self):
         return f"{self.name} eee"
+
+
+@pytest.fixture()
+def _example_tiff_files(tmp_path):
+    for i in range(5):
+        ImageWriter.save(
+            Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
+        )
+
+
+@pytest.fixture()
+def mf_widget(qtbot, part_settings):
+    res = MultipleFileWidget(
+        part_settings,
+        {
+            LoadStackImage.get_name(): LoadStackImage,
+            LoadMaskSegmentation.get_name(): LoadMaskSegmentation,
+        },
+    )
+    qtbot.add_widget(res)
+    return res
+
+
+@pytest.fixture()
+def _example_mask_project_files(tmp_path):
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[:5] = 1
+    data[5:] = 2
+    image = Image(data, image_spacing=(1, 1), axes_order="XY", file_path=str(tmp_path / "mask.tif"))
+    ImageWriter.save(image, image.file_path)
+    project = MaskProjectTuple(file_path=image.file_path, image=image, roi_info=ROIInfo(image.fit_array_to_image(data)))
+    SaveROI.save(tmp_path / "proj.seg", project, SaveROIOptions())
 
 
 @pytest.mark.filterwarnings("ignore:EnumComboBox is deprecated")
@@ -525,13 +559,8 @@ class TestMultipleFileWidget:
 
     @pytest.mark.enablethread()
     @pytest.mark.enabledialog()
-    def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path):
-        widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
-        qtbot.add_widget(widget)
-        for i in range(5):
-            ImageWriter.save(
-                Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
-            )
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [
             [
                 [
@@ -541,49 +570,59 @@ class TestMultipleFileWidget:
             ]
             for i in range(5)
         ]
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
         assert part_settings.get_last_files_multiple() == file_list
-        assert widget.file_view.topLevelItemCount() == 5
-        widget.file_view.clear()
-        widget.state_dict.clear()
-        widget.file_list.clear()
+        assert mf_widget.file_view.topLevelItemCount() == 5
+        mf_widget.file_view.clear()
+        mf_widget.state_dict.clear()
+        mf_widget.file_list.clear()
         monkeypatch.setattr(LoadRecentFiles, "exec_", lambda x: True)
         monkeypatch.setattr(LoadRecentFiles, "get_files", lambda x: file_list)
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.load_recent()
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.load_recent()
         assert part_settings.get_last_files_multiple() == file_list
-        assert widget.file_view.topLevelItemCount() == 5
+        assert mf_widget.file_view.topLevelItemCount() == 5
 
     @pytest.mark.enablethread()
     @pytest.mark.enabledialog()
-    def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path):
-        widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
-        qtbot.add_widget(widget)
-        for i in range(5):
-            ImageWriter.save(
-                Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
-            )
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [[[str(tmp_path / f"img_{i}.tif")], LoadStackImage.get_name()] for i in range(5)]
         load_property = LoadProperty(
             [str(tmp_path / f"img_{i}.tif") for i in range(5)], LoadStackImage.get_name(), LoadStackImage
         )
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
-        assert widget.file_view.topLevelItemCount() == 5
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert mf_widget.file_view.topLevelItemCount() == 5
         assert part_settings.get_last_files_multiple() == file_list
-        widget.file_view.clear()
-        widget.state_dict.clear()
-        widget.file_list.clear()
+        mf_widget.file_view.clear()
+        mf_widget.state_dict.clear()
+        mf_widget.file_list.clear()
         monkeypatch.setattr(MultipleLoadDialog, "exec_", lambda x: True)
         monkeypatch.setattr(MultipleLoadDialog, "get_result", lambda x: load_property)
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.load_files()
-        assert widget.file_view.topLevelItemCount() == 5
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.load_files()
+        assert mf_widget.file_view.topLevelItemCount() == 5
         assert part_settings.get_last_files_multiple() == file_list
         part_settings.dump()
         part_settings.load()
         assert part_settings.get_last_files_multiple() == file_list
+
+    @pytest.mark.enablethread()
+    @pytest.mark.enabledialog()
+    @pytest.mark.usefixtures("_example_mask_project_files")
+    def test_load_mask_project(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
+        load_property = LoadProperty(
+            [str(tmp_path / "proj.seg")], LoadMaskSegmentation.get_name(), LoadMaskSegmentation
+        )
+
+        with qtbot.waitSignal(mf_widget._add_state):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert part_settings.get_last_files_multiple() == [
+            [[str(tmp_path / "proj.seg")], LoadMaskSegmentation.get_name()]
+        ]
+        assert mf_widget.file_view.topLevelItemCount() == 2
 
 
 class TestBaseMainWindow:

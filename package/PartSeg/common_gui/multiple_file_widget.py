@@ -255,6 +255,9 @@ class MultipleFileWidget(QWidget):
 
     def save_state_action(self, state: ProjectInfoBase, custom_name):
         # TODO left elipsis
+        if isinstance(state, list):
+            self.add_states(state)
+            return
         # state: ProjectInfoBase = self.get_state()
         if not isinstance(state, ProjectInfoBase):  # workaround for PointsInfo load
             return

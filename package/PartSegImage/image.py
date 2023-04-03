@@ -409,6 +409,8 @@ class Image:
         which fit all information
         """
         array = self.fit_array_to_image(array)
+        if np.max(array) == 1:
+            return array.astype(np.uint8)
         unique = np.unique(array)
         if unique.size == 2 and unique[1] == 1:
             return array.astype(np.uint8)
