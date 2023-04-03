@@ -1,5 +1,4 @@
 import os
-import sre_constants
 from functools import partial
 from glob import glob
 from pathlib import Path
@@ -183,11 +182,9 @@ class AddFiles(QWidget):
             self.update_files_list(res_list)
 
     def find_all(self):
-        try:
-            paths = glob(str(self.paths_input.text()))
-        except sre_constants.error as e:
-            QMessageBox().warning(self, "Bad path", f"During search of files an error '{e.msg}` occurred")
-            return
+        # When it fails again then there is a need to provide test
+        # with input that causes crash
+        paths = glob(str(self.paths_input.text()))
 
         paths = sorted(x for x in (set(paths) - self.files_to_proceed) if not os.path.isdir(x))
         if len(paths) > 0:
