@@ -473,7 +473,7 @@ class ImageView(QWidget):
 
         image_info.roi.colormap = Colormap(colors=res, interpolation=ColormapInterpolationMode.ZERO)
         max_val = image_info.roi_count + 1
-        image_info.roi._all_vals = np.array(  # pylint: disable=W0212
+        image_info.roi._all_vals = np.array(  # pylint: disable=protected-access
             [0] + [(x + 1) / (max_val + 1) for x in range(1, max_val)]
         )
 
@@ -920,7 +920,7 @@ class ImageView(QWidget):
 
     @staticmethod
     def _data_to_world(layer: Layer, cords):
-        return layer._transforms[1:3].simplified(cords)  # pylint: disable=W0212
+        return layer._transforms[1:3].simplified(cords)  # pylint: disable=protected-access
 
     def _bounding_box(self, num) -> Optional[Tuple[np.ndarray, np.ndarray]]:
         lower_bound_list = []
@@ -945,7 +945,7 @@ class NapariQtViewer(QtViewer):
         super().__init__(viewer, show_welcome_screen=False)
         self.widget(0).layout().setContentsMargins(0, 5, 0, 2)
 
-    def dragEnterEvent(self, event):  # pylint: disable=R0201
+    def dragEnterEvent(self, event):  # pylint: disable=no-self-use
         """
         ignore napari reading mechanism
         """

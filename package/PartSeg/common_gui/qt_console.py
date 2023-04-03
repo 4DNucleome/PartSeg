@@ -93,7 +93,7 @@ class QtConsole(RichJupyterWidget):
             self.kernel_client = kernel_client
             self.shell = kernel_manager.kernel.shell
             self.push = self.shell.push
-        elif type(shell) is InProcessInteractiveShell:  # pylint: disable=C0123
+        elif type(shell) is InProcessInteractiveShell:  # pylint: disable=unidiomatic-typecheck
             # If there is an existing running InProcessInteractiveShell
             # it is likely because multiple viewers have been launched from
             # the same process. In that case create a new kernel.

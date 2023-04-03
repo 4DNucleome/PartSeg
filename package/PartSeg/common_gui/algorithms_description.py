@@ -230,7 +230,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if isinstance(res, QWidget):
             res.setToolTip(tool_tip_text)
         if isinstance(res, Widget):
-            res.tooltip = tool_tip_text  # pylint: disable=W0201 # false positive
+            res.tooltip = tool_tip_text  # pylint: disable=attribute-defined-outside-init # false positive
         return res
 
     @staticmethod

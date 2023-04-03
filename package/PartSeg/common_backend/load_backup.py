@@ -56,5 +56,5 @@ def import_config():
             napari_settings = napari_get_settings(state_store.save_folder)
             if hasattr(napari_settings, "load") and napari_settings.load is not None:
                 napari_settings.load()
-            elif hasattr(napari_settings, "_load") and napari_settings._load is not None:  # pylint: disable=W0212
-                napari_settings._load()  # pylint: disable=W0212
+            elif getattr(napari_settings, "_load", None) is not None:
+                napari_settings._load()  # pylint: disable=protected-access

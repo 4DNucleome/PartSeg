@@ -127,7 +127,7 @@ class SearchLabel(Container):
 
     @staticmethod
     def _data_to_world(layer: Labels, cords):
-        return layer._transforms[1:3].simplified(cords)  # pylint: disable=W0212
+        return layer._transforms[1:3].simplified(cords)  # pylint: disable=protected-access
 
     def _zoom(self):
         self._stop()
