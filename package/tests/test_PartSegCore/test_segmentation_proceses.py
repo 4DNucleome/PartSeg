@@ -24,7 +24,7 @@ class TestSegmentation:
         try:
             data = load_metadata_base(profile_path)
             assert check_loaded_dict(data)
-        except Exception:  # pylint: disable=W0703  # pragma: no cover
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
             pytest.fail("Fail in loading profile")
             return
         image = TiffImageReader.read_image(
