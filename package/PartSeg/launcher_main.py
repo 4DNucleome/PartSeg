@@ -26,6 +26,11 @@ def _test_imports():
     from PartSeg._roi_mask.main_window import MainWindow as MaskMain
     from PartSeg.common_backend.base_argparser import _setup_sentry
 
+    with suppress(ImportError):
+        from napari.qt import get_app
+
+        get_app()
+
     _setup_sentry()
     freetype.get_handle()
     plugins.register()
