@@ -11,7 +11,7 @@ multiprocessing.freeze_support()
 
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal
-def _test_imports():
+def _test_imports():  # pragma: no cover
     print("start_test_import")
     from qtpy.QtWidgets import QApplication
 
