@@ -524,6 +524,10 @@ class SplitImageOnParts(StackAlgorithm):
     __argument_class__ = SplitImageOnPartsParameters
     new_parameters: SplitImageOnPartsParameters
 
+    def __init__(self):
+        super().__init__()
+        self._components_count = -1
+
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         if self.image is None:  # pragma: no cover
             raise ValueError("No image")
@@ -542,13 +546,14 @@ class SplitImageOnParts(StackAlgorithm):
             mask[..., j * size : (j + 1) * size, i * size : (i + 1) * size] = cnt
 
         report_fun("Done", 1)
+        self._components_count = count_components
         return ROIExtractionResult(
             roi=mask,
             parameters=self.get_segmentation_profile(),
         )
 
     def get_info_text(self):
-        return ""
+        return f"Split on {self._components_count} parts"
 
     @staticmethod
     def get_steps_num():
