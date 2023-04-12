@@ -77,6 +77,7 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
+          PIP_CONSTRAINT: requirements/constraints_py${{ inputs.python_version }}.txt
 
       - uses: codecov/codecov-action@v3
         if: ${{ inputs.coverage }}
