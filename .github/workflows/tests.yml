@@ -32,7 +32,7 @@ jobs:
           retention-days: 5
 
   base-test:
-    name: Base Test on ${{ matrix.platform }} py${{ matrix.python_version }} ${{ matrix.backend }}
+    name: Base Test
     if: github.event_name == 'pull_request'
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
