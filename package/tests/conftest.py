@@ -1,12 +1,9 @@
 import dataclasses
 import itertools
-import multiprocessing as mp
 import os
 import platform
-import signal
 from copy import deepcopy
 from pathlib import Path
-from queue import Empty
 
 import numpy as np
 import pytest
@@ -41,34 +38,6 @@ def _mock_settings_path(tmp_path, monkeypatch):
 def bundle_test_dir():
     """Return path to directory with test data"""
     return Path(os.path.join(os.path.dirname(__file__), "test_data"))
-
-
-def wait_sigint(q: mp.Queue, pid):
-    try:
-        q.get(timeout=20 * 60)
-    except Empty:
-        print("Timeout")
-        os.kill(pid, signal.SIGINT)
-        import time
-
-        time.sleep(30)
-        try:
-            os.kill(pid, 0)
-        except OSError:
-            pass
-        else:
-            os.kill(pid, signal.SIGKILL)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _sigint_after_time():
-    manager = mp.Manager()
-    q = manager.Queue()
-    p = mp.Process(target=wait_sigint, args=(q, os.getpid()))
-    p.start()
-    yield
-    q.put(1)
-    p.join()
 
 
 @pytest.fixture()
