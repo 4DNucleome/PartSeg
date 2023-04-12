@@ -20,7 +20,7 @@ from PartSegCore.mask.io_functions import LoadStackImage as MaskLoadStackImage
 
 class TestPartSettingsIO:
     @pytest.mark.parametrize("method", analysis_save_dict.values())
-    def test_save(self, method, qtbot, part_settings_with_project, tmp_path):
+    def test_save(self, method, part_settings_with_project, tmp_path):
         pi = part_settings_with_project.get_project_info()
         method.save(tmp_path / "data", pi, method.get_default_values())
 
