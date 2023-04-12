@@ -60,7 +60,7 @@ def wait_sigint(q: mp.Queue, pid):
             os.kill(pid, signal.SIGKILL)
 
 
-@pytest.fixture(scope="session", autouse=True)
+# @pytest.fixture(scope="session", autouse=True)
 def _sigint_after_time():
     manager = mp.Manager()
     q = manager.Queue()
