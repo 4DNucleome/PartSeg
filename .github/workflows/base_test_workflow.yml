@@ -72,7 +72,7 @@ jobs:
         uses: aganders3/headless-gui@v1
         timeout-minutes: 60
         with:
-          run: python -m tox ${{ inputs.tox_args }}
+          run: python -m tox ${{ inputs.tox_args }} -v
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
