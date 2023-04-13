@@ -6,7 +6,7 @@ steps:
   - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9'}}
   - template: pip_cache.yaml
     parameters:
-      key: test | requirements/requirements_pyinstaller.txt | "$(Agent.OS)" | "$(PY)"
+      key: test | requirements/constraints_py3.9.txt | "$(Agent.OS)" | "$(PY)"
       path: ${{ parameters.cache_dir }}
   - task: DownloadPipelineArtifact@2
     inputs:
