@@ -147,7 +147,7 @@ stages:
             cache_dir: $(pip_cache_dir)
 
   - stage: Builds
-    dependsOn: Tests_linux
+    dependsOn: GetTestData
     jobs:
       - job: sdist
         pool: {vmImage: 'Ubuntu-20.04'}
