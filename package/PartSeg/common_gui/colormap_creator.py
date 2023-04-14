@@ -224,8 +224,8 @@ class ColormapCreator(QWidget):
     emitted on save button click. Contains current colormap in format accepted by :py:func:`create_color_map`
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
         self.color_picker = QColorDialog()
         self.color_picker.setWindowFlag(Qt.WindowType.Widget)
         self.color_picker.setOptions(
@@ -307,18 +307,21 @@ class PColormapCreator(ColormapCreator):
     def save(self):
         if self.show_colormap.colormap:
             rand_name = custom_name_generate(self.prohibited_names, self.settings.colormap_dict)
-            self.prohibited_names.add(rand_name)
-            colors = list(self.show_colormap.colormap.colors)
-            positions = list(self.show_colormap.colormap.controls)
-            if positions[0] != 0:
-                positions.insert(0, 0)
-                colors.insert(0, colors[0])
-            if positions[-1] != 1:
-                positions.append(1)
-                colors.append(colors[-1])
-            self.settings.colormap_dict[rand_name] = Colormap(colors=np.array(colors), controls=np.array(positions))
-            self.settings.chosen_colormap_change(rand_name, True)
+            save_colormap_in_settings(self.settings, self.show_colormap.colormap, rand_name)
             self.colormap_selected.emit(self.settings.colormap_dict[rand_name][0])
+
+
+def save_colormap_in_settings(settings: ViewSettings, colormap: Colormap, name: str):
+    colors = list(colormap.colors)
+    positions = list(colormap.controls)
+    if positions[0] != 0:
+        positions.insert(0, 0)
+        colors.insert(0, colors[0])
+    if positions[-1] != 1:
+        positions.append(1)
+        colors.append(colors[-1])
+    settings.colormap_dict[name] = Colormap(colors=np.array(colors), controls=np.array(positions))
+    settings.chosen_colormap_change(name, True)
 
 
 _icon_selector = IconSelector()
@@ -434,8 +437,10 @@ class ColormapList(QWidget):
     visibility_colormap_change = Signal(str, bool)
     """Hide or show colormap"""
 
-    def __init__(self, colormap_map: Dict[str, Tuple[Colormap, bool]], selected: Optional[Iterable[str]] = None):
-        super().__init__()
+    def __init__(
+        self, colormap_map: Dict[str, Tuple[Colormap, bool]], selected: Optional[Iterable[str]] = None, parent=None
+    ):
+        super().__init__(parent=parent)
         self._selected = set() if selected is None else set(selected)
         self._blocked = set()
         self.current_columns = 1
