@@ -119,6 +119,7 @@ class SaveROIOptions(BaseModel):
         description="When loading data in ROI analysis, if not checked"
         " then data outside ROI will be replaced with zeros.",
     )
+    frame_thickness: int = Field(2, title="Frame thickness", description="Thickness of frame around ROI")
     spacing: typing.List[float] = Field([10**-6, 10**-6, 10**-6], hidden=True)
 
 
@@ -148,6 +149,7 @@ def _save_mask_roi_metadata(
         "shape": project.roi_info.roi.shape,
         "annotations": project.roi_info.annotations,
         "keep_data_outside_mask": not parameters.mask_data,
+        "frame_thickness": parameters.frame_thickness,
     }
     if isinstance(project.image, Image):
         file_path = project.image.file_path

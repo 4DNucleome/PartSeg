@@ -37,7 +37,7 @@ def generate_mask(project_tuple: MaskProjectTuple, size: int, save_path: str):
         mask[..., j * size : (j + 1) * size, i * size : (i + 1) * size] = cnt
     project_tuple = dataclasses.replace(project_tuple, roi_info=ROIInfo(mask))
     logging.info("Save mask to %s", save_path)
-    SaveROI.save(save_path, project_tuple, SaveROIOptions(relative_path=True, mask_data=True))
+    SaveROI.save(save_path, project_tuple, SaveROIOptions(relative_path=True, mask_data=True, frame_thickness=0))
 
 
 def cut_image(image: Image, size: int, save_dir: str):

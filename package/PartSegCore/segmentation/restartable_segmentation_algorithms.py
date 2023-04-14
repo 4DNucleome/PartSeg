@@ -484,6 +484,8 @@ def remove_object_touching_border(new_segment):
     res = np.copy(new_segment)
     print("to remove", to_remove)
     for i in to_remove:
+        if i == 0:
+            continue
         res[res == i] = 0
     return res
 
