@@ -1,3 +1,8 @@
+"""
+This is script to cut larger 2d images into smaller ones. It is useful when you have large image and you want to
+be able to process it on weaker computer.
+"""
+
 import dataclasses
 import logging
 import os

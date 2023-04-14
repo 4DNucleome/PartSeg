@@ -1,3 +1,9 @@
+"""
+Script to update frame thickness for mask segmentation files.
+It could be used to add frame thickness for mask segmentation files created with older versions of PartSeg or to update
+it it files contain wrong value.
+"""
+
 import argparse
 import io
 import json
@@ -7,22 +13,32 @@ import tarfile
 from glob import glob
 from pathlib import Path
 
-from PartSegCore.io_utils import get_tarinfo, load_metadata_base
-from PartSegCore.json_hooks import PartSegEncoder
-
 try:
     from tqdm import tqdm
 except ImportError:
 
-    def tqdm(x, total):  # noqa: ARG001
+    def tqdm(x):
         return x
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="This is script to add or update frame thickness for mask segmentation files. During load"
+        " mask segmentation files in PartSeg roi gui additional frame is added to catted objects."
+        " The default frame thickness is 2 and was hardcoded in older (before 0.15.0) versions of PartSeg."
+        " To avoid expensive recreation of all mask segmentation files this script can be used "
+        "to update frame thickness."
+    )
     parser.add_argument("input", help="input directory")
     parser.add_argument("frame_thickness", help="frame thickness", type=int)
     args = parser.parse_args()
+    process_files(args)
+
+
+def process_files(args):
+    from PartSegCore.io_utils import get_tarinfo, load_metadata_base
+    from PartSegCore.json_hooks import PartSegEncoder
+
     files = list(glob(f"{args.input}/*.seg"))
     if not len(files):
         raise print(f"No files in {args.input}/*.seg", file=sys.stderr)
