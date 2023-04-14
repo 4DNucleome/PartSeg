@@ -482,6 +482,7 @@ def remove_object_touching_border(new_segment):
         to_remove.update(np.unique(new_segment[tuple(slice_copy)]))
 
     res = np.copy(new_segment)
+    print("to remove", to_remove)
     for i in to_remove:
         res[res == i] = 0
     return res
@@ -553,7 +554,10 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 self.threshold_info[0],
             )
             if self.new_parameters.remove_object_touching_border:
+                print("remove_object_touching_border")
                 new_segment = remove_object_touching_border(new_segment)
+            else:
+                print("not remove_object_touching_border")
 
             self.parameters["remove_object_touching_border"] = self.new_parameters.remove_object_touching_border
 
