@@ -332,7 +332,7 @@ def load_mask_project(
         if not np.any(single_roi):
             continue
         im = image.cut_image(
-            bound.get_slices(frame_thick), replace_mask=True, zero_out_cut_area=zero_out_cut_area, frame=frame_thick
+            bound.get_slices(), replace_mask=True, zero_out_cut_area=zero_out_cut_area, frame=frame_thick
         ).cut_image(
             single_roi,
             replace_mask=True,
