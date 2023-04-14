@@ -393,8 +393,8 @@ class MaximumDistanceWatershedParams(BaseModel):
     threshold: ThresholdSelection = ThresholdSelection.get_default()
     dilate_radius: int = Field(5, title="Dilate Radius", ge=1, le=100, description="To merge small objects")
     minimum_size: int = Field(100, title="Minimum Size", ge=1, le=1000000, description="To remove small objects")
-    minimum_radius: float = Field(
-        10.0,
+    minimum_radius: int = Field(
+        10,
         title="Minimum Radius",
         ge=0.0,
         le=100.0,
@@ -431,12 +431,15 @@ class MaximumDistanceWatershed(BaseThreshold):
         maxima = sitk.GetArrayFromImage(
             sitk.RelabelComponent(
                 sitk.ConnectedComponent(
-                    sitk.BinaryDilate(
-                        sitk.RegionalMaxima(sitk.GetImageFromArray(data)),
-                        [arguments.dilate_radius] * 3,
+                    sitk.Mask(
+                        sitk.BinaryDilate(
+                            sitk.RegionalMaxima(sitk.GetImageFromArray(data)),
+                            [arguments.dilate_radius] * 3,
+                        ),
+                        sitk.GetImageFromArray(mask1),
                     )
                 ),
-                (arguments.dilate_radius * 2 + 1) ** dim_num,
+                int((arguments.dilate_radius**dim_num) * np.pi),
             )
         )
         mask1[mask1 > 0] = 1
