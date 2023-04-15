@@ -45,6 +45,7 @@ __all__ = [
     "load_dict",
     "load_metadata",
     "LoadMaskSegmentation",
+    "LoadProfileFromJSON",
 ]
 
 

@@ -11,7 +11,15 @@ from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
 from PartSeg.common_gui.napari_image_view import SearchType
-from PartSeg.plugins.napari_widgets import MaskCreate, ROIAnalysisExtraction, ROIMaskExtraction, SearchLabel, _settings
+from PartSeg.plugins.napari_widgets import (
+    ImageColormap,
+    LabelSelector,
+    MaskCreate,
+    ROIAnalysisExtraction,
+    ROIMaskExtraction,
+    SearchLabel,
+    _settings,
+)
 from PartSeg.plugins.napari_widgets.measurement_widget import update_properties
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSeg.plugins.napari_widgets.search_label_widget import HIGHLIGHT_LABEL_NAME
@@ -25,9 +33,9 @@ from PartSegCore.segmentation import ROIExtractionResult
 
 
 @pytest.fixture(autouse=True)
-def _clean_settings(tmp_path):
+def _clean_settings(tmp_path, part_settings):
     old_settings = _settings._SETTINGS
-    _settings._SETTINGS = None
+    _settings._SETTINGS = part_settings
     yield
     _settings._SETTINGS = old_settings
 
@@ -270,3 +278,39 @@ def test_search_labels(make_napari_viewer, qtbot):
     assert HIGHLIGHT_LABEL_NAME not in viewer.layers
     search.search_type.value = SearchType.Highlight
     search.component_selector.value = 2
+
+
+def test_label_control(make_napari_viewer, qtbot):
+    viewer = make_napari_viewer()
+    widget = LabelSelector(viewer)
+    qtbot.addWidget(widget)
+    widget.label_view.refresh()
+
+    assert widget.label_view.layout().count() == 2  # labels and stretch
+
+    data = np.zeros((10, 10), dtype=np.uint8)
+    viewer.add_image(data, name="image")
+    viewer.add_labels(data, name="label")
+    viewer.layers.selection.clear()
+    viewer.layers.selection.add(viewer.layers["label"])
+    assert widget.label_view.layout().itemAt(0).widget().apply_label_btn.isEnabled()
+    viewer.layers.selection.clear()
+    viewer.layers.selection.add(viewer.layers["image"])
+    assert not widget.label_view.layout().itemAt(0).widget().apply_label_btn.isEnabled()
+
+
+def test_image_colormap(make_napari_viewer, qtbot):
+    viewer = make_napari_viewer()
+    widget = ImageColormap(viewer)
+    qtbot.addWidget(widget)
+    widget.colormap_list.refresh()
+
+    data = np.zeros((10, 10), dtype=np.uint8)
+    viewer.add_image(data, name="image")
+    viewer.add_labels(data, name="label")
+    viewer.layers.selection.clear()
+    viewer.layers.selection.add(viewer.layers["label"])
+    assert not widget.colormap_list.grid_layout.itemAt(0).widget().apply_colormap_btn.isEnabled()
+    viewer.layers.selection.clear()
+    viewer.layers.selection.add(viewer.layers["image"])
+    assert widget.colormap_list.grid_layout.itemAt(0).widget().apply_colormap_btn.isEnabled()
