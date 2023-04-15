@@ -2,7 +2,7 @@ from napari_plugin_engine import napari_hook_implementation
 
 from PartSeg._launcher.main_window import PartSegGUILauncher
 from PartSeg.plugins import register as register_plugin
-from PartSeg.plugins.napari_widgets.label_controls import ImageColormap
+from PartSeg.plugins.napari_widgets.colormap_control import ImageColormap
 from PartSeg.plugins.napari_widgets.mask_create_widget import MaskCreate
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ROIAnalysisExtraction, ROIMaskExtraction
 from PartSeg.plugins.napari_widgets.search_label_widget import SearchLabel

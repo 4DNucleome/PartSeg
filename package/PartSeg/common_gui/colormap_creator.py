@@ -346,6 +346,7 @@ class ChannelPreview(QWidget):
     def __init__(self, colormap: Colormap, accepted: bool, name: str, removable: bool = False, used: bool = False):
         super().__init__()
         self.image = convert_colormap_to_image(colormap)
+        self.colormap = colormap
         self.name = name
         self.removable = removable
         self.checked = QCheckBox()
@@ -414,8 +415,10 @@ class ChannelPreview(QWidget):
 
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
-        start = 2 * self.checked.x() + self.checked.width()
-        end = self.remove_btn.x() - self.checked.x()
+        layout = self.layout()
+        first_el = layout.itemAt(0).widget()
+        start = 2 * first_el.x() + first_el.width()
+        end = self.remove_btn.x() - first_el.x()
         rect = self.rect()
         rect.setX(start)
         rect.setWidth(end - start)
@@ -468,7 +471,7 @@ class ColormapList(QWidget):
 
     def get_selected(self) -> Set[str]:
         """Already selected colormaps"""
-        return set(self._selected)
+        return self._selected
 
     def change_selection(self, name, selected):
         if selected:
@@ -511,7 +514,7 @@ class ColormapList(QWidget):
                 widget.set_blocked(name in blocked)
                 widget.set_chosen(name in selected)
             else:
-                widget = ChannelPreview(colormap, name in selected, name, removable=removable, used=name in blocked)
+                widget = self._create_colormap_preview(colormap, name, removable)
                 widget.edit_request[Colormap].connect(self.edit_signal)
                 widget.remove_request.connect(self._remove_request)
                 widget.selection_changed.connect(self.change_selection)
@@ -521,6 +524,11 @@ class ColormapList(QWidget):
         height = widget.minimumHeight()
         self.current_columns = columns
         self.central_widget.setMinimumHeight((height + 10) * ceil(len(self.colormap_map) / columns))
+
+    def _create_colormap_preview(self, colormap: Colormap, name: str, removable: bool) -> ChannelPreview:
+        return ChannelPreview(
+            colormap, name in self.get_selected(), name, removable=removable, used=name in self.blocked()
+        )
 
     def check_state(self, name: str) -> bool:
         """
