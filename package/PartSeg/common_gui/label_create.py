@@ -123,8 +123,8 @@ class LabelChoose(QWidget):
     edit_signal = Signal(list)
     edit_with_name_signal = Signal(str, list)
 
-    def __init__(self, settings):
-        super().__init__()
+    def __init__(self, settings, parent=None):
+        super().__init__(parent)
         self.settings = settings
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -158,7 +158,7 @@ class LabelChoose(QWidget):
 
         chosen_name = self.settings.current_labels
         for name, (val, removable) in self.settings.label_color_dict.items():
-            label = LabelShow(name, val, removable, self)
+            label = self._label_show(name, val, removable)
             if name == chosen_name:
                 label.set_checked(True)
             label.selected.connect(self.change_scheme)
@@ -167,6 +167,9 @@ class LabelChoose(QWidget):
             label.edit_labels_with_name.connect(self.edit_with_name_signal.emit)
             self.layout().addWidget(label)
         self.layout().addStretch(1)
+
+    def _label_show(self, name: str, label: List[Sequence[float]], removable) -> LabelShow:
+        return LabelShow(name, label, removable, self)
 
     def showEvent(self, _):
         self.refresh()

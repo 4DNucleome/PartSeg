@@ -15,7 +15,6 @@ class NapariColormapControl(ChannelPreview):
         self, viewer: Viewer, colormap: Colormap, accepted: bool, name: str, removable: bool = False, used: bool = False
     ):
         super().__init__(colormap, accepted, name, removable, used)
-        viewer.layers.selection.events.changed.connect(self.update_preview)
         self.viewer = viewer
         self.apply_colormap_btn = QPushButton("Apply")
         layout: QHBoxLayout = self.layout()
@@ -23,6 +22,7 @@ class NapariColormapControl(ChannelPreview):
         layout.insertWidget(0, self.apply_colormap_btn)
 
         self.apply_colormap_btn.clicked.connect(self.apply_colormap)
+        viewer.layers.selection.events.changed.connect(self.update_preview)
         self.update_preview()
 
     def update_preview(self, _event=None):
