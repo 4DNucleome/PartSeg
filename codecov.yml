@@ -21,5 +21,9 @@ coverage:
         target: auto
         threshold: 1%  # coverage can drop by up to 0.5% while still posting success
         paths: [ 'package/tests/.*' ]
+codecov:
+  notify:
+    after_n_builds: 2
 comment:
   require_changes: true  # if true: only post the PR comment if coverage changes
+  after_n_builds: 2
