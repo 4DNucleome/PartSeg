@@ -17,14 +17,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pr_title:
-    name: Check PR title
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-    - name: conventional-pr-title
-      uses: aslafy-z/conventional-pr-title-action@v2.2.0
-
   download_data:
     name: Download test data
     runs-on: ubuntu-20.04
