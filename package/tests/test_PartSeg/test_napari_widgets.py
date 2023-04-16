@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from napari.layers import Labels
+from napari.utils import Colormap
 from qtpy.QtCore import QTimer
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
@@ -14,13 +15,14 @@ from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
 from PartSeg.common_gui.napari_image_view import SearchType
 from PartSeg.plugins.napari_widgets import (
     ImageColormap,
-    LabelSelector,
     MaskCreate,
     ROIAnalysisExtraction,
     ROIMaskExtraction,
     SearchLabel,
     _settings,
 )
+from PartSeg.plugins.napari_widgets.colormap_control import NapariColormapControl
+from PartSeg.plugins.napari_widgets.lables_control import LabelSelector, NapariLabelShow
 from PartSeg.plugins.napari_widgets.measurement_widget import update_properties
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSeg.plugins.napari_widgets.search_label_widget import HIGHLIGHT_LABEL_NAME
@@ -281,37 +283,67 @@ def test_search_labels(make_napari_viewer, qtbot):
     search.component_selector.value = 2
 
 
-def test_label_control(make_napari_viewer, qtbot):
+@pytest.fixture()
+def viewer_with_data(make_napari_viewer):
     viewer = make_napari_viewer()
-    widget = LabelSelector(viewer)
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[2:5, 2:-2] = 1
+    data[5:-2, 2:-2] = 2
+    viewer.add_image(data, name="image")
+    viewer.add_labels(data, name="label")
+    viewer.layers.selection.clear()
+    return viewer
+
+
+def test_label_control(viewer_with_data, qtbot):
+    widget = LabelSelector(viewer_with_data)
     qtbot.addWidget(widget)
     widget.label_view.refresh()
 
     assert widget.label_view.layout().count() == 2  # labels and stretch
 
-    data = np.zeros((10, 10), dtype=np.uint8)
-    viewer.add_image(data, name="image")
-    viewer.add_labels(data, name="label")
-    viewer.layers.selection.clear()
-    viewer.layers.selection.add(viewer.layers["label"])
+    viewer_with_data.layers.selection.add(viewer_with_data.layers["label"])
     assert widget.label_view.layout().itemAt(0).widget().apply_label_btn.isEnabled()
-    viewer.layers.selection.clear()
-    viewer.layers.selection.add(viewer.layers["image"])
+    viewer_with_data.layers.selection.clear()
+    viewer_with_data.layers.selection.add(viewer_with_data.layers["image"])
     assert not widget.label_view.layout().itemAt(0).widget().apply_label_btn.isEnabled()
 
 
-def test_image_colormap(make_napari_viewer, qtbot):
-    viewer = make_napari_viewer()
-    widget = ImageColormap(viewer)
+def test_image_colormap(viewer_with_data, qtbot):
+    widget = ImageColormap(viewer_with_data)
     qtbot.addWidget(widget)
     widget.colormap_list.refresh()
 
-    data = np.zeros((10, 10), dtype=np.uint8)
-    viewer.add_image(data, name="image")
-    viewer.add_labels(data, name="label")
-    viewer.layers.selection.clear()
-    viewer.layers.selection.add(viewer.layers["label"])
+    viewer_with_data.layers.selection.add(viewer_with_data.layers["label"])
     assert not widget.colormap_list.grid_layout.itemAt(0).widget().apply_colormap_btn.isEnabled()
-    viewer.layers.selection.clear()
-    viewer.layers.selection.add(viewer.layers["image"])
+    viewer_with_data.layers.selection.clear()
+    viewer_with_data.layers.selection.add(viewer_with_data.layers["image"])
     assert widget.colormap_list.grid_layout.itemAt(0).widget().apply_colormap_btn.isEnabled()
+
+
+def test_napari_label_show(viewer_with_data, qtbot):
+    widget = NapariLabelShow(viewer_with_data, "label_name", [[128, 234, 123], [240, 0, 0]], False)
+    qtbot.addWidget(widget)
+    viewer_with_data.layers.selection.add(viewer_with_data.layers["image"])
+    assert not widget.apply_label_btn.isEnabled()
+    viewer_with_data.layers.selection.add(viewer_with_data.layers["label"])
+    assert not widget.apply_label_btn.isEnabled()
+    viewer_with_data.layers.selection.remove(viewer_with_data.layers["image"])
+    assert widget.apply_label_btn.isEnabled()
+    assert viewer_with_data.layers["label"].color_mode == "auto"
+    widget.apply_label_btn.click()
+    assert viewer_with_data.layers["label"].color_mode == "direct"
+
+
+def test_napari_colormap_control(viewer_with_data, qtbot):
+    widget = NapariColormapControl(viewer_with_data, Colormap([[0, 0, 0, 0], [1, 0, 0, 1]]), False, "image_name")
+    qtbot.addWidget(widget)
+    viewer_with_data.layers.selection.add(viewer_with_data.layers["label"])
+    assert not widget.apply_colormap_btn.isEnabled()
+    viewer_with_data.layers.selection.add(viewer_with_data.layers["image"])
+    assert not widget.apply_colormap_btn.isEnabled()
+    viewer_with_data.layers.selection.remove(viewer_with_data.layers["label"])
+    assert widget.apply_colormap_btn.isEnabled()
+    assert viewer_with_data.layers["image"].colormap.name == "gray"
+    widget.apply_colormap_btn.click()
+    assert viewer_with_data.layers["image"].colormap.name == "custom"
