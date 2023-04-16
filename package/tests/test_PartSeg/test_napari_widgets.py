@@ -7,6 +7,7 @@ import pytest
 from napari.layers import Labels
 from qtpy.QtCore import QTimer
 
+from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
@@ -33,9 +34,9 @@ from PartSegCore.segmentation import ROIExtractionResult
 
 
 @pytest.fixture(autouse=True)
-def _clean_settings(tmp_path, part_settings):
+def _clean_settings(tmp_path):
     old_settings = _settings._SETTINGS
-    _settings._SETTINGS = part_settings
+    _settings._SETTINGS = PartSettings(tmp_path)
     yield
     _settings._SETTINGS = old_settings
 
