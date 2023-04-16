@@ -57,3 +57,9 @@ class LabelSelector(QTabWidget):
         self.label_view = NaparliLabelChoose(viewer, settings)
         self.addTab(self.label_view, "Select labels")
         self.addTab(self.label_editor, "Create labels")
+
+        self.label_view.edit_with_name_signal.connect(self.label_editor.set_colors)
+        self.label_view.edit_signal.connect(self._set_label_editor)
+
+    def _set_label_editor(self):
+        self.setCurrentWidget(self.label_editor)

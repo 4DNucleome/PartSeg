@@ -233,8 +233,8 @@ class LabelEditor(QWidget):
         layout.addLayout(self.color_layout)
         self.setLayout(layout)
 
-    @Slot(list)
-    def set_colors(self, colors: list):
+    @Slot(str, list)
+    def set_colors(self, name: str, colors: list):
         for _ in range(self.color_layout.count()):
             el = self.color_layout.takeAt(0)
             if el.widget():

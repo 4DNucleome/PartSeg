@@ -66,7 +66,13 @@ class ImageColormap(QTabWidget):
 
         self.colormap_creator.colormap_selected.connect(self.handle_new_colormap)
 
+        self.colormap_list.edit_signal.connect(self.colormap_creator.set_colormap)
+        self.colormap_list.edit_signal.connect(self._set_colormap_editor)
+
     def handle_new_colormap(self, colormap):
         rand_name = custom_name_generate(set(), self.settings.colormap_dict)
         save_colormap_in_settings(self.settings, colormap, rand_name)
         self.settings.dump()
+
+    def _set_colormap_editor(self):
+        self.setCurrentWidget(self.colormap_creator)

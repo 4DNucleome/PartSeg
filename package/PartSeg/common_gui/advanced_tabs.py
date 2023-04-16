@@ -206,7 +206,7 @@ class ColorControl(QTabWidget):
         self.color_preview.edit_signal.connect(self._set_colormap_editor)
         self.label_editor = LabelEditor(settings)
         self.label_view = LabelChoose(settings)
-        self.label_view.edit_signal.connect(self.label_editor.set_colors)
+        self.label_view.edit_with_name_signal.connect(self.label_editor.set_colors)
         self.label_view.edit_signal.connect(self._set_label_editor)
         self.mask_control = MaskControl(settings)
         self.addTab(self.appearance, "Appearance")
