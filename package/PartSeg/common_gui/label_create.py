@@ -1,8 +1,12 @@
 """
 This module contains widgets to create and manage labels scheme
 """
+import json
+import typing
 from copy import deepcopy
-from typing import List, Sequence
+from io import BytesIO
+from pathlib import Path
+from typing import Any, Callable, List, Optional, Sequence, Union
 
 import numpy as np
 from qtpy.QtCore import Qt, Signal, Slot
@@ -20,9 +24,13 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
 from PartSeg.common_gui.icon_selector import IconSelector
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
 from PartSegCore.custom_name_generate import custom_name_generate
+from PartSegCore.io_utils import IO_LABELS_COLORMAP, LoadBase, SaveBase
+from PartSegCore.utils import BaseModel
 
 _icon_selector = IconSelector()
 
@@ -218,6 +226,10 @@ class LabelEditor(QWidget):
         self.remove_color_btn.clicked.connect(self.remove_color)
         self.save_btn = QPushButton("Save")
         self.save_btn.clicked.connect(self.save)
+        self.import_btn = QPushButton("Import")
+        self.import_btn.clicked.connect(self._import_action)
+        self.export_btn = QPushButton("Export")
+        self.export_btn.clicked.connect(self._export_action)
 
         self.color_layout = QHBoxLayout()
         layout = QVBoxLayout()
@@ -225,10 +237,31 @@ class LabelEditor(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.add_color_btn)
         btn_layout.addWidget(self.remove_color_btn)
+        btn_layout.addWidget(self.import_btn)
+        btn_layout.addWidget(self.export_btn)
         btn_layout.addWidget(self.save_btn)
         layout.addLayout(btn_layout)
         layout.addLayout(self.color_layout)
         self.setLayout(layout)
+
+    def _import_action(self):
+        dial = PLoadDialog(LoadLabels, settings=self.settings, path=IO_LABELS_COLORMAP)
+        if dial.exec_():
+            res = dial.get_result()
+            self.set_colors(res.load_class.load(res.load_location))
+
+    def _export_action(self):
+        if not self.color_layout.count():
+            return
+        self.get_colors()
+        dial = PSaveDialog(
+            SaveLabels,
+            settings=self.settings,
+            path=IO_LABELS_COLORMAP,
+        )
+        if dial.exec_():
+            res = dial.get_result()
+            res.save_class.save(res.save_destination, self.get_colors(), res.parameters)
 
     @Slot(list)
     def set_colors(self, colors: list):
@@ -248,7 +281,7 @@ class LabelEditor(QWidget):
         color = self.color_picker.currentColor()
         self.color_layout.addWidget(ColorShow([color.red(), color.green(), color.blue()], self))
 
-    def get_colors(self):
+    def get_colors(self) -> List[List[int]]:
         count = self.color_layout.count()
         return [self.color_layout.itemAt(i).widget().color for i in range(count)]
 
@@ -277,3 +310,50 @@ class LabelEditor(QWidget):
 
     def mouseReleaseEvent(self, e: QMouseEvent):
         self.chosen = None
+
+
+class LoadLabels(LoadBase):
+    __argument_class__ = BaseModel
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Labels json (*.label.json)"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: List[Union[str, BytesIO, Path]],
+        range_changed: Callable[[int, int], Any] = None,
+        step_changed: Callable[[int], Any] = None,
+        metadata: Optional[dict] = None,
+    ) -> List[List[float]]:
+        with open(load_locations[0]) as f_p:
+            return json.load(f_p)
+
+    @classmethod
+    def get_short_name(cls):
+        return "label_json"
+
+
+class SaveLabels(SaveBase):
+    __argument_class__ = BaseModel
+
+    @classmethod
+    def get_short_name(cls):
+        return "label_json"
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
+        with open(save_location, "w") as f_p:
+            json.dump(project_info, f_p)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Labels json (*.label.json)"
