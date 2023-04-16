@@ -1,9 +1,14 @@
 import bisect
+import json
+import typing
 from contextlib import suppress
 from functools import partial
+from io import BytesIO
 from math import ceil
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import nme
 import numpy as np
 from napari.utils import Colormap
 from qtpy.QtCore import QPointF, QRect, Qt, Signal
@@ -33,12 +38,16 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
 from PartSeg.common_gui.icon_selector import IconSelector
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.common_gui.qt_util import get_mouse_x, get_mouse_y
 from PartSeg.common_gui.universal_gui_part import InfoLabel
 from PartSegCore.color_image.base_colors import Color
 from PartSegCore.custom_name_generate import custom_name_generate
+from PartSegCore.io_utils import IO_LABELS_COLORMAP, LoadBase, SaveBase
+from PartSegCore.utils import BaseModel
 
 
 def color_from_qcolor(color: QColor) -> Color:
@@ -234,6 +243,8 @@ class ColormapCreator(QWidget):
         self.show_colormap = ColormapEdit()
         self.clear_btn = QPushButton("Clear")
         self.save_btn = QPushButton("Save")
+        self.export_btn = QPushButton("Export")
+        self.import_btn = QPushButton("Import")
         self.distribute_btn = QPushButton("Distribute evenly")
         self.reverse_btn = QPushButton("Reverse")
         self.info_label = InfoLabel(
@@ -253,6 +264,8 @@ class ColormapCreator(QWidget):
         btn_layout.addStretch(1)
         btn_layout.addWidget(self.reverse_btn)
         btn_layout.addWidget(self.distribute_btn)
+        btn_layout.addWidget(self.import_btn)
+        btn_layout.addWidget(self.export_btn)
         btn_layout.addWidget(self.clear_btn)
         btn_layout.addWidget(self.save_btn)
         layout.addLayout(btn_layout)
@@ -262,6 +275,24 @@ class ColormapCreator(QWidget):
         self.save_btn.clicked.connect(self.save)
         self.reverse_btn.clicked.connect(self.show_colormap.reverse)
         self.distribute_btn.clicked.connect(self.show_colormap.distribute_evenly)
+        self.export_btn.clicked.connect(self._export_action)
+        self.import_btn.clicked.connect(self._import_action)
+
+    def _import_action(self):
+        dial = PLoadDialog(ColormapLoad, settings=self.settings, path=IO_LABELS_COLORMAP)
+        if dial.exec_():
+            res = dial.get_result()
+            self.show_colormap.colormap = res.load_class.load(res.load_location)
+
+    def _export_action(self):
+        dial = PSaveDialog(
+            ColormapSave,
+            settings=self.settings,
+            path=IO_LABELS_COLORMAP,
+        )
+        if dial.exec_():
+            res = dial.get_result()
+            res.save_class.save(res.save_destination, self.show_colormap.colormap, res.parameters)
 
     def add_color(self, pos):
         color = self.color_picker.currentColor()
@@ -589,3 +620,50 @@ class PColormapList(ColormapList):
             with suppress(KeyError):
                 colormaps.remove(name)
         self.settings.chosen_colormap = sorted(colormaps)
+
+
+class ColormapSave(SaveBase):
+    __argument_class__ = BaseModel
+
+    @classmethod
+    def get_short_name(cls):
+        return "colormap_json"
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
+        with open(save_location, "w") as f:
+            json.dump(project_info, f, cls=nme.NMEEncoder, indent=4)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Colormap json (*.colormap.json)"
+
+
+class ColormapLoad(LoadBase):
+    __argument_class__ = BaseModel
+
+    @classmethod
+    def get_short_name(cls):
+        return "colormap_json"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> Colormap:
+        with open(load_locations[0]) as f:
+            return json.load(f, object_hook=nme.nme_object_hook)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Colormap json (*.colormap.json)"
