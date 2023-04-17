@@ -1,6 +1,9 @@
+import os
+
 import numpy as np
 import pytest
 from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QFileDialog
 
 from PartSeg.common_backend.base_settings import LabelColorDict, ViewSettings
 from PartSeg.common_gui.label_create import LabelEditor, _LabelShow
@@ -43,7 +46,7 @@ class TestLabelEditor:
         qtbot.addWidget(widget)
         assert len(widget.get_colors()) == 0
 
-    def test_add(self, qtbot):
+    def test_add(self, qtbot, base_settings):
         settings = ViewSettings()
         widget = LabelEditor(settings)
         qtbot.addWidget(widget)
@@ -54,13 +57,44 @@ class TestLabelEditor:
         widget.save()
         assert len(settings.label_color_dict) == base_count + 1
 
-    def test_color(self, qtbot):
+    def test_color(self, qtbot, base_settings):
         settings = ViewSettings()
         widget = LabelEditor(settings)
         qtbot.addWidget(widget)
         widget.color_picker.setCurrentColor(QColor(100, 200, 0))
         widget.add_color()
         assert widget.get_colors() == [[100, 200, 0]]
+
+    def test_label_creator_save(self, qtbot, tmp_path, monkeypatch, base_settings):
+        widget = LabelEditor(base_settings)
+        qtbot.addWidget(widget)
+        labels = [[128, 50, 200], [255, 0, 0], [0, 0, 255]]
+        widget.set_colors(labels)
+
+        target_path = str(tmp_path / "test.json")
+
+        def exec_(self_):
+            self_.selectFile(target_path)
+            self_.accept()
+            return True
+
+        def selected_name_filter(self_):
+            return self_.nameFilters()[0]
+
+        def selected_files(self_):
+            return [target_path]
+
+        monkeypatch.setattr(QFileDialog, "exec_", exec_)
+        monkeypatch.setattr(QFileDialog, "selectedNameFilter", selected_name_filter)
+        monkeypatch.setattr(QFileDialog, "selectedFiles", selected_files)
+
+        widget._export_action()
+        assert os.path.isfile(target_path)
+
+        widget.set_colors([])
+
+        widget._import_action()
+        assert widget.get_colors() == labels
 
 
 def test__label_show(qtbot):

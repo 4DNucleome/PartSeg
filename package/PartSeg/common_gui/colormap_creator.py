@@ -1,10 +1,16 @@
 import bisect
+import json
+import typing
 from contextlib import suppress
 from functools import partial
+from io import BytesIO
 from math import ceil
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import nme
 import numpy as np
+from fonticon_fa6 import FA6S
 from napari.utils import Colormap
 from qtpy.QtCore import QPointF, QRect, Qt, Signal
 from qtpy.QtGui import (
@@ -31,14 +37,19 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt.fonticon import icon
 
-from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_backend.base_settings import BaseSettings, ViewSettings
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog
+from PartSeg.common_gui.custom_save_dialog import PSaveDialog
 from PartSeg.common_gui.icon_selector import IconSelector
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.common_gui.qt_util import get_mouse_x, get_mouse_y
 from PartSeg.common_gui.universal_gui_part import InfoLabel
 from PartSegCore.color_image.base_colors import Color
 from PartSegCore.custom_name_generate import custom_name_generate
+from PartSegCore.io_utils import IO_LABELS_COLORMAP, LoadBase, SaveBase
+from PartSegCore.utils import BaseModel
 
 
 def color_from_qcolor(color: QColor) -> Color:
@@ -256,6 +267,7 @@ class ColormapCreator(QWidget):
         btn_layout.addWidget(self.clear_btn)
         btn_layout.addWidget(self.save_btn)
         layout.addLayout(btn_layout)
+        self._btn_layout = btn_layout
         self.setLayout(layout)
         self.show_colormap.double_clicked.connect(self.add_color)
         self.clear_btn.clicked.connect(self.show_colormap.clear)
@@ -281,14 +293,45 @@ class ColormapCreator(QWidget):
         self.show_colormap.refresh()
 
 
-class PColormapCreator(ColormapCreator):
+class PColormapCreatorMid(ColormapCreator):
+    """Class to add export and import buttons to ColormapCreator without full PColormapCreator"""
+
+    def __init__(self, settings: BaseSettings):
+        super().__init__()
+        self.settings = settings
+        self.export_btn = QPushButton("Export")
+        self.import_btn = QPushButton("Import")
+
+        self._btn_layout.insertWidget(3, self.import_btn)
+        self._btn_layout.insertWidget(3, self.export_btn)
+
+        self.export_btn.clicked.connect(self._export_action)
+        self.import_btn.clicked.connect(self._import_action)
+
+    def _import_action(self):
+        dial = PLoadDialog(ColormapLoad, settings=self.settings, path=IO_LABELS_COLORMAP)
+        if dial.exec_():
+            res = dial.get_result()
+            self.show_colormap.colormap = res.load_class.load(res.load_location)
+
+    def _export_action(self):
+        dial = PSaveDialog(
+            ColormapSave,
+            settings=self.settings,
+            path=IO_LABELS_COLORMAP,
+        )
+        if dial.exec_():
+            res = dial.get_result()
+            res.save_class.save(res.save_destination, self.show_colormap.colormap, res.parameters)
+
+
+class PColormapCreator(PColormapCreatorMid):
     """
     :py:class:`~.ColormapCreator` variant which save result in :py:class:`.ViewSettings`
     """
 
-    def __init__(self, settings: ViewSettings):
-        super().__init__()
-        self.settings = settings
+    def __init__(self, settings: BaseSettings):
+        super().__init__(settings)
         for i, el in enumerate(settings.get_from_profile("custom_colors", [])):
             self.color_picker.setCustomColor(
                 i, qcolor_from_color(el if isinstance(el, Color) else Color.from_tuple(el))
@@ -360,7 +403,7 @@ class ChannelPreview(QWidget):
         layout.addWidget(self.checked)
         layout.addStretch(1)
         self.remove_btn = QToolButton()
-        self.remove_btn.setIcon(_icon_selector.close_icon)
+        self.remove_btn.setIcon(icon(FA6S.trash_can))
         if removable:
             self.remove_btn.setToolTip("Remove colormap")
         else:
@@ -368,7 +411,7 @@ class ChannelPreview(QWidget):
         self.remove_btn.setEnabled(not accepted and self.removable)
 
         self.edit_btn = QToolButton()
-        self.edit_btn.setIcon(_icon_selector.edit_icon)
+        self.edit_btn.setIcon(icon(FA6S.pen))
         layout.addWidget(self.remove_btn)
         layout.addWidget(self.edit_btn)
         layout.addWidget(self.label)
@@ -602,3 +645,50 @@ class PColormapList(ColormapList):
             with suppress(KeyError):
                 colormaps.remove(name)
         self.settings.chosen_colormap = sorted(colormaps)
+
+
+class ColormapSave(SaveBase):
+    __argument_class__ = BaseModel
+
+    @classmethod
+    def get_short_name(cls):
+        return "colormap_json"
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict = None,
+        range_changed=None,
+        step_changed=None,
+    ):
+        with open(save_location, "w") as f:
+            json.dump(project_info, f, cls=nme.NMEEncoder, indent=4)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Colormap json (*.colormap.json)"
+
+
+class ColormapLoad(LoadBase):
+    __argument_class__ = BaseModel
+
+    @classmethod
+    def get_short_name(cls):
+        return "colormap_json"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> Colormap:
+        with open(load_locations[0]) as f:
+            return json.load(f, object_hook=nme.nme_object_hook)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Colormap json (*.colormap.json)"

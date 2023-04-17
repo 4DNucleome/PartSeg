@@ -14,7 +14,8 @@ setup_cfg_block_to_yaml_list () {
         grep -v ";"                           |
         sed -r "s/^ +/  - /g"                 |    # (3)
         sed 's/napari.*/"napari=*=*pyside2"/g'|
-        sed 's/qtconsole/qtconsole-base/g'
+        sed 's/qtconsole/qtconsole-base/g'    |
+        sed '/fonticon-fontawesome6/d'
 }
 
 setup_cfg_block_to_yaml_list "$1"
