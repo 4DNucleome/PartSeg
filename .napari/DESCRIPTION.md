@@ -92,6 +92,8 @@ Create labels mapping:
 Apply label mapping:
 ![Label mapping apply](https://user-images.githubusercontent.com/3826210/232475763-75267d90-6cf3-4bc8-bedd-4d5dfefbe8cd.png)
 
+More details about usage could be found [here](https://partseg.readthedocs.io/en/latest/interface-overview/interface-overview.html#create-labels)
+
 ### Image Colormap
 
 This widget allows to create custom colormap for image.
@@ -103,6 +105,8 @@ Create new colormap:
 
 Apply colormap:
 ![Apply colormap](https://user-images.githubusercontent.com/3826210/232477638-d3f2ff42-3e55-4099-aa52-cf32744be36c.png)
+
+More details about usage could be found [here](https://partseg.readthedocs.io/en/latest/interface-overview/interface-overview.html#color-map-creator)
 
 ## Reader plugins
 
