@@ -77,6 +77,33 @@ Transform labels layer into another labels layer with the possibility to dilate,
 
 ![Mask create widget](https://i.imgur.com/FIJGLjb.png)
 
+### Label selector
+
+This is widget that allows to create custom label mapping. It could be useful to prepare
+publications figures. If image hase more labels that selected label mapping contains it
+cycle colors.
+Created mapping will be stored between sessions
+
+This widget will not work with really big labels numbers.
+
+Create labels mapping:
+![Label mapping creation](https://user-images.githubusercontent.com/3826210/232475750-e926eefb-6266-41c7-b8df-1ac2e695b541.png)
+
+Apply label mapping:
+![Label mapping apply](https://user-images.githubusercontent.com/3826210/232475763-75267d90-6cf3-4bc8-bedd-4d5dfefbe8cd.png)
+
+### Image Colormap
+
+This widget allows to create custom colormap for image.
+
+Create colormaps will be stored between sessions.
+
+Create new colormap:
+![Create colormap](https://user-images.githubusercontent.com/3826210/232477486-97d5238f-ca2f-4585-a6ed-43a0cf6185be.png)
+
+Apply colormap:
+![Apply colormap](https://user-images.githubusercontent.com/3826210/232477638-d3f2ff42-3e55-4099-aa52-cf32744be36c.png)
+
 ## Reader plugins
 
 In this plugin, there are also all PartSeg readers and writers.
