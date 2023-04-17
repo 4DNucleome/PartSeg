@@ -10,6 +10,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import nme
 import numpy as np
+from fonticon_fa6 import FA6S
 from napari.utils import Colormap
 from qtpy.QtCore import QPointF, QRect, Qt, Signal
 from qtpy.QtGui import (
@@ -36,6 +37,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt.fonticon import icon
 
 from PartSeg.common_backend.base_settings import BaseSettings, ViewSettings
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
@@ -397,7 +399,7 @@ class ChannelPreview(QWidget):
         layout.addWidget(self.checked)
         layout.addStretch(1)
         self.remove_btn = QToolButton()
-        self.remove_btn.setIcon(_icon_selector.close_icon)
+        self.remove_btn.setIcon(icon(FA6S.trash_can))
         if removable:
             self.remove_btn.setToolTip("Remove colormap")
         else:
@@ -405,7 +407,7 @@ class ChannelPreview(QWidget):
         self.remove_btn.setEnabled(not accepted and self.removable)
 
         self.edit_btn = QToolButton()
-        self.edit_btn.setIcon(_icon_selector.edit_icon)
+        self.edit_btn.setIcon(icon(FA6S.pen))
         layout.addWidget(self.remove_btn)
         layout.addWidget(self.edit_btn)
         layout.addWidget(self.label)

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Callable, List, Optional, Sequence, Union
 
 import numpy as np
+from fonticon_fa6 import FA6S
 from qtpy.QtCore import Qt, Signal, Slot
 from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
 from qtpy.QtWidgets import (
@@ -22,6 +23,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt.fonticon import icon
 
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
@@ -83,10 +85,10 @@ class LabelShow(QWidget):
         self.label_show = _LabelShow(np.array(label, dtype=np.uint8))
 
         self.remove_btn = QToolButton()
-        self.remove_btn.setIcon(_icon_selector.close_icon)
+        self.remove_btn.setIcon(icon(FA6S.trash_can))
 
         self.edit_btn = QToolButton()
-        self.edit_btn.setIcon(_icon_selector.edit_icon)
+        self.edit_btn.setIcon(icon(FA6S.pen))
 
         if removable:
             self.remove_btn.setToolTip("Remove colormap")
