@@ -37,7 +37,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_backend.base_settings import BaseSettings, ViewSettings
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import PSaveDialog
 from PartSeg.common_gui.icon_selector import IconSelector
@@ -243,8 +243,6 @@ class ColormapCreator(QWidget):
         self.show_colormap = ColormapEdit()
         self.clear_btn = QPushButton("Clear")
         self.save_btn = QPushButton("Save")
-        self.export_btn = QPushButton("Export")
-        self.import_btn = QPushButton("Import")
         self.distribute_btn = QPushButton("Distribute evenly")
         self.reverse_btn = QPushButton("Reverse")
         self.info_label = InfoLabel(
@@ -264,35 +262,16 @@ class ColormapCreator(QWidget):
         btn_layout.addStretch(1)
         btn_layout.addWidget(self.reverse_btn)
         btn_layout.addWidget(self.distribute_btn)
-        btn_layout.addWidget(self.import_btn)
-        btn_layout.addWidget(self.export_btn)
         btn_layout.addWidget(self.clear_btn)
         btn_layout.addWidget(self.save_btn)
         layout.addLayout(btn_layout)
+        self._btn_layout = btn_layout
         self.setLayout(layout)
         self.show_colormap.double_clicked.connect(self.add_color)
         self.clear_btn.clicked.connect(self.show_colormap.clear)
         self.save_btn.clicked.connect(self.save)
         self.reverse_btn.clicked.connect(self.show_colormap.reverse)
         self.distribute_btn.clicked.connect(self.show_colormap.distribute_evenly)
-        self.export_btn.clicked.connect(self._export_action)
-        self.import_btn.clicked.connect(self._import_action)
-
-    def _import_action(self):
-        dial = PLoadDialog(ColormapLoad, settings=self.settings, path=IO_LABELS_COLORMAP)
-        if dial.exec_():
-            res = dial.get_result()
-            self.show_colormap.colormap = res.load_class.load(res.load_location)
-
-    def _export_action(self):
-        dial = PSaveDialog(
-            ColormapSave,
-            settings=self.settings,
-            path=IO_LABELS_COLORMAP,
-        )
-        if dial.exec_():
-            res = dial.get_result()
-            res.save_class.save(res.save_destination, self.show_colormap.colormap, res.parameters)
 
     def add_color(self, pos):
         color = self.color_picker.currentColor()
@@ -312,14 +291,45 @@ class ColormapCreator(QWidget):
         self.show_colormap.refresh()
 
 
-class PColormapCreator(ColormapCreator):
+class PColormapCreatorMid(ColormapCreator):
+    """Class to add export and import buttons to ColormapCreator without full PColormapCreator"""
+
+    def __init__(self, settings: BaseSettings):
+        super().__init__()
+        self.settings = settings
+        self.export_btn = QPushButton("Export")
+        self.import_btn = QPushButton("Import")
+
+        self._btn_layout.insertWidget(3, self.import_btn)
+        self._btn_layout.insertWidget(3, self.export_btn)
+
+        self.export_btn.clicked.connect(self._export_action)
+        self.import_btn.clicked.connect(self._import_action)
+
+    def _import_action(self):
+        dial = PLoadDialog(ColormapLoad, settings=self.settings, path=IO_LABELS_COLORMAP)
+        if dial.exec_():
+            res = dial.get_result()
+            self.show_colormap.colormap = res.load_class.load(res.load_location)
+
+    def _export_action(self):
+        dial = PSaveDialog(
+            ColormapSave,
+            settings=self.settings,
+            path=IO_LABELS_COLORMAP,
+        )
+        if dial.exec_():
+            res = dial.get_result()
+            res.save_class.save(res.save_destination, self.show_colormap.colormap, res.parameters)
+
+
+class PColormapCreator(PColormapCreatorMid):
     """
     :py:class:`~.ColormapCreator` variant which save result in :py:class:`.ViewSettings`
     """
 
-    def __init__(self, settings: ViewSettings):
-        super().__init__()
-        self.settings = settings
+    def __init__(self, settings: BaseSettings):
+        super().__init__(settings)
         for i, el in enumerate(settings.get_from_profile("custom_colors", [])):
             self.color_picker.setCustomColor(
                 i, qcolor_from_color(el if isinstance(el, Color) else Color.from_tuple(el))
