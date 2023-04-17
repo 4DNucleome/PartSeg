@@ -253,7 +253,7 @@ class LabelEditor(QWidget):
         dial = PLoadDialog(LabelsLoad, settings=self.settings, path=IO_LABELS_COLORMAP)
         if dial.exec_():
             res = dial.get_result()
-            self.set_colors(res.load_class.load(res.load_location))
+            self.set_colors("", res.load_class.load(res.load_location))
 
     def _export_action(self):
         if not self.color_layout.count():
