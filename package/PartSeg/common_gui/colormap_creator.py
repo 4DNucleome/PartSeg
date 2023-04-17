@@ -634,7 +634,7 @@ class ColormapSave(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict,
+        parameters: dict = None,
         range_changed=None,
         step_changed=None,
     ):

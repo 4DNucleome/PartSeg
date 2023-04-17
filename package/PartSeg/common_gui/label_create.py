@@ -245,7 +245,7 @@ class LabelEditor(QWidget):
         self.setLayout(layout)
 
     def _import_action(self):
-        dial = PLoadDialog(LoadLabels, settings=self.settings, path=IO_LABELS_COLORMAP)
+        dial = PLoadDialog(LabelsLoad, settings=self.settings, path=IO_LABELS_COLORMAP)
         if dial.exec_():
             res = dial.get_result()
             self.set_colors(res.load_class.load(res.load_location))
@@ -255,7 +255,7 @@ class LabelEditor(QWidget):
             return
         self.get_colors()
         dial = PSaveDialog(
-            SaveLabels,
+            LabelsSave,
             settings=self.settings,
             path=IO_LABELS_COLORMAP,
         )
@@ -312,7 +312,7 @@ class LabelEditor(QWidget):
         self.chosen = None
 
 
-class LoadLabels(LoadBase):
+class LabelsLoad(LoadBase):
     __argument_class__ = BaseModel
 
     @classmethod
@@ -335,7 +335,7 @@ class LoadLabels(LoadBase):
         return "label_json"
 
 
-class SaveLabels(SaveBase):
+class LabelsSave(SaveBase):
     __argument_class__ = BaseModel
 
     @classmethod
@@ -347,7 +347,7 @@ class SaveLabels(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict,
+        parameters: dict = None,
         range_changed=None,
         step_changed=None,
     ):
