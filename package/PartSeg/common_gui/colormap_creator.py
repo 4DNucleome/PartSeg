@@ -37,7 +37,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from superqt.fonticon import icon
+from superqt.fonticon import setTextIcon
 
 from PartSeg.common_backend.base_settings import BaseSettings, ViewSettings
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
@@ -383,8 +383,10 @@ class ChannelPreview(QWidget):
     remove_request = Signal(str)
     """Signal with name of colormap (name)"""
 
-    def __init__(self, colormap: Colormap, accepted: bool, name: str, removable: bool = False, used: bool = False):
-        super().__init__()
+    def __init__(
+        self, colormap: Colormap, accepted: bool, name: str, removable: bool = False, used: bool = False, parent=None
+    ):
+        super().__init__(parent)
         self.image = convert_colormap_to_image(colormap)
         self.name = name
         self.removable = removable
@@ -398,16 +400,17 @@ class ChannelPreview(QWidget):
         layout = QHBoxLayout()
         layout.addWidget(self.checked)
         layout.addStretch(1)
-        self.remove_btn = QToolButton()
-        self.remove_btn.setIcon(icon(FA6S.trash_can))
+        self.remove_btn = QToolButton(self)
+        setTextIcon(self.remove_btn, FA6S.trash_can, 16)
+        # self.remove_btn.setIcon(icon(FA6S.trash_can))
         if removable:
             self.remove_btn.setToolTip("Remove colormap")
         else:
             self.remove_btn.setToolTip("This colormap is protected")
         self.remove_btn.setEnabled(not accepted and self.removable)
 
-        self.edit_btn = QToolButton()
-        self.edit_btn.setIcon(icon(FA6S.pen))
+        self.edit_btn = QToolButton(self)
+        setTextIcon(self.edit_btn, FA6S.pen, 16)
         layout.addWidget(self.remove_btn)
         layout.addWidget(self.edit_btn)
         layout.addWidget(self.label)
@@ -549,7 +552,9 @@ class ColormapList(QWidget):
                 widget.set_blocked(name in blocked)
                 widget.set_chosen(name in selected)
             else:
-                widget = ChannelPreview(colormap, name in selected, name, removable=removable, used=name in blocked)
+                widget = ChannelPreview(
+                    colormap, name in selected, name, removable=removable, used=name in blocked, parent=self
+                )
                 widget.edit_request[Colormap].connect(self.edit_signal)
                 widget.remove_request.connect(self._remove_request)
                 widget.selection_changed.connect(self.change_selection)

@@ -23,7 +23,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from superqt.fonticon import icon
+from superqt.fonticon import setTextIcon
 
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
@@ -85,10 +85,10 @@ class LabelShow(QWidget):
         self.label_show = _LabelShow(np.array(label, dtype=np.uint8))
 
         self.remove_btn = QToolButton()
-        self.remove_btn.setIcon(icon(FA6S.trash_can))
+        setTextIcon(self.remove_btn, FA6S.trash_can, 16)
 
         self.edit_btn = QToolButton()
-        self.edit_btn.setIcon(icon(FA6S.pen))
+        setTextIcon(self.edit_btn, FA6S.pen, 16)
 
         if removable:
             self.remove_btn.setToolTip("Remove colormap")
