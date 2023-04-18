@@ -6,7 +6,7 @@ from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QFileDialog
 
 from PartSeg.common_backend.base_settings import LabelColorDict, ViewSettings
-from PartSeg.common_gui.label_create import LabelEditor, _LabelShow
+from PartSeg.common_gui.label_create import LabelChoose, LabelEditor, _LabelShow
 from PartSegCore.color_image.color_data import sitk_labels
 
 
@@ -111,3 +111,21 @@ def test__label_show(qtbot):
     widget.set_labels(np.array([[255, 255, 255, 255], [100, 100, 100, 255]], dtype=np.uint8))
     assert widget.image.height() == 1
     assert widget.image.width() == 2
+
+
+class TestLabelChoose:
+    def test_basic(self, qtbot, base_settings):
+        widget = LabelChoose(base_settings)
+        qtbot.addWidget(widget)
+        widget.refresh()
+
+        assert widget.layout().count() == 2
+
+        base_settings.label_color_dict["test"] = [[255, 255, 255], [100, 100, 100]]
+        widget.refresh()
+        assert widget.layout().count() == 3
+
+        widget.remove("test")
+        assert widget.layout().count() == 2
+
+        assert "test" not in base_settings.label_color_dict

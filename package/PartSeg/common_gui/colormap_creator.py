@@ -402,7 +402,6 @@ class ChannelPreview(QWidget):
         layout.addStretch(1)
         self.remove_btn = QToolButton(self)
         setTextIcon(self.remove_btn, FA6S.trash_can, 16)
-        # self.remove_btn.setIcon(icon(FA6S.trash_can))
         if removable:
             self.remove_btn.setToolTip("Remove colormap")
         else:
