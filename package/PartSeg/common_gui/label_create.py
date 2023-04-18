@@ -152,7 +152,8 @@ class LabelChoose(QWidget):
 
     @Slot(str)
     def remove(self, name: str):
-        del self.settings.label_color_dict[name]
+        if name in self.settings.label_color_dict:
+            del self.settings.label_color_dict[name]
         self.refresh()
 
     def refresh(self):
