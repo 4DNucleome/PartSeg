@@ -769,8 +769,8 @@ class BaseSettings(ViewSettings):
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
 
-        self.label_color_dict._refresh_order()
-        self.colormap_dict._refresh_order()
+        self.label_color_dict._refresh_order()  # pylint: disable=protected-access
+        self.colormap_dict._refresh_order()  # pylint: disable=protected-access
 
         return errors_dict
 
