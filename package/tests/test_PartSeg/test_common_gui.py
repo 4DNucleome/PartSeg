@@ -62,7 +62,7 @@ from PartSeg.common_gui.algorithms_description import (
     SubAlgorithmWidget,
 )
 from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
-from PartSeg.common_gui.colormap_creator import ColormapLoad, ColormapSave
+from PartSeg.common_gui.colormap_creator import ColormapLoad, ColormapSave, save_colormap_in_settings
 from PartSeg.common_gui.custom_load_dialog import (
     CustomLoadDialog,
     IOMethodMock,
@@ -1925,3 +1925,17 @@ def test_labels_meth(cls_):
     assert cls_.get_short_name() == "label_json"
     assert cls_.get_name().startswith("Labels")
     assert cls_.get_extensions() == [".label.json"]
+
+
+def test_save_colormap_in_settings(part_settings):
+    class DummyColormap(typing.NamedTuple):
+        colors: typing.List[typing.List[float]]
+        controls: typing.List[float]
+
+    assert "custom_aaa" not in part_settings.colormap_dict
+    cmap = Colormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0, 1])
+    save_colormap_in_settings(part_settings, cmap, "custom_aaa")
+    assert len(part_settings.colormap_dict["custom_aaa"][0].controls) == 2
+    cmap2 = DummyColormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0.1, 0.9])
+    save_colormap_in_settings(part_settings, cmap2, "custom_bbb")
+    assert len(part_settings.colormap_dict["custom_bbb"][0].controls) == 4

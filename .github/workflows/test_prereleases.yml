@@ -107,7 +107,7 @@ jobs:
     - uses: tlambert03/setup-qt-libs@v1
     - name: Install dependencies
       run: |
-        pip install --upgrade pip==21.1
+        pip install --upgrade pip
         pip install pip-tools
     - name: Compile and install PyInstaller requirements
       run: |

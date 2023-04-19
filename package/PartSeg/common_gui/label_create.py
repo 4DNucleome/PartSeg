@@ -133,8 +133,8 @@ class LabelChoose(QWidget):
     edit_signal = Signal(list)
     edit_with_name_signal = Signal(str, list)
 
-    def __init__(self, settings):
-        super().__init__()
+    def __init__(self, settings, parent=None):
+        super().__init__(parent)
         self.settings = settings
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -169,7 +169,7 @@ class LabelChoose(QWidget):
 
         chosen_name = self.settings.current_labels
         for name, (val, removable) in self.settings.label_color_dict.items():
-            label = LabelShow(name, val, removable, self)
+            label = self._label_show(name, val, removable)
             if name == chosen_name:
                 label.set_checked(True)
             label.selected.connect(self.change_scheme)
@@ -178,6 +178,9 @@ class LabelChoose(QWidget):
             label.edit_labels_with_name.connect(self.edit_with_name_signal.emit)
             self.layout().addWidget(label)
         self.layout().addStretch(1)
+
+    def _label_show(self, name: str, label: List[Sequence[float]], removable) -> LabelShow:
+        return LabelShow(name, label, removable, self)
 
     def showEvent(self, _):
         self.refresh()
@@ -210,8 +213,8 @@ class ColorShow(QLabel):
 class LabelEditor(QWidget):
     """Widget for create label scheme."""
 
-    def __init__(self, settings: ViewSettings):
-        super().__init__()
+    def __init__(self, settings: ViewSettings, parent=None):
+        super().__init__(parent=parent)
         self.settings = settings
         self.color_list = []
         self.chosen = None
@@ -251,7 +254,7 @@ class LabelEditor(QWidget):
         dial = PLoadDialog(LabelsLoad, settings=self.settings, path=IO_LABELS_COLORMAP)
         if dial.exec_():
             res = dial.get_result()
-            self.set_colors(res.load_class.load(res.load_location))
+            self.set_colors("", res.load_class.load(res.load_location))
 
     def _export_action(self):
         if not self.color_layout.count():
@@ -266,8 +269,8 @@ class LabelEditor(QWidget):
             res = dial.get_result()
             res.save_class.save(res.save_destination, self.get_colors(), res.parameters)
 
-    @Slot(list)
-    def set_colors(self, colors: list):
+    @Slot(str, list)
+    def set_colors(self, name: str, colors: list):
         for _ in range(self.color_layout.count()):
             el = self.color_layout.takeAt(0)
             if el.widget():

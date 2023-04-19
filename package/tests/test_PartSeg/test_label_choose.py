@@ -69,7 +69,7 @@ class TestLabelEditor:
         widget = LabelEditor(base_settings)
         qtbot.addWidget(widget)
         labels = [[128, 50, 200], [255, 0, 0], [0, 0, 255]]
-        widget.set_colors(labels)
+        widget.set_colors("test", labels)
 
         target_path = str(tmp_path / "test.json")
 
@@ -91,7 +91,7 @@ class TestLabelEditor:
         widget._export_action()
         assert os.path.isfile(target_path)
 
-        widget.set_colors([])
+        widget.set_colors("", [])
 
         widget._import_action()
         assert widget.get_colors() == labels
