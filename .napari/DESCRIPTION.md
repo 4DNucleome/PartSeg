@@ -87,10 +87,10 @@ Created mapping will be stored between sessions
 This widget will not work with really big labels numbers.
 
 Create labels mapping:
-![Label mapping creation](https://user-images.githubusercontent.com/3826210/232475750-e926eefb-6266-41c7-b8df-1ac2e695b541.png)
+![Label mapping creation](https://user-images.githubusercontent.com/3826210/233070662-22a2b016-1397-4a21-bac2-2588c096a702.png)
 
 Apply label mapping:
-![Label mapping apply](https://user-images.githubusercontent.com/3826210/232475763-75267d90-6cf3-4bc8-bedd-4d5dfefbe8cd.png)
+![Label mapping apply](https://user-images.githubusercontent.com/3826210/233070664-372cf038-6658-4b86-94f6-ade3cb3df9a3.png)
 
 More details about usage could be found [here](https://partseg.readthedocs.io/en/latest/interface-overview/interface-overview.html#create-labels)
 
@@ -101,10 +101,10 @@ This widget allows to create custom colormap for image.
 Create colormaps will be stored between sessions.
 
 Create new colormap:
-![Create colormap](https://user-images.githubusercontent.com/3826210/232477486-97d5238f-ca2f-4585-a6ed-43a0cf6185be.png)
+![Create colormap](https://user-images.githubusercontent.com/3826210/233070666-79558119-7d91-4ccf-8e8f-0e55119ace98.png)
 
 Apply colormap:
-![Apply colormap](https://user-images.githubusercontent.com/3826210/232477638-d3f2ff42-3e55-4099-aa52-cf32744be36c.png)
+![Apply colormap](https://user-images.githubusercontent.com/3826210/233070668-b7633574-e12b-4037-acc8-eee1a70eead6.png)
 
 More details about usage could be found [here](https://partseg.readthedocs.io/en/latest/interface-overview/interface-overview.html#color-map-creator)
 
