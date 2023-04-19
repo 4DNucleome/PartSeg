@@ -769,6 +769,9 @@ class BaseSettings(ViewSettings):
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
 
+        self.label_color_dict._refresh_order()
+        self.colormap_dict._refresh_order()
+
         return errors_dict
 
     def get_project_info(self) -> ProjectInfoBase:
