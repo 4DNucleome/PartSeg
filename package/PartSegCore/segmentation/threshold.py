@@ -389,13 +389,14 @@ class MultipleOtsu(BaseThreshold):
         return res2, (thr1, thr2)
 
 
+@register_class(version="0.0.1", migrations=[("0.0.1", rename_key("minimum_radius", "minimum_border_distance"))])
 class MaximumDistanceWatershedParams(BaseModel):
     threshold: ThresholdSelection = ThresholdSelection.get_default()
     dilate_radius: int = Field(5, title="Dilate Radius", ge=1, le=100, description="To merge small objects")
     minimum_size: int = Field(100, title="Minimum Size", ge=1, le=1000000, description="To remove small objects")
-    minimum_radius: int = Field(
+    minimum_border_distance: int = Field(
         10,
-        title="Minimum Radius",
+        title="Border Radius",
         ge=0.0,
         le=100.0,
         description="Minimum distance of local maxima from the border. To avoid artifacts",
@@ -423,7 +424,7 @@ class MaximumDistanceCore(BaseThreshold):
     4. Distance transform - to find distance from the border
     5. Identify local maxima - to find core objects
     6. Remove local maxima that are too close to the border - to avoid artifacts.
-       This distance is controlled by ``minimum_radius`` parameter.
+       This distance is controlled by ``minimum_border_distance`` parameter.
     7. Dilate core objects - to make them bigger. For elongated objects it is possible to have multiple local
        maxima along longest axis of object. This step is to merge them.
        This distance is controlled by ``dilate_radius`` parameter.
@@ -456,7 +457,7 @@ class MaximumDistanceCore(BaseThreshold):
         data = sitk.GetArrayFromImage(sitk.DanielssonDistanceMap(sitk.GetImageFromArray((mask2 == 0).astype(np.uint8))))
 
         maxima = sitk.GetArrayFromImage(sitk.RegionalMaxima(sitk.GetImageFromArray(data)))
-        maxima[data < arguments.minimum_radius] = 0
+        maxima[data < arguments.minimum_border_distance] = 0
 
         dilated_maxima = sitk.GetArrayFromImage(
             sitk.BinaryDilate(sitk.GetImageFromArray(maxima), [arguments.dilate_radius] * 3)
