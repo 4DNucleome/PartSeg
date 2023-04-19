@@ -4,6 +4,7 @@ from napari import Viewer
 from napari.layers import Labels
 from qtpy.QtWidgets import QHBoxLayout, QPushButton, QTabWidget
 
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.label_create import LabelChoose, LabelEditor, LabelShow
 from PartSeg.plugins.napari_widgets._settings import get_settings
 
@@ -47,13 +48,21 @@ class NaparliLabelChoose(LabelChoose):
         return NapariLabelShow(self.viewer, name, label, removable, self)
 
 
+class NapariLabelEditor(LabelEditor):
+    settings: BaseSettings
+
+    def save(self):
+        super().save()
+        self.settings.dump()
+
+
 class LabelSelector(QTabWidget):
     def __init__(self, viewer: Viewer, parent=None):
         super().__init__(parent)
         self.viewer = viewer
         settings = get_settings()
         self.settings = settings
-        self.label_editor = LabelEditor(settings)
+        self.label_editor = NapariLabelEditor(settings)
         self.label_view = NaparliLabelChoose(viewer, settings)
         self.addTab(self.label_view, "Select labels")
         self.addTab(self.label_editor, "Create labels")

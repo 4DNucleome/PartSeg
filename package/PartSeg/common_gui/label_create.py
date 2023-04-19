@@ -213,8 +213,8 @@ class ColorShow(QLabel):
 class LabelEditor(QWidget):
     """Widget for create label scheme."""
 
-    def __init__(self, settings: ViewSettings):
-        super().__init__()
+    def __init__(self, settings: ViewSettings, parent=None):
+        super().__init__(parent=parent)
         self.settings = settings
         self.color_list = []
         self.chosen = None
