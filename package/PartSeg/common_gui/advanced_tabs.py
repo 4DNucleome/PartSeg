@@ -24,7 +24,7 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg import plugins, state_store
-from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_backend.base_settings import BaseSettings, ViewSettings
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelEditor
 from PartSeg.common_gui.universal_gui_part import CustomDoubleSpinBox
@@ -197,7 +197,7 @@ class ColorControl(QTabWidget):
     Class for storage all settings for labels and colormaps.
     """
 
-    def __init__(self, settings: ViewSettings, image_view_names: List[str]):
+    def __init__(self, settings: BaseSettings, image_view_names: List[str]):
         super().__init__()
         self.appearance = Appearance(settings)
         self.colormap_editor = PColormapCreator(settings)
@@ -206,7 +206,7 @@ class ColorControl(QTabWidget):
         self.color_preview.edit_signal.connect(self._set_colormap_editor)
         self.label_editor = LabelEditor(settings)
         self.label_view = LabelChoose(settings)
-        self.label_view.edit_signal.connect(self.label_editor.set_colors)
+        self.label_view.edit_with_name_signal.connect(self.label_editor.set_colors)
         self.label_view.edit_signal.connect(self._set_label_editor)
         self.mask_control = MaskControl(settings)
         self.addTab(self.appearance, "Appearance")

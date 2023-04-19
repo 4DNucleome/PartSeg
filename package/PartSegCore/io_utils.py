@@ -2,7 +2,7 @@ import json
 import os
 import re
 import typing
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, StringIO, TextIOBase
@@ -67,10 +67,12 @@ class SaveBase(AlgorithmDescribeBase, ABC):
     ]
 
     @classmethod
+    @abstractmethod
     def get_short_name(cls):
         raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
@@ -129,10 +131,12 @@ class LoadBase(AlgorithmDescribeBase, ABC):
     ]
 
     @classmethod
+    @abstractmethod
     def get_short_name(cls):
         raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
@@ -502,3 +506,6 @@ class LoadPlanExcel(LoadBase):
     @classmethod
     def get_name(cls) -> str:
         return "Calculation plans from result (*.xlsx)"
+
+
+IO_LABELS_COLORMAP = "io.labels_colormap_dir"

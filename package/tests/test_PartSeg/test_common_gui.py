@@ -16,6 +16,7 @@ import pytest
 import qtpy
 from magicgui import register_type
 from magicgui.widgets import Container, Widget, create_widget
+from napari.utils import Colormap
 from nme import register_class
 from pydantic import Field
 from qtpy.QtCore import QPoint, QRect, QSize, Qt
@@ -61,6 +62,7 @@ from PartSeg.common_gui.algorithms_description import (
     SubAlgorithmWidget,
 )
 from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
+from PartSeg.common_gui.colormap_creator import ColormapLoad, ColormapSave, save_colormap_in_settings
 from PartSeg.common_gui.custom_load_dialog import (
     CustomLoadDialog,
     IOMethodMock,
@@ -78,7 +80,7 @@ from PartSeg.common_gui.error_report import (
     _print_traceback,
 )
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
-from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelShow
+from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelShow, LabelsLoad, LabelsSave
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
 from PartSeg.common_gui.multiple_file_widget import (
@@ -1895,3 +1897,45 @@ def test_progress_circle(qtbot):
     qtbot.addWidget(w)
     w.set_fraction(0.5)
     w.paintEvent(QPaintEvent(QRect(0, 0, 100, 100)))
+
+
+def test_colormap_io(tmp_path):
+    cmap = Colormap([[0, 0, 0], [0.5, 0.5, 0.5], [1, 1, 1]], controls=[0, 0.3, 1])
+    ColormapSave.save(tmp_path / "cmap.json", cmap)
+    cmap2 = ColormapLoad.load([tmp_path / "cmap.json"])
+    assert cmap2 == cmap
+
+
+@pytest.mark.parametrize("cls_", [ColormapSave, ColormapLoad])
+def test_colormap_meth(cls_):
+    assert cls_.get_short_name() == "colormap_json"
+    assert cls_.get_name().startswith("Colormap")
+    assert cls_.get_extensions() == [".colormap.json"]
+
+
+def test_labels_io(tmp_path):
+    data = [[128, 0, 130], [0, 180, 120]]
+    LabelsSave.save(tmp_path / "labels.json", data)
+    data2 = LabelsLoad.load([tmp_path / "labels.json"])
+    assert data == data2
+
+
+@pytest.mark.parametrize("cls_", [LabelsSave, LabelsLoad])
+def test_labels_meth(cls_):
+    assert cls_.get_short_name() == "label_json"
+    assert cls_.get_name().startswith("Labels")
+    assert cls_.get_extensions() == [".label.json"]
+
+
+def test_save_colormap_in_settings(part_settings):
+    class DummyColormap(typing.NamedTuple):
+        colors: typing.List[typing.List[float]]
+        controls: typing.List[float]
+
+    assert "custom_aaa" not in part_settings.colormap_dict
+    cmap = Colormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0, 1])
+    save_colormap_in_settings(part_settings, cmap, "custom_aaa")
+    assert len(part_settings.colormap_dict["custom_aaa"][0].controls) == 2
+    cmap2 = DummyColormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0.1, 0.9])
+    save_colormap_in_settings(part_settings, cmap2, "custom_bbb")
+    assert len(part_settings.colormap_dict["custom_bbb"][0].controls) == 4
