@@ -402,12 +402,41 @@ class MaximumDistanceWatershedParams(BaseModel):
     )
 
 
-class MaximumDistanceWatershed(BaseThreshold):
+class MaximumDistanceCore(BaseThreshold):
+    """
+    This Is algorithm intended to bue used in "* threshold with watershed" algorithms.
+    It generates array with three values:
+
+     * 0 - background,
+     * 1 - area to watershed,
+     * 2 - core objects to start watershed from
+
+    This algorithm is developed to make possible split of almost convex objects that are touching each other.
+    Core objects are identified as local maxima of distance from the border.
+
+    To perform this task the following steps are performed:
+
+    1. Thresholding - to detect whole area of objects. This is controlled by ``threshold`` parameter.
+    2. Remove small objects - to remove small objects. This is controlled by ``minimum_size` parameter.
+    3. Small objects close - to merge small objects. As distance transform is used, it is required small holes.
+       This steep closes holes smaller tan 10px.
+    4. Distance transform - to find distance from the border
+    5. Identify local maxima - to find core objects
+    6. Remove local maxima that are too close to the border - to avoid artifacts.
+       This distance is controlled by ``minimum_radius`` parameter.
+    7. Dilate core objects - to make them bigger. For elongated objects it is possible to have multiple local
+       maxima along longest axis of object. This step is to merge them.
+       This distance is controlled by ``dilate_radius`` parameter.
+
+
+    This is algorithm that detect core objects
+    """
+
     __argument_class__ = MaximumDistanceWatershedParams
 
     @classmethod
     def get_name(cls):
-        return "Maximum Distance Watershed"
+        return "Maximum Distance Core"
 
     @classmethod
     @update_argument("arguments")
@@ -419,31 +448,22 @@ class MaximumDistanceWatershed(BaseThreshold):
         operator: typing.Callable[[object, object], bool],
     ):
         thr: BaseThreshold = ThresholdSelection[arguments.threshold.name]
-        dim_num = sum(x > 1 for x in data.shape)
         mask1, thr_val = thr.calculate_mask(data, mask, arguments.threshold.values, operator)
         mask1 = sitk.GetArrayFromImage(
             sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(mask1)), arguments.minimum_size)
         )
         mask2 = close_small_holes((mask1 > 0), 10)
         data = sitk.GetArrayFromImage(sitk.DanielssonDistanceMap(sitk.GetImageFromArray((mask2 == 0).astype(np.uint8))))
-        data[data < arguments.minimum_radius] = 0
 
-        maxima = sitk.GetArrayFromImage(
-            sitk.RelabelComponent(
-                sitk.ConnectedComponent(
-                    sitk.Mask(
-                        sitk.BinaryDilate(
-                            sitk.RegionalMaxima(sitk.GetImageFromArray(data)),
-                            [arguments.dilate_radius] * 3,
-                        ),
-                        sitk.GetImageFromArray(mask1),
-                    )
-                ),
-                int((arguments.dilate_radius**dim_num) * np.pi),
-            )
+        maxima = sitk.GetArrayFromImage(sitk.RegionalMaxima(sitk.GetImageFromArray(data)))
+        maxima[data < arguments.minimum_radius] = 0
+
+        dilated_maxima = sitk.GetArrayFromImage(
+            sitk.BinaryDilate(sitk.GetImageFromArray(maxima), [arguments.dilate_radius] * 3)
         )
+
         mask1[mask1 > 0] = 1
-        mask1[maxima > 0] = 2
+        mask1[dilated_maxima > 0] = 2
         if operator(0, 1):
             meth = np.max
         else:
@@ -460,7 +480,7 @@ class DoubleThresholdSelection(
 DoubleThresholdSelection.register(DoubleThreshold)
 DoubleThresholdSelection.register(DoubleOtsu)
 DoubleThresholdSelection.register(MultipleOtsu)
-DoubleThresholdSelection.register(MaximumDistanceWatershed)
+DoubleThresholdSelection.register(MaximumDistanceCore, old_names=["Maximum Distance Watershed"])
 
 
 def __getattr__(name):  # pragma: no cover
