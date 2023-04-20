@@ -1,3 +1,4 @@
+import contextlib
 import importlib
 import itertools
 import os
@@ -34,7 +35,8 @@ def register_napari_plugins():
         save_mask_roi,
         napari_widgets,
     ]:
-        napari.plugins.plugin_manager.register(module)
+        with contextlib.suppress(ValueError):
+            napari.plugins.plugin_manager.register(module)
 
 
 def get_plugins():
