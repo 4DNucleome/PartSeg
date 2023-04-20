@@ -6,7 +6,12 @@ import pytest
 from PartSegCore.algorithm_describe_base import base_model_to_algorithm_property
 from PartSegCore.segmentation import ROIExtractionAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult, SegmentationLimitException
-from PartSegCore.segmentation.restartable_segmentation_algorithms import final_algorithm_list as restartable_list
+from PartSegCore.segmentation.restartable_segmentation_algorithms import (
+    final_algorithm_list as restartable_list,
+)
+from PartSegCore.segmentation.restartable_segmentation_algorithms import (
+    remove_object_touching_border,
+)
 from PartSegCore.segmentation.segmentation_algorithm import (
     CellFromNucleusFlow,
     ThresholdFlowAlgorithm,
@@ -74,3 +79,22 @@ def test_close_small_holes(ndim, dtype):
     data[(slice(3, -3),) * ndim] = 0
     res = close_small_holes(data, 5**2)
     assert np.all(res == copy)
+
+
+def test_remove_object_touching_border():
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[3:-3, 3:-3] = 1
+    res = remove_object_touching_border(data)
+    assert np.all(res == data)
+
+    res = remove_object_touching_border(np.reshape(data, (1, 10, 10)))
+    assert np.all(res == np.reshape(data, (1, 10, 10)))
+
+    new_data = np.copy(data)
+    new_data[:2] = 2
+
+    res = remove_object_touching_border(new_data)
+    assert np.all(res == data)
+
+    res = remove_object_touching_border(np.reshape(new_data, (1, 10, 10)))
+    assert np.all(res == np.reshape(data, (1, 10, 10)))

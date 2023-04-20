@@ -471,7 +471,6 @@ class BaseThresholdFlowAlgorithmParameters(ThresholdBaseAlgorithmParameters):
 
 def remove_object_touching_border(new_segment):
     non_one_dims = np.where(np.array(new_segment.shape) > 1)[0]
-    print(non_one_dims)
     slice_list = [slice(None)] * len(new_segment.shape)
     to_remove = set()
     for dim in non_one_dims:
@@ -482,7 +481,6 @@ def remove_object_touching_border(new_segment):
         to_remove.update(np.unique(new_segment[tuple(slice_copy)]))
 
     res = np.copy(new_segment)
-    print("to remove", to_remove)
     for i in to_remove:
         if i == 0:
             continue
