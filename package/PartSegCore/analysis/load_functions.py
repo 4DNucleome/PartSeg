@@ -300,7 +300,7 @@ def _mask_data_outside_mask(file_path):
 def _get_frame_thick(file_path):
     if not isinstance(file_path, str):
         return FRAME_THICKNESS
-    with tarfile.open(file_path, "r:*") as tar_file:
+    with tarfile.open(file_path, "r:*") as tar_file:  # NOSONAR
         metadata = load_metadata_base(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
         return metadata.get("frame_thickness", FRAME_THICKNESS)
 
