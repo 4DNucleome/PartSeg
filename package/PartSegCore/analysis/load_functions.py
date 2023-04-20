@@ -21,6 +21,7 @@ from PartSegCore.algorithm_describe_base import Register, ROIExtractionProfile
 from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple, project_version_info
 from PartSegCore.io_utils import (
+    IO_MASK_METADATA_FILE,
     LoadBase,
     LoadPoints,
     SegmentationType,
@@ -92,7 +93,7 @@ def load_project_from_tar(tar_file, file_path):
     with contextlib.suppress(KeyError):
         algorithm_dict["algorithm_name"] = AnalysisAlgorithmSelection[algorithm_dict["algorithm_name"]].get_name()
 
-    metadata = json.loads(tar_file.extractfile("metadata.json").read(), object_hook=partseg_object_hook)
+    metadata = json.loads(tar_file.extractfile(IO_MASK_METADATA_FILE).read(), object_hook=partseg_object_hook)
 
     version = parse_version(metadata.get("project_version_info", "1.0"))
 
@@ -292,7 +293,7 @@ def _mask_data_outside_mask(file_path):
     if not isinstance(file_path, str):
         return False
     with tarfile.open(file_path, "r:*") as tar_file:
-        metadata = load_metadata_base(tar_file.extractfile("metadata.json").read().decode("utf8"))
+        metadata = load_metadata_base(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
         return metadata.get("keep_data_outside_mask", False)
 
 
@@ -300,7 +301,7 @@ def _get_frame_thick(file_path):
     if not isinstance(file_path, str):
         return FRAME_THICKNESS
     with tarfile.open(file_path, "r:*") as tar_file:
-        metadata = load_metadata_base(tar_file.extractfile("metadata.json").read().decode("utf8"))
+        metadata = load_metadata_base(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
         return metadata.get("frame_thickness", FRAME_THICKNESS)
 
 

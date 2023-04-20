@@ -18,6 +18,7 @@ from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from PartSegCore.io_utils import (
+    IO_MASK_METADATA_FILE,
     LoadBase,
     LoadPoints,
     SaveBase,
@@ -163,7 +164,7 @@ def _save_mask_roi_metadata(
         else:
             metadata["base_file"] = file_path
     metadata_buff = BytesIO(json.dumps(metadata, cls=PartSegEncoder).encode("utf-8"))
-    metadata_tar = get_tarinfo("metadata.json", metadata_buff)
+    metadata_tar = get_tarinfo(IO_MASK_METADATA_FILE, metadata_buff)
     tar_file.addfile(metadata_tar, metadata_buff)
 
 
@@ -240,7 +241,7 @@ def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, 
         raise WrongFileTypeException  # pragma: no cover
     files = tar_file.getnames()
     step_changed(1)
-    metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+    metadata = load_metadata(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
     step_changed(2)
     if "segmentation.npy" in files:
         segmentation_file_name = "segmentation.npy"
@@ -393,7 +394,7 @@ class LoadROIParameters(LoadBase):
 
         tar_file, _ = open_tar_file(file_data)
         try:
-            project_metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+            project_metadata = load_metadata(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
             parameters = defaultdict(
                 lambda: None,
                 [(int(k), v) for k, v in project_metadata["parameters"].items()],
