@@ -1,6 +1,7 @@
 ignore:
   - package/PartSeg/changelog.py
   - package/PartSeg/version.py
+  - package/PartSegCore/sphinx/auto_parameters.py
 coverage:
   status:
     project:
