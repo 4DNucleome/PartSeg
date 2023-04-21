@@ -554,10 +554,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 self.threshold_info[0],
             )
             if self.new_parameters.remove_object_touching_border:
-                print("remove_object_touching_border")
                 new_segment = remove_object_touching_border(new_segment)
-            else:
-                print("not remove_object_touching_border")
 
             self.parameters["remove_object_touching_border"] = self.new_parameters.remove_object_touching_border
 
