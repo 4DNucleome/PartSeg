@@ -124,7 +124,7 @@ class CustomSaveDialog(LoadRegisterFileDialog):
             super().accept()
             return
         save_class = self.io_register[self.selectedNameFilter()]
-        fields = save_class.get_fields()
+        fields = save_class._get_fields()
         if len(fields) == 0:
             super().accept()
             return
