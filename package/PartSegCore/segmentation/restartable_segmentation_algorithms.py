@@ -517,7 +517,6 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
         self.threshold_info = [None, None]
 
     def calculation_run(self, report_fun) -> typing.Optional[ROIExtractionResult]:
-        print("algorithm parameters", self.new_parameters)
         segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
             self.final_sizes = []
@@ -542,7 +541,6 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 return self.prepare_result(self.finally_segment)
             path_sprawl: BaseWatershed = FlowMethodSelection[self.new_parameters.flow_type.name]
             self.parameters["flow_type"] = self.new_parameters.flow_type
-            print("before sprawl")
             new_segment = path_sprawl.sprawl(
                 self.sprawl_area,
                 np.copy(finally_segment),  # TODO add tests for discover this problem
@@ -555,7 +553,6 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 self.threshold_info[1],
                 self.threshold_info[0],
             )
-            print("after sprawl")
             if self.new_parameters.remove_object_touching_border:
                 print("remove_object_touching_border")
                 new_segment = remove_object_touching_border(new_segment)

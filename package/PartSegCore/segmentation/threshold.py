@@ -448,27 +448,21 @@ class MaximumDistanceCore(BaseThreshold):
         arguments: MaximumDistanceWatershedParams,
         operator: typing.Callable[[object, object], bool],
     ):
-        print("before threshold")
         thr: BaseThreshold = ThresholdSelection[arguments.threshold.name]
         mask1, thr_val = thr.calculate_mask(data, mask, arguments.threshold.values, operator)
-        print("beore relabel")
         mask1 = sitk.GetArrayFromImage(
             sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(mask1)), arguments.minimum_size)
         )
-        print("before close small holes")
         mask2 = close_small_holes((mask1 > 0), 10)
-        print("before distance transform")
         data = sitk.GetArrayFromImage(sitk.DanielssonDistanceMap(sitk.GetImageFromArray((mask2 == 0).astype(np.uint8))))
 
-        print("before regional maxima")
         maxima = sitk.GetArrayFromImage(sitk.RegionalMaxima(sitk.GetImageFromArray(data)))
-        print("before remove regional base on border distance")
         maxima[data < arguments.minimum_border_distance] = 0
-        print("before dilate")
+
         dilated_maxima = sitk.GetArrayFromImage(
             sitk.BinaryDilate(sitk.GetImageFromArray(maxima), [arguments.dilate_radius] * 3)
         )
-        print("before preparing core/area mask")
+
         mask1[mask1 > 0] = 1
         mask1[dilated_maxima > 0] = 2
         if operator(0, 1):
