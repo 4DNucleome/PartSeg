@@ -143,7 +143,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     @classmethod
     def get_doc_from_fields(cls):
         resp = "{\n"
-        for el in cls._get_fields():
+        for el in get_fields_from_algorithm(cls):
             if isinstance(el, AlgorithmProperty):
                 resp += f"  {el.name}: {el.value_type} - "
                 if el.help_text:
@@ -186,7 +186,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     def get_fields_dict(cls) -> typing.Dict[str, AlgorithmProperty]:
-        return {v.name: v for v in cls._get_fields() if isinstance(v, AlgorithmProperty)}
+        return {v.name: v for v in get_fields_from_algorithm(cls) if isinstance(v, AlgorithmProperty)}
 
     @classmethod
     def get_default_values(cls):
@@ -202,6 +202,12 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
             for el in cls.get_fields()
             if isinstance(el, AlgorithmProperty)
         }
+
+
+def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    if ald_desc.__new_style__:
+        return base_model_to_algorithm_property(ald_desc.__argument_class__)
+    return ald_desc.get_fields()
 
 
 def is_static(fun):
