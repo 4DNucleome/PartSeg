@@ -173,6 +173,7 @@ a = Analysis(
     + collect_data_files("freetype")
     + collect_data_files("skimage")
     + collect_data_files("jsonschema_specifications")
+    + collect_data_files("PartSegCore-compiled-backend")
     + pyzmq_data
     + plugins_data
     + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")],
