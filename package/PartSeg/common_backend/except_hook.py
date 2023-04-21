@@ -1,4 +1,5 @@
 import sys
+import traceback
 
 import sentry_sdk
 from qtpy.QtCore import QCoreApplication, QThread
@@ -22,6 +23,7 @@ def my_excepthook(type_, value, trace_back):
 
     # log the exception here
     if state_store.show_error_dialog and not isinstance(value, KeyboardInterrupt):
+        traceback.print_exc()
         if state_store.auto_report or state_store.always_report:
             with sentry_sdk.push_scope() as scope:
                 scope.set_tag("auto_report", "true")

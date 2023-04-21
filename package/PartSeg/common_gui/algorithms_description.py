@@ -1,6 +1,7 @@
 import collections.abc
 import inspect
 import logging
+import traceback
 import typing
 from contextlib import suppress
 from copy import deepcopy
@@ -641,6 +642,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
             mess.setWindowTitle("Segmentation limitations")
             mess.exec_()
             return
+        traceback.print_exception(type(exc), exc, exc.__traceback__)
         dial = ErrorDialog(exc, "Error during segmentation", f"{QApplication.instance().applicationName()}")
         dial.exec_()
 
