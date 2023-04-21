@@ -20,6 +20,8 @@ IORegister = typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase), str,
 
 
 class IOMethodMock:
+    __new_style__ = False
+
     def __init__(self, name: str):
         self.name = name
 
