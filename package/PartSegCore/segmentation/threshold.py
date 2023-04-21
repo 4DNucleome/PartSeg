@@ -450,6 +450,8 @@ class MaximumDistanceCore(BaseThreshold):
     ):
         thr: BaseThreshold = ThresholdSelection[arguments.threshold.name]
         mask1, thr_val = thr.calculate_mask(data, mask, arguments.threshold.values, operator)
+        if not np.any(mask1):
+            return mask1, (thr_val, thr_val)
         mask1 = sitk.GetArrayFromImage(
             sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(mask1)), arguments.minimum_size)
         )
