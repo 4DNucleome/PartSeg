@@ -13,9 +13,7 @@ steps:
   - bash: |
       python -m pip install -U pip wheel setuptools
     displayName: install libs
-  - bash: |
-      python -m pip install .[pyinstaller] -c requirements/constraints_py3.9.txt
-      python -m pip install git+https://github.com/4DNucleome/PartSegCore-compiled-backend.git@debug_path
+  - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.9.txt
     displayName: install partseg
   - bash: |
       python  build_utils/create_and_pack_executable.py
