@@ -626,6 +626,17 @@ class TestMultipleFileWidget:
         ]
         assert mf_widget.file_view.topLevelItemCount() == 2
 
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_forget_all(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
+        load_property = LoadProperty(
+            [str(tmp_path / f"img_{i}.tif") for i in range(5)], LoadStackImage.get_name(), LoadStackImage
+        )
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert mf_widget.file_view.topLevelItemCount() == 5
+        mf_widget.forget_all()
+        assert mf_widget.file_view.topLevelItemCount() == 0
+
 
 class TestBaseMainWindow:
     def test_create(self, tmp_path, qtbot):
