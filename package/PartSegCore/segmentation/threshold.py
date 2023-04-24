@@ -450,11 +450,11 @@ class MaximumDistanceCore(BaseThreshold):
     ):
         thr: BaseThreshold = ThresholdSelection[arguments.threshold.name]
         mask1, thr_val = thr.calculate_mask(data, mask, arguments.threshold.values, operator)
-        if not np.any(mask1):
-            return mask1, (thr_val, thr_val)
         mask1 = sitk.GetArrayFromImage(
             sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(mask1)), arguments.minimum_size)
         )
+        if not np.any(mask1):
+            return mask1, (thr_val, thr_val)
         mask2 = close_small_holes((mask1 > 0), 10)
         data = sitk.GetArrayFromImage(sitk.DanielssonDistanceMap(sitk.GetImageFromArray((mask2 == 0).astype(np.uint8))))
 
@@ -468,9 +468,9 @@ class MaximumDistanceCore(BaseThreshold):
         mask1[mask1 > 0] = 1
         mask1[dilated_maxima > 0] = 2
         if operator(0, 1):
-            meth = np.max
+            meth = np.amax
         else:
-            meth = np.min
+            meth = np.amin
         return mask1, (thr_val, float(meth(data[mask1 == 2]) if np.any(mask1 == 2) else meth(data[mask1 == 1])))
 
 
