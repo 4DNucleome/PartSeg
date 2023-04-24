@@ -135,6 +135,16 @@ class CalculationProcess:
         self.algorithm_parameters: dict = {}
         self.results: CalculationResultList = []
 
+    def _reset_image_cache(self):
+        self.image = None
+        self.roi_info = None
+        self.additional_layers = {}
+        self.mask = None
+        self.history = []
+        self.algorithm_parameters = {}
+        self.measurement = []
+        self.reused_mask = set()
+
     @staticmethod
     def load_data(operation, calculation: FileCalculation) -> Union[ProjectTuple, List[ProjectTuple]]:
         metadata = {"default_spacing": calculation.voxel_size}
@@ -172,26 +182,29 @@ class CalculationProcess:
         if isinstance(projects, ProjectTuple):
             projects = [projects]
         for project in projects:
-            self.image = project.image
-            if calculation.overwrite_voxel_size:
-                self.image.set_spacing(calculation.voxel_size)
-            if operation == RootType.Mask_project:
-                self.mask = project.mask
-            if operation == RootType.Project:
-                self.mask = project.mask
-                # FIXME when load annotation from project is done
-                self.roi_info = project.roi_info
-                self.additional_layers = project.additional_layers
-                self.history = project.history
-                self.algorithm_parameters = project.algorithm_parameters
+            try:
+                self.image = project.image
+                if calculation.overwrite_voxel_size:
+                    self.image.set_spacing(calculation.voxel_size)
+                if operation == RootType.Mask_project:
+                    self.mask = project.mask
+                if operation == RootType.Project:
+                    self.mask = project.mask
+                    # FIXME when load annotation from project is done
+                    self.roi_info = project.roi_info
+                    self.additional_layers = project.additional_layers
+                    self.history = project.history
+                    self.algorithm_parameters = project.algorithm_parameters
 
-            self.iterate_over(calculation.calculation_plan.execution_tree)
-            for el in self.measurement:
-                el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
-            self.results.append(
-                ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
-            )
-            self.measurement = []
+                self.iterate_over(calculation.calculation_plan.execution_tree)
+                for el in self.measurement:
+                    el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
+                self.results.append(
+                    ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
+                )
+            except Exception as e:
+                self.results.append(prepare_error_data(e))
+            self._reset_image_cache()
         return self.results
 
     def iterate_over(self, node: Union[CalculationTree, List[CalculationTree]]):
