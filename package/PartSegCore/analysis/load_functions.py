@@ -325,8 +325,9 @@ def load_mask_project(
         components = list(data.roi_info.bound_info)
     res = []
     base, ext = os.path.splitext(load_locations[0])
-    path_template = base + "_component{}" + ext
     range_changed(0, len(components))
+    str_len = str(len(str(len(components))))
+    path_template = base + "_component{:0" + str_len + "d}" + ext
     for i in components:
         step_changed(i)
         bound = data.roi_info.bound_info[i]
