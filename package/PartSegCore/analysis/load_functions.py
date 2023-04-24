@@ -306,7 +306,8 @@ def load_mask_project(
         components = list(data.roi_info.bound_info)
     res = []
     base, ext = os.path.splitext(load_locations[0])
-    path_template = base + "_component{}" + ext
+    str_len = str(len(str(len(components))))
+    path_template = base + "_component{:0" + str_len + "d}" + ext
     for i in components:
         single_roi = roi == i
         if not np.any(single_roi):
