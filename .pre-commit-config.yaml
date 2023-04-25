@@ -48,3 +48,7 @@ repos:
     hooks:
     -   id: mypy
         files: ^package/PartSegImage/.+\.py
+
+
+ci:
+    autoupdate_commit_msg: 'ci: [pre-commit.ci] pre-commit autoupdate'
