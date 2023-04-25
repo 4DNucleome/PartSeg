@@ -202,7 +202,7 @@ class CalculationProcess:
                 self.results.append(
                     ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
                 )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 self.results.append(prepare_error_data(e))
             self._reset_image_cache()
         return self.results
