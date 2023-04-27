@@ -16,7 +16,10 @@ parser.add_argument("--main-packages", action="store_true")
 args = parser.parse_args()
 
 out = subprocess.run(  # nosec
-    ["git", "diff", str(src_dir / "requirements" / "constraints_py3.9.txt")], capture_output=True, check=True
+    ["git", "diff", str(src_dir / "requirements" / "constraints_py3.9.txt")],
+    capture_output=True,
+    check=True,
+    shell=False,
 )
 
 changed_packages = [
