@@ -42,11 +42,11 @@ cloudpickle==2.2.1
     # via dask
 comm==0.1.3
     # via ipykernel
-coverage==7.2.3
+coverage==7.2.5
     # via pytest-cov
 czifile==2019.7.2
     # via PartSeg (setup.cfg)
-dask==2023.4.0
+dask==2023.4.1
     # via napari
 debugpy==1.6.7
     # via ipykernel
@@ -80,7 +80,7 @@ idna==3.4
     # via requests
 imagecodecs==2023.3.16
     # via PartSeg (setup.cfg)
-imageio==2.28.0
+imageio==2.28.1
     # via
     #   -r requirements/version_denylist.txt
     #   PartSeg (setup.cfg)
@@ -103,7 +103,7 @@ ipykernel==6.22.0
     #   PartSeg (setup.cfg)
     #   napari-console
     #   qtconsole
-ipython==8.12.0
+ipython==8.13.1
     # via
     #   PartSeg (setup.cfg)
     #   ipykernel
@@ -214,7 +214,7 @@ packaging==23.1
     #   scikit-image
     #   sphinx
     #   superqt
-pandas==2.0.0
+pandas==2.0.1
     # via
     #   PartSeg (setup.cfg)
     #   napari
@@ -237,7 +237,7 @@ pillow==9.5.0
     #   scikit-image
 pint==0.20.1
     # via napari
-platformdirs==3.2.0
+platformdirs==3.5.0
     # via jupyter-core
 pluggy==1.0.0
     # via pytest
@@ -363,11 +363,11 @@ qtpy==2.3.1
     #   qtawesome
     #   qtconsole
     #   superqt
-requests==2.28.2
+requests==2.29.0
     # via
     #   PartSeg (setup.cfg)
     #   sphinx
-rich==13.3.4
+rich==13.3.5
     # via npe2
 scikit-image==0.20.0
     # via
@@ -378,7 +378,7 @@ scipy==1.9.1
     #   PartSeg (setup.cfg)
     #   napari
     #   scikit-image
-sentry-sdk==1.20.0
+sentry-sdk==1.21.1
     # via PartSeg (setup.cfg)
 shiboken2==5.15.2.1
     # via pyside2
@@ -490,5 +490,5 @@ zipp==3.15.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==67.7.1
+setuptools==67.7.2
     # via pyinstaller
