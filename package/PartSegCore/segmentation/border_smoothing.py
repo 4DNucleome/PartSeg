@@ -3,7 +3,7 @@ from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection

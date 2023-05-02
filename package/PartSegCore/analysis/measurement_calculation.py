@@ -23,8 +23,8 @@ from typing import (
 import numpy as np
 import pandas as pd
 import SimpleITK
+from local_migrator import register_class, rename_key
 from mahotas.features import haralick
-from nme import register_class, rename_key
 from pydantic import Field
 from scipy.spatial.distance import cdist
 from sympy import Rational, symbols

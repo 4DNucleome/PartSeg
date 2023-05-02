@@ -8,6 +8,7 @@ from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import napari
 import numpy as np
+from local_migrator import register_class
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
@@ -15,7 +16,6 @@ from napari.layers.labels import Labels
 from napari.qt import QtViewer
 from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
-from nme import register_class
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget

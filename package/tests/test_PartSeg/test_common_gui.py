@@ -14,10 +14,10 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import qtpy
+from local_migrator import register_class
 from magicgui import register_type
 from magicgui.widgets import Container, Widget, create_widget
 from napari.utils import Colormap
-from nme import register_class
 from pydantic import Field
 from qtpy.QtCore import QPoint, QRect, QSize, Qt
 from qtpy.QtGui import QPaintEvent

@@ -3,7 +3,7 @@ import typing
 from enum import Enum
 
 import pytest
-from nme import class_to_str, register_class
+from local_migrator import class_to_str, register_class
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, ValidationError
 

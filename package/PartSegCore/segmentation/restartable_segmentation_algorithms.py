@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import numpy as np
 import SimpleITK
-from nme import REGISTER, class_to_str, register_class, rename_key
+from local_migrator import REGISTER, class_to_str, register_class, rename_key
 from pydantic import Field, validator
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile

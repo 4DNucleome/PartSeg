@@ -1,18 +1,18 @@
-import nme
+import local_migrator
 
 from PartSegCore._old_json_hooks import part_hook
 
 
-class PartSegEncoder(nme.NMEEncoder):
+class PartSegEncoder(local_migrator.Encoder):
     pass
 
 
 def partseg_object_hook(dkt: dict):
     if "__class__" in dkt:
-        return nme.nme_object_hook(dkt)
+        return local_migrator.object_hook(dkt)
 
     if "__ReadOnly__" in dkt or "__Serializable__" in dkt or "__Enum__" in dkt:
-        if problematic_fields := nme.check_for_errors_in_dkt_values(dkt):
+        if problematic_fields := local_migrator.check_for_errors_in_dkt_values(dkt):
             dkt["__error__"] = f"Error in fields: {', '.join(problematic_fields)}"
             return dkt
         is_enum = "__Enum__" in dkt
@@ -21,8 +21,8 @@ def partseg_object_hook(dkt: dict):
         cls_str = dkt["__subtype__"]
         del dkt["__subtype__"]
         try:
-            dkt_migrated = nme.REGISTER.migrate_data(cls_str, {}, dkt)
-            cls = nme.REGISTER.get_class(cls_str)
+            dkt_migrated = local_migrator.REGISTER.migrate_data(cls_str, {}, dkt)
+            cls = local_migrator.REGISTER.get_class(cls_str)
             return cls(**dkt_migrated)
         except Exception:  # pylint: disable=broad-except
             dkt["__subtype__"] = cls_str

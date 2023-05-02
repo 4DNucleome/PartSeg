@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import tifffile
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
