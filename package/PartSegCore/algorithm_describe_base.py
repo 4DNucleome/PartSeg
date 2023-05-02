@@ -6,7 +6,7 @@ from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
 from functools import wraps
 
-from nlocal_migratorme import REGISTER, class_to_str
+from local_migrator import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
 from pydantic.main import ModelMetaclass
