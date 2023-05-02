@@ -131,6 +131,10 @@ kiwisolver==1.4.4
     # via vispy
 lazy-loader==0.2
     # via scikit-image
+local-migrator==0.1.8
+    # via
+    #   PartSeg (setup.cfg)
+    #   nme
 locket==1.0.0
     # via partd
 lxml==4.9.2
@@ -170,7 +174,7 @@ nest-asyncio==1.5.6
     # via ipykernel
 networkx==3.1
     # via scikit-image
-nme==0.1.6
+nme==0.1.8
     # via PartSeg (setup.cfg)
 npe2==0.7.0
     # via
@@ -207,7 +211,7 @@ packaging==23.1
     #   build
     #   dask
     #   ipykernel
-    #   nme
+    #   local-migrator
     #   pytest
     #   qtconsole
     #   qtpy
@@ -235,7 +239,7 @@ pillow==9.5.0
     #   imageio
     #   napari
     #   scikit-image
-pint==0.20.1
+pint==0.21
     # via napari
 platformdirs==3.5.0
     # via jupyter-core
@@ -456,7 +460,7 @@ traitlets==5.9.0
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.7.0
+typer==0.9.0
     # via npe2
 typing-extensions==4.5.0
     # via
@@ -467,6 +471,7 @@ typing-extensions==4.5.0
     #   psygnal
     #   pydantic
     #   superqt
+    #   typer
 tzdata==2023.3
     # via pandas
 urllib3==1.26.15
