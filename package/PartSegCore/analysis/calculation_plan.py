@@ -8,7 +8,7 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
-from nme import register_class, rename_key
+from local_migrator import register_class, rename_key
 from pydantic import BaseModel as PydanticBaseModel
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile

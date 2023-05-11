@@ -133,8 +133,10 @@ kiwisolver==1.4.4
     # via vispy
 lazy-loader==0.2
     # via scikit-image
-local-migrator==0.1.9
-    # via nme
+local-migrator==0.1.8
+    # via
+    #   PartSeg (setup.cfg)
+    #   nme
 locket==1.0.0
     # via partd
 lxml==4.9.2

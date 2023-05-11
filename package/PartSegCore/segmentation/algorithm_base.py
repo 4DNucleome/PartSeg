@@ -5,7 +5,7 @@ from textwrap import indent
 from typing import Any, Callable, Dict, MutableMapping, Optional
 
 import numpy as np
-from nme import REGISTER, class_to_str
+from local_migrator import REGISTER, class_to_str
 
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
