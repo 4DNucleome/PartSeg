@@ -49,10 +49,10 @@ class ProjectTuple(ProjectInfoBase):
 
     def __repr__(self):
         return (
-            f"ProjectTuple(file_path={self.file_path},\nimage={repr(self.image)},\n"
-            f"segmentation={numpy_repr(self.roi_info.roi)},\nsegmentation_info={repr(self.roi_info)},\n"
-            f"additional_layers={repr(self.additional_layers)},\nmask={numpy_repr(self.mask)},\n"
-            f"history={repr(self.history)},\nalgorithm_parameters={self.algorithm_parameters},\nerrors={self.errors})"
+            f"ProjectTuple(file_path={self.file_path},\nimage={self.image!r},\n"
+            f"segmentation={numpy_repr(self.roi_info.roi)},\nsegmentation_info={self.roi_info!r},\n"
+            f"additional_layers={self.additional_layers!r},\nmask={numpy_repr(self.mask)},\n"
+            f"history={self.history!r},\nalgorithm_parameters={self.algorithm_parameters},\nerrors={self.errors})"
         )
 
     @property

@@ -23,7 +23,7 @@ class SegmentationPipelineElement(BaseModel):
     def __repr__(self):
         return (
             "SegmentationPipelineElement(segmentation="
-            f"{repr(self.segmentation)},mask_property={repr(self.mask_property)})"
+            f"{self.segmentation!r},mask_property={self.mask_property!r})"
         )
 
 
@@ -53,5 +53,5 @@ class SegmentationPipeline(BaseModel):
     def __repr__(self):
         return (
             f"SegmentationPipeline(name={self.name},\nmask_history={self.mask_history},\n"
-            f"segmentation={repr(self.segmentation)})"
+            f"segmentation={self.segmentation!r})"
         )

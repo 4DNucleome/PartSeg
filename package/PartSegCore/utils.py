@@ -205,8 +205,8 @@ class EventedDict(typing.MutableMapping):
 
     def __repr__(self):
         if self._klass is not None:
-            return f"EventedDict(klass={self._klass}, {repr(self._dict)})"
-        return f"EventedDict({repr(self._dict)})"
+            return f"EventedDict(klass={self._klass}, {self._dict!r})"
+        return f"EventedDict({self._dict!r})"
 
     def _propagate_setitem(self, key):
         # Fixme when partial disconnect will work
