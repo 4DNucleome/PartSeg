@@ -219,6 +219,10 @@ class TestEventedDict:
         assert set(dkt) == {"a"}
         assert set(dkt["a"]) == {"b"}
 
+    def test_dict_repr(self):
+        assert repr(EventedDict(a=1, b=2)) == "EventedDict(klass={'*': <class 'object'>}, {'a': 1, 'b': 2})"
+        assert str(EventedDict(a=1, b=2)) == "EventedDict[{'*': <class 'object'>}]({'a': 1, 'b': 2})"
+
 
 class TestProfileDict:
     def test_simple(self):
