@@ -155,6 +155,8 @@ jobs:
         with:
           run: conda run -n test --no-capture-output tox -e py39-PySide2-conda
         timeout-minutes: 60
+        env:
+          CONDA_EXE: mamba
 
   check-package:
     name: Build & inspect our package.
