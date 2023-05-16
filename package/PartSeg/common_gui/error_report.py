@@ -169,7 +169,7 @@ class ErrorDialog(QDialog):
 
         url = "https://github.com/4DNucleome/PartSeg/issues/new?"
         data = {
-            "title": f"Error report from PartSeg `{repr(self.exception)}`",
+            "title": f"Error report from PartSeg `{self.exception!r}`",
             "body": f"This issue is created from PartSeg error dialog\n\n```"
             f"python\n{self.error_description.toPlainText()}\n```\n",
             "labels": "bug",

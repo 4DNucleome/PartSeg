@@ -259,9 +259,9 @@ class Node(BaseModel):
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
     def __str__(self):  # pragma: no cover
-        left_text = f"({str(self.left)})" if isinstance(self.left, Node) else str(self.left)
+        left_text = f"({self.left!s})" if isinstance(self.left, Node) else str(self.left)
 
-        right_text = f"({str(self.right)})" if isinstance(self.right, Node) else str(self.right)
+        right_text = f"({self.right!s})" if isinstance(self.right, Node) else str(self.right)
 
         return left_text + self.op + right_text
 
