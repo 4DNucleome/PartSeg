@@ -8,7 +8,7 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
-from nme import register_class, rename_key
+from local_migrator import register_class, rename_key
 from pydantic import BaseModel as PydanticBaseModel
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -309,7 +309,7 @@ class CalculationTree:
         return f"{self.operation}:\n[{'n'.join([str(x) for x in self.children])}]"
 
     def __repr__(self):
-        return f"CalculationTree(operation={repr(self.operation)}, children={self.children})"
+        return f"CalculationTree(operation={self.operation!r}, children={self.children})"
 
     def as_dict(self):
         return {"operation": self.operation, "children": self.children}
@@ -515,7 +515,7 @@ class CalculationPlan:
         return f"CalculationPlan<{self.name}>\n{self.execution_tree}"
 
     def __repr__(self):
-        return f"CalculationPlan(name={repr(self.name)}, execution_tree={repr(self.execution_tree)})"
+        return f"CalculationPlan(name={self.name!r}, execution_tree={self.execution_tree!r})"
 
     def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
         """

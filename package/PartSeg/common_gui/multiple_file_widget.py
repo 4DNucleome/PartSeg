@@ -129,6 +129,7 @@ class MultipleFileWidget(QWidget):
         self.load_files_btn = QPushButton("Load Files")
         self.load_recent_files_btn = QPushButton("Load recent Files")
         self.forget_btn = QPushButton("Forget")
+        self.forget_all_btn = QPushButton("Forget all")
 
         self.save_state_btn.clicked.connect(self.save_state)
         self.forget_btn.clicked.connect(self.forget)
@@ -136,6 +137,7 @@ class MultipleFileWidget(QWidget):
         self.load_recent_files_btn.clicked.connect(self.load_recent)
         self.file_view.itemDoubleClicked.connect(self.load_state)
         self.file_view.context_load.connect(self.load_state)
+        self.forget_all_btn.clicked.connect(self.forget_all)
         self.last_point = None
 
         self.custom_names_chk = QCheckBox("Custom names")
@@ -143,10 +145,11 @@ class MultipleFileWidget(QWidget):
         layout = QGridLayout()
         layout.addWidget(self.file_view, 0, 0, 1, 2)
         layout.addWidget(self.save_state_btn, 1, 0)
-        layout.addWidget(self.forget_btn, 1, 1)
-        layout.addWidget(self.load_files_btn, 2, 0)
+        layout.addWidget(self.load_files_btn, 1, 1)
         layout.addWidget(self.load_recent_files_btn, 2, 1)
-        layout.addWidget(self.custom_names_chk, 3, 0, 1, 2)
+        layout.addWidget(self.forget_btn, 2, 0)
+        layout.addWidget(self.forget_all_btn, 3, 0)
+        layout.addWidget(self.custom_names_chk, 3, 1)
 
         self.setLayout(layout)
         self.setMouseTracking(True)
@@ -302,6 +305,11 @@ class MultipleFileWidget(QWidget):
         self.forget_btn.setDisabled(True)
         item: QTreeWidgetItem = self.file_view.currentItem()
         self.forget_action(item)
+        QTimer().singleShot(500, self.enable_forget)
+
+    def forget_all(self):
+        for index in range(self.file_view.topLevelItemCount(), -1, -1):
+            self.forget_action(self.file_view.topLevelItem(index))
 
     def forget_action(self, item):
         if item is None:
@@ -325,7 +333,6 @@ class MultipleFileWidget(QWidget):
             del self.state_dict_count[text]
             self.file_list.remove(text)
             self.file_view.takeTopLevelItem(index)
-        QTimer().singleShot(500, self.enable_forget)
 
     @Slot()
     def enable_forget(self):

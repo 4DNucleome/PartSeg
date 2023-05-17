@@ -5,7 +5,7 @@ from textwrap import indent
 from typing import Any, Callable, Dict, MutableMapping, Optional
 
 import numpy as np
-from nme import REGISTER, class_to_str
+from local_migrator import REGISTER, class_to_str
 
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
@@ -44,7 +44,7 @@ def dict_repr(dkt: MutableMapping) -> str:
         elif isinstance(v, np.ndarray):
             res.append(f"{k}: {numpy_repr(v)}")
         else:
-            res.append(f"{k}: {repr(v)}")
+            res.append(f"{k}: {v!r}")
     return "{" + ", ".join(res) + "}"
 
 
@@ -149,9 +149,9 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
             mask_info = f"mask={self.mask}"
         return (
             f"{self.__class__.__module__}.{self.__class__.__name__}(\n"
-            + indent(f"image={repr(self.image)},\n", " " * 4)
+            + indent(f"image={self.image!r},\n", " " * 4)
             + indent(f"channel={numpy_repr(self.channel)},\n{mask_info},", " " * 4)
-            + indent(f"\nvalue={repr(self.get_segmentation_profile().values)})", " " * 4)
+            + indent(f"\nvalue={self.get_segmentation_profile().values!r})", " " * 4)
         )
 
     def clean(self):

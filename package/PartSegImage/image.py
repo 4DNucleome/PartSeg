@@ -789,7 +789,7 @@ class Image:
         mask_info = f"mask=True, mask_dtype={self._mask_array.dtype}" if self.mask is not None else "mask=False"
         return (
             f"Image(shape={self._channel_arrays[0].shape} dtype={self._channel_arrays[0].dtype}, spacing={self.spacing}"
-            f", labels={self.channel_names}, channels={self.channels}, axes={repr(self.axis_order)}, {mask_info})"
+            f", labels={self.channel_names}, channels={self.channels}, axes={self.axis_order!r}, {mask_info})"
         )
 
     @classmethod

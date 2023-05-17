@@ -14,10 +14,10 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import qtpy
+from local_migrator import register_class
 from magicgui import register_type
 from magicgui.widgets import Container, Widget, create_widget
 from napari.utils import Colormap
-from nme import register_class
 from pydantic import Field
 from qtpy.QtCore import QPoint, QRect, QSize, Qt
 from qtpy.QtGui import QPaintEvent
@@ -625,6 +625,17 @@ class TestMultipleFileWidget:
             [[str(tmp_path / "proj.seg")], LoadMaskSegmentation.get_name()]
         ]
         assert mf_widget.file_view.topLevelItemCount() == 2
+
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_forget_all(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
+        load_property = LoadProperty(
+            [str(tmp_path / f"img_{i}.tif") for i in range(5)], LoadStackImage.get_name(), LoadStackImage
+        )
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert mf_widget.file_view.topLevelItemCount() == 5
+        mf_widget.forget_all()
+        assert mf_widget.file_view.topLevelItemCount() == 0
 
 
 class TestBaseMainWindow:

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import tifffile
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
@@ -80,7 +80,7 @@ class MaskProjectTuple(ProjectInfoBase):
     file_path: str
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
-    roi_info: ROIInfo = ROIInfo(None)
+    roi_info: ROIInfo = dataclasses.field(default_factory=lambda: ROIInfo(None))
     additional_layers: typing.Dict[str, AdditionalLayerDescription] = dataclasses.field(default_factory=dict)
     selected_components: typing.List[int] = dataclasses.field(default_factory=list)
     roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]] = dataclasses.field(
