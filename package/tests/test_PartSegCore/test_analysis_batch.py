@@ -305,7 +305,9 @@ def mask_operation_plan(request, simple_measurement_list):
 
 def wait_for_calculation(manager):
     for _ in range(int(120 / 0.1)):
-        manager.get_results()
+        res = manager.get_results()
+        if res.errors:
+            warnings.warn(str(res.errors), stacklevel=1)  # pragma: no cover
         if manager.has_work:
             time.sleep(0.1)
         else:
@@ -451,15 +453,8 @@ class TestCalculationProcess:
         manager = CalculationManager()
         manager.set_number_of_workers(2)
         manager.add_calculation(calc)
+        wait_for_calculation(manager)
 
-        while manager.has_work:
-            time.sleep(0.1)
-            manager.get_results()
-        if sys.platform == "darwin":
-            time.sleep(2)  # pragma: no cover
-        else:
-            time.sleep(0.4)
-        manager.writer.finish()
         assert os.path.exists(os.path.join(tmpdir, "test2.xlsx"))
         df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (2, 4)
@@ -569,17 +564,8 @@ class TestCalculationProcess:
         manager = CalculationManager()
         manager.set_number_of_workers(2)
         manager.add_calculation(calc)
+        wait_for_calculation(manager)
 
-        while manager.has_work:
-            time.sleep(0.1)
-            res = manager.get_results()
-            if res.errors:
-                warnings.warn(str(res.errors), stacklevel=1)  # pragma: no cover
-        if sys.platform == "darwin":
-            time.sleep(2)  # pragma: no cover
-        else:
-            time.sleep(0.4)
-        manager.writer.finish()
         assert os.path.exists(os.path.join(tmpdir, "test3.xlsx"))
         df = pd.read_excel(os.path.join(tmpdir, "test3.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (8, 10)
