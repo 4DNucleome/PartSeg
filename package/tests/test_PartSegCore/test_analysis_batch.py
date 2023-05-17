@@ -6,11 +6,15 @@ import sys
 import time
 import warnings
 from glob import glob
+from itertools import dropwhile
+from typing import Callable
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.batch_processing import batch_backend
 from PartSegCore.analysis.batch_processing.batch_backend import (
     CalculationManager,
@@ -37,11 +41,15 @@ from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import SaveBase
+from PartSegCore.mask.io_functions import MaskProjectTuple, SaveROI, SaveROIOptions
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.roi_info import ROIInfo
+from PartSegCore.segmentation import ROIExtractionAlgorithm, ROIExtractionResult
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdFlowAlgorithm
 from PartSegCore.universal_const import Units
-from PartSegImage import TiffImageReader
+from PartSegCore.utils import BaseModel
+from PartSegImage import Channel, Image, ImageWriter, TiffImageReader
 
 ENGINE = None if pd.__version__ == "0.24.0" else "openpyxl"
 
@@ -52,6 +60,67 @@ class MocksCalculation:
 
 
 # TODO add check of per component measurements
+
+
+class DummyParams(BaseModel):
+    channel: Channel = 0
+
+
+class DummyExtraction(ROIExtractionAlgorithm):
+    __argument_class__ = DummyParams
+
+    @classmethod
+    def support_time(cls):
+        return True
+
+    @classmethod
+    def support_z(cls):
+        return True
+
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
+        channel = self.image.get_channel(0)
+        if channel.max() == 0:
+            raise ValueError("Empty image")
+        return ROIExtractionResult(np.ones(channel.shape, dtype=np.uint8), self.get_segmentation_profile())
+
+    def get_info_text(self):
+        return ""
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Dummy"
+
+
+@pytest.fixture()
+def _register_dummy_extraction():
+    assert "Dummy" not in AnalysisAlgorithmSelection.__register__
+    AnalysisAlgorithmSelection.register(DummyExtraction)
+    yield
+    AnalysisAlgorithmSelection.__register__.pop("Dummy")
+    assert "Dummy" not in AnalysisAlgorithmSelection.__register__
+
+
+@pytest.fixture()
+def _prepare_mask_project_data(tmp_path):
+    data = np.zeros((4, 10, 10), dtype=np.uint8)
+    data[:, 2:4, 2:4] = 1
+    data[:, 6:8, 2:4] = 2
+    data[:, 6:8, 6:8] = 3
+
+    image = Image(data, (1, 1, 1), axes_order="ZYX", file_path=tmp_path / "test.tiff")
+    ImageWriter.save(image, image.file_path)
+
+    roi = np.zeros(data.shape, dtype=np.uint8)
+    roi[:, :5, :5] = 1
+    roi[:, 5:10, :5] = 2
+    roi[:, :5, 5:10] = 3
+    roi[:, 5:10, 5:10] = 4
+
+    roi = image.fit_mask_to_image(roi)
+
+    proj = MaskProjectTuple(file_path=image.file_path, image=image, roi_info=ROIInfo(roi))
+
+    SaveROI.save(tmp_path / "test.seg", proj, SaveROIOptions())
 
 
 @pytest.fixture()
@@ -108,6 +177,20 @@ def simple_measurement_list():
     ]
     statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
     return MeasurementCalculate(channel=-1, units=Units.µm, measurement_profile=statistic, name_prefix="")
+
+
+@pytest.fixture()
+def calculation_plan_dummy(simple_measurement_list):
+    tree = CalculationTree(
+        RootType.Mask_project,
+        [
+            CalculationTree(
+                ROIExtractionProfile(name="test", algorithm=DummyExtraction.get_name(), values=DummyParams()),
+                [CalculationTree(simple_measurement_list, [])],
+            )
+        ],
+    )
+    return CalculationPlan(tree=tree, name="test")
 
 
 @pytest.fixture()
@@ -576,6 +659,25 @@ class TestCalculationProcess:
         assert df3.shape == (df["Segmentation Components Number"]["count"].sum(), 6)
         df4 = pd.read_excel(os.path.join(tmpdir, "test3.xlsx"), sheet_name=3, index_col=0, header=[0, 1], engine=ENGINE)
         assert df4.shape == (df["Segmentation Components Number"]["count"].sum(), 8)
+
+    @pytest.mark.usefixtures("_prepare_mask_project_data")
+    @pytest.mark.usefixtures("_register_dummy_extraction")
+    def test_fail_single_mask_project(self, tmp_path, calculation_plan_dummy):
+        file_path = str(tmp_path / "test.seg")
+        calc = Calculation(
+            [file_path],
+            base_prefix=str(tmp_path),
+            result_prefix=str(tmp_path),
+            measurement_file_path=str(tmp_path / "test3.xlsx"),
+            sheet_name="Sheet1",
+            calculation_plan=calculation_plan_dummy,
+            voxel_size=(1, 1, 1),
+        )
+        calc_process = CalculationProcess()
+        res = calc_process.do_calculation(FileCalculation(file_path, calc))
+        assert len(res) == 4
+        assert sum(isinstance(x, ResponseData) for x in res) == 3
+        assert isinstance(next(dropwhile(lambda x: isinstance(x, ResponseData), res))[0], ValueError)
 
 
 class MockCalculationProcess(CalculationProcess):
