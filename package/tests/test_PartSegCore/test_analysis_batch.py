@@ -54,102 +54,85 @@ class MocksCalculation:
 # TODO add check of per component measurements
 
 
-# noinspection DuplicatedCode
-class TestCalculationProcess:
-    @staticmethod
-    def create_calculation_plan():
-        parameters = LowerThresholdFlowAlgorithm.__argument_class__(
-            channel=1,
-            minimum_size=200,
-            threshold={
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
-                },
+@pytest.fixture()
+def ltww_segmentation():
+    parameters = LowerThresholdFlowAlgorithm.__argument_class__(
+        channel=1,
+        minimum_size=200,
+        threshold={
+            "name": "Base/Core",
+            "values": {
+                "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
+                "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
             },
-            noise_filtering={"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-            side_connection=False,
-            flow_type={"name": "Euclidean", "values": {}},
-        )
+        },
+        noise_filtering={"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+        side_connection=False,
+        flow_type={"name": "Euclidean", "values": {}},
+    )
 
-        segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
-        mask_suffix = MaskSuffix(name="", suffix="_mask")
-        chosen_fields = [
-            MeasurementEntry(
-                name="Segmentation Volume",
-                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                name="Segmentation Volume/Mask Volume",
-                calculation_tree=Node(
-                    left=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
-                    op="/",
-                    right=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.No),
-                ),
-            ),
-            MeasurementEntry(
-                name="Segmentation Components Number",
-                calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
-            ),
-        ]
-        statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
-        statistic_calculate = MeasurementCalculate(
-            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
-        )
-        tree = CalculationTree(
-            RootType.Image,
-            [CalculationTree(mask_suffix, [CalculationTree(segmentation, [CalculationTree(statistic_calculate, [])])])],
-        )
-        return CalculationPlan(tree=tree, name="test")
+    return ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
 
-    @staticmethod
-    def create_calculation_plan2():
-        parameters = LowerThresholdFlowAlgorithm.__argument_class__(
-            channel=0,
-            minimum_size=200,
-            threshold={
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
-                },
-            },
-            noise_filtering={"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-            side_connection=False,
-            flow_type={"name": "Euclidean", "values": {}},
-        )
 
-        segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
-        chosen_fields = [
-            MeasurementEntry(
-                name="Segmentation Volume",
-                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+@pytest.fixture()
+def measurement_list():
+    chosen_fields = [
+        MeasurementEntry(
+            name="Segmentation Volume",
+            calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+        ),
+        MeasurementEntry(
+            name="Segmentation Volume/Mask Volume",
+            calculation_tree=Node(
+                left=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+                op="/",
+                right=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.No),
             ),
-            MeasurementEntry(
-                name="Segmentation Volume/Mask Volume",
-                calculation_tree=Node(
-                    left=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
-                    op="/",
-                    right=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.No),
-                ),
-            ),
-            MeasurementEntry(
-                name="Segmentation Components Number",
-                calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
-            ),
-        ]
-        statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
-        statistic_calculate = MeasurementCalculate(
-            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
-        )
-        tree = CalculationTree(
-            RootType.Mask_project, [CalculationTree(segmentation, [CalculationTree(statistic_calculate, [])])]
-        )
-        return CalculationPlan(tree=tree, name="test2")
+        ),
+        MeasurementEntry(
+            name="Segmentation Components Number",
+            calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
+        ),
+    ]
+    statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
+    return MeasurementCalculate(channel=0, units=Units.µm, measurement_profile=statistic, name_prefix="")
 
-    @staticmethod
-    def create_simple_plan(root_type: RootType, save: Save):
+
+@pytest.fixture()
+def simple_measurement_list():
+    chosen_fields = [
+        MeasurementEntry(
+            name="Segmentation Volume",
+            calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+        ),
+    ]
+    statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
+    return MeasurementCalculate(channel=-1, units=Units.µm, measurement_profile=statistic, name_prefix="")
+
+
+@pytest.fixture()
+def calculation_plan(ltww_segmentation, measurement_list):
+    mask_suffix = MaskSuffix(name="", suffix="_mask")
+    tree = CalculationTree(
+        RootType.Image,
+        [CalculationTree(mask_suffix, [CalculationTree(ltww_segmentation, [CalculationTree(measurement_list, [])])])],
+    )
+    return CalculationPlan(tree=tree, name="test")
+
+
+@pytest.fixture()
+def calculation_plan2(ltww_segmentation, measurement_list):
+    ltww_segmentation.values.channel = 0
+
+    tree = CalculationTree(
+        RootType.Mask_project, [CalculationTree(ltww_segmentation, [CalculationTree(measurement_list, [])])]
+    )
+    return CalculationPlan(tree=tree, name="test2")
+
+
+@pytest.fixture()
+def simple_plan(simple_measurement_list):
+    def _create_simple_plan(root_type: RootType, save: Save):
         parameters = {
             "channel": 0,
             "minimum_size": 200,
@@ -158,203 +141,171 @@ class TestCalculationProcess:
             "side_connection": False,
         }
         segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold", values=parameters)
-        chosen_fields = [
-            MeasurementEntry(
-                name="Segmentation Volume",
-                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
-            ),
-        ]
-        statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
-        statistic_calculate = MeasurementCalculate(
-            channel=-1, units=Units.µm, measurement_profile=statistic, name_prefix=""
-        )
         tree = CalculationTree(
             root_type,
-            [CalculationTree(segmentation, [CalculationTree(statistic_calculate, []), CalculationTree(save, [])])],
+            [CalculationTree(segmentation, [CalculationTree(simple_measurement_list, []), CalculationTree(save, [])])],
         )
         return CalculationPlan(tree=tree, name="test")
 
-    @staticmethod
-    def create_calculation_plan3():
-        parameters = LowerThresholdFlowAlgorithm.__argument_class__(
-            channel=1,
-            minimum_size=200,
-            threshold={
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 30000}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 13000}},
-                },
-            },
-            noise_filtering={"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-            side_connection=False,
-            flow_type={"name": "Euclidean", "values": {}},
-        )
+    return _create_simple_plan
 
-        segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
-        mask_suffix = MaskSuffix(name="", suffix="_mask")
-        chosen_fields = [
-            MeasurementEntry(
-                name="Segmentation Volume",
-                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                name="Segmentation Volume/Mask Volume",
-                calculation_tree=Node(
-                    left=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
-                    op="/",
-                    right=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.No),
-                ),
-            ),
-            MeasurementEntry(
-                name="Segmentation Components Number",
-                calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                name="Segmentation Volume per component",
-                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
-            ),
-        ]
-        statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
-        statistic_calculate = MeasurementCalculate(
-            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
-        )
-        mask_create = MaskCreate(
-            name="",
-            mask_property=MaskProperty(
-                dilate=RadiusType.NO,
-                dilate_radius=0,
-                fill_holes=RadiusType.NO,
-                max_holes_size=0,
-                save_components=True,
-                clip_to_mask=False,
-                reversed_mask=False,
-            ),
-        )
-        parameters2 = {
-            "channel": 1,
-            "minimum_size": 200,
-            "threshold": {"name": "Manual", "values": {"threshold": 30000}},
-            "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-            "side_connection": False,
-        }
 
-        segmentation2 = ROIExtractionProfile(name="test", algorithm="Lower threshold", values=parameters2)
-        chosen_fields = [
-            MeasurementEntry(
-                name="Segmentation Volume",
-                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+@pytest.fixture()
+def calculation_plan3(ltww_segmentation):
+    mask_suffix = MaskSuffix(name="", suffix="_mask")
+    chosen_fields = [
+        MeasurementEntry(
+            name="Segmentation Volume",
+            calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+        ),
+        MeasurementEntry(
+            name="Segmentation Volume/Mask Volume",
+            calculation_tree=Node(
+                left=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+                op="/",
+                right=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.No),
             ),
-            MeasurementEntry(
-                name="Segmentation Volume/Mask Volume",
-                calculation_tree=Node(
-                    left=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
-                    op="/",
-                    right=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.No),
-                ),
-            ),
-            MeasurementEntry(
-                name="Segmentation Components Number",
-                calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
-            ),
-            MeasurementEntry(
-                name="Mask Volume per component",
-                calculation_tree=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.Yes),
-            ),
-        ]
-        statistic = MeasurementProfile(name="base_measure2", chosen_fields=chosen_fields[:], name_prefix="aa_")
-        statistic_calculate2 = MeasurementCalculate(
-            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
-        )
-        chosen_fields.append(
-            MeasurementEntry(
-                name="Segmentation Volume per component",
-                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
-            )
-        )
-        statistic = MeasurementProfile(name="base_measure3", chosen_fields=chosen_fields[:], name_prefix="bb_")
-        statistic_calculate3 = MeasurementCalculate(
-            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
-        )
-        tree = CalculationTree(
-            RootType.Image,
-            [
-                CalculationTree(
-                    mask_suffix,
-                    [
-                        CalculationTree(
-                            segmentation,
-                            [
-                                CalculationTree(statistic_calculate, []),
-                                CalculationTree(
-                                    mask_create,
-                                    [
-                                        CalculationTree(
-                                            segmentation2,
-                                            [
-                                                CalculationTree(statistic_calculate2, []),
-                                                CalculationTree(statistic_calculate3, []),
-                                            ],
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        )
-                    ],
-                )
-            ],
-        )
-        return CalculationPlan(tree=tree, name="test")
+        ),
+        MeasurementEntry(
+            name="Segmentation Components Number",
+            calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
+        ),
+        MeasurementEntry(
+            name="Segmentation Volume per component",
+            calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
+        ),
+    ]
+    statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
+    statistic_calculate = MeasurementCalculate(channel=0, units=Units.µm, measurement_profile=statistic, name_prefix="")
+    mask_create = MaskCreate(
+        name="",
+        mask_property=MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=True,
+            clip_to_mask=False,
+            reversed_mask=False,
+        ),
+    )
+    parameters2 = {
+        "channel": 1,
+        "minimum_size": 200,
+        "threshold": {"name": "Manual", "values": {"threshold": 30000}},
+        "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+        "side_connection": False,
+    }
 
-    @staticmethod
-    def create_mask_operation_plan(mask_op):
-        parameters = {
-            "channel": 0,
-            "minimum_size": 200,
-            "threshold": {"name": "Manual", "values": {"threshold": 13000}},
-            "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
-            "side_connection": False,
-        }
-        parameters2 = dict(**parameters)
-        parameters2["channel"] = 1
-        segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold", values=parameters)
-        segmentation2 = ROIExtractionProfile(name="test2", algorithm="Lower threshold", values=parameters2)
-        chosen_fields = [
-            MeasurementEntry(
-                name="Segmentation Volume",
-                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+    segmentation2 = ROIExtractionProfile(name="test", algorithm="Lower threshold", values=parameters2)
+    chosen_fields = [
+        MeasurementEntry(
+            name="Segmentation Volume",
+            calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+        ),
+        MeasurementEntry(
+            name="Segmentation Volume/Mask Volume",
+            calculation_tree=Node(
+                left=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+                op="/",
+                right=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.No),
             ),
-        ]
-        statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
-        statistic_calculate = MeasurementCalculate(
-            channel=-1, units=Units.µm, measurement_profile=statistic, name_prefix=""
+        ),
+        MeasurementEntry(
+            name="Segmentation Components Number",
+            calculation_tree=Leaf(name="Components number", area=AreaType.ROI, per_component=PerComponent.No),
+        ),
+        MeasurementEntry(
+            name="Mask Volume per component",
+            calculation_tree=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.Yes),
+        ),
+    ]
+    statistic = MeasurementProfile(name="base_measure2", chosen_fields=chosen_fields[:], name_prefix="aa_")
+    statistic_calculate2 = MeasurementCalculate(
+        channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
+    )
+    chosen_fields.append(
+        MeasurementEntry(
+            name="Segmentation Volume per component",
+            calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.Yes),
         )
-        tree = CalculationTree(
-            RootType.Image,
-            [
-                CalculationTree(
-                    segmentation,
-                    [CalculationTree(MaskCreate(name="test1", mask_property=MaskProperty.simple_mask()), [])],
-                ),
-                CalculationTree(
-                    segmentation2,
-                    [CalculationTree(MaskCreate(name="test2", mask_property=MaskProperty.simple_mask()), [])],
-                ),
-                CalculationTree(mask_op, [CalculationTree(segmentation2, [CalculationTree(statistic_calculate, [])])]),
-            ],
-        )
-        return CalculationPlan(tree=tree, name="test")
-
-    @pytest.mark.parametrize(
-        "mask_op",
+    )
+    statistic = MeasurementProfile(name="base_measure3", chosen_fields=chosen_fields[:], name_prefix="bb_")
+    statistic_calculate3 = MeasurementCalculate(
+        channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
+    )
+    tree = CalculationTree(
+        RootType.Image,
         [
-            MaskUse(name="test1"),
-            MaskSum(name="", mask1="test1", mask2="test2"),
-            MaskIntersection(name="", mask1="test1", mask2="test2"),
+            CalculationTree(
+                mask_suffix,
+                [
+                    CalculationTree(
+                        ltww_segmentation,
+                        [
+                            CalculationTree(statistic_calculate, []),
+                            CalculationTree(
+                                mask_create,
+                                [
+                                    CalculationTree(
+                                        segmentation2,
+                                        [
+                                            CalculationTree(statistic_calculate2, []),
+                                            CalculationTree(statistic_calculate3, []),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    )
+                ],
+            )
         ],
     )
-    def test_mask_op(self, mask_op, data_test_dir, tmpdir):
-        plan = self.create_mask_operation_plan(mask_op)
+    return CalculationPlan(tree=tree, name="test")
+
+
+@pytest.fixture(
+    params=[
+        MaskUse(name="test1"),
+        MaskSum(name="", mask1="test1", mask2="test2"),
+        MaskIntersection(name="", mask1="test1", mask2="test2"),
+    ]
+)
+def mask_operation_plan(request, simple_measurement_list):
+    parameters = {
+        "channel": 0,
+        "minimum_size": 200,
+        "threshold": {"name": "Manual", "values": {"threshold": 13000}},
+        "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+        "side_connection": False,
+    }
+    parameters2 = dict(**parameters)
+    parameters2["channel"] = 1
+    segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold", values=parameters)
+    segmentation2 = ROIExtractionProfile(name="test2", algorithm="Lower threshold", values=parameters2)
+    tree = CalculationTree(
+        RootType.Image,
+        [
+            CalculationTree(
+                segmentation,
+                [CalculationTree(MaskCreate(name="test1", mask_property=MaskProperty.simple_mask()), [])],
+            ),
+            CalculationTree(
+                segmentation2,
+                [CalculationTree(MaskCreate(name="test2", mask_property=MaskProperty.simple_mask()), [])],
+            ),
+            CalculationTree(
+                request.param, [CalculationTree(segmentation2, [CalculationTree(simple_measurement_list, [])])]
+            ),
+        ],
+    )
+    return CalculationPlan(tree=tree, name="test")
+
+
+# noinspection DuplicatedCode
+class TestCalculationProcess:
+    def test_mask_op(self, data_test_dir, tmpdir, mask_operation_plan):
         file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif")
         calc = Calculation(
             [file_path],
@@ -362,7 +313,7 @@ class TestCalculationProcess:
             result_prefix=tmpdir,
             measurement_file_path=os.path.join(tmpdir, "test3.xlsx"),
             sheet_name="Sheet1",
-            calculation_plan=plan,
+            calculation_plan=mask_operation_plan,
             voxel_size=(1, 1, 1),
         )
         calc_process = CalculationProcess()
@@ -370,20 +321,18 @@ class TestCalculationProcess:
         assert isinstance(res, list)
         assert isinstance(res[0], ResponseData)
 
-    def test_one_file(self, data_test_dir):
-        plan = self.create_calculation_plan()
+    def test_one_file(self, data_test_dir, calculation_plan):
         process = CalculationProcess()
         file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component5.tif")
         calc = MocksCalculation(file_path)
         process.calculation = calc
         process.image = TiffImageReader.read_image(file_path)
-        process.iterate_over(plan.execution_tree)
+        process.iterate_over(calculation_plan.execution_tree)
         assert len(process.measurement[0]) == 3
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_base(self, tmpdir, data_test_dir, monkeypatch):
+    def test_full_pipeline_base(self, tmpdir, data_test_dir, monkeypatch, calculation_plan):
         monkeypatch.setattr(batch_backend, "CalculationProcess", MockCalculationProcess)
-        plan = self.create_calculation_plan()
         file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
         file_paths = sorted(glob(file_pattern))
         assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
@@ -393,7 +342,7 @@ class TestCalculationProcess:
             result_prefix=data_test_dir,
             measurement_file_path=os.path.join(tmpdir, "test.xlsx"),
             sheet_name="Sheet1",
-            calculation_plan=plan,
+            calculation_plan=calculation_plan,
             voxel_size=(1, 1, 1),
         )
         calc_process = CalculationProcess()
@@ -403,9 +352,8 @@ class TestCalculationProcess:
             assert isinstance(res[0], ResponseData)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline(self, tmpdir, data_test_dir, monkeypatch):
+    def test_full_pipeline(self, tmpdir, data_test_dir, monkeypatch, calculation_plan):
         monkeypatch.setattr(batch_backend, "CalculationProcess", MockCalculationProcess)
-        plan = self.create_calculation_plan()
         file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
         file_paths = sorted(glob(file_pattern))
         assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
@@ -415,7 +363,7 @@ class TestCalculationProcess:
             result_prefix=data_test_dir,
             measurement_file_path=os.path.join(tmpdir, "test.xlsx"),
             sheet_name="Sheet1",
-            calculation_plan=plan,
+            calculation_plan=calculation_plan,
             voxel_size=(1, 1, 1),
         )
 
@@ -445,8 +393,7 @@ class TestCalculationProcess:
             assert os.path.basename(df.name.units[i]) == f"stack1_component{i+1}.tif"
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_error(self, tmp_path, data_test_dir, monkeypatch):
-        plan = self.create_calculation_plan()
+    def test_full_pipeline_error(self, tmp_path, data_test_dir, monkeypatch, calculation_plan):
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         file_pattern_copy = os.path.join(data_test_dir, "stack1_components", "stack1_component*.tif")
@@ -466,7 +413,7 @@ class TestCalculationProcess:
             result_prefix=str(data_dir),
             measurement_file_path=os.path.join(result_dir, "test.xlsx"),
             sheet_name="Sheet1",
-            calculation_plan=plan,
+            calculation_plan=calculation_plan,
             voxel_size=(1, 1, 1),
         )
 
@@ -492,8 +439,7 @@ class TestCalculationProcess:
         str(df2.loc[0]["error description"]).startswith("[Errno 2]")
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_mask_project(self, tmpdir, data_test_dir):
-        plan = self.create_calculation_plan2()
+    def test_full_pipeline_mask_project(self, tmpdir, data_test_dir, calculation_plan2):
         file_pattern = os.path.join(data_test_dir, "*nucleus.seg")
         file_paths = glob(file_pattern)
         calc = Calculation(
@@ -502,7 +448,7 @@ class TestCalculationProcess:
             result_prefix=data_test_dir,
             measurement_file_path=os.path.join(tmpdir, "test2.xlsx"),
             sheet_name="Sheet1",
-            calculation_plan=plan,
+            calculation_plan=calculation_plan2,
             voxel_size=(1, 1, 1),
         )
 
@@ -522,8 +468,7 @@ class TestCalculationProcess:
         df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (2, 4)
 
-    def test_do_calculation(self, tmpdir, data_test_dir):
-        plan = self.create_calculation_plan3()
+    def test_do_calculation(self, tmpdir, data_test_dir, calculation_plan3):
         file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif")
         calc = Calculation(
             [file_path],
@@ -531,7 +476,7 @@ class TestCalculationProcess:
             result_prefix=data_test_dir,
             measurement_file_path=os.path.join(tmpdir, "test3.xlsx"),
             sheet_name="Sheet1",
-            calculation_plan=plan,
+            calculation_plan=calculation_plan3,
             voxel_size=(1, 1, 1),
         )
         index, res = do_calculation((1, file_path), calc)
@@ -550,7 +495,7 @@ class TestCalculationProcess:
         ],
     )
     @pytest.mark.parametrize("save_method", save_dict.values())
-    def test_do_calculation_save(self, tmpdir, data_test_dir, file_name, root_type, save_method: SaveBase):
+    def test_do_calculation_save(self, tmpdir, data_test_dir, file_name, root_type, save_method: SaveBase, simple_plan):
         save_desc = Save(
             suffix="_test",
             directory="",
@@ -558,7 +503,7 @@ class TestCalculationProcess:
             short_name=save_method.get_short_name(),
             values=save_method.get_default_values(),
         )
-        plan = self.create_simple_plan(root_type, save_desc)
+        plan = simple_plan(root_type, save_desc)
         file_path = os.path.join(data_test_dir, file_name)
         calc = Calculation(
             [file_path],
@@ -574,8 +519,7 @@ class TestCalculationProcess:
         assert isinstance(res, list)
         assert isinstance(res[0], ResponseData)
 
-    def test_do_calculation_calculation_process(self, tmpdir, data_test_dir):
-        plan = self.create_calculation_plan3()
+    def test_do_calculation_calculation_process(self, tmpdir, data_test_dir, calculation_plan3):
         file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif")
         calc = Calculation(
             [file_path],
@@ -583,7 +527,7 @@ class TestCalculationProcess:
             result_prefix=data_test_dir,
             measurement_file_path=os.path.join(tmpdir, "test3.xlsx"),
             sheet_name="Sheet1",
-            calculation_plan=plan,
+            calculation_plan=calculation_plan3,
             voxel_size=(1, 1, 1),
         )
         calc_process = CalculationProcess()
@@ -592,9 +536,8 @@ class TestCalculationProcess:
         assert isinstance(res[0], ResponseData)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_component_split_no_process(self, tmpdir, data_test_dir, monkeypatch):
+    def test_full_pipeline_component_split_no_process(self, tmpdir, data_test_dir, monkeypatch, calculation_plan3):
         monkeypatch.setattr(batch_backend, "CalculationProcess", MockCalculationProcess)
-        plan = self.create_calculation_plan3()
         file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
         file_paths = sorted(glob(file_pattern))
         assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
@@ -604,7 +547,7 @@ class TestCalculationProcess:
             result_prefix=data_test_dir,
             measurement_file_path=os.path.join(tmpdir, "test.xlsx"),
             sheet_name="Sheet1",
-            calculation_plan=plan,
+            calculation_plan=calculation_plan3,
             voxel_size=(1, 1, 1),
         )
         calc_process = CalculationProcess()
@@ -614,8 +557,7 @@ class TestCalculationProcess:
             assert isinstance(res[0], ResponseData)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_component_split(self, tmpdir, data_test_dir):
-        plan = self.create_calculation_plan3()
+    def test_full_pipeline_component_split(self, tmpdir, data_test_dir, calculation_plan3):
         file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
         file_paths = glob(file_pattern)
         calc = Calculation(
@@ -624,7 +566,7 @@ class TestCalculationProcess:
             result_prefix=data_test_dir,
             measurement_file_path=os.path.join(tmpdir, "test3.xlsx"),
             sheet_name="Sheet1",
-            calculation_plan=plan,
+            calculation_plan=calculation_plan3,
             voxel_size=(1, 1, 1),
         )
 
