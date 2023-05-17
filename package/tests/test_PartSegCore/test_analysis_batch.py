@@ -303,6 +303,24 @@ def mask_operation_plan(request, simple_measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
+def wait_for_calculation(manager):
+    for _ in range(int(120 / 0.1)):
+        manager.get_results()
+        if manager.has_work:
+            time.sleep(0.1)
+        else:
+            break
+    else:  # pragma: no cover
+        manager.kill_jobs()
+        pytest.fail("jobs hanged")
+
+    manager.writer.finish()
+    if sys.platform == "darwin":
+        time.sleep(2)  # pragma: no cover
+    else:
+        time.sleep(0.4)
+
+
 # noinspection DuplicatedCode
 class TestCalculationProcess:
     def test_mask_op(self, data_test_dir, tmpdir, mask_operation_plan):
@@ -370,22 +388,7 @@ class TestCalculationProcess:
         manager = CalculationManager()
         manager.set_number_of_workers(3)
         manager.add_calculation(calc)
-
-        for _ in range(int(120 / 0.1)):
-            manager.get_results()
-            if manager.has_work:
-                time.sleep(0.1)
-            else:
-                break
-        else:  # pragma: no cover
-            manager.kill_jobs()
-            pytest.fail("jobs hanged")
-
-        manager.writer.finish()
-        if sys.platform == "darwin":
-            time.sleep(2)  # pragma: no cover
-        else:
-            time.sleep(0.4)
+        wait_for_calculation(manager)
         assert os.path.exists(os.path.join(tmpdir, "test.xlsx"))
         df = pd.read_excel(os.path.join(tmpdir, "test.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (8, 4)
@@ -420,15 +423,8 @@ class TestCalculationProcess:
         manager = CalculationManager()
         manager.set_number_of_workers(3)
         manager.add_calculation(calc)
+        wait_for_calculation(manager)
 
-        while manager.has_work:
-            time.sleep(0.1)
-            manager.get_results()
-        manager.writer.finish()
-        if sys.platform == "darwin":
-            time.sleep(2)  # pragma: no cover
-        else:
-            time.sleep(0.4)
         assert os.path.exists(os.path.join(result_dir, "test.xlsx"))
         df = pd.read_excel(os.path.join(result_dir, "test.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (8, 4)
