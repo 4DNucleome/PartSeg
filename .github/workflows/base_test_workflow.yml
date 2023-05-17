@@ -90,6 +90,15 @@ jobs:
           name: upload pytest timing reports as json
           path: |
             ./report-*.json
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ inputs.coverage }}
+        with:
+          name: coverage_report ${{ inputs.tox_args }}
+          path: |
+            ./htmlcov
+          retention-days: 7
 
       - uses: codecov/codecov-action@v3
         if: ${{ inputs.coverage }}
