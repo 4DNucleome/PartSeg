@@ -1,3 +1,4 @@
+report-*.json
 environment.yml
 minimum-constrains.txt
 .isort.cfg
