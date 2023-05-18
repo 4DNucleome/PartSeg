@@ -12,6 +12,7 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 import pytest
+import tifffile
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import AnalysisAlgorithmSelection
@@ -74,7 +75,7 @@ class DummyExtraction(ROIExtractionAlgorithm):
         return True
 
     @classmethod
-    def support_z(cls):
+    def support_z(cls):  # pragma: no cover
         return True
 
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
@@ -83,12 +84,18 @@ class DummyExtraction(ROIExtractionAlgorithm):
             raise ValueError("Empty image")
         return ROIExtractionResult(np.ones(channel.shape, dtype=np.uint8), self.get_segmentation_profile())
 
-    def get_info_text(self):
+    def get_info_text(self):  # pragma: no cover
         return ""
 
     @classmethod
     def get_name(cls) -> str:
         return "Dummy"
+
+
+class DummySpacingCheck(DummyExtraction):
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
+        assert self.image.spacing == (3, 2, 1)
+        return ROIExtractionResult(np.ones(self.image.shape, dtype=np.uint8), self.get_segmentation_profile())
 
 
 @pytest.fixture()
@@ -98,6 +105,25 @@ def _register_dummy_extraction():
     yield
     AnalysisAlgorithmSelection.__register__.pop("Dummy")
     assert "Dummy" not in AnalysisAlgorithmSelection.__register__
+
+
+@pytest.fixture()
+def _register_dummy_spacing():
+    assert "Dummy" not in AnalysisAlgorithmSelection.__register__
+    AnalysisAlgorithmSelection.register(DummySpacingCheck)
+    yield
+    AnalysisAlgorithmSelection.__register__.pop("Dummy")
+    assert "Dummy" not in AnalysisAlgorithmSelection.__register__
+
+
+@pytest.fixture()
+def _prepare_spacing_data(tmp_path):
+    data = np.zeros((4, 1, 10, 10), dtype=np.uint8)
+    data[:, :, 2:-2, 2:-2] = 1
+    tifffile.imwrite(tmp_path / "test1.tiff", data)
+
+    image = Image(data, (1, 1, 1), axes_order="ZCYX", file_path=tmp_path / "test2.tiff")
+    ImageWriter.save(image, image.file_path)
 
 
 @pytest.fixture()
@@ -191,6 +217,12 @@ def calculation_plan_dummy(simple_measurement_list):
         ],
     )
     return CalculationPlan(tree=tree, name="test")
+
+
+@pytest.fixture()
+def calculation_plan_dummy_spacing(calculation_plan_dummy):
+    calculation_plan_dummy.execution_tree.operation = RootType.Image
+    return calculation_plan_dummy
 
 
 @pytest.fixture()
@@ -677,7 +709,30 @@ class TestCalculationProcess:
         res = calc_process.do_calculation(FileCalculation(file_path, calc))
         assert len(res) == 4
         assert sum(isinstance(x, ResponseData) for x in res) == 3
-        assert isinstance(next(dropwhile(lambda x: isinstance(x, ResponseData), res))[0], ValueError)
+        assert isinstance(list(dropwhile(lambda x: isinstance(x, ResponseData), res))[0][0], ValueError)
+
+    @pytest.mark.usefixtures("_prepare_spacing_data")
+    @pytest.mark.usefixtures("_register_dummy_spacing")
+    def test_spacing_overwrite(self, tmp_path, calculation_plan_dummy_spacing):
+        file_path1 = str(tmp_path / "test1.tiff")
+        file_path2 = str(tmp_path / "test2.tiff")
+        calc = Calculation(
+            [file_path1, file_path2],
+            base_prefix=str(tmp_path),
+            result_prefix=str(tmp_path),
+            measurement_file_path=str(tmp_path / "test3.xlsx"),
+            sheet_name="Sheet1",
+            calculation_plan=calculation_plan_dummy_spacing,
+            voxel_size=(3, 2, 1),
+        )
+        calc_process = CalculationProcess()
+        res = calc_process.do_calculation(FileCalculation(file_path1, calc))
+        assert len(res) == 1
+        assert isinstance(res[0], ResponseData)
+        calc.overwrite_voxel_size = True
+        res = calc_process.do_calculation(FileCalculation(file_path2, calc))
+        assert len(res) == 1
+        assert isinstance(res[0], ResponseData)
 
 
 class MockCalculationProcess(CalculationProcess):
