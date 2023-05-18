@@ -72,7 +72,7 @@ class ThresholdPreview(StackAlgorithm):
         return val
 
     def get_info_text(self):
-        return ""
+        return f"Threshold: {self.new_parameters.threshold}"
 
     @staticmethod
     def get_steps_num():
@@ -164,24 +164,24 @@ class MorphologicalWatershed(BaseThresholdAlgorithm):
             report_fun("Filing holes", 3)
             mask = close_small_holes(mask, self.new_parameters.close_holes_size)
         report_fun("Smooth border", 4)
-        self.segmentation = SmoothAlgorithmSelection[self.new_parameters.smooth_border.name].smooth(
+        segmentation = SmoothAlgorithmSelection[self.new_parameters.smooth_border.name].smooth(
             mask, self.new_parameters.smooth_border.values
         )
 
         report_fun("Components calculating", 5)
-        seg_image = sitk.GetImageFromArray(self.segmentation)
+        seg_image = sitk.GetImageFromArray(segmentation)
         distance_map = sitk.SignedMaurerDistanceMap(
             seg_image, insideIsPositive=False, squaredDistance=False, useImageSpacing=False
         )
 
         ws = sitk.MorphologicalWatershed(distance_map, markWatershedLine=False, level=1)
-        self.segmentation = sitk.GetArrayFromImage(
+        segmentation = sitk.GetArrayFromImage(
             sitk.RelabelComponent(sitk.Mask(ws, sitk.Cast(seg_image, ws.GetPixelID())), 20)
         )
 
-        self.base_sizes = np.bincount(self.segmentation.flat)
+        self.base_sizes = np.bincount(segmentation.flat)
         ind = bisect(self.base_sizes[1:], self.new_parameters.minimum_size, lambda x, y: x > y)
-        resp = np.copy(self.segmentation)
+        resp = np.copy(segmentation)
         resp[resp > ind] = 0
 
         if len(self.base_sizes) == 1:
@@ -239,23 +239,21 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             report_fun("Filing holes", 3)
             mask = close_small_holes(mask, self.new_parameters.close_holes_size)
         report_fun("Smooth border", 4)
-        self.segmentation = SmoothAlgorithmSelection[self.new_parameters.smooth_border.name].smooth(
+        segmentation = SmoothAlgorithmSelection[self.new_parameters.smooth_border.name].smooth(
             mask, self.new_parameters.smooth_border.values
         )
 
         report_fun("Components calculating", 5)
-        self.segmentation = sitk.GetArrayFromImage(
+        segmentation = sitk.GetArrayFromImage(
             sitk.RelabelComponent(
-                sitk.ConnectedComponent(
-                    sitk.GetImageFromArray(self.segmentation), not self.new_parameters.side_connection
-                ),
+                sitk.ConnectedComponent(sitk.GetImageFromArray(segmentation), not self.new_parameters.side_connection),
                 20,
             )
         )
 
-        self.base_sizes = np.bincount(self.segmentation.flat)
+        self.base_sizes = np.bincount(segmentation.flat)
         ind = bisect(self.base_sizes[1:], self.new_parameters.minimum_size, lambda x, y: x > y)
-        resp = np.copy(self.segmentation)
+        resp = np.copy(segmentation)
         resp[resp > ind] = 0
 
         if len(self.base_sizes) == 1:
@@ -443,6 +441,10 @@ class CellFromNucleusFlow(StackAlgorithm):
     __argument_class__ = CellFromNucleusFlowParameters
     new_parameters: CellFromNucleusFlowParameters
 
+    def __init__(self):
+        super().__init__()
+        self.found_nucleus = 0
+
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         report_fun("Nucleus noise removal", 0)
         nucleus_channel = self.get_noise_filtered_channel(
@@ -462,6 +464,7 @@ class CellFromNucleusFlow(StackAlgorithm):
         sizes = np.bincount(nucleus_objects.flat)
         ind = bisect(sizes[1:], self.new_parameters.minimum_size, lambda x, y: x > y)
         nucleus_objects[nucleus_objects > ind] = 0
+        self.found_nucleus = ind
         report_fun("Cell noise removal", 3)
         cell_channel = self.get_noise_filtered_channel(
             self.new_parameters.cell_channel, self.new_parameters.cell_noise_filtering
@@ -505,7 +508,7 @@ class CellFromNucleusFlow(StackAlgorithm):
         )
 
     def get_info_text(self):
-        return ""
+        return f"Fond nucleus: {self.found_nucleus}"
 
     @staticmethod
     def get_steps_num():
