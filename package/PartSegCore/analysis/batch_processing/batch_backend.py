@@ -111,7 +111,7 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     index, file_path = file_info
     try:
         return index, calc.do_calculation(FileCalculation(file_path, calculation))
-    except Exception as e:  # pylint: disable=W0703
+    except Exception as e:  # pylint: disable=broad-except
         return index, [prepare_error_data(e)]
 
 
@@ -135,8 +135,18 @@ class CalculationProcess:
         self.algorithm_parameters: dict = {}
         self.results: CalculationResultList = []
 
+    def _reset_image_cache(self):
+        self.image = None
+        self.roi_info = None
+        self.additional_layers = {}
+        self.mask = None
+        self.history = []
+        self.algorithm_parameters = {}
+        self.measurement = []
+        self.reused_mask = set()
+
     @staticmethod
-    def load_data(operation, calculation: FileCalculation):
+    def load_data(operation, calculation: FileCalculation) -> Union[ProjectTuple, List[ProjectTuple]]:
         metadata = {"default_spacing": calculation.voxel_size}
         ext = path.splitext(calculation.file_path)[1]
         if operation == RootType.Image:
@@ -146,14 +156,13 @@ class CalculationProcess:
                 if ext in load_class.get_extensions():
                     return load_class.load([calculation.file_path], metadata=metadata)
             raise ValueError("File type not supported")
-        elif operation == RootType.Project:
+        if operation == RootType.Project:
             return LoadProject.load([calculation.file_path], metadata=metadata)
-        else:  # operation == RootType.Mask_project
-            try:
-                return LoadProject.load([calculation.file_path], metadata=metadata)
-            except (KeyError, WrongFileTypeException):
-                # TODO identify exceptions
-                return LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
+        try:
+            return LoadProject.load([calculation.file_path], metadata=metadata)
+        except (KeyError, WrongFileTypeException):
+            # TODO identify exceptions
+            return LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
 
     def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
         """
@@ -173,27 +182,29 @@ class CalculationProcess:
         if isinstance(projects, ProjectTuple):
             projects = [projects]
         for project in projects:
-            project: ProjectTuple
-            self.image = project.image
-            if calculation.overwrite_voxel_size:
-                self.image.set_spacing(calculation.voxel_size)
-            if operation == RootType.Mask_project:
-                self.mask = project.mask
-            if operation == RootType.Project:
-                self.mask = project.mask
-                # FIXME when load annotation from project is done
-                self.roi_info = project.roi_info
-                self.additional_layers = project.additional_layers
-                self.history = project.history
-                self.algorithm_parameters = project.algorithm_parameters
+            try:
+                self.image = project.image
+                if calculation.overwrite_voxel_size:
+                    self.image.set_spacing(calculation.voxel_size)
+                if operation == RootType.Mask_project:
+                    self.mask = project.mask
+                if operation == RootType.Project:
+                    self.mask = project.mask
+                    # FIXME when load annotation from project is done
+                    self.roi_info = project.roi_info
+                    self.additional_layers = project.additional_layers
+                    self.history = project.history
+                    self.algorithm_parameters = project.algorithm_parameters
 
-            self.iterate_over(calculation.calculation_plan.execution_tree)
-            for el in self.measurement:
-                el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
-            self.results.append(
-                ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
-            )
-            self.measurement = []
+                self.iterate_over(calculation.calculation_plan.execution_tree)
+                for el in self.measurement:
+                    el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
+                self.results.append(
+                    ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
+                )
+            except Exception as e:  # pylint: disable=broad-except
+                self.results.append(prepare_error_data(e))
+            self._reset_image_cache()
         return self.results
 
     def iterate_over(self, node: Union[CalculationTree, List[CalculationTree]]):
@@ -218,7 +229,7 @@ class CalculationProcess:
         :param List[CalculationTree] children: list of nodes to iterate over with applied mask
         """
         mask_path = operation.get_mask_path(self.calculation.file_path)
-        if mask_path == "":  # pragma: no cover
+        if not mask_path:  # pragma: no cover
             raise ValueError("Empty path to mask.")
         if not os.path.exists(mask_path):
             raise OSError(f"Mask file {mask_path} does not exists")
@@ -767,7 +778,7 @@ class FileData:
                         file_path = f"{base}({i}){ext}"
                 if i == 100:  # pragma: no cover
                     raise PermissionError(f"Fail to write result excel {self.file_path}")
-            except Exception as e:  # pragma: no cover   # pylint: disable=W0703
+            except Exception as e:  # pragma: no cover   # pylint: disable=broad-except
                 logging.error("[batch_backend] %s", e)
                 self.error_queue.put(prepare_error_data(e))
             finally:

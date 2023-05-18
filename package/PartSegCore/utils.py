@@ -15,7 +15,7 @@ from pydantic import BaseModel as PydanticBaseModel
 
 __author__ = "Grzegorz Bokota"
 
-from nme import register_class
+from local_migrator import register_class
 from psygnal import Signal
 
 
@@ -42,11 +42,11 @@ def numpy_repr(val: np.ndarray):
 class CallbackBase(ABC):
     @abstractmethod
     def is_alive(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def __call__(self, *args, **kwarg):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class CallbackFun(CallbackBase):
@@ -200,14 +200,10 @@ class EventedDict(typing.MutableMapping):
         return {k: v.as_dict_deep() if isinstance(v, EventedDict) else v for k, v in self._dict.items()}
 
     def __str__(self):
-        if self._klass is not None:
-            return f"EventedDict[{self._klass}]({self._dict})"
-        return f"EventedDict({self._dict})"
+        return f"EventedDict[{self._klass}]({self._dict})"
 
     def __repr__(self):
-        if self._klass is not None:
-            return f"EventedDict(klass={self._klass}, {repr(self._dict)})"
-        return f"EventedDict({repr(self._dict)})"
+        return f"EventedDict(klass={self._klass}, {self._dict!r})"
 
     def _propagate_setitem(self, key):
         # Fixme when partial disconnect will work
@@ -405,7 +401,7 @@ class ProfileDict:
         return check_loaded_dict(self.my_dict)
 
     def filter_data(self):  # pragma: no cover
-        warnings.warn("Deprecated, use pop errors instead", FutureWarning)
+        warnings.warn("Deprecated, use pop errors instead", FutureWarning, stacklevel=2)
         self.pop_errors()
 
     def pop_errors(self) -> typing.List[typing.Tuple[str, dict]]:
@@ -489,7 +485,6 @@ def _get_translation_dicts_from_signature(signature: inspect.Signature) -> typin
 
 
 def _get_kwargs_from_old_args(old_args_order: typing.List[str], args, kwargs):
-
     if len(args) > len(old_args_order):
         raise TypeError("Too many positional arguments, please use keyword argument or update old_args_order")
     kwargs = kwargs.copy()
@@ -521,7 +516,6 @@ def kwargs_to_model(func=None, old_args_order: typing.Optional[typing.List[str]]
         old_args_order = []
 
     def decorator(func_):
-
         # get functions parameters type annotation to checks its model fields.
 
         signature = inspect.signature(func_)

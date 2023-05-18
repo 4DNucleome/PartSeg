@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 import os
 
@@ -11,6 +11,7 @@ from PartSegCore.napari_plugins.load_mask_project import napari_get_reader as na
 from PartSegCore.napari_plugins.load_masked_image import napari_get_reader as napari_get_reader_mask_image
 from PartSegCore.napari_plugins.load_roi_project import napari_get_reader as napari_get_reader_roi
 from PartSegCore.napari_plugins.loader import project_to_layers
+from PartSegCore.napari_plugins.save_mask_roi import napari_write_labels
 
 
 def test_project_to_layers_analysis(analysis_segmentation):
@@ -78,3 +79,15 @@ def test_load_roi_project(load_data):
     assert data[1][2] == "image"
     assert data[2][2] == "labels"
     assert data[3][2] == "labels"
+
+
+def test_write_labels(tmp_path):
+    data = np.zeros((1, 10, 10, 10), dtype=np.uint8)
+    assert napari_write_labels(str(tmp_path / "test.seg"), [], {"scale": [10, 10]}) is None
+    assert not (tmp_path / "test.seg").exists()
+
+    assert napari_write_labels(str(tmp_path / "test.seg"), data, {"scale": [10, 10]}) == str(tmp_path / "test.seg")
+    assert (tmp_path / "test.seg").exists()
+
+    assert napari_write_labels(str(tmp_path / "test.txt"), data, {"scale": [10, 10]}) is None
+    assert not (tmp_path / "test.txt").exists()

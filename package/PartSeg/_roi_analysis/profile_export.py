@@ -26,14 +26,14 @@ from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelectio
 
 class ObjectPreviewProtocol(typing.Protocol):
     def preview_object(self, ob):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class ObjectPreview(QTextEdit):
     """Base class for viewer used by :py:class:`ExportDialog` to preview data"""
 
     def preview_object(self, ob):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class StringViewer(ObjectPreview):
@@ -255,7 +255,7 @@ class ImportDialog(QDialog):
         end_reg = re.compile(r"(.*) \((\d+)\)$")
 
         def in_func():
-            if not rename_radio.isChecked() or str(new_name_field.text()).strip() != "":
+            if not rename_radio.isChecked() or str(new_name_field.text()).strip():
                 return
 
             match = end_reg.match(ob_name)

@@ -5,7 +5,7 @@ from abc import ABC
 import mahotas
 import numpy as np
 import SimpleITK as sitk
-from nme import register_class, rename_key, update_argument
+from local_migrator import register_class, rename_key, update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
@@ -45,7 +45,7 @@ class BaseThreshold(AlgorithmDescribeBase, ABC, method_from_fun="calculate_mask"
         arguments: BaseModel,
         operator: typing.Callable[[object, object], bool],
     ):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class ManualThreshold(BaseThreshold):

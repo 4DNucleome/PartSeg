@@ -2,15 +2,20 @@ import typing
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.image_transforming.transform_base import TransformBase
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 
 class SwapTimeStack(TransformBase):
     @classmethod
     def transform(
-        cls, image: Image, arguments: dict, callback_function: typing.Optional[typing.Callable[[str, int], None]] = None
-    ) -> Image:
-        return image.swap_time_and_stack()
+        cls,
+        image: Image,
+        roi_info: ROIInfo,
+        arguments: dict,
+        callback_function: typing.Optional[typing.Callable[[str, int], None]] = None,
+    ) -> typing.Tuple[Image, typing.Optional[ROIInfo]]:
+        return image.swap_time_and_stack(), None
 
     @classmethod
     def get_fields_per_dimension(cls, component_list: typing.List[str]):

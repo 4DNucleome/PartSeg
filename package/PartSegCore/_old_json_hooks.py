@@ -1,4 +1,4 @@
-import nme
+import local_migrator
 import numpy as np
 from napari.utils import Colormap
 
@@ -87,8 +87,8 @@ def part_hook(dkt):
         ):
             dkt["measurement_profile"] = dkt["statistic_profile"]
             del dkt["statistic_profile"]
-    except Exception as e:  # pylint: disable=W0703
-        if problematic_fields := nme.check_for_errors_in_dkt_values(dkt2):
+    except Exception as e:  # pylint: disable=broad-except
+        if problematic_fields := local_migrator.check_for_errors_in_dkt_values(dkt2):
             dkt2["__error__"] = f"Error in fields: {', '.join(problematic_fields)}"
             return dkt2
         dkt = dkt2
@@ -97,7 +97,7 @@ def part_hook(dkt):
     return profile_hook(dkt)
 
 
-def profile_hook(dkt):  # noqa: C901
+def profile_hook(dkt):
     """
     hook for json loading
 
@@ -149,8 +149,8 @@ def profile_hook(dkt):  # noqa: C901
                 dkt["controls"].append(1)
                 dkt["colors"].append(dkt["colors"][-1])
             return Colormap(**dkt)
-    except Exception as e:  # pylint: disable=W0703
-        if problematic_fields := nme.check_for_errors_in_dkt_values(dkt2):
+    except Exception as e:  # pylint: disable=broad-except
+        if problematic_fields := local_migrator.check_for_errors_in_dkt_values(dkt2):
             dkt2["__error__"] = f"Error in fields: {', '.join(problematic_fields)}"
             return dkt2
         dkt = dkt2

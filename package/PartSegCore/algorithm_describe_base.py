@@ -6,7 +6,7 @@ from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
 from functools import wraps
 
-from nme import REGISTER, class_to_str
+from local_migrator import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
 from pydantic.main import ModelMetaclass
@@ -270,7 +270,6 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
         parameters_order = self._get_parameters_from_signature(getattr(self, self.__method_name__))
 
         def _class_generator(func_):
-
             drop_attr = self._validate_function_parameters(
                 func_, getattr(self, self.__method_name__), self.__method_name__
             )
@@ -319,7 +318,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     @classmethod
     def get_doc_from_fields(cls):
         resp = "{\n"
-        for el in cls._get_fields():
+        for el in get_fields_from_algorithm(cls):
             if isinstance(el, AlgorithmProperty):
                 resp += f"  {el.name}: {el.value_type} - "
                 if el.help_text:
@@ -360,7 +359,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
         :return: name of algorithm
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     @_partial_abstractmethod
@@ -377,7 +376,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
                 stacklevel=2,
             )
             return base_model_to_algorithm_property(cls.__argument_class__)
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def _get_fields(cls):
@@ -385,12 +384,12 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     def get_fields_dict(cls) -> typing.Dict[str, AlgorithmProperty]:
-        return {v.name: v for v in cls._get_fields() if isinstance(v, AlgorithmProperty)}
+        return {v.name: v for v in get_fields_from_algorithm(cls) if isinstance(v, AlgorithmProperty)}
 
     @classmethod
     def get_default_values(cls):
         if cls.__new_style__:
-            return cls.__argument_class__()  # pylint: disable=E1102
+            return cls.__argument_class__()  # pylint: disable=not-callable
         return {
             el.name: {
                 "name": el.default_value,
@@ -401,6 +400,12 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
             for el in cls.get_fields()
             if isinstance(el, AlgorithmProperty)
         }
+
+
+def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    if ald_desc.__new_style__:
+        return base_model_to_algorithm_property(ald_desc.__argument_class__)
+    return ald_desc.get_fields()
 
 
 def is_static(fun):
@@ -650,7 +655,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
     values: typing.Any
 
     @validator("values")
-    def validate_values(cls, v, values):  # pylint: disable=R0201
+    def validate_values(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, dict):
             return v
         if "algorithm" not in values:
@@ -751,7 +756,8 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     user_name = field.field_info.title
     value_range = None
     possible_values = None
-    value_type = field.type_
+
+    value_type = getattr(field, "annotation", field.type_)
     default_value = field.field_info.default
     help_text = field.field_info.description
     if user_name is None:
@@ -792,6 +798,8 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
         res.append(obj.header())
     for name, value in obj.__fields__.items():
         ap = _field_to_algorithm_property(name, value)
+        if value.field_info.extra.get("hidden", False):
+            continue
         pos = len(res)
         if "position" in value.field_info.extra:
             pos = value.field_info.extra["position"]

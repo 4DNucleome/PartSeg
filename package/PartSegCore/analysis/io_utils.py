@@ -24,7 +24,7 @@ else:
 class ProjectTuple(ProjectInfoBase):
     file_path: str
     image: Image
-    roi_info: ROIInfo = ROIInfo(None)
+    roi_info: ROIInfo = field(default_factory=lambda: ROIInfo(None))
     additional_layers: typing.Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     mask: typing.Optional[np.ndarray] = None
     history: typing.List[HistoryElement] = field(default_factory=list)
@@ -49,15 +49,15 @@ class ProjectTuple(ProjectInfoBase):
 
     def __repr__(self):
         return (
-            f"ProjectTuple(file_path={self.file_path},\nimage={repr(self.image)},\n"
-            f"segmentation={numpy_repr(self.roi_info.roi)},\nsegmentation_info={repr(self.roi_info)},\n"
-            f"additional_layers={repr(self.additional_layers)},\nmask={numpy_repr(self.mask)},\n"
-            f"history={repr(self.history)},\nalgorithm_parameters={self.algorithm_parameters},\nerrors={self.errors})"
+            f"ProjectTuple(file_path={self.file_path},\nimage={self.image!r},\n"
+            f"segmentation={numpy_repr(self.roi_info.roi)},\nsegmentation_info={self.roi_info!r},\n"
+            f"additional_layers={self.additional_layers!r},\nmask={numpy_repr(self.mask)},\n"
+            f"history={self.history!r},\nalgorithm_parameters={self.algorithm_parameters},\nerrors={self.errors})"
         )
 
     @property
     def roi(self):
-        warnings.warn("roi is deprecated", DeprecationWarning, 2)
+        warnings.warn("roi is deprecated", DeprecationWarning, stacklevel=2)
         return self.roi_info.roi
 
 

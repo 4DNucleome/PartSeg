@@ -7,7 +7,7 @@ import pkg_resources
 
 
 def get_plugins():
-    packages = pkgutil.iter_modules(__path__, __name__ + ".")
+    packages = pkgutil.iter_modules(__path__, f"{__name__}.")
     packages2 = itertools.chain(
         pkg_resources.iter_entry_points("PartSegCore.plugins"),
         pkg_resources.iter_entry_points("partsegcore.plugins"),
@@ -21,7 +21,8 @@ plugins_loaded = set()
 def register():
     for el in get_plugins():
         if hasattr(el, "register") and el.__name__ not in plugins_loaded:
-            assert isinstance(el.register, typing.Callable)  # nosec
+            if not isinstance(el.register, typing.Callable):  # pragma: no cover
+                raise TypeError(f"Plugin {el.__name__} has no register method")
             el.register()
             plugins_loaded.add(el.__name__)
 

@@ -99,7 +99,7 @@ class MaskDialog(QDialog):
 
     def text_changed(self):
         text1 = self.get_result()[0]
-        if text1 == "" or text1 not in self.mask_names:
+        if not text1 or text1 not in self.mask_names:
             self.ok_btn.setDisabled(True)
         else:
             self.ok_btn.setDisabled(False)
@@ -143,7 +143,7 @@ class TwoMaskDialog(QDialog):
 
     def text_changed(self):
         text1, text2 = self.get_result()
-        if text1 == "" or text2 == "" or text1 not in self.mask_names or text2 not in self.mask_names:
+        if "" in {text1, text2} or text1 not in self.mask_names or text2 not in self.mask_names:
             self.ok_btn.setDisabled(True)
         else:
             self.ok_btn.setDisabled(text1 == text2)
@@ -235,14 +235,14 @@ class FileMask(QWidget):
         if dial.exec_():
             self.first_text.setText(dial.selectedFiles()[0])
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         if self.select_type.currentEnum() == FileMaskType.Suffix:
-            return self.first_text.text().strip() != ""
+            return bool(self.first_text.text().strip())
         if self.select_type.currentEnum() == FileMaskType.Replace:
             return "" not in {self.first_text.text().strip(), self.second_text.text().strip()}
 
         text = self.first_text.text().strip()
-        return text != "" and os.path.exists(text) and os.path.isfile(text)
+        return text and os.path.exists(text) and os.path.isfile(text)
 
     def get_value(self, name=""):
         mask_type = self.select_type.currentEnum()
@@ -646,7 +646,7 @@ class SelectMaskOp(ProtectedGroupBox):
 
     def _activate_button(self, _value=None):
         name = self.mask_name.text().strip()
-        name_ok = name == "" or name not in self.mask_set
+        name_ok = not name or name not in self.mask_set
         if self._replace:
             name_ok = name_ok and self._node_type == NodeType.mask
             node_type = self._parent_node_type
@@ -812,7 +812,7 @@ class CreatePlan(QWidget):
         self.plan_node_changed.emit()
 
     def create_mask(self, mask_ob: MaskBase):
-        if mask_ob.name != "" and mask_ob.name in self.mask_set:
+        if mask_ob.name and mask_ob.name in self.mask_set:
             show_warning("Already exists", "Mask with this name already exists")
             return
 
@@ -886,7 +886,7 @@ class CreatePlan(QWidget):
             )
         text = text.strip()
         if ok:
-            if text == "":
+            if not text:
                 QMessageBox.information(
                     self, "Name cannot be empty", "Name cannot be empty, Please set correct name", QMessageBox.Ok
                 )
@@ -1009,8 +1009,9 @@ class PlanPreview(QTreeWidget):
         widget = self.topLevelItem(0)  # type : QTreeWidgetItem
         for index in path:
             if str(widget.child(0).text(0)) == "Description":
-                index += 1
-            widget = widget.child(index)
+                widget = widget.child(index + 1)
+            else:
+                widget = widget.child(index)
         return widget
 
     def update_view(self, reset=False):

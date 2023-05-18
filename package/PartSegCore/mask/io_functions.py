@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import tifffile
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
@@ -66,7 +66,7 @@ class MaskProjectTuple(ProjectInfoBase):
     :ivar typing.Union[Image,str,None] ~.image: image which is proceeded in given segmentation.
         If :py:class:`str` then it is path to image on drive
     :ivar typing.Optional[np.ndarray] ~.mask: Mask limiting segmentation area.
-    :ivar typing.Optional[np.ndarray] ~.roi: ROI array.
+    :ivar ROIInfo ~.roi_info: ROI information.
     :ivar SegmentationInfo ~.roi_info: ROI description
     :ivar typing.List[int] ~.selected_components: list of selected components
     :ivar typing.Dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
@@ -80,7 +80,7 @@ class MaskProjectTuple(ProjectInfoBase):
     file_path: str
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
-    roi_info: ROIInfo = ROIInfo(None)
+    roi_info: ROIInfo = dataclasses.field(default_factory=lambda: ROIInfo(None))
     additional_layers: typing.Dict[str, AdditionalLayerDescription] = dataclasses.field(default_factory=dict)
     selected_components: typing.List[int] = dataclasses.field(default_factory=list)
     roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]] = dataclasses.field(
@@ -105,7 +105,7 @@ class MaskProjectTuple(ProjectInfoBase):
 
     @property
     def roi(self):
-        warnings.warn("roi is deprecated", DeprecationWarning, 2)
+        warnings.warn("roi is deprecated", DeprecationWarning, stacklevel=2)
         return self.roi_info.roi
 
 
@@ -119,7 +119,7 @@ class SaveROIOptions(BaseModel):
         description="When loading data in ROI analysis, if not checked"
         " then data outside ROI will be replaced with zeros.",
     )
-    spacing: typing.List[float] = Field((10**-6, 10**-6, 10**-6), hidden=True)
+    spacing: typing.List[float] = Field([10**-6, 10**-6, 10**-6], hidden=True)
 
 
 def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile, parameters: SaveROIOptions):
@@ -155,7 +155,7 @@ def _save_mask_roi_metadata(
         file_path = project.image
     else:
         file_path = ""
-    if file_path != "":
+    if file_path:
         if parameters.relative_path and isinstance(file_data, str):
             metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
         else:
@@ -235,7 +235,7 @@ def save_stack_segmentation(
 
 def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, step_changed=None):
     if check_segmentation_type(tar_file) != SegmentationType.mask:
-        raise WrongFileTypeException()
+        raise WrongFileTypeException  # pragma: no cover
     files = tar_file.getnames()
     step_changed(1)
     metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
@@ -525,7 +525,7 @@ class LoadStackImageWithMask(LoadBase):
 
 class SaveROI(SaveBase):
     """
-    Save current ROI
+    Save current ROI as a project
     """
 
     __argument_class__ = SaveROIOptions

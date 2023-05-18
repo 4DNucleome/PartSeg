@@ -77,7 +77,7 @@ class ImageSettings(QObject):
         raise AttributeError("full_segmentation not supported")
 
     @full_segmentation.setter
-    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=R0201
+    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=no-self-use
         raise AttributeError("full_segmentation not supported")
 
     @property
@@ -85,7 +85,7 @@ class ImageSettings(QObject):
         raise AttributeError("noise_remove_image_part not supported")
 
     @noise_remove_image_part.setter
-    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=R0201
+    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=no-self-use
         raise AttributeError("noise_remove_image_part not supported")
 
     @property
@@ -93,7 +93,7 @@ class ImageSettings(QObject):
         return self._additional_layers
 
     @additional_layers.setter
-    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=R0201
+    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=no-self-use
         raise AttributeError("additional_layers assign not supported")
 
     @property
@@ -118,7 +118,7 @@ class ImageSettings(QObject):
     @property
     def segmentation(self) -> np.ndarray:  # pragma: no cover
         """current roi"""
-        warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning)
+        warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi
 
     @property
@@ -128,7 +128,7 @@ class ImageSettings(QObject):
 
     @property
     def segmentation_info(self) -> ROIInfo:  # pragma: no cover
-        warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning)
+        warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi_info
 
     @property
@@ -303,7 +303,7 @@ class ViewSettings(ImageSettings):
         """Sequence of available themes"""
         try:
             return napari.utils.theme.available_themes()
-        except:  # noqa: E722  # pylint: disable=W0702  # pragma: no cover
+        except:  # noqa: E722  # pylint: disable=bare-except  # pragma: no cover
             return ("light",)
 
     @property
@@ -498,7 +498,7 @@ class BaseSettings(ViewSettings):
 
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (
-            result.file_path is not None and result.file_path != "" and result.file_path != self.image.file_path
+            result.file_path is not None and result.file_path and result.file_path != self.image.file_path
         ):  # pragma: no cover
             if self._parent is not None:
                 # TODO change to non disrupting popup
@@ -707,7 +707,7 @@ class BaseSettings(ViewSettings):
         if self.napari_settings.save is not None:
             self.napari_settings.save()
         else:
-            self.napari_settings._save()  # pylint: disable=W0212
+            self.napari_settings._save()  # pylint: disable=protected-access
         if folder_path is None:
             folder_path = self.json_folder_path
         if not os.path.exists(folder_path):
@@ -718,7 +718,7 @@ class BaseSettings(ViewSettings):
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
                 with open(os.path.join(folder_path, el.file_name), "w", encoding="utf-8") as ff:
                     ff.write(dump_string)
-            except Exception as e:  # pylint: disable=W0703
+            except Exception as e:  # pylint: disable=broad-except
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
             logger.error(errors_list)
@@ -759,7 +759,7 @@ class BaseSettings(ViewSettings):
                 if error is not None:
                     errors_dict[file_path] = error
                 el.values.update(data)
-            except Exception as e:  # pylint: disable=W0703
+            except Exception as e:  # pylint: disable=broad-except
                 error = True
                 logger.error(e)
                 errors_dict[file_path] = e
@@ -768,6 +768,9 @@ class BaseSettings(ViewSettings):
                     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
+
+        self.label_color_dict._refresh_order()  # pylint: disable=protected-access
+        self.colormap_dict._refresh_order()  # pylint: disable=protected-access
 
         return errors_dict
 
@@ -783,10 +786,10 @@ class BaseSettings(ViewSettings):
     def verify_image(image: Image, silent=True) -> Union[Image, bool]:
         if image.is_time:
             if image.is_stack:
-                raise TimeAndStackException()
+                raise TimeAndStackException
             if silent:
                 return image.swap_time_and_stack()
-            raise SwapTimeStackException()
+            raise SwapTimeStackException
         return True
 
 

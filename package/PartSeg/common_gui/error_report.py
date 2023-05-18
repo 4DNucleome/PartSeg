@@ -5,6 +5,7 @@ THis module contains widgets used for error reporting. The report backed is sent
 """
 import getpass
 import io
+import os
 import pprint
 import re
 import traceback
@@ -47,8 +48,8 @@ try:
 except ImportError:  # pragma: no cover
     QT5 = True
 
-_email_regexp = re.compile(r"[\w+]+@\w+\.\w+")
-_feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
+_EMAIL_REGEXP = re.compile(r"[\w+]+@\w+\.\w+")
+_FEEDBACK_URL = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
     organization_slug="cent", project_slug="partseg"
 )
 
@@ -97,7 +98,7 @@ class ErrorDialog(QDialog):
         self.contact_info = QLineEdit()
         self.user_name = QLineEdit()
         self.cancel_btn.clicked.connect(self.reject)
-        self.send_report_btn.clicked.connect(self.send_information)
+        self.send_report_btn.clicked.connect(self.send_report)
         self.create_issue_btn.clicked.connect(self.create_issue)
 
         self.desc = QLabel(description)
@@ -168,7 +169,7 @@ class ErrorDialog(QDialog):
 
         url = "https://github.com/4DNucleome/PartSeg/issues/new?"
         data = {
-            "title": f"Error report from PartSeg `{repr(self.exception)}`",
+            "title": f"Error report from PartSeg `{self.exception!r}`",
             "body": f"This issue is created from PartSeg error dialog\n\n```"
             f"python\n{self.error_description.toPlainText()}\n```\n",
             "labels": "bug",
@@ -189,12 +190,12 @@ class ErrorDialog(QDialog):
 
         webbrowser.open(f"{url}{urllib.parse.urlencode(data)}")
 
-    def send_information(self):
+    def send_report(self):
         """
         Function with construct final error message and send it using sentry.
         """
         with sentry_sdk.push_scope() as scope:
-            text = self.desc.text() + "\n\nVersion: " + __version__ + "\n"
+            text = f"{self.desc.text()}\n\nVersion: {__version__}\n"
             if len(self.additional_notes) > 0:
                 scope.set_extra("additional_notes", self.additional_notes)
             if len(self.additional_info.toPlainText()) > 0:
@@ -217,24 +218,26 @@ class ErrorDialog(QDialog):
             data = {
                 "comments": self.additional_info.toPlainText(),
                 "event_id": event_id,
-                "email": contact_text if _email_regexp.match(contact_text) else "unknown@unknown.com",
-                "name": user_name or getpass.getuser(),
+                "email": contact_text if _EMAIL_REGEXP.match(contact_text) else "unknown@unknown.com",
+                "name": user_name or get_user(),
             }
 
-            r = requests.post(
-                url=_feedback_url,
-                data=data,
-                headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
-            )
-            if r.status_code != 200:
-                data["email"] = "unknown@unknown.com"
-                data["name"] = getpass.getuser()
-                requests.post(
-                    url=_feedback_url,
+            with suppress(requests.exceptions.Timeout):
+                r = requests.post(
+                    url=_FEEDBACK_URL,
                     data=data,
                     headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+                    timeout=3,
                 )
-
+                if r.status_code != 200:
+                    data["email"] = "unknown@unknown.com"
+                    data["name"] = get_user()
+                    requests.post(
+                        url=_FEEDBACK_URL,
+                        data=data,
+                        headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+                        timeout=3,
+                    )
         self.accept()
 
 
@@ -442,3 +445,11 @@ class QMessageFromException(QMessageBox):
         )
         ob.setDefaultButton(default_button)
         return ob.exec_()
+
+
+def get_user() -> str:
+    try:
+        return getpass.getuser()
+    except ModuleNotFoundError:  # pragma: no cover
+        # On windows `pwd` module is not available
+        return os.getlogin()

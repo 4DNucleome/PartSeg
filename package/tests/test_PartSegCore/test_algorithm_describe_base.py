@@ -1,10 +1,10 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import typing
 from abc import ABC, abstractmethod
 from enum import Enum
 
 import pytest
-from nme import class_to_str, register_class
+from local_migrator import class_to_str, register_class
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, ValidationError
 
@@ -269,6 +269,16 @@ def test_base_model_to_algorithm_property_hline():
     assert isinstance(fields[2], str)
 
 
+def test_hidden_field():
+    class Model(BaseModel):
+        field1: int = Field(1, hidden=True)
+        field2: int = 1
+
+    fields = base_model_to_algorithm_property(Model)
+    assert len(fields) == 1
+    assert fields[0].name == "field2"
+
+
 class TestAlgorithmDescribeBase:
     def test_old_style_algorithm(self):
         class SampleAlgorithm(AlgorithmDescribeBase):
@@ -370,7 +380,7 @@ class TestAlgorithmDescribeBase:
                 @classmethod
                 @abstractmethod
                 def get_sample(cls):
-                    raise NotImplementedError()
+                    raise NotImplementedError
 
     def test_not_supported_from_function(self):
         def sample_function(params: dict) -> dict:
@@ -380,7 +390,7 @@ class TestAlgorithmDescribeBase:
             @classmethod
             @abstractmethod
             def sample(cls) -> dict:
-                raise NotImplementedError()
+                raise NotImplementedError
 
         with pytest.raises(RuntimeError, match="This class does not support from_function method"):
             SampleClass.from_function(sample_function)
@@ -441,17 +451,17 @@ class TestAlgorithmDescribeBase:
             @classmethod
             @abstractmethod
             def get_sample(cls) -> str:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             @classmethod
             def get_fields(cls):
-                raise NotImplementedError()
+                raise NotImplementedError
 
         class SampleClass2(SampleClass, method_from_fun="calculate"):
             @classmethod
             @abstractmethod
             def calculate(cls, a: int, arguments: dict) -> str:
-                raise NotImplementedError()
+                raise NotImplementedError
 
         @SampleClass2.from_function(sample="aaa")
         def calc(a: int) -> str:
@@ -464,7 +474,7 @@ class TestAlgorithmDescribeBase:
             @classmethod
             @abstractmethod
             def calculate(cls, a: int, b: int) -> int:
-                raise NotImplementedError()
+                raise NotImplementedError
 
         @SampleClass.from_function()
         def calc(a: int, b: int) -> int:
@@ -491,16 +501,16 @@ class ClassForTestFromFuncBase(AlgorithmDescribeBase):
     @classmethod
     @abstractmethod
     def get_alpha(cls) -> float:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class ClassForTestFromFunc(ClassForTestFromFuncBase, method_from_fun="calculate"):
     @classmethod
     @abstractmethod
     def get_info(cls) -> str:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
     def calculate(cls, params: BaseModel, scalar: float) -> dict:
-        raise NotImplementedError()
+        raise NotImplementedError

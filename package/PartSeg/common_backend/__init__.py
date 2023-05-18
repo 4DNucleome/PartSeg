@@ -16,7 +16,7 @@ def napari_get_settings(path=None) -> "NapariSettings":
 
     try:
         return _napari_get_settings(path)
-    except:  # noqa  # pylint: disable=W0702
+    except Exception:  # pylint: disable=broad-except
         return _napari_get_settings()
 
 

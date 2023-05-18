@@ -344,7 +344,7 @@ class Options(QWidget):
         widget.execute()
 
     def execution_done(self, segmentation: ROIExtractionResult):
-        if segmentation.info_text != "":
+        if segmentation.info_text:
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         self._settings.set_segmentation_result(segmentation)
         self.label.setText(self.sender().get_info_text())
@@ -412,6 +412,12 @@ class MainMenu(BaseMainMenu):
         if dial.exec_():
             save_location, selected_filter, save_class, values = dial.get_result()
             project_info = self.settings.get_project_info()
+            if save_class.need_segmentation() and project_info.roi_info.roi is None:
+                QMessageBox.information(self, "No segmentation", "Cannot save without segmentation")
+                return
+            if save_class.need_mask() and project_info.mask is None:
+                QMessageBox.information(self, "No mask", "Cannot save without mask")
+                return
             base_values[selected_filter] = values
 
             def exception_hook(exception):  # pragma: no cover
@@ -522,6 +528,8 @@ class MaskDialog(MaskDialogBase):
 
 
 class MainWindow(BaseMainWindow):
+    settings: PartSettings
+
     @classmethod
     def get_setting_class(cls) -> Type[PartSettings]:
         return PartSettings
@@ -536,7 +544,6 @@ class MainWindow(BaseMainWindow):
         self.files_num = 2
         self.setMinimumWidth(600)
         # thi isinstance is only for hinting in IDE
-        assert isinstance(self.settings, PartSettings)  # nosec
         self.main_menu = MainMenu(self.settings, self)
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_image")
         self.raw_image = CompareImageView(self.settings, self.channel_control2, "raw_image")
@@ -660,8 +667,10 @@ class MainWindow(BaseMainWindow):
         super().closeEvent(event)
 
     @staticmethod
-    def get_project_info(file_path, image):
-        return ProjectTuple(file_path=file_path, image=image)
+    def get_project_info(file_path, image, roi_info=None):
+        if roi_info is None:
+            roi_info = ROIInfo(None)
+        return ProjectTuple(file_path=file_path, image=image, roi_info=roi_info)
 
     def set_data(self, data):
         self.main_menu.set_data(data)

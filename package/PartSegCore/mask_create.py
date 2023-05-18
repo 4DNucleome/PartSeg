@@ -2,7 +2,7 @@ import typing
 
 import numpy as np
 import SimpleITK as sitk
-from nme import register_class
+from local_migrator import register_class
 
 from PartSegCore.image_operations import RadiusType, dilate, erode
 from PartSegCore.utils import BaseModel

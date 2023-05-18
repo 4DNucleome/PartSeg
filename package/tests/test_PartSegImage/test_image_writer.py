@@ -59,8 +59,8 @@ def test_ome_save(tmp_path, bundle_test_dir, ome_xml, z_size):
         assert meta_data["Pixels"]["Channel"][0]["Name"] == "a"
         assert meta_data["Pixels"]["Channel"][1]["Name"] == "b"
         assert meta_data["Name"] == "Test"
-        xml_file = etree.fromstring(tiff.ome_metadata.encode("utf8"))  # nosec
-        ome_xml.assert_(xml_file)  # noqa PT009
+        xml_file = etree.fromstring(tiff.ome_metadata.encode("utf8"))  # nosec  # noqa: S320
+        ome_xml.assert_(xml_file)  # noqa: PT009
     read_image = TiffImageReader.read_image(tmp_path / "test.tif")
     assert np.allclose(read_image.spacing, image.spacing)
     assert np.allclose(read_image.shift, image.shift)

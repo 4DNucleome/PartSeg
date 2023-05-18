@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Callable
 
 import numpy as np
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
@@ -56,7 +56,7 @@ class BaseWatershed(AlgorithmDescribeBase, ABC, method_from_fun="sprawl"):
         :param upper_bound: data value upper bound
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class PathWatershed(BaseWatershed):

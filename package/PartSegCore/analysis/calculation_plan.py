@@ -8,7 +8,7 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
-from nme import register_class, rename_key
+from local_migrator import register_class, rename_key
 from pydantic import BaseModel as PydanticBaseModel
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -309,7 +309,7 @@ class CalculationTree:
         return f"{self.operation}:\n[{'n'.join([str(x) for x in self.children])}]"
 
     def __repr__(self):
-        return f"CalculationTree(operation={repr(self.operation)}, children={self.children})"
+        return f"CalculationTree(operation={self.operation!r}, children={self.children})"
 
     def as_dict(self):
         return {"operation": self.operation, "children": self.children}
@@ -515,7 +515,7 @@ class CalculationPlan:
         return f"CalculationPlan<{self.name}>\n{self.execution_tree}"
 
     def __repr__(self):
-        return f"CalculationPlan(name={repr(self.name)}, execution_tree={repr(self.execution_tree)})"
+        return f"CalculationPlan(name={self.name!r}, execution_tree={self.execution_tree!r})"
 
     def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
         """
@@ -709,6 +709,7 @@ class CalculationPlan:
                 return el.operation
             if isinstance(el.operation, MaskFile):
                 num -= 1
+        return None
 
     @classmethod
     def dict_load(cls, data_dict):
@@ -727,7 +728,7 @@ class CalculationPlan:
         return res_plan
 
     @staticmethod
-    def get_el_name(el):  # noqa C901
+    def get_el_name(el):  # noqa: C901, PLR0911, PLR0912
         """
         :param el: Plan element
         :return: str
@@ -742,11 +743,11 @@ class CalculationPlan:
         if isinstance(el, ROIExtractionProfile):
             return f"Segmentation: {el.name}"
         if isinstance(el, MeasurementCalculate):
-            if el.name_prefix == "":
+            if not el.name_prefix:
                 return f"Measurement: {el.name}"
             return f"Measurement: {el.name} with prefix: {el.name_prefix}"
         if isinstance(el, MaskCreate):
-            return f"Create mask: {el.name}" if el.name != "" else "Create mask:"
+            return f"Create mask: {el.name}" if el.name else "Create mask:"
         if isinstance(el, MaskUse):
             return f"Use mask: {el.name}"
         if isinstance(el, MaskSuffix):
@@ -759,14 +760,14 @@ class CalculationPlan:
             base = el.short_name
             if el.directory:
                 return f"Save {base} in directory with name {el.suffix}"
-            return f"Save {base} with suffix {el.suffix}" if el.suffix != "" else f"Save {base}"
+            return f"Save {base} with suffix {el.suffix}" if el.suffix else f"Save {base}"
 
         if isinstance(el, MaskIntersection):
-            if el.name == "":
+            if not el.name:
                 return f"Mask intersection of mask {el.mask1} and {el.mask2}"
             return f"Mask {el.name} intersection of mask {el.mask1} and {el.mask2}"
         if isinstance(el, MaskSum):
-            if el.name == "":
+            if not el.name:
                 return f"Mask sum of mask {el.mask1} and {el.mask2}"
             return f"Mask {el.name} sum of mask {el.mask1} and {el.mask2}"
 

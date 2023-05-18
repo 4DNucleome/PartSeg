@@ -40,7 +40,7 @@ class StackSettings(BaseSettings):
 
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (
-            result.file_path is not None and result.file_path != "" and result.file_path != self.image.file_path
+            result.file_path is not None and result.file_path and result.file_path != self.image.file_path
         ):  # pragma: no cover
             if self._parent is not None:
                 # TODO change to non disrupting popup

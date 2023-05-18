@@ -3,7 +3,7 @@ from typing import Iterable, List, Union
 
 import numpy as np
 import SimpleITK as sitk
-from nme import register_class
+from local_migrator import register_class
 
 
 @register_class

@@ -47,7 +47,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
-          cache-dependency-path: 'requirements/requirements_pyinstaller.txt'
+          cache-dependency-path: 'setup.cfg'
 
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
@@ -107,11 +107,11 @@ jobs:
     - uses: tlambert03/setup-qt-libs@v1
     - name: Install dependencies
       run: |
-        pip install --upgrade pip==21.1
+        pip install --upgrade pip
         pip install pip-tools
     - name: Compile and install PyInstaller requirements
       run: |
-        pip-compile --upgrade -o requirements.txt setup.cfg --extra pyinstaller
+        pip-compile --upgrade -o requirements.txt setup.cfg --extra pyinstaller  --pre
         pip-sync
         pip install .
     - name: upload requirements

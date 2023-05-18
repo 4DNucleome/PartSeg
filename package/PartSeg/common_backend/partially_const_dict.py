@@ -60,6 +60,13 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
         del self._order_dict[key]
         self.item_removed.emit(item)
 
+    def _refresh_order(self):
+        """workaround for load data problem"""
+        self._order_dict = {
+            name: i for i, name in enumerate(itertools.chain(self.const_item_dict.keys(), self.editable_items.keys()))
+        }
+        self._counter = len(self._order_dict)
+
     def get_position(self, key: str) -> int:
         """
         Get item position as unique int. For soring purpose

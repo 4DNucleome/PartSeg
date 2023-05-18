@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Type, Union, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -40,7 +40,7 @@ from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
 from PartSeg.common_gui.error_report import DataImportErrorDialog
 from PartSeg.common_gui.lock_checkbox import LockCheckBox
 from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
-from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile, get_fields_from_algorithm
 from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
@@ -48,6 +48,8 @@ from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, Measu
 from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
+
+_DialogType = Union[Type[str], Type[int], Type[float]]
 
 
 def h_line():
@@ -148,11 +150,12 @@ class Properties(QWidget):
 
     # @Slot(str)  # PySide bug
     def profile_chosen(self, text):
-        if text == "":
+        if not text:
             self.delete_btn.setEnabled(False)
             self.rename_btn.setEnabled(False)
             self.info_label.setPlainText("")
             return
+
         try:
             if self.sender() == self.profile_list.list_widget:
                 profile = self._settings.roi_profiles[text]
@@ -238,7 +241,7 @@ class Properties(QWidget):
         elif self.pipeline_list.selectedItems():
             text = self.pipeline_list.selectedItems()[0].text()
             dkt = self._settings.roi_pipelines
-        if text != "":
+        if text:
             self.delete_btn.setDisabled(True)
             del dkt[text]
             self.update_profile_list()
@@ -328,7 +331,7 @@ class Properties(QWidget):
         elif self.pipeline_list.selectedItems():
             profile_name = self.pipeline_list.selectedItems()[0].text()
             profiles_dict = self._settings.roi_pipelines
-        if profile_name == "":
+        if not profile_name:
             return
         text, ok = QInputDialog.getText(self, "New profile name", f"New name for {profile_name}", text=profile_name)
         if ok:
@@ -607,7 +610,7 @@ class MeasurementSettings(QWidget):
             self.move_down.setDisabled(True)
 
     def good_name(self):
-        return str(self.profile_name.text()).strip() != ""
+        return str(self.profile_name.text()).strip()
 
     def move_down_fun(self):
         row = self.profile_options_chosen.currentRow()
@@ -648,7 +651,7 @@ class MeasurementSettings(QWidget):
             except ValueError as e:  # pragma: no cover
                 QMessageBox().warning(self, "Problem in add measurement", str(e))
         with suppress(KeyError):
-            arguments = MEASUREMENT_DICT[str(node.name)]._get_fields()  # pylint: disable=protected-access
+            arguments = get_fields_from_algorithm(MEASUREMENT_DICT[str(node.name)])
             if len(arguments) > 0 and not dict(node.parameters):
                 dial = self.form_dialog(arguments)
                 if dial.exec_():
@@ -728,7 +731,7 @@ class MeasurementSettings(QWidget):
         for i in range(self.profile_options_chosen.count()):
             txt = str(self.profile_options_chosen.item(i).text())
             selected_values.append((txt, str, txt))
-        val_dialog = MultipleInput("Set fields name", list(selected_values), parent=self)
+        val_dialog = MultipleInput("Set fields name", objects_list=list(selected_values), parent=self)
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
@@ -830,34 +833,17 @@ class SegAdvancedWindow(AdvancedWindow):
 
 
 class MultipleInput(QDialog):
-    def __init__(self, text, help_text, objects_list=None, parent=None):  # noqa: PLR0915
-        if objects_list is None:
-            objects_list = help_text
-            help_text = ""
+    def __init__(
+        self,
+        text: str,
+        help_text: str = "",
+        objects_list: List[Union[Tuple[str, _DialogType], Tuple[str, _DialogType, str]]] = None,
+        parent: Optional[QWidget] = None,
+    ):
+        if objects_list is None:  # pragma: no cover
+            raise ValueError("objects_list cannot be None")
 
-        def create_input_float(obj, ob2=None):
-            if ob2 is not None:
-                val = obj
-                obj = ob2
-            else:
-                val = 0
-            res = QDoubleSpinBox(obj)
-            res.setRange(-1000000, 1000000)
-            res.setValue(val)
-            return res
-
-        def create_input_int(obj, ob2=None):
-            if ob2 is not None:
-                val = obj
-                obj = ob2
-            else:
-                val = 0
-            res = QSpinBox(obj)
-            res.setRange(-1000000, 1000000)
-            res.setValue(val)
-            return res
-
-        field_dict = {str: QLineEdit, float: create_input_float, int: create_input_int}
+        field_dict = {str: QLineEdit, float: _create_input_float, int: _create_input_int}
         super().__init__(parent=parent)
         ok_butt = QPushButton("Ok", self)
         cancel_butt = QPushButton("Cancel", self)
@@ -886,7 +872,7 @@ class MultipleInput(QDialog):
         font.setBold(True)
         main_text.setFont(font)
         main_layout.addWidget(main_text)
-        if help_text != "":
+        if help_text:
             help_label = QLabel(help_text)
             help_label.setWordWrap(True)
             main_layout.addWidget(help_label)
@@ -915,3 +901,27 @@ class MultipleInput(QDialog):
     @property
     def get_response(self):
         return self.result
+
+
+def _create_input_float(obj, ob2=None):
+    if ob2 is not None:
+        val = obj
+        obj = ob2
+    else:
+        val = 0
+    res = QDoubleSpinBox(obj)
+    res.setRange(-1000000, 1000000)
+    res.setValue(val)
+    return res
+
+
+def _create_input_int(obj, ob2=None):
+    if ob2 is not None:
+        val = obj
+        obj = ob2
+    else:
+        val = 0
+    res = QSpinBox(obj)
+    res.setRange(-1000000, 1000000)
+    res.setValue(val)
+    return res

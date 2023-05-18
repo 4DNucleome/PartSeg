@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import argparse
 import json
 import sys
@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Callable, Optional
 from unittest.mock import MagicMock, patch
 
+import napari.layers
 import numpy as np
 import pytest
 import sentry_sdk
@@ -114,7 +115,7 @@ class TestExceptHook:
             error_list.append(value)
 
         def import_raise(_value):
-            raise ImportError()
+            raise ImportError
 
         monkeypatch.setattr(sys, "__excepthook__", excepthook_catch)
         monkeypatch.setattr(sys, "exit", exit_catch)
@@ -188,6 +189,13 @@ class TestBaseArgparse:
     def test_safe_repr(self):
         assert base_argparser.safe_repr(1) == "1"
         assert base_argparser.safe_repr(np.arange(3)) == "array([0, 1, 2])"
+
+    def test_safe_repr_napari_image(self):
+        assert (
+            base_argparser.safe_repr(napari.layers.Image(np.zeros((10, 10, 5))))
+            == "<Image of shape: (10, 10, 5), dtype: float64, slice"
+            " (0, slice(None, None, None), slice(None, None, None))>"
+        )
 
 
 class TestProgressThread:

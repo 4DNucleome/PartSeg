@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
 import sys
@@ -48,6 +48,7 @@ else:
 
         return os.path.join(os.path.dirname(resources.__file__), "icons")
 
+import contextlib
 from dask import config
 
 import imagecodecs
@@ -61,7 +62,7 @@ if napari_version <= parse_version("0.4.16"):
 from imageio.config.plugins import known_plugins as imageio_known_plugins
 
 hiddenimports = (
-    ["imagecodecs._" + x for x in imagecodecs._extensions()]
+    [f"imagecodecs.{y}" for y in (x if x[0] == "_" else f"_{x}" for x in imagecodecs._extensions())]
     + ["imagecodecs._shared"]
     + plugins
     + ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"]
@@ -85,8 +86,11 @@ hiddenimports = (
         "magicgui.backends._qtpy",
         "freetype",
         "psygnal._signal",
+        "psygnal._dataclass_utils",
+        "psygnal._weak_callback",
+        "imagecodecs._imagecodecs"
     ]
-    + [x.module_name for x in imageio_known_plugins.values()]
+    + [x.module_name for x in imageio_known_plugins.values()] + [x for x in collect_submodules("skimage") if "tests" not in x]
 )
 
 
@@ -98,14 +102,11 @@ for package_path in importlib.metadata.files("psygnal"):
 hiddenimports.append("mypy_extensions")
 
 
-try:
+with contextlib.suppress(ImportError):
     from sentry_sdk.integrations import _AUTO_ENABLING_INTEGRATIONS
 
     for el in _AUTO_ENABLING_INTEGRATIONS:
         hiddenimports.append(os.path.splitext(el)[0])
-except ImportError:
-    pass
-
 qt_data = []
 
 # print(["plugins." + x.name for x in plugins.get_plugins()])
@@ -170,6 +171,8 @@ a = Analysis(
     + collect_data_files("vispy")
     + collect_data_files("napari")
     + collect_data_files("freetype")
+    + collect_data_files("skimage")
+    + collect_data_files("jsonschema_specifications")
     + pyzmq_data
     + plugins_data
     + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")],

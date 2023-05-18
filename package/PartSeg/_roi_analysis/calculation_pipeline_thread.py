@@ -23,5 +23,5 @@ class CalculatePipelineThread(ProgressTread):
             self.result = calculate_pipeline(
                 image=self.image, mask=self.mask, pipeline=self.pipeline, report_fun=self.info_function
             )
-        except Exception as e:  # pylint: disable=W0703
+        except Exception as e:  # pylint: disable=broad-except
             self.error_signal.emit(e)

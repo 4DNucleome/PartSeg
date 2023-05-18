@@ -2,14 +2,8 @@ default_language_version:
     python: python3.8
 
 repos:
--   repo: https://github.com/MarcoGorelli/absolufy-imports
-    rev: v0.3.1
-    hooks:
-    -   id: absolufy-imports
-        args: ["--application-directories", "package"]
-        exclude: examples|setup.py|build_utils|docs|toxfile.py
 -   repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
     - id: black
       pass_filenames: true
@@ -31,11 +25,11 @@ repos:
     - id: setup-cfg-fmt
       args: ["--include-version-classifiers", "--max-py-version", "3.11"]
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.244
+    rev: v0.0.267
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+    rev: v3.4.0
     hooks:
     - id: pyupgrade
       args: ["--py38-plus"]
@@ -50,7 +44,11 @@ repos:
       exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.0.0'  # Use the sha / tag you want to point at
+    rev: 'v1.3.0'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
         files: ^package/PartSegImage/.+\.py
+
+
+ci:
+    autoupdate_commit_msg: 'ci: [pre-commit.ci] pre-commit autoupdate'

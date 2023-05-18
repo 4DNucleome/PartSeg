@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any, Dict, ForwardRef, Optional, Set, Union
 
 import numpy as np
-from nme import REGISTER, class_to_str, register_class, rename_key
+from local_migrator import REGISTER, class_to_str, register_class, rename_key
 from pydantic import Field, validator
 from sympy import Symbol, symbols
 
@@ -88,7 +88,7 @@ class Leaf(BaseModel):
     channel: Optional[Channel] = None
 
     @validator("parameters")
-    def _validate_parameters(cls, v, values):  # pylint: disable=R0201
+    def _validate_parameters(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, dict) or "name" not in values:
             return v
         from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
@@ -104,7 +104,7 @@ class Leaf(BaseModel):
         return method.__argument_class__(**v)
 
     @validator("per_component")
-    def _validate_per_component(cls, v, values):  # pylint: disable=R0201
+    def _validate_per_component(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, PerComponent) or "area" not in values or values["area"] is None:
             return v
         if v == PerComponent.Per_Mask_component and values["area"] != AreaType.ROI:
@@ -259,9 +259,9 @@ class Node(BaseModel):
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
     def __str__(self):  # pragma: no cover
-        left_text = f"({str(self.left)})" if isinstance(self.left, Node) else str(self.left)
+        left_text = f"({self.left!s})" if isinstance(self.left, Node) else str(self.left)
 
-        right_text = f"({str(self.right)})" if isinstance(self.right, Node) else str(self.right)
+        right_text = f"({self.right!s})" if isinstance(self.right, Node) else str(self.right)
 
         return left_text + self.op + right_text
 
@@ -377,7 +377,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
         List incomplete.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def get_starting_leaf(cls) -> Leaf:
@@ -391,7 +391,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_units(cls, ndim) -> symbols:
         """Return units for measurement. They are shown to user"""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def need_channel(cls):

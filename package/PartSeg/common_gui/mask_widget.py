@@ -215,7 +215,7 @@ class MaskDialogBase(QDialog):
         self.reset_next_btn.setDisabled(True)
 
     def next_mask(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def prev_mask(self):
-        raise NotImplementedError()
+        raise NotImplementedError

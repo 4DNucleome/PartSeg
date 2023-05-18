@@ -32,7 +32,7 @@ jobs:
           retention-days: 5
 
   base-test:
-    name: Base Test on ${{ matrix.platform }} py${{ matrix.python_version }} ${{ matrix.backend }}
+    name: Base py${{ matrix.python_version }}
     if: github.event_name == 'pull_request'
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
@@ -65,7 +65,7 @@ jobs:
       qt_backend: ${{ matrix.qt_backend }}
 
   base-test-main:
-    name: Base Test on ${{ matrix.platform }} py${{ matrix.python_version }} ${{ matrix.backend }}
+    name: Base py${{ matrix.python_version }}
     if: github.event_name == 'push'
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
@@ -130,6 +130,12 @@ jobs:
         with:
           name: test_data
           path: test_data
+
+      - name: Use mamba solver
+        shell: "bash -el {0}"
+        run: |
+          conda install -n base conda-libmamba-solver
+          conda config --set solver libmamba
 
       - name: Install dependencies
         shell: "bash -el {0}"

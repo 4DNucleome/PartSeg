@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import os
 
 import numpy as np
@@ -463,10 +463,10 @@ class TestMergeImage:
 
     def test_merge_channel_name(self):
         image1 = Image(
-            data=np.zeros((4, 10, 10), dtype=np.uint8),
-            axes_order="ZXY",
+            data=np.zeros((2, 4, 10, 10), dtype=np.uint8),
+            axes_order="CZXY",
             image_spacing=(1, 1, 1),
-            channel_names=["channel 1"],
+            channel_names=["channel 1", "channel 3"],
         )
         image2 = Image(
             data=np.zeros((4, 10, 10), dtype=np.uint8),
@@ -481,9 +481,9 @@ class TestMergeImage:
             channel_names=["channel 5"],
         )
         res_image = image1.merge(image2, "C")
-        assert res_image.channel_names == ["channel 1", "channel 2"]
+        assert res_image.channel_names == ["channel 1", "channel 3", "channel 1 (1)"]
         res_image = image1.merge(image3, "C")
-        assert res_image.channel_names == ["channel 1", "channel 5"]
+        assert res_image.channel_names == ["channel 1", "channel 3", "channel 5"]
 
     def test_different_axes_order(self):
         image1 = Image(data=np.zeros((3, 10, 10), dtype=np.uint8), axes_order="ZXY", image_spacing=(1, 1, 1))

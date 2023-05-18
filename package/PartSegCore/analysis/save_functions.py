@@ -24,6 +24,7 @@ __all__ = [
     "SaveXYZ",
     "SaveAsTiff",
     "SaveAsNumpy",
+    "SaveProfilesToJSON",
     "save_dict",
 ]
 

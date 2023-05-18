@@ -2,7 +2,7 @@ import json
 import os
 import re
 import typing
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, StringIO, TextIOBase
@@ -42,7 +42,7 @@ def check_segmentation_type(tar_file: TarFile) -> SegmentationType:
         return SegmentationType.analysis
     if "metadata.json" in names:
         return SegmentationType.mask
-    raise WrongFileTypeException()
+    raise WrongFileTypeException
 
 
 def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
@@ -67,10 +67,12 @@ class SaveBase(AlgorithmDescribeBase, ABC, method_from_fun="save"):
     ]
 
     @classmethod
+    @abstractmethod
     def get_short_name(cls):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
@@ -87,7 +89,7 @@ class SaveBase(AlgorithmDescribeBase, ABC, method_from_fun="save"):
         :param range_changed: report function for inform about steps num
         :param step_changed: report function for progress
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def get_name_with_suffix(cls):
@@ -131,10 +133,12 @@ class LoadBase(AlgorithmDescribeBase, ABC, method_from_fun="load", additional_pa
     ]
 
     @classmethod
+    @abstractmethod
     def get_short_name(cls):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
@@ -151,7 +155,7 @@ class LoadBase(AlgorithmDescribeBase, ABC, method_from_fun="load", additional_pa
         :param metadata: additional information needed by function. Like default spacing for load image
         :return: Project info or list of project info
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def get_name_with_suffix(cls):
@@ -503,3 +507,6 @@ class LoadPlanExcel(LoadBase):
     @classmethod
     def get_name(cls) -> str:
         return "Calculation plans from result (*.xlsx)"
+
+
+IO_LABELS_COLORMAP = "io.labels_colormap_dir"

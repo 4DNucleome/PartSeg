@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import numpy as np
 import SimpleITK
-from nme import REGISTER, class_to_str, register_class, rename_key
+from local_migrator import REGISTER, class_to_str, register_class, rename_key
 from pydantic import Field, validator
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -40,7 +40,7 @@ REQUIRE_MASK_STR = "Need mask"
 
 
 def blank_operator(_x, _y):
-    raise NotImplementedError()
+    raise NotImplementedError
 
 
 class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
@@ -55,7 +55,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
     def __init__(self, **kwargs):
         super().__init__()
         self.parameters: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
-        self.new_parameters = self.__argument_class__() if self.__new_style__ else {}  # pylint: disable=E1102
+        self.new_parameters = self.__argument_class__() if self.__new_style__ else {}  # pylint: disable=not-callable
 
     def set_image(self, image):
         self.parameters = defaultdict(lambda: None)
@@ -82,7 +82,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
     @abstractmethod
     def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> typing.Optional[ROIExtractionResult]:
         """Restartable calculation may return None if there is no need to recalculate"""
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class BorderRimParameters(BorderRimBase.__argument_class__):
@@ -159,7 +159,7 @@ class ThresholdBaseAlgorithmParameters(BaseModel):
     )
 
     @validator("noise_filtering")
-    def _noise_filter_validate(cls, v):  # pylint: disable=R0201
+    def _noise_filter_validate(cls, v):  # pylint: disable=no-self-use
         if not isinstance(v, dict):
             return v
         algorithm = NoiseFilterSelection[v["name"]]

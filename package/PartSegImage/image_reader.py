@@ -78,7 +78,7 @@ class BaseImageReader:
             should be deduced from path
         :return: image structure
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def read_image(
@@ -158,7 +158,7 @@ class BaseImageReaderBuffer(BaseImageReader):
             should be deduced from path
         :return: image structure
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def read_image(
@@ -198,10 +198,12 @@ class GenericImageReader(BaseImageReaderBuffer):
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
-            assert not isinstance(image_path, BytesIO)  # nosec
+            if isinstance(image_path, BytesIO):  # pragma: no cover
+                raise NotImplementedError("Oif format is not supported for BytesIO")
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext == ".obsep":
-            assert not isinstance(image_path, BytesIO)  # nosec
+            if isinstance(image_path, BytesIO):  # pragma: no cover
+                raise NotImplementedError("Obsep format is not supported for BytesIO")
             return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
@@ -363,7 +365,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                 self.read_ome_metadata(image_file)
             else:
                 x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
-                self.spacing = self.default_spacing[0], x_spacing, y_spacing
+                self.spacing = self.default_spacing[0], y_spacing, x_spacing
             mutex = Lock()
             count_pages = [0]
 
@@ -387,7 +389,8 @@ class TiffImageReader(BaseImageReaderBuffer):
 
             else:
                 mask_data = None
-                self.callback_function("max", total_pages_num)
+                if total_pages_num > 1:
+                    self.callback_function("max", total_pages_num)
 
             image_file.report_func = report_func
             try:

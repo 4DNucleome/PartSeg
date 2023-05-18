@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 from copy import copy
 from unittest.mock import patch
 
@@ -754,3 +754,8 @@ class TestCalculatePlaner:
     def test_create(self, qtbot, part_settings):
         widget = prepare_plan_widget.CalculatePlaner(part_settings)
         qtbot.addWidget(widget)
+
+
+def test_calculation_plan_repr(calculation_plan):
+    assert "name='test'" in repr(calculation_plan)
+    assert "operation=<RootType.Image: 0>" in repr(calculation_plan)

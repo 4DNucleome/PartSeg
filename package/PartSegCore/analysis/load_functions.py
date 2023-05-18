@@ -45,6 +45,7 @@ __all__ = [
     "load_dict",
     "load_metadata",
     "LoadMaskSegmentation",
+    "LoadProfileFromJSON",
 ]
 
 
@@ -57,14 +58,14 @@ def _load_history(tar_file):
             history_buffer = BytesIO()
             history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
             history_buffer.seek(0)
-            el = update_algorithm_dict(el)
-            segmentation_parameters = {"algorithm_name": el["algorithm_name"], "values": el["values"]}
+            el_up = update_algorithm_dict(el)
+            segmentation_parameters = {"algorithm_name": el_up["algorithm_name"], "values": el_up["values"]}
             history.append(
                 HistoryElement(
                     roi_extraction_parameters=segmentation_parameters,
-                    mask_property=el["mask_property"],
+                    mask_property=el_up["mask_property"],
                     arrays=history_buffer,
-                    annotations=el.get("annotations", {}),
+                    annotations=el_up.get("annotations", {}),
                 )
             )
     return history
@@ -72,7 +73,7 @@ def _load_history(tar_file):
 
 def load_project_from_tar(tar_file, file_path):
     if check_segmentation_type(tar_file) != SegmentationType.analysis:
-        raise WrongFileTypeException()
+        raise WrongFileTypeException
     image_buffer = BytesIO()
     image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
     image_buffer.write(image_tar.read())
@@ -305,7 +306,8 @@ def load_mask_project(
         components = list(data.roi_info.bound_info)
     res = []
     base, ext = os.path.splitext(load_locations[0])
-    path_template = base + "_component{}" + ext
+    str_len = str(len(str(len(components))))
+    path_template = base + "_component{:0" + str_len + "d}" + ext
     for i in components:
         single_roi = roi == i
         if not np.any(single_roi):
