@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 import numpy as np
 import SimpleITK as sitk
-from nme import register_class, rename_key
+from local_migrator import register_class, rename_key
 from pydantic import Field
 
 from PartSegCore.convex_fill import convex_fill

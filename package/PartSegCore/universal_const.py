@@ -1,6 +1,6 @@
 from enum import Enum
 
-from nme import register_class
+from local_migrator import register_class
 
 
 # noinspection NonAsciiCharacters

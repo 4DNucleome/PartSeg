@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 import pytest
-from nme import REGISTER, class_to_str, register_class, rename_key, update_argument
+from local_migrator import REGISTER, class_to_str, register_class, rename_key, update_argument
 
 
 @register_class

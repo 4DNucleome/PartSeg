@@ -14,7 +14,7 @@ from pydantic import BaseModel as PydanticBaseModel
 
 __author__ = "Grzegorz Bokota"
 
-from nme import register_class
+from local_migrator import register_class
 from psygnal import Signal
 
 
@@ -199,14 +199,10 @@ class EventedDict(typing.MutableMapping):
         return {k: v.as_dict_deep() if isinstance(v, EventedDict) else v for k, v in self._dict.items()}
 
     def __str__(self):
-        if self._klass is not None:
-            return f"EventedDict[{self._klass}]({self._dict})"
-        return f"EventedDict({self._dict})"
+        return f"EventedDict[{self._klass}]({self._dict})"
 
     def __repr__(self):
-        if self._klass is not None:
-            return f"EventedDict(klass={self._klass}, {repr(self._dict)})"
-        return f"EventedDict({repr(self._dict)})"
+        return f"EventedDict(klass={self._klass}, {self._dict!r})"
 
     def _propagate_setitem(self, key):
         # Fixme when partial disconnect will work

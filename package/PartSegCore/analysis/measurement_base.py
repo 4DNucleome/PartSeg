@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any, Dict, ForwardRef, Iterable, Optional, Set, Tuple, Union
 
 import numpy as np
-from nme import REGISTER, class_to_str, register_class, rename_key
+from local_migrator import REGISTER, class_to_str, register_class, rename_key
 from pydantic import Field, validator
 from sympy import Symbol, symbols
 
@@ -272,9 +272,9 @@ class Node(BaseModel):
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
     def __str__(self):  # pragma: no cover
-        left_text = f"({str(self.left)})" if isinstance(self.left, Node) else str(self.left)
+        left_text = f"({self.left!s})" if isinstance(self.left, Node) else str(self.left)
 
-        right_text = f"({str(self.right)})" if isinstance(self.right, Node) else str(self.right)
+        right_text = f"({self.right!s})" if isinstance(self.right, Node) else str(self.right)
 
         return left_text + self.op + right_text
 

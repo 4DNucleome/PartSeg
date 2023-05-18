@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import tifffile
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
@@ -67,7 +67,7 @@ class MaskProjectTuple(ProjectInfoBase):
     :ivar typing.Union[Image,str,None] ~.image: image which is proceeded in given segmentation.
         If :py:class:`str` then it is path to image on drive
     :ivar typing.Optional[np.ndarray] ~.mask: Mask limiting segmentation area.
-    :ivar typing.Optional[np.ndarray] ~.roi: ROI array.
+    :ivar ROIInfo ~.roi_info: ROI information.
     :ivar SegmentationInfo ~.roi_info: ROI description
     :ivar typing.List[int] ~.selected_components: list of selected components
     :ivar typing.Dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
@@ -81,7 +81,7 @@ class MaskProjectTuple(ProjectInfoBase):
     file_path: str
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
-    roi_info: ROIInfo = ROIInfo(None)
+    roi_info: ROIInfo = dataclasses.field(default_factory=lambda: ROIInfo(None))
     additional_layers: typing.Dict[str, AdditionalLayerDescription] = dataclasses.field(default_factory=dict)
     selected_components: typing.List[int] = dataclasses.field(default_factory=list)
     roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]] = dataclasses.field(
@@ -528,7 +528,7 @@ class LoadStackImageWithMask(LoadBase):
 
 class SaveROI(SaveBase):
     """
-    Save current ROI
+    Save current ROI as a project
     """
 
     __argument_class__ = SaveROIOptions

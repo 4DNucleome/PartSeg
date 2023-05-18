@@ -8,7 +8,7 @@ from math import ceil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-import nme
+import local_migrator
 import numpy as np
 from fonticon_fa6 import FA6S
 from napari.utils import Colormap
@@ -666,7 +666,7 @@ class ColormapSave(SaveBase):
         step_changed=None,
     ):
         with open(save_location, "w") as f:
-            json.dump(project_info, f, cls=nme.NMEEncoder, indent=4)
+            json.dump(project_info, f, cls=local_migrator.Encoder, indent=4)
 
     @classmethod
     def get_name(cls) -> str:
@@ -689,7 +689,7 @@ class ColormapLoad(LoadBase):
         metadata: typing.Optional[dict] = None,
     ) -> Colormap:
         with open(load_locations[0]) as f:
-            return json.load(f, object_hook=nme.nme_object_hook)
+            return json.load(f, object_hook=local_migrator.object_hook)
 
     @classmethod
     def get_name(cls) -> str:
