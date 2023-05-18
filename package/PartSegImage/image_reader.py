@@ -365,7 +365,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                 self.read_ome_metadata(image_file)
             else:
                 x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
-                self.spacing = self.default_spacing[0], x_spacing, y_spacing
+                self.spacing = self.default_spacing[0], y_spacing, x_spacing
             mutex = Lock()
             count_pages = [0]
 

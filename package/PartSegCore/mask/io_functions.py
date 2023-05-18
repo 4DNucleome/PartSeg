@@ -66,7 +66,7 @@ class MaskProjectTuple(ProjectInfoBase):
     :ivar typing.Union[Image,str,None] ~.image: image which is proceeded in given segmentation.
         If :py:class:`str` then it is path to image on drive
     :ivar typing.Optional[np.ndarray] ~.mask: Mask limiting segmentation area.
-    :ivar typing.Optional[np.ndarray] ~.roi: ROI array.
+    :ivar ROIInfo ~.roi_info: ROI information.
     :ivar SegmentationInfo ~.roi_info: ROI description
     :ivar typing.List[int] ~.selected_components: list of selected components
     :ivar typing.Dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
@@ -525,7 +525,7 @@ class LoadStackImageWithMask(LoadBase):
 
 class SaveROI(SaveBase):
     """
-    Save current ROI
+    Save current ROI as a project
     """
 
     __argument_class__ = SaveROIOptions

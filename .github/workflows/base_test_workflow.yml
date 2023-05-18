@@ -85,6 +85,21 @@ jobs:
           BACKEND: ${{ inputs.qt_backend }}
           PIP_CONSTRAINT: requirements/constraints_py${{ inputs.python_version }}.txt
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: upload pytest timing reports as json
+          path: |
+            ./report-*.json
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ inputs.coverage }}
+        with:
+          name: coverage_report ${{ inputs.tox_args }}
+          path: |
+            ./htmlcov
+          retention-days: 7
+
       - uses: codecov/codecov-action@v3
         if: ${{ inputs.coverage }}
         with:
