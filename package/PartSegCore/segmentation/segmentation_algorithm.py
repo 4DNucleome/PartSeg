@@ -19,6 +19,7 @@ from PartSegCore.segmentation.utils import close_small_holes
 from PartSegCore.segmentation.watershed import BaseWatershed, FlowMethodSelection
 from PartSegCore.utils import BaseModel, bisect
 from PartSegImage import Channel
+from PartSegImage.image import minimal_dtype
 
 
 class StackAlgorithm(ROIExtractionAlgorithm, ABC):
@@ -487,10 +488,7 @@ class SplitImageOnParts(StackAlgorithm):
         image = self.image
         size = self.new_parameters.side_length
         count_components = ceil(image.shape[-1] / size) * ceil(image.shape[-2] / size)
-        if count_components > 254:
-            dtype = np.uint16
-        else:
-            dtype = np.uint8
+        dtype = minimal_dtype(count_components)
         mask = np.zeros(image.shape, dtype=dtype)
         x_step = ceil(image.shape[-1] / size)
         y_step = ceil(image.shape[-2] / size)
