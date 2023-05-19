@@ -395,11 +395,11 @@ class CalculationPrepare(QDialog):
             "<b><font color='red'>errors</font><b>"
         )
         self.voxel_size = Spacing("Voxel size", settings.image.spacing, settings.get("units_value", Units.nm))
-        all_prefix = os.path.commonprefix(file_list)
-        if not os.path.exists(all_prefix):
-            all_prefix = os.path.dirname(all_prefix)
-        if not os.path.isdir(all_prefix):
-            all_prefix = os.path.dirname(all_prefix)
+        if len(file_list) == 1:
+            all_prefix = os.path.dirname(file_list[0])
+        else:
+            all_prefix = os.path.commonpath(file_list)
+        self.all_file_prefix = all_prefix
         self.base_prefix = QLineEdit(all_prefix, self)
         self.base_prefix.setReadOnly(True)
         self.result_prefix = QLineEdit(all_prefix, self)
@@ -594,16 +594,9 @@ class CalculationPrepare(QDialog):
         }
 
         warn_state = np.amax(self.state_list, axis=1, initial=0)
-
-        if len(self.file_list) == 1:
-            all_prefix = os.path.dirname(self.file_list[0])
-        else:
-            all_prefix = os.path.commonprefix(self.file_list)
-        if not os.path.exists(all_prefix):
-            all_prefix = os.path.dirname(all_prefix)
         for file_num, file_path in enumerate(self.file_list):
             widget = QTreeWidgetItem(self.file_list_widget)
-            widget.setText(0, os.path.relpath(file_path, all_prefix))
+            widget.setText(0, os.path.relpath(file_path, self.all_file_prefix))
             if not os.path.exists(file_path):
                 widget.setIcon(0, icon_dkt[0])
                 widget.setToolTip(0, "File do not exists")
