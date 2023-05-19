@@ -8,6 +8,7 @@ from napari.layers import Labels, Layer
 from qtpy.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
 from PartSeg.plugins.napari_widgets.utils import NapariFormWidget
+from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
 from PartSegCore.utils import BaseModel
 
@@ -20,7 +21,15 @@ class CompareType(Enum):
         return self.name.replace("_", " ").title()
 
 
-class ThresholdModel(BaseModel):
+class AlgModel(BaseModel):
+    class Config(BaseModel.Config):
+        arbitrary_types_allowed = True
+
+    def run_calculation(self):
+        raise NotImplementedError
+
+
+class ThresholdModel(AlgModel):
     class Config(BaseModel.Config):
         arbitrary_types_allowed = True
 
@@ -43,6 +52,22 @@ class ThresholdModel(BaseModel):
 
 class DoubleThresholdModel(ThresholdModel):
     threshold: DoubleThresholdSelection = DoubleThresholdSelection.get_default()
+
+
+class NoiseFilteringModel(AlgModel):
+    data: NapariImage
+    noise_filtering: NoiseFilterSelection = NoiseFilterSelection.get_default()
+
+    def run_calculation(self):
+        data = self.data.data
+        data = self.noise_filtering.algorithm().noise_filter(
+            channel=data, spacing=self.data.scale[-3:], arguments=self.noise_filtering.values
+        )
+        return {
+            "data": data,
+            "meta": {"scale": self.data.scale, "contrast_limits": self.data.contrast_limits},
+            "layer_type": "image",
+        }
 
 
 class AlgorithmWidgetBase(QWidget):
@@ -76,3 +101,7 @@ class Threshold(AlgorithmWidgetBase):
 
 class DoubleThreshold(AlgorithmWidgetBase):
     __data_model__ = DoubleThresholdModel
+
+
+class NoiseFiltering(AlgorithmWidgetBase):
+    __data_model__ = NoiseFilteringModel
