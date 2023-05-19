@@ -422,6 +422,9 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         name = cls.__register__.get_default()
         return cls(name=name, values=cls[name].get_default_values())
 
+    def algorithm(self):
+        return self.__register__[self.name]
+
 
 class ROIExtractionProfileMeta(ModelMetaclass):
     def __new__(cls, name, bases, attrs, **kwargs):

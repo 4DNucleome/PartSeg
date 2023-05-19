@@ -82,7 +82,7 @@ class NapariAlgorithmChoose(AlgorithmChooseBase):
 
 class ROIExtractionAlgorithms(QWidget):
     @staticmethod
-    def get_method_dict() -> AlgorithmSelection:  # pragma: no cover
+    def get_method_dict() -> typing.Type[AlgorithmSelection]:  # pragma: no cover
         raise NotImplementedError
 
     @staticmethod

@@ -10,6 +10,7 @@ import numpy as np
 from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
+from pydantic.fields import UndefinedType
 from qtpy.QtCore import QMargins, QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -205,7 +206,10 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(ap.value_type, BaseModel):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
         else:
-            res = create_widget(value=ap.default_value, annotation=ap.value_type, options=ap.mgi_options)
+            if isinstance(ap.default_value, UndefinedType):
+                res = create_widget(annotation=ap.value_type, options=ap.mgi_options)
+            else:
+                res = create_widget(value=ap.default_value, annotation=ap.value_type, options=ap.mgi_options)
             if isinstance(res, EmptyWidget):
                 raise ValueError(f"Unknown type {ap.value_type}")
         return res
