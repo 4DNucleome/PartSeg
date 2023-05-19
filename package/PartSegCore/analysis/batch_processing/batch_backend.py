@@ -576,7 +576,7 @@ class SheetData:
         return self.name, self.data_frame
 
     def __repr__(self):
-        return f"SheetData({self.name=}, {self.columns=}, wait_rows={len(self.row_list)})"
+        return f"SheetData(name={self.name}, columns{list(self.columns)[1:]}, wait_rows={len(self.row_list)})"
 
 
 class FileData:
