@@ -348,6 +348,8 @@ class DoubleOtsu(BaseThreshold):
         cleaned_image_sitk = sitk.GetImageFromArray(data)
         res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, 2, 0, arguments.bins, arguments.valley)
         res = sitk.GetArrayFromImage(res)
+        if not np.any(res.flat):
+            return res, (0, 0)
         thr1 = data[res == 2].min()
         thr2 = data[res == 1].min()
         return res, (thr1, thr2)
@@ -379,6 +381,8 @@ class MultipleOtsu(BaseThreshold):
         cleaned_image_sitk = sitk.GetImageFromArray(data)
         res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, arguments.components, 0, arguments.bins, arguments.valley)
         res = sitk.GetArrayFromImage(res)
+        if not np.any(res.flat):
+            return res, (0, 0)
         map_component = np.zeros(arguments.components + 1, dtype=np.uint8)
         map_component[: arguments.lower_component] = 0
         map_component[arguments.lower_component : arguments.upper_component] = 1
