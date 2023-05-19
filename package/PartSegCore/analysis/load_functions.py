@@ -51,7 +51,7 @@ __all__ = [
     "LoadProfileFromJSON",
 ]
 
-from PartSegImage.image import FRAME_THICKNESS, Image
+from PartSegImage.image import Image
 
 
 def _load_history(tar_file):
@@ -297,14 +297,6 @@ def _mask_data_outside_mask(file_path):
         return metadata.get("keep_data_outside_mask", False)
 
 
-def _get_frame_thick(file_path):
-    if not isinstance(file_path, str):
-        return FRAME_THICKNESS
-    with tarfile.open(file_path, "r:*") as tar_file:  # NOSONAR
-        metadata = load_metadata_base(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
-        return metadata.get("frame_thickness", FRAME_THICKNESS)
-
-
 def load_mask_project(
     load_locations: typing.List[typing.Union[str, BytesIO, Path]],
     range_changed: typing.Callable[[int, int], typing.Any],
@@ -313,7 +305,6 @@ def load_mask_project(
 ):
     data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
     zero_out_cut_area = _mask_data_outside_mask(load_locations[0])
-    frame_thick = _get_frame_thick(load_locations[0])
     image = data.image
     if not isinstance(image, Image):  # pragma: no cover
         raise ValueError("Image is not instance of Image class.")
@@ -331,16 +322,16 @@ def load_mask_project(
     for i in components:
         step_changed(i)
         bound = data.roi_info.bound_info[i]
-        single_roi = roi[tuple(bound.get_slices(frame_thick))] == i
+        single_roi = roi[tuple(bound.get_slices(data.frame_thickness))] == i
         if not np.any(single_roi):
             continue
         im = image.cut_image(
-            bound.get_slices(), replace_mask=True, zero_out_cut_area=zero_out_cut_area, frame=frame_thick
+            bound.get_slices(), replace_mask=True, zero_out_cut_area=zero_out_cut_area, frame=data.frame_thickness
         ).cut_image(
             single_roi,
             replace_mask=True,
             zero_out_cut_area=zero_out_cut_area,
-            frame=frame_thick,
+            frame=data.frame_thickness,
         )
         im.file_path = path_template.format(i)
         res.append(ProjectTuple(im.file_path, im, mask=im.mask))

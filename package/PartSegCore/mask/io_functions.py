@@ -91,6 +91,7 @@ class MaskProjectTuple(ProjectInfoBase):
     errors: str = ""
     spacing: typing.Optional[typing.List[float]] = None
     points: typing.Optional[np.ndarray] = None
+    frame_thickness: int = FRAME_THICKNESS
 
     def get_raw_copy(self):
         return MaskProjectTuple(self.file_path, self.image.substitute(mask=None))
@@ -299,6 +300,7 @@ def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, 
         roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
         history=history,
         spacing=([10 ** (-9), *list(spacing)]) if spacing is not None else None,
+        frame_thickness=metadata.get("frame_thickness", FRAME_THICKNESS),
     )
 
 
