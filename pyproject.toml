@@ -93,6 +93,9 @@ max-complexity = 15
 [tool.check-manifest]
 ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]
 
+[tool.mypy]
+ignore_missing_imports = true
+
 [[tool.mypy.overrides]]
 module = "tifffile.*"
 ignore_missing_imports = true

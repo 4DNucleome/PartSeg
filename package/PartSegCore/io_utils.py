@@ -509,3 +509,4 @@ class LoadPlanExcel(LoadBase):
 
 
 IO_LABELS_COLORMAP = "io.labels_colormap_dir"
+IO_MASK_METADATA_FILE = "metadata.json"

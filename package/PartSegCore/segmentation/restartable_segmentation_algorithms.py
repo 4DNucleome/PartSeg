@@ -445,6 +445,7 @@ class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
     def __init__(self):
         super().__init__()
         self.sprawl_area = None
+        self._original_output = None
 
     def _threshold(self, image, thr=None):
         if thr is None:
@@ -454,6 +455,7 @@ class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
         )
         self.threshold_info = thr_val
         self.sprawl_area = (mask >= 1).astype(np.uint8)
+        self._original_output = mask
         return (mask == 2).astype(np.uint8)
 
 
@@ -462,6 +464,28 @@ class BaseThresholdFlowAlgorithmParameters(ThresholdBaseAlgorithmParameters):
     threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), position=2)
     flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default(), position=3)
     minimum_size: int = Field(8000, title="Minimum core\nsize (px)", ge=0, le=10**6)
+    remove_object_touching_border: bool = Field(
+        False, title="Remove objects\ntouching border", description="Remove objects touching border"
+    )
+
+
+def remove_object_touching_border(new_segment):
+    non_one_dims = np.where(np.array(new_segment.shape) > 1)[0]
+    slice_list = [slice(None)] * len(new_segment.shape)
+    to_remove = set()
+    for dim in non_one_dims:
+        slice_copy = slice_list[:]
+        slice_copy[dim] = 0
+        to_remove.update(np.unique(new_segment[tuple(slice_copy)]))
+        slice_copy[dim] = new_segment.shape[dim] - 1
+        to_remove.update(np.unique(new_segment[tuple(slice_copy)]))
+
+    res = np.copy(new_segment)
+    for i in to_remove:
+        if i == 0:
+            continue
+        res[res == i] = 0
+    return res
 
 
 class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
@@ -510,6 +534,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             restarted
             or self.old_threshold_info[1] != self.threshold_info[1]
             or self.new_parameters.flow_type != self.parameters["flow_type"]
+            or self.new_parameters.remove_object_touching_border != self.parameters["remove_object_touching_border"]
         ):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
@@ -528,11 +553,19 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 self.threshold_info[1],
                 self.threshold_info[0],
             )
+            if self.new_parameters.remove_object_touching_border:
+                new_segment = remove_object_touching_border(new_segment)
+
+            self.parameters["remove_object_touching_border"] = self.new_parameters.remove_object_touching_border
+
             self.final_sizes = np.bincount(new_segment.flat)
             return ROIExtractionResult(
                 roi=new_segment,
                 parameters=self.get_segmentation_profile(),
-                additional_layers=self.get_additional_layers(full_segmentation=self.sprawl_area),
+                additional_layers={
+                    "original": AdditionalLayerDescription(data=self._original_output, layer_type="labels"),
+                    **self.get_additional_layers(full_segmentation=self.sprawl_area),
+                },
                 roi_annotation={
                     i: {"component": i, "core voxels": self._sizes_array[i], "voxels": v}
                     for i, v in enumerate(self.final_sizes[1:], 1)

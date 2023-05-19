@@ -21,6 +21,7 @@ from PartSegCore.analysis.batch_processing.batch_backend import (
     CalculationManager,
     CalculationProcess,
     ResponseData,
+    SheetData,
     do_calculation,
 )
 from PartSegCore.analysis.calculation_plan import (
@@ -740,3 +741,27 @@ class MockCalculationProcess(CalculationProcess):
         if os.path.basename(calculation.file_path) == "stack1_component1.tif":
             time.sleep(0.5)
         return super().do_calculation(calculation)
+
+
+class TestSheetData:
+    def test_create(self):
+        cols = [("aa", "nm"), ("bb", "nm")]
+        sheet_data = SheetData("test_name", cols)
+        assert "test_name" in repr(sheet_data)
+        assert str(cols) in repr(sheet_data)
+        assert "wait_rows=0" in repr(sheet_data)
+
+    def test_add_data(self):
+        cols = [("aa", "nm"), ("bb", "nm")]
+        sheet_data = SheetData("test_name", cols)
+        with pytest.raises(ValueError, match="Wrong number of columns"):
+            sheet_data.add_data(["aa", 1, 2, 3], None)
+
+        with pytest.raises(ValueError, match="Wrong number of columns"):
+            sheet_data.add_data(["aa", 1], None)
+
+        sheet_data.add_data(["aa", 1, 2], None)
+        assert "wait_rows=1" in repr(sheet_data)
+
+        assert sheet_data.get_data_to_write()[0] == "test_name"
+        assert "wait_rows=0" in repr(sheet_data)

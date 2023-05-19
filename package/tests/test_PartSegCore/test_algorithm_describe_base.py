@@ -15,6 +15,8 @@ from PartSegCore.algorithm_describe_base import (
     _GetDescriptionClass,
     base_model_to_algorithm_property,
 )
+from PartSegCore.analysis import AnalysisAlgorithmSelection
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 
@@ -353,7 +355,18 @@ class TestAlgorithmDescribeBase:
             assert SampleSubAlgorithm.get_default_values() == {"name": 1, "name2": 3.0}
 
 
-def test_roi_extraction_profile():
-    ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
-    with pytest.warns(FutureWarning):
-        ROIExtractionProfile("aaa", "aaa", {})
+class TestROIExtractionProfile:
+    def test_roi_extraction_profile(self):
+        ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
+        with pytest.warns(FutureWarning):
+            ROIExtractionProfile("aaa", "aaa", {})
+
+    def test_pretty_print(self):
+        prof1 = ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
+        assert f"{prof1}\n " == prof1.pretty_print(AnalysisAlgorithmSelection)
+        prof2 = ROIExtractionProfile(
+            name="aaa",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        )
+        assert prof2.pretty_print(AnalysisAlgorithmSelection).count("\n") == 7

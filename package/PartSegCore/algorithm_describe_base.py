@@ -482,7 +482,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
         try:
             algorithm = algorithm_dict[self.algorithm]
         except KeyError:
-            return str(self)
+            return f"{self}\n "
         values = self.values if isinstance(self.values, dict) else self.values.dict()
         if self.name in {"", "Unknown"}:
             return (

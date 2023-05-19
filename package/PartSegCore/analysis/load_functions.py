@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import sys
@@ -17,8 +18,10 @@ from packaging.version import parse as parse_version
 from tifffile import TiffFile
 
 from PartSegCore.algorithm_describe_base import Register, ROIExtractionProfile
+from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple, project_version_info
 from PartSegCore.io_utils import (
+    IO_MASK_METADATA_FILE,
     LoadBase,
     LoadPoints,
     SegmentationType,
@@ -47,6 +50,8 @@ __all__ = [
     "LoadMaskSegmentation",
     "LoadProfileFromJSON",
 ]
+
+from PartSegImage.image import Image
 
 
 def _load_history(tar_file):
@@ -85,12 +90,13 @@ def load_project_from_tar(tar_file, file_path):
     algorithm_str = tar_file.extractfile("algorithm.json").read()
     algorithm_dict = load_metadata(algorithm_str)
     algorithm_dict = update_algorithm_dict(algorithm_dict)
-    algorithm_dict.get("project_file_version")
-    metadata = json.loads(tar_file.extractfile("metadata.json").read(), object_hook=partseg_object_hook)
-    try:
-        version = parse_version(metadata["project_version_info"])
-    except KeyError:
-        version = Version("1.0")
+    with contextlib.suppress(KeyError):
+        algorithm_dict["algorithm_name"] = AnalysisAlgorithmSelection[algorithm_dict["algorithm_name"]].get_name()
+
+    metadata = json.loads(tar_file.extractfile(IO_MASK_METADATA_FILE).read(), object_hook=partseg_object_hook)
+
+    version = parse_version(metadata.get("project_version_info", "1.0"))
+
     if version == Version("1.0"):
         seg_dict = np.load(tar_to_buff(tar_file, "segmentation.npz"))
         mask = seg_dict["mask"] if "mask" in seg_dict else None
@@ -287,32 +293,46 @@ def _mask_data_outside_mask(file_path):
     if not isinstance(file_path, str):
         return False
     with tarfile.open(file_path, "r:*") as tar_file:
-        metadata = load_metadata_base(tar_file.extractfile("metadata.json").read().decode("utf8"))
+        metadata = load_metadata_base(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
         return metadata.get("keep_data_outside_mask", False)
 
 
 def load_mask_project(
     load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-    range_changed: typing.Callable[[int, int], typing.Any] = None,
-    step_changed: typing.Callable[[int], typing.Any] = None,
+    range_changed: typing.Callable[[int, int], typing.Any],
+    step_changed: typing.Callable[[int], typing.Any],
     metadata: typing.Optional[dict] = None,
 ):
     data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
     zero_out_cut_area = _mask_data_outside_mask(load_locations[0])
     image = data.image
+    if not isinstance(image, Image):  # pragma: no cover
+        raise ValueError("Image is not instance of Image class.")
+    if data.roi_info.roi is None:  # pragma: no cover
+        raise ValueError("No ROI found in the image.")
     roi = data.roi_info.roi
     components = data.selected_components
     if not components:
         components = list(data.roi_info.bound_info)
     res = []
     base, ext = os.path.splitext(load_locations[0])
+    range_changed(0, len(components))
     str_len = str(len(str(len(components))))
     path_template = base + "_component{:0" + str_len + "d}" + ext
     for i in components:
-        single_roi = roi == i
+        step_changed(i)
+        bound = data.roi_info.bound_info[i]
+        single_roi = roi[tuple(bound.get_slices(data.frame_thickness))] == i
         if not np.any(single_roi):
             continue
-        im = image.cut_image(roi == i, replace_mask=True, zero_out_cut_area=zero_out_cut_area)
+        im = image.cut_image(
+            bound.get_slices(), replace_mask=True, zero_out_cut_area=zero_out_cut_area, frame=data.frame_thickness
+        ).cut_image(
+            single_roi,
+            replace_mask=True,
+            zero_out_cut_area=zero_out_cut_area,
+            frame=data.frame_thickness,
+        )
         im.file_path = path_template.format(i)
         res.append(ProjectTuple(im.file_path, im, mask=im.mask))
     return res
@@ -335,6 +355,16 @@ class LoadMaskSegmentation(LoadBase):
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.List[ProjectTuple]:
+        if range_changed is None:
+
+            def range_changed(_x, _y):
+                return None
+
+        if step_changed is None:
+
+            def step_changed(_):
+                return None
+
         return load_mask_project(load_locations, range_changed, step_changed, metadata)
 
 

@@ -18,6 +18,7 @@ from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from PartSegCore.io_utils import (
+    IO_MASK_METADATA_FILE,
     LoadBase,
     LoadPoints,
     SaveBase,
@@ -90,6 +91,7 @@ class MaskProjectTuple(ProjectInfoBase):
     errors: str = ""
     spacing: typing.Optional[typing.List[float]] = None
     points: typing.Optional[np.ndarray] = None
+    frame_thickness: int = FRAME_THICKNESS
 
     def get_raw_copy(self):
         return MaskProjectTuple(self.file_path, self.image.substitute(mask=None))
@@ -119,6 +121,7 @@ class SaveROIOptions(BaseModel):
         description="When loading data in ROI analysis, if not checked"
         " then data outside ROI will be replaced with zeros.",
     )
+    frame_thickness: int = Field(2, title="Frame thickness", description="Thickness of frame around ROI")
     spacing: typing.List[float] = Field([10**-6, 10**-6, 10**-6], hidden=True)
 
 
@@ -148,6 +151,7 @@ def _save_mask_roi_metadata(
         "shape": project.roi_info.roi.shape,
         "annotations": project.roi_info.annotations,
         "keep_data_outside_mask": not parameters.mask_data,
+        "frame_thickness": parameters.frame_thickness,
     }
     if isinstance(project.image, Image):
         file_path = project.image.file_path
@@ -161,7 +165,7 @@ def _save_mask_roi_metadata(
         else:
             metadata["base_file"] = file_path
     metadata_buff = BytesIO(json.dumps(metadata, cls=PartSegEncoder).encode("utf-8"))
-    metadata_tar = get_tarinfo("metadata.json", metadata_buff)
+    metadata_tar = get_tarinfo(IO_MASK_METADATA_FILE, metadata_buff)
     tar_file.addfile(metadata_tar, metadata_buff)
 
 
@@ -212,7 +216,7 @@ def save_stack_segmentation(
     step_changed=empty_fun,
 ):
     range_changed(0, 7)
-    tar_file, _file_path = open_tar_file(file_data, "w")
+    tar_file, _file_path = open_tar_file(file_data, "w:gz")
     step_changed(1)
     try:
         _save_mask_roi(segmentation_info, tar_file, parameters)
@@ -238,7 +242,7 @@ def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, 
         raise WrongFileTypeException  # pragma: no cover
     files = tar_file.getnames()
     step_changed(1)
-    metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+    metadata = load_metadata(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
     step_changed(2)
     if "segmentation.npy" in files:
         segmentation_file_name = "segmentation.npy"
@@ -296,6 +300,7 @@ def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, 
         roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
         history=history,
         spacing=([10 ** (-9), *list(spacing)]) if spacing is not None else None,
+        frame_thickness=metadata.get("frame_thickness", FRAME_THICKNESS),
     )
 
 
@@ -391,7 +396,7 @@ class LoadROIParameters(LoadBase):
 
         tar_file, _ = open_tar_file(file_data)
         try:
-            project_metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+            project_metadata = load_metadata(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
             parameters = defaultdict(
                 lambda: None,
                 [(int(k), v) for k, v in project_metadata["parameters"].items()],

@@ -61,7 +61,7 @@ from PartSegCore.analysis.calculation_plan import (
 )
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
-from PartSegCore.analysis.measurement_base import AreaType, PerComponent
+from PartSegCore.analysis.measurement_base import has_mask_components, has_roi_components
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import WrongFileTypeException
@@ -575,6 +575,9 @@ class SheetData:
         self.row_list = []
         return self.name, self.data_frame
 
+    def __repr__(self):
+        return f"SheetData(name={self.name}, columns{list(self.columns)[1:]}, wait_rows={len(self.row_list)})"
+
 
 class FileData:
     """
@@ -678,13 +681,8 @@ class FileData:
         main_header = []
         for i, el in enumerate(component_information):
             local_header = []
-            component_seg = False
-            component_mask = False
-            for per_component, area in measurement[i].measurement_profile.get_component_and_area_info():
-                if per_component == PerComponent.Yes and area == AreaType.ROI:
-                    component_seg = True
-                if per_component == PerComponent.Yes and area != AreaType.ROI:
-                    component_mask = True
+            component_seg = has_roi_components(measurement[i].measurement_profile.get_component_and_area_info())
+            component_mask = has_mask_components(measurement[i].measurement_profile.get_component_and_area_info())
             if component_seg:
                 local_header.append(("Segmentation component", "num"))
             if component_mask:
