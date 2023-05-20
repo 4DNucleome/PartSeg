@@ -2,14 +2,19 @@ import operator
 from enum import Enum
 from typing import Optional, Type
 
+import numpy as np
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
+from napari.utils.notifications import show_info
+from pydantic import ValidationError
 from qtpy.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
 from PartSeg.plugins.napari_widgets.utils import NapariFormWidget
+from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
+from PartSegCore.segmentation.watershed import FlowMethodSelection
 from PartSegCore.utils import BaseModel
 
 
@@ -22,6 +27,8 @@ class CompareType(Enum):
 
 
 class AlgModel(BaseModel):
+    layer_name: str = ""
+
     class Config(BaseModel.Config):
         arbitrary_types_allowed = True
 
@@ -39,34 +46,94 @@ class ThresholdModel(AlgModel):
     threshold: ThresholdSelection = ThresholdSelection.get_default()
 
     def run_calculation(self):
-        data = self.data.data
-        mask = self.mask.data if self.mask is not None else None
+        data = np.squeeze(self.data.data)
+        mask = np.squeeze(self.mask.data) if self.mask is not None else None
         if mask is not None and mask.shape != data.shape:
             raise ValueError("Mask shape is different than data shape")
         op = operator.gt if self.operator == CompareType.lower_threshold else operator.lt
-        data = self.threshold.algorithm().calculate_mask(
+        res_data = self.threshold.algorithm().calculate_mask(
             data=data, mask=mask, arguments=self.threshold.values, operator=op
         )[0]
-        return {"data": data, "meta": {"scale": self.data.scale}, "layer_type": "labels"}
+        return {
+            "data": res_data.reshape(self.data.data.shape),
+            "meta": {"scale": self.data.scale, "name": self.layer_name or None},
+            "layer_type": "labels",
+        }
 
 
 class DoubleThresholdModel(ThresholdModel):
     threshold: DoubleThresholdSelection = DoubleThresholdSelection.get_default()
 
 
-class NoiseFilteringModel(AlgModel):
+class NoiseFilterModel(AlgModel):
     data: NapariImage
     noise_filtering: NoiseFilterSelection = NoiseFilterSelection.get_default()
 
     def run_calculation(self):
-        data = self.data.data
-        data = self.noise_filtering.algorithm().noise_filter(
+        data = np.squeeze(self.data.data)
+        res_data = self.noise_filtering.algorithm().noise_filter(
             channel=data, spacing=self.data.scale[-3:], arguments=self.noise_filtering.values
         )
         return {
-            "data": data,
-            "meta": {"scale": self.data.scale, "contrast_limits": self.data.contrast_limits},
+            "data": res_data.reshape(self.data.data.shape),
+            "meta": {
+                "scale": self.data.scale,
+                "contrast_limits": self.data.contrast_limits,
+                "name": self.layer_name or None,
+            },
             "layer_type": "image",
+        }
+
+
+class FlowModel(AlgModel):
+    data: NapariImage
+    flow_area: Layer
+    core_objects: Layer
+    mask: Optional[Labels] = None
+    flow_method: FlowMethodSelection = FlowMethodSelection.get_default()
+
+    def run_calculation(self):
+        data = self.data.data
+        if self.flow_area is self.core_objects:
+            flow_area = self.flow_area.data == 1
+            core_objects = self.flow_area.data == 2
+        else:
+            flow_area = self.flow_area.data
+            core_objects = self.core_objects.data
+        components_num = np.amax(core_objects)
+
+        data = self.flow_method.algorithm().calculate_mask(
+            data=data,
+            sprawl_area=flow_area,
+            core_objects=core_objects,
+            components_num=components_num,
+            arguments=self.flow_method.values,
+            spacing=self.data.scale[-3:],
+        )[0]
+        return {
+            "data": data,
+            "meta": {"scale": self.data.scale},
+            "layer_type": "labels",
+            "name": self.layer_name or None,
+        }
+
+
+class BorderSmoothingModel(AlgModel):
+    data: Labels
+    border_smoothing: SmoothAlgorithmSelection = SmoothAlgorithmSelection.get_default()
+    only_side_connection: bool = True
+
+    def run_calculation(self):
+        data = self.data.data
+        self.border_smoothing.algorithm().smooth(segmentation=np.squeeze(data), arguments=self.border_smoothing.values)
+        return {
+            "data": data.reshape(self.data.data.shape),
+            "meta": {
+                "scale": self.data.scale,
+                "contrast_limits": self.data.contrast_limits,
+                "name": self.layer_name or None,
+            },
+            "layer_type": "labels",
         }
 
 
@@ -91,8 +158,22 @@ class AlgorithmWidgetBase(QWidget):
         self.form.reset_choices(event)
 
     def run_operation(self):
-        res = self.form.get_values().run_calculation()
-        self.napari_viewer.add_layer(Layer.create(**res))
+        try:
+            res = self.form.get_values().run_calculation()
+        except ValidationError:
+            show_info("It looks like not all layers are selected")
+            return
+        layer = Layer.create(**res)
+        if (
+            layer.name in self.napari_viewer.layers
+            and layer.__class__ is self.napari_viewer.layers[layer.name].__class__
+        ):
+            try:
+                self.napari_viewer.layers[layer.name].data = res[0]
+            except Exception:
+                self.napari_viewer.add_layer(layer)
+        else:
+            self.napari_viewer.add_layer(layer)
 
 
 class Threshold(AlgorithmWidgetBase):
@@ -103,5 +184,9 @@ class DoubleThreshold(AlgorithmWidgetBase):
     __data_model__ = DoubleThresholdModel
 
 
-class NoiseFiltering(AlgorithmWidgetBase):
-    __data_model__ = NoiseFilteringModel
+class NoiseFilter(AlgorithmWidgetBase):
+    __data_model__ = NoiseFilterModel
+
+
+class BorderSmooth(AlgorithmWidgetBase):
+    __data_model__ = BorderSmoothingModel

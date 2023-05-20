@@ -2,7 +2,7 @@ from napari_plugin_engine import napari_hook_implementation
 
 from PartSeg._launcher.main_window import PartSegGUILauncher
 from PartSeg.plugins import register as register_plugin
-from PartSeg.plugins.napari_widgets.algorithm_widgets import DoubleThreshold, NoiseFiltering, Threshold
+from PartSeg.plugins.napari_widgets.algorithm_widgets import BorderSmooth, DoubleThreshold, NoiseFilter, Threshold
 from PartSeg.plugins.napari_widgets.colormap_control import ImageColormap
 from PartSeg.plugins.napari_widgets.lables_control import LabelSelector
 from PartSeg.plugins.napari_widgets.mask_create_widget import MaskCreate
@@ -75,4 +75,9 @@ def napari_experimental_provide_dock_widget10():
 
 @napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
 def napari_experimental_provide_dock_widget11():
-    return NoiseFiltering
+    return NoiseFilter
+
+
+@napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
+def napari_experimental_provide_dock_widget12():
+    return BorderSmooth

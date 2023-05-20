@@ -4,6 +4,7 @@ import gc
 import numpy as np
 import pandas as pd
 import pytest
+from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from napari.utils import Colormap
 from qtpy.QtCore import QTimer
@@ -21,6 +22,12 @@ from PartSeg.plugins.napari_widgets import (
     SearchLabel,
     _settings,
 )
+from PartSeg.plugins.napari_widgets.algorithm_widgets import (
+    BorderSmoothingModel,
+    DoubleThresholdModel,
+    NoiseFilterModel,
+    ThresholdModel,
+)
 from PartSeg.plugins.napari_widgets.colormap_control import NapariColormapControl
 from PartSeg.plugins.napari_widgets.lables_control import LabelSelector, NapariLabelShow
 from PartSeg.plugins.napari_widgets.measurement_widget import update_properties
@@ -33,6 +40,9 @@ from PartSegCore.analysis.measurement_calculation import Volume, Voxels
 from PartSegCore.analysis.save_functions import SaveProfilesToJSON
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.segmentation import ROIExtractionResult
+from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
+from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
+from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
 
 
 @pytest.fixture(autouse=True)
@@ -168,10 +178,7 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
             el.value = True
 
     measurement._calculate()
-    for _ in range(10):
-        qtbot.wait(200)
-        if measurement.calculate_btn.enabled:
-            break
+    qtbot.wait_until(lambda: measurement.calculate_btn.enabled)
 
     assert measurement.calculate_btn.enabled
 
@@ -347,3 +354,68 @@ def test_napari_colormap_control(viewer_with_data, qtbot):
     assert viewer_with_data.layers["image"].colormap.name == "gray"
     widget.apply_colormap_btn.click()
     assert viewer_with_data.layers["image"].colormap.name == "custom"
+
+
+@pytest.fixture(params=range(2, 5))
+def ndim_param(request):
+    return request.param
+
+
+@pytest.fixture()
+def napari_image(ndim_param):
+    shape = (1,) * max(ndim_param - 3, 0) + (10,) * min(ndim_param, 3)
+    slice_ = (slice(None),) * max(ndim_param - 3, 0) + (slice(2, 8),) * min(ndim_param, 3)
+    data = np.zeros(shape, dtype=np.uint16)
+    data[slice_] = 10000
+    data[..., 4:-4, 4:-4] = 20000
+    return NapariImage(data)
+
+
+@pytest.fixture()
+def napari_labels(ndim_param):
+    shape = (1,) * max(ndim_param - 3, 0) + (10,) * min(ndim_param, 3)
+    slice_ = (slice(None),) * max(ndim_param - 3, 0) + (slice(2, 8),) * min(ndim_param, 3)
+    data = np.zeros(shape, dtype=np.uint8)
+    data[slice_] = 1
+    data[..., -3, -3] = 0
+    return Labels(data)
+
+
+@pytest.mark.parametrize("algorithm", ThresholdSelection.__register__.values())
+def test_threshold_model(algorithm, napari_image):
+    alg_params = ThresholdSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = ThresholdModel(threshold=alg_params, data=napari_image)
+    assert model.run_calculation()["layer_type"] == "labels"
+
+
+@pytest.mark.parametrize("algorithm", DoubleThresholdSelection.__register__.values())
+def test_double_threshold_model(algorithm, napari_image):
+    alg_params = DoubleThresholdSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = DoubleThresholdModel(threshold=alg_params, data=napari_image)
+    assert model.run_calculation()["layer_type"] == "labels"
+
+
+@pytest.mark.parametrize("algorithm", NoiseFilterSelection.__register__.values())
+def test_noise_filter_model(algorithm, napari_image):
+    alg_params = NoiseFilterSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = NoiseFilterModel(noise_filtering=alg_params, data=napari_image)
+    assert model.run_calculation()["layer_type"] == "image"
+
+
+@pytest.mark.parametrize("algorithm", SmoothAlgorithmSelection.__register__.values())
+def test_border_smoothing_model(algorithm, napari_labels):
+    alg_params = SmoothAlgorithmSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = BorderSmoothingModel(border_smoothing=alg_params, data=napari_labels)
+    assert model.run_calculation()["layer_type"] == "labels"
