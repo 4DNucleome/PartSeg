@@ -26,6 +26,7 @@ from PartSeg.plugins.napari_widgets.algorithm_widgets import (
     BorderSmoothingModel,
     DoubleThresholdModel,
     NoiseFilterModel,
+    Threshold,
     ThresholdModel,
 )
 from PartSeg.plugins.napari_widgets.colormap_control import NapariColormapControl
@@ -421,3 +422,16 @@ def test_border_smoothing_model(algorithm, napari_labels):
     )
     model = BorderSmoothingModel(border_smoothing=alg_params, data=napari_labels)
     assert model.run_calculation()["layer_type"] == "labels"
+
+
+def test_threshold_widget(make_napari_viewer, qtbot, napari_image):
+    viewer = make_napari_viewer()
+    viewer.add_layer(napari_image)
+    widget = Threshold(viewer)
+    viewer.window.add_dock_widget(widget, area="right")
+    assert len(viewer.layers) == 1
+    widget.run_operation()
+    assert len(viewer.layers) == 2
+    assert "Labels" in viewer.layers
+    widget.run_operation()
+    assert len(viewer.layers) == 2

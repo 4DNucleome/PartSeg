@@ -169,7 +169,7 @@ class AlgorithmWidgetBase(QWidget):
             and layer.__class__ is self.napari_viewer.layers[layer.name].__class__
         ):
             try:
-                self.napari_viewer.layers[layer.name].data = res[0]
+                self.napari_viewer.layers[layer.name].data = res["data"]
             except Exception:
                 self.napari_viewer.add_layer(layer)
         else:
