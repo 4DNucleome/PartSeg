@@ -429,6 +429,7 @@ def test_threshold_widget(make_napari_viewer, qtbot, napari_image):
     viewer.add_layer(napari_image)
     widget = Threshold(viewer)
     viewer.window.add_dock_widget(widget, area="right")
+    widget.reset_choices()
     assert len(viewer.layers) == 1
     widget.run_operation()
     assert len(viewer.layers) == 2
