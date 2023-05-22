@@ -167,11 +167,9 @@ class AlgorithmWidgetBase(QWidget):
         if (
             layer.name in self.napari_viewer.layers
             and layer.__class__ is self.napari_viewer.layers[layer.name].__class__
+            and np.array_equal(layer.scale, self.napari_viewer.layers[layer.name].scale)
         ):
-            try:
-                self.napari_viewer.layers[layer.name].data = res["data"]
-            except Exception:
-                self.napari_viewer.add_layer(layer)
+            self.napari_viewer.layers[layer.name].data = res["data"]
         else:
             self.napari_viewer.add_layer(layer)
 

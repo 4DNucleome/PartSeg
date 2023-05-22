@@ -436,3 +436,11 @@ def test_threshold_widget(make_napari_viewer, qtbot, napari_image):
     assert "Labels" in viewer.layers
     widget.run_operation()
     assert len(viewer.layers) == 2
+    del viewer.layers[napari_image.name]
+    assert len(viewer.layers) == 1
+    new_image = NapariImage(
+        np.reshape(napari_image.data, (1, *napari_image.data.shape)), scale=(1, *napari_image.scale)
+    )
+    viewer.add_layer(new_image)
+    widget.run_operation()
+    assert len(viewer.layers) == 3
