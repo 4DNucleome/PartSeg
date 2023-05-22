@@ -29,6 +29,7 @@ jobs:
       os: ${{ matrix.os }}
       napari: "napari417"
       qt_backend: ${{ matrix.qt_backend }}
+      timeout: 10
 
   test-pyqt5:
     name: PyQt5 ${{ matrix.napari }}
@@ -47,3 +48,4 @@ jobs:
       os: "ubuntu-20.04"
       napari: ${{ matrix.napari }}
       qt_backend: ${{ matrix.qt_backend }}
+      timeout: 10
