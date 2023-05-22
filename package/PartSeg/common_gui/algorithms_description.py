@@ -219,10 +219,10 @@ class QtAlgorithmProperty(AlgorithmProperty):
             except ValueError as e:
                 if "None is not a valid choice." in str(e):
                     res = create_widget(annotation=ap.value_type, options=ap.mgi_options)
-                else:
+                else:  # pragma: no cover
                     raise e
 
-        if isinstance(res, EmptyWidget):
+        if isinstance(res, EmptyWidget):  # pragma: no cover
             raise ValueError(f"Unknown type {ap.value_type}")
         return res
 
