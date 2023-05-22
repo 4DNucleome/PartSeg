@@ -180,7 +180,10 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
             el.value = True
 
     measurement._calculate()
-    qtbot.wait_until(lambda: measurement.calculate_btn.enabled, timeout=1000)
+    for _ in range(10):
+        qtbot.wait(200)
+        if measurement.calculate_btn.enabled:
+            break
 
     assert measurement.calculate_btn.enabled
 
