@@ -1,5 +1,6 @@
 import contextlib
 import gc
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -424,7 +425,8 @@ def test_border_smoothing_model(algorithm, napari_labels):
     assert model.run_calculation()["layer_type"] == "labels"
 
 
-def test_threshold_widget(make_napari_viewer, qtbot, napari_image):
+@patch("PartSeg.plugins.napari_widgets.algorithm_widgets.show_info")
+def test_threshold_widget(show_patch, make_napari_viewer, qtbot, napari_image):
     viewer = make_napari_viewer()
     viewer.add_layer(napari_image)
     widget = Threshold(viewer)
@@ -438,6 +440,9 @@ def test_threshold_widget(make_napari_viewer, qtbot, napari_image):
     assert len(viewer.layers) == 2
     del viewer.layers[napari_image.name]
     assert len(viewer.layers) == 1
+    widget.run_operation()
+    assert len(viewer.layers) == 1
+    assert show_patch.called
     new_image = NapariImage(
         np.reshape(napari_image.data, (1, *napari_image.data.shape)), scale=(1, *napari_image.scale)
     )
