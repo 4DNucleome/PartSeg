@@ -379,7 +379,7 @@ scipy==1.10.1
     #   PartSeg (setup.cfg)
     #   napari
     #   scikit-image
-sentry-sdk==1.23.0
+sentry-sdk==1.23.1
     # via PartSeg (setup.cfg)
 shiboken2==5.15.2.1
     # via pyside2
@@ -485,11 +485,11 @@ wrapt==1.15.0
     # via napari
 xlrd==2.0.1
     # via PartSeg (setup.cfg)
-xlsxwriter==3.1.0
+xlsxwriter==3.1.1
     # via PartSeg (setup.cfg)
 zipp==3.15.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==67.7.2
+setuptools==67.8.0
     # via pyinstaller
