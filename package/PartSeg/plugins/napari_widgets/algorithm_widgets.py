@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Optional, Type
 
 import numpy as np
+import SimpleITK as sitk
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
@@ -10,12 +11,14 @@ from napari.utils.notifications import show_info
 from pydantic import ValidationError
 from qtpy.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
+from PartSeg.plugins.napari_widgets._settings import get_settings
 from PartSeg.plugins.napari_widgets.utils import NapariFormWidget
 from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
 from PartSegCore.segmentation.watershed import WatershedSelection
 from PartSegCore.utils import BaseModel
+from PartSegImage.image import minimal_dtype
 
 
 class CompareType(Enum):
@@ -56,7 +59,7 @@ class ThresholdModel(AlgModel):
         )[0]
         return {
             "data": res_data.reshape(self.data.data.shape),
-            "meta": {"scale": self.data.scale, "name": self.layer_name or None},
+            "meta": {"scale": self.data.scale, "name": self.layer_name or "Threshold labels"},
             "layer_type": "labels",
         }
 
@@ -79,7 +82,7 @@ class NoiseFilterModel(AlgModel):
             "meta": {
                 "scale": self.data.scale,
                 "contrast_limits": self.data.contrast_limits,
-                "name": self.layer_name or None,
+                "name": self.layer_name or "Denoised image",
             },
             "layer_type": "image",
         }
@@ -87,39 +90,46 @@ class NoiseFilterModel(AlgModel):
 
 class WatershedModel(AlgModel):
     data: NapariImage
-    flow_area: Layer
-    core_objects: Layer
+    flow_area: Labels
+    core_objects: Labels
     mask: Optional[Labels] = None
     flow_method: WatershedSelection = WatershedSelection.get_default()
     side_connection: bool = True
     operator: CompareType = CompareType.lower_threshold
 
     def run_calculation(self):
-        data = self.data.data
+        data = np.squeeze(self.data.data)
         if self.flow_area is self.core_objects:
-            flow_area = self.flow_area.data == 1
-            core_objects = self.flow_area.data == 2
+            flow_area = np.squeeze(self.flow_area.data == 1).astype(np.uint8)
+            core_objects = sitk.GetArrayFromImage(
+                sitk.ConnectedComponent(sitk.GetImageFromArray(np.squeeze(self.flow_area.data == 2).astype(np.uint8)))
+            )
         else:
-            flow_area = self.flow_area.data
-            core_objects = self.core_objects.data
+            flow_area = np.squeeze(self.flow_area.data)
+            core_objects = np.squeeze(self.core_objects.data)
         components_num = np.amax(core_objects)
+        core_objects = core_objects.astype(minimal_dtype(components_num))
         op = operator.gt if self.operator == CompareType.lower_threshold else operator.lt
 
-        data = self.flow_method.algorithm().calculate_mask(
+        data = self.flow_method.algorithm().sprawl(
             data=data,
             sprawl_area=flow_area,
             core_objects=core_objects,
             components_num=components_num,
             arguments=self.flow_method.values,
-            spacing=self.data.scale[-3:],
+            spacing=self.flow_area.scale[-3:],
             side_connection=self.side_connection,
             operator=op,
+            lower_bound=0,
+            upper_bound=0,
         )
         return {
-            "data": data,
-            "meta": {"scale": self.data.scale},
+            "data": data.reshape(self.flow_area.data.shape),
+            "meta": {
+                "scale": self.flow_area.scale,
+                "name": self.layer_name or "Watershed",
+            },
             "layer_type": "labels",
-            "name": self.layer_name or None,
         }
 
 
@@ -130,13 +140,52 @@ class BorderSmoothingModel(AlgModel):
 
     def run_calculation(self):
         data = self.data.data
-        self.border_smoothing.algorithm().smooth(segmentation=np.squeeze(data), arguments=self.border_smoothing.values)
+        res_data = self.border_smoothing.algorithm().smooth(
+            segmentation=np.squeeze(data), arguments=self.border_smoothing.values
+        )
         return {
-            "data": data.reshape(self.data.data.shape),
+            "data": res_data.reshape(self.data.data.shape),
             "meta": {
                 "scale": self.data.scale,
-                "contrast_limits": self.data.contrast_limits,
-                "name": self.layer_name or None,
+                "name": self.layer_name or "Border smoothed",
+            },
+            "layer_type": "labels",
+        }
+
+
+class ConnectedComponentsModel(AlgModel):
+    data: NapariImage
+    side_connection: bool = True
+    minimum_size: int = 20
+
+    def run_calculation(self):
+        data = np.squeeze(self.data.data)
+        res_data = sitk.GetArrayFromImage(
+            sitk.RelabelComponent(
+                sitk.ConnectedComponent(sitk.GetImageFromArray(data), self.side_connection),
+                self.minimum_size,
+            )
+        )
+        return {
+            "data": res_data.reshape(self.data.data.shape),
+            "meta": {
+                "scale": self.data.scale,
+                "name": self.layer_name or "Connected components",
+            },
+            "layer_type": "labels",
+        }
+
+
+class SplitCoreObjectsModel(AlgModel):
+    data: Labels
+
+    def run_calculation(self):
+        res_data = (self.data.data >= 2).astype(np.uint8)
+        return {
+            "data": res_data,
+            "meta": {
+                "scale": self.data.scale,
+                "name": self.layer_name or "Core objects",
             },
             "layer_type": "labels",
         }
@@ -147,12 +196,14 @@ class AlgorithmWidgetBase(QWidget):
 
     def __init__(self, napari_viewer: Viewer, parent=None):
         super().__init__(parent)
+        self.settings = get_settings()
         self.napari_viewer = napari_viewer
 
         self.run_button = QPushButton("Run")
         self.run_button.clicked.connect(self.run_operation)
 
         self.form = NapariFormWidget(self.__data_model__)
+        self.form.set_values(self.settings.get(f"widgets.{self.__class__.__name__}", {}))
 
         layout = QVBoxLayout()
         layout.addWidget(self.form)
@@ -177,6 +228,8 @@ class AlgorithmWidgetBase(QWidget):
             self.napari_viewer.layers[layer.name].data = res["data"]
         else:
             self.napari_viewer.add_layer(layer)
+        self.settings.set(f"widgets.{self.__class__.__name__}", dict(self.form.get_values()))
+        self.settings.dump()
 
 
 class Threshold(AlgorithmWidgetBase):
@@ -193,3 +246,15 @@ class NoiseFilter(AlgorithmWidgetBase):
 
 class BorderSmooth(AlgorithmWidgetBase):
     __data_model__ = BorderSmoothingModel
+
+
+class Watershed(AlgorithmWidgetBase):
+    __data_model__ = WatershedModel
+
+
+class ConnectedComponents(AlgorithmWidgetBase):
+    __data_model__ = ConnectedComponentsModel
+
+
+class SplitCoreObjects(AlgorithmWidgetBase):
+    __data_model__ = SplitCoreObjectsModel

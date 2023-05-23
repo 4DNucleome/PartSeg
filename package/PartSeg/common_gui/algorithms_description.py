@@ -210,7 +210,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return res
 
     @classmethod
-    def _get_field_magicgui(cls, ap: AlgorithmProperty):
+    def _get_field_magicgui(cls, ap: AlgorithmProperty) -> Widget:
         if isinstance(ap.default_value, UndefinedType) or ap.default_value is Ellipsis:
             res = create_widget(annotation=ap.value_type, options=ap.mgi_options)
         else:
@@ -236,7 +236,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             self.per_dimension = True
             res = ListInput(prop, 3)
         elif not inspect.isclass(self.value_type):
-            res = create_widget(value=self.default_value, annotation=self.value_type, options=self.mgi_options)
+            res = self._get_field_magicgui(self)
         elif hasattr(self.value_type, "get_object"):
             res = self.value_type.get_object()
         else:
