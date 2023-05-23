@@ -438,7 +438,7 @@ def test_threshold_widget(show_patch, make_napari_viewer, qtbot, napari_image):
     assert len(viewer.layers) == 1
     widget.run_operation()
     assert len(viewer.layers) == 2
-    assert "Labels" in viewer.layers
+    assert "Threshold labels" in viewer.layers
     widget.run_operation()
     assert len(viewer.layers) == 2
     del viewer.layers[napari_image.name]
