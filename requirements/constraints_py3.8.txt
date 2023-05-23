@@ -373,7 +373,7 @@ qtpy==2.3.1
     #   qtawesome
     #   qtconsole
     #   superqt
-requests==2.30.0
+requests==2.31.0
     # via
     #   PartSeg (setup.cfg)
     #   sphinx
