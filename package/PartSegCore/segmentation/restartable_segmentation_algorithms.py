@@ -30,7 +30,7 @@ from PartSegCore.segmentation.threshold import (
     SingleThresholdParams,
     ThresholdSelection,
 )
-from PartSegCore.segmentation.watershed import BaseWatershed, FlowMethodSelection, calculate_distances_array, get_neigh
+from PartSegCore.segmentation.watershed import BaseWatershed, WatershedSelection, calculate_distances_array, get_neigh
 from PartSegCore.universal_const import Units
 from PartSegCore.utils import BaseModel, bisect
 from PartSegCore_compiled_backend.multiscale_opening import PyMSO, calculate_mu_mid
@@ -462,7 +462,7 @@ class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("sprawl_type", "flow_type"))])
 class BaseThresholdFlowAlgorithmParameters(ThresholdBaseAlgorithmParameters):
     threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), position=2)
-    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default(), position=3)
+    flow_type: WatershedSelection = Field(WatershedSelection.get_default(), position=3)
     minimum_size: int = Field(8000, title="Minimum core\nsize (px)", ge=0, le=10**6)
     remove_object_touching_border: bool = Field(
         False, title="Remove objects\ntouching border", description="Remove objects touching border"
@@ -539,7 +539,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
                 return self.prepare_result(self.finally_segment)
-            path_sprawl: BaseWatershed = FlowMethodSelection[self.new_parameters.flow_type.name]
+            path_sprawl: BaseWatershed = WatershedSelection[self.new_parameters.flow_type.name]
             self.parameters["flow_type"] = self.new_parameters.flow_type
             new_segment = path_sprawl.sprawl(
                 self.sprawl_area,

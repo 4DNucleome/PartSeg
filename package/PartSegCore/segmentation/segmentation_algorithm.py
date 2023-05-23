@@ -16,7 +16,7 @@ from PartSegCore.segmentation.border_smoothing import NoneSmoothing, OpeningSmoo
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import BaseThreshold, DoubleThresholdSelection, ThresholdSelection
 from PartSegCore.segmentation.utils import close_small_holes
-from PartSegCore.segmentation.watershed import BaseWatershed, FlowMethodSelection
+from PartSegCore.segmentation.watershed import BaseWatershed, WatershedSelection
 from PartSegCore.utils import BaseModel, bisect
 from PartSegImage import Channel
 from PartSegImage.image import minimal_dtype
@@ -259,7 +259,7 @@ class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("sprawl_type", "flow_type"))])
 class ThresholdFlowAlgorithmParameters(BaseThresholdAlgorithmParameters):
     threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default())
-    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default())
+    flow_type: WatershedSelection = Field(WatershedSelection.get_default())
 
 
 class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
@@ -304,7 +304,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
         )
 
         report_fun("Flow calculation", 5)
-        sprawl_algorithm: BaseWatershed = FlowMethodSelection[self.new_parameters.flow_type.name]
+        sprawl_algorithm: BaseWatershed = WatershedSelection[self.new_parameters.flow_type.name]
         segmentation = sprawl_algorithm.sprawl(
             mask,
             core_objects,
@@ -374,7 +374,7 @@ class CellFromNucleusFlowParameters(BaseModel):
     cell_channel: Channel = Field(0, title="Cell Channel")
     cell_noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     cell_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Threshold")
-    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default(), title="Flow type")
+    flow_type: WatershedSelection = Field(WatershedSelection.get_default(), title="Flow type")
     close_holes: bool = Field(True, title="Fill holes")
     close_holes_size: int = Field(200, title="Maximum holes size (px)", ge=0, le=10**5)
     smooth_border: SmoothAlgorithmSelection = Field(SmoothAlgorithmSelection.get_default(), title="Smooth borders")
@@ -425,7 +425,7 @@ class CellFromNucleusFlow(StackAlgorithm):
         )
 
         report_fun("Flow calculation", 5)
-        sprawl_algorithm: BaseWatershed = FlowMethodSelection[self.new_parameters.flow_type.name]
+        sprawl_algorithm: BaseWatershed = WatershedSelection[self.new_parameters.flow_type.name]
         mean_brightness = np.mean(cell_channel[cell_mask > 0])
         if mean_brightness < cell_thr:
             mean_brightness = cell_thr + 10

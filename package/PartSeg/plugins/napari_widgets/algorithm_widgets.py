@@ -14,7 +14,7 @@ from PartSeg.plugins.napari_widgets.utils import NapariFormWidget
 from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
-from PartSegCore.segmentation.watershed import FlowMethodSelection
+from PartSegCore.segmentation.watershed import WatershedSelection
 from PartSegCore.utils import BaseModel
 
 
@@ -85,12 +85,14 @@ class NoiseFilterModel(AlgModel):
         }
 
 
-class FlowModel(AlgModel):
+class WatershedModel(AlgModel):
     data: NapariImage
     flow_area: Layer
     core_objects: Layer
     mask: Optional[Labels] = None
-    flow_method: FlowMethodSelection = FlowMethodSelection.get_default()
+    flow_method: WatershedSelection = WatershedSelection.get_default()
+    side_connection: bool = True
+    operator: CompareType = CompareType.lower_threshold
 
     def run_calculation(self):
         data = self.data.data
@@ -101,6 +103,7 @@ class FlowModel(AlgModel):
             flow_area = self.flow_area.data
             core_objects = self.core_objects.data
         components_num = np.amax(core_objects)
+        op = operator.gt if self.operator == CompareType.lower_threshold else operator.lt
 
         data = self.flow_method.algorithm().calculate_mask(
             data=data,
@@ -109,7 +112,9 @@ class FlowModel(AlgModel):
             components_num=components_num,
             arguments=self.flow_method.values,
             spacing=self.data.scale[-3:],
-        )[0]
+            side_connection=self.side_connection,
+            operator=op,
+        )
         return {
             "data": data,
             "meta": {"scale": self.data.scale},
