@@ -88,35 +88,45 @@ class NoiseFilterModel(AlgModel):
         }
 
 
+def make_3d(data: np.ndarray):
+    if data.ndim > 3:
+        data = np.squeeze(data)
+    if data.ndim == 2:
+        return data.reshape((1, *data.shape))
+    if data.ndim != 3:
+        raise ValueError(f"Wrong data dimensionality with shape {data.shape}")
+    return data
+
+
 class WatershedModel(AlgModel):
     data: NapariImage
     flow_area: Labels
     core_objects: Labels
     mask: Optional[Labels] = None
-    flow_method: WatershedSelection = WatershedSelection.get_default()
+    watershed: WatershedSelection = WatershedSelection.get_default()
     side_connection: bool = True
     operator: CompareType = CompareType.lower_threshold
 
     def run_calculation(self):
-        data = np.squeeze(self.data.data)
+        data = make_3d(self.data.data)
         if self.flow_area is self.core_objects:
-            flow_area = np.squeeze(self.flow_area.data == 1).astype(np.uint8)
+            flow_area = make_3d(self.flow_area.data == 1).astype(np.uint8)
             core_objects = sitk.GetArrayFromImage(
-                sitk.ConnectedComponent(sitk.GetImageFromArray(np.squeeze(self.flow_area.data == 2).astype(np.uint8)))
+                sitk.ConnectedComponent(sitk.GetImageFromArray(make_3d(self.flow_area.data == 2).astype(np.uint8)))
             )
         else:
-            flow_area = np.squeeze(self.flow_area.data)
-            core_objects = np.squeeze(self.core_objects.data)
+            flow_area = make_3d(self.flow_area.data)
+            core_objects = make_3d(self.core_objects.data)
         components_num = np.amax(core_objects)
         core_objects = core_objects.astype(minimal_dtype(components_num))
         op = operator.gt if self.operator == CompareType.lower_threshold else operator.lt
 
-        data = self.flow_method.algorithm().sprawl(
+        data = self.watershed.algorithm().sprawl(
             data=data,
             sprawl_area=flow_area,
             core_objects=core_objects,
             components_num=components_num,
-            arguments=self.flow_method.values,
+            arguments=self.watershed.values,
             spacing=self.flow_area.scale[-3:],
             side_connection=self.side_connection,
             operator=op,
@@ -154,7 +164,7 @@ class BorderSmoothingModel(AlgModel):
 
 
 class ConnectedComponentsModel(AlgModel):
-    data: NapariImage
+    data: Labels
     side_connection: bool = True
     minimum_size: int = 20
 

@@ -1,10 +1,12 @@
 import contextlib
 import gc
+import json
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
+from local_migrator import object_hook
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from napari.utils import Colormap
@@ -23,12 +25,16 @@ from PartSeg.plugins.napari_widgets import (
     SearchLabel,
     _settings,
 )
+from PartSeg.plugins.napari_widgets._settings import PartSegNapariEncoder
 from PartSeg.plugins.napari_widgets.algorithm_widgets import (
     BorderSmoothingModel,
+    ConnectedComponentsModel,
     DoubleThresholdModel,
     NoiseFilterModel,
+    SplitCoreObjectsModel,
     Threshold,
     ThresholdModel,
+    WatershedModel,
 )
 from PartSeg.plugins.napari_widgets.colormap_control import NapariColormapControl
 from PartSeg.plugins.napari_widgets.lables_control import LabelSelector, NapariLabelShow
@@ -45,6 +51,7 @@ from PartSegCore.segmentation import ROIExtractionResult
 from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
+from PartSegCore.segmentation.watershed import WatershedSelection
 
 
 @pytest.fixture(autouse=True)
@@ -383,6 +390,7 @@ def napari_labels(ndim_param):
     data = np.zeros(shape, dtype=np.uint8)
     data[slice_] = 1
     data[..., -3, -3] = 0
+    data[..., 5, 5] = 2
     return Labels(data)
 
 
@@ -428,6 +436,21 @@ def test_border_smoothing_model(algorithm, napari_labels):
     assert model.run_calculation()["layer_type"] == "labels"
 
 
+@pytest.mark.parametrize("algorithm", WatershedSelection.__register__.values())
+def test_watershed_model(algorithm, napari_image, napari_labels):
+    alg_params = WatershedSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = WatershedModel(
+        watershed=alg_params,
+        data=napari_image,
+        flow_area=napari_labels,
+        core_objects=napari_labels,
+    )
+    assert model.run_calculation()["layer_type"] == "labels"
+
+
 @patch("PartSeg.plugins.napari_widgets.algorithm_widgets.show_info")
 def test_threshold_widget(show_patch, make_napari_viewer, qtbot, napari_image):
     viewer = make_napari_viewer()
@@ -452,3 +475,20 @@ def test_threshold_widget(show_patch, make_napari_viewer, qtbot, napari_image):
     viewer.add_layer(new_image)
     widget.run_operation()
     assert len(viewer.layers) == 3
+
+
+def test_part_seg_napari_encoder(napari_image):
+    thr = ThresholdModel(data=napari_image)
+    res_str = json.dumps(dict(thr), cls=PartSegNapariEncoder)
+    res = json.loads(res_str, object_hook=object_hook)
+    assert res["data"] == napari_image.name
+
+
+def test_connected_components_model(napari_labels):
+    model = ConnectedComponentsModel(data=napari_labels)
+    assert model.run_calculation()["layer_type"] == "labels"
+
+
+def test_split_core_objects_model(napari_labels):
+    model = SplitCoreObjectsModel(data=napari_labels)
+    assert model.run_calculation()["layer_type"] == "labels"

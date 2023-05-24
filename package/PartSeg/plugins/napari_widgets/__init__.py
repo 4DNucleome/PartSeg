@@ -4,7 +4,7 @@ from PartSeg._launcher.main_window import PartSegGUILauncher
 from PartSeg.plugins import register as register_plugin
 from PartSeg.plugins.napari_widgets.algorithm_widgets import (
     BorderSmooth,
-    ConnectedComponentsModel,
+    ConnectedComponents,
     DoubleThreshold,
     NoiseFilter,
     SplitCoreObjects,
@@ -98,7 +98,7 @@ def napari_experimental_provide_dock_widget13():
 
 @napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
 def napari_experimental_provide_dock_widget14():
-    return ConnectedComponentsModel
+    return ConnectedComponents
 
 
 @napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
