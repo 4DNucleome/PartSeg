@@ -1,9 +1,13 @@
 import contextlib
 import gc
+import json
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
+from local_migrator import object_hook
+from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from napari.utils import Colormap
 from qtpy.QtCore import QTimer
@@ -21,6 +25,17 @@ from PartSeg.plugins.napari_widgets import (
     SearchLabel,
     _settings,
 )
+from PartSeg.plugins.napari_widgets._settings import PartSegNapariEncoder
+from PartSeg.plugins.napari_widgets.algorithm_widgets import (
+    BorderSmoothingModel,
+    ConnectedComponentsModel,
+    DoubleThresholdModel,
+    NoiseFilterModel,
+    SplitCoreObjectsModel,
+    Threshold,
+    ThresholdModel,
+    WatershedModel,
+)
 from PartSeg.plugins.napari_widgets.colormap_control import NapariColormapControl
 from PartSeg.plugins.napari_widgets.lables_control import LabelSelector, NapariLabelShow
 from PartSeg.plugins.napari_widgets.measurement_widget import update_properties
@@ -33,6 +48,10 @@ from PartSegCore.analysis.measurement_calculation import Volume, Voxels
 from PartSegCore.analysis.save_functions import SaveProfilesToJSON
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.segmentation import ROIExtractionResult
+from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
+from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
+from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
+from PartSegCore.segmentation.watershed import WatershedSelection
 
 
 @pytest.fixture(autouse=True)
@@ -347,3 +366,129 @@ def test_napari_colormap_control(viewer_with_data, qtbot):
     assert viewer_with_data.layers["image"].colormap.name == "gray"
     widget.apply_colormap_btn.click()
     assert viewer_with_data.layers["image"].colormap.name == "custom"
+
+
+@pytest.fixture(params=range(2, 5))
+def ndim_param(request):
+    return request.param
+
+
+@pytest.fixture()
+def napari_image(ndim_param):
+    shape = (1,) * max(ndim_param - 3, 0) + (10,) * min(ndim_param, 3)
+    slice_ = (slice(None),) * max(ndim_param - 3, 0) + (slice(2, 8),) * min(ndim_param, 3)
+    data = np.zeros(shape, dtype=np.uint16)
+    data[slice_] = 10000
+    data[(0,) * (ndim_param - 2) + (slice(4, 6), slice(4, 6))] = 20000
+    return NapariImage(data)
+
+
+@pytest.fixture()
+def napari_labels(ndim_param):
+    shape = (1,) * max(ndim_param - 3, 0) + (10,) * min(ndim_param, 3)
+    slice_ = (slice(None),) * max(ndim_param - 3, 0) + (slice(2, 8),) * min(ndim_param, 3)
+    data = np.zeros(shape, dtype=np.uint8)
+    data[slice_] = 1
+    data[..., -3, -3] = 0
+    data[..., 5, 5] = 2
+    return Labels(data)
+
+
+@pytest.mark.parametrize("algorithm", ThresholdSelection.__register__.values())
+def test_threshold_model(algorithm, napari_image):
+    if algorithm.get_name() == "Kittler Illingworth":
+        pytest.skip("Kittler Illingworth is not working properly")
+    alg_params = ThresholdSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = ThresholdModel(threshold=alg_params, data=napari_image)
+    assert model.run_calculation()["layer_type"] == "labels"
+
+
+@pytest.mark.parametrize("algorithm", DoubleThresholdSelection.__register__.values())
+def test_double_threshold_model(algorithm, napari_image):
+    alg_params = DoubleThresholdSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = DoubleThresholdModel(threshold=alg_params, data=napari_image)
+    assert model.run_calculation()["layer_type"] == "labels"
+
+
+@pytest.mark.parametrize("algorithm", NoiseFilterSelection.__register__.values())
+def test_noise_filter_model(algorithm, napari_image):
+    alg_params = NoiseFilterSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = NoiseFilterModel(noise_filtering=alg_params, data=napari_image)
+    assert model.run_calculation()["layer_type"] == "image"
+
+
+@pytest.mark.parametrize("algorithm", SmoothAlgorithmSelection.__register__.values())
+def test_border_smoothing_model(algorithm, napari_labels):
+    alg_params = SmoothAlgorithmSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = BorderSmoothingModel(border_smoothing=alg_params, data=napari_labels)
+    assert model.run_calculation()["layer_type"] == "labels"
+
+
+@pytest.mark.parametrize("algorithm", WatershedSelection.__register__.values())
+def test_watershed_model(algorithm, napari_image, napari_labels):
+    alg_params = WatershedSelection(
+        name=algorithm.get_name(),
+        values=algorithm.__argument_class__(),
+    )
+    model = WatershedModel(
+        watershed=alg_params,
+        data=napari_image,
+        flow_area=napari_labels,
+        core_objects=napari_labels,
+    )
+    assert model.run_calculation()["layer_type"] == "labels"
+
+
+@patch("PartSeg.plugins.napari_widgets.algorithm_widgets.show_info")
+def test_threshold_widget(show_patch, make_napari_viewer, qtbot, napari_image):
+    viewer = make_napari_viewer()
+    viewer.add_layer(napari_image)
+    widget = Threshold(viewer)
+    viewer.window.add_dock_widget(widget, area="right")
+    widget.reset_choices()
+    assert len(viewer.layers) == 1
+    widget.run_operation()
+    assert len(viewer.layers) == 2
+    assert "Threshold labels" in viewer.layers
+    widget.run_operation()
+    assert len(viewer.layers) == 2
+    del viewer.layers[napari_image.name]
+    assert len(viewer.layers) == 1
+    widget.run_operation()
+    assert len(viewer.layers) == 1
+    assert show_patch.called
+    new_image = NapariImage(
+        np.reshape(napari_image.data, (1, *napari_image.data.shape)), scale=(1, *napari_image.scale)
+    )
+    viewer.add_layer(new_image)
+    widget.run_operation()
+    assert len(viewer.layers) == 3
+
+
+def test_part_seg_napari_encoder(napari_image):
+    thr = ThresholdModel(data=napari_image)
+    res_str = json.dumps(dict(thr), cls=PartSegNapariEncoder)
+    res = json.loads(res_str, object_hook=object_hook)
+    assert res["data"] == napari_image.name
+
+
+def test_connected_components_model(napari_labels):
+    model = ConnectedComponentsModel(data=napari_labels)
+    assert model.run_calculation()["layer_type"] == "labels"
+
+
+def test_split_core_objects_model(napari_labels):
+    model = SplitCoreObjectsModel(data=napari_labels)
+    assert model.run_calculation()["layer_type"] == "labels"

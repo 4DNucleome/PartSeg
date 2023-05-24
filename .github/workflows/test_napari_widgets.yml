@@ -22,12 +22,14 @@ jobs:
       fail-fast: false
       matrix:
         qt_backend: ["PyQt5", "PySide2"]
+        os: ["ubuntu-20.04"]
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: "3.10"
-      os: "ubuntu-latest"
+      os: ${{ matrix.os }}
       napari: "napari417"
       qt_backend: ${{ matrix.qt_backend }}
+      timeout: 10
 
   test-pyqt5:
     name: PyQt5 ${{ matrix.napari }}
@@ -46,3 +48,4 @@ jobs:
       os: "ubuntu-20.04"
       napari: ${{ matrix.napari }}
       qt_backend: ${{ matrix.qt_backend }}
+      timeout: 10

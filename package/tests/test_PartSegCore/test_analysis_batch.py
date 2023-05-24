@@ -4,7 +4,6 @@ import os
 import shutil
 import sys
 import time
-import warnings
 from glob import glob
 from itertools import dropwhile
 from typing import Callable
@@ -421,9 +420,7 @@ def mask_operation_plan(request, simple_measurement_list):
 
 def wait_for_calculation(manager):
     for _ in range(int(120 / 0.1)):
-        res = manager.get_results()
-        if res.errors:
-            warnings.warn(str(res.errors), stacklevel=1)  # pragma: no cover
+        manager.get_results()
         if manager.has_work:
             time.sleep(0.1)
         else:

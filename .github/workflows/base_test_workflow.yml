@@ -28,6 +28,10 @@ on:
         required: false
         type: boolean
         default: False
+      timeout:
+        required: false
+        type: number
+        default: 60
 
 
 jobs:
@@ -76,7 +80,7 @@ jobs:
 
       - name: Test with tox
         uses: aganders3/headless-gui@v1
-        timeout-minutes: 60
+        timeout-minutes: ${{ inputs.timeout }}
         with:
           run: python -m tox ${{ inputs.tox_args }}
         env:

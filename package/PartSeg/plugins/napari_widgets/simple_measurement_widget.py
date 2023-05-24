@@ -34,6 +34,7 @@ class SimpleMeasurement(Container):
         self.calculate_btn = PushButton(text="Calculate")
         self.margins = (0, 0, 0, 0)
         self.measurement_result: Optional[MeasurementResult] = None
+        self.worker = None
 
         options_layout = HBox(
             widgets=(
@@ -86,6 +87,7 @@ class SimpleMeasurement(Container):
         worker.returned.connect(self._calculate_next)
         worker.errored.connect(self._finished)
         worker.start()
+        self.worker = worker
         self.calculate_btn.enabled = False
 
     def _calculate_next(self, data):
@@ -109,6 +111,7 @@ class SimpleMeasurement(Container):
 
     def _finished(self):
         self.calculate_btn.enabled = True
+        self.worker = None
 
     def _clean_measurements(self):
         selected = set()

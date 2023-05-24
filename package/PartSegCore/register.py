@@ -61,8 +61,8 @@ class RegisterEnum(Enum):
 
 # noinspection DuplicatedCode
 register_dict = {
-    RegisterEnum.flow: watershed.FlowMethodSelection.__register__,
-    RegisterEnum.sprawl: watershed.FlowMethodSelection.__register__,
+    RegisterEnum.flow: watershed.WatershedSelection.__register__,
+    RegisterEnum.sprawl: watershed.WatershedSelection.__register__,
     RegisterEnum.threshold: threshold.ThresholdSelection.__register__,
     RegisterEnum.noise_filtering: noise_filtering.NoiseFilterSelection.__register__,
     RegisterEnum.analysis_algorithm: analysis_algorithm_description.AnalysisAlgorithmSelection.__register__,
