@@ -2,13 +2,11 @@ import os
 from typing import Any, Optional
 
 import numpy as np
-from napari_plugin_engine import napari_hook_implementation
 
 from PartSegImage import Image, ImageWriter
 from PartSegImage.image import DEFAULT_SCALE_FACTOR
 
 
-@napari_hook_implementation
 def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
     ext = os.path.splitext(path)[1]
     if not isinstance(data, np.ndarray) or ext not in {".tiff", ".tif", ".TIFF", ".TIF"}:
@@ -26,7 +24,6 @@ def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
     return path
 
 
-@napari_hook_implementation
 def napari_write_image(path: str, data: Any, meta: dict) -> Optional[str]:
     ext = os.path.splitext(path)[1]
     if not isinstance(data, np.ndarray) or ext not in {".tiff", ".tif", ".TIFF", ".TIF"}:

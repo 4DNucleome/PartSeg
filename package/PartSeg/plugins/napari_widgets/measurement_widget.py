@@ -10,6 +10,7 @@ from qtpy.QtWidgets import QCheckBox, QLabel, QTabWidget
 from PartSeg._roi_analysis.advanced_window import MeasurementSettings
 from PartSeg._roi_analysis.measurement_widget import NO_MEASUREMENT_STRING, FileNamesEnum, MeasurementWidgetBase
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
+from PartSeg.plugins import register as register_plugins
 from PartSeg.plugins.napari_widgets._settings import get_settings
 from PartSeg.plugins.napari_widgets.utils import NapariFormDialog, generate_image
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
@@ -118,6 +119,7 @@ class Measurement(QTabWidget):
         self.measurement_settings = NapariMeasurementSettings(self.settings)
         self.addTab(self.measurement_widget, "Measurements")
         self.addTab(self.measurement_settings, "Measurements settings")
+        register_plugins()
 
     def reset_choices(self, event=None):
         self.measurement_widget.reset_choices()
