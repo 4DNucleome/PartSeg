@@ -107,7 +107,10 @@ where area of interest is defined by positive value and core objects (start for 
 
 ### Watershed for watershed segmentation
 
-![Watershed](https://github.com/4DNucleome/PartSeg/assets/3826210/2a03b040-cb77-4ad2-a263-0bf25b2d0384)
+![Watershed widget](https://github.com/4DNucleome/PartSeg/assets/3826210/1f42254b-9d58-499d-9306-9bac228ab4d2)
+
+Part of the flow methods require information if the central object is brighter or darker than the area to split.
+Examples of such methods are MSO and Path.
 
 ## Helpful widgets
 
