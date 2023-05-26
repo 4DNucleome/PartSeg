@@ -17,11 +17,11 @@ contributions:
   - id: PartSeg.load_mask_project
     title: Get Reader
     python_name: PartSegCore.napari_plugins.load_mask_project:napari_get_reader
-  - id: PartSeg.write_labels_2
+  - id: PartSeg.save_mask_roi
     title: Write Labels
     python_name: PartSegCore.napari_plugins.save_mask_roi:napari_write_labels
-  - id: PartSeg.get_reader_4
-    title: Get Reader
+  - id: PartSeg.load_masked_image
+    title: Get Reader for image with mask
     python_name: PartSegCore.napari_plugins.load_masked_image:napari_get_reader
   - id: PartSeg.SimpleMeasurement
     title: Create Simple Measurement
@@ -163,9 +163,14 @@ contributions:
     - '*.seg'
     - '*.tgz'
     accepts_directories: false
-  - command: PartSeg.get_reader_4
+  - command: PartSeg.load_masked_image
     filename_patterns:
-    - '*'
+    - '*.tif'
+    - '*.tiff'
+    - '*.lsm'
+    - '*.czi'
+    - '*.oib'
+    - '*.oif'
     accepts_directories: true
   - command: PartSeg.get_reader_5
     filename_patterns:
@@ -188,17 +193,17 @@ contributions:
     layer_types:
     - image
     filename_extensions: ["*.tif", "*.tiff"]
-    display_name: image
+    display_name: Image as tiff
   - command: PartSeg.write_tiff_labels
     layer_types:
     - labels
     filename_extensions: ["*.tif", "*.tiff"]
-    display_name: labels
-  - command: PartSeg.write_labels_2
+    display_name: Labels as tiff
+  - command: PartSeg.save_mask_roi
     layer_types:
     - labels
-    filename_extensions: []
-    display_name: labels
+    filename_extensions: ["*.seg", "*.tgz"]
+    display_name: PartSeg mask roi
   - command: PartSeg.write_image_2
     layer_types:
     - image
