@@ -129,7 +129,7 @@ packages = itertools.chain(
     pkg_resources.iter_entry_points("partsegcore.plugins"),
 )
 
-plugins_data = []
+plugins_data = [(os.path.join(base_path, "napari.yaml"), ".")]
 
 for package in packages:
     module = package.load()
