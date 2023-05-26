@@ -32,6 +32,8 @@ def import_config():
     possible_folders = glob(os.path.join(base_folder, "*"))
     versions = []
     for folder in possible_folders:
+        if os.path.basename(folder) == "napari":
+            continue
         with contextlib.suppress(packaging.version.InvalidVersion):
             version = packaging.version.parse(os.path.basename(folder))
             if isinstance(version, packaging.version.Version):

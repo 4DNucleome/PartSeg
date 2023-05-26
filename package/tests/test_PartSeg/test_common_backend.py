@@ -431,6 +431,7 @@ class TestLoadBackup:
         (tmp_path / "0.13.12_").mkdir()
         (tmp_path / "0.13.11_test").mkdir()
         (tmp_path / "buka").mkdir()
+        (tmp_path / "napari").mkdir()
 
         load_backup.import_config()
 
