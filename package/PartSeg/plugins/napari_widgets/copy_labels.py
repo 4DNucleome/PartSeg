@@ -64,8 +64,8 @@ class CopyLabelsWidget(QWidget):
             self._update_items(label_layer)
         self.setVisible(is_labels)
         if is_labels:
-            label_layer.events.set_data.connect(self.debouncer.throttle)
-            label_layer.events.selected_label.connect(self._shallow_update)
+            label_layer.events.set_data.connect(self._shallow_update)
+            label_layer.events.selected_label.connect(self.debouncer.throttle)
 
     def _shallow_update(self, event):
         label_num = event.source.selected_label

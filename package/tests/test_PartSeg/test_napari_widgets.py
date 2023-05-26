@@ -26,7 +26,6 @@ from PartSeg.plugins.napari_widgets import (
     SearchLabel,
     _settings,
 )
-from PartSeg.plugins.napari_widgets._settings import PartSegNapariEncoder
 from PartSeg.plugins.napari_widgets.algorithm_widgets import (
     BorderSmoothingModel,
     ConnectedComponentsModel,
@@ -480,7 +479,7 @@ def test_threshold_widget(show_patch, make_napari_viewer, qtbot, napari_image):
 
 def test_part_seg_napari_encoder(napari_image):
     thr = ThresholdModel(data=napari_image)
-    res_str = json.dumps(dict(thr), cls=PartSegNapariEncoder)
+    res_str = json.dumps(dict(thr), cls=_settings.PartSegNapariEncoder)
     res = json.loads(res_str, object_hook=object_hook)
     assert res["data"] == napari_image.name
 
@@ -530,6 +529,7 @@ class TestCopyLabels:
         copy_labels.checkbox_layout.itemAt(0).widget().setChecked(True)
         napari_labels2.selected_label = 3
         napari_labels2.data[4, 1, 1] = 3
+        napari_labels2.events.set_data(value=napari_labels2.data)
         assert copy_labels.checkbox_layout.count() == 3
 
     def test_copy_action(self, copy_labels, napari_labels2):
