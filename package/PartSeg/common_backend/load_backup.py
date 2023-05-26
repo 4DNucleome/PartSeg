@@ -27,7 +27,6 @@ def import_config():
     """
     if os.path.exists(state_store.save_folder):
         return
-    version = packaging.version.parse(parsed_version.base_version)
     base_folder = os.path.dirname(state_store.save_folder)
     possible_folders = glob(os.path.join(base_folder, "*"))
     versions = []
@@ -35,17 +34,12 @@ def import_config():
         if os.path.basename(folder) == "napari":
             continue
         with contextlib.suppress(packaging.version.InvalidVersion):
-            version = packaging.version.parse(os.path.basename(folder))
-            if isinstance(version, packaging.version.Version):
-                versions.append(version)
-    versions = sorted(
-        (
-            x
-            for x in [_parse_version(os.path.basename(y)) for y in possible_folders]
-            if isinstance(x, packaging.version.Version)
-        ),
-        reverse=True,
-    )
+            folder_version = packaging.version.parse(os.path.basename(folder))
+            if isinstance(folder_version, packaging.version.Version):
+                versions.append(folder_version)
+
+    versions = sorted(versions, reverse=True)
+    version = packaging.version.parse(parsed_version.base_version)
     before_version = next((x for x in versions if x < version), None)
     if before_version is not None:
         before_name = str(before_version)
