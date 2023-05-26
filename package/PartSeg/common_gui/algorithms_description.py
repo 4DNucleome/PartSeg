@@ -29,6 +29,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from sentry_sdk.integrations.logging import ignore_logger
 from superqt import QEnumComboBox
 
 from PartSeg.common_backend.base_settings import BaseSettings
@@ -48,6 +49,9 @@ from PartSegCore.segmentation.algorithm_base import (
     SegmentationLimitException,
 )
 from PartSegImage import Channel, Image
+
+logger = logging.getLogger(__name__)
+ignore_logger(__name__)
 
 
 def recursive_update(d, u):
@@ -123,7 +127,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         try:
             return self._setter(self._widget, val)
         except (TypeError, ValueError) as e:
-            logging.error("Error %s setting value %s to %s", e, val, self.name)
+            logger.error("Error %s setting value %s to %s", e, val, self.name)
 
     def get_field(self) -> QWidget:
         """
