@@ -506,6 +506,7 @@ def napari_labels2():
 @pytest.fixture()
 def copy_labels(make_napari_viewer, qtbot, napari_labels2):
     viewer = make_napari_viewer()
+    viewer.add_labels(napari_labels2.data)
     widget = CopyLabelsWidget(viewer)
     qtbot.addWidget(widget)
     viewer.add_layer(napari_labels2)
@@ -516,8 +517,9 @@ class TestCopyLabels:
     def test_refresh_checkbox(self, copy_labels, napari_labels2):
         assert copy_labels.checkbox_layout.count() == 2
         copy_labels.checkbox_layout.itemAt(0).widget().setChecked(True)
-        napari_labels2.data[4, 1, 1] = 3
         napari_labels2.selected_label = 3
+        napari_labels2.data[4, 1, 1] = 3
+        napari_labels2.selected_label = 4
         assert copy_labels.checkbox_layout.count() == 3
 
     def test_copy_action(self, copy_labels, napari_labels2):
