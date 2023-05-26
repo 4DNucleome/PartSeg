@@ -9,6 +9,7 @@ from PartSeg.plugins.napari_widgets.algorithm_widgets import (
     Watershed,
 )
 from PartSeg.plugins.napari_widgets.colormap_control import ImageColormap
+from PartSeg.plugins.napari_widgets.copy_labels import CopyLabelsWidget
 from PartSeg.plugins.napari_widgets.lables_control import LabelSelector
 from PartSeg.plugins.napari_widgets.mask_create_widget import MaskCreate
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ROIAnalysisExtraction, ROIMaskExtraction
@@ -18,6 +19,7 @@ __all__ = (
     "PartSegGUILauncher",
     "BorderSmooth",
     "ConnectedComponents",
+    "CopyLabelsWidget",
     "DoubleThreshold",
     "NoiseFilter",
     "SplitCoreObjects",
