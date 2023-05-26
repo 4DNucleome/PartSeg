@@ -507,7 +507,7 @@ class MockDebouncer(QObject):
     triggered = Signal()
 
     def setTimeout(self, timeout):
-        pass
+        """to satisfy QSignalDebouncer interface"""
 
     def throttle(self, *args):
         self.triggered.emit()
