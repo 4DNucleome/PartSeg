@@ -1,4 +1,3 @@
-import contextlib
 import importlib
 import itertools
 import os
@@ -10,32 +9,14 @@ from importlib.metadata import entry_points
 import PartSegCore.plugins
 
 
-def register_napari_plugins():
-    import napari
-    import napari_plugin_engine
-    import napari_svg
+def register_napari_plugins():  # pragma: no cover
+    import npe2
 
-    from PartSeg.plugins import napari_widgets
-    from PartSegCore.napari_plugins import (
-        load_image,
-        load_mask_project,
-        load_masked_image,
-        load_roi_project,
-        save_mask_roi,
+    import PartSeg
+
+    npe2.PluginManager.instance().register(
+        os.path.join(os.path.dirname(os.path.dirname(PartSeg.__file__)), "napari.yaml")
     )
-
-    for module in [
-        napari_svg,
-        napari_plugin_engine,
-        load_image,
-        load_mask_project,
-        load_masked_image,
-        load_roi_project,
-        save_mask_roi,
-        napari_widgets,
-    ]:
-        with contextlib.suppress(ValueError):
-            napari.plugins.plugin_manager.register(module)
 
 
 def get_plugins():

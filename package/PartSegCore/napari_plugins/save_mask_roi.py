@@ -2,14 +2,12 @@ import os
 from typing import Any, Optional
 
 import numpy as np
-from napari_plugin_engine import napari_hook_implementation
 
 from PartSegCore.mask.io_functions import MaskProjectTuple, SaveROI, SaveROIOptions
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage.image import DEFAULT_SCALE_FACTOR
 
 
-@napari_hook_implementation
 def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
     if not isinstance(data, np.ndarray):
         return None

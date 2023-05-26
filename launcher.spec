@@ -88,7 +88,9 @@ hiddenimports = (
         "psygnal._signal",
         "psygnal._dataclass_utils",
         "psygnal._weak_callback",
-        "imagecodecs._imagecodecs"
+        "imagecodecs._imagecodecs",
+        "PartSeg.plugins.napari_widgets",
+        "PartSegCore.napari_plugins",
     ]
     + [x.module_name for x in imageio_known_plugins.values()] + [x for x in collect_submodules("skimage") if "tests" not in x]
 )
@@ -129,7 +131,7 @@ packages = itertools.chain(
     importlib.metadata.entry_points().get("partsegcore.plugins", []),
 )
 
-plugins_data = []
+plugins_data = [(os.path.join(base_path, "napari.yaml"), ".")]
 
 for package in packages:
     module = package.load()

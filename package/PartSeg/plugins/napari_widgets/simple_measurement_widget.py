@@ -11,6 +11,7 @@ from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
 from napari.qt import create_worker
 
+from PartSeg.plugins import register as register_plugins
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import base_model_to_algorithm_property
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
@@ -57,6 +58,7 @@ class SimpleMeasurement(Container):
             warnings.simplefilter("ignore", FutureWarning)
             self.labels_choice.changed.connect(self._refresh_measurements)
             self.calculate_btn.changed.connect(self._calculate)
+        register_plugins()
 
     def _calculate(self, event=None):
         to_calculate = []

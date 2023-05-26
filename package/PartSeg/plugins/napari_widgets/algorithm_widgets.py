@@ -11,6 +11,7 @@ from napari.utils.notifications import show_info
 from pydantic import ValidationError
 from qtpy.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
+from PartSeg.plugins import register as register_plugins
 from PartSeg.plugins.napari_widgets._settings import get_settings
 from PartSeg.plugins.napari_widgets.utils import NapariFormWidget
 from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
@@ -219,6 +220,7 @@ class AlgorithmWidgetBase(QWidget):
         layout.addWidget(self.form)
         layout.addWidget(self.run_button)
         self.setLayout(layout)
+        register_plugins()
 
     def reset_choices(self, event=None):
         self.form.reset_choices(event)

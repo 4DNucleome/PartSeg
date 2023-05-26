@@ -488,7 +488,7 @@ class LoadStackImage(LoadBase):
 
 class LoadStackImageWithMask(LoadBase):
     """
-    Load image, hne mask from secondary file
+    Load image, then mask from secondary file
     """
 
     @classmethod
