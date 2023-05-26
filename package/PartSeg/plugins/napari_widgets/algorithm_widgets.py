@@ -30,6 +30,14 @@ class CompareType(Enum):
         return self.name.replace("_", " ").title()
 
 
+class FlowType(Enum):
+    bright_center = 1
+    dark_center = 2
+
+    def __str__(self):
+        return self.name.replace("_", " ").title()
+
+
 class AlgModel(BaseModel):
     layer_name: str = ""
 
@@ -106,7 +114,7 @@ class WatershedModel(AlgModel):
     mask: Optional[Labels] = None
     watershed: WatershedSelection = WatershedSelection.get_default()
     side_connection: bool = True
-    operator: CompareType = CompareType.lower_threshold
+    operator: FlowType = FlowType.bright_center
 
     def run_calculation(self):
         data = make_3d(self.data.data)
@@ -120,8 +128,15 @@ class WatershedModel(AlgModel):
             core_objects = make_3d(self.core_objects.data)
         components_num = np.amax(core_objects)
         core_objects = core_objects.astype(minimal_dtype(components_num))
-        op = operator.gt if self.operator == CompareType.lower_threshold else operator.lt
+        op = operator.gt if self.operator == FlowType.bright_center else operator.lt
 
+        if op(1, 0):
+            lower_bound = np.min(data[flow_area > 0])
+            upper_bound = np.max(data[flow_area > 0])
+        else:
+            lower_bound = np.max(data[flow_area > 0])
+            upper_bound = np.min(data[flow_area > 0])
+        print(lower_bound, upper_bound)
         data = self.watershed.algorithm().sprawl(
             data=data,
             sprawl_area=flow_area,
@@ -131,8 +146,8 @@ class WatershedModel(AlgModel):
             spacing=self.flow_area.scale[-3:],
             side_connection=self.side_connection,
             operator=op,
-            lower_bound=0,
-            upper_bound=0,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
         )
         return {
             "data": data.reshape(self.flow_area.data.shape),
