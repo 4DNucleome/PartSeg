@@ -3,7 +3,7 @@ schema_version: 0.2.0
 contributions:
   commands:
   - id: PartSeg.load_roi_project
-    title: Get PartSeg ROI Reader
+    title: Get PartSeg ROI project Reader
     python_name: PartSegCore.napari_plugins.load_roi_project:napari_get_reader
   - id: PartSeg.load_image
     title: Get Image Reader
@@ -15,10 +15,10 @@ contributions:
     title: Write tiff Labels
     python_name: PartSegCore.napari_plugins.save_tiff_layer:napari_write_labels
   - id: PartSeg.load_mask_project
-    title: Get Reader
+    title: Get PartSeg mask project Reader
     python_name: PartSegCore.napari_plugins.load_mask_project:napari_get_reader
   - id: PartSeg.save_mask_roi
-    title: Write Labels
+    title: Write Labels as mask project
     python_name: PartSegCore.napari_plugins.save_mask_roi:napari_write_labels
   - id: PartSeg.load_masked_image
     title: Get Reader for image with mask
@@ -71,75 +71,6 @@ contributions:
   - id: PartSeg.Threshold
     title: Create Threshold
     python_name: PartSeg.plugins.napari_widgets:Threshold
-  - id: PartSeg.get_reader_5
-    title: Get Reader
-    python_name: PartSegCore.napari_plugins.load_roi_project:napari_get_reader
-  - id: PartSeg.get_reader_6
-    title: Get Reader
-    python_name: PartSegCore.napari_plugins.load_image:napari_get_reader
-  - id: PartSeg.write_image_2
-    title: Write Image
-    python_name: PartSegCore.napari_plugins.save_tiff_layer:napari_write_image
-  - id: PartSeg.write_labels_3
-    title: Write Labels
-    python_name: PartSegCore.napari_plugins.save_tiff_layer:napari_write_labels
-  - id: PartSeg.get_reader_7
-    title: Get Reader
-    python_name: PartSegCore.napari_plugins.load_mask_project:napari_get_reader
-  - id: PartSeg.write_labels_4
-    title: Write Labels
-    python_name: PartSegCore.napari_plugins.save_mask_roi:napari_write_labels
-  - id: PartSeg.get_reader_8
-    title: Get Reader
-    python_name: PartSegCore.napari_plugins.load_masked_image:napari_get_reader
-  - id: PartSeg.SimpleMeasurement_2
-    title: Create Simple Measurement
-    python_name: PartSeg.plugins.napari_widgets.simple_measurement_widget:SimpleMeasurement
-  - id: PartSeg.ROIAnalysisExtraction_2
-    title: Create ROI Analysis Extraction
-    python_name: PartSeg.plugins.napari_widgets:ROIAnalysisExtraction
-  - id: PartSeg.DoubleThreshold_2
-    title: Create Double Threshold
-    python_name: PartSeg.plugins.napari_widgets:DoubleThreshold
-  - id: PartSeg.NoiseFilter_2
-    title: Create Noise Filter
-    python_name: PartSeg.plugins.napari_widgets:NoiseFilter
-  - id: PartSeg.BorderSmooth_2
-    title: Create Border Smooth
-    python_name: PartSeg.plugins.napari_widgets:BorderSmooth
-  - id: PartSeg.Watershed_2
-    title: Create Watershed
-    python_name: PartSeg.plugins.napari_widgets:Watershed
-  - id: PartSeg.ConnectedComponents_2
-    title: Create Connected Components
-    python_name: PartSeg.plugins.napari_widgets:ConnectedComponents
-  - id: PartSeg.SplitCoreObjects_2
-    title: Create Split Core Objects
-    python_name: PartSeg.plugins.napari_widgets:SplitCoreObjects
-  - id: PartSeg.ROIMaskExtraction_2
-    title: Create ROI Mask Extraction
-    python_name: PartSeg.plugins.napari_widgets:ROIMaskExtraction
-  - id: PartSeg.MaskCreate_2
-    title: Create Mask Create
-    python_name: PartSeg.plugins.napari_widgets:MaskCreate
-  - id: PartSeg.Measurement_2
-    title: Create Measurement
-    python_name: PartSeg.plugins.napari_widgets.measurement_widget:Measurement
-  - id: PartSeg.SearchLabel_2
-    title: Create Search Label
-    python_name: PartSeg.plugins.napari_widgets:SearchLabel
-  - id: PartSeg.PartSegGUILauncher_2
-    title: Create Part Seg GUI Launcher
-    python_name: PartSeg.plugins.napari_widgets:PartSegGUILauncher
-  - id: PartSeg.ImageColormap_2
-    title: Create Image Colormap
-    python_name: PartSeg.plugins.napari_widgets:ImageColormap
-  - id: PartSeg.LabelSelector_2
-    title: Create Label Selector
-    python_name: PartSeg.plugins.napari_widgets:LabelSelector
-  - id: PartSeg.Threshold_2
-    title: Create Threshold
-    python_name: PartSeg.plugins.napari_widgets:Threshold
   readers:
   - command: PartSeg.load_roi_project
     filename_patterns:
@@ -171,23 +102,7 @@ contributions:
     - '*.czi'
     - '*.oib'
     - '*.oif'
-    accepts_directories: true
-  - command: PartSeg.get_reader_5
-    filename_patterns:
-    - '*'
-    accepts_directories: true
-  - command: PartSeg.get_reader_6
-    filename_patterns:
-    - '*'
-    accepts_directories: true
-  - command: PartSeg.get_reader_7
-    filename_patterns:
-    - '*'
-    accepts_directories: true
-  - command: PartSeg.get_reader_8
-    filename_patterns:
-    - '*'
-    accepts_directories: true
+    accepts_directories: false
   writers:
   - command: PartSeg.write_tiff_image
     layer_types:
@@ -204,83 +119,37 @@ contributions:
     - labels
     filename_extensions: ["*.seg", "*.tgz"]
     display_name: PartSeg mask roi
-  - command: PartSeg.write_image_2
-    layer_types:
-    - image
-    filename_extensions: []
-    display_name: image
-  - command: PartSeg.write_labels_3
-    layer_types:
-    - labels
-    filename_extensions: []
-    display_name: labels
-  - command: PartSeg.write_labels_4
-    layer_types:
-    - labels
-    filename_extensions: []
-    display_name: labels
   widgets:
+  - command: PartSeg.SearchLabel
+    display_name: Search Label
+  - command: PartSeg.Measurement
+    display_name: Measurement
   - command: PartSeg.SimpleMeasurement
     display_name: Simple Measurement
   - command: PartSeg.ROIAnalysisExtraction
     display_name: ROI Analysis Extraction
-  - command: PartSeg.DoubleThreshold
-    display_name: Double Threshold
-  - command: PartSeg.NoiseFilter
-    display_name: Noise Filter
-  - command: PartSeg.BorderSmooth
-    display_name: Border Smooth
-  - command: PartSeg.Watershed
-    display_name: Watershed
-  - command: PartSeg.ConnectedComponents
-    display_name: Connected Components
-  - command: PartSeg.SplitCoreObjects
-    display_name: Split Core Objects
   - command: PartSeg.ROIMaskExtraction
     display_name: ROI Mask Extraction
   - command: PartSeg.MaskCreate
     display_name: Mask Create
-  - command: PartSeg.Measurement
-    display_name: Measurement
-  - command: PartSeg.SearchLabel
-    display_name: Search Label
   - command: PartSeg.PartSegGUILauncher
-    display_name: Part Seg GUI Launcher
+    display_name: PartSeg GUI Launcher
   - command: PartSeg.ImageColormap
     display_name: Image Colormap
   - command: PartSeg.LabelSelector
     display_name: Label Selector
+
+  - command: PartSeg.BorderSmooth
+    display_name: Border Smooth
+  - command: PartSeg.ConnectedComponents
+    display_name: Connected Components
+  - command: PartSeg.NoiseFilter
+    display_name: Noise Filter
+  - command: PartSeg.DoubleThreshold
+    display_name: Double Threshold
+  - command: PartSeg.SplitCoreObjects
+    display_name: Split Core Objects
   - command: PartSeg.Threshold
     display_name: Threshold
-  - command: PartSeg.SimpleMeasurement_2
-    display_name: Simple Measurement
-  - command: PartSeg.ROIAnalysisExtraction_2
-    display_name: ROI Analysis Extraction
-  - command: PartSeg.DoubleThreshold_2
-    display_name: Double Threshold
-  - command: PartSeg.NoiseFilter_2
-    display_name: Noise Filter
-  - command: PartSeg.BorderSmooth_2
-    display_name: Border Smooth
-  - command: PartSeg.Watershed_2
+  - command: PartSeg.Watershed
     display_name: Watershed
-  - command: PartSeg.ConnectedComponents_2
-    display_name: Connected Components
-  - command: PartSeg.SplitCoreObjects_2
-    display_name: Split Core Objects
-  - command: PartSeg.ROIMaskExtraction_2
-    display_name: ROI Mask Extraction
-  - command: PartSeg.MaskCreate_2
-    display_name: Mask Create
-  - command: PartSeg.Measurement_2
-    display_name: Measurement
-  - command: PartSeg.SearchLabel_2
-    display_name: Search Label
-  - command: PartSeg.PartSegGUILauncher_2
-    display_name: Part Seg GUI Launcher
-  - command: PartSeg.ImageColormap_2
-    display_name: Image Colormap
-  - command: PartSeg.LabelSelector_2
-    display_name: Label Selector
-  - command: PartSeg.Threshold_2
-    display_name: Threshold
