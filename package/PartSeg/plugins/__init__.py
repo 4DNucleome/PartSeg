@@ -10,7 +10,7 @@ import pkg_resources
 import PartSegCore.plugins
 
 
-def register_napari_plugins():
+def register_napari_plugins():  # pragma: no cover
     import npe2
 
     import PartSeg
