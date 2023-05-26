@@ -61,7 +61,7 @@ stages:
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.10', architecture: x64}}
           - bash: |
-              python -m pip install check-manifest==0.48 numpy==1.22.3
+              python -m pip install check-manifest==0.49 numpy==1.22.3
             displayName: InstallDeps
           - bash: check-manifest
             displayName: check-manifest
