@@ -1,3 +1,4 @@
+import contextlib
 import os
 import shutil
 from glob import glob
@@ -29,6 +30,12 @@ def import_config():
     version = packaging.version.parse(parsed_version.base_version)
     base_folder = os.path.dirname(state_store.save_folder)
     possible_folders = glob(os.path.join(base_folder, "*"))
+    versions = []
+    for folder in possible_folders:
+        with contextlib.suppress(packaging.version.InvalidVersion):
+            version = packaging.version.parse(os.path.basename(folder))
+            if isinstance(version, packaging.version.Version):
+                versions.append(version)
     versions = sorted(
         (
             x
