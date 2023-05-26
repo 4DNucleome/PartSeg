@@ -10,7 +10,7 @@ from local_migrator import object_hook
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from napari.utils import Colormap
-from qtpy.QtCore import QTimer
+from qtpy.QtCore import QObject, QTimer, Signal
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
@@ -503,8 +503,19 @@ def napari_labels2():
     return Labels(data)
 
 
+class MockDebouncer(QObject):
+    triggered = Signal()
+
+    def setTimeout(self, timeout):
+        pass
+
+    def throttle(self, *args):
+        self.triggered.emit()
+
+
 @pytest.fixture()
-def copy_labels(make_napari_viewer, qtbot, napari_labels2):
+def copy_labels(make_napari_viewer, qtbot, napari_labels2, monkeypatch):
+    monkeypatch.setattr("PartSeg.plugins.napari_widgets.copy_labels.QSignalDebouncer", MockDebouncer)
     viewer = make_napari_viewer()
     viewer.add_labels(napari_labels2.data)
     widget = CopyLabelsWidget(viewer)
@@ -519,7 +530,6 @@ class TestCopyLabels:
         copy_labels.checkbox_layout.itemAt(0).widget().setChecked(True)
         napari_labels2.selected_label = 3
         napari_labels2.data[4, 1, 1] = 3
-        napari_labels2.selected_label = 4
         assert copy_labels.checkbox_layout.count() == 3
 
     def test_copy_action(self, copy_labels, napari_labels2):

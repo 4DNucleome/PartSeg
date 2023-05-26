@@ -11,6 +11,7 @@ from qtpy.QtWidgets import (
     QSpinBox,
     QWidget,
 )
+from superqt.utils import QSignalDebouncer
 
 from PartSeg.common_gui.flow_layout import FlowLayout
 
@@ -41,6 +42,9 @@ class CopyLabelsWidget(QWidget):
         layout.addWidget(self.uncheck_all_btn, 4, 1)
         self.shortcut = QShortcut(QKeySequence("Ctrl+K"), self)
         self.shortcut.activated.connect(self.copy_action)
+        self.debouncer = QSignalDebouncer(parent=self)
+        self.debouncer.setTimeout(200)
+        self.debouncer.triggered.connect(self.update_items)
 
         self.setLayout(layout)
 
@@ -49,26 +53,27 @@ class CopyLabelsWidget(QWidget):
         self.check_all_btn.clicked.connect(self._check_all)
         self.uncheck_all_btn.clicked.connect(self._uncheck_all)
         if isinstance(self.viewer.layers.selection.active, Labels):
-            self._update_items(self.viewer.layers.selection.active)
+            self._activate_widget(self.viewer.layers.selection.active)
 
     def activate_widget(self, event):
-        is_labels = isinstance(event.value, Labels)
+        self._activate_widget(event.value)
+
+    def _activate_widget(self, label_layer: Labels):
+        is_labels = isinstance(label_layer, Labels)
         if is_labels and not self.isVisible():
-            self._update_items(event.value)
+            self._update_items(label_layer)
         self.setVisible(is_labels)
         if is_labels:
-            event.value.events.set_data.connect(self._shallow_update)
-            event.value.events.selected_label.connect(self.update_items)
+            label_layer.events.set_data.connect(self.debouncer.throttle)
+            label_layer.events.selected_label.connect(self._shallow_update)
 
     def _shallow_update(self, event):
-        label = event.source.selected_label
+        label_num = event.source.selected_label
+        self._components.add(label_num)
         self.refresh()
-        if label in self._components:
-            return
-        self._components.add(label)
 
-    def update_items(self, event):
-        self._update_items(event.source)
+    def update_items(self):
+        self._update_items(self.viewer.layers.selection.active)
 
     def _update_items(self, layer):
         unique = np.unique(layer.data)
