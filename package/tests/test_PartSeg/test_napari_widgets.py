@@ -28,8 +28,10 @@ from PartSeg.plugins.napari_widgets import (
 from PartSeg.plugins.napari_widgets._settings import PartSegNapariEncoder
 from PartSeg.plugins.napari_widgets.algorithm_widgets import (
     BorderSmoothingModel,
+    CompareType,
     ConnectedComponentsModel,
     DoubleThresholdModel,
+    FlowType,
     NoiseFilterModel,
     SplitCoreObjectsModel,
     Threshold,
@@ -437,7 +439,8 @@ def test_border_smoothing_model(algorithm, napari_labels):
 
 
 @pytest.mark.parametrize("algorithm", WatershedSelection.__register__.values())
-def test_watershed_model(algorithm, napari_image, napari_labels):
+@pytest.mark.parametrize("operator", FlowType.__members__.values())
+def test_watershed_model(algorithm, napari_image, napari_labels, operator):
     alg_params = WatershedSelection(
         name=algorithm.get_name(),
         values=algorithm.__argument_class__(),
@@ -447,6 +450,7 @@ def test_watershed_model(algorithm, napari_image, napari_labels):
         data=napari_image,
         flow_area=napari_labels,
         core_objects=napari_labels,
+        operator=operator,
     )
     assert model.run_calculation()["layer_type"] == "labels"
 
@@ -492,3 +496,8 @@ def test_connected_components_model(napari_labels):
 def test_split_core_objects_model(napari_labels):
     model = SplitCoreObjectsModel(data=napari_labels)
     assert model.run_calculation()["layer_type"] == "labels"
+
+
+def test_enum():
+    assert " " in str(CompareType.lower_threshold)
+    assert " " in str(FlowType.dark_center)

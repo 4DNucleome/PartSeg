@@ -136,7 +136,6 @@ class WatershedModel(AlgModel):
         else:
             lower_bound = np.max(data[flow_area > 0])
             upper_bound = np.min(data[flow_area > 0])
-        print(lower_bound, upper_bound)
         data = self.watershed.algorithm().sprawl(
             data=data,
             sprawl_area=flow_area,
