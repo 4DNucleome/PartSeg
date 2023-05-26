@@ -125,10 +125,10 @@ napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
 napari_resource_dest_path = os.path.relpath(os.path.dirname(napari_resource_path), napari_base_path)
 
 packages = itertools.chain(
-    pkg_resources.iter_entry_points("PartSeg.plugins"),
-    pkg_resources.iter_entry_points("partseg.plugins"),
-    pkg_resources.iter_entry_points("PartSegCore.plugins"),
-    pkg_resources.iter_entry_points("partsegcore.plugins"),
+    importlib.metadata.entry_points().get("PartSeg.plugins", []),
+    importlib.metadata.entry_points().get("partseg.plugins", []),
+    importlib.metadata.entry_points().get("PartSegCore.plugins", []),
+    importlib.metadata.entry_points().get("partsegcore.plugins", []),
 )
 
 plugins_data = [(os.path.join(base_path, "napari.yaml"), ".")]
