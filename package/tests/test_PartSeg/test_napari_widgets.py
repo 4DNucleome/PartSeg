@@ -10,7 +10,7 @@ from local_migrator import object_hook
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from napari.utils import Colormap
-from qtpy.QtCore import QTimer
+from qtpy.QtCore import QObject, QTimer, Signal
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
@@ -18,6 +18,7 @@ from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
 from PartSeg.common_gui.napari_image_view import SearchType
 from PartSeg.plugins.napari_widgets import (
+    CopyLabelsWidget,
     ImageColormap,
     MaskCreate,
     ROIAnalysisExtraction,
@@ -25,7 +26,6 @@ from PartSeg.plugins.napari_widgets import (
     SearchLabel,
     _settings,
 )
-from PartSeg.plugins.napari_widgets._settings import PartSegNapariEncoder
 from PartSeg.plugins.napari_widgets.algorithm_widgets import (
     BorderSmoothingModel,
     CompareType,
@@ -483,7 +483,7 @@ def test_threshold_widget(show_patch, make_napari_viewer, qtbot, napari_image):
 
 def test_part_seg_napari_encoder(napari_image):
     thr = ThresholdModel(data=napari_image)
-    res_str = json.dumps(dict(thr), cls=PartSegNapariEncoder)
+    res_str = json.dumps(dict(thr), cls=_settings.PartSegNapariEncoder)
     res = json.loads(res_str, object_hook=object_hook)
     assert res["data"] == napari_image.name
 
@@ -496,6 +496,71 @@ def test_connected_components_model(napari_labels):
 def test_split_core_objects_model(napari_labels):
     model = SplitCoreObjectsModel(data=napari_labels)
     assert model.run_calculation()["layer_type"] == "labels"
+
+
+@pytest.fixture()
+def napari_labels2():
+    data = np.zeros((10, 10, 10), dtype=np.uint8)
+    data[5, 2:-2, 2:5] = 1
+    data[5, 2:-2, 5:-2] = 2
+    return Labels(data)
+
+
+class MockDebouncer(QObject):
+    triggered = Signal()
+
+    def setTimeout(self, timeout):
+        """to satisfy QSignalDebouncer interface"""
+
+    def throttle(self, *args):
+        self.triggered.emit()
+
+
+@pytest.fixture()
+def copy_labels(make_napari_viewer, qtbot, napari_labels2, monkeypatch):
+    monkeypatch.setattr("PartSeg.plugins.napari_widgets.copy_labels.QSignalDebouncer", MockDebouncer)
+    viewer = make_napari_viewer()
+    viewer.add_labels(napari_labels2.data)
+    widget = CopyLabelsWidget(viewer)
+    qtbot.addWidget(widget)
+    viewer.add_layer(napari_labels2)
+    return widget
+
+
+class TestCopyLabels:
+    def test_refresh_checkbox(self, copy_labels, napari_labels2):
+        assert copy_labels.checkbox_layout.count() == 2
+        copy_labels.checkbox_layout.itemAt(0).widget().setChecked(True)
+        napari_labels2.selected_label = 3
+        napari_labels2.data[4, 1, 1] = 3
+        napari_labels2.events.set_data(value=napari_labels2.data)
+        assert copy_labels.checkbox_layout.count() == 3
+
+    def test_copy_action(self, copy_labels, napari_labels2):
+        copy_labels.viewer.dims.current_step = (5, 0, 0)
+        copy_labels.checkbox_layout.itemAt(0).widget().setChecked(True)
+        copy_labels.lower.setValue(3)
+        copy_labels.upper.setValue(7)
+        copy_labels.copy_action()
+        assert napari_labels2.data[4, 2, 2] == 1
+        assert napari_labels2.data[4, 2, 6] == 0
+        copy_labels.checkbox_layout.itemAt(0).widget().setChecked(False)
+        copy_labels.lower.setValue(2)
+        napari_labels2.selected_label = 2
+        copy_labels.copy_action()
+        assert napari_labels2.data[4, 2, 6] == 2
+        assert napari_labels2.data[2, 2, 6] == 2
+        assert napari_labels2.data[2, 2, 2] == 0
+        copy_labels.viewer.layers.selection.clear()
+        copy_labels.copy_action()
+
+    def test_check_uncheck(self, copy_labels, qtbot):
+        assert copy_labels.checkbox_layout.count() == 2
+        assert not copy_labels.checkbox_layout.itemAt(0).widget().isChecked()
+        copy_labels._check_all()
+        assert copy_labels.checkbox_layout.itemAt(0).widget().isChecked()
+        copy_labels._uncheck_all()
+        assert not copy_labels.checkbox_layout.itemAt(0).widget().isChecked()
 
 
 def test_enum():

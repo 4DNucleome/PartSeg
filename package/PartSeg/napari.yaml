@@ -71,6 +71,9 @@ contributions:
   - id: PartSeg.Threshold
     title: Create Threshold
     python_name: PartSeg.plugins.napari_widgets:Threshold
+  - id: PartSeg.CopyLabels
+    title: Create Copy Labels
+    python_name: PartSeg.plugins.napari_widgets:CopyLabelsWidget
   readers:
   - command: PartSeg.load_roi_project
     filename_patterns:
@@ -138,7 +141,8 @@ contributions:
     display_name: Image Colormap
   - command: PartSeg.LabelSelector
     display_name: Label Selector
-
+  - command: PartSeg.CopyLabels
+    display_name: Copy Labels
   - command: PartSeg.BorderSmooth
     display_name: Border Smooth
   - command: PartSeg.ConnectedComponents

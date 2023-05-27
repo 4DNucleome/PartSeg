@@ -143,6 +143,12 @@ Apply label mapping:
 
 More details about usage could be found [here](https://partseg.readthedocs.io/en/latest/interface-overview/interface-overview.html#create-labels)
 
+## Copy labels
+
+![Copy labels widget](https://github.com/4DNucleome/PartSeg/assets/3826210/3d159b28-a88f-4831-82b0-ad43c08d3405)
+
+Copy selected Labels from current layer along z-axis.
+
 ## Image Colormap
 
 This widget allows to create custom colormap for image.
