@@ -20,6 +20,7 @@ class CopyLabelsWidget(QWidget):
     def __init__(self, napari_viewer: Viewer):
         super().__init__()
         self.viewer = napari_viewer
+        self.label = QLabel("Copy selected labels along z-axis")
 
         self.copy_btn = QPushButton("Copy")
         self.check_all_btn = QPushButton("Check all")
