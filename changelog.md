@@ -22,6 +22,7 @@
 -   Resolve warnings when testing custom save dialog. (#941)
 -   Add padding zeros for component num when load Mask seg file to ROI GUI (#944)
 -   Proper calculate bounds for watershed napari widget (#969)
+-   Fix bug in the wrong order of axis saved in napari contribution (#972)
 
 ### Dependency
 
