@@ -12,6 +12,9 @@ from PartSegCore.napari_plugins.load_masked_image import napari_get_reader as na
 from PartSegCore.napari_plugins.load_roi_project import napari_get_reader as napari_get_reader_roi
 from PartSegCore.napari_plugins.loader import project_to_layers
 from PartSegCore.napari_plugins.save_mask_roi import napari_write_labels
+from PartSegCore.napari_plugins.save_tiff_layer import napari_write_labels as napari_write_labels_tiff
+
+from PartSegCore.mask.io_functions import LoadROIFromTIFF
 
 
 def test_project_to_layers_analysis(analysis_segmentation):
@@ -91,3 +94,13 @@ def test_write_labels(tmp_path):
 
     assert napari_write_labels(str(tmp_path / "test.txt"), data, {"scale": [10, 10]}) is None
     assert not (tmp_path / "test.txt").exists()
+
+
+def test_save_load_axis_order(tmp_path):
+    data = np.zeros((1, 10, 20, 30), dtype=np.uint8)
+    layer = Labels(data)
+    data_path = str(tmp_path/ "test.tif")
+    assert napari_write_labels_tiff(data_path, *layer.as_layer_data_tuple()[:2])
+    proj = LoadROIFromTIFF.load([data_path])
+    assert proj.roi_info.roi.shape == data.shape
+

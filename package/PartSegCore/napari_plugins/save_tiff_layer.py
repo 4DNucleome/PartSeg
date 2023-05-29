@@ -15,7 +15,7 @@ def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
     image = Image(
         data,
         np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
-        axes_order="TZXY"[-data.ndim :],
+        axes_order="TZYX"[-data.ndim :],
         channel_names=[meta["name"]],
         shift=np.divide(meta["translate"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         name="ROI",
