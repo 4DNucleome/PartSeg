@@ -1,5 +1,112 @@
 # Changelog
 
+## 0.15.0
+
+### Bug Fixes
+
+-   Print all exceptions instead of the latest one in exception dialog (#799)
+-   Fix ROIExtractionResult `__str__`and `__repr__` to use `ROIExtractionResult` not `SegmentationResult` (#810)
+-   Fix code to address changes in the napari repository (#817)
+-   Fix the problem with resize of multiline widgets (#832)
+-   Fix tox configuration to run all required tests (#840)
+-   Fix MSO `step_limit` description in GUI (#843)
+-   Fix `redefined-while-unused`import code for python 3.9.7 (#844)
+-   Fix warnings reported by Deepsource (#846)
+-   Ensure that "ROI" layer is in the proper place for proper visualization (#856)
+-   Fix tests of napari widgets (#862)
+-   Fix build of the bundle for a new psygnal release (#863)
+-   Fix minimal requirements pipeline (#877)
+-   Fix bug with generation of form for the model with hidden field (#920)
+-   Update pyinstaller configuration (#926)
+-   Use text icon, not pixmap icon in colormap and labels list (#938)
+-   Resolve warnings when testing custom save dialog. (#941)
+-   Add padding zeros for component num when load Mask seg file to ROI GUI (#944)
+-   Proper calculate bounds for watershed napari widget (#969)
+
+### Dependency
+
+-   [Automatic] Dependency upgrades (#824)
+-   [Automatic] Dependency upgrades (#828)
+-   [Automatic] Dependency upgrades: `ipykernel`, `packaging` (#838)
+-   [Automatic] Dependency upgrades: `imageio`, `ipykernel`, `napari`, `numpy`, `sentry` (#850)
+-   [Automatic] Dependency upgrades: `imagecodecs`, `ipykernel`, `numpy`, `psygnal` (#859)
+-   [Automatic] Dependency upgrades: `pydantic`, `pygments`, `xlsxwriter` (#874)
+-   [Automatic] Dependency upgrades: `imageio`, `packaging`, `scipy`, `xlsxwriter` (#878)
+-   [Automatic] Dependency upgrades: `ipykernel`, `requests`, `sentry`, `xlsxwriter` (#884)
+-   [Automatic] Dependency upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `pandas`, `sentry`, `tifffile` (#889)
+-   [Automatic] Dependency upgrades: `ipython`, `pyqt5` (#893)
+-   [Automatic] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `numpy`, `openpyxl`, `psygnal`, `pydantic`, `pyinstaller`, `pyqt5`, `scipy`, `sentry-sdk`, `tifffile`, `xlsxwriter` (#897)
+-   [Automatic] Dependency upgrades: `imageio`, `psygnal` (#905)
+-   [Automatic] Dependency upgrades: `ipython`, `magicgui`, `scipy`, `sentry-sdk`, `tifffile` (#906)
+-   [Automatic] Dependency upgrades: `imagecodecs`, `imageio`, `ipykernel`, `openpyxl`, `pydantic`, `pyinstaller`, `qtawesome`, `qtconsole`, `sentry-sdk`, `tifffile`, `xlsxwriter` (#908)
+-   [Automatic] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `pandas`, `psygnal`, `pydantic`, `pygments`, `pyinstaller`, `qtpy`, `sentry-sdk`, `tifffile` (#917)
+
+### Documentation
+
+-   Update README and project metadata (#805)
+
+### Features
+
+-   Add `PARTSEG_SENTRY_URL` env variable support and basic documentation about error reporting (#802)
+-   Allow to see underlying exception when show warning caused by exception (#829)
+-   Add voxel size measurement and allow to overwrite voxel size in batch (#853)
+-   Add alpha support for Qt6 (#866)
+-   Add option to create projection alongside z-axis (#919)
+-   Add napari image custom representation for better error report via sentry (#861)
+-   Add import and export operation for labels and colormaps (#936)
+-   Implement napari widgets for colormap and lables control (#935)
+-   Add forget all button to multiple files widget (#942)
+-   Do not abort processing whole mask segmentation project during exception on single component (#943)
+-   Add distance based watersheed to flow methods (#915)
+-   Add napari widgets for all group of algoritms (#958)
+-   Add napari widget to copy lables along z-axis (#968)
+
+### Miscellaneous Tasks
+
+-   Improve ruff configuration, remove isort (#815)
+-   Use `fail_on_no_env` feature from `tox-gh-actions` (#842)
+-   Add python 3.11 to list of supported versions (#867)
+-   Disable python 3.11 test because of timeout (#870)
+-   Bump ruff to 0.0.218, remove flake8 from pre-commit (#880)
+-   Replace GabrielBB/xvfb-action@v1 by aganders3/headless-gui, part 2 (#887)
+-   Better minimal requirements test (#888)
+-   Improve regexp for proper generate list of packages in update report (#894)
+-   Add check for PR title (#933)
+-   Migrate from `nme` to `local_migrator` (#951)
+
+### Refactor
+
+-   Simplify and refactor github workflows. (#864)
+-   Better load Mask project in Roi Analysis (#921)
+-   Use more descriptive names in `pylint: disable` (#922)
+-   Remove `pkg_resources` usage as it is deprecated (#967)
+-   Convert napari plugin to npe2 (#966)
+
+### Security
+
+-   Bump peter-evans/create-pull-request from 4 to 5 (#928)
+
+### Styling
+
+-   Change default theme to dark, remove blinking windows on startup. (#809)
+
+### Testing
+
+-   [Automatic] Dependency upgrades: `packaging`, `pyinstaller`, `pyopengl-accelerate`, `tifffile`, `xlsxwriter` (#932)
+-   [Automatic] Constraints upgrades: `fonticon-fontawesome6`, `imageio`, `numpy`, `partsegcore-compiled-backend`, `pygments`, `sentry-sdk` (#937)
+-   [Automatic] Constraints upgrades: `imageio`, `ipython`, `pandas`, `requests`, `sentry-sdk` (#948)
+-   [Automatic] Constraints upgrades: `ipython`, `nme`, `qtconsole`, `requests`, `sentry-sdk` (#955)
+-   [Automatic] Constraints upgrades: `ipykernel`, `local-migrator`, `pyinstaller`, `sentry-sdk`, `sympy` (#957)
+-   [Automatic] Constraints upgrades: `sentry-sdk`, `xlsxwriter` (#959)
+-   [Automatic] Constraints upgrades: `requests` (#961)
+
+### Ci
+
+-   Update codecov configuration to wait on two reports before post information (#934)
+-   [pre-commit.ci] pre-commit autoupdate (#945)
+-   [pre-commit.ci] pre-commit autoupdate (#956)
+-   [pre-commit.ci] pre-commit autoupdate (#964)
+
 ## 0.14.6 - 2022-11-13
 
 ### Bug Fixes
