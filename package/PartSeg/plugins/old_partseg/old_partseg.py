@@ -40,7 +40,7 @@ class LoadPartSegOld(LoadBase):
             seg_array = None
         algorithm_dict = json.load(tar_file.extractfile("data.json"))
         spacing = np.array(algorithm_dict["spacing"][::-1]) / UNIT_SCALE[Units.nm.value]
-        image = Image(image_arr.reshape((1, *image_arr.shape) + (1,)), spacing, file_path, axes_order="TZYXC")
+        image = Image(image_arr.reshape((1, *image_arr.shape, 1)), spacing, file_path, axes_order="TZYXC")
         values = {
             "channel": 0,
             "minimum_size": algorithm_dict["minimum_size"],
