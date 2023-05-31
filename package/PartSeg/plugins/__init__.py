@@ -1,3 +1,4 @@
+import contextlib
 import importlib
 import itertools
 import os
@@ -14,9 +15,10 @@ def register_napari_plugins():  # pragma: no cover
 
     import PartSeg
 
-    npe2.PluginManager.instance().register(
-        os.path.join(os.path.dirname(os.path.dirname(PartSeg.__file__)), "napari.yaml")
-    )
+    with contextlib.suppress(ValueError):
+        npe2.PluginManager.instance().register(
+            os.path.join(os.path.dirname(os.path.dirname(PartSeg.__file__)), "napari.yaml")
+        )
 
 
 def get_plugins():
