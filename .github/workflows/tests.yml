@@ -77,10 +77,10 @@ jobs:
         qt_backend: ["PySide2", "PyQt5"]
         include:
           - python_version: "3.9"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
             qt_backend: "PySide6"
           - python_version: "3.9"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
             qt_backend: "PyQt6"
     with:
       test_data: True
