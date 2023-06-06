@@ -22,12 +22,14 @@ def register_napari_plugins():  # pragma: no cover
 
 
 def get_plugins():
-    if getattr(sys, "frozen", False):
+    if getattr(sys, "frozen", False):  # pragma: no cover
         new_path = [os.path.join(os.path.dirname(os.path.dirname(__path__[0])), "plugins")]
-        packages = pkgutil.iter_modules(new_path, "plugins.")
+        sys.path.append(new_path[0])
+        packages = pkgutil.iter_modules(new_path)
         register_napari_plugins()
     else:
-        packages = pkgutil.iter_modules(__path__, f"{__name__}.")
+        sys.path.append(os.path.dirname(__file__))
+        packages = list(pkgutil.iter_modules(__path__))
     packages2 = itertools.chain(
         entry_points().get("PartSeg.plugins", []),
         entry_points().get("partseg.plugins", []),

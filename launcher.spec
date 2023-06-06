@@ -81,6 +81,7 @@ hiddenimports = (
         "numpy.random.entropy",
         "PartSegCore.register",
         "PartSegCore.channel_class",
+        "nme",
         "defusedxml.cElementTree",
         "vispy.app.backends._pyqt5",
         "scipy.spatial.transform._rotation_groups",
