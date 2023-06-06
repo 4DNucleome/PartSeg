@@ -11,6 +11,5 @@ if TYPE_CHECKING:
 
 
 @impl
-def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
+def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001
     env_conf.add_constant(["sys_platform"], "string representing current OS", sys.platform)
-    print("tox_add_env_config", env_conf, state)
