@@ -20,7 +20,13 @@ steps:
     displayName: "Run Tox"
     env:
       CODECOV_TOKEN: $(codecov_token_secret)
+
+  - task: CopyFiles@2
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)'
+      contents: 'report-*.json'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     inputs:
-      pathToPublish: ./report-*.json
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'
       artifactName: reports
