@@ -159,7 +159,7 @@ jobs:
       - name: Test with tox
         uses: aganders3/headless-gui@v1
         with:
-          run: conda run -n test --no-capture-output tox -e py39-PySide2-conda
+          run: conda run -n test --no-capture-output tox -e py39-PySide2-conda -c .
         timeout-minutes: 60
 
   check-package:
