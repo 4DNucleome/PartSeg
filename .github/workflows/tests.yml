@@ -139,7 +139,8 @@ jobs:
 
       - name: Install dependencies
         shell: "bash -el {0}"
-        run: mamba install -y "tox-conda>=0.10.0"
+        run: |
+          mamba install -y "tox-conda>=0.10.0"
 
       - name: List environment packages
         shell: "bash -el {0}"
@@ -155,6 +156,10 @@ jobs:
           name: environment
           path: environment.yml
           retention-days: 5
+
+      - name: patch tox.ini
+        shell: "bash -el {0}"
+        run: sed -e "s/{sys_platform}/{platform}/g" tox.ini -i
 
       - name: Test with tox
         uses: aganders3/headless-gui@v1
