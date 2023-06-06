@@ -1,6 +1,5 @@
 import contextlib
 import importlib
-import importlib.util
 import itertools
 import os
 import pkgutil
@@ -23,7 +22,7 @@ def register_napari_plugins():  # pragma: no cover
 
 
 def get_plugins():
-    if getattr(sys, "frozen", False):
+    if getattr(sys, "frozen", False):  # pragma: no cover
         new_path = [os.path.join(os.path.dirname(os.path.dirname(__path__[0])), "plugins")]
         sys.path.append(new_path[0])
         packages = pkgutil.iter_modules(new_path)
