@@ -157,6 +157,10 @@ jobs:
           path: environment.yml
           retention-days: 5
 
+      - name: patch tox.ini
+        shell: "bash -el {0}"
+        run: sed -e "s/{sys_platform}/{platform}/g" tox.ini -i
+
       - name: Test with tox
         uses: aganders3/headless-gui@v1
         with:
