@@ -139,7 +139,9 @@ jobs:
 
       - name: Install dependencies
         shell: "bash -el {0}"
-        run: mamba install -y "tox-conda>=0.10.0" "tox>=4"
+        run: |
+          mamba install -y "tox>=4"
+          mamba install -y "tox-conda>=0.10.0"
 
       - name: List environment packages
         shell: "bash -el {0}"
