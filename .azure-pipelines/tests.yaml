@@ -20,3 +20,7 @@ steps:
     displayName: "Run Tox"
     env:
       CODECOV_TOKEN: $(codecov_token_secret)
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: ./report-*.json
+      artifactName: reports
