@@ -22,7 +22,7 @@ from PartSegImage.image import minimal_dtype, reduce_array
 class StackSettings(BaseSettings):
     load_metadata = staticmethod(load_metadata)
     components_change_list = Signal([int, list])
-    save_locations_keys = [
+    save_locations_keys: typing.ClassVar[typing.List[str]] = [
         "save_batch",
         "save_components_directory",
         "save_segmentation_directory",

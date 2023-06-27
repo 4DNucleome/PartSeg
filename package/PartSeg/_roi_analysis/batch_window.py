@@ -374,7 +374,7 @@ class CalculationPrepare(QDialog):
         measurement_file_path: os.PathLike,
         settings: PartSettings,
         batch_manager: CalculationManager,
-        parent: QWidget = None,
+        parent: typing.Optional[QWidget] = None,
     ):
         """
         :param file_list: list of files to proceed

@@ -837,7 +837,7 @@ class MultipleInput(QDialog):
         self,
         text: str,
         help_text: str = "",
-        objects_list: List[Union[Tuple[str, _DialogType], Tuple[str, _DialogType, str]]] = None,
+        objects_list: Optional[List[Union[Tuple[str, _DialogType], Tuple[str, _DialogType, str]]]] = None,
         parent: Optional[QWidget] = None,
     ):
         if objects_list is None:  # pragma: no cover

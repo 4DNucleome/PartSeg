@@ -63,8 +63,8 @@ class LoadPartSegOld(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
         """Load project from archive old format"""

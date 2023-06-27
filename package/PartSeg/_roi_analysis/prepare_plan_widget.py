@@ -406,7 +406,7 @@ class ROIExtractionOp(ProtectedGroupBox):
     roi_extraction_profile_add = Signal(object)
     roi_extraction_pipeline_add = Signal(object)
 
-    def __init__(self, settings: PartSettings, parent: QWidget = None):
+    def __init__(self, settings: PartSettings, parent: typing.Optional[QWidget] = None):
         super().__init__("ROI extraction", parent)
         self.settings = settings
 
@@ -511,7 +511,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
     set_of_measurement_add = Signal(object)
     set_of_measurement_selected = Signal(object)
 
-    def __init__(self, settings: PartSettings, parent: QWidget = None):
+    def __init__(self, settings: PartSettings, parent: typing.Optional[QWidget] = None):
         super().__init__("Set of measurements:", parent)
         self.settings = settings
 
@@ -589,7 +589,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
 
 
 class StretchWrap(QWidget):
-    def __init__(self, widget: QWidget, parent: QWidget = None):
+    def __init__(self, widget: QWidget, parent: typing.Optional[QWidget] = None):
         super().__init__(parent)
         self.widget = widget
         lay = QVBoxLayout()
@@ -605,7 +605,7 @@ class StretchWrap(QWidget):
 class SelectMaskOp(ProtectedGroupBox):
     mask_step_add = Signal(object)
 
-    def __init__(self, settings: PartSettings, parent: QWidget = None):
+    def __init__(self, settings: PartSettings, parent: typing.Optional[QWidget] = None):
         super().__init__("Use mask from:", parent)
         self.settings = settings
         self.mask_set = {}

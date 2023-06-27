@@ -476,7 +476,7 @@ class CalculationPlan:
     :type execution_tree: CalculationTree
     """
 
-    correct_name = {
+    correct_name: typing.ClassVar[typing.Dict[str, typing.Union[BaseModel, Enum]]] = {
         MaskCreate.__name__: MaskCreate,
         MaskUse.__name__: MaskUse,
         Save.__name__: Save,
