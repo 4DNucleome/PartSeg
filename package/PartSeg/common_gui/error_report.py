@@ -250,7 +250,7 @@ class ExceptionListItem(QListWidgetItem):
 
     # TODO Prevent from reporting disc error
     def __init__(
-        self, exception: typing.Union[Exception, typing.Tuple[Exception, typing.List]], parent: QListWidget = None
+        self, exception: typing.Union[Exception, typing.Tuple[Exception, typing.List]], parent: typing.Optional[QListWidget] = None
     ):
         if isinstance(exception, Exception):
             traceback_summary = None
@@ -291,7 +291,7 @@ class DataImportErrorDialog(QDialog):
     def __init__(
         self,
         errors: typing.Dict[str, typing.Union[Exception, typing.List[typing.Tuple[str, dict]]]],
-        parent: QWidget = None,
+        parent: typing.Optional[QWidget] = None,
         text: str = "During import data part of the entries was filtered out",
     ):
         super().__init__(parent)

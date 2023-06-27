@@ -175,7 +175,7 @@ class SaveProject(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info: ProjectTuple,
-        parameters: dict = None,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -334,7 +334,7 @@ class SaveAsTiff(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict = None,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):

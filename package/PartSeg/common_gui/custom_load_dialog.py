@@ -125,7 +125,7 @@ class PLoadDialog(CustomLoadDialog):
         *,
         settings: "BaseSettings",
         path: str,
-        default_directory: str = None,
+        default_directory: typing.Optional[str] = None,
         filter_path="",
         parent=None,
         caption="Load file",

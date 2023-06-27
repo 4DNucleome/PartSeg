@@ -661,7 +661,7 @@ class ColormapSave(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict = None,
+        parameters: Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -684,8 +684,8 @@ class ColormapLoad(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> Colormap:
         with open(load_locations[0]) as f:

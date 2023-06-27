@@ -816,7 +816,7 @@ class AlgorithmChooseBase(QWidget):
         )
         return result
 
-    def change_algorithm(self, name, values: dict = None):
+    def change_algorithm(self, name, values: typing.Optional[dict] = None):
         self.settings.set_algorithm("current_algorithm", name)
         widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
         blocked = self.blockSignals(True)

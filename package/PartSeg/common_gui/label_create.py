@@ -329,8 +329,8 @@ class LabelsLoad(LoadBase):
     def load(
         cls,
         load_locations: List[Union[str, BytesIO, Path]],
-        range_changed: Callable[[int, int], Any] = None,
-        step_changed: Callable[[int], Any] = None,
+        range_changed: Optional[Callable[[int, int], Any]] = None,
+        step_changed: Optional[Callable[[int], Any]] = None,
         metadata: Optional[dict] = None,
     ) -> List[List[float]]:
         with open(load_locations[0]) as f_p:
@@ -353,7 +353,7 @@ class LabelsSave(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict = None,
+        parameters: Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):

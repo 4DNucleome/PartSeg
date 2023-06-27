@@ -155,7 +155,7 @@ class PSaveDialog(CustomSaveDialog):
         *,
         settings: "BaseSettings",
         path: str,
-        default_directory: str = None,
+        default_directory: typing.Optional[str] = None,
         filter_path="",
         system_widget=True,
         base_values: typing.Optional[dict] = None,

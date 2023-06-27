@@ -141,8 +141,7 @@ class BaseImageReader:
         if len(array.shape) < len(cls.return_order()):
             array = np.reshape(array, array.shape + (1,) * (len(cls.return_order()) - len(array.shape)))
 
-        array = np.moveaxis(array, list(range(len(axes_li))), final_mapping)
-        return array
+        return np.moveaxis(array, list(range(len(axes_li))), final_mapping)
 
 
 class BaseImageReaderBuffer(BaseImageReader):
