@@ -1,7 +1,7 @@
 import sys
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, ForwardRef, Iterable, Optional, Set, Tuple, Union
+from typing import Any, ClassVar, Dict, ForwardRef, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
 from local_migrator import REGISTER, class_to_str, register_class, rename_key
@@ -338,7 +338,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
     text_info = "", ""
 
-    need_class_method = [
+    need_class_method: ClassVar[List[str]] = [
         "get_description",
         "is_component",
         "calculate_property",

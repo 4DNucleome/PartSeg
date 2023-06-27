@@ -57,7 +57,7 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
 
 
 class SaveBase(AlgorithmDescribeBase, ABC):
-    need_functions = [
+    need_functions: typing.ClassVar[typing.List[str]] = [
         "save",
         "get_short_name",
         "get_name_with_suffix",
@@ -120,7 +120,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
 
 class LoadBase(AlgorithmDescribeBase, ABC):
-    need_functions = [
+    need_functions: typing.ClassVar[typing.List[str]] = [
         "load",
         "get_short_name",
         "get_name_with_suffix",

@@ -1,6 +1,6 @@
 import itertools
 from collections.abc import MutableMapping
-from typing import Generic, Iterator, Tuple, TypeVar, Union
+from typing import Any, ClassVar, Dict, Generic, Iterator, Tuple, TypeVar, Union
 
 from qtpy.QtCore import QObject, Signal
 
@@ -19,7 +19,7 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
     """Signal with item added to dict"""
     item_removed = Signal(object)
     """Signal with item remove fom dict"""
-    const_item_dict = {}
+    const_item_dict: ClassVar[Dict[str, Any]] = {}
     """Dict with non removable elements"""
 
     def __init__(self, editable_items):

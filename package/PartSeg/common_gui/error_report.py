@@ -250,7 +250,9 @@ class ExceptionListItem(QListWidgetItem):
 
     # TODO Prevent from reporting disc error
     def __init__(
-        self, exception: typing.Union[Exception, typing.Tuple[Exception, typing.List]], parent: typing.Optional[QListWidget] = None
+        self,
+        exception: typing.Union[Exception, typing.Tuple[Exception, typing.List]],
+        parent: typing.Optional[QListWidget] = None,
     ):
         if isinstance(exception, Exception):
             traceback_summary = None
