@@ -104,6 +104,26 @@ class BaseImageReader:
             instance.set_default_spacing(default_spacing)
         return instance.read(image_path, mask_path)
 
+    @staticmethod
+    def _reduce_obsolete_dummy_axes(array, axes) -> typing.Tuple[np.ndarray, str]:
+        """
+        If there are duplicates in axes string then remove dimensions of size one
+
+        :return: reduced array and axes
+        """
+        if len(axes) == len(set(axes)):
+            return array, axes
+
+        ax_li = []
+        shape_li = []
+        for dim, ax in zip(array.shape, axes):
+            if dim != 1:
+                ax_li.append(ax)
+                shape_li.append(dim)
+        axes = "".join(ax_li)
+        array = np.reshape(array, shape_li)
+        return array, axes
+
     @classmethod
     def update_array_shape(cls, array: np.ndarray, axes: str):
         """
@@ -112,6 +132,8 @@ class BaseImageReader:
         :param array: array to reorder
         :param axes: current order of array axes as string like "TZYXC"
         """
+        axes, array = cls._reduce_obsolete_dummy_axes(array, axes)
+
         try:
             final_mapping_dict = {letter: i for i, letter in enumerate(cls.return_order())}
             for let1, let2 in [("Z", "I"), ("Z", "Q"), ("C", "S")]:
