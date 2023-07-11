@@ -132,7 +132,7 @@ class BaseImageReader:
         :param array: array to reorder
         :param axes: current order of array axes as string like "TZYXC"
         """
-        axes, array = cls._reduce_obsolete_dummy_axes(array, axes)
+        array, axes = cls._reduce_obsolete_dummy_axes(array, axes)
 
         try:
             final_mapping_dict = {letter: i for i, letter in enumerate(cls.return_order())}
