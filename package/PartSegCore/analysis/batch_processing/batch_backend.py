@@ -22,6 +22,7 @@ Calculation hierarchy:
 """
 import json
 import logging
+import math
 import os
 import threading
 import traceback
@@ -73,6 +74,11 @@ from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, report_empty_fun
 from PartSegCore.utils import iterate_names
 from PartSegImage import Image, TiffImageReader
+
+# https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3#ID0EDBD=Newer_versions
+# page with excel limits
+MAX_CHAR_IN_EXCEL_CELL = 30_000  # real limit is 32_767 but it is better to have some margin
+MAX_ROWS_IN_EXCEL_CELL = 50  # real limit is 253 but 50 provides better readability
 
 
 class ResponseData(NamedTuple):
@@ -824,12 +830,26 @@ class FileData:
         cell_format = book.add_format({"bold": True})
         sheet.write("A1", "Plan Description", cell_format)
         sheet.write("B1", "Plan JSON", cell_format)
-        description = calculation_plan.pretty_print()
-        sheet.write("A2", description)
-        sheet.set_row(1, description.count("\n") * 12 + 10)
-        sheet.set_column(0, 0, max(map(len, description.split("\n"))))
+        sheet.write("C1", "Plan JSON (readable)", cell_format)
+        description = calculation_plan.pretty_print().split("\n")
+        for i in range(math.ceil(len(description) / MAX_ROWS_IN_EXCEL_CELL)):
+            to_write = description[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
+            sheet.write(f"A{i+2}", "\n".join(to_write))
+            sheet.set_row(i + 1, len(to_write) * 11 + 10)
+
+        sheet.set_column(0, 0, max(map(len, description)))
         sheet.set_column(1, 1, 15)
-        sheet.write("B2", json.dumps(calculation_plan, cls=PartSegEncoder, indent=2))
+        calculation_plan_str = json.dumps(calculation_plan, cls=PartSegEncoder)
+        for i in range(math.ceil(len(calculation_plan_str) / MAX_CHAR_IN_EXCEL_CELL)):
+            sheet.write(f"B{i+2}", calculation_plan_str[i * MAX_CHAR_IN_EXCEL_CELL : (i + 1) * MAX_CHAR_IN_EXCEL_CELL])
+
+        calculation_plan_pretty = json.dumps(calculation_plan, cls=PartSegEncoder, indent=2).split("\n")
+        for i in range(math.ceil(len(calculation_plan_pretty) / MAX_ROWS_IN_EXCEL_CELL)):
+            to_write = calculation_plan_pretty[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
+            sheet.write(f"C{i+2}", "\n".join(to_write))
+            sheet.set_row(i + 1, len(to_write) * 11 + 10)
+
+        sheet.set_column(2, 2, max(map(len, calculation_plan_pretty)))
 
     def get_errors(self) -> List[ErrorInfo]:
         """

@@ -485,7 +485,12 @@ class LoadPlanExcel(LoadBase):
         try:
             for sheet_name in xlsx.sheetnames:
                 if sheet_name.startswith("info"):
-                    data = xlsx[sheet_name].cell(row=2, column=2).value
+                    data = ""
+                    index = 2  # skip header
+                    while xlsx[sheet_name].cell(row=index, column=2).value:
+                        data += xlsx[sheet_name].cell(row=index, column=2).value
+                        index += 1
+
                     try:
                         data, err = load_matadata_part(data)
                         data_list.append(data)
