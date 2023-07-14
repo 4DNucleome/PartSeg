@@ -158,9 +158,15 @@ class PLoadDialog(CustomLoadDialog):
 
 class SelectDirectoryDialog(QFileDialog):
     def __init__(
-        self, settings: "BaseSettings", path: typing.Union[str, typing.List[str]], default_directory: str, parent=None
+        self,
+        settings: "BaseSettings",
+        path: typing.Union[str, typing.List[str]],
+        default_directory: typing.Optional[str],
+        parent=None,
     ) -> None:
         super().__init__(parent, "Select directory")
+        if default_directory is None:
+            default_directory = str(Path.home())
         self.settings = settings
         self.setFileMode(QFileDialog.Directory)
         self.setAcceptMode(QFileDialog.AcceptOpen)

@@ -9,6 +9,7 @@ from pickle import PicklingError  # nosec
 
 import numpy as np
 import sentry_sdk
+from openpyxl.reader.excel import load_workbook
 from qtpy.QtCore import QByteArray, Qt, QTimer
 from qtpy.QtGui import QIcon, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
@@ -36,15 +37,17 @@ from PartSeg import parsed_version, state_store
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.prepare_plan_widget import CalculatePlaner
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
+from PartSeg.common_gui.custom_load_dialog import PLoadDialog, SelectDirectoryDialog
 from PartSeg.common_gui.custom_save_dialog import PSaveDialog
 from PartSeg.common_gui.error_report import ExceptionList, ExceptionListItem
+from PartSeg.common_gui.main_window import OPEN_DIRECTORY
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
-from PartSeg.common_gui.select_multiple_files import AddFiles
+from PartSeg.common_gui.select_multiple_files import IO_BATCH_DIRECTORY, AddFiles
 from PartSeg.common_gui.universal_gui_part import Spacing, right_label
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
 from PartSegCore.analysis.calculation_plan import Calculation, CalculationPlan, MaskFile
-from PartSegCore.io_utils import SaveBase
+from PartSegCore.io_utils import LoadPlanExcel, SaveBase
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.universal_const import Units
 from PartSegData import icons_dir
@@ -244,6 +247,8 @@ class FileChoose(QWidget):
         self.result_file.setReadOnly(True)
         self.choose_result = QPushButton("Save result as", self)
         self.choose_result.clicked.connect(self.choose_result_file)
+        self.export_data_button = QPushButton("Export batch with data", self)
+        self.export_data_button.clicked.connect(self.export_data)
 
         self.run_button.clicked.connect(self.prepare_calculation)
         self.files_widget.file_list_changed.connect(self.change_situation)
@@ -256,6 +261,7 @@ class FileChoose(QWidget):
         calc_layout.addWidget(self.calculation_choose)
         calc_layout.addWidget(self.result_file)
         calc_layout.addWidget(self.choose_result)
+        calc_layout.addWidget(self.export_data_button)
         calc_layout.addStretch()
         calc_layout.addWidget(self.run_button)
         layout.addLayout(calc_layout)
@@ -263,6 +269,10 @@ class FileChoose(QWidget):
         self.setLayout(layout)
 
         self._refresh_batch_list()
+
+    def export_data(self):
+        dialog = ExportProjectDialog(self.result_file.text(), self.files_widget.paths_input.text(), self.settings, self)
+        dialog.exec_()
 
     def prepare_calculation(self):
         plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
@@ -607,6 +617,131 @@ class CalculationPrepare(QDialog):
                 sub_widget.setIcon(0, icon_dkt[self.state_list[file_num, mask_num]])
 
             widget.setIcon(0, icon_dkt[warn_state[file_num]])
+
+
+class ExportProjectDialog(QDialog):
+    """Export data for zenodo"""
+
+    def __init__(
+        self, excel_path: str, base_folder: str, settings: PartSettings, parent: typing.Optional[QWidget] = None
+    ) -> None:
+        super().__init__(parent=parent)
+        self.setWindowTitle("Export batch with data")
+        self.settings = settings
+        self._all_files_exists = False
+        self.excel_path = QLineEdit(excel_path)
+        self.base_folder = QLineEdit(base_folder)
+        self.zenodo_token = QLineEdit(settings.get("zenodo_token", ""))
+        self.excel_path_btn = QPushButton("Select excel file")
+        self.base_folder_btn = QPushButton("Select base folder")
+        self.info_box = QTreeWidget()
+        self.info_box.header().close()
+
+        self.export_btn = QPushButton("Export")
+        self.export_btn.setDisabled(True)
+        self.export_to_zenodo_btn = QPushButton("Export to zenodo")
+        self.export_to_zenodo_btn.setDisabled(True)
+
+        layout = QGridLayout()
+
+        layout.addWidget(QLabel("Excel file"), 0, 0)
+        layout.addWidget(self.excel_path, 0, 1)
+        layout.addWidget(self.excel_path_btn, 0, 2)
+        layout.addWidget(QLabel("Base folder"), 1, 0)
+        layout.addWidget(self.base_folder, 1, 1)
+        layout.addWidget(self.base_folder_btn, 1, 2)
+        layout.addWidget(QLabel("Zenodo token"), 2, 0)
+        layout.addWidget(self.zenodo_token, 2, 1, 1, 2)
+        layout.addWidget(self.info_box, 3, 0, 1, 3)
+
+        layout.addWidget(self.export_btn, 5, 0)
+        layout.addWidget(self.export_to_zenodo_btn, 5, 2)
+
+        self.setLayout(layout)
+
+        self.zenodo_token.textChanged.connect(self._zenodo_token_refresh)
+        self.excel_path.textChanged.connect(self._zenodo_token_refresh)
+        self.base_folder.textChanged.connect(self._zenodo_token_refresh)
+        self.excel_path.textChanged.connect(self._excel_path_changed)
+        self.base_folder.textChanged.connect(self._excel_path_changed)
+        self.base_folder_btn.clicked.connect(self.select_folder)
+        self.excel_path_btn.clicked.connect(self.select_excel)
+
+    def _could_export(self):
+        dir_path = Path(self.base_folder.text())
+        excel_path = Path(self.excel_path.text())
+        return self._all_files_exists and dir_path.is_dir() and excel_path.exists() and excel_path.is_file()
+
+    def _zenodo_token_refresh(self):
+        self.export_to_zenodo_btn.setEnabled(self._could_export() and len(self.zenodo_token.text()) > 5)
+
+    def _export_btn_refresh(self):
+        self.export_btn.setEnabled(self._could_export())
+
+    def select_folder(self):
+        dial = SelectDirectoryDialog(
+            settings=self.settings,
+            path=[IO_BATCH_DIRECTORY, OPEN_DIRECTORY],
+            default_directory=str(Path.home()),
+            parent=self,
+        )
+        if dial.exec_():
+            self.base_folder.setText(dial.selectedFiles()[0])
+
+    def select_excel(self):
+        dial = PLoadDialog(LoadPlanExcel, settings=self.settings, path=IO_SAVE_DIRECTORY)
+        if dial.exec_():
+            file_path = str(dial.selectedFiles()[0])
+            if not os.path.splitext(file_path)[1]:
+                file_path += ".xlsx"
+            self.excel_path.setText(file_path)
+
+    def _excel_path_changed(self):
+        excel_path = Path(self.excel_path.text())
+        if not excel_path.exists() or not excel_path.is_file():
+            return
+        not_icon = QIcon(os.path.join(icons_dir, "task-reject.png"))
+        ok_icon = QIcon(os.path.join(icons_dir, "task-accepted.png"))
+
+        file_and_presence_list = _extract_information_from_excel_to_export(excel_path, self.base_folder.text())
+        self.info_box.clear()
+        presence_all = True
+        for file_path, presence in file_and_presence_list:
+            widget = QTreeWidgetItem(self.info_box)
+            widget.setText(0, file_path)
+            if not presence:
+                widget.setIcon(0, not_icon)
+                widget.setToolTip(0, "File do not exists")
+            else:
+                widget.setIcon(0, ok_icon)
+            presence_all &= presence
+
+        self._all_files_exists = presence_all
+        self._zenodo_token_refresh()
+        self._export_btn_refresh()
+
+
+def _extract_information_from_excel_to_export(
+    excel_path: typing.Union[str, Path], base_folder: typing.Union[str, Path]
+) -> typing.List[typing.Tuple[str, bool]]:
+    """Extract information from excel file to export"""
+    file_list = []
+    file_set = set()
+    base_folder = Path(base_folder)
+
+    xlsx = load_workbook(filename=excel_path, read_only=True)
+    for sheet in xlsx.worksheets:
+        if sheet.cell(1, 2).value != "name":
+            continue
+        index = 4  # offset
+        while image_path := sheet.cell(index, 2).value:
+            index += 1
+            if image_path in file_set:
+                continue
+            file_set.add(image_path)
+            file_list.append((image_path, (base_folder / image_path).exists()))
+
+    return file_list
 
 
 class CalculationProcessItem(QStandardItem):
