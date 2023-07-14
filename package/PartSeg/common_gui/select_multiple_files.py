@@ -23,6 +23,8 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_gui.custom_load_dialog import SelectDirectoryDialog
+from PartSeg.common_gui.main_window import OPEN_DIRECTORY
 from PartSegCore.analysis.calculation_plan import MaskMapper
 
 IO_BATCH_DIRECTORY = "io.batch_directory"
@@ -206,9 +208,7 @@ class AddFiles(QWidget):
 
     def select_files(self):
         dial = QFileDialog(self, "Select files")
-        dial.setDirectory(
-            self.settings.get(IO_BATCH_DIRECTORY, self.settings.get("io.load_image_directory", str(Path.home())))
-        )
+        dial.setDirectory(self.settings.get(IO_BATCH_DIRECTORY, self.settings.get(OPEN_DIRECTORY, str(Path.home()))))
         dial.setFileMode(QFileDialog.ExistingFiles)
         if dial.exec_():
             self.settings.set(IO_BATCH_DIRECTORY, os.path.dirname(str(dial.selectedFiles()[0])))
@@ -219,14 +219,14 @@ class AddFiles(QWidget):
             self.file_list_changed.emit(self.files_to_proceed)
 
     def select_directory(self):
-        dial = QFileDialog(self, "Select directory")
-        dial.setDirectory(
-            self.settings.get(IO_BATCH_DIRECTORY, self.settings.get("io.load_image_directory", str(Path.home())))
+        dial = SelectDirectoryDialog(
+            settings=self.settings,
+            path=[IO_BATCH_DIRECTORY, OPEN_DIRECTORY],
+            default_directory=str(Path.home()),
+            parent=self,
         )
-        dial.setFileMode(QFileDialog.Directory)
         if dial.exec_():
             self.paths_input.setText(dial.selectedFiles()[0])
-            self.settings.set(IO_BATCH_DIRECTORY, str(dial.selectedFiles()[0]))
 
     def file_chosen(self):
         self.delete_button.setEnabled(True)

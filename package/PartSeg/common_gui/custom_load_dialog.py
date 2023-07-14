@@ -154,3 +154,31 @@ class PLoadDialog(CustomLoadDialog):
         self.settings.set(self.path_in_dict, directory)
         if self.filter_path:
             self.settings.set(self.filter_path, self.selectedNameFilter())
+
+
+class SelectDirectoryDialog(QFileDialog):
+    def __init__(
+        self, settings: "BaseSettings", path: typing.Union[str, typing.List[str]], default_directory: str, parent=None
+    ) -> None:
+        super().__init__(parent, "Select directory")
+        self.settings = settings
+        self.setFileMode(QFileDialog.Directory)
+        self.setAcceptMode(QFileDialog.AcceptOpen)
+        if isinstance(path, list):
+            for path_ in reversed(path):
+                default_directory = self.settings.get(path_, default_directory)
+            self.setDirectory(default_directory)
+            self.path_in_dict = path[0]
+        else:
+            self.setDirectory(self.settings.get(path, default_directory))
+            self.path_in_dict = path
+        history = self.history() + settings.get_path_history()
+        self.setHistory(history)
+
+    def accept(self) -> None:
+        super().accept()
+        if self.result() != QFileDialog.Accepted:
+            return
+        directory = self.selectedFiles()[0]
+        self.settings.add_path_history(directory)
+        self.settings.set(self.path_in_dict, directory)
