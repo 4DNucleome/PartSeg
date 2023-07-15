@@ -387,21 +387,22 @@ Execute batch
 
 Export data and batch
 ^^^^^^^^^^^^^^^^^^^^^
-
 The main output of PartSeg batch processing is excel file with output of all measurements. Next to it there is also
-spreadsheet with batch plan saved. This give ability to automatically prepare package that will contain
-Batch plan, measurement outputs and input values. To use this please click **Export batch with data** in
-*input files* tab of *Batch Processing* window. This will open dialog with options to select files to export.
+spreadsheet with batch plan saved. This gives the ability to automatically prepare a package that will contain
+Batch plan, measurement outputs and input values. To use this please click Export batch with data in
+input files tab of Batch Processing window. This will open dialog with options to select files to export.
 
 .. image::  images/export_batch_all.png
    :alt: Dialog for exporting whole project based on batch plan.
 
-After selecting excel file with batch output and eventually correct Base folder path (need to be set for batch output created before PartSeg 0.15.1).
-If all required files are found on drive the *Export* button will be activated and allow to create archive contains all required files
-and could be used to share results with other users or create supplementary materials for publication.
+After that select excel file with batch output and eventually correct
+Base folder path (need to be set for batch output created before PartSeg
+ 0.15.1).
+If all required files are found on drive the Export button will be activated and allow to create archive containing all required files
+that can be used to share results with other users or create supplementary materials for publication.
+If the user wants to share the data using zenodo then he/she needs to provide authorization token. The token can be generated
+in settings on Zenodo page.
 
-If the user want to share the data using zenodo then need to provide authorization token. The token can be generated
-in setting on Zenodo page.
 
 .. image::  images/zenodo_token.png
    :alt: View on Zenodo settings where user could generate token.
