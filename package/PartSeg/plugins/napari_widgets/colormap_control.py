@@ -26,7 +26,7 @@ class NapariColormapControl(ChannelPreview):
         self.update_preview()
 
     def update_preview(self, _event=None):
-        if len(self.viewer.layers.selection) == 1 and isinstance(list(self.viewer.layers.selection)[0], Image):
+        if len(self.viewer.layers.selection) == 1 and isinstance(next(iter(self.viewer.layers.selection)), Image):
             self.apply_colormap_btn.setEnabled(True)
             self.apply_colormap_btn.setToolTip("Apply colormap to selected layer")
         else:
@@ -34,7 +34,7 @@ class NapariColormapControl(ChannelPreview):
             self.apply_colormap_btn.setToolTip("Select one image layer to apply colormap")
 
     def apply_colormap(self):
-        if len(self.viewer.layers.selection) == 1 and isinstance(layer := list(self.viewer.layers.selection)[0], Image):
+        if len(self.viewer.layers.selection) == 1 and isinstance(layer := next(iter(self.viewer.layers.selection)), Image):
             layer.colormap = self.colormap
 
 

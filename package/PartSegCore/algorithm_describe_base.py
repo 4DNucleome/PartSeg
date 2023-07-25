@@ -598,7 +598,7 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
     :return:
     """
     res = []
-    value: "ModelField"
+    value: ModelField
     if hasattr(obj, "header") and obj.header():
         res.append(obj.header())
     for name, value in obj.__fields__.items():

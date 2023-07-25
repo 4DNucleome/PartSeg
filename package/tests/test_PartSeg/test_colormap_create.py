@@ -235,7 +235,7 @@ class TestPColormapCreator:
 
         cmap_dict = base_settings.get_from_profile("custom_colormap")
         assert len(cmap_dict) == 1
-        assert check_res(list(cmap_dict.values())[0])
+        assert check_res(next(iter(cmap_dict.values())))
 
     def test_custom_colors_save(self, qtbot, base_settings):
         widget = PColormapCreator(base_settings)
