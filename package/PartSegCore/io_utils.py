@@ -205,7 +205,7 @@ def load_metadata_base(data: typing.Union[str, Path]):
         try:
             decoded_data = json.loads(str(data), object_hook=partseg_object_hook)
         except Exception:
-            raise e
+            raise e  # noqa: B904
 
     return decoded_data
 

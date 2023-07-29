@@ -34,7 +34,9 @@ class NapariColormapControl(ChannelPreview):
             self.apply_colormap_btn.setToolTip("Select one image layer to apply colormap")
 
     def apply_colormap(self):
-        if len(self.viewer.layers.selection) == 1 and isinstance(layer := next(iter(self.viewer.layers.selection)), Image):
+        if len(self.viewer.layers.selection) == 1 and isinstance(
+            layer := next(iter(self.viewer.layers.selection)), Image
+        ):
             layer.colormap = self.colormap
 
 
