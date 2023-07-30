@@ -28,11 +28,9 @@ def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
 def napari_write_images(path: str, layer_data: List[FullLayerData]) -> List[str]:
     ext = os.path.splitext(path)[1]
     base_shape = layer_data[0][0].shape
-    if not all(isinstance(x[0], np.ndarray) and x[0].shape == base_shape for x in layer_data) or ext not in {
+    if not all(isinstance(x[0], np.ndarray) and x[0].shape == base_shape for x in layer_data) or ext.lower() not in {
         ".tiff",
         ".tif",
-        ".TIFF",
-        ".TIF",
     }:
         return []
     scale_shift = min(len(base_shape), 3)

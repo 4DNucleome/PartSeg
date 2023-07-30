@@ -125,3 +125,21 @@ def test_napari_write_images(image_layer_tuples, tmp_path):
     assert len(napari_write_images(data_path, image_layer_tuples)) == 1
     image = GenericImageReader.read_image(data_path)
     assert image.channels == len(image_layer_tuples)
+
+
+def test_write_multichannel(tmp_path):
+    data = np.zeros((1, 10, 20, 30, 5), dtype=np.uint8)
+    data[:, 1:-1, 1:-1, 1:-1] = 1
+    layer = Image(data)
+    data_path = str(tmp_path / "test.tif")
+    assert napari_write_images(data_path, [layer.as_layer_data_tuple()])
+    image = GenericImageReader.read_image(data_path)
+    assert image.channels == 5
+
+
+def test_different_shapes(tmp_path):
+    layer1 = Image(np.eye(10, dtype=np.uint8))
+    layer2 = Image(np.eye(20, dtype=np.uint8))
+    data_path = str(tmp_path / "test.tif")
+    assert not napari_write_images(data_path, [layer1.as_layer_data_tuple(), layer2.as_layer_data_tuple()])
+    assert not (tmp_path / "test.tif").exists()
