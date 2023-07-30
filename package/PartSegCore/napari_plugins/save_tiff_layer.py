@@ -48,7 +48,7 @@ def napari_write_images(path: str, layer_data: List[FullLayerData]) -> List[str]
         axes = axes[-data.ndim :]
     else:
         data = [x[0] for x in layer_data]
-        axes = "C" + axes[-len(data[0].shape) :]
+        axes = f"C{axes[-len(data[0].shape):]}"
         scale_shift -= 1
     image = Image(
         data,
