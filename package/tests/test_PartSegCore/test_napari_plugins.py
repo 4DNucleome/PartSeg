@@ -114,9 +114,9 @@ def test_save_load_axis_order(tmp_path):
 def image_layer_tuples(request):
     res = []
     for i in range(request.param[0]):
-        data = np.zeros((1, 10, 20, 30)[-request.param[1]:], dtype=np.uint8)
+        data = np.zeros((1, 10, 20, 30)[-request.param[1] :], dtype=np.uint8)
         data[:, 1:-1, 1:-1] = i + 1
-        res.append(Image(data, scale=(1, 1, 1, 1)[-request.param[1]:]).as_layer_data_tuple())
+        res.append(Image(data, scale=(1, 1, 1, 1)[-request.param[1] :]).as_layer_data_tuple())
     return res
 
 
