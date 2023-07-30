@@ -10,7 +10,7 @@ contributions:
     python_name: PartSegCore.napari_plugins.load_image:napari_get_reader
   - id: PartSeg.write_tiff_image
     title: Write tiff Image
-    python_name: PartSegCore.napari_plugins.save_tiff_layer:napari_write_image
+    python_name: PartSegCore.napari_plugins.save_tiff_layer:napari_write_images
   - id: PartSeg.write_tiff_labels
     title: Write tiff Labels
     python_name: PartSegCore.napari_plugins.save_tiff_layer:napari_write_labels
@@ -109,7 +109,7 @@ contributions:
   writers:
   - command: PartSeg.write_tiff_image
     layer_types:
-    - image
+    - image+
     filename_extensions: ["*.tif", "*.tiff"]
     display_name: Image as tiff
   - command: PartSeg.write_tiff_labels
