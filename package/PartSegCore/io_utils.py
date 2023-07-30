@@ -204,8 +204,8 @@ def load_metadata_base(data: typing.Union[str, Path]):
     except ValueError as e:
         try:
             decoded_data = json.loads(str(data), object_hook=partseg_object_hook)
-        except Exception:
-            raise e
+        except Exception:  # pragma: no cover
+            raise e  # noqa: B904
 
     return decoded_data
 

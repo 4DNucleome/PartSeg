@@ -456,7 +456,7 @@ class BaseSettings(ViewSettings):
         """
         super().__init__()
         napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
-        self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
+        self.napari_settings: NapariSettings = napari_get_settings(napari_path)
         self._current_roi_dict = profile_name
         self._roi_dict = ProfileDict()
         self._last_algorithm_dict = ProfileDict()
