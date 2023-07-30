@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 from napari.layers import Image, Labels, Layer
 
-from PartSegImage import GenericImageReader
 from PartSegCore.mask.io_functions import LoadROIFromTIFF
 from PartSegCore.napari_plugins.load_image import napari_get_reader as napari_get_reader_image
 from PartSegCore.napari_plugins.load_mask_project import napari_get_reader as napari_get_reader_mask
@@ -14,7 +13,13 @@ from PartSegCore.napari_plugins.load_masked_image import napari_get_reader as na
 from PartSegCore.napari_plugins.load_roi_project import napari_get_reader as napari_get_reader_roi
 from PartSegCore.napari_plugins.loader import project_to_layers
 from PartSegCore.napari_plugins.save_mask_roi import napari_write_labels
-from PartSegCore.napari_plugins.save_tiff_layer import napari_write_labels as napari_write_labels_tiff, napari_write_images
+from PartSegCore.napari_plugins.save_tiff_layer import (
+    napari_write_images,
+)
+from PartSegCore.napari_plugins.save_tiff_layer import (
+    napari_write_labels as napari_write_labels_tiff,
+)
+from PartSegImage import GenericImageReader
 
 
 def test_project_to_layers_analysis(analysis_segmentation):
