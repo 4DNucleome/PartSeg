@@ -45,14 +45,15 @@ def napari_write_images(path: str, layer_data: List[FullLayerData]) -> List[str]
             axes += "C"
             scale_shift -= 1
             channel_names = [f'{meta["name"]} {i}' for i in range(1, data.shape[-1] + 1)]
+        axes = axes[-data.ndim:]
     else:
-        data = np.stack([x[0] for x in layer_data], axis=-1)
-        axes += "C"
+        data = [x[0] for x in layer_data]
+        axes = "C" + axes[-len(data[0].shape):]
         scale_shift -= 1
     image = Image(
         data,
         np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
-        axes_order=axes[-data.ndim :],
+        axes_order=axes,
         channel_names=channel_names,
         shift=np.divide(meta["translate"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         name="Image",

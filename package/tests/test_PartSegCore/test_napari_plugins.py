@@ -110,13 +110,13 @@ def test_save_load_axis_order(tmp_path):
     assert proj.roi_info.roi.shape == data.shape
 
 
-@pytest.fixture(params=[1, 3, 10])
+@pytest.fixture(params=[(1, 4), (1, 3), (3, 4), (3, 3), (10, 4)])
 def image_layer_tuples(request):
     res = []
-    for i in range(request.param):
-        data = np.zeros((1, 10, 20, 30), dtype=np.uint8)
-        data[:, 1:-1, 1:-1, 1:-1] = i + 1
-        res.append(Image(data, scale=(1, 1, 1, 1)).as_layer_data_tuple())
+    for i in range(request.param[0]):
+        data = np.zeros((1, 10, 20, 30)[-request.param[1]:], dtype=np.uint8)
+        data[:, 1:-1, 1:-1] = i + 1
+        res.append(Image(data, scale=(1, 1, 1, 1)[-request.param[1]:]).as_layer_data_tuple())
     return res
 
 
