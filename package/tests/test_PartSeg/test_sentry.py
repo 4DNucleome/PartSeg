@@ -1,18 +1,18 @@
 import multiprocessing
+from importlib.metadata import version as package_version
 
 import numpy as np
 import pytest
 import sentry_sdk
 import sentry_sdk.serializer
 import sentry_sdk.utils
+from packaging.version import parse as parse_version
 from sentry_sdk.client import Client
 from sentry_sdk.hub import Hub
 from sentry_sdk.serializer import serialize
-from importlib.metadata import version as package_version
 
 from PartSeg.common_backend.base_argparser import safe_repr
 from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
-from packaging.version import parse as parse_version
 
 SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
 
@@ -22,7 +22,6 @@ if SENTRY_GE_1_29:
 else:
     DEFAULT_ERROR_REPORT = sentry_sdk.utils.MAX_STRING_LENGTH
     CONST_NAME = "MAX_STRING_LENGTH"
-
 
 
 def test_message_clip(monkeypatch):

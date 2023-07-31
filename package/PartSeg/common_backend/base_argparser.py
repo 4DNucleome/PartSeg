@@ -6,6 +6,7 @@ import platform
 import sys
 import zlib
 from contextlib import suppress
+from importlib.metadata import version as package_version
 from typing import Optional, Sequence
 
 import numpy as np
@@ -13,14 +14,12 @@ import sentry_sdk
 import sentry_sdk.serializer
 import sentry_sdk.utils
 from napari.layers import Image
+from packaging.version import parse as parse_version
 from sentry_sdk.utils import safe_repr as _safe_repr
 
 from PartSeg import __version__, state_store
 from PartSeg.common_backend.except_hook import my_excepthook
 from PartSegCore.utils import numpy_repr
-from packaging.version import parse as parse_version
-from importlib.metadata import version as package_version
-
 
 SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
 
@@ -139,7 +138,7 @@ def _setup_sentry():  # pragma: no cover
         state_store.report_errors = False
         return
     sentry_sdk.utils.MAX_STRING_LENGTH = 10**4
-    sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH = 10 ** 4
+    sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH = 10**4
     sentry_sdk.serializer.safe_repr = safe_repr
     sentry_sdk.serializer.MAX_DATABAG_BREADTH = 100
     init_kwargs = {"release": f"PartSeg@{__version__}"}
