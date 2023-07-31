@@ -20,6 +20,7 @@ steps:
     displayName: "Run Tox"
     env:
       CODECOV_TOKEN: $(codecov_token_secret)
+      PIP_CONSTRAINT: requirements/constraints_py3.9.txt
 
   - task: CopyFiles@2
     inputs:
