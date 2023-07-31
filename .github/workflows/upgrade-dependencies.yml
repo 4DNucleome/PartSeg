@@ -47,7 +47,7 @@ jobs:
         run: |
           set -x
           flags="--extra pyqt5 --extra pyqt6 --extra pyside2 --extra pyside6"
-          flags+="--extra test --extra pyinstaller --allow-unsafe --strip-extras --resolver=backtracking"
+          flags+=" --extra test --extra pyinstaller --allow-unsafe --strip-extras --resolver=backtracking"
 
           for pyv in 3.8 3.9 3.10 3.11; do
             python${pyv}  -m pip install -U pip pip-tools
