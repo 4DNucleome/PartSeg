@@ -2,7 +2,7 @@ import json
 import os
 import re
 import typing
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, StringIO, TextIOBase
@@ -57,7 +57,7 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
 
 
 class SaveBase(AlgorithmDescribeBase, ABC):
-    need_functions = [
+    need_functions: typing.ClassVar[typing.List[str]] = [
         "save",
         "get_short_name",
         "get_name_with_suffix",
@@ -67,10 +67,12 @@ class SaveBase(AlgorithmDescribeBase, ABC):
     ]
 
     @classmethod
+    @abstractmethod
     def get_short_name(cls):
         raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
@@ -118,7 +120,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
 
 class LoadBase(AlgorithmDescribeBase, ABC):
-    need_functions = [
+    need_functions: typing.ClassVar[typing.List[str]] = [
         "load",
         "get_short_name",
         "get_name_with_suffix",
@@ -129,15 +131,17 @@ class LoadBase(AlgorithmDescribeBase, ABC):
     ]
 
     @classmethod
+    @abstractmethod
     def get_short_name(cls):
         raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
         """
@@ -200,8 +204,8 @@ def load_metadata_base(data: typing.Union[str, Path]):
     except ValueError as e:
         try:
             decoded_data = json.loads(str(data), object_hook=partseg_object_hook)
-        except Exception:
-            raise e
+        except Exception:  # pragma: no cover
+            raise e  # noqa: B904
 
     return decoded_data
 
@@ -402,7 +406,7 @@ class SaveROIAsNumpy(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict = None,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -426,8 +430,8 @@ class LoadPoints(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> PointsInfo:
         df = pd.read_csv(load_locations[0], delimiter=",", index_col=0)
@@ -451,8 +455,8 @@ class LoadPlanJson(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
         return load_matadata_part(load_locations[0])
@@ -471,8 +475,8 @@ class LoadPlanExcel(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
         data_list, error_list = [], []
@@ -481,7 +485,12 @@ class LoadPlanExcel(LoadBase):
         try:
             for sheet_name in xlsx.sheetnames:
                 if sheet_name.startswith("info"):
-                    data = xlsx[sheet_name].cell(row=2, column=2).value
+                    data = ""
+                    index = 2  # skip header
+                    while xlsx[sheet_name].cell(row=index, column=2).value:
+                        data += xlsx[sheet_name].cell(row=index, column=2).value
+                        index += 1
+
                     try:
                         data, err = load_matadata_part(data)
                         data_list.append(data)
@@ -502,3 +511,7 @@ class LoadPlanExcel(LoadBase):
     @classmethod
     def get_name(cls) -> str:
         return "Calculation plans from result (*.xlsx)"
+
+
+IO_LABELS_COLORMAP = "io.labels_colormap_dir"
+IO_MASK_METADATA_FILE = "metadata.json"

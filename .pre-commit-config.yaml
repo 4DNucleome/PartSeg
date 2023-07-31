@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.7.0
     hooks:
     - id: black
       pass_filenames: true
@@ -20,16 +20,16 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.2.0
+    rev: v2.4.0
     hooks:
     - id: setup-cfg-fmt
       args: ["--include-version-classifiers", "--max-py-version", "3.11"]
--   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.259
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.280
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+    rev: v3.9.0
     hooks:
     - id: pyupgrade
       args: ["--py38-plus"]
@@ -44,7 +44,11 @@ repos:
       exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.1.1'  # Use the sha / tag you want to point at
+    rev: 'v1.4.1'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
         files: ^package/PartSegImage/.+\.py
+
+
+ci:
+    autoupdate_commit_msg: 'ci: [pre-commit.ci] pre-commit autoupdate'

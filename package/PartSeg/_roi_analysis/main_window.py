@@ -412,6 +412,12 @@ class MainMenu(BaseMainMenu):
         if dial.exec_():
             save_location, selected_filter, save_class, values = dial.get_result()
             project_info = self.settings.get_project_info()
+            if save_class.need_segmentation() and project_info.roi_info.roi is None:
+                QMessageBox.information(self, "No segmentation", "Cannot save without segmentation")
+                return
+            if save_class.need_mask() and project_info.mask is None:
+                QMessageBox.information(self, "No mask", "Cannot save without mask")
+                return
             base_values[selected_filter] = values
 
             def exception_hook(exception):  # pragma: no cover

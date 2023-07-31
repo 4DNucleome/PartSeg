@@ -32,7 +32,7 @@ jobs:
           retention-days: 5
 
   base-test:
-    name: Base Test on ${{ matrix.platform }} py${{ matrix.python_version }} ${{ matrix.backend }}
+    name: Base py${{ matrix.python_version }}
     if: github.event_name == 'pull_request'
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
@@ -71,7 +71,7 @@ jobs:
       tox_args: ${{ matrix.tox_args }}
 
   base-test-main:
-    name: Base Test on ${{ matrix.platform }} py${{ matrix.python_version }} ${{ matrix.backend }}
+    name: Base py${{ matrix.python_version }}
     if: github.event_name == 'push'
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
@@ -86,10 +86,10 @@ jobs:
             qt_backend: "PyQt5"
             os: "ubuntu-22.04"
           - python_version: "3.9"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
             qt_backend: "PySide6"
           - python_version: "3.9"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
             qt_backend: "PyQt6"
     with:
       test_data: True
@@ -140,9 +140,16 @@ jobs:
           name: test_data
           path: test_data
 
+      - name: Use mamba solver
+        shell: "bash -el {0}"
+        run: |
+          conda install -n base conda-libmamba-solver
+          conda config --set solver libmamba
+
       - name: Install dependencies
         shell: "bash -el {0}"
-        run: mamba install -y "tox-conda>=0.10.0"
+        run: |
+          mamba install -y "tox-conda>=0.10.0"
 
       - name: List environment packages
         shell: "bash -el {0}"
@@ -158,6 +165,10 @@ jobs:
           name: environment
           path: environment.yml
           retention-days: 5
+
+      - name: patch tox.ini
+        shell: "bash -el {0}"
+        run: sed -e "s/{sys_platform}/{platform}/g" tox.ini -i
 
       - name: Test with tox
         uses: aganders3/headless-gui@v1

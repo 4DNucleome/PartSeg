@@ -73,7 +73,7 @@ def convex_fill(array: np.ndarray):
             continue
         component: np.ndarray = array == i
         points = np.nonzero(component)
-        if len(points) == 0 or len(points[0]) == 0:  # pylint: disable=R1714
+        if len(points) == 0 or len(points[0]) == 0:  # pylint: disable=consider-using-in
             continue
         lower_bound = np.min(points, axis=1)
         upper_bound = np.max(points, axis=1)

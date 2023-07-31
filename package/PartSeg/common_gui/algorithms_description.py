@@ -10,6 +10,7 @@ import numpy as np
 from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
+from pydantic.fields import UndefinedType
 from qtpy.QtCore import QMargins, QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -28,6 +29,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from sentry_sdk.integrations.logging import ignore_logger
 from superqt import QEnumComboBox
 
 from PartSeg.common_backend.base_settings import BaseSettings
@@ -47,6 +49,9 @@ from PartSegCore.segmentation.algorithm_base import (
     SegmentationLimitException,
 )
 from PartSegImage import Channel, Image
+
+logger = logging.getLogger(__name__)
+ignore_logger(__name__)
 
 
 def recursive_update(d, u):
@@ -122,7 +127,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         try:
             return self._setter(self._widget, val)
         except (TypeError, ValueError) as e:
-            logging.error("Error %s setting value %s to %s", e, val, self.name)
+            logger.error("Error %s setting value %s to %s", e, val, self.name)
 
     def get_field(self) -> QWidget:
         """
@@ -205,9 +210,24 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(ap.value_type, BaseModel):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
         else:
-            res = create_widget(value=ap.default_value, annotation=ap.value_type, options=ap.mgi_options)
-            if isinstance(res, EmptyWidget):
-                raise ValueError(f"Unknown type {ap.value_type}")
+            res = cls._get_field_magicgui(ap)
+        return res
+
+    @classmethod
+    def _get_field_magicgui(cls, ap: AlgorithmProperty) -> Widget:
+        if isinstance(ap.default_value, UndefinedType) or ap.default_value is Ellipsis:
+            res = create_widget(annotation=ap.value_type, options=ap.mgi_options)
+        else:
+            try:
+                res = create_widget(value=ap.default_value, annotation=ap.value_type, options=ap.mgi_options)
+            except ValueError as e:
+                if "None is not a valid choice." in str(e):
+                    res = create_widget(annotation=ap.value_type, options=ap.mgi_options)
+                else:  # pragma: no cover
+                    raise e
+
+        if isinstance(res, EmptyWidget):  # pragma: no cover
+            raise ValueError(f"Unknown type {ap.value_type}")
         return res
 
     def _get_field(self) -> typing.Union[QWidget, Widget]:
@@ -220,7 +240,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             self.per_dimension = True
             res = ListInput(prop, 3)
         elif not inspect.isclass(self.value_type):
-            res = create_widget(value=self.default_value, annotation=self.value_type, options=self.mgi_options)
+            res = self._get_field_magicgui(self)
         elif hasattr(self.value_type, "get_object"):
             res = self.value_type.get_object()
         else:
@@ -230,7 +250,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if isinstance(res, QWidget):
             res.setToolTip(tool_tip_text)
         if isinstance(res, Widget):
-            res.tooltip = tool_tip_text  # pylint: disable=W0201 # false positive
+            res.tooltip = tool_tip_text  # pylint: disable=attribute-defined-outside-init # false positive
         return res
 
     @staticmethod
@@ -796,7 +816,7 @@ class AlgorithmChooseBase(QWidget):
         )
         return result
 
-    def change_algorithm(self, name, values: dict = None):
+    def change_algorithm(self, name, values: typing.Optional[dict] = None):
         self.settings.set_algorithm("current_algorithm", name)
         widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
         blocked = self.blockSignals(True)

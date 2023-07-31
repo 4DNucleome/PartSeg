@@ -61,8 +61,8 @@ class RegisterEnum(Enum):
 
 # noinspection DuplicatedCode
 register_dict = {
-    RegisterEnum.flow: watershed.FlowMethodSelection.__register__,
-    RegisterEnum.sprawl: watershed.FlowMethodSelection.__register__,
+    RegisterEnum.flow: watershed.WatershedSelection.__register__,
+    RegisterEnum.sprawl: watershed.WatershedSelection.__register__,
     RegisterEnum.threshold: threshold.ThresholdSelection.__register__,
     RegisterEnum.noise_filtering: noise_filtering.NoiseFilterSelection.__register__,
     RegisterEnum.analysis_algorithm: analysis_algorithm_description.AnalysisAlgorithmSelection.__register__,
@@ -120,7 +120,7 @@ def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, rep
     :param target_type: Which type of operation.
     :param replace: force to replace operation if same name is defined. Dangerous.
     """
-    if target_type == RegisterEnum._qss_register:  # pylint: disable=W0212
+    if target_type == RegisterEnum._qss_register:  # pylint: disable=protected-access
         qss_list.append(target)
     else:
         register_dict[target_type].register(target, replace=replace, old_names=old_names)

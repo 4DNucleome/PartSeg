@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 import dataclasses
 import json
@@ -267,7 +267,7 @@ class TestJsonLoad:
             with open(profile_path) as ff:
                 data = json.load(ff, object_hook=partseg_object_hook)
             assert check_loaded_dict(data)
-        except Exception:  # pylint: disable=W0703  # pragma: no cover
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
             pytest.fail("Fail in loading profile")
 
     def test_measure_load(self, data_test_dir):
@@ -277,7 +277,7 @@ class TestJsonLoad:
             with open(profile_path) as ff:
                 data = json.load(ff, object_hook=partseg_object_hook)
             assert check_loaded_dict(data)
-        except Exception:  # pylint: disable=W0703  # pragma: no cover
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
             pytest.fail("Fail in loading profile")
 
     def test_json_dump(self):

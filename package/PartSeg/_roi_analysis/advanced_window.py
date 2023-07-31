@@ -40,7 +40,7 @@ from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
 from PartSeg.common_gui.error_report import DataImportErrorDialog
 from PartSeg.common_gui.lock_checkbox import LockCheckBox
 from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
-from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile, get_fields_from_algorithm
 from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
@@ -651,7 +651,7 @@ class MeasurementSettings(QWidget):
             except ValueError as e:  # pragma: no cover
                 QMessageBox().warning(self, "Problem in add measurement", str(e))
         with suppress(KeyError):
-            arguments = MEASUREMENT_DICT[str(node.name)]._get_fields()  # pylint: disable=protected-access
+            arguments = get_fields_from_algorithm(MEASUREMENT_DICT[str(node.name)])
             if len(arguments) > 0 and not dict(node.parameters):
                 dial = self.form_dialog(arguments)
                 if dial.exec_():
@@ -837,7 +837,7 @@ class MultipleInput(QDialog):
         self,
         text: str,
         help_text: str = "",
-        objects_list: List[Union[Tuple[str, _DialogType], Tuple[str, _DialogType, str]]] = None,
+        objects_list: Optional[List[Union[Tuple[str, _DialogType], Tuple[str, _DialogType, str]]]] = None,
         parent: Optional[QWidget] = None,
     ):
         if objects_list is None:  # pragma: no cover

@@ -23,8 +23,8 @@ from typing import (
 import numpy as np
 import pandas as pd
 import SimpleITK
+from local_migrator import register_class, rename_key
 from mahotas.features import haralick
-from nme import register_class, rename_key
 from pydantic import Field
 from scipy.spatial.distance import cdist
 from sympy import Rational, symbols
@@ -39,6 +39,8 @@ from PartSegCore.analysis.measurement_base import (
     MeasurementMethodBase,
     Node,
     PerComponent,
+    has_mask_components,
+    has_roi_components,
 )
 from PartSegCore.mask_partition_utils import BorderRim, MaskDistanceSplit
 from PartSegCore.roi_info import ROIInfo
@@ -170,16 +172,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         """
         if all_components and self.components_info.has_components():
             return True, True
-        has_mask_components = any(
-            (
-                x in {PerComponent.Yes, PerComponent.Per_Mask_component} and y != AreaType.ROI
-                for x, y in self._type_dict.values()
-            )
-        )
-        has_segmentation_components = any(
-            (x == PerComponent.Yes and y == AreaType.ROI for x, y in self._type_dict.values())
-        )
-        return has_mask_components, has_segmentation_components
+
+        return has_mask_components(self._type_dict.values()), has_roi_components(self._type_dict.values())
 
     def get_labels(self, expand=True, all_components=False) -> List[str]:
         """
@@ -190,12 +184,12 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
         if not expand:
             return list(self.keys())
-        has_mask_components, has_segmentation_components = self.get_component_info(all_components)
+        mask_components, roi_components = self.get_component_info(all_components)
         labels = list(self._data_dict.keys())
         index = 1 if FILE_NAME_STR in self._data_dict else 0
-        if has_mask_components:
+        if mask_components:
             labels.insert(index, "Mask component")
-        if has_segmentation_components:
+        if roi_components:
             labels.insert(index, "Segmentation component")
         return labels
 
@@ -225,9 +219,9 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
                 res.append(val)
         return res
 
-    def _get_component_info(self, has_mask_components, has_segmentation_components):
-        if has_mask_components:
-            if has_segmentation_components:
+    def _get_component_info(self, mask_components, roi_components):
+        if mask_components:
+            if roi_components:
                 translation = self.components_info.components_translation
                 return [(x, y) for x in translation for y in translation[x]]
             return [(0, x) for x in self.components_info.mask_components]
@@ -247,16 +241,16 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
     def get_separated(self, all_components=False) -> List[List[MeasurementValueType]]:
         """Get measurements separated for each component"""
-        has_mask_components, has_segmentation_components = self.get_component_info(all_components)
-        if not has_mask_components and not has_segmentation_components:
+        mask_components, roi_components = self.get_component_info(all_components)
+        if not mask_components and not roi_components:
             return [list(self._data_dict.values())]
-        component_info = self._get_component_info(has_mask_components, has_segmentation_components)
+        component_info = self._get_component_info(mask_components, roi_components)
         res, iterator = self._prepare_res_iterator(len(component_info))
 
         for i, num in enumerate(component_info):
-            if has_segmentation_components:
+            if roi_components:
                 res[i].append(num[0])
-            if has_mask_components:
+            if mask_components:
                 res[i].append(num[1])
 
         mask_to_pos = {val: i for i, val in enumerate(self.components_info.mask_components)}
@@ -567,6 +561,7 @@ class MeasurementProfile(BaseModel):
         Calculate measurements on given set of parameters
 
         :param image: image on which measurements should be calculated
+        :param channel_num: channel number on which measurements should be calculated
         :param roi: array with segmentation labeled as positive integers
         :param result_units: units which should be used to present results.
         :param range_changed: callback function to set information about steps range
@@ -754,7 +749,7 @@ class Volume(MeasurementMethodBase):
     text_info = "Volume", "Calculate volume of current segmentation"
 
     @classmethod
-    def calculate_property(cls, area_array, voxel_size, result_scalar, **_):  # pylint: disable=W0221
+    def calculate_property(cls, area_array, voxel_size, result_scalar, **_):  # pylint: disable=arguments-differ
         return np.count_nonzero(area_array) * pixel_volume(voxel_size, result_scalar)
 
     @classmethod
@@ -766,7 +761,7 @@ class Voxels(MeasurementMethodBase):
     text_info = "Voxels", "Calculate number of voxels of current segmentation"
 
     @classmethod
-    def calculate_property(cls, area_array, **_):  # pylint: disable=W0221
+    def calculate_property(cls, area_array, **_):  # pylint: disable=arguments-differ
         return np.count_nonzero(area_array)
 
     @classmethod
@@ -839,7 +834,7 @@ class Diameter(MeasurementMethodBase):
     text_info = "Diameter", "Diameter of area"
 
     @staticmethod
-    def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=arguments-differ
         pos = np.transpose(np.nonzero(get_border(area_array))).astype(float)
         if pos.size == 0:
             return 0
@@ -861,7 +856,7 @@ class DiameterOld(MeasurementMethodBase):  # pragma: no cover
     text_info = "Diameter old", "Diameter of area (Very slow)"
 
     @staticmethod
-    def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=arguments-differ
         return calc_diam(get_border(area_array), [x * result_scalar for x in voxel_size])
 
     @classmethod
@@ -873,7 +868,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
     text_info = "Pixel brightness sum", "Sum of pixel brightness for current segmentation"
 
     @staticmethod
-    def calculate_property(area_array: np.ndarray, channel: np.ndarray, **_):  # pylint: disable=W0221
+    def calculate_property(area_array: np.ndarray, channel: np.ndarray, **_):  # pylint: disable=arguments-differ
         """
         :param area_array: mask for area
         :param channel: data. same shape like area_type
@@ -899,7 +894,7 @@ class ComponentsNumber(MeasurementMethodBase):
     text_info = "Components number", "Calculate number of connected components on segmentation"
 
     @staticmethod
-    def calculate_property(area_array, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, **_):  # pylint: disable=arguments-differ
         return np.unique(area_array).size - 1
 
     @classmethod
@@ -911,7 +906,7 @@ class MaximumPixelBrightness(MeasurementMethodBase):
     text_info = "Maximum pixel brightness", "Calculate maximum pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, channel, **_):  # pylint: disable=arguments-differ
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
         return np.max(channel[area_array > 0]) if np.any(area_array) else 0
@@ -929,7 +924,7 @@ class MinimumPixelBrightness(MeasurementMethodBase):
     text_info = "Minimum pixel brightness", "Calculate minimum pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, channel, **_):  # pylint: disable=arguments-differ
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
         return np.min(channel[area_array > 0]) if np.any(area_array) else 0
@@ -947,7 +942,7 @@ class MeanPixelBrightness(MeasurementMethodBase):
     text_info = "Mean pixel brightness", "Calculate mean pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, channel, **_):  # pylint: disable=arguments-differ
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
         return np.mean(channel[area_array > 0]) if np.any(area_array) else 0
@@ -965,7 +960,7 @@ class MedianPixelBrightness(MeasurementMethodBase):
     text_info = "Median pixel brightness", "Calculate median pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, channel, **_):  # pylint: disable=arguments-differ
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
         return np.median(channel[area_array > 0]) if np.any(area_array) else 0
@@ -986,7 +981,7 @@ class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
     )
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, channel, **_):  # pylint: disable=arguments-differ
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
         return np.std(channel[area_array > 0]) if np.any(area_array) else 0
@@ -1004,7 +999,7 @@ class Moment(MeasurementMethodBase):
     text_info = "Moment", "Calculate moment of segmented structure"
 
     @staticmethod
-    def calculate_property(area_array, channel, voxel_size, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, channel, voxel_size, **_):  # pylint: disable=arguments-differ
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:  # pragma: no cover
                 raise ValueError("This measurements do not support time data")
@@ -1028,7 +1023,7 @@ class FirstPrincipalAxisLength(MeasurementMethodBase):
     text_info = "First principal axis length", "Length of first principal axis"
 
     @staticmethod
-    def calculate_property(**kwargs):  # pylint: disable=W0221
+    def calculate_property(**kwargs):  # pylint: disable=arguments-differ
         return get_main_axis_length(0, **kwargs)
 
     @classmethod
@@ -1044,7 +1039,7 @@ class SecondPrincipalAxisLength(MeasurementMethodBase):
     text_info = "Second principal axis length", "Length of second principal axis"
 
     @staticmethod
-    def calculate_property(**kwargs):  # pylint: disable=W0221
+    def calculate_property(**kwargs):  # pylint: disable=arguments-differ
         return get_main_axis_length(1, **kwargs)
 
     @classmethod
@@ -1060,7 +1055,7 @@ class ThirdPrincipalAxisLength(MeasurementMethodBase):
     text_info = "Third principal axis length", "Length of third principal axis"
 
     @staticmethod
-    def calculate_property(**kwargs):  # pylint: disable=W0221
+    def calculate_property(**kwargs):  # pylint: disable=arguments-differ
         return get_main_axis_length(2, **kwargs)
 
     @classmethod
@@ -1076,7 +1071,7 @@ class Compactness(MeasurementMethodBase):
     text_info = "Compactness", "Calculate compactness off segmentation (Surface^1.5/volume)"
 
     @staticmethod
-    def calculate_property(**kwargs):  # pylint: disable=W0221
+    def calculate_property(**kwargs):  # pylint: disable=arguments-differ
         if kwargs.get("_cache", False) and "help_dict" in kwargs and "_area" in kwargs and "_per_component" in kwargs:
             help_dict = kwargs["help_dict"]
             border_hash_str = hash_fun_call_name(
@@ -1111,7 +1106,7 @@ class Sphericity(MeasurementMethodBase):
     text_info = "Sphericity", "volume/(4/3 * π * radius **3) for 3d data and volume/(π * radius **2) for 2d data"
 
     @staticmethod
-    def calculate_property(**kwargs):  # pylint: disable=W0221
+    def calculate_property(**kwargs):  # pylint: disable=arguments-differ
         if all(key in kwargs for key in ["help_dict", "_area", "_per_component"]) and (
             "_cache" not in kwargs or kwargs["_cache"]
         ):
@@ -1150,7 +1145,7 @@ class Surface(MeasurementMethodBase):
     text_info = "Surface", "Calculating surface of current segmentation"
 
     @staticmethod
-    def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=W0221
+    def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=arguments-differ
         return calculate_volume_surface(area_array, [x * result_scalar for x in voxel_size])
 
     @classmethod
@@ -1167,7 +1162,7 @@ class RimVolume(MeasurementMethodBase):
         return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
-    def calculate_property(area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
+    def calculate_property(area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=arguments-differ
         border_mask_array = BorderRim.border_mask(voxel_size=voxel_size, result_scalar=result_scalar, **kwargs)
         if border_mask_array is None:
             return None
@@ -1195,7 +1190,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
         return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
-    def calculate_property(channel, area_array, **kwargs):  # pylint: disable=W0221
+    def calculate_property(channel, area_array, **kwargs):  # pylint: disable=arguments-differ
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:  # pragma: no cover
                 raise ValueError("This measurements do not support time data")
@@ -1255,7 +1250,7 @@ class DistanceMaskROI(MeasurementMethodBase):
         return area_pos
 
     @classmethod
-    def calculate_property(  # pylint: disable=W0221
+    def calculate_property(  # pylint: disable=arguments-differ
         cls,
         channel,
         area_array,
@@ -1266,7 +1261,7 @@ class DistanceMaskROI(MeasurementMethodBase):
         distance_to_roi: DistancePoint,
         *args,
         **kwargs,
-    ):  # pylint: disable=W0221
+    ):  # pylint: disable=arguments-differ
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:
                 raise ValueError("This measurements do not support time data")
@@ -1335,7 +1330,7 @@ class DistanceROIROI(DistanceMaskROI):
         distance_from_new_roi: DistancePoint,
         distance_to_roi: DistancePoint,
         **kwargs,
-    ):  # pylint: disable=W0221
+    ):  # pylint: disable=arguments-differ
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:
                 raise ValueError("This measurements do not support time data")
@@ -1408,7 +1403,7 @@ class ROINeighbourhoodROI(DistanceMaskROI):
         distance: float,
         units: Units,
         **kwargs,
-    ):  # pylint: disable=W0221
+    ):  # pylint: disable=arguments-differ
         try:
             hash_name = hash_fun_call_name(
                 calculate_segmentation_step,
@@ -1460,7 +1455,9 @@ class SplitOnPartVolume(MeasurementMethodBase):
     __argument_class__ = SplitOnPartParameters
 
     @staticmethod
-    def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
+    def calculate_property(
+        part_selection, area_array, voxel_size, result_scalar, **kwargs
+    ):  # pylint: disable=arguments-differ
         masked = MaskDistanceSplit.split(voxel_size=voxel_size, **kwargs)
         mask = masked == part_selection
         return np.count_nonzero(mask * area_array) * pixel_volume(voxel_size, result_scalar)
@@ -1486,7 +1483,7 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
     __argument_class__ = SplitOnPartParameters
 
     @staticmethod
-    def calculate_property(part_selection, channel, area_array, **kwargs):  # pylint: disable=W0221
+    def calculate_property(part_selection, channel, area_array, **kwargs):  # pylint: disable=arguments-differ
         masked = MaskDistanceSplit.split(**kwargs)
         mask = np.array(masked == part_selection)
         if channel.ndim - mask.ndim == 1:
@@ -1561,9 +1558,9 @@ class Haralick(MeasurementMethodBase):
         return True
 
     @classmethod
-    def calculate_property(  # pylint: disable=W0221
+    def calculate_property(  # pylint: disable=arguments-differ
         cls, area_array, channel, distance, feature, _cache=False, **kwargs
-    ):  # pylint: disable=W0221
+    ):  # pylint: disable=arguments-differ
         if isinstance(feature, str):
             feature = HaralickEnum(feature)
         if _cache := _cache and "_area" in kwargs and "_per_component" in kwargs:
@@ -1596,7 +1593,7 @@ class ComponentBoundingBox(MeasurementMethodBase):
         return "str"
 
     @staticmethod
-    def calculate_property(bounds_info, _component_num, **kwargs):  # pylint: disable=W0221
+    def calculate_property(bounds_info, _component_num, **kwargs):  # pylint: disable=arguments-differ
         return str(bounds_info[_component_num])
 
     @classmethod
@@ -1617,7 +1614,7 @@ class GetROIAnnotationType(MeasurementMethodBase):
         return Leaf(name=cls.text_info[0], area=AreaType.ROI, per_component=PerComponent.Yes)
 
     @staticmethod
-    def calculate_property(roi_annotation, name, _component_num, **kwargs):  # pylint: disable=W0221
+    def calculate_property(roi_annotation, name, _component_num, **kwargs):  # pylint: disable=arguments-differ
         return str(roi_annotation.get(_component_num, {}).get(name, ""))
 
     @classmethod
@@ -1663,9 +1660,9 @@ class ColocalizationMeasurement(MeasurementMethodBase):
         raise RuntimeError(f"Not supported colocalization method {colocalization}")  # pragma: no cover
 
     @classmethod
-    def calculate_property(  # pylint: disable=W0221
+    def calculate_property(  # pylint: disable=arguments-differ
         cls, area_array, colocalization, randomize=False, randomize_repeat=10, channel_fst=0, channel_scd=1, **kwargs
-    ):  # pylint: disable=W0221
+    ):  # pylint: disable=arguments-differ
         mask_binary = area_array > 0
         data_1 = kwargs[f"channel_{channel_fst}"][mask_binary].astype(float)
         data_2 = kwargs[f"channel_{channel_scd}"][mask_binary].astype(float)
@@ -1726,7 +1723,7 @@ class VoxelSize(MeasurementMethodBase):
     text_info = "Voxel size", "Voxel size"
 
     @classmethod
-    def calculate_property(cls, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
+    def calculate_property(cls, voxel_size, result_scalar, **kwargs):  # pylint: disable=arguments-differ
         return " x ".join([str(x * result_scalar) for x in voxel_size])
 
     @classmethod

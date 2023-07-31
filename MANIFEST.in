@@ -5,6 +5,7 @@ include package/tests/test_data/napari_measurements_profile.json
 include package/tests/test_data/notebook/*.json
 include package/tests/test_data/old_saves/*/*/*.json
 include package/tests/test_data/sample_batch_output.xlsx
+include package/PartSeg/napari.yaml
 include Readme.md
 include changelog.md
 include pyproject.toml

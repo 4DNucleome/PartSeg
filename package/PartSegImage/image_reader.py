@@ -104,6 +104,26 @@ class BaseImageReader:
             instance.set_default_spacing(default_spacing)
         return instance.read(image_path, mask_path)
 
+    @staticmethod
+    def _reduce_obsolete_dummy_axes(array, axes) -> typing.Tuple[np.ndarray, str]:
+        """
+        If there are duplicates in axes string then remove dimensions of size one
+
+        :return: reduced array and axes
+        """
+        if len(axes) == len(set(axes)):
+            return array, axes
+
+        ax_li = []
+        shape_li = []
+        for dim, ax in zip(array.shape, axes):
+            if dim != 1:
+                ax_li.append(ax)
+                shape_li.append(dim)
+        axes = "".join(ax_li)
+        array = np.reshape(array, shape_li)
+        return array, axes
+
     @classmethod
     def update_array_shape(cls, array: np.ndarray, axes: str):
         """
@@ -112,6 +132,8 @@ class BaseImageReader:
         :param array: array to reorder
         :param axes: current order of array axes as string like "TZYXC"
         """
+        array, axes = cls._reduce_obsolete_dummy_axes(array, axes)
+
         try:
             final_mapping_dict = {letter: i for i, letter in enumerate(cls.return_order())}
             for let1, let2 in [("Z", "I"), ("Z", "Q"), ("C", "S")]:
@@ -141,8 +163,7 @@ class BaseImageReader:
         if len(array.shape) < len(cls.return_order()):
             array = np.reshape(array, array.shape + (1,) * (len(cls.return_order()) - len(array.shape)))
 
-        array = np.moveaxis(array, list(range(len(axes_li))), final_mapping)
-        return array
+        return np.moveaxis(array, list(range(len(axes_li))), final_mapping)
 
 
 class BaseImageReaderBuffer(BaseImageReader):
@@ -365,7 +386,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                 self.read_ome_metadata(image_file)
             else:
                 x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
-                self.spacing = self.default_spacing[0], x_spacing, y_spacing
+                self.spacing = self.default_spacing[0], y_spacing, x_spacing
             mutex = Lock()
             count_pages = [0]
 
@@ -389,7 +410,8 @@ class TiffImageReader(BaseImageReaderBuffer):
 
             else:
                 mask_data = None
-                self.callback_function("max", total_pages_num)
+                if total_pages_num > 1:
+                    self.callback_function("max", total_pages_num)
 
             image_file.report_func = report_func
             try:

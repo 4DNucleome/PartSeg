@@ -1,7 +1,11 @@
+import os
+
 import numpy as np
+from napari.utils import Colormap
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QFileDialog
 
 import PartSegData
 from PartSeg.common_backend.base_settings import BaseSettings, ColormapDict, ViewSettings
@@ -11,6 +15,7 @@ from PartSeg.common_gui.colormap_creator import (
     ColormapEdit,
     ColormapList,
     PColormapCreator,
+    PColormapCreatorMid,
     PColormapList,
     color_from_qcolor,
     qcolor_from_color,
@@ -171,11 +176,42 @@ class TestColormapCreator:
         ):
             assert np.allclose(el, col.as_tuple())
 
+    def test_colormap_creator_save(self, qtbot, tmp_path, monkeypatch, base_settings):
+        widget = PColormapCreatorMid(base_settings)
+        cmap = Colormap([[0, 0, 0], [0.5, 0.5, 0.5], [1, 1, 1]], controls=[0, 0.3, 1])
+        widget.show_colormap.colormap = cmap
+        qtbot.addWidget(widget)
+        target_path = str(tmp_path / "test.json")
+
+        def exec_(self_):
+            self_.selectFile(target_path)
+            self_.accept()
+            return True
+
+        def selected_name_filter(self_):
+            return self_.nameFilters()[0]
+
+        def selected_files(self_):
+            return [target_path]
+
+        monkeypatch.setattr(QFileDialog, "exec_", exec_)
+        monkeypatch.setattr(QFileDialog, "selectedNameFilter", selected_name_filter)
+        monkeypatch.setattr(QFileDialog, "selectedFiles", selected_files)
+
+        widget._export_action()
+        assert os.path.isfile(target_path)
+
+        widget.clear_btn.click()
+        assert widget.show_colormap.colormap != cmap
+
+        widget._import_action()
+
+        assert widget.show_colormap.colormap == cmap
+
 
 class TestPColormapCreator:
-    def test_save(self, qtbot):
-        settings = ViewSettings()
-        widget = PColormapCreator(settings)
+    def test_save(self, qtbot, base_settings):
+        widget = PColormapCreator(base_settings)
         qtbot.addWidget(widget)
         color1 = QColor(10, 40, 12)
         color2 = QColor(100, 4, 220)
@@ -197,23 +233,22 @@ class TestPColormapCreator:
         with qtbot.wait_signal(widget.colormap_selected, check_params_cb=check_res):
             widget.save_btn.click()
 
-        cmap_dict = settings.get_from_profile("custom_colormap")
+        cmap_dict = base_settings.get_from_profile("custom_colormap")
         assert len(cmap_dict) == 1
-        assert check_res(list(cmap_dict.values())[0])
+        assert check_res(next(iter(cmap_dict.values())))
 
-    def test_custom_colors_save(self, qtbot):
-        settings = ViewSettings()
-        widget = PColormapCreator(settings)
+    def test_custom_colors_save(self, qtbot, base_settings):
+        widget = PColormapCreator(base_settings)
         qtbot.addWidget(widget)
         color1 = QColor(10, 40, 12)
         color2 = QColor(100, 4, 220)
         widget.color_picker.setCustomColor(2, color1)
         widget.color_picker.setCustomColor(7, color2)
         widget._save_custom_colors()
-        custom_color_list = settings.get_from_profile("custom_colors")
+        custom_color_list = base_settings.get_from_profile("custom_colors")
         assert custom_color_list[2] == color_from_qcolor(color1)
         assert custom_color_list[7] == color_from_qcolor(color2)
-        widget2 = PColormapCreator(settings)
+        widget2 = PColormapCreator(base_settings)
         assert widget2.color_picker.customColor(2) == color1
         assert widget2.color_picker.customColor(7) == color2
 

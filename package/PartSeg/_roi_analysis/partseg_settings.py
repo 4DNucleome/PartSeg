@@ -31,7 +31,7 @@ class PartSettings(BaseSettings):
     json_encoder_class = PartSegEncoder
     load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
-    save_locations_keys = [
+    save_locations_keys: typing.ClassVar[typing.List[str]] = [
         "open_directory",
         "save_directory",
         "export_directory",

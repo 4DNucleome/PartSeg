@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Callable
 
 import numpy as np
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
@@ -237,15 +237,17 @@ class MSOWatershed(BaseWatershed):
         return result
 
 
-class FlowMethodSelection(AlgorithmSelection, class_methods=["sprawl"], suggested_base_class=BaseWatershed):
+class WatershedSelection(AlgorithmSelection, class_methods=["sprawl"], suggested_base_class=BaseWatershed):
     """This register contains algorithms for sprawl area from core object."""
 
 
-FlowMethodSelection.register(MSOWatershed, old_names=["MultiScale Opening sprawl"])
-FlowMethodSelection.register(PathWatershed, old_names=["Path sprawl"])
-FlowMethodSelection.register(DistanceWatershed, old_names=["Euclidean sprawl"])
-FlowMethodSelection.register(PathDistanceWatershed, old_names=["Path euclidean sprawl"])
-FlowMethodSelection.register(FDTWatershed, old_names=["Fuzzy distance sprawl"])
+WatershedSelection.register(MSOWatershed, old_names=["MultiScale Opening sprawl"])
+WatershedSelection.register(PathWatershed, old_names=["Path sprawl"])
+WatershedSelection.register(DistanceWatershed, old_names=["Euclidean sprawl"])
+WatershedSelection.register(PathDistanceWatershed, old_names=["Path euclidean sprawl"])
+WatershedSelection.register(FDTWatershed, old_names=["Fuzzy distance sprawl"])
+
+FlowMethodSelection = WatershedSelection
 
 
 def __getattr__(name):  # pragma: no cover
@@ -253,12 +255,12 @@ def __getattr__(name):  # pragma: no cover
         warnings.warn(
             "flow_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
         )
-        return FlowMethodSelection.__register__
+        return WatershedSelection.__register__
     if name == "sprawl_dict":
         warnings.warn(
             "sprawl_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
         )
-        return FlowMethodSelection.__register__
+        return WatershedSelection.__register__
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 

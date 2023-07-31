@@ -99,7 +99,7 @@ class BatchProceed(QThread):
                     SaveROI.save(os.path.join(task.save_prefix[0], name), state2, parameters=task.save_prefix[1])
                 else:
                     self.multiple_result.emit(state2)
-            except Exception as e:  # pylint: disable=W0703
+            except Exception as e:  # pylint: disable=broad-except
                 self.error_signal.emit(f"Exception occurred during proceed {file_path}. Exception info {e}")
             self.index += 1
         self.index = 0

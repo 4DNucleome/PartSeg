@@ -192,10 +192,10 @@ def add_classes(types_list, translate_dict, global_state):
                 and (sub_types := [x for x in type_.__args__ if not isinstance(x, omit_list)])
             ):
                 add_classes(sub_types, translate_dict, global_state)
-                if type_._name is None:  # pylint: disable=W0212
+                if type_._name is None:  # pylint: disable=protected-access
                     type_str = str(type_.__origin__)
                 else:
-                    type_str = f"typing.{str(type_._name)}"  # pylint: disable=W0212
+                    type_str = f"typing.{type_._name!s}"  # pylint: disable=protected-access
                 type_str += "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
                 translate_dict[type_] = type_str
                 continue
@@ -283,11 +283,11 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
 
     result = global_state[typename]
     result._source = class_definition
-    result._field_defaults = defaults_dict  # pylint: disable=W0212
+    result._field_defaults = defaults_dict  # pylint: disable=protected-access
     result.__annotations__ = types
     with suppress(AttributeError):
         result.__signature__ = inspect.signature(result)
-    result._field_types = collections.OrderedDict(types)  # pylint: disable=W0212
+    result._field_types = collections.OrderedDict(types)  # pylint: disable=protected-access
     return result
 
 

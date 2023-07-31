@@ -6,7 +6,7 @@ from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
 from functools import wraps
 
-from nme import REGISTER, class_to_str
+from local_migrator import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
 from pydantic.main import ModelMetaclass
@@ -143,7 +143,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     @classmethod
     def get_doc_from_fields(cls):
         resp = "{\n"
-        for el in cls._get_fields():
+        for el in get_fields_from_algorithm(cls):
             if isinstance(el, AlgorithmProperty):
                 resp += f"  {el.name}: {el.value_type} - "
                 if el.help_text:
@@ -186,12 +186,12 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     def get_fields_dict(cls) -> typing.Dict[str, AlgorithmProperty]:
-        return {v.name: v for v in cls._get_fields() if isinstance(v, AlgorithmProperty)}
+        return {v.name: v for v in get_fields_from_algorithm(cls) if isinstance(v, AlgorithmProperty)}
 
     @classmethod
     def get_default_values(cls):
         if cls.__new_style__:
-            return cls.__argument_class__()  # pylint: disable=E1102
+            return cls.__argument_class__()  # pylint: disable=not-callable
         return {
             el.name: {
                 "name": el.default_value,
@@ -202,6 +202,12 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
             for el in cls.get_fields()
             if isinstance(el, AlgorithmProperty)
         }
+
+
+def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    if ald_desc.__new_style__:
+        return base_model_to_algorithm_property(ald_desc.__argument_class__)
+    return ald_desc.get_fields()
 
 
 def is_static(fun):
@@ -416,6 +422,9 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         name = cls.__register__.get_default()
         return cls(name=name, values=cls[name].get_default_values())
 
+    def algorithm(self):
+        return self.__register__[self.name]
+
 
 class ROIExtractionProfileMeta(ModelMetaclass):
     def __new__(cls, name, bases, attrs, **kwargs):
@@ -451,7 +460,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
     values: typing.Any
 
     @validator("values")
-    def validate_values(cls, v, values):  # pylint: disable=R0201
+    def validate_values(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, dict):
             return v
         if "algorithm" not in values:
@@ -476,7 +485,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
         try:
             algorithm = algorithm_dict[self.algorithm]
         except KeyError:
-            return str(self)
+            return f"{self}\n "
         values = self.values if isinstance(self.values, dict) else self.values.dict()
         if self.name in {"", "Unknown"}:
             return (
@@ -589,7 +598,7 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
     :return:
     """
     res = []
-    value: "ModelField"
+    value: ModelField
     if hasattr(obj, "header") and obj.header():
         res.append(obj.header())
     for name, value in obj.__fields__.items():

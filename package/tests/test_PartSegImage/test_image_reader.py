@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import math
 import os.path
 import shutil
@@ -128,6 +128,13 @@ class TestImageClass:
         shutil.copy(tmp_path / "Cy5.TIF", tmp_path / "Cy5_deconv.TIF")
         image = GenericImageReader.read_image(tmp_path / "test.obsep")
         assert image.channels == 3
+
+    def test_double_axes_in_dim_read(self, data_test_dir):
+        image = GenericImageReader.read_image(os.path.join(data_test_dir, "double_q_in_axes.tif"))
+        assert image.layers == 360
+        assert image.channels == 1
+        assert image.stack_pos == 1
+        assert image.plane_shape == (360, 32)
 
 
 class CustomImage(Image):

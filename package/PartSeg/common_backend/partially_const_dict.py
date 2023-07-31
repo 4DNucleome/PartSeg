@@ -1,6 +1,6 @@
 import itertools
 from collections.abc import MutableMapping
-from typing import Generic, Iterator, Tuple, TypeVar, Union
+from typing import Any, ClassVar, Dict, Generic, Iterator, Tuple, TypeVar, Union
 
 from qtpy.QtCore import QObject, Signal
 
@@ -19,7 +19,7 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
     """Signal with item added to dict"""
     item_removed = Signal(object)
     """Signal with item remove fom dict"""
-    const_item_dict = {}
+    const_item_dict: ClassVar[Dict[str, Any]] = {}
     """Dict with non removable elements"""
 
     def __init__(self, editable_items):
@@ -59,6 +59,13 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
         del self.editable_items[key]
         del self._order_dict[key]
         self.item_removed.emit(item)
+
+    def _refresh_order(self):
+        """workaround for load data problem"""
+        self._order_dict = {
+            name: i for i, name in enumerate(itertools.chain(self.const_item_dict.keys(), self.editable_items.keys()))
+        }
+        self._counter = len(self._order_dict)
 
     def get_position(self, key: str) -> int:
         """

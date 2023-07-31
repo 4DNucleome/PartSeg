@@ -9,7 +9,7 @@ from argparse import Namespace
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
@@ -77,7 +77,7 @@ class ImageSettings(QObject):
         raise AttributeError("full_segmentation not supported")
 
     @full_segmentation.setter
-    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=R0201
+    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=no-self-use
         raise AttributeError("full_segmentation not supported")
 
     @property
@@ -85,7 +85,7 @@ class ImageSettings(QObject):
         raise AttributeError("noise_remove_image_part not supported")
 
     @noise_remove_image_part.setter
-    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=R0201
+    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=no-self-use
         raise AttributeError("noise_remove_image_part not supported")
 
     @property
@@ -93,7 +93,7 @@ class ImageSettings(QObject):
         return self._additional_layers
 
     @additional_layers.setter
-    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=R0201
+    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=no-self-use
         raise AttributeError("additional_layers assign not supported")
 
     @property
@@ -303,7 +303,7 @@ class ViewSettings(ImageSettings):
         """Sequence of available themes"""
         try:
             return napari.utils.theme.available_themes()
-        except:  # noqa: E722  # pylint: disable=W0702  # pragma: no cover
+        except:  # noqa: E722  # pylint: disable=bare-except  # pragma: no cover
             return ("light",)
 
     @property
@@ -447,7 +447,7 @@ class BaseSettings(ViewSettings):
     load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
-    save_locations_keys = []
+    save_locations_keys: ClassVar[List[str]] = []
 
     def __init__(self, json_path: Union[Path, str], profile_name: str = "default"):
         """
@@ -456,7 +456,7 @@ class BaseSettings(ViewSettings):
         """
         super().__init__()
         napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
-        self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
+        self.napari_settings: NapariSettings = napari_get_settings(napari_path)
         self._current_roi_dict = profile_name
         self._roi_dict = ProfileDict()
         self._last_algorithm_dict = ProfileDict()
@@ -707,7 +707,7 @@ class BaseSettings(ViewSettings):
         if self.napari_settings.save is not None:
             self.napari_settings.save()
         else:
-            self.napari_settings._save()  # pylint: disable=W0212
+            self.napari_settings._save()  # pylint: disable=protected-access
         if folder_path is None:
             folder_path = self.json_folder_path
         if not os.path.exists(folder_path):
@@ -718,7 +718,7 @@ class BaseSettings(ViewSettings):
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
                 with open(os.path.join(folder_path, el.file_name), "w", encoding="utf-8") as ff:
                     ff.write(dump_string)
-            except Exception as e:  # pylint: disable=W0703
+            except Exception as e:  # pylint: disable=broad-except
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
             logger.error(errors_list)
@@ -759,7 +759,7 @@ class BaseSettings(ViewSettings):
                 if error is not None:
                     errors_dict[file_path] = error
                 el.values.update(data)
-            except Exception as e:  # pylint: disable=W0703
+            except Exception as e:  # pylint: disable=broad-except
                 error = True
                 logger.error(e)
                 errors_dict[file_path] = e
@@ -768,6 +768,9 @@ class BaseSettings(ViewSettings):
                     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
+
+        self.label_color_dict._refresh_order()  # pylint: disable=protected-access
+        self.colormap_dict._refresh_order()  # pylint: disable=protected-access
 
         return errors_dict
 

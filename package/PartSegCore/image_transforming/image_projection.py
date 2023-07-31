@@ -57,7 +57,11 @@ class ImageProjection(TransformBase):
             roi = ROIInfo(np.max(image.fit_array_to_image(roi_info.roi), axis=axis).reshape(target_shape))
         return (
             image.__class__(
-                data=new_channels, image_spacing=tuple(spacing), channel_names=image.channel_names, mask=new_mask
+                data=new_channels,
+                image_spacing=tuple(spacing),
+                channel_names=image.channel_names,
+                mask=new_mask,
+                axes_order=image.axis_order,
             ),
             roi,
         )

@@ -74,7 +74,7 @@ class ROIInfo:
         return f"ROIInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
 
     def __repr__(self):
-        return f"ROIInfo(roi={numpy_repr(self.roi)}, bound_info={self.bound_info}, sizes={repr(self.sizes)})"
+        return f"ROIInfo(roi={numpy_repr(self.roi)}, bound_info={self.bound_info}, sizes={self.sizes!r})"
 
     @staticmethod
     def calc_bounds(roi: np.ndarray) -> Dict[int, BoundInfo]:

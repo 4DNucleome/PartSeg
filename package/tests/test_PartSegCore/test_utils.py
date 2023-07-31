@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import json
 from unittest.mock import MagicMock
 
@@ -34,7 +34,7 @@ def test_callback_method():
     call_list = []
 
     class A:
-        def fun(self):  # pylint: disable=R0201
+        def fun(self):  # pylint: disable=no-self-use
             call_list.append(1)
 
     a = A()
@@ -54,7 +54,7 @@ def test_get_callback():
         raise NotImplementedError
 
     class A:
-        def fun(self):  # pylint: disable=R0201
+        def fun(self):  # pylint: disable=no-self-use
             raise NotImplementedError
 
     a = A()
@@ -218,6 +218,10 @@ class TestEventedDict:
         assert dkt["a"]["b"] == 1
         assert set(dkt) == {"a"}
         assert set(dkt["a"]) == {"b"}
+
+    def test_dict_repr(self):
+        assert repr(EventedDict(a=1, b=2)) == "EventedDict(klass={'*': <class 'object'>}, {'a': 1, 'b': 2})"
+        assert str(EventedDict(a=1, b=2)) == "EventedDict[{'*': <class 'object'>}]({'a': 1, 'b': 2})"
 
 
 class TestProfileDict:

@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import datetime
 import io
 import os
@@ -14,9 +14,10 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import qtpy
+from local_migrator import register_class
 from magicgui import register_type
 from magicgui.widgets import Container, Widget, create_widget
-from nme import register_class
+from napari.utils import Colormap
 from pydantic import Field
 from qtpy.QtCore import QPoint, QRect, QSize, Qt
 from qtpy.QtGui import QPaintEvent
@@ -61,6 +62,7 @@ from PartSeg.common_gui.algorithms_description import (
     SubAlgorithmWidget,
 )
 from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
+from PartSeg.common_gui.colormap_creator import ColormapLoad, ColormapSave, save_colormap_in_settings
 from PartSeg.common_gui.custom_load_dialog import (
     CustomLoadDialog,
     IOMethodMock,
@@ -78,7 +80,7 @@ from PartSeg.common_gui.error_report import (
     _print_traceback,
 )
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
-from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelShow
+from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelShow, LabelsLoad, LabelsSave
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
 from PartSeg.common_gui.multiple_file_widget import (
@@ -112,11 +114,13 @@ from PartSegCore.algorithm_describe_base import (
 )
 from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.calculation_plan import MaskSuffix
-from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
+from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
+from PartSegCore.mask.io_functions import MaskProjectTuple, SaveROI, SaveROIOptions
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
 from PartSegCore.utils import BaseModel
@@ -141,6 +145,38 @@ class Enum2(Enum):
 
     def __str__(self):
         return f"{self.name} eee"
+
+
+@pytest.fixture()
+def _example_tiff_files(tmp_path):
+    for i in range(5):
+        ImageWriter.save(
+            Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
+        )
+
+
+@pytest.fixture()
+def mf_widget(qtbot, part_settings):
+    res = MultipleFileWidget(
+        part_settings,
+        {
+            LoadStackImage.get_name(): LoadStackImage,
+            LoadMaskSegmentation.get_name(): LoadMaskSegmentation,
+        },
+    )
+    qtbot.add_widget(res)
+    return res
+
+
+@pytest.fixture()
+def _example_mask_project_files(tmp_path):
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[:5] = 1
+    data[5:] = 2
+    image = Image(data, image_spacing=(1, 1), axes_order="XY", file_path=str(tmp_path / "mask.tif"))
+    ImageWriter.save(image, image.file_path)
+    project = MaskProjectTuple(file_path=image.file_path, image=image, roi_info=ROIInfo(image.fit_array_to_image(data)))
+    SaveROI.save(tmp_path / "proj.seg", project, SaveROIOptions())
 
 
 @pytest.mark.filterwarnings("ignore:EnumComboBox is deprecated")
@@ -525,13 +561,8 @@ class TestMultipleFileWidget:
 
     @pytest.mark.enablethread()
     @pytest.mark.enabledialog()
-    def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path):
-        widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
-        qtbot.add_widget(widget)
-        for i in range(5):
-            ImageWriter.save(
-                Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
-            )
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [
             [
                 [
@@ -541,49 +572,70 @@ class TestMultipleFileWidget:
             ]
             for i in range(5)
         ]
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
         assert part_settings.get_last_files_multiple() == file_list
-        assert widget.file_view.topLevelItemCount() == 5
-        widget.file_view.clear()
-        widget.state_dict.clear()
-        widget.file_list.clear()
+        assert mf_widget.file_view.topLevelItemCount() == 5
+        mf_widget.file_view.clear()
+        mf_widget.state_dict.clear()
+        mf_widget.file_list.clear()
         monkeypatch.setattr(LoadRecentFiles, "exec_", lambda x: True)
         monkeypatch.setattr(LoadRecentFiles, "get_files", lambda x: file_list)
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.load_recent()
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.load_recent()
         assert part_settings.get_last_files_multiple() == file_list
-        assert widget.file_view.topLevelItemCount() == 5
+        assert mf_widget.file_view.topLevelItemCount() == 5
 
     @pytest.mark.enablethread()
     @pytest.mark.enabledialog()
-    def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path):
-        widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
-        qtbot.add_widget(widget)
-        for i in range(5):
-            ImageWriter.save(
-                Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
-            )
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [[[str(tmp_path / f"img_{i}.tif")], LoadStackImage.get_name()] for i in range(5)]
         load_property = LoadProperty(
             [str(tmp_path / f"img_{i}.tif") for i in range(5)], LoadStackImage.get_name(), LoadStackImage
         )
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
-        assert widget.file_view.topLevelItemCount() == 5
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert mf_widget.file_view.topLevelItemCount() == 5
         assert part_settings.get_last_files_multiple() == file_list
-        widget.file_view.clear()
-        widget.state_dict.clear()
-        widget.file_list.clear()
+        mf_widget.file_view.clear()
+        mf_widget.state_dict.clear()
+        mf_widget.file_list.clear()
         monkeypatch.setattr(MultipleLoadDialog, "exec_", lambda x: True)
         monkeypatch.setattr(MultipleLoadDialog, "get_result", lambda x: load_property)
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.load_files()
-        assert widget.file_view.topLevelItemCount() == 5
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.load_files()
+        assert mf_widget.file_view.topLevelItemCount() == 5
         assert part_settings.get_last_files_multiple() == file_list
         part_settings.dump()
         part_settings.load()
         assert part_settings.get_last_files_multiple() == file_list
+
+    @pytest.mark.enablethread()
+    @pytest.mark.enabledialog()
+    @pytest.mark.usefixtures("_example_mask_project_files")
+    def test_load_mask_project(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
+        load_property = LoadProperty(
+            [str(tmp_path / "proj.seg")], LoadMaskSegmentation.get_name(), LoadMaskSegmentation
+        )
+
+        with qtbot.waitSignal(mf_widget._add_state):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert part_settings.get_last_files_multiple() == [
+            [[str(tmp_path / "proj.seg")], LoadMaskSegmentation.get_name()]
+        ]
+        assert mf_widget.file_view.topLevelItemCount() == 2
+
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_forget_all(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
+        load_property = LoadProperty(
+            [str(tmp_path / f"img_{i}.tif") for i in range(5)], LoadStackImage.get_name(), LoadStackImage
+        )
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert mf_widget.file_view.topLevelItemCount() == 5
+        mf_widget.forget_all()
+        assert mf_widget.file_view.topLevelItemCount() == 0
 
 
 class TestBaseMainWindow:
@@ -1856,3 +1908,45 @@ def test_progress_circle(qtbot):
     qtbot.addWidget(w)
     w.set_fraction(0.5)
     w.paintEvent(QPaintEvent(QRect(0, 0, 100, 100)))
+
+
+def test_colormap_io(tmp_path):
+    cmap = Colormap([[0, 0, 0], [0.5, 0.5, 0.5], [1, 1, 1]], controls=[0, 0.3, 1])
+    ColormapSave.save(tmp_path / "cmap.json", cmap)
+    cmap2 = ColormapLoad.load([tmp_path / "cmap.json"])
+    assert cmap2 == cmap
+
+
+@pytest.mark.parametrize("cls_", [ColormapSave, ColormapLoad])
+def test_colormap_meth(cls_):
+    assert cls_.get_short_name() == "colormap_json"
+    assert cls_.get_name().startswith("Colormap")
+    assert cls_.get_extensions() == [".colormap.json"]
+
+
+def test_labels_io(tmp_path):
+    data = [[128, 0, 130], [0, 180, 120]]
+    LabelsSave.save(tmp_path / "labels.json", data)
+    data2 = LabelsLoad.load([tmp_path / "labels.json"])
+    assert data == data2
+
+
+@pytest.mark.parametrize("cls_", [LabelsSave, LabelsLoad])
+def test_labels_meth(cls_):
+    assert cls_.get_short_name() == "label_json"
+    assert cls_.get_name().startswith("Labels")
+    assert cls_.get_extensions() == [".label.json"]
+
+
+def test_save_colormap_in_settings(part_settings):
+    class DummyColormap(typing.NamedTuple):
+        colors: typing.List[typing.List[float]]
+        controls: typing.List[float]
+
+    assert "custom_aaa" not in part_settings.colormap_dict
+    cmap = Colormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0, 1])
+    save_colormap_in_settings(part_settings, cmap, "custom_aaa")
+    assert len(part_settings.colormap_dict["custom_aaa"][0].controls) == 2
+    cmap2 = DummyColormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0.1, 0.9])
+    save_colormap_in_settings(part_settings, cmap2, "custom_bbb")
+    assert len(part_settings.colormap_dict["custom_bbb"][0].controls) == 4

@@ -20,6 +20,8 @@ IORegister = typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase), str,
 
 
 class IOMethodMock:
+    __new_style__ = False
+
     def __init__(self, name: str):
         self.name = name
 
@@ -123,7 +125,7 @@ class PLoadDialog(CustomLoadDialog):
         *,
         settings: "BaseSettings",
         path: str,
-        default_directory: str = None,
+        default_directory: typing.Optional[str] = None,
         filter_path="",
         parent=None,
         caption="Load file",

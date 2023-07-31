@@ -13,11 +13,12 @@ from pathlib import Path
 
 import numpy as np
 import tifffile
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from PartSegCore.io_utils import (
+    IO_MASK_METADATA_FILE,
     LoadBase,
     LoadPoints,
     SaveBase,
@@ -66,7 +67,7 @@ class MaskProjectTuple(ProjectInfoBase):
     :ivar typing.Union[Image,str,None] ~.image: image which is proceeded in given segmentation.
         If :py:class:`str` then it is path to image on drive
     :ivar typing.Optional[np.ndarray] ~.mask: Mask limiting segmentation area.
-    :ivar typing.Optional[np.ndarray] ~.roi: ROI array.
+    :ivar ROIInfo ~.roi_info: ROI information.
     :ivar SegmentationInfo ~.roi_info: ROI description
     :ivar typing.List[int] ~.selected_components: list of selected components
     :ivar typing.Dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
@@ -80,7 +81,7 @@ class MaskProjectTuple(ProjectInfoBase):
     file_path: str
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
-    roi_info: ROIInfo = ROIInfo(None)
+    roi_info: ROIInfo = dataclasses.field(default_factory=lambda: ROIInfo(None))
     additional_layers: typing.Dict[str, AdditionalLayerDescription] = dataclasses.field(default_factory=dict)
     selected_components: typing.List[int] = dataclasses.field(default_factory=list)
     roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]] = dataclasses.field(
@@ -90,6 +91,7 @@ class MaskProjectTuple(ProjectInfoBase):
     errors: str = ""
     spacing: typing.Optional[typing.List[float]] = None
     points: typing.Optional[np.ndarray] = None
+    frame_thickness: int = FRAME_THICKNESS
 
     def get_raw_copy(self):
         return MaskProjectTuple(self.file_path, self.image.substitute(mask=None))
@@ -119,6 +121,7 @@ class SaveROIOptions(BaseModel):
         description="When loading data in ROI analysis, if not checked"
         " then data outside ROI will be replaced with zeros.",
     )
+    frame_thickness: int = Field(2, title="Frame thickness", description="Thickness of frame around ROI")
     spacing: typing.List[float] = Field([10**-6, 10**-6, 10**-6], hidden=True)
 
 
@@ -148,6 +151,7 @@ def _save_mask_roi_metadata(
         "shape": project.roi_info.roi.shape,
         "annotations": project.roi_info.annotations,
         "keep_data_outside_mask": not parameters.mask_data,
+        "frame_thickness": parameters.frame_thickness,
     }
     if isinstance(project.image, Image):
         file_path = project.image.file_path
@@ -161,7 +165,7 @@ def _save_mask_roi_metadata(
         else:
             metadata["base_file"] = file_path
     metadata_buff = BytesIO(json.dumps(metadata, cls=PartSegEncoder).encode("utf-8"))
-    metadata_tar = get_tarinfo("metadata.json", metadata_buff)
+    metadata_tar = get_tarinfo(IO_MASK_METADATA_FILE, metadata_buff)
     tar_file.addfile(metadata_tar, metadata_buff)
 
 
@@ -212,7 +216,7 @@ def save_stack_segmentation(
     step_changed=empty_fun,
 ):
     range_changed(0, 7)
-    tar_file, _file_path = open_tar_file(file_data, "w")
+    tar_file, _file_path = open_tar_file(file_data, "w:gz")
     step_changed(1)
     try:
         _save_mask_roi(segmentation_info, tar_file, parameters)
@@ -238,7 +242,7 @@ def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, 
         raise WrongFileTypeException  # pragma: no cover
     files = tar_file.getnames()
     step_changed(1)
-    metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+    metadata = load_metadata(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
     step_changed(2)
     if "segmentation.npy" in files:
         segmentation_file_name = "segmentation.npy"
@@ -296,6 +300,7 @@ def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, 
         roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
         history=history,
         spacing=([10 ** (-9), *list(spacing)]) if spacing is not None else None,
+        frame_thickness=metadata.get("frame_thickness", FRAME_THICKNESS),
     )
 
 
@@ -332,8 +337,8 @@ class LoadROI(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> MaskProjectTuple:
         segmentation_tuple = load_stack_segmentation(
@@ -370,8 +375,8 @@ class LoadROIParameters(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> MaskProjectTuple:
         file_data = load_locations[0]
@@ -391,7 +396,7 @@ class LoadROIParameters(LoadBase):
 
         tar_file, _ = open_tar_file(file_data)
         try:
-            project_metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+            project_metadata = load_metadata(tar_file.extractfile(IO_MASK_METADATA_FILE).read().decode("utf8"))
             parameters = defaultdict(
                 lambda: None,
                 [(int(k), v) for k, v in project_metadata["parameters"].items()],
@@ -419,8 +424,8 @@ class LoadROIImage(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> MaskProjectTuple:
         seg = LoadROI.load(load_locations)
@@ -466,8 +471,8 @@ class LoadStackImage(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> MaskProjectTuple:
         if metadata is None:
@@ -483,7 +488,7 @@ class LoadStackImage(LoadBase):
 
 class LoadStackImageWithMask(LoadBase):
     """
-    Load image, hne mask from secondary file
+    Load image, then mask from secondary file
     """
 
     @classmethod
@@ -503,8 +508,8 @@ class LoadStackImageWithMask(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
         if metadata is None:
@@ -525,7 +530,7 @@ class LoadStackImageWithMask(LoadBase):
 
 class SaveROI(SaveBase):
     """
-    Save current ROI
+    Save current ROI as a project
     """
 
     __argument_class__ = SaveROIOptions
@@ -692,7 +697,7 @@ class SaveParametersJSON(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info: typing.Union[ROIExtractionProfile, MaskProjectTuple],
-        parameters: dict = None,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -728,8 +733,8 @@ class LoadROIFromTIFF(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
         image = TiffImageReader.read_image(load_locations[0])

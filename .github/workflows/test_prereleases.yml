@@ -17,7 +17,7 @@ on:
 jobs:
   download_data:
     name: Download test data
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - shell: bash
@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-2019, macos-11, ubuntu-20.04]
+        platform: [windows-2022, macos-12, ubuntu-22.04]
         python: [3.9]
     steps:
       - uses: actions/checkout@v3
@@ -47,7 +47,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
-          cache-dependency-path: 'requirements/requirements_pyinstaller.txt'
+          cache-dependency-path: 'setup.cfg'
 
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
@@ -107,7 +107,7 @@ jobs:
     - uses: tlambert03/setup-qt-libs@v1
     - name: Install dependencies
       run: |
-        pip install --upgrade pip==21.1
+        pip install --upgrade pip
         pip install pip-tools
     - name: Compile and install PyInstaller requirements
       run: |

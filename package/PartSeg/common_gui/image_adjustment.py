@@ -1,4 +1,4 @@
-from typing import Dict, NamedTuple
+from typing import Dict, NamedTuple, Optional
 
 from qtpy.QtWidgets import QComboBox, QDialog, QGridLayout, QPushButton, QStackedWidget
 
@@ -13,7 +13,7 @@ class ImageAdjustTuple(NamedTuple):
 
 
 class ImageAdjustmentDialog(QDialog):
-    def __init__(self, image: Image, transform_dict: Dict[str, TransformBase] = None):
+    def __init__(self, image: Image, transform_dict: Optional[Dict[str, TransformBase]] = None):
         super().__init__()
         if transform_dict is None:
             transform_dict = image_transform_dict
