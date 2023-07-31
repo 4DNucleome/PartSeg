@@ -1,7 +1,9 @@
 import logging
 import multiprocessing
 import os
+import tarfile
 import typing
+import zipfile
 from contextlib import suppress
 from io import BytesIO
 from pathlib import Path
@@ -629,6 +631,8 @@ class ExportProjectDialog(QDialog):
         self.setWindowTitle("Export batch with data")
         self.settings = settings
         self._all_files_exists = False
+        self.info_label = QLabel()
+        self.info_label.setVisible(False)
         self.excel_path = QLineEdit(excel_path)
         self.base_folder = QLineEdit(base_folder)
         self.zenodo_token = QLineEdit(settings.get("zenodo_token", ""))
@@ -644,15 +648,16 @@ class ExportProjectDialog(QDialog):
 
         layout = QGridLayout()
 
-        layout.addWidget(QLabel("Excel file"), 0, 0)
-        layout.addWidget(self.excel_path, 0, 1)
-        layout.addWidget(self.excel_path_btn, 0, 2)
-        layout.addWidget(QLabel("Base folder"), 1, 0)
-        layout.addWidget(self.base_folder, 1, 1)
-        layout.addWidget(self.base_folder_btn, 1, 2)
-        layout.addWidget(QLabel("Zenodo token"), 2, 0)
-        layout.addWidget(self.zenodo_token, 2, 1, 1, 2)
-        layout.addWidget(self.info_box, 3, 0, 1, 3)
+        layout.addWidget(self.info_label, 0, 0, 1, 3)
+        layout.addWidget(QLabel("Excel file"), 1, 0)
+        layout.addWidget(self.excel_path, 1, 1)
+        layout.addWidget(self.excel_path_btn, 1, 2)
+        layout.addWidget(QLabel("Base folder"), 2, 0)
+        layout.addWidget(self.base_folder, 2, 1)
+        layout.addWidget(self.base_folder_btn, 2, 2)
+        layout.addWidget(QLabel("Zenodo token"), 3, 0)
+        layout.addWidget(self.zenodo_token, 3, 1, 1, 2)
+        layout.addWidget(self.info_box, 4, 0, 1, 3)
 
         layout.addWidget(self.export_btn, 5, 0)
         layout.addWidget(self.export_to_zenodo_btn, 5, 2)
@@ -705,16 +710,22 @@ class ExportProjectDialog(QDialog):
 
         file_and_presence_list = _extract_information_from_excel_to_export(excel_path, self.base_folder.text())
         self.info_box.clear()
-        presence_all = True
-        for file_path, presence in file_and_presence_list:
-            widget = QTreeWidgetItem(self.info_box)
-            widget.setText(0, file_path)
-            if not presence:
-                widget.setIcon(0, not_icon)
-                widget.setToolTip(0, "File do not exists")
-            else:
-                widget.setIcon(0, ok_icon)
-            presence_all &= presence
+        presence_all = bool(file_and_presence_list)
+        if not presence_all:
+            self.info_label.setText("No files to export")
+            self.info_label.setVisible(True)
+        else:
+            self.info_label.setText("")
+            self.info_label.setVisible(False)
+            for file_path, presence in file_and_presence_list:
+                widget = QTreeWidgetItem(self.info_box)
+                widget.setText(0, file_path)
+                if not presence:
+                    widget.setIcon(0, not_icon)
+                    widget.setToolTip(0, "File do not exists")
+                else:
+                    widget.setIcon(0, ok_icon)
+                presence_all &= presence
 
         self._all_files_exists = presence_all
         self._zenodo_token_refresh()
@@ -724,7 +735,7 @@ class ExportProjectDialog(QDialog):
 def _extract_information_from_excel_to_export(
     excel_path: typing.Union[str, Path], base_folder: typing.Union[str, Path]
 ) -> typing.List[typing.Tuple[str, bool]]:
-    """Extract information from excel file to export"""
+    """Extract information from Excel file to export"""
     file_list = []
     file_set = set()
     base_folder = Path(base_folder)
@@ -742,6 +753,52 @@ def _extract_information_from_excel_to_export(
             file_list.append((image_path, (base_folder / image_path).exists()))
 
     return file_list
+
+
+def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path, progress_callback: typing.Callable):
+    """
+    Export files to archive
+
+    :param excel_path:
+    :param base_folder:
+    :param target_path:
+    :param progress_callback:
+    :return:
+    """
+
+    file_list = _extract_information_from_excel_to_export(excel_path, base_folder)
+    if not file_list:
+        raise ValueError("No files to export")
+    if not all(presence for _, presence in file_list):
+        raise ValueError("Some files do not exists")
+    ext = target_path.suffix
+    if ext == ".zip":
+        with zipfile.ZipFile(target_path, "w") as zip_file:
+            for file_path, _ in file_list:
+                zip_file.write(base_folder / file_path, arcname=file_path)
+                progress_callback()
+            zip_file.write(excel_path, arcname=excel_path.name)
+        return
+
+    mode_dict = {
+        ".tgz": "w:gz",
+        ".gz": "w:gz",
+        ".tbz2": "w:bz2",
+        ".bz2": "w:bz2",
+        ".txz": "w:xz",
+        ".xz": "w:xz",
+        ".tar": "w:",
+    }
+
+    mode = mode_dict.get(ext)
+    if mode is None:
+        raise ValueError("Unknown archive type")
+
+    with tarfile.open(target_path, mode=mode) as tar:
+        for file_path, _ in file_list:
+            tar.add(base_folder / file_path, arcname=file_path)
+            progress_callback()
+        tar.add(excel_path, arcname=excel_path.name)
 
 
 class CalculationProcessItem(QStandardItem):
