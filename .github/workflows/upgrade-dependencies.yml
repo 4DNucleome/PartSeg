@@ -45,7 +45,7 @@ jobs:
       - name: Upgrade Python dependencies
         # ADD YOUR CUSTOM DEPENDENCY UPGRADE COMMANDS BELOW
         run: |
-
+          set -x
           flags="--extra pyqt5 --extra pyqt6 --extra pyside2 --extra pyside6"
           flags+="--extra test --extra pyinstaller --allow-unsafe --strip-extras --resolver=backtracking"
 
