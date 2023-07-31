@@ -759,7 +759,7 @@ class TestCalculationProcess:
         res = calc_process.do_calculation(FileCalculation(file_path, calc))
         assert len(res) == 4
         assert sum(isinstance(x, ResponseData) for x in res) == 3
-        assert isinstance(list(dropwhile(lambda x: isinstance(x, ResponseData), res))[0][0], ValueError)
+        assert isinstance(next(iter(dropwhile(lambda x: isinstance(x, ResponseData), res)))[0], ValueError)
 
     @pytest.mark.usefixtures("_prepare_spacing_data")
     @pytest.mark.usefixtures("_register_dummy_spacing")
