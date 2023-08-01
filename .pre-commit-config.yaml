@@ -41,7 +41,7 @@ repos:
     rev: 0.7.16  # Use the ref you want to point at
     hooks:
     - id: mdformat
-      exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
+      exclude: TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
       additional_dependencies:
           - mdformat-gfm
           - mdformat-black
