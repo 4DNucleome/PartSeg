@@ -20,6 +20,7 @@ Calculation hierarchy:
    }
 
 """
+import contextlib
 import json
 import logging
 import math
@@ -112,7 +113,8 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     :param file_info: index and path to file which should be processed
     :param calculation: calculation description
     """
-    SimpleITK.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
+    with contextlib.suppress(AttributeError):
+        SimpleITK.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
     calc = CalculationProcess()
     index, file_path = file_info
     try:

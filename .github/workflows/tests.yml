@@ -42,6 +42,7 @@ jobs:
         python_version: ["3.8", "3.9", "3.10"]
         os: ["ubuntu-20.04"]
         qt_backend: ["PyQt5"]
+        tox_args: [ "" ]
         include:
           - python_version: "3.9"
             os: "macos-11"
@@ -58,11 +59,16 @@ jobs:
           - python_version: "3.9"
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
+          - python_version: "3.11"
+            os: "ubuntu-22.04"
+            qt_backend: "PyQt5"
+            tox_args: "-vv -e py311-PyQt5-all"
     with:
       test_data: True
       python_version: ${{ matrix.python_version }}
       os: ${{ matrix.os }}
       qt_backend: ${{ matrix.qt_backend }}
+      tox_args: ${{ matrix.tox_args }}
 
   base-test-main:
     name: Base py${{ matrix.python_version }}
@@ -76,6 +82,9 @@ jobs:
         os: ["ubuntu-20.04", "macos-11", "windows-2019"]
         qt_backend: ["PySide2", "PyQt5"]
         include:
+          - python_version: "3.11"
+            qt_backend: "PyQt5"
+            os: "ubuntu-22.04"
           - python_version: "3.9"
             os: "ubuntu-22.04"
             qt_backend: "PySide6"
