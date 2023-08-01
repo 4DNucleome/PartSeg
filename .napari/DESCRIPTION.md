@@ -24,9 +24,9 @@ then detailed description could be found in PartSeg documentation/
 
 The PartSeg is focused on the reproducible ROI Extraction process and offers two groups of algorithms:
 
-*   __ROI Mask Extraction__ set of algorithms (from PartSeg ROI Analysis) to work on a whole stack and mainly used for extracting nucleus or cell from a stack.
-*   __ROI Analysis Extraction__ set of algorithms (from PartSeg ROI Mask) for detailed segmentation on the level of a single nucleus.
-    If possible, they use an inner caching mechanism to improve performance while adjusting parameters.
+- __ROI Mask Extraction__ set of algorithms (from PartSeg ROI Analysis) to work on a whole stack and mainly used for extracting nucleus or cell from a stack.
+- __ROI Analysis Extraction__ set of algorithms (from PartSeg ROI Mask) for detailed segmentation on the level of a single nucleus.
+  If possible, they use an inner caching mechanism to improve performance while adjusting parameters.
 
 Algorithms from both groups should support masking.
 (perform ROI extraction only on the mask layer's area has non-zero values).
@@ -44,7 +44,7 @@ PartSeg offers two measurement widgets:
 ### Measurement
 
 Interface to PartSeg measurement engine.
-In this widget, there are two tabs. **Measurement settings* that allow
+In this widget, there are two tabs. \**Measurement settings* that allow
 to define, delete, import, and export set of measurements
 
 ![Measurement Settings](https://i.imgur.com/cfuXRRD.png)
