@@ -37,17 +37,22 @@ jobs:
           python-version: "3.10"
           cache: pip
           cache-dependency-path: 'setup.cfg'
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: 'setup.cfg'
       - name: Upgrade Python dependencies
         # ADD YOUR CUSTOM DEPENDENCY UPGRADE COMMANDS BELOW
         run: |
-          python3.8 -m pip install -U pip pip-tools
-          python3.9 -m pip install -U pip pip-tools
-          python3.10 -m pip install -U pip pip-tools
+          set -x
+          flags="--extra pyqt5 --extra pyqt6 --extra pyside2 --extra pyside6"
+          flags+=" --extra test --extra pyinstaller --allow-unsafe --strip-extras --resolver=backtracking"
 
-          python3.8 -m piptools compile --upgrade -o requirements/constraints_py3.8.txt setup.cfg requirements/version_denylist.txt --extra pyqt5 --extra pyqt6 --extra pyside2 --extra pyside6 --extra test --extra pyinstaller --allow-unsafe --strip-extras --resolver=backtracking
-          python3.9 -m piptools compile --upgrade -o requirements/constraints_py3.9.txt setup.cfg requirements/version_denylist.txt --extra pyqt5 --extra pyqt6 --extra pyside2 --extra pyside6 --extra test --extra pyinstaller --allow-unsafe --strip-extras --resolver=backtracking
-          python3.10 -m piptools compile --upgrade -o requirements/constraints_py3.10.txt setup.cfg requirements/version_denylist.txt --extra pyqt5 --extra pyqt6 --extra pyside2 --extra pyside6 --extra test --extra pyinstaller --allow-unsafe --strip-extras --resolver=backtracking
-
+          for pyv in 3.8 3.9 3.10 3.11; do
+            python${pyv}  -m pip install -U pip pip-tools
+            python${pyv}  -m piptools compile --upgrade -o requirements/constraints_py${pyv}.txt  setup.cfg requirements/version_denylist.txt ${flags}
+          done
       # END PYTHON DEPENDENCIES
 
       - name: Check updated packages

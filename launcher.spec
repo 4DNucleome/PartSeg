@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
 
 block_cipher = None
 import sys
@@ -180,7 +180,8 @@ a = Analysis(
     + collect_data_files("PartSegCore-compiled-backend")
     + pyzmq_data
     + plugins_data
-    + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")],
+    + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")]
+    + copy_metadata("PartSeg", recursive=True),
     hiddenimports=hiddenimports,
     # + ["plugins." + x.name for x in plugins.get_plugins()],
     hookspath=[],

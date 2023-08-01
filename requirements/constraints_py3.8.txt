@@ -326,7 +326,7 @@ pyside2==5.15.2.1
     # via
     #   -r requirements/version_denylist.txt
     #   PartSeg (setup.cfg)
-pyside6==6.3.1
+pyside6==6.3.1 ; python_version < "3.10"
     # via
     #   -r requirements/version_denylist.txt
     #   PartSeg (setup.cfg)
@@ -392,7 +392,7 @@ requests==2.31.0
     #   PartSeg (setup.cfg)
     #   pooch
     #   sphinx
-rich==13.5.0
+rich==13.5.1
     # via npe2
 rpds-py==0.9.2
     # via
@@ -408,7 +408,9 @@ scipy==1.10.1
     #   napari
     #   scikit-image
 sentry-sdk==1.28.1
-    # via PartSeg (setup.cfg)
+    # via
+    #   -r requirements/version_denylist.txt
+    #   PartSeg (setup.cfg)
 shiboken2==5.15.2.1
     # via pyside2
 shiboken6==6.3.1

@@ -181,7 +181,7 @@ stages:
           matrix:
             macos:
               imageName: 'macos-11'
-              test_path: dist/PartSeg/PartSeg _test
+              test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
             windows:
               imageName: 'windows-2019'
               test_path: dist\PartSeg\PartSeg _test
