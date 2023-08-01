@@ -45,8 +45,6 @@ repos:
       additional_dependencies:
           - mdformat-gfm
           - mdformat-black
-          - mdformat-frontmatter
-          - mdformat-footnote
           - mdformat-toc
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
