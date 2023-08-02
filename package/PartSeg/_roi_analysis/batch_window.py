@@ -34,6 +34,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt.utils import thread_worker
 
 from PartSeg import parsed_version, state_store
 from PartSeg._roi_analysis.partseg_settings import PartSettings
@@ -645,6 +646,9 @@ class ExportProjectDialog(QDialog):
         self.export_btn.setDisabled(True)
         self.export_to_zenodo_btn = QPushButton("Export to zenodo")
         self.export_to_zenodo_btn.setDisabled(True)
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+        self.worker = None
 
         layout = QGridLayout()
 
@@ -658,9 +662,10 @@ class ExportProjectDialog(QDialog):
         layout.addWidget(QLabel("Zenodo token"), 3, 0)
         layout.addWidget(self.zenodo_token, 3, 1, 1, 2)
         layout.addWidget(self.info_box, 4, 0, 1, 3)
+        layout.addWidget(self.progress_bar, 5, 0, 1, 3)
 
-        layout.addWidget(self.export_btn, 5, 0)
-        layout.addWidget(self.export_to_zenodo_btn, 5, 2)
+        layout.addWidget(self.export_btn, 6, 0)
+        layout.addWidget(self.export_to_zenodo_btn, 6, 2)
 
         self.setLayout(layout)
 
@@ -671,6 +676,33 @@ class ExportProjectDialog(QDialog):
         self.base_folder.textChanged.connect(self._excel_path_changed)
         self.base_folder_btn.clicked.connect(self.select_folder)
         self.excel_path_btn.clicked.connect(self.select_excel)
+        self.export_btn.clicked.connect(self._export_archive)
+
+    def _export_archive(self):
+        dlg = PSaveDialog(
+            "Archive name (*.tgz *.zip *.tbz2 *.txy)",
+            settings=self.settings,
+            path=IO_SAVE_DIRECTORY,
+            parent=self,
+        )
+        if dlg.exec_():
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setRange(0, self.info_box.topLevelItemCount() + 1)
+            self.progress_bar.setValue(0)
+            export_to_archive_ = thread_worker(export_to_archive)
+            self.worker = export_to_archive_(
+                excel_path=Path(self.excel_path.text()),
+                base_folder=Path(self.base_folder.text()),
+                target_path=Path(dlg.selectedFiles()[0]),
+            )
+            self.worker.yielded.connect(self._progress)
+            self.worker.start()
+
+    def _progress(self):
+        self.progress_bar.setValue(self.progress_bar.value() + 1)
+        if self.progress_bar.value() == self.progress_bar.maximum():
+            self.progress_bar.setVisible(False)
+            self.worker = None
 
     def _could_export(self):
         dir_path = Path(self.base_folder.text())
@@ -755,7 +787,7 @@ def _extract_information_from_excel_to_export(
     return file_list
 
 
-def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path, progress_callback: typing.Callable):
+def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path):
     """
     Export files to archive
 
@@ -776,8 +808,9 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path, pr
         with zipfile.ZipFile(target_path, "w") as zip_file:
             for file_path, _ in file_list:
                 zip_file.write(base_folder / file_path, arcname=file_path)
-                progress_callback()
+                yield
             zip_file.write(excel_path, arcname=excel_path.name)
+            yield
         return
 
     mode_dict = {
@@ -797,8 +830,9 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path, pr
     with tarfile.open(target_path, mode=mode) as tar:
         for file_path, _ in file_list:
             tar.add(base_folder / file_path, arcname=file_path)
-            progress_callback()
+            yield
         tar.add(excel_path, arcname=excel_path.name)
+        yield
 
 
 class CalculationProcessItem(QStandardItem):
