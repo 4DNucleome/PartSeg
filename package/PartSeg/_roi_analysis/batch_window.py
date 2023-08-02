@@ -1,3 +1,4 @@
+import json
 import logging
 import multiprocessing
 import os
@@ -10,6 +11,7 @@ from pathlib import Path
 from pickle import PicklingError  # nosec
 
 import numpy as np
+import requests
 import sentry_sdk
 from openpyxl.reader.excel import load_workbook
 from qtpy.QtCore import QByteArray, Qt, QTimer
@@ -56,6 +58,8 @@ from PartSegCore.universal_const import Units
 from PartSegData import icons_dir
 
 __author__ = "Grzegorz Bokota"
+
+REQUESTS_TIMEOUT = 600
 
 
 class SaveExcel(SaveBase):
@@ -677,6 +681,7 @@ class ExportProjectDialog(QDialog):
         self.base_folder_btn.clicked.connect(self.select_folder)
         self.excel_path_btn.clicked.connect(self.select_excel)
         self.export_btn.clicked.connect(self._export_archive)
+        self.export_to_zenodo_btn.clicked.connect(self._export_to_zenodo)
 
     def _export_archive(self):
         dlg = PSaveDialog(
@@ -696,13 +701,41 @@ class ExportProjectDialog(QDialog):
                 target_path=Path(dlg.selectedFiles()[0]),
             )
             self.worker.yielded.connect(self._progress)
+            self.worker.finished.connect(self._export_finished)
+            self.worker.errored.connect(self._export_errored)
             self.worker.start()
 
-    def _progress(self):
-        self.progress_bar.setValue(self.progress_bar.value() + 1)
-        if self.progress_bar.value() == self.progress_bar.maximum():
-            self.progress_bar.setVisible(False)
-            self.worker = None
+    def _export_finished(self):
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setValue(0)
+        self.worker = None
+
+    def _progress(self, value: int):
+        self.progress_bar.setValue(value)
+
+    def _export_to_zenodo(self):
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, self.info_box.topLevelItemCount() + 1)
+        self.progress_bar.setValue(0)
+
+        export_to_zenodo_ = thread_worker(export_to_zenodo)
+        self.worker = export_to_zenodo_(
+            Path(self.excel_path.text()), Path(self.base_folder.text()), zenodo_token=self.zenodo_token.text()
+        )
+        self.worker.yielded.connect(self._progress)
+        self.worker.finished.connect(self._export_finished)
+        self.worker.returned.connect(self._export_finished)
+        self.worker.errored.connect(self._export_errored)
+        self.worker.start()
+
+    def _export_errored(self, value):
+        self.info_label.setText(f"Error: {value}")
+        self.info_label.setVisible(True)
+
+    def _zenodo_export_finished(self, value):
+        deposition_id, deposit_url = value
+        self.info_label.setText(f"Deposition id: {deposition_id}\nDeposit url: {deposit_url}")
+        self.info_label.setVisible(True)
 
     def _could_export(self):
         dir_path = Path(self.base_folder.text())
@@ -791,11 +824,9 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path):
     """
     Export files to archive
 
-    :param excel_path:
-    :param base_folder:
-    :param target_path:
-    :param progress_callback:
-    :return:
+    :param Path excel_path: path to excel file
+    :param Path base_folder: base folder from where paths are calculated
+    :param Path target_path: path to archive
     """
 
     file_list = _extract_information_from_excel_to_export(excel_path, base_folder)
@@ -806,11 +837,12 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path):
     ext = target_path.suffix
     if ext == ".zip":
         with zipfile.ZipFile(target_path, "w") as zip_file:
-            for file_path, _ in file_list:
-                zip_file.write(base_folder / file_path, arcname=file_path)
-                yield
             zip_file.write(excel_path, arcname=excel_path.name)
-            yield
+            yield 1
+            for i, (file_path, _) in enumerate(file_list, start=2):
+                zip_file.write(base_folder / file_path, arcname=file_path)
+                yield i
+
         return
 
     mode_dict = {
@@ -828,11 +860,86 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path):
         raise ValueError("Unknown archive type")
 
     with tarfile.open(target_path, mode=mode) as tar:
-        for file_path, _ in file_list:
-            tar.add(base_folder / file_path, arcname=file_path)
-            yield
         tar.add(excel_path, arcname=excel_path.name)
-        yield
+        yield 1
+        for i, (file_path, _) in enumerate(file_list, start=2):
+            tar.add(base_folder / file_path, arcname=file_path)
+            yield i
+
+
+def export_to_zenodo(
+    excel_path: Path,
+    base_folder: Path,
+    zenodo_token: str,
+    zenodo_url: str = "https://sandbox.zenodo.org/api/deposit/depositions",
+    # 'https://zenodo.org/api/deposit/depositions'
+):
+    """
+    Export project to Zenodo
+
+    :param excel_path:
+    :param base_folder:
+    :param zenodo_token:
+    :param zenodo_url: Zenodo API URL
+    :return:
+    """
+    file_list = _extract_information_from_excel_to_export(excel_path, base_folder)
+    if not file_list:
+        raise ValueError("No files to export")
+    if not all(presence for _, presence in file_list):
+        raise ValueError("Some files do not exists")
+    params = {"access_token": zenodo_token}
+    headers = {"Content-Type": "application/json"}
+    initial_request = requests.post(
+        "https://sandbox.zenodo.org/api/deposit/depositions",
+        params=params,
+        json={},
+        headers=headers,
+        timeout=REQUESTS_TIMEOUT,
+    )
+    if initial_request.status_code != 201:
+        raise ValueError(f"Can't create deposition {initial_request.status_code} {initial_request.json()['message']}")
+    bucket_url = initial_request.json()["links"]["bucket"]
+    deposition_id = initial_request.json()["id"]
+    deposit_url = initial_request.json()["links"]["html"]
+
+    data = {
+        "metadata": {
+            "title": "My first PartSeg upload",
+            "upload_type": "dataset",
+            "description": "Upload data from PartSeg",
+            "creators": [{"name": "Grzegorz Bokota", "affiliation": "PartSeg"}],
+        }
+    }
+    requests.put(
+        f"{zenodo_url}/{deposition_id}",
+        params=params,
+        data=json.dumps(data),
+        headers=headers,
+        timeout=REQUESTS_TIMEOUT,
+    )
+    # r.status_code
+
+    with excel_path.open(mode="rb") as fp:
+        requests.put(
+            f"{bucket_url}/{excel_path.name}",
+            data=fp,
+            params=params,
+            timeout=REQUESTS_TIMEOUT,
+        )
+        yield 1
+
+    for i, (filename, _) in enumerate(file_list, start=2):
+        with (base_folder / filename).open(mode="rb") as fp:
+            requests.put(
+                f"{bucket_url}/{filename}",
+                data=fp,
+                params=params,
+                timeout=REQUESTS_TIMEOUT,
+            )
+            yield i
+
+    return deposition_id, deposit_url
 
 
 class CalculationProcessItem(QStandardItem):
