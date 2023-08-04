@@ -25,6 +25,7 @@ then detailed description could be found in PartSeg documentation/
 The PartSeg is focused on the reproducible ROI Extraction process and offers two groups of algorithms:
 
 - __ROI Mask Extraction__ set of algorithms (from PartSeg ROI Analysis) to work on a whole stack and mainly used for extracting nucleus or cell from a stack.
+
 - __ROI Analysis Extraction__ set of algorithms (from PartSeg ROI Mask) for detailed segmentation on the level of a single nucleus.
   If possible, they use an inner caching mechanism to improve performance while adjusting parameters.
 
