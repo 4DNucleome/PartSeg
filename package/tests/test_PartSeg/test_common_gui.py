@@ -69,6 +69,7 @@ from PartSeg.common_gui.custom_load_dialog import (
     LoadProperty,
     LoadRegisterFileDialog,
     PLoadDialog,
+    SelectDirectoryDialog,
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
@@ -1950,3 +1951,9 @@ def test_save_colormap_in_settings(part_settings):
     cmap2 = DummyColormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0.1, 0.9])
     save_colormap_in_settings(part_settings, cmap2, "custom_bbb")
     assert len(part_settings.colormap_dict["custom_bbb"][0].controls) == 4
+
+
+class TestSelectDirectoryDialog:
+    def test_create(self, qtbot, base_settings):
+        w = SelectDirectoryDialog(settings=base_settings, path="aa")
+        qtbot.addWidget(w)
