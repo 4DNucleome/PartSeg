@@ -8,6 +8,7 @@ from PartSeg._roi_analysis.export_batch import (
     ExportProjectDialog,
     _extract_information_from_excel_to_export,
     export_to_archive,
+    export_to_zenodo,
 )
 
 
@@ -85,7 +86,7 @@ def test_extract_information_from_excel_to_export(data_test_dir, bundle_test_dir
     assert all(x[1] for x in res)
 
 
-def all_files_in_dir(path):
+def all_files_in_archive(path):
     if path.suffix == ".zip":
         with zipfile.ZipFile(path) as zip_file:
             name_list = zip_file.namelist()
@@ -101,4 +102,28 @@ def all_files_in_dir(path):
 def test_export_to_archive(bundle_test_dir, tmp_path, ext):
     a = list(export_to_archive(bundle_test_dir / "sample_batch_output.xlsx", tmp_path, tmp_path / f"arch{ext}"))
     assert len(a) == 9
-    all_files_in_dir(tmp_path / f"arch{ext}")
+    all_files_in_archive(tmp_path / f"arch{ext}")
+
+
+@pytest.mark.usefixtures("_dummy_tiffs")
+@patch("requests.post")
+@patch("requests.put")
+def test_zenodo_export(put_mock, post_mock, bundle_test_dir, tmp_path):
+    post_mock.return_value.status_code = 201
+    put_mock.return_value.status_code = 200
+    a = list(
+        export_to_zenodo(
+            excel_path=bundle_test_dir / "sample_batch_output.xlsx",
+            base_folder=tmp_path,
+            zenodo_token="sample_token",  # noqa: S106
+            title="sample title",
+            author="sample author",
+            affiliation="sample affiliation",
+            orcid="0000-0000-0000-0000",
+            description="sample description",
+            zenodo_url="https://dummy_url",
+        )
+    )
+    assert len(a) == 9
+    assert post_mock.call_count == 1
+    assert put_mock.call_count == 10
