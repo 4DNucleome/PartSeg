@@ -258,7 +258,7 @@ class ExportProjectDialog(QDialog):
     def select_folder(self):
         dial = SelectDirectoryDialog(
             settings=self.settings,
-            path=[IO_BATCH_DIRECTORY, OPEN_DIRECTORY],
+            settings_path=[IO_BATCH_DIRECTORY, OPEN_DIRECTORY],
             default_directory=str(Path.home()),
             parent=self,
         )

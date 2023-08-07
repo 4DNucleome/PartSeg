@@ -160,7 +160,7 @@ class SelectDirectoryDialog(QFileDialog):
     def __init__(
         self,
         settings: "BaseSettings",
-        path: typing.Union[str, typing.List[str]],
+        settings_path: typing.Union[str, typing.List[str]],
         default_directory: typing.Optional[str] = None,
         parent=None,
     ) -> None:
@@ -168,22 +168,22 @@ class SelectDirectoryDialog(QFileDialog):
         if default_directory is None:
             default_directory = str(Path.home())
         self.settings = settings
-        self.setFileMode(QFileDialog.Directory)
-        self.setAcceptMode(QFileDialog.AcceptOpen)
-        if isinstance(path, list):
-            for path_ in reversed(path):
+        self.setFileMode(QFileDialog.FileMode.Directory)
+        self.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
+        if isinstance(settings_path, list):
+            for path_ in reversed(settings_path):
                 default_directory = self.settings.get(path_, default_directory)
             self.setDirectory(default_directory)
-            self.path_in_dict = path[0]
+            self.path_in_dict = settings_path[0]
         else:
-            self.setDirectory(self.settings.get(path, default_directory))
-            self.path_in_dict = path
+            self.setDirectory(self.settings.get(settings_path, default_directory))
+            self.path_in_dict = settings_path
         history = self.history() + settings.get_path_history()
         self.setHistory(history)
 
     def accept(self) -> None:
         super().accept()
-        if self.result() != QFileDialog.Accepted:
+        if self.result() != QFileDialog.DialogCode.Accepted:
             return
         directory = self.selectedFiles()[0]
         self.settings.add_path_history(directory)

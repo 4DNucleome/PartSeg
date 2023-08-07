@@ -1705,7 +1705,7 @@ class TestAlgorithmChooseBase:
         assert widget.algorithm_choose.currentText() == BorderRim.get_name()
 
     def test_reload(self, qtbot, part_settings):
-        # Dummy test to check if code execute
+        # Simple test to check if code execute
         widget = AlgorithmChooseBase(part_settings, AnalysisAlgorithmSelection)
         qtbot.addWidget(widget)
         widget.reload()
@@ -1954,6 +1954,23 @@ def test_save_colormap_in_settings(part_settings):
 
 
 class TestSelectDirectoryDialog:
-    def test_create(self, qtbot, base_settings):
-        w = SelectDirectoryDialog(settings=base_settings, path="aa")
+    @pytest.mark.parametrize("settings_path", ["s_path", ["s_path", "s_path2"]])
+    def test_create(self, qtbot, base_settings, settings_path, tmp_path):
+        base_settings.set("s_path", str(tmp_path))
+        base_settings.set("s_path2", str(tmp_path / "aaa"))
+        w = SelectDirectoryDialog(settings=base_settings, settings_path=settings_path)
         qtbot.addWidget(w)
+        assert w.directory().absolutePath() == str(tmp_path)
+
+    def test_accept(self, qtbot, base_settings, tmp_path):
+        base_settings.set("s_path", str(tmp_path))
+        (tmp_path / "sample_dir").mkdir()
+        w = SelectDirectoryDialog(settings=base_settings, settings_path="s_path")
+        qtbot.addWidget(w)
+        w.selectFile(str(tmp_path / "sample_dir"))
+
+        w.show()
+        qtbot.wait_exposed(w)
+
+        w.accept()
+        assert Path(base_settings.get("s_path")).resolve() == (tmp_path / "sample_dir").resolve()

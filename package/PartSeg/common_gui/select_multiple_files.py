@@ -221,7 +221,7 @@ class AddFiles(QWidget):
     def select_directory(self):
         dial = SelectDirectoryDialog(
             settings=self.settings,
-            path=[IO_BATCH_DIRECTORY, OPEN_DIRECTORY],
+            settings_path=[IO_BATCH_DIRECTORY, OPEN_DIRECTORY],
             default_directory=None,
             parent=self,
         )
