@@ -20,6 +20,7 @@ from qtpy.QtWidgets import (
     QCheckBox,
     QDialog,
     QFileDialog,
+    QFormLayout,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -31,11 +32,13 @@ from qtpy.QtWidgets import (
     QPushButton,
     QSpinBox,
     QTabWidget,
+    QTextEdit,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
+from superqt import QCollapsible
 from superqt.utils import thread_worker
 
 from PartSeg import parsed_version, state_store
@@ -638,13 +641,24 @@ class ExportProjectDialog(QDialog):
         self._all_files_exists = False
         self.info_label = QLabel()
         self.info_label.setVisible(False)
+        self.info_label.setWordWrap(True)
         self.excel_path = QLineEdit(excel_path)
         self.base_folder = QLineEdit(base_folder)
         self.zenodo_token = QLineEdit(settings.get("zenodo_token", ""))
+        self.zenodo_title = QLineEdit()
+        self.zenodo_author = QLineEdit(settings.get("zenodo_author", ""))
+        self.zenodo_author.setToolTip(
+            "Only first author could be used from this widget. Other you need to add manually"
+        )
+        self.zenodo_affiliation = QLineEdit(settings.get("zenodo_affiliation", ""))
+        self.zenodo_description = QTextEdit()
+        self.zenodo_sandbox = QCheckBox()
+        self.zenodo_sandbox.setToolTip("Use https://sandbox.zenodo.org instead of https://zenodo.org")
         self.excel_path_btn = QPushButton("Select excel file")
         self.base_folder_btn = QPushButton("Select base folder")
         self.info_box = QTreeWidget()
         self.info_box.header().close()
+        self.zenodo_collapse = QCollapsible("Zenodo export")
 
         self.export_btn = QPushButton("Export")
         self.export_btn.setDisabled(True)
@@ -653,25 +667,6 @@ class ExportProjectDialog(QDialog):
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         self.worker = None
-
-        layout = QGridLayout()
-
-        layout.addWidget(self.info_label, 0, 0, 1, 3)
-        layout.addWidget(QLabel("Excel file"), 1, 0)
-        layout.addWidget(self.excel_path, 1, 1)
-        layout.addWidget(self.excel_path_btn, 1, 2)
-        layout.addWidget(QLabel("Base folder"), 2, 0)
-        layout.addWidget(self.base_folder, 2, 1)
-        layout.addWidget(self.base_folder_btn, 2, 2)
-        layout.addWidget(QLabel("Zenodo token"), 3, 0)
-        layout.addWidget(self.zenodo_token, 3, 1, 1, 2)
-        layout.addWidget(self.info_box, 4, 0, 1, 3)
-        layout.addWidget(self.progress_bar, 5, 0, 1, 3)
-
-        layout.addWidget(self.export_btn, 6, 0)
-        layout.addWidget(self.export_to_zenodo_btn, 6, 2)
-
-        self.setLayout(layout)
 
         self.zenodo_token.textChanged.connect(self._zenodo_token_refresh)
         self.excel_path.textChanged.connect(self._zenodo_token_refresh)
@@ -682,6 +677,42 @@ class ExportProjectDialog(QDialog):
         self.excel_path_btn.clicked.connect(self.select_excel)
         self.export_btn.clicked.connect(self._export_archive)
         self.export_to_zenodo_btn.clicked.connect(self._export_to_zenodo)
+
+        self._setup_ui()
+
+    def _setup_ui(self):
+        layout = QGridLayout()
+
+        layout.addWidget(self.info_label, 0, 0, 1, 3)
+        layout.addWidget(QLabel("Excel file"), 1, 0)
+        layout.addWidget(self.excel_path, 1, 1)
+        layout.addWidget(self.excel_path_btn, 1, 2)
+        layout.addWidget(QLabel("Base folder"), 2, 0)
+        layout.addWidget(self.base_folder, 2, 1)
+        layout.addWidget(self.base_folder_btn, 2, 2)
+        layout.addWidget(self.zenodo_collapse, 3, 0, 1, 3)
+        layout.addWidget(self.info_box, 4, 0, 1, 3)
+        layout.addWidget(self.progress_bar, 5, 0, 1, 3)
+
+        layout.addWidget(self.export_btn, 6, 0)
+        layout.addWidget(self.export_to_zenodo_btn, 6, 2)
+
+        self.setLayout(layout)
+
+        zenodo_layout = QFormLayout()
+        zenodo_layout.addRow("Zenodo token", self.zenodo_token)
+        zenodo_layout.addRow("Dataset title", self.zenodo_title)
+        zenodo_layout.addRow("Dataset author", self.zenodo_author)
+        zenodo_layout.addRow("Affiliation", self.zenodo_affiliation)
+        zenodo_layout.addRow(QLabel("Description:"))
+        zenodo_layout.addRow(self.zenodo_description)
+        sandbox_label = QLabel("Upload to sandbox")
+        sandbox_label.setToolTip(self.zenodo_sandbox.toolTip())
+        zenodo_layout.addRow(sandbox_label, self.zenodo_sandbox)
+
+        widg = QWidget()
+        widg.setLayout(zenodo_layout)
+        self.zenodo_collapse.addWidget(widg)
 
     def _export_archive(self):
         dlg = PSaveDialog(
@@ -710,6 +741,9 @@ class ExportProjectDialog(QDialog):
         self.progress_bar.setValue(0)
         self.worker = None
 
+    def _export_returned(self, result):
+        pass
+
     def _progress(self, value: int):
         self.progress_bar.setValue(value)
 
@@ -718,14 +752,32 @@ class ExportProjectDialog(QDialog):
         self.progress_bar.setRange(0, self.info_box.topLevelItemCount() + 1)
         self.progress_bar.setValue(0)
 
-        export_to_zenodo_ = thread_worker(export_to_zenodo)
-        self.worker = export_to_zenodo_(
-            Path(self.excel_path.text()), Path(self.base_folder.text()), zenodo_token=self.zenodo_token.text()
+        export_to_zenodo_ = thread_worker(
+            export_to_zenodo,
+            connect={
+                "yielded": self._progress,
+                "finished": self._export_finished,
+                "errored": self._export_errored,
+                "returned": self._export_returned,
+            },
+            start_thread=False,
         )
-        self.worker.yielded.connect(self._progress)
-        self.worker.finished.connect(self._export_finished)
-        self.worker.returned.connect(self._export_finished)
-        self.worker.errored.connect(self._export_errored)
+        url = "https://zenodo.org/api/deposit/depositions"
+        if self.zenodo_sandbox.isChecked():
+            url = "https://sandbox.zenodo.org/api/deposit/depositions"
+        self.worker = export_to_zenodo_(
+            excel_path=Path(self.excel_path.text()),
+            base_folder=Path(self.base_folder.text()),
+            title=self.zenodo_title.text(),
+            author=self.zenodo_author.text(),
+            affiliation=self.zenodo_affiliation.text(),
+            description=self.zenodo_description.toPlainText(),
+            zenodo_token=self.zenodo_token.text(),
+            zenodo_url=url,
+        )
+        self.settings.set("zenodo_token", self.zenodo_token.text())
+        self.settings.set("zenodo_author", self.zenodo_author.text())
+        self.settings.set("zenodo_affiliation", self.zenodo_affiliation.text())
         self.worker.start()
 
     def _export_errored(self, value):
@@ -871,15 +923,22 @@ def export_to_zenodo(
     excel_path: Path,
     base_folder: Path,
     zenodo_token: str,
-    zenodo_url: str = "https://sandbox.zenodo.org/api/deposit/depositions",
-    # 'https://zenodo.org/api/deposit/depositions'
+    title: str,
+    author: str,
+    affiliation: str,
+    description: str,
+    zenodo_url: str = "https://zenodo.org/api/deposit/depositions",
 ):
     """
     Export project to Zenodo
 
-    :param excel_path:
-    :param base_folder:
-    :param zenodo_token:
+    :param excel_path: path to excel file with output from batch processing
+    :param base_folder: base folder from where paths are calculated
+    :param zenodo_token: Zenodo API token
+    :param title: title of the deposition
+    :param author: author of the deposition
+    :param affiliation: affiliation of the author
+    :param description: description of the deposition
     :param zenodo_url: Zenodo API URL
     :return:
     """
@@ -891,7 +950,7 @@ def export_to_zenodo(
     params = {"access_token": zenodo_token}
     headers = {"Content-Type": "application/json"}
     initial_request = requests.post(
-        "https://sandbox.zenodo.org/api/deposit/depositions",
+        zenodo_url,
         params=params,
         json={},
         headers=headers,
@@ -905,12 +964,13 @@ def export_to_zenodo(
 
     data = {
         "metadata": {
-            "title": "My first PartSeg upload",
+            "title": title,
             "upload_type": "dataset",
-            "description": "Upload data from PartSeg",
-            "creators": [{"name": "Grzegorz Bokota", "affiliation": "PartSeg"}],
+            "description": description,
+            "creators": [{"name": author, "affiliation": affiliation}],
         }
     }
+    print(data)
     requests.put(
         f"{zenodo_url}/{deposition_id}",
         params=params,
