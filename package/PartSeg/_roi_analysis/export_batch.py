@@ -39,6 +39,9 @@ from PartSegData import icons_dir
 
 REQUESTS_TIMEOUT = 600
 
+NO_FILES = "No files to export"
+MISSING_FILES = "Some files do not exists"
+
 
 class ExportProjectDialog(QDialog):
     """Export data for zenodo"""
@@ -281,7 +284,7 @@ class ExportProjectDialog(QDialog):
         self.info_box.clear()
         presence_all = bool(file_and_presence_list)
         if not presence_all:
-            self.info_label.setText("No files to export")
+            self.info_label.setText(NO_FILES)
             self.info_label.setVisible(True)
         else:
             self.info_label.setText("")
@@ -335,9 +338,9 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path):
 
     file_list = _extract_information_from_excel_to_export(excel_path, base_folder)
     if not file_list:
-        raise ValueError("No files to export")
+        raise ValueError(NO_FILES)
     if not all(presence for _, presence in file_list):
-        raise ValueError("Some files do not exists")
+        raise ValueError(MISSING_FILES)
     ext = target_path.suffix
     if ext == ".zip":
         with zipfile.ZipFile(target_path, "w") as zip_file:
@@ -418,9 +421,9 @@ def export_to_zenodo(
     """
     file_list = _extract_information_from_excel_to_export(excel_path, base_folder)
     if not file_list:
-        raise ValueError("No files to export")
+        raise ValueError(NO_FILES)
     if not all(presence for _, presence in file_list):
-        raise ValueError("Some files do not exists")
+        raise ValueError(MISSING_FILES)
     params = {"access_token": zenodo_token}
     headers = {"Content-Type": "application/json"}
     initial_request = requests.post(
