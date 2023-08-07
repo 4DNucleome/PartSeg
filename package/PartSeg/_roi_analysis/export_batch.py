@@ -356,6 +356,10 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path):
     return target_path
 
 
+class ZenodoCreateDeposition(ValueError):
+    pass
+
+
 def export_to_zenodo(
     excel_path: Path,
     base_folder: Path,
@@ -394,7 +398,13 @@ def export_to_zenodo(
         timeout=REQUESTS_TIMEOUT,
     )
     if initial_request.status_code != 201:
-        raise ValueError(f"Can't create deposition {initial_request.status_code} {initial_request.json()['message']}")
+        raise ZenodoCreateDeposition(
+            "Can't create deposition. Please check your zenodo token."
+            " Please remember that token for sandbox and production are different. "
+            f" You could create token at "
+            f"{zenodo_url.replace('api/deposit/depositions', 'account/settings/applications/')}"
+            f" {initial_request.status_code} {initial_request.json()['message']}"
+        )
     bucket_url = initial_request.json()["links"]["bucket"]
     deposition_id = initial_request.json()["id"]
     deposit_url = initial_request.json()["links"]["html"]
