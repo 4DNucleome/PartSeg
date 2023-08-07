@@ -395,19 +395,29 @@ input files tab of Batch Processing window. This will open dialog with options t
 .. image::  images/export_batch_all.png
    :alt: Dialog for exporting whole project based on batch plan.
 
+
 After that select excel file with batch output and eventually correct
-Base folder path (need to be set for batch output created before PartSeg
- 0.15.1).
+Base folder path (need to be set for batch output created before PartSeg 0.15.2).
 If all required files are found on drive the Export button will be activated and allow to create archive containing all required files
 that can be used to share results with other users or create supplementary materials for publication.
-If the user wants to share the data using zenodo then he/she needs to provide authorization token. The token can be generated
-in settings on Zenodo page.
 
+.. image::  images/export_zenodo_batch.png
+   :alt: Dialog variant for exporting whole batch to zenodo.
+
+If the user wants to share the data using zenodo then he/she needs to provide authorization token. The token can be generated
+in settings on `Zenodo page <https://sandbox.zenodo.org/account/settings/applications/>`_.
+To enable export button, next to the token, the title, author, author affiliation, and description need to be provided.
+Other authors could be provided, after creation of the record, on Zenodo page.
 
 .. image::  images/zenodo_token.png
    :alt: View on Zenodo settings where user could generate token.
 
-After click on *Export to Zenodo* button the new dialog with zenodo specific fields.
+When export is finished the user will be informed about link to the created record.
+
+.. image::  images/export_zenodo_finished.png
+   :alt: Link to the created record on zenodo.
+
+It could be also found in upload section on zenodo page. The record will be draft and need to be published manually.
 
 Common elements
 ---------------
