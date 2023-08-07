@@ -1,13 +1,15 @@
 import json
 import os
 import tarfile
+import time
 import typing
 import zipfile
+from contextlib import suppress
 from pathlib import Path
 
 import requests
 from openpyxl import load_workbook
-from qtpy.QtCore import Qt
+from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -66,8 +68,10 @@ class ExportProjectDialog(QDialog):
             "Only first author could be used from this widget. Other you need to add manually"
         )
         self.zenodo_affiliation = QLineEdit(settings.get("zenodo_affiliation", ""))
+        self.zenodo_orcid = QLineEdit(settings.get("zenodo_orcid", ""))
         self.zenodo_description = QTextEdit()
         self.zenodo_description.setPlaceholderText("Put your dataset description here")
+        self.zenodo_description.setSizeAdjustPolicy(QTextEdit.SizeAdjustPolicy.AdjustToContents)
         self.zenodo_sandbox = QCheckBox()
         self.zenodo_sandbox.setToolTip("Use https://sandbox.zenodo.org instead of https://zenodo.org")
         self.excel_path_btn = QPushButton("Select excel file")
@@ -84,12 +88,12 @@ class ExportProjectDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.worker = None
 
-        self.zenodo_token.textChanged.connect(self._zenodo_token_refresh)
-        self.excel_path.textChanged.connect(self._zenodo_token_refresh)
-        self.base_folder.textChanged.connect(self._zenodo_token_refresh)
-        self.zenodo_title.textChanged.connect(self._zenodo_token_refresh)
-        self.zenodo_author.textChanged.connect(self._zenodo_token_refresh)
-        self.zenodo_affiliation.textChanged.connect(self._zenodo_token_refresh)
+        self.zenodo_token.textChanged.connect(self._check_if_enable_zenodo_btn)
+        self.excel_path.textChanged.connect(self._check_if_enable_zenodo_btn)
+        self.base_folder.textChanged.connect(self._check_if_enable_zenodo_btn)
+        self.zenodo_title.textChanged.connect(self._check_if_enable_zenodo_btn)
+        self.zenodo_author.textChanged.connect(self._check_if_enable_zenodo_btn)
+        self.zenodo_affiliation.textChanged.connect(self._check_if_enable_zenodo_btn)
         self.excel_path.textChanged.connect(self._excel_path_changed)
         self.base_folder.textChanged.connect(self._excel_path_changed)
         self.base_folder_btn.clicked.connect(self.select_folder)
@@ -123,6 +127,7 @@ class ExportProjectDialog(QDialog):
         zenodo_layout.addRow("Dataset title", self.zenodo_title)
         zenodo_layout.addRow("Dataset author", self.zenodo_author)
         zenodo_layout.addRow("Affiliation", self.zenodo_affiliation)
+        zenodo_layout.addRow("ORCID", self.zenodo_orcid)
         zenodo_layout.addRow(QLabel("Description:"))
         zenodo_layout.addRow(self.zenodo_description)
         sandbox_label = QLabel("Upload to sandbox")
@@ -132,9 +137,18 @@ class ExportProjectDialog(QDialog):
         widg = QWidget()
         widg.setLayout(zenodo_layout)
         self.zenodo_collapse.addWidget(widg)
+        with suppress(KeyError):
+            geometry = self.settings.get_from_profile("export_window_geometry")
+            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
+
+    def closeEvent(self, event) -> None:
+        self.settings.set_in_profile("export_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
+        super().closeEvent(event)
 
     def _export_archive(self):
         self.info_label.setVisible(False)
+        self.export_btn.setDisabled(True)
+        self.export_to_zenodo_btn.setDisabled(True)
         dlg = PSaveDialog(
             "Archive name (*.tgz *.zip *.tbz2 *.txy)",
             settings=self.settings,
@@ -166,6 +180,8 @@ class ExportProjectDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.progress_bar.setValue(0)
         self.worker = None
+        self._check_if_enable_zenodo_btn()
+        self._check_if_enable_export_btn()
 
     def _export_returned(self, result):
         self.info_label.setText(f"Export finished. {result}")
@@ -176,6 +192,8 @@ class ExportProjectDialog(QDialog):
 
     def _export_to_zenodo(self):
         self.info_label.setVisible(False)
+        self.export_btn.setDisabled(True)
+        self.export_to_zenodo_btn.setDisabled(True)
         self.progress_bar.setVisible(True)
         self.progress_bar.setRange(0, self.info_box.topLevelItemCount() + 1)
         self.progress_bar.setValue(0)
@@ -201,20 +219,17 @@ class ExportProjectDialog(QDialog):
             affiliation=self.zenodo_affiliation.text(),
             description=self.zenodo_description.toPlainText(),
             zenodo_token=self.zenodo_token.text(),
+            orcid=self.zenodo_orcid.text(),
             zenodo_url=url,
         )
         self.settings.set("zenodo_token", self.zenodo_token.text())
         self.settings.set("zenodo_author", self.zenodo_author.text())
         self.settings.set("zenodo_affiliation", self.zenodo_affiliation.text())
+        self.settings.set("zenodo_orcid", self.zenodo_orcid.text())
         self.worker.start()
 
     def _export_errored(self, value):
         self.info_label.setText(f"Error: {value}")
-        self.info_label.setVisible(True)
-
-    def _zenodo_export_finished(self, value):
-        deposition_id, deposit_url = value
-        self.info_label.setText(f"Deposition id: {deposition_id}\nDeposit url: {deposit_url}")
         self.info_label.setVisible(True)
 
     def _could_export(self):
@@ -222,7 +237,7 @@ class ExportProjectDialog(QDialog):
         excel_path = Path(self.excel_path.text())
         return self._all_files_exists and dir_path.is_dir() and excel_path.exists() and excel_path.is_file()
 
-    def _zenodo_token_refresh(self):
+    def _check_if_enable_zenodo_btn(self):
         self.export_to_zenodo_btn.setEnabled(
             bool(
                 self._could_export()
@@ -230,10 +245,11 @@ class ExportProjectDialog(QDialog):
                 and self.zenodo_author.text()
                 and self.zenodo_affiliation.text()
                 and self.zenodo_title.text()
+                and self.zenodo_description.toPlainText()
             )
         )
 
-    def _export_btn_refresh(self):
+    def _check_if_enable_export_btn(self):
         self.export_btn.setEnabled(self._could_export())
 
     def select_folder(self):
@@ -281,8 +297,8 @@ class ExportProjectDialog(QDialog):
                 presence_all &= presence
 
         self._all_files_exists = presence_all
-        self._zenodo_token_refresh()
-        self._export_btn_refresh()
+        self._check_if_enable_zenodo_btn()
+        self._check_if_enable_export_btn()
 
 
 def _extract_information_from_excel_to_export(
@@ -312,7 +328,7 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path):
     """
     Export files to archive
 
-    :param Path excel_path: path to excel file
+    :param Path excel_path: path to Excel file
     :param Path base_folder: base folder from where paths are calculated
     :param Path target_path: path to archive
     """
@@ -361,6 +377,20 @@ class ZenodoCreatError(ValueError):
     pass
 
 
+def sleep_with_rate(response: requests.Response):
+    """Sleep with rate limit"""
+    if "X-RateLimit-Remaining" not in response.headers:
+        return
+    remaining = int(response.headers["X-RateLimit-Remaining"])
+    if remaining > 0:
+        return
+    reset = int(response.headers["X-RateLimit-Reset"])
+    sleep_time = reset - time.time()
+    if sleep_time > 0:
+        print(f"Sleeping for {sleep_time} seconds")
+        time.sleep(sleep_time)
+
+
 def export_to_zenodo(
     excel_path: Path,
     base_folder: Path,
@@ -368,18 +398,20 @@ def export_to_zenodo(
     title: str,
     author: str,
     affiliation: str,
+    orcid: str,
     description: str,
     zenodo_url: str = "https://zenodo.org/api/deposit/depositions",
 ):
     """
     Export project to Zenodo
 
-    :param excel_path: path to excel file with output from batch processing
+    :param excel_path: path to Excel file with output from batch processing
     :param base_folder: base folder from where paths are calculated
     :param zenodo_token: Zenodo API token
     :param title: title of the deposition
     :param author: author of the deposition
     :param affiliation: affiliation of the author
+    :param orcid: ORCID of the author
     :param description: description of the deposition
     :param zenodo_url: Zenodo API URL
     :return:
@@ -414,10 +446,15 @@ def export_to_zenodo(
         "metadata": {
             "title": title,
             "upload_type": "dataset",
-            "description": description,
             "creators": [{"name": author, "affiliation": affiliation}],
         }
     }
+
+    if description:
+        data["metadata"]["description"] = description
+    if orcid:
+        data["metadata"]["creators"][0]["orcid"] = orcid
+
     r = requests.put(
         f"{zenodo_url}/{deposition_id}",
         params=params,
@@ -426,7 +463,7 @@ def export_to_zenodo(
         timeout=REQUESTS_TIMEOUT,
     )
     if r.status_code != 200:
-        raise ZenodoCreatError("Can't update deposition metadata")
+        raise ZenodoCreatError(f"Can't update deposition metadata. Status code: {r.status_code}")
 
     with excel_path.open(mode="rb") as fp:
         r = requests.put(
@@ -436,10 +473,11 @@ def export_to_zenodo(
             timeout=REQUESTS_TIMEOUT,
         )
         if r.status_code != 200:
-            raise ZenodoCreatError("Can't upload excel file")
+            raise ZenodoCreatError(f"Can't upload excel file. Status code: {r.status_code}")
         yield 1
 
     for i, (filename, _) in enumerate(file_list, start=2):
+        sleep_with_rate(r)
         with (base_folder / filename).open(mode="rb") as fp:
             r = requests.put(
                 f"{bucket_url}/{filename}",
@@ -448,7 +486,7 @@ def export_to_zenodo(
                 timeout=REQUESTS_TIMEOUT,
             )
             if r.status_code != 200:
-                raise ZenodoCreatError(f"Can't upload file {filename}")
+                raise ZenodoCreatError(f"Can't upload file {filename}. Status code: {r.status_code}")
             yield i
 
     return deposit_url
