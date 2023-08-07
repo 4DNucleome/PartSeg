@@ -97,6 +97,7 @@ class ExportProjectDialog(QDialog):
         self.zenodo_title.textChanged.connect(self._check_if_enable_zenodo_btn)
         self.zenodo_author.textChanged.connect(self._check_if_enable_zenodo_btn)
         self.zenodo_affiliation.textChanged.connect(self._check_if_enable_zenodo_btn)
+        self.zenodo_description.textChanged.connect(self._check_if_enable_zenodo_btn)
         self.excel_path.textChanged.connect(self._excel_path_changed)
         self.base_folder.textChanged.connect(self._excel_path_changed)
         self.base_folder_btn.clicked.connect(self.select_folder)
