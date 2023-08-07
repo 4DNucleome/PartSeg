@@ -133,6 +133,7 @@ class ExportProjectDialog(QDialog):
         self.zenodo_collapse.addWidget(widg)
 
     def _export_archive(self):
+        self.info_label.setVisible(False)
         dlg = PSaveDialog(
             "Archive name (*.tgz *.zip *.tbz2 *.txy)",
             settings=self.settings,
@@ -143,15 +144,21 @@ class ExportProjectDialog(QDialog):
             self.progress_bar.setVisible(True)
             self.progress_bar.setRange(0, self.info_box.topLevelItemCount() + 1)
             self.progress_bar.setValue(0)
-            export_to_archive_ = thread_worker(export_to_archive)
+            export_to_archive_ = thread_worker(
+                export_to_archive,
+                connect={
+                    "yielded": self._progress,
+                    "finished": self._export_finished,
+                    "errored": self._export_errored,
+                    "returned": self._export_returned,
+                },
+                start_thread=False,
+            )
             self.worker = export_to_archive_(
                 excel_path=Path(self.excel_path.text()),
                 base_folder=Path(self.base_folder.text()),
                 target_path=Path(dlg.selectedFiles()[0]),
             )
-            self.worker.yielded.connect(self._progress)
-            self.worker.finished.connect(self._export_finished)
-            self.worker.errored.connect(self._export_errored)
             self.worker.start()
 
     def _export_finished(self):
@@ -167,6 +174,7 @@ class ExportProjectDialog(QDialog):
         self.progress_bar.setValue(value)
 
     def _export_to_zenodo(self):
+        self.info_label.setVisible(False)
         self.progress_bar.setVisible(True)
         self.progress_bar.setRange(0, self.info_box.topLevelItemCount() + 1)
         self.progress_bar.setValue(0)
@@ -322,7 +330,7 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path):
                 zip_file.write(base_folder / file_path, arcname=file_path)
                 yield i
 
-        return
+        return target_path
 
     mode_dict = {
         ".tgz": "w:gz",
@@ -399,7 +407,6 @@ def export_to_zenodo(
             "creators": [{"name": author, "affiliation": affiliation}],
         }
     }
-    print(data)
     requests.put(
         f"{zenodo_url}/{deposition_id}",
         params=params,
