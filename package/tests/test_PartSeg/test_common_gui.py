@@ -1960,7 +1960,7 @@ class TestSelectDirectoryDialog:
         base_settings.set("s_path2", str(tmp_path / "aaa"))
         w = SelectDirectoryDialog(settings=base_settings, settings_path=settings_path)
         qtbot.addWidget(w)
-        assert w.directory().absolutePath() == str(tmp_path)
+        assert Path(w.directory().absolutePath()).resolve() == tmp_path.resolve()
 
     def test_accept(self, qtbot, base_settings, tmp_path):
         base_settings.set("s_path", str(tmp_path))
