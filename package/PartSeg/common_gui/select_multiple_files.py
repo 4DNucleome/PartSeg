@@ -222,6 +222,7 @@ class AddFiles(QWidget):
         dial = SelectDirectoryDialog(
             settings=self.settings,
             path=[IO_BATCH_DIRECTORY, OPEN_DIRECTORY],
+            default_directory=None,
             parent=self,
         )
         if dial.exec_():
