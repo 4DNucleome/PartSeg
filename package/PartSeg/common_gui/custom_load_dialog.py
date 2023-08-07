@@ -161,7 +161,7 @@ class SelectDirectoryDialog(QFileDialog):
         self,
         settings: "BaseSettings",
         path: typing.Union[str, typing.List[str]],
-        default_directory: typing.Optional[str],
+        default_directory: typing.Optional[str] = None,
         parent=None,
     ) -> None:
         super().__init__(parent, "Select directory")
