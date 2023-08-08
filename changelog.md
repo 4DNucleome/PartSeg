@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.15.1 - 2023-08-09
+
+### Bug Fixes
+
+- Fix possible problem of double registration napari plugin in PartSeg bundle (#974)
+- Bump OS versions for part of testing workflows.  (#977)
+- Bump os version for main tests workflow. (#979)
+- Ensure that the module `PartSegCore.channel_class` is present in bundle (#980)
+- Lower npe2 schema version to work with older napari version (#981)
+- Generate test report per platfom (#978)
+- Importing plugins in bundle keeping proper module names (#983)
+- Fix napari repo workflow (#985)
+- Fix bug in read tiff files with double `Q` in axes but one related to dummy dimmension (#992)
+- Fix bug that lead to corupted state when saving calculation plan to excel file (#995)
+- Enable python 3.11 test on CI, fix minor errors (#869)
+
+### Features
+
+- Allow to save multiple napari image layers to single tiff file (#1000)
+- Add option to export batch project with data (#996)
+
+### Testing
+
+- \[Automatic\] Constraints upgrades: `imageio`, `ipython`, `psygnal`, `scipy`, `sentry-sdk` (#975)
+- \[Automatic\] Constraints upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `napari`, `numpy`, `pandas`, `pydantic`, `pyinstaller`, `scipy`, `sentry-sdk`, `tifffile`, `vispy` (#986)
+- \[Automatic\] Constraints upgrades: `imagecodecs`, `sentry-sdk`, `tifffile` (#997)
+- \[Automatic\] Constraints upgrades: `ipykernel`, `pydantic` (#1002)
+- \[Automatic\] Constraints upgrades: `numpy`, `pygments`, `sentry-sdk`, `superqt` (#1007)
+
+### Ci
+
+- \[pre-commit.ci\] pre-commit autoupdate (#973)
+- \[pre-commit.ci\] pre-commit autoupdate (#982)
+- \[pre-commit.ci\] pre-commit autoupdate (#987)
+- \[pre-commit.ci\] pre-commit autoupdate (#988)
+- \[pre-commit.ci\] pre-commit autoupdate (#991)
+- \[pre-commit.ci\] pre-commit autoupdate (#998)
+- \[pre-commit.ci\] pre-commit autoupdate (#1004)
+- Change markdown linter from pre-commit to mdformat (#1006)
+
 ## 0.15.0 - 2023-05-30
 
 ### Bug Fixes
