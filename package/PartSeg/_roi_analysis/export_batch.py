@@ -377,7 +377,7 @@ def export_to_archive(excel_path: Path, base_folder: Path, target_path: Path):
     return target_path
 
 
-class ZenodoCreatError(ValueError):
+class ZenodoCreateError(ValueError):
     pass
 
 
@@ -435,7 +435,7 @@ def export_to_zenodo(
         timeout=REQUESTS_TIMEOUT,
     )
     if initial_request.status_code != 201:
-        raise ZenodoCreatError(
+        raise ZenodoCreateError(
             "Can't create deposition. Please check your zenodo token."
             " Please remember that token for sandbox and production are different. "
             f" You could create token at "
@@ -467,7 +467,7 @@ def export_to_zenodo(
         timeout=REQUESTS_TIMEOUT,
     )
     if r.status_code != 200:
-        raise ZenodoCreatError(f"Can't update deposition metadata. Status code: {r.status_code}")
+        raise ZenodoCreateError(f"Can't update deposition metadata. Status code: {r.status_code}")
 
     with excel_path.open(mode="rb") as fp:
         r = requests.put(
@@ -477,7 +477,7 @@ def export_to_zenodo(
             timeout=REQUESTS_TIMEOUT,
         )
         if r.status_code != 200:
-            raise ZenodoCreatError(f"Can't upload excel file. Status code: {r.status_code}")
+            raise ZenodoCreateError(f"Can't upload excel file. Status code: {r.status_code}")
         yield 1
 
     for i, (filename, _) in enumerate(file_list, start=2):
@@ -490,7 +490,7 @@ def export_to_zenodo(
                 timeout=REQUESTS_TIMEOUT,
             )
             if r.status_code != 200:
-                raise ZenodoCreatError(f"Can't upload file {filename}. Status code: {r.status_code}")
+                raise ZenodoCreateError(f"Can't upload file {filename}. Status code: {r.status_code}")
             yield i
 
     return deposit_url
