@@ -1972,5 +1972,7 @@ class TestSelectDirectoryDialog:
         w.show()
         qtbot.wait_exposed(w)
 
+        assert not base_settings.get_path_history()
         w.accept()
+        assert base_settings.get_path_history()
         assert Path(base_settings.get("s_path")).resolve() == (tmp_path / "sample_dir").resolve()
