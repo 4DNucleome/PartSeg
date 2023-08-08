@@ -80,6 +80,31 @@ class TestExportProjectDialog:
         assert not dlg.export_btn.isEnabled()
         assert not dlg.export_to_zenodo_btn.isEnabled()
 
+    @pytest.mark.parametrize("ext", ["", ".xlsx"])
+    def test_set_excel_file(self, monkeypatch, part_settings, qtbot, bundle_test_dir, ext):
+        dlg = ExportProjectDialog("", "", part_settings)
+        qtbot.addWidget(dlg)
+        monkeypatch.setattr("PartSeg.common_gui.custom_load_dialog.PLoadDialog.exec_", lambda x: True)
+        monkeypatch.setattr(
+            "PartSeg.common_gui.custom_load_dialog.PLoadDialog.selectedFiles",
+            lambda x: [str(bundle_test_dir / ("sample_batch_output" + ext))],
+        )
+        assert dlg.excel_path.text() == ""
+        dlg.select_excel()
+        assert dlg.excel_path.text() == str(bundle_test_dir / "sample_batch_output.xlsx")
+
+    def test_set_base_folder(self, monkeypatch, part_settings, qtbot, bundle_test_dir):
+        dlg = ExportProjectDialog("", "", part_settings)
+        qtbot.addWidget(dlg)
+        monkeypatch.setattr("PartSeg.common_gui.custom_load_dialog.SelectDirectoryDialog.exec_", lambda x: True)
+        monkeypatch.setattr(
+            "PartSeg.common_gui.custom_load_dialog.SelectDirectoryDialog.selectedFiles",
+            lambda x: [str(bundle_test_dir)],
+        )
+        assert dlg.base_folder.text() == ""
+        dlg.select_folder()
+        assert dlg.base_folder.text() == str(bundle_test_dir)
+
     @pytest.mark.usefixtures("_dummy_tiffs")
     def test_enable_export_btn(self, part_settings, qtbot, bundle_test_dir, tmp_path):
         dlg = ExportProjectDialog("", "", part_settings)
