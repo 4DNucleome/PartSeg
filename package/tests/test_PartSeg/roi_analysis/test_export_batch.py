@@ -58,20 +58,20 @@ def test_export_to_archive(bundle_test_dir, tmp_path, ext):
 @pytest.mark.usefixtures("_dummy_tiffs")
 def test_fail_export_to_archive_unknown_extension(bundle_test_dir, tmp_path):
     with pytest.raises(ValueError, match="Unknown archive type"):
-        next(export_to_archive(bundle_test_dir / "sample_batch_output.xlsx", tmp_path, tmp_path / "arch.bla"))
+        list(export_to_archive(bundle_test_dir / "sample_batch_output.xlsx", tmp_path, tmp_path / "arch.bla"))
 
 
 @pytest.mark.usefixtures("_dummy_tiffs")
 def test_fail_export_to_archive_missing_file(bundle_test_dir, tmp_path):
     (tmp_path / "stack1_component1.tif").unlink()
     with pytest.raises(ValueError, match=MISSING_FILES):
-        next(export_to_archive(bundle_test_dir / "sample_batch_output.xlsx", tmp_path, tmp_path / "arch.tar.gz"))
+        list(export_to_archive(bundle_test_dir / "sample_batch_output.xlsx", tmp_path, tmp_path / "arch.tar.gz"))
 
 
 def test_fail_export_empty_excel(tmp_path):
     pd.DataFrame().to_excel(tmp_path / "empty.xlsx")
     with pytest.raises(ValueError, match=NO_FILES):
-        next(export_to_archive(tmp_path / "empty.xlsx", tmp_path, tmp_path / "arch.tar.gz"))
+        list(export_to_archive(tmp_path / "empty.xlsx", tmp_path, tmp_path / "arch.tar.gz"))
 
 
 @pytest.fixture()
@@ -107,7 +107,7 @@ def test_zenodo_export(put_mock, post_mock, bundle_test_dir, tmp_path, zenodo_kw
 def test_zenodo_export_fail_no_files(put_mock, post_mock, bundle_test_dir, tmp_path, zenodo_kwargs):
     (tmp_path / "stack1_component1.tif").unlink()
     with pytest.raises(ValueError, match=MISSING_FILES):
-        next(
+        list(
             export_to_zenodo(
                 excel_path=bundle_test_dir / "sample_batch_output.xlsx", base_folder=tmp_path, **zenodo_kwargs
             )
@@ -122,7 +122,7 @@ def test_zenodo_export_fail_no_files(put_mock, post_mock, bundle_test_dir, tmp_p
 def test_zenodo_export_fail(put_mock, post_mock, tmp_path, zenodo_kwargs):
     pd.DataFrame().to_excel(tmp_path / "empty.xlsx")
     with pytest.raises(ValueError, match=NO_FILES):
-        next(export_to_zenodo(excel_path=tmp_path / "empty.xlsx", base_folder=tmp_path, **zenodo_kwargs))
+        list(export_to_zenodo(excel_path=tmp_path / "empty.xlsx", base_folder=tmp_path, **zenodo_kwargs))
     assert post_mock.call_count == 0
     assert put_mock.call_count == 0
 
@@ -133,7 +133,7 @@ def test_zenodo_export_fail(put_mock, post_mock, tmp_path, zenodo_kwargs):
 def test_zenodo_export_fail_create_deposit(put_mock, post_mock, bundle_test_dir, tmp_path, zenodo_kwargs):
     post_mock.return_value.status_code = 400
     with pytest.raises(ZenodoCreateError, match="Can't create deposition"):
-        next(
+        list(
             export_to_zenodo(
                 excel_path=bundle_test_dir / "sample_batch_output.xlsx", base_folder=tmp_path, **zenodo_kwargs
             )
