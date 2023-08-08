@@ -1,14 +1,20 @@
 import tarfile
+import time
 import zipfile
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
 import pytest
 
 from PartSeg._roi_analysis.export_batch import (
+    MISSING_FILES,
+    NO_FILES,
     ExportProjectDialog,
+    ZenodoCreateError,
     _extract_information_from_excel_to_export,
     export_to_archive,
     export_to_zenodo,
+    sleep_with_rate,
 )
 
 
@@ -50,27 +56,104 @@ def test_export_to_archive(bundle_test_dir, tmp_path, ext):
 
 
 @pytest.mark.usefixtures("_dummy_tiffs")
+def test_fail_export_to_archive_unknown_extension(bundle_test_dir, tmp_path):
+    with pytest.raises(ValueError, match="Unknown archive type"):
+        next(export_to_archive(bundle_test_dir / "sample_batch_output.xlsx", tmp_path, tmp_path / "arch.bla"))
+
+
+@pytest.mark.usefixtures("_dummy_tiffs")
+def test_fail_export_to_archive_missing_file(bundle_test_dir, tmp_path):
+    (tmp_path / "stack1_component1.tif").unlink()
+    with pytest.raises(ValueError, match=MISSING_FILES):
+        next(export_to_archive(bundle_test_dir / "sample_batch_output.xlsx", tmp_path, tmp_path / "arch.tar.gz"))
+
+
+def test_fail_export_empty_excel(tmp_path):
+    pd.DataFrame().to_excel(tmp_path / "empty.xlsx")
+    with pytest.raises(ValueError, match=NO_FILES):
+        next(export_to_archive(tmp_path / "empty.xlsx", tmp_path, tmp_path / "arch.tar.gz"))
+
+
+@pytest.fixture()
+def zenodo_kwargs():
+    return {
+        "zenodo_token": "sample_token",
+        "title": "sample title",
+        "author": "sample author",
+        "affiliation": "sample affiliation",
+        "orcid": "0000-0000-0000-0000",
+        "description": "sample description",
+        "zenodo_url": "https://dummy_url",
+    }
+
+
+@pytest.mark.usefixtures("_dummy_tiffs")
 @patch("requests.post")
 @patch("requests.put")
-def test_zenodo_export(put_mock, post_mock, bundle_test_dir, tmp_path):
+def test_zenodo_export(put_mock, post_mock, bundle_test_dir, tmp_path, zenodo_kwargs):
     post_mock.return_value.status_code = 201
     put_mock.return_value.status_code = 200
     a = list(
-        export_to_zenodo(
-            excel_path=bundle_test_dir / "sample_batch_output.xlsx",
-            base_folder=tmp_path,
-            zenodo_token="sample_token",  # noqa: S106
-            title="sample title",
-            author="sample author",
-            affiliation="sample affiliation",
-            orcid="0000-0000-0000-0000",
-            description="sample description",
-            zenodo_url="https://dummy_url",
-        )
+        export_to_zenodo(excel_path=bundle_test_dir / "sample_batch_output.xlsx", base_folder=tmp_path, **zenodo_kwargs)
     )
     assert len(a) == 9
     assert post_mock.call_count == 1
     assert put_mock.call_count == 10
+
+
+@pytest.mark.usefixtures("_dummy_tiffs")
+@patch("requests.post")
+@patch("requests.put")
+def test_zenodo_export_fail_no_files(put_mock, post_mock, bundle_test_dir, tmp_path, zenodo_kwargs):
+    (tmp_path / "stack1_component1.tif").unlink()
+    with pytest.raises(ValueError, match=MISSING_FILES):
+        next(
+            export_to_zenodo(
+                excel_path=bundle_test_dir / "sample_batch_output.xlsx", base_folder=tmp_path, **zenodo_kwargs
+            )
+        )
+    assert post_mock.call_count == 0
+    assert put_mock.call_count == 0
+
+
+@pytest.mark.usefixtures("_dummy_tiffs")
+@patch("requests.post")
+@patch("requests.put")
+def test_zenodo_export_fail(put_mock, post_mock, tmp_path, zenodo_kwargs):
+    pd.DataFrame().to_excel(tmp_path / "empty.xlsx")
+    with pytest.raises(ValueError, match=NO_FILES):
+        next(export_to_zenodo(excel_path=tmp_path / "empty.xlsx", base_folder=tmp_path, **zenodo_kwargs))
+    assert post_mock.call_count == 0
+    assert put_mock.call_count == 0
+
+
+@pytest.mark.usefixtures("_dummy_tiffs")
+@patch("requests.post")
+@patch("requests.put")
+def test_zenodo_export_fail_create_deposit(put_mock, post_mock, bundle_test_dir, tmp_path, zenodo_kwargs):
+    post_mock.return_value.status_code = 400
+    with pytest.raises(ZenodoCreateError, match="Can't create deposition"):
+        next(
+            export_to_zenodo(
+                excel_path=bundle_test_dir / "sample_batch_output.xlsx", base_folder=tmp_path, **zenodo_kwargs
+            )
+        )
+    assert post_mock.call_count == 1
+    assert put_mock.call_count == 0
+
+
+@patch("time.sleep")
+def test_sleep_with_rate(sleep_mock):
+    response_mock = MagicMock()
+    sleep_with_rate(response_mock)
+    sleep_mock.assert_not_called()
+    response_mock.headers = {"X-RateLimit-Remaining": 10}
+    sleep_with_rate(response_mock)
+    sleep_mock.assert_not_called()
+    response_mock.headers["X-RateLimit-Remaining"] = 0
+    response_mock.headers["X-RateLimit-Reset"] = time.time() + 100
+    sleep_with_rate(response_mock)
+    sleep_mock.assert_called_once()
 
 
 class TestExportProjectDialog:
@@ -118,6 +201,11 @@ class TestExportProjectDialog:
 
         dlg.base_folder.setText(str(tmp_path))
         assert dlg.export_btn.isEnabled()
+
+        pd.DataFrame().to_excel(tmp_path / "empty.xlsx")
+        dlg.excel_path.setText(str(tmp_path / "empty.xlsx"))
+        assert not dlg.export_btn.isEnabled()
+        assert dlg.info_label.text() == NO_FILES
 
     @pytest.mark.usefixtures("_dummy_tiffs")
     @patch("PartSeg._roi_analysis.export_batch.PSaveDialog")
