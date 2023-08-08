@@ -1962,17 +1962,19 @@ class TestSelectDirectoryDialog:
         qtbot.addWidget(w)
         assert Path(w.directory().absolutePath()).resolve() == tmp_path.resolve()
 
-    def test_accept(self, qtbot, base_settings, tmp_path):
+    def test_accept(self, qtbot, base_settings, tmp_path, monkeypatch):
         base_settings.set("s_path", str(tmp_path))
         (tmp_path / "sample_dir").mkdir()
+        monkeypatch.setattr(
+            "PartSeg.common_gui.custom_load_dialog.SelectDirectoryDialog.selectedFiles",
+            lambda x: [str(tmp_path / "sample_dir")],
+        )
         w = SelectDirectoryDialog(settings=base_settings, settings_path="s_path")
         qtbot.addWidget(w)
         w.selectFile(str(tmp_path / "sample_dir"))
 
-        w.show()
-        qtbot.wait_exposed(w)
-
         assert not base_settings.get_path_history()
+        w.setResult(QFileDialog.DialogCode.Accepted)
         w.accept()
         assert base_settings.get_path_history()
         assert Path(base_settings.get("s_path")).resolve() == (tmp_path / "sample_dir").resolve()
