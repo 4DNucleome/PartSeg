@@ -33,6 +33,7 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg import parsed_version, state_store
+from PartSeg._roi_analysis.export_batch import ExportProjectDialog
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.prepare_plan_widget import CalculatePlaner
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
@@ -244,6 +245,8 @@ class FileChoose(QWidget):
         self.result_file.setReadOnly(True)
         self.choose_result = QPushButton("Save result as", self)
         self.choose_result.clicked.connect(self.choose_result_file)
+        self.export_data_button = QPushButton("Export batch with data", self)
+        self.export_data_button.clicked.connect(self.export_data)
 
         self.run_button.clicked.connect(self.prepare_calculation)
         self.files_widget.file_list_changed.connect(self.change_situation)
@@ -256,6 +259,7 @@ class FileChoose(QWidget):
         calc_layout.addWidget(self.calculation_choose)
         calc_layout.addWidget(self.result_file)
         calc_layout.addWidget(self.choose_result)
+        calc_layout.addWidget(self.export_data_button)
         calc_layout.addStretch()
         calc_layout.addWidget(self.run_button)
         layout.addLayout(calc_layout)
@@ -263,6 +267,10 @@ class FileChoose(QWidget):
         self.setLayout(layout)
 
         self._refresh_batch_list()
+
+    def export_data(self):
+        dialog = ExportProjectDialog(self.result_file.text(), self.files_widget.paths_input.text(), self.settings, self)
+        dialog.exec_()
 
     def prepare_calculation(self):
         plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]

@@ -26,7 +26,8 @@ from PartSegImage import Image
 @pytest.fixture(scope="module")
 def data_test_dir():
     """Return path to directory with test data"""
-    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "test_data")
+    return Path(__file__).absolute().parent.parent.parent / "test_data"
+    # return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "test_data")
 
 
 @pytest.fixture(autouse=True)
