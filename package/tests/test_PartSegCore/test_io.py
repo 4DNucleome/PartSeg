@@ -55,6 +55,7 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
+from PartSegCore.segmentation.threshold import RangeThresholdSelection
 from PartSegCore.utils import ProfileDict, check_loaded_dict
 from PartSegImage import Image
 
@@ -708,6 +709,14 @@ def test_find_problematic_entries_nested():
     assert find_problematic_entries(data) == [data["ccc"]]
     data = {"aaa": 1, "bbb": 2, "ccc": {"ddd": 1, "eee": 2, "__error__": True}, "kkk": {"__error__": True, "a": 1}}
     assert find_problematic_entries(data) == [data["ccc"], data["kkk"]]
+
+
+def test_load_range_algorithm(bundle_test_dir):
+    data, err = LoadPlanJson.load([bundle_test_dir / "range_profile.json"])
+    assert err == []
+    assert len(data) == 1
+    assert isinstance(data["test_range"].values.threshold, RangeThresholdSelection)
+    assert data["test_range"].values.threshold.name == "Range"
 
 
 update_name_json = """

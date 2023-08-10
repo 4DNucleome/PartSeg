@@ -9,14 +9,12 @@ from functools import wraps
 from local_migrator import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
+from pydantic.fields import ModelField, UndefinedType
 from pydantic.main import ModelMetaclass
 from typing_extensions import Annotated
 
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
-
-if typing.TYPE_CHECKING:
-    from pydantic.fields import ModelField
 
 
 class AlgorithmDescribeNotFound(Exception):
@@ -575,7 +573,10 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
             )
         if issubclass(field.type_, AlgorithmSelection):
             value_type = AlgorithmDescribeBase
-            default_value = field.field_info.default.name
+            if isinstance(field.field_info.default, UndefinedType):
+                default_value = field.field_info.default_factory().name
+            else:
+                default_value = field.field_info.default.name
             possible_values = field.type_.__register__
 
     return AlgorithmProperty(

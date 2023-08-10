@@ -323,6 +323,19 @@ class DoubleThreshold(BaseThreshold):
         return mask2, (thr_val1, thr_val2)
 
 
+class RangeThresholdParams(DoubleThresholdParams):
+    core_threshold: ThresholdSelection = Field(default_factory=ThresholdSelection.get_default, title="Upper threshold")
+    base_threshold: ThresholdSelection = Field(default_factory=ThresholdSelection.get_default, title="Lower threshold")
+
+
+class RangeThreshold(DoubleThreshold):
+    __argument_class__ = RangeThresholdParams
+
+    @classmethod
+    def get_name(cls):
+        return "Range"
+
+
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("hist_num", "bins"))])
 class DoubleOtsuParams(BaseModel):
     valley: bool = Field(True, title="Valley emphasis")
@@ -488,6 +501,14 @@ DoubleThresholdSelection.register(DoubleThreshold)
 DoubleThresholdSelection.register(DoubleOtsu)
 DoubleThresholdSelection.register(MultipleOtsu)
 DoubleThresholdSelection.register(MaximumDistanceCore, old_names=["Maximum Distance Watershed"])
+
+
+class RangeThresholdSelection(AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold):
+    pass
+
+
+RangeThresholdSelection.register(RangeThreshold)
+RangeThresholdSelection.register(DoubleOtsu)
 
 
 def __getattr__(name):  # pragma: no cover
