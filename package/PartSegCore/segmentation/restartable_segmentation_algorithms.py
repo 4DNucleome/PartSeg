@@ -27,6 +27,7 @@ from PartSegCore.segmentation.threshold import (
     DoubleThresholdParams,
     DoubleThresholdSelection,
     ManualThreshold,
+    RangeThresholdSelection,
     SingleThresholdParams,
     ThresholdSelection,
 )
@@ -414,9 +415,22 @@ def _to_double_threshold(dkt):
     return dkt
 
 
-@register_class(version="0.0.2", migrations=[("0.0.1", _to_two_thresholds), ("0.0.2", _to_double_threshold)])
+def _rename_algorithm(dkt):
+    values = dkt["threshold"].values
+    name = dkt["threshold"].name
+    if name == "Base/Core":
+        name = "Range"
+    dkt["threshold"] = RangeThresholdSelection(name=name, values=values)
+
+    return dkt
+
+
+@register_class(
+    version="0.0.3",
+    migrations=[("0.0.1", _to_two_thresholds), ("0.0.2", _to_double_threshold), ("0.0.3", _rename_algorithm)],
+)
 class RangeThresholdAlgorithmParameters(ThresholdBaseAlgorithmParameters):
-    threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default(), position=2)
+    threshold: RangeThresholdSelection = Field(default_factory=RangeThresholdSelection.get_default, position=2)
 
 
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
@@ -433,7 +447,7 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
             thr: BaseThreshold = DoubleThresholdSelection[self.new_parameters.threshold.name]
         mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters.threshold.values, operator.ge)
         mask[mask == 2] = 0
-        self.threshold_info = thr_val
+        self.threshold_info = thr_val[::-1]
         return mask
 
     @classmethod
