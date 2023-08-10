@@ -444,7 +444,7 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
 
     def _threshold(self, image, thr=None):
         if thr is None:
-            thr: BaseThreshold = DoubleThresholdSelection[self.new_parameters.threshold.name]
+            thr: BaseThreshold = RangeThresholdSelection[self.new_parameters.threshold.name]
         mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters.threshold.values, operator.ge)
         mask[mask == 2] = 0
         self.threshold_info = thr_val[::-1]

@@ -204,7 +204,7 @@ class TestRangeThresholdAlgorithm:
         alg = sa.RangeThresholdAlgorithm()
         parameters = sa.RangeThresholdAlgorithm.__argument_class__(
             threshold={
-                "name": "Base/Core",
+                "name": "Range",
                 "values": {
                     "base_threshold": {
                         "name": "Manual",
@@ -248,7 +248,7 @@ class TestRangeThresholdAlgorithm:
         alg = sa.RangeThresholdAlgorithm()
         parameters = sa.RangeThresholdAlgorithm.__argument_class__(
             threshold={
-                "name": "Base/Core",
+                "name": "Range",
                 "values": {
                     "base_threshold": {
                         "name": "Manual",
