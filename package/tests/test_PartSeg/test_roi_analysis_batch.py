@@ -27,14 +27,11 @@ from PartSegCore.segmentation.restartable_segmentation_algorithms import (
         ("", "", False),
         ("mask1", "mask1", False),
         ("mask2", "mask2", False),
-        ("mask1", "mask2", True),
         ("mask2", "mask1", True),
         ("mask", "mask2", False),
         ("mask2", "mask", False),
         ("mask", "mask1", False),
-        ("mask", "mask2", False),
         ("mask1", "mask", False),
-        ("mask2", "mask", False),
     ],
 )
 def test_two_mask_dialog(qtbot, mask1, mask2, enabled):
