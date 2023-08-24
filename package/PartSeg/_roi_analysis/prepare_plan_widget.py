@@ -980,6 +980,11 @@ class PlanPreview(QTreeWidget):
         self.set_plan(calculation_plan)
 
     def set_plan(self, calculation_plan):
+        if calculation_plan.is_bad():
+            QMessageBox().warning(
+                self, "Cannot preview broken plan", f"Cannot preview broken plan. {calculation_plan.get_error_source()}"
+            )
+            return
         self.calculation_plan = calculation_plan
         self.setCurrentItem(self.topLevelItem(0))
         self.update_view(True)
