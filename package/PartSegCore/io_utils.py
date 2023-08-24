@@ -508,9 +508,9 @@ class LoadPlanExcel(LoadBase):
             xlsx.close()
         data_dict = {}
         for calc_plan in data_list:
-            # if calc_plan.is_bad():
-            #     error_list.append(f"Problem with load {calc_plan.name} because of {calc_plan.get_error_source()}")
-            #     continue
+            if calc_plan.is_bad():
+                error_list.append(f"Problem with load {calc_plan.name} because of {calc_plan.get_error_source()}")
+                continue
             new_name = iterate_names(calc_plan.name, data_dict)
             if new_name is None:  # pragma: no cover
                 error_list.append(f"Cannot determine proper name for {calc_plan.name}")

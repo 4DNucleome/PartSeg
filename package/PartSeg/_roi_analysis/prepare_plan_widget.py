@@ -919,6 +919,8 @@ class CreatePlan(QWidget):
             self.information.setText(item.pretty_print(AnalysisAlgorithmSelection))
 
     def edit_plan(self):
+        if self.sender() is None:
+            return
         plan = self.sender().plan_to_edit  # type: CalculationPlan
         if plan.is_bad():
             QMessageBox().warning(
