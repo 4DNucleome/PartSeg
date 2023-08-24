@@ -43,7 +43,7 @@ from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.select_multiple_files import AddFiles
 from PartSeg.common_gui.universal_gui_part import Spacing, right_label
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
-from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
+from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager, get_data_loader
 from PartSegCore.analysis.calculation_plan import Calculation, CalculationPlan, MaskFile
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
@@ -609,6 +609,10 @@ class CalculationPrepare(QDialog):
                 widget.setIcon(0, icon_dkt[0])
                 widget.setToolTip(0, "File do not exists")
                 continue
+            _, ext_match = get_data_loader(self.calculation_plan.execution_tree.operation, file_path)
+            if not ext_match:
+                warn_state[file_num] = 2
+                widget.setToolTip(0, "File format not supported")
             for mask_num, mask_mapper in enumerate(self.mask_mapper_list):
                 sub_widget = QTreeWidgetItem(widget)
                 sub_widget.setText(0, text_dkt[self.state_list[file_num, mask_num]].format(mask_mapper.name))

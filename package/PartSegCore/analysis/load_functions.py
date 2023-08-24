@@ -49,6 +49,7 @@ __all__ = [
     "load_metadata",
     "LoadMaskSegmentation",
     "LoadProfileFromJSON",
+    "LoadImageForBatch",
 ]
 
 from PartSegImage.image import Image
@@ -418,3 +419,43 @@ load_dict = Register(
     LoadPoints,
     class_methods=LoadBase.need_functions,
 )
+
+
+class LoadImageForBatch(LoadBase):
+    @classmethod
+    def get_short_name(cls):
+        return "load_all"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> typing.Union[ProjectTuple, typing.List[ProjectTuple]]:
+        ext = os.path.splitext(load_locations[0])[1].lower()
+
+        for loader in load_dict.values():
+            if loader.partial() or loader.number_of_files() != 1:
+                continue
+            if ext in loader.get_extensions():
+                res = loader.load([load_locations[0]], metadata=metadata)
+                if isinstance(res, list):
+                    return [cls._clean_project(x) for x in res]
+                return cls._clean_project(res)
+        raise ValueError(f"Cannot load file {load_locations[0]}")
+
+    @staticmethod
+    def _clean_project(project: ProjectTuple):
+        return ProjectTuple(file_path=project.file_path, image=project.image.substitute(mask=None))
+
+    @classmethod
+    def get_name(cls) -> str:
+        ext_set = set()
+        for loader in load_dict.values():
+            if loader.partial() or loader.number_of_files() != 1:
+                continue
+            ext_set.update(loader.get_extensions())
+
+        return f"Load generic ({' '.join(f'*{x}' for x in ext_set)})"

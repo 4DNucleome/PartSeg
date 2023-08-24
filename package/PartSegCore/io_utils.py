@@ -445,6 +445,10 @@ class LoadPoints(LoadBase):
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         return ["text"]
 
+    @classmethod
+    def partial(cls):
+        return True
+
 
 class LoadPlanJson(LoadBase):
     @classmethod

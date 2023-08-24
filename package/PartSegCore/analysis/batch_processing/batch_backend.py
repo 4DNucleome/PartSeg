@@ -62,11 +62,10 @@ from PartSegCore.analysis.calculation_plan import (
     get_save_path,
 )
 from PartSegCore.analysis.io_utils import ProjectTuple
-from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
+from PartSegCore.analysis.load_functions import LoadImageForBatch, LoadMaskSegmentation, LoadProject
 from PartSegCore.analysis.measurement_base import has_mask_components, has_roi_components
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
-from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
@@ -90,6 +89,32 @@ class ResponseData(NamedTuple):
 CalculationResultList = List[ResponseData]
 ErrorInfo = Tuple[Exception, Union[StackSummary, Tuple[Dict, StackSummary]]]
 WrappedResult = Tuple[int, List[Union[ErrorInfo, ResponseData]]]
+
+
+root_to_loader = {
+    RootType.Image: LoadMaskSegmentation,
+    RootType.Mask_project: LoadMaskSegmentation,
+    RootType.Project: LoadProject,
+}
+
+
+def get_data_loader(
+    root_type: RootType, file_path: str
+) -> Tuple[Union[Type[LoadMaskSegmentation], Type[LoadProject], Type[LoadImageForBatch]], bool]:
+    """
+    Get data loader for given root type. Return indicator if file extension match to loader.
+
+    :param RootType root_type: type of loader
+    :param str file_path: path to file
+    :return: Loader and indicator if file extension match to loader
+    """
+
+    ext = path.splitext(file_path)[1].lower()
+    if root_type == RootType.Mask_project:
+        return LoadMaskSegmentation, ext in LoadMaskSegmentation.get_extensions()
+    if root_type == RootType.Project:
+        return LoadProject, ext in LoadProject.get_extensions()
+    return LoadImageForBatch, ext in LoadImageForBatch.get_extensions()
 
 
 def prepare_error_data(exception: Exception) -> ErrorInfo:
@@ -156,21 +181,10 @@ class CalculationProcess:
     @staticmethod
     def load_data(operation, calculation: FileCalculation) -> Union[ProjectTuple, List[ProjectTuple]]:
         metadata = {"default_spacing": calculation.voxel_size}
-        ext = path.splitext(calculation.file_path)[1]
-        if operation == RootType.Image:
-            for load_class in load_dict.values():
-                if load_class.partial() or load_class.number_of_files() != 1:
-                    continue
-                if ext in load_class.get_extensions():
-                    return load_class.load([calculation.file_path], metadata=metadata)
-            raise ValueError("File type not supported")
-        if operation == RootType.Project:
-            return LoadProject.load([calculation.file_path], metadata=metadata)
-        try:
-            return LoadProject.load([calculation.file_path], metadata=metadata)
-        except (KeyError, WrongFileTypeException):
-            # TODO identify exceptions
-            return LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
+
+        loader, _ = get_data_loader(operation, calculation.file_path)
+
+        return loader.load([calculation.file_path], metadata=metadata)
 
     def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
         """
