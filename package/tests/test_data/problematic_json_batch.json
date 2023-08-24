@@ -1,0 +1,469 @@
+{
+  "L-S Batch": {
+    "__class__": "PartSegCore.analysis.calculation_plan.CalculationPlan",
+    "__class_version_dkt__": {
+      "PartSegCore.analysis.calculation_plan.CalculationPlan": "0.0.0"
+    },
+    "__values__": {
+      "tree": {
+        "__class__": "PartSegCore.analysis.calculation_plan.CalculationTree",
+        "__class_version_dkt__": {
+          "PartSegCore.analysis.calculation_plan.CalculationTree": "0.0.0"
+        },
+        "__values__": {
+          "operation": {
+            "__class__": "PartSegCore.analysis.calculation_plan.RootType",
+            "__class_version_dkt__": {
+              "PartSegCore.analysis.calculation_plan.RootType": "0.0.0"
+            },
+            "__values__": {
+              "value": 2
+            }
+          },
+          "children": [
+            {
+              "__class__": "PartSegCore.analysis.calculation_plan.CalculationTree",
+              "__class_version_dkt__": {
+                "PartSegCore.analysis.calculation_plan.CalculationTree": "0.0.0"
+              },
+              "__values__": {
+                "operation": {
+                  "__class__": "PartSegCore.algorithm_describe_base.ROIExtractionProfile",
+                  "__class_version_dkt__": {
+                    "PartSegCore.algorithm_describe_base.ROIExtractionProfile": "0.0.0",
+                    "PartSegCore.utils.BaseModel": "0.0.0"
+                  },
+                  "__values__": {
+                    "name": "veena sm_FISH 06-06",
+                    "algorithm": "sm-fish spot segmentation",
+                    "values": {
+                      "__class__": "PartSeg_smfish.segmentation.SMSegmentationBaseParameters",
+                      "__class_version_dkt__": {
+                        "PartSeg_smfish.segmentation.SMSegmentationBaseParameters": "0.0.0",
+                        "PartSegCore.utils.BaseModel": "0.0.0"
+                      },
+                      "__values__": {
+                        "channel_nuc": {
+                          "__class__": "PartSegImage.channel_class.Channel",
+                          "__class_version_dkt__": {
+                            "PartSegImage.channel_class.Channel": "0.0.0"
+                          },
+                          "__values__": {
+                            "value": 0
+                          }
+                        },
+                        "noise_filtering_nucleus": {
+                          "__class__": "PartSegCore.segmentation.noise_filtering.NoiseFilterSelection",
+                          "__class_version_dkt__": {
+                            "PartSegCore.segmentation.noise_filtering.NoiseFilterSelection": "0.0.0",
+                            "PartSegCore.algorithm_describe_base.AlgorithmSelection": "0.0.0",
+                            "PartSegCore.utils.BaseModel": "0.0.0"
+                          },
+                          "__values__": {
+                            "name": "Median",
+                            "values": {
+                              "__class__": "PartSegCore.segmentation.noise_filtering.MedianNoiseFilteringParams",
+                              "__class_version_dkt__": {
+                                "PartSegCore.segmentation.noise_filtering.MedianNoiseFilteringParams": "0.0.0",
+                                "PartSegCore.utils.BaseModel": "0.0.0"
+                              },
+                              "__values__": {
+                                "dimension_type": {
+                                  "__class__": "PartSegCore.segmentation.noise_filtering.DimensionType",
+                                  "__class_version_dkt__": {
+                                    "PartSegCore.segmentation.noise_filtering.DimensionType": "0.0.0"
+                                  },
+                                  "__values__": {
+                                    "value": 1
+                                  }
+                                },
+                                "radius": 1
+                              }
+                            },
+                            "class_path": "PartSegCore.segmentation.noise_filtering.MedianNoiseFiltering"
+                          }
+                        },
+                        "nucleus_threshold": {
+                          "__class__": "PartSegCore.segmentation.threshold.ThresholdSelection",
+                          "__class_version_dkt__": {
+                            "PartSegCore.segmentation.threshold.ThresholdSelection": "0.0.0",
+                            "PartSegCore.algorithm_describe_base.AlgorithmSelection": "0.0.0",
+                            "PartSegCore.utils.BaseModel": "0.0.0"
+                          },
+                          "__values__": {
+                            "name": "Yen",
+                            "values": {
+                              "__class__": "PartSegCore.segmentation.threshold.SimpleITKThresholdParams256",
+                              "__class_version_dkt__": {
+                                "PartSegCore.segmentation.threshold.SimpleITKThresholdParams256": "0.0.1",
+                                "PartSegCore.utils.BaseModel": "0.0.0"
+                              },
+                              "__values__": {
+                                "apply_mask": true,
+                                "bins": 256
+                              }
+                            },
+                            "class_path": "PartSegCore.segmentation.threshold.YenThreshold"
+                          }
+                        },
+                        "minimum_nucleus_size": 500,
+                        "leave_the_biggest": true,
+                        "channel_molecule": {
+                          "__class__": "PartSegImage.channel_class.Channel",
+                          "__class_version_dkt__": {
+                            "PartSegImage.channel_class.Channel": "0.0.0"
+                          },
+                          "__values__": {
+                            "value": 1
+                          }
+                        },
+                        "molecule_threshold": {
+                          "__class__": "PartSegCore.segmentation.threshold.ThresholdSelection",
+                          "__class_version_dkt__": {
+                            "PartSegCore.segmentation.threshold.ThresholdSelection": "0.0.0",
+                            "PartSegCore.algorithm_describe_base.AlgorithmSelection": "0.0.0",
+                            "PartSegCore.utils.BaseModel": "0.0.0"
+                          },
+                          "__values__": {
+                            "name": "Manual",
+                            "values": {
+                              "__class__": "PartSegCore.segmentation.threshold.SingleThresholdParams",
+                              "__class_version_dkt__": {
+                                "PartSegCore.segmentation.threshold.SingleThresholdParams": "0.0.0",
+                                "PartSegCore.utils.BaseModel": "0.0.0"
+                              },
+                              "__values__": {
+                                "threshold": 5.0
+                              }
+                            },
+                            "class_path": "PartSegCore.segmentation.threshold.ManualThreshold"
+                          }
+                        },
+                        "minimum_molecule_size": 12,
+                        "spot_method": {
+                          "__class__": "PartSeg_smfish.segmentation.SpotExtractionSelection",
+                          "__class_version_dkt__": {
+                            "PartSeg_smfish.segmentation.SpotExtractionSelection": "0.0.0",
+                            "PartSegCore.algorithm_describe_base.AlgorithmSelection": "0.0.0",
+                            "PartSegCore.utils.BaseModel": "0.0.0"
+                          },
+                          "__values__": {
+                            "name": "Gaussian spot estimate",
+                            "values": {
+                              "__class__": "PartSeg_smfish.segmentation.GaussBackgroundEstimateParameters",
+                              "__class_version_dkt__": {
+                                "PartSeg_smfish.segmentation.GaussBackgroundEstimateParameters": "0.0.0",
+                                "PartSegCore.utils.BaseModel": "0.0.0"
+                              },
+                              "__values__": {
+                                "background_estimate_radius": 5.0,
+                                "foreground_estimate_radius": 2.5,
+                                "estimate_mask": false
+                              }
+                            },
+                            "class_path": "plugins.PartSeg_smfish.segmentation.GaussBackgroundEstimate"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "__class__": "PartSegCore.analysis.calculation_plan.CalculationTree",
+                    "__class_version_dkt__": {
+                      "PartSegCore.analysis.calculation_plan.CalculationTree": "0.0.0"
+                    },
+                    "__values__": {
+                      "operation": {
+                        "__class__": "PartSegCore.analysis.calculation_plan.MeasurementCalculate",
+                        "__class_version_dkt__": {
+                          "PartSegCore.analysis.calculation_plan.MeasurementCalculate": "0.0.1",
+                          "PartSegCore.utils.BaseModel": "0.0.0"
+                        },
+                        "__values__": {
+                          "channel": -1,
+                          "units": {
+                            "__class__": "PartSegCore.universal_const.Units",
+                            "__class_version_dkt__": {
+                              "PartSegCore.universal_const.Units": "0.0.0"
+                            },
+                            "__values__": {
+                              "value": 2
+                            }
+                          },
+                          "measurement_profile": {
+                            "__class__": "PartSegCore.analysis.measurement_calculation.MeasurementProfile",
+                            "__class_version_dkt__": {
+                              "PartSegCore.analysis.measurement_calculation.MeasurementProfile": "0.0.0",
+                              "PartSegCore.utils.BaseModel": "0.0.0"
+                            },
+                            "__values__": {
+                              "name": "veena smfish",
+                              "chosen_fields": [
+                                {
+                                  "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                                  "__class_version_dkt__": {
+                                    "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+                                    "PartSegCore.utils.BaseModel": "0.0.0"
+                                  },
+                                  "__values__": {
+                                    "name": "[PartSeg_smfish] ROI Component type per component ",
+                                    "calculation_tree": {
+                                      "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+                                      "__class_version_dkt__": {
+                                        "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                                        "PartSegCore.utils.BaseModel": "0.0.0"
+                                      },
+                                      "__values__": {
+                                        "name": "Component type",
+                                        "parameters": {},
+                                        "power": 1.0,
+                                        "area": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 1
+                                          }
+                                        },
+                                        "per_component": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 2
+                                          }
+                                        },
+                                        "channel": null
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                                  "__class_version_dkt__": {
+                                    "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+                                    "PartSegCore.utils.BaseModel": "0.0.0"
+                                  },
+                                  "__values__": {
+                                    "name": "ROI Volume per component ",
+                                    "calculation_tree": {
+                                      "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+                                      "__class_version_dkt__": {
+                                        "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                                        "PartSegCore.utils.BaseModel": "0.0.0"
+                                      },
+                                      "__values__": {
+                                        "name": "Volume",
+                                        "parameters": {},
+                                        "power": 1.0,
+                                        "area": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 1
+                                          }
+                                        },
+                                        "per_component": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 2
+                                          }
+                                        },
+                                        "channel": null
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                                  "__class_version_dkt__": {
+                                    "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+                                    "PartSegCore.utils.BaseModel": "0.0.0"
+                                  },
+                                  "__values__": {
+                                    "name": "ROI Pixel brightness sum per component ",
+                                    "calculation_tree": {
+                                      "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+                                      "__class_version_dkt__": {
+                                        "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                                        "PartSegCore.utils.BaseModel": "0.0.0"
+                                      },
+                                      "__values__": {
+                                        "name": "Pixel brightness sum",
+                                        "parameters": {},
+                                        "power": 1.0,
+                                        "area": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 1
+                                          }
+                                        },
+                                        "per_component": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 2
+                                          }
+                                        },
+                                        "channel": null
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                                  "__class_version_dkt__": {
+                                    "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+                                    "PartSegCore.utils.BaseModel": "0.0.0"
+                                  },
+                                  "__values__": {
+                                    "name": "ROI Mean pixel brightness per component ",
+                                    "calculation_tree": {
+                                      "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+                                      "__class_version_dkt__": {
+                                        "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                                        "PartSegCore.utils.BaseModel": "0.0.0"
+                                      },
+                                      "__values__": {
+                                        "name": "Mean pixel brightness",
+                                        "parameters": {},
+                                        "power": 1.0,
+                                        "area": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 1
+                                          }
+                                        },
+                                        "per_component": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 2
+                                          }
+                                        },
+                                        "channel": null
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                                  "__class_version_dkt__": {
+                                    "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+                                    "PartSegCore.utils.BaseModel": "0.0.0"
+                                  },
+                                  "__values__": {
+                                    "name": "ROI Compactness per component ",
+                                    "calculation_tree": {
+                                      "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+                                      "__class_version_dkt__": {
+                                        "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                                        "PartSegCore.utils.BaseModel": "0.0.0"
+                                      },
+                                      "__values__": {
+                                        "name": "Compactness",
+                                        "parameters": {},
+                                        "power": 1.0,
+                                        "area": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 1
+                                          }
+                                        },
+                                        "per_component": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 2
+                                          }
+                                        },
+                                        "channel": null
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                                  "__class_version_dkt__": {
+                                    "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+                                    "PartSegCore.utils.BaseModel": "0.0.0"
+                                  },
+                                  "__values__": {
+                                    "name": "ROI Sphericity per component ",
+                                    "calculation_tree": {
+                                      "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+                                      "__class_version_dkt__": {
+                                        "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                                        "PartSegCore.utils.BaseModel": "0.0.0"
+                                      },
+                                      "__values__": {
+                                        "name": "Sphericity",
+                                        "parameters": {},
+                                        "power": 1.0,
+                                        "area": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 1
+                                          }
+                                        },
+                                        "per_component": {
+                                          "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                                          "__class_version_dkt__": {
+                                            "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                                          },
+                                          "__values__": {
+                                            "value": 2
+                                          }
+                                        },
+                                        "channel": null
+                                      }
+                                    }
+                                  }
+                                }
+                              ],
+                              "name_prefix": ""
+                            }
+                          },
+                          "name_prefix": ""
+                        }
+                      },
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "name": "L-S Batch"
+    }
+  }
+}

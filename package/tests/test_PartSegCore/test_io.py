@@ -679,6 +679,13 @@ def test_load_json_plan(bundle_test_dir):
     assert LoadPlanJson.get_short_name() == "plan_json"
 
 
+def test_load_json_plan_problem(bundle_test_dir):
+    data, err = LoadPlanJson.load([bundle_test_dir / "problematic_json_batch.json"])
+    assert len(err) == 1
+    assert len(data) == 0
+    assert "not found in register" in err[0]
+
+
 def test_find_problematic_leafs_base():
     assert find_problematic_leafs(1) == []
     assert find_problematic_leafs({"aaa": 1, "bbb": 2}) == []
