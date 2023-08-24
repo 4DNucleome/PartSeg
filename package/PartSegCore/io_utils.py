@@ -16,6 +16,7 @@ import tifffile
 from openpyxl import load_workbook
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from PartSegCore.analysis.calculation_plan import CalculationTree
 from PartSegCore.json_hooks import partseg_object_hook
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.utils import EventedDict, ProfileDict, check_loaded_dict, iterate_names
@@ -466,7 +467,17 @@ class LoadPlanJson(LoadBase):
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
-        return load_metadata_part(load_locations[0])
+        res, err = load_metadata_part(load_locations[0])
+        res_dkt = {}
+        err_li = []
+        for key, value in res.items():
+            if isinstance(value, dict):
+                err_li.append(", ".join(CalculationTree.get_source_error_dict(value)))
+            elif value.is_bad():
+                err_li.append(f"Problem with load {value.name} because of {value.get_error_source()}")
+            else:
+                res_dkt[key] = value
+        return res_dkt, err + err_li
 
     @classmethod
     def get_name(cls) -> str:

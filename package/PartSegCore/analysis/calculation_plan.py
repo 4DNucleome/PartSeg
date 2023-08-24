@@ -322,13 +322,13 @@ class CalculationTree:
         res = []
         for el in self.children:
             if isinstance(el, dict):
-                res.extend(self._get_source_error_dict(el))
+                res.extend(self.get_source_error_dict(el))
             else:
                 res.extend(el.get_error_source())
         return res
 
     @classmethod
-    def _get_source_error_dict(cls, dkt):
+    def get_source_error_dict(cls, dkt):
         if not isinstance(dkt, dict) or "__error__" not in dkt:
             return []
         if "not found in register" in dkt["__error__"]:
@@ -338,7 +338,7 @@ class CalculationTree:
         fields = local_migrator.check_for_errors_in_dkt_values(dkt["__values__"])
         res = []
         for field in fields:
-            res.extend(cls._get_source_error_dict(dkt["__values__"][field]))
+            res.extend(cls.get_source_error_dict(dkt["__values__"][field]))
         return res
 
 

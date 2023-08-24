@@ -1208,6 +1208,9 @@ class CalculateInfo(QWidget):
             if err:
                 error_str = "\n".join(err)
                 show_warning("Import error", f"error during importing, part of data were filtered. {error_str}")
+            if not plans:
+                show_warning("Import error", "No plans were imported")
+                return
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview, CalculationPlan)
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():
