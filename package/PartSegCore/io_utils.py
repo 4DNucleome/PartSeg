@@ -220,6 +220,9 @@ def load_metadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any
     # TODO extract to function
     data = load_metadata_base(data)
     bad_key = []
+    if isinstance(data, typing.MutableMapping) and "__error__" in data:
+        bad_key.append(data)
+        data = {}
     if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
         bad_key.extend((k, data.pop(k)) for k, v in list(data.items()) if not check_loaded_dict(v))
     elif isinstance(data, ProfileDict) and not data.verify_data():
@@ -505,6 +508,9 @@ class LoadPlanExcel(LoadBase):
             xlsx.close()
         data_dict = {}
         for calc_plan in data_list:
+            # if calc_plan.is_bad():
+            #     error_list.append(f"Problem with load {calc_plan.name} because of {calc_plan.get_error_source()}")
+            #     continue
             new_name = iterate_names(calc_plan.name, data_dict)
             if new_name is None:  # pragma: no cover
                 error_list.append(f"Cannot determine proper name for {calc_plan.name}")

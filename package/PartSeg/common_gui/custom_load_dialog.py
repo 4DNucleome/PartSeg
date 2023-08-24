@@ -86,9 +86,9 @@ class CustomLoadDialog(LoadRegisterFileDialog):
         history: typing.Optional[typing.List[str]] = None,
     ):
         super().__init__(load_register, caption, parent)
-        self.setOption(QFileDialog.DontUseNativeDialog, True)
-        self.setFileMode(QFileDialog.ExistingFile)
-        self.setAcceptMode(QFileDialog.AcceptOpen)
+        self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+        self.setFileMode(QFileDialog.FileMode.ExistingFile)
+        self.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
         self.files_list = []
         self.setWindowTitle("Open File")
         if history is not None:
@@ -96,10 +96,12 @@ class CustomLoadDialog(LoadRegisterFileDialog):
             self.setHistory(history)
 
     def accept(self):
-        selected_files = [x for x in self.selectedFiles() if self.fileMode == QFileDialog.Directory or isfile(x)]
+        selected_files = [
+            x for x in self.selectedFiles() if self.fileMode == QFileDialog.FileMode.Directory or isfile(x)
+        ]
         if not selected_files:
             return
-        if len(selected_files) == 1 and self.fileMode != QFileDialog.Directory and isdir(selected_files[0]):
+        if len(selected_files) == 1 and self.fileMode != QFileDialog.FileMode.Directory and isdir(selected_files[0]):
             super().accept()
             return
 

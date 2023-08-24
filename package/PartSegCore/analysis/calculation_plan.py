@@ -8,6 +8,7 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
+import local_migrator
 from local_migrator import register_class, rename_key
 from pydantic import BaseModel as PydanticBaseModel
 
@@ -314,6 +315,32 @@ class CalculationTree:
     def as_dict(self):
         return {"operation": self.operation, "children": self.children}
 
+    def is_bad(self):
+        return any(isinstance(el, dict) or el.is_bad() for el in self.children) or isinstance(self.operation, dict)
+
+    def get_error_source(self):
+        res = []
+        for el in self.children:
+            if isinstance(el, dict):
+                res.extend(self._get_source_error_dict(el))
+            else:
+                res.extend(el.get_error_source())
+        return res
+
+    @classmethod
+    def _get_source_error_dict(cls, dkt):
+        if not isinstance(dkt, dict) or "__error__" not in dkt:
+            return []
+        if "not found in register" in dkt["__error__"]:
+            return [dkt["__error__"]]
+        if "__values__" not in dkt:
+            return []
+        fields = local_migrator.check_for_errors_in_dkt_values(dkt["__values__"])
+        res = []
+        for field in fields:
+            res.extend(cls._get_source_error_dict(dkt["__values__"][field]))
+        return res
+
 
 class NodeType(Enum):
     """Type of node in calculation"""
@@ -501,6 +528,12 @@ class CalculationPlan:
         self.current_pos = []
         self.changes = []
         self.current_node = None
+
+    def is_bad(self):
+        return self.execution_tree.is_bad()
+
+    def get_error_source(self):
+        return ", ".join(self.execution_tree.get_error_source())
 
     def as_dict(self):
         return {"tree": self.execution_tree, "name": self.name}

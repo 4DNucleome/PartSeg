@@ -6,7 +6,7 @@ class SearchableListWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.list_widget = QListWidget()
+        self.list_widget = QListWidget(self)
 
         self.filter_widget = QLineEdit()
         self.filter_widget.textChanged.connect(self.update_visible)
