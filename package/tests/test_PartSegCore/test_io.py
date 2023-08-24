@@ -664,6 +664,13 @@ def test_load_plan_form_excel(bundle_test_dir):
     assert LoadPlanExcel.get_short_name() == "plan_excel"
 
 
+def test_load_plan_form_excel_problem(bundle_test_dir):
+    data, err = LoadPlanExcel.load([bundle_test_dir / "problematic_excel_batch.xlsx"])
+    assert len(err) == 1
+    assert len(data) == 0
+    assert "not found in register" in err[0]
+
+
 def test_load_json_plan(bundle_test_dir):
     data, err = LoadPlanJson.load([bundle_test_dir / "measurements_profile.json"])
     assert err == []
