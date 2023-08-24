@@ -1201,7 +1201,6 @@ class CalculateInfo(QWidget):
             path="io.batch_plan_directory",
             caption="Import calculation plans",
         )
-        dial.setOption(QFileDialog.Option.DontUseNativeDialog, False)
         if dial.exec_():
             res = dial.get_result()
             plans, err = res.load_class.load(res.load_location)

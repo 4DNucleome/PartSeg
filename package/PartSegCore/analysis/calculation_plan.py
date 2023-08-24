@@ -290,7 +290,7 @@ class PlanChanges(Enum):
     replace_node = 3  #:
 
 
-@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.CalculationTree"])
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.CalculationTree"], allow_errors_in_values=True)
 class CalculationTree:
     """
     Structure for describe calculation structure
@@ -316,15 +316,14 @@ class CalculationTree:
         return {"operation": self.operation, "children": self.children}
 
     def is_bad(self):
-        return any(isinstance(el, dict) or el.is_bad() for el in self.children) or isinstance(self.operation, dict)
+        return any(el.is_bad() for el in self.children) or isinstance(self.operation, dict)
 
     def get_error_source(self):
         res = []
         for el in self.children:
-            if isinstance(el, dict):
-                res.extend(self.get_source_error_dict(el))
-            else:
-                res.extend(el.get_error_source())
+            res.extend(el.get_error_source())
+        if isinstance(self.operation, dict):
+            res.extend(self.get_source_error_dict(self.operation))
         return res
 
     @classmethod
@@ -493,6 +492,7 @@ class FileCalculation:
         return f"FileCalculation(file_path={self.file_path}, calculation={self.calculation})"
 
 
+@register_class(allow_errors_in_values=True)
 class CalculationPlan:
     """
     Clean description Calculation plan.
