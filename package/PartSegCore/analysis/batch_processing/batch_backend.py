@@ -179,7 +179,7 @@ class CalculationProcess:
 
         try:
             return loader.load([calculation.file_path], metadata=metadata)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             if ext_match:
                 raise e
             raise ValueError(f"File {calculation.file_path} do not match to {operation}") from e
