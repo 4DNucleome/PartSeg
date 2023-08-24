@@ -9,6 +9,9 @@ class PartSegEncoder(local_migrator.Encoder):
 
 def partseg_object_hook(dkt: dict):
     if "__class__" in dkt:
+        if dkt["__class__"].startswith("plugins."):
+            # workaround for plans exported from an old PartSeg bundle
+            dkt["__class__"] = dkt["__class__"][len("plugins.") :]
         return local_migrator.object_hook(dkt)
 
     if "__ReadOnly__" in dkt or "__Serializable__" in dkt or "__Enum__" in dkt:
