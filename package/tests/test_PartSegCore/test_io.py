@@ -721,6 +721,8 @@ def test_load_range_algorithm(bundle_test_dir):
 
 def test_load_image_for_batch(data_test_dir):
     assert LoadImageForBatch.get_name()
+    assert LoadImageForBatch.get_short_name()
+    assert LoadImageForBatch.get_extensions()
     with pytest.raises(ValueError, match="Cannot load file"):
         # assert to not try load points
         LoadImageForBatch.load(["data.csv"])
