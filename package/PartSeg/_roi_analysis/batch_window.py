@@ -609,10 +609,14 @@ class CalculationPrepare(QDialog):
                 widget.setIcon(0, icon_dkt[0])
                 widget.setToolTip(0, "File do not exists")
                 continue
-            _, ext_match = get_data_loader(self.calculation_plan.execution_tree.operation, file_path)
+            loader, ext_match = get_data_loader(self.calculation_plan.execution_tree.operation, file_path)
             if not ext_match:
                 warn_state[file_num] = 2
-                widget.setToolTip(0, "File format not supported")
+                widget.setToolTip(
+                    0,
+                    "File extension suggest that format not supported. "
+                    f"Supported are {', '.join(loader.get_extensions())}",
+                )
             for mask_num, mask_mapper in enumerate(self.mask_mapper_list):
                 sub_widget = QTreeWidgetItem(widget)
                 sub_widget.setText(0, text_dkt[self.state_list[file_num, mask_num]].format(mask_mapper.name))
