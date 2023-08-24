@@ -91,13 +91,6 @@ ErrorInfo = Tuple[Exception, Union[StackSummary, Tuple[Dict, StackSummary]]]
 WrappedResult = Tuple[int, List[Union[ErrorInfo, ResponseData]]]
 
 
-root_to_loader = {
-    RootType.Image: LoadMaskSegmentation,
-    RootType.Mask_project: LoadMaskSegmentation,
-    RootType.Project: LoadProject,
-}
-
-
 def get_data_loader(
     root_type: RootType, file_path: str
 ) -> Tuple[Union[Type[LoadMaskSegmentation], Type[LoadProject], Type[LoadImageForBatch]], bool]:
@@ -182,9 +175,14 @@ class CalculationProcess:
     def load_data(operation, calculation: FileCalculation) -> Union[ProjectTuple, List[ProjectTuple]]:
         metadata = {"default_spacing": calculation.voxel_size}
 
-        loader, _ = get_data_loader(operation, calculation.file_path)
+        loader, ext_match = get_data_loader(operation, calculation.file_path)
 
-        return loader.load([calculation.file_path], metadata=metadata)
+        try:
+            return loader.load([calculation.file_path], metadata=metadata)
+        except Exception as e:
+            if ext_match:
+                raise e
+            raise ValueError(f"File {calculation.file_path} do not match to {operation}") from e
 
     def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
         """
