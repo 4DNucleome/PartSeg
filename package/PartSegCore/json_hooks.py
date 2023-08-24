@@ -12,6 +12,11 @@ def partseg_object_hook(dkt: dict):
         if dkt["__class__"].startswith("plugins."):
             # workaround for plans exported from an old PartSeg bundle
             dkt["__class__"] = dkt["__class__"][len("plugins.") :]
+            if "__class_version_dkt__" in dkt:
+                for name, value in list(dkt["__class_version_dkt__"].items()):
+                    if name.startswith("plugins."):
+                        dkt["__class_version_dkt__"][name[len("plugins.") :]] = value
+                        del dkt["__class_version_dkt__"][name]
         return local_migrator.object_hook(dkt)
 
     if "__ReadOnly__" in dkt or "__Serializable__" in dkt or "__Enum__" in dkt:
