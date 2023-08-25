@@ -18,6 +18,8 @@ from PartSegCore.segmentation.restartable_segmentation_algorithms import (
     UpperThresholdAlgorithm,
 )
 
+NOT_FOUND_STR = "not found in register"
+
 
 @pytest.mark.parametrize(
     ("mask1", "mask2", "enabled"),
@@ -217,6 +219,22 @@ class TestCalculateInfo:
         )
         part_settings.batch_plans["test2"] = calculation_plan2
         assert widget.calculate_plans.count() == 2
+
+    def test_add_bad_plan(self, qtbot, part_settings, calculation_plan):
+        bad_plan = copy(calculation_plan)
+        bad_plan.name = "test2"
+        bad_plan.execution_tree.children[0].operation = {"__error__": NOT_FOUND_STR}
+        part_settings.batch_plans[calculation_plan.name] = calculation_plan
+        part_settings.batch_plans[bad_plan.name] = bad_plan
+
+        widget = prepare_plan_widget.CalculateInfo(part_settings)
+        qtbot.addWidget(widget)
+
+        assert widget.calculate_plans.count() == 2
+        assert widget.calculate_plans.item(0).text() == calculation_plan.name
+        assert widget.calculate_plans.item(0).icon().isNull()
+        assert widget.calculate_plans.item(1).text() == bad_plan.name
+        assert not widget.calculate_plans.item(1).icon().isNull()
 
     def test_delete_plan(self, qtbot, part_settings, calculation_plan):
         part_settings.batch_plans["test"] = calculation_plan
@@ -758,7 +776,7 @@ class TestCreatePlan:
     def test_edit_plan_bad_plan(self, message_patch, qtbot, part_settings, calculation_plan):
         widget = prepare_plan_widget.CreatePlan(part_settings)
         qtbot.addWidget(widget)
-        calculation_plan.execution_tree.children[0].operation = {"__error__": "not found in register"}
+        calculation_plan.execution_tree.children[0].operation = {"__error__": NOT_FOUND_STR}
         widget.edit_plan(calculation_plan)
         message_patch.assert_called_once()
 
@@ -767,6 +785,21 @@ class TestCalculatePlaner:
     def test_create(self, qtbot, part_settings):
         widget = prepare_plan_widget.CalculatePlaner(part_settings)
         qtbot.addWidget(widget)
+
+
+class TestPlanPreview:
+    def test_create(self, qtbot, calculation_plan):
+        widget = prepare_plan_widget.PlanPreview(calculation_plan=calculation_plan)
+        qtbot.addWidget(widget)
+
+    @patch("PartSeg._roi_analysis.prepare_plan_widget.QMessageBox.warning")
+    def test_create_bad_plan(self, message_patch, qtbot, calculation_plan):
+        widget = prepare_plan_widget.PlanPreview()
+        qtbot.addWidget(widget)
+        calculation_plan.execution_tree.children[0].operation = {"__error__": NOT_FOUND_STR}
+        widget.set_plan(calculation_plan)
+        message_patch.assert_called_once()
+        assert widget.calculation_plan is None
 
 
 def test_calculation_plan_repr(calculation_plan):

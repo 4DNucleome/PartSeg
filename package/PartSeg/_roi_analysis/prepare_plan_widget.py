@@ -940,10 +940,12 @@ class PlanPreview(QTreeWidget):
 
     def __init__(self, parent=None, calculation_plan=None):
         super().__init__(parent)
-        self.calculation_plan = calculation_plan
+        self.calculation_plan = None
         self.header().close()
         self.itemSelectionChanged.connect(self.set_path)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
+        if calculation_plan is not None:
+            self.set_plan(calculation_plan)
 
     def restore_path(self, widget, path):
         """
@@ -977,7 +979,7 @@ class PlanPreview(QTreeWidget):
         self.set_plan(calculation_plan)
 
     def set_plan(self, calculation_plan):
-        if calculation_plan.is_bad():
+        if calculation_plan is not None and calculation_plan.is_bad():
             QMessageBox().warning(
                 self, "Cannot preview broken plan", f"Cannot preview broken plan. {calculation_plan.get_error_source()}"
             )
