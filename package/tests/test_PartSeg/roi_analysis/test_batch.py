@@ -34,13 +34,13 @@ class TestCalculationPrepare:
         assert dial.execute_btn.isEnabled()
 
     def test_show(self, calculation_prepare, tmp_path):
-        files = [tmp_path / "test1.tif", tmp_path / "test2.tif"]
+        files = [tmp_path / "test1.tif", tmp_path / "test2.tif", tmp_path / "test2.aaa"]
         for file in files:
             file.write_text("test")
         dial = calculation_prepare(file_list=files)
         assert dial.file_list_widget.topLevelItemCount() == 0
         dial.show()
-        assert dial.file_list_widget.topLevelItemCount() == 2
+        assert dial.file_list_widget.topLevelItemCount() == 3
         dial.close()
 
     def test_no_file(self, calculation_prepare, tmp_path):
