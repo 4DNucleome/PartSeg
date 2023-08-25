@@ -210,7 +210,7 @@ def load_metadata_base(data: typing.Union[str, Path]):
     return decoded_data
 
 
-def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[typing.Tuple[str, dict]]]:
+def load_metadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[typing.Tuple[str, dict]]]:
     """
     Load serialized data. Get valid entries.
 
@@ -220,11 +220,18 @@ def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any
     # TODO extract to function
     data = load_metadata_base(data)
     bad_key = []
+    if isinstance(data, typing.MutableMapping) and "__error__" in data:
+        bad_key.append(data)
+        data = {}
     if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
         bad_key.extend((k, data.pop(k)) for k, v in list(data.items()) if not check_loaded_dict(v))
     elif isinstance(data, ProfileDict) and not data.verify_data():
         bad_key = data.pop_errors()
     return data, bad_key
+
+
+load_matadata_part = load_metadata_part
+# backward compatibility
 
 
 def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapping]:
@@ -463,7 +470,17 @@ class LoadPlanJson(LoadBase):
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
-        return load_matadata_part(load_locations[0])
+        from PartSegCore.analysis.calculation_plan import CalculationPlan
+
+        res, err = load_metadata_part(load_locations[0])
+        res_dkt = {}
+        err_li = []
+        for key, value in res.items():
+            if isinstance(value, CalculationPlan) and value.is_bad():
+                err_li.append(f"Problem with load {value.name} because of {value.get_error_source()}")
+            else:
+                res_dkt[key] = value
+        return res_dkt, err + err_li
 
     @classmethod
     def get_name(cls) -> str:
@@ -496,7 +513,7 @@ class LoadPlanExcel(LoadBase):
                         index += 1
 
                     try:
-                        data, err = load_matadata_part(data)
+                        data, err = load_metadata_part(data)
                         data_list.append(data)
                         error_list.extend(err)
                     except ValueError:  # pragma: no cover
@@ -505,6 +522,9 @@ class LoadPlanExcel(LoadBase):
             xlsx.close()
         data_dict = {}
         for calc_plan in data_list:
+            if calc_plan.is_bad():
+                error_list.append(f"Problem with load {calc_plan.name} because of {calc_plan.get_error_source()}")
+                continue
             new_name = iterate_names(calc_plan.name, data_dict)
             if new_name is None:  # pragma: no cover
                 error_list.append(f"Cannot determine proper name for {calc_plan.name}")

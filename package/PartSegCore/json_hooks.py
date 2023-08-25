@@ -2,13 +2,28 @@ import local_migrator
 
 from PartSegCore._old_json_hooks import part_hook
 
+PLUGINS_STR = "plugins."
+PLUGINS_STR_LEN = len(PLUGINS_STR)
+
 
 class PartSegEncoder(local_migrator.Encoder):
     pass
 
 
+def _validate_plugin_prefix(dkt: dict):
+    if dkt["__class__"].startswith(PLUGINS_STR):
+        # workaround for plans exported from an old PartSeg bundle
+        dkt["__class__"] = dkt["__class__"][PLUGINS_STR_LEN:]
+        if "__class_version_dkt__" in dkt:
+            for name, value in list(dkt["__class_version_dkt__"].items()):
+                if name.startswith(PLUGINS_STR):
+                    dkt["__class_version_dkt__"][name[PLUGINS_STR_LEN:]] = value
+                    del dkt["__class_version_dkt__"][name]
+
+
 def partseg_object_hook(dkt: dict):
     if "__class__" in dkt:
+        _validate_plugin_prefix(dkt)
         return local_migrator.object_hook(dkt)
 
     if "__ReadOnly__" in dkt or "__Serializable__" in dkt or "__Enum__" in dkt:

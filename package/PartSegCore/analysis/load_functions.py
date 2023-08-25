@@ -27,8 +27,8 @@ from PartSegCore.io_utils import (
     SegmentationType,
     WrongFileTypeException,
     check_segmentation_type,
-    load_matadata_part,
     load_metadata_base,
+    load_metadata_part,
     open_tar_file,
     proxy_callback,
     tar_to_buff,
@@ -382,7 +382,7 @@ class LoadProfileFromJSON(LoadBase):
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.Tuple[dict, list]:
-        return load_matadata_part(load_locations[0])
+        return load_metadata_part(load_locations[0])
 
     @classmethod
     def get_name(cls) -> str:

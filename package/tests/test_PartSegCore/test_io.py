@@ -34,6 +34,7 @@ from PartSegCore.io_utils import (
     find_problematic_entries,
     find_problematic_leafs,
     load_metadata_base,
+    load_metadata_part,
 )
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
@@ -664,12 +665,34 @@ def test_load_plan_form_excel(bundle_test_dir):
     assert LoadPlanExcel.get_short_name() == "plan_excel"
 
 
+def test_load_plan_form_excel_problem(bundle_test_dir):
+    data, err = LoadPlanExcel.load([bundle_test_dir / "problematic_excel_batch.xlsx"])
+    assert len(err) == 1
+    assert len(data) == 0
+    assert "not found in register" in err[0]
+
+
 def test_load_json_plan(bundle_test_dir):
     data, err = LoadPlanJson.load([bundle_test_dir / "measurements_profile.json"])
     assert err == []
     assert len(data) == 1
     assert LoadPlanJson.get_name_with_suffix().endswith("(*.json)")
     assert LoadPlanJson.get_short_name() == "plan_json"
+
+
+def test_load_json_plan_problem(bundle_test_dir):
+    data, err = LoadPlanJson.load([bundle_test_dir / "problematic_json_batch.json"])
+    assert len(err) == 1
+    assert len(data) == 0
+    assert "not found in register" in err[0]
+
+
+def test_load_metadata_problem():
+    data, err = load_metadata_part(
+        '{"__class__": "PartSegCore.universal_const.Units1", "__class_version_dkt__": {"PartSegCore.universal_const.Units": "0.0.0"}, "__values__": {"value": 2}}'  # noqa: E501
+    )
+    assert len(err) == 1
+    assert len(data) == 0
 
 
 def test_find_problematic_leafs_base():

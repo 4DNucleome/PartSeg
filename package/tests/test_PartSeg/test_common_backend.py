@@ -29,7 +29,7 @@ from PartSeg.common_backend import (
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
-from PartSegCore.io_utils import load_matadata_part
+from PartSegCore.io_utils import load_metadata_part
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
@@ -704,9 +704,9 @@ class TestBaseSettings:
         settings.dump_part(tmp_path / "data.json", "aaa.bb")
         settings.dump_part(tmp_path / "data2.json", "aaa.bb", names=["cc", "dd"])
 
-        res = load_matadata_part(tmp_path / "data.json")
+        res = load_metadata_part(tmp_path / "data.json")
         assert res[0] == {"bb": 10, "cc": 11, "dd": 12, "ee": {"ff": 14, "gg": 15}}
-        res = load_matadata_part(tmp_path / "data2.json")
+        res = load_metadata_part(tmp_path / "data2.json")
         assert res[0] == {"cc": 11, "dd": 12}
 
     def test_base_settings_verify_image(self):
