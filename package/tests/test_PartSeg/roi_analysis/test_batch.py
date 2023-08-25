@@ -39,9 +39,8 @@ class TestCalculationPrepare:
             file.write_text("test")
         dial = calculation_prepare(file_list=files)
         assert dial.file_list_widget.topLevelItemCount() == 0
-        dial.show()
+        dial._show_event_setup()
         assert dial.file_list_widget.topLevelItemCount() == 3
-        dial.close()
 
     def test_no_file(self, calculation_prepare, tmp_path):
         files = [tmp_path / "test1.tif", tmp_path / "test2.tif"]

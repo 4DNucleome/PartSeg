@@ -585,8 +585,11 @@ class CalculationPrepare(QDialog):
                     self.state_list[file_num, mask_num] = 1
         self.verify_data()
 
-    def showEvent(self, event):
+    def showEvent(self, event):  # pragma: no cover
         super().showEvent(event)
+        self._show_event_setup()
+
+    def _show_event_setup(self):
         self._check_start_conditions()
 
         icon_dkt = {
