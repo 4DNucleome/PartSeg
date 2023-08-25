@@ -21,7 +21,7 @@ from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.calculation_plan import CalculationPlan, MaskSuffix, MeasurementCalculate
-from PartSegCore.analysis.load_functions import LoadProject
+from PartSegCore.analysis.load_functions import LoadImageForBatch, LoadProject
 from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
@@ -717,6 +717,19 @@ def test_load_range_algorithm(bundle_test_dir):
     assert len(data) == 1
     assert isinstance(data["test_range"].values.threshold, RangeThresholdSelection)
     assert data["test_range"].values.threshold.name == "Range"
+
+
+def test_load_image_for_batch(data_test_dir):
+    assert LoadImageForBatch.get_name()
+    assert LoadImageForBatch.get_short_name()
+    assert LoadImageForBatch.get_extensions()
+    with pytest.raises(ValueError, match="Cannot load file"):
+        # assert to not try load points
+        LoadImageForBatch.load(["data.csv"])
+
+    proj = LoadImageForBatch.load([data_test_dir / "stack1_component1.tgz"])
+    assert proj.image.mask is None
+    assert proj.mask is None
 
 
 update_name_json = """
