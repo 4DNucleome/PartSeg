@@ -470,15 +470,13 @@ class LoadPlanJson(LoadBase):
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
-        from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree
+        from PartSegCore.analysis.calculation_plan import CalculationPlan
 
         res, err = load_metadata_part(load_locations[0])
         res_dkt = {}
         err_li = []
         for key, value in res.items():
-            if isinstance(value, dict):
-                err_li.append(", ".join(CalculationTree.get_source_error_dict(value)))
-            elif isinstance(value, CalculationPlan) and value.is_bad():
+            if isinstance(value, CalculationPlan) and value.is_bad():
                 err_li.append(f"Problem with load {value.name} because of {value.get_error_source()}")
             else:
                 res_dkt[key] = value
