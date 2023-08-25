@@ -3,6 +3,7 @@ from copy import copy
 from unittest.mock import patch
 
 import pytest
+from qtpy.QtWidgets import QTreeWidgetItem
 
 from PartSeg._roi_analysis import prepare_plan_widget
 from PartSegCore import Units
@@ -746,6 +747,21 @@ class TestCreatePlan:
         widget.create_mask(prepare_plan_widget.MaskCreate(name="test2", mask_property=mask_property_non_default))
         show_warning_patch.assert_called_once_with("Already exists", "Mask with this name already exists")
 
+    def test_edit_plan(self, qtbot, part_settings, calculation_plan):
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        assert count_tree_widget_items(widget.plan.topLevelItem(0)) == 1
+        widget.edit_plan(calculation_plan)
+        assert count_tree_widget_items(widget.plan.topLevelItem(0)) == 37
+
+    @patch("PartSeg._roi_analysis.prepare_plan_widget.QMessageBox.warning")
+    def test_edit_plan_bad_plan(self, message_patch, qtbot, part_settings, calculation_plan):
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        calculation_plan.execution_tree.children[0].operation = {"__error__": "not found in register"}
+        widget.edit_plan(calculation_plan)
+        message_patch.assert_called_once()
+
 
 class TestCalculatePlaner:
     def test_create(self, qtbot, part_settings):
@@ -756,3 +772,12 @@ class TestCalculatePlaner:
 def test_calculation_plan_repr(calculation_plan):
     assert "name='test'" in repr(calculation_plan)
     assert "operation=<RootType.Image: 0>" in repr(calculation_plan)
+
+
+def count_tree_widget_items(tree_widget: QTreeWidgetItem):
+    count = 1
+    for i in range(tree_widget.childCount()):
+        count += count_tree_widget_items(tree_widget.child(i))
+        count += 1
+
+    return count

@@ -918,10 +918,7 @@ class CreatePlan(QWidget):
         else:
             self.information.setText(item.pretty_print(AnalysisAlgorithmSelection))
 
-    def edit_plan(self):
-        if self.sender() is None:
-            return
-        plan = self.sender().plan_to_edit  # type: CalculationPlan
+    def edit_plan(self, plan: CalculationPlan):
         if plan.is_bad():
             QMessageBox().warning(
                 self, "Cannot edit broken plan", f"Cannot edit broken plan. {plan.get_error_source()}"
@@ -1079,7 +1076,7 @@ class CalculateInfo(QWidget):
     :type settings: Settings
     """
 
-    plan_to_edit_signal = Signal()
+    plan_to_edit_signal = Signal(object)
 
     def __init__(self, settings: PartSettings):
         super().__init__()
@@ -1238,7 +1235,7 @@ class CalculateInfo(QWidget):
             return  # pragma: no cover
         if text in self.settings.batch_plans:
             self.plan_to_edit = self.settings.batch_plans[text]
-            self.plan_to_edit_signal.emit()
+            self.plan_to_edit_signal.emit(self.plan_to_edit)
 
     def plan_preview(self, text):
         if self.protect:
