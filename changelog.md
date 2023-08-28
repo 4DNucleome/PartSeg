@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.15.2 - 2023-08-28
+
+### Bug Fixes
+
+- Fix range threshold selection of algorithms (#1009)
+- When run batch check if file extension is supported by loader (#1016)
+- Do not allow to select and render corrupted batch plans (#1015)
+
+### Testing
+
+- \[Automatic\] Constraints upgrades: `imagecodecs`, `ipykernel`, `magicgui`, `psygnal`, `scipy`, `superqt`, `tifffile` (#1011)
+- \[Automatic\] Constraints upgrades: `imageio`, `pyinstaller`, `tifffile` (#1018)
+
+### Ci
+
+- Use faster version of black (#1010)
+- \[pre-commit.ci\] pre-commit autoupdate (#1013)
+
 ## 0.15.1 - 2023-08-09
 
 ### Bug Fixes

@@ -397,7 +397,7 @@ input files tab of Batch Processing window. This will open dialog with options t
 
 
 After that select excel file with batch output and eventually correct
-Base folder path (need to be set for batch output created before PartSeg 0.15.2).
+Base folder path (need to be set for batch output created before PartSeg 0.15.3).
 If all required files are found on drive the Export button will be activated and allow to create archive containing all required files
 that can be used to share results with other users or create supplementary materials for publication.
 
