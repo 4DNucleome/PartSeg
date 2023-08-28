@@ -80,7 +80,7 @@ idna==3.4
     # via requests
 imagecodecs==2023.8.12
     # via PartSeg (setup.cfg)
-imageio==2.31.1
+imageio==2.31.2
     # via
     #   -r requirements/version_denylist.txt
     #   PartSeg (setup.cfg)
@@ -248,7 +248,7 @@ platformdirs==3.10.0
     # via
     #   jupyter-core
     #   pooch
-pluggy==1.2.0
+pluggy==1.3.0
     # via pytest
 pooch==1.7.0
     # via scikit-image
@@ -285,7 +285,7 @@ pygments==2.16.1
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==5.13.0
+pyinstaller==5.13.1
     # via PartSeg (setup.cfg)
 pyinstaller-hooks-contrib==2023.7
     # via pyinstaller
@@ -439,7 +439,7 @@ superqt==0.5.3
     #   napari
 sympy==1.12
     # via PartSeg (setup.cfg)
-tifffile==2023.8.12
+tifffile==2023.8.25
     # via
     #   PartSeg (setup.cfg)
     #   czifile
