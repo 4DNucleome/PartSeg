@@ -235,7 +235,7 @@ class MorphologicalWatershed(BaseSingleThresholdAlgorithm):
         )
 
         ws = sitk.MorphologicalWatershed(distance_map, markWatershedLine=False, level=1)
-        return sitk.GetArrayFromImage(sitk.RelabelComponent(sitk.Mask(ws, sitk.Cast(seg_image, ws.GetPixelID())), 20))
+        return sitk.GetArrayFromImage(sitk.RelabelComponent(sitk.Mask(ws, sitk.Cast(seg_image, sitk.sitkUInt8)), 20))
 
 
 class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
