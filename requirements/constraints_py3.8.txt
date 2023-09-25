@@ -8,14 +8,14 @@ alabaster==0.7.13
     # via sphinx
 altgraph==0.17.3
     # via pyinstaller
-app-model==0.2.0
+app-model==0.2.1
     # via napari
 appdirs==1.4.4
     # via
     #   PartSeg (setup.cfg)
     #   napari
     #   npe2
-asttokens==2.2.1
+asttokens==2.4.0
     # via stack-data
 attrs==23.1.0
     # via
@@ -25,7 +25,7 @@ babel==2.12.1
     # via sphinx
 backcall==0.2.0
     # via ipython
-build==0.10.0
+build==1.0.3
     # via npe2
 cachey==0.2.1
     # via napari
@@ -44,13 +44,13 @@ cloudpickle==2.2.1
     # via dask
 comm==0.1.4
     # via ipykernel
-coverage==7.3.0
+coverage==7.3.1
     # via pytest-cov
 czifile==2019.7.2
     # via PartSeg (setup.cfg)
 dask==2023.5.0
     # via napari
-debugpy==1.6.7.post1
+debugpy==1.8.0
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -70,19 +70,19 @@ fonticon-fontawesome6==6.4.0
     # via PartSeg (setup.cfg)
 freetype-py==2.4.0
     # via vispy
-fsspec==2023.6.0
+fsspec==2023.9.2
     # via dask
 h5py==3.9.0
     # via PartSeg (setup.cfg)
 heapdict==1.0.1
     # via cachey
-hsluv==5.0.3
+hsluv==5.0.4
     # via vispy
 idna==3.4
     # via requests
 imagecodecs==2023.3.16
     # via PartSeg (setup.cfg)
-imageio==2.31.2
+imageio==2.31.4
     # via
     #   -r requirements/version_denylist.txt
     #   PartSeg (setup.cfg)
@@ -93,10 +93,12 @@ imagesize==1.4.1
     # via sphinx
 importlib-metadata==6.8.0
     # via
+    #   build
     #   dask
     #   jupyter-client
+    #   pyinstaller
     #   sphinx
-importlib-resources==6.0.1
+importlib-resources==6.1.0
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -104,7 +106,7 @@ in-n-out==0.1.8
     # via app-model
 iniconfig==2.0.0
     # via pytest
-ipykernel==6.25.1
+ipykernel==6.25.2
     # via
     #   PartSeg (setup.cfg)
     #   napari-console
@@ -122,11 +124,11 @@ jinja2==3.1.2
     # via
     #   numpydoc
     #   sphinx
-jsonschema==4.19.0
+jsonschema==4.19.1
     # via napari
 jsonschema-specifications==2023.7.1
     # via jsonschema
-jupyter-client==8.3.0
+jupyter-client==8.3.1
     # via
     #   ipykernel
     #   qtconsole
@@ -180,7 +182,7 @@ napari-plugin-engine==0.2.0
     #   napari-svg
 napari-svg==0.1.10
     # via napari
-nest-asyncio==1.5.7
+nest-asyncio==1.5.8
     # via ipykernel
 networkx==3.1
     # via scikit-image
@@ -223,6 +225,7 @@ packaging==23.1
     #   ipykernel
     #   local-migrator
     #   pooch
+    #   pyinstaller
     #   pytest
     #   qtconsole
     #   qtpy
@@ -246,7 +249,7 @@ pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==10.0.0
+pillow==10.0.1
     # via
     #   imageio
     #   napari
@@ -269,7 +272,7 @@ psutil==5.9.5
     # via
     #   ipykernel
     #   napari
-psygnal==0.9.3
+psygnal==0.9.4
     # via
     #   PartSeg (setup.cfg)
     #   app-model
@@ -296,9 +299,9 @@ pygments==2.16.1
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==5.13.1
+pyinstaller==6.0.0
     # via PartSeg (setup.cfg)
-pyinstaller-hooks-contrib==2023.7
+pyinstaller-hooks-contrib==2023.8
     # via pyinstaller
 pyopengl==3.1.7
     # via napari
@@ -336,7 +339,7 @@ pyside6-essentials==6.3.1
     # via
     #   pyside6
     #   pyside6-addons
-pytest==7.4.0
+pytest==7.4.2
     # via
     #   PartSeg (setup.cfg)
     #   pytest-cov
@@ -352,7 +355,7 @@ python-dateutil==2.8.2
     # via
     #   jupyter-client
     #   pandas
-pytz==2023.3
+pytz==2023.3.post1
     # via
     #   babel
     #   pandas
@@ -370,11 +373,11 @@ pyzmq==25.1.1
     #   qtconsole
 qtawesome==1.2.3
     # via PartSeg (setup.cfg)
-qtconsole==5.4.3
+qtconsole==5.4.4
     # via
     #   PartSeg (setup.cfg)
     #   napari-console
-qtpy==2.3.1
+qtpy==2.4.0
     # via
     #   PartSeg (setup.cfg)
     #   magicgui
@@ -392,9 +395,9 @@ requests==2.31.0
     #   PartSeg (setup.cfg)
     #   pooch
     #   sphinx
-rich==13.5.2
+rich==13.5.3
     # via npe2
-rpds-py==0.9.2
+rpds-py==0.10.3
     # via
     #   jsonschema
     #   referencing
@@ -407,7 +410,7 @@ scipy==1.10.1
     #   PartSeg (setup.cfg)
     #   napari
     #   scikit-image
-sentry-sdk==1.29.2
+sentry-sdk==1.31.0
     # via
     #   -r requirements/version_denylist.txt
     #   PartSeg (setup.cfg)
@@ -418,7 +421,7 @@ shiboken6==6.3.1
     #   pyside6
     #   pyside6-addons
     #   pyside6-essentials
-simpleitk==2.2.1
+simpleitk==2.3.0
     # via PartSeg (setup.cfg)
 six==1.16.0
     # via
@@ -445,7 +448,7 @@ sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 stack-data==0.6.2
     # via ipython
-superqt==0.5.3
+superqt==0.5.4
     # via
     #   PartSeg (setup.cfg)
     #   magicgui
@@ -481,7 +484,7 @@ tqdm==4.66.1
     # via napari
 traceback-with-variables==2.0.4
     # via PartSeg (setup.cfg)
-traitlets==5.9.0
+traitlets==5.10.0
     # via
     #   comm
     #   ipykernel
@@ -492,7 +495,7 @@ traitlets==5.9.0
     #   qtconsole
 typer==0.9.0
     # via npe2
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   app-model
     #   ipython
@@ -505,7 +508,7 @@ typing-extensions==4.7.1
     #   typer
 tzdata==2023.3
     # via pandas
-urllib3==2.0.4
+urllib3==2.0.5
     # via
     #   requests
     #   sentry-sdk
@@ -520,13 +523,13 @@ wrapt==1.15.0
     # via napari
 xlrd==2.0.1
     # via PartSeg (setup.cfg)
-xlsxwriter==3.1.2
+xlsxwriter==3.1.5
     # via PartSeg (setup.cfg)
-zipp==3.16.2
+zipp==3.17.0
     # via
     #   importlib-metadata
     #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==68.1.2
+setuptools==68.2.2
     # via pyinstaller
