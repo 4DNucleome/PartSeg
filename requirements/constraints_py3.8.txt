@@ -34,13 +34,13 @@ certifi==2023.7.22
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.3.0
+charset-normalizer==3.3.1
     # via requests
 click==8.1.7
     # via
     #   dask
     #   typer
-cloudpickle==2.2.1
+cloudpickle==3.0.0
     # via dask
 comm==0.1.4
     # via ipykernel
@@ -74,7 +74,7 @@ fonticon-fontawesome6==6.4.0
     # via PartSeg (setup.cfg)
 freetype-py==2.4.0
     # via vispy
-fsspec==2023.9.2
+fsspec==2023.10.0
     # via dask
 h5py==3.10.0
     # via PartSeg (setup.cfg)
@@ -86,7 +86,7 @@ idna==3.4
     # via requests
 imagecodecs==2023.3.16
     # via PartSeg (setup.cfg)
-imageio==2.31.5
+imageio==2.31.6
     # via
     #   -r requirements/version_denylist.txt
     #   PartSeg (setup.cfg)
@@ -155,7 +155,7 @@ locket==1.0.0
     # via partd
 lxml==4.9.3
     # via PartSeg (setup.cfg)
-magicgui==0.7.3
+magicgui==0.8.0
     # via
     #   PartSeg (setup.cfg)
     #   napari
@@ -177,12 +177,11 @@ mypy-extensions==1.0.0
     # via psygnal
 napari==0.4.18
     # via PartSeg (setup.cfg)
-napari-console==0.0.8
+napari-console==0.0.9
     # via napari
 napari-plugin-engine==0.2.0
     # via
     #   napari
-    #   napari-console
     #   napari-svg
 napari-svg==0.1.10
     # via napari
@@ -192,7 +191,7 @@ networkx==3.1
     # via scikit-image
 nme==0.1.8
     # via PartSeg (setup.cfg)
-npe2==0.7.2
+npe2==0.7.3
     # via
     #   -r requirements/version_denylist.txt
     #   napari
@@ -253,7 +252,7 @@ pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==10.1.0
+pillow==10.0.1
     # via
     #   imageio
     #   napari
@@ -287,6 +286,8 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.2
     # via stack-data
+pyconify==0.1.5
+    # via superqt
 pydantic==1.10.13
     # via
     #   -r requirements/version_denylist.txt
@@ -398,6 +399,7 @@ requests==2.31.0
     # via
     #   PartSeg (setup.cfg)
     #   pooch
+    #   pyconify
     #   sphinx
 rich==13.6.0
     # via npe2
@@ -512,7 +514,7 @@ typing-extensions==4.8.0
     #   typer
 tzdata==2023.3
     # via pandas
-urllib3==2.0.6
+urllib3==2.0.7
     # via
     #   requests
     #   sentry-sdk
@@ -527,7 +529,7 @@ wrapt==1.15.0
     # via napari
 xlrd==2.0.1
     # via PartSeg (setup.cfg)
-xlsxwriter==3.1.8
+xlsxwriter==3.1.9
     # via PartSeg (setup.cfg)
 zipp==3.17.0
     # via
