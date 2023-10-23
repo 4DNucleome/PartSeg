@@ -39,7 +39,7 @@ jobs:
     name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }}
     runs-on: ${{ inputs.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         name: Install Python ${{ inputs.python_version }}
         with:
