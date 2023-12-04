@@ -1,52 +1,38 @@
+import contextlib
 import importlib
 import itertools
 import os
 import pkgutil
 import sys
 import typing
-
-import pkg_resources
+from importlib.metadata import entry_points
 
 import PartSegCore.plugins
 
 
-def register_napari_plugins():
-    import napari
-    import napari_plugin_engine
-    import napari_svg
+def register_napari_plugins():  # pragma: no cover
+    import npe2
 
-    from PartSeg.plugins import napari_widgets
-    from PartSegCore.napari_plugins import (
-        load_image,
-        load_mask_project,
-        load_masked_image,
-        load_roi_project,
-        save_mask_roi,
-    )
+    import PartSeg
 
-    for module in [
-        napari_svg,
-        napari_plugin_engine,
-        load_image,
-        load_mask_project,
-        load_masked_image,
-        load_roi_project,
-        save_mask_roi,
-        napari_widgets,
-    ]:
-        napari.plugins.plugin_manager.register(module)
+    with contextlib.suppress(ValueError):
+        npe2.PluginManager.instance().register(
+            os.path.join(os.path.dirname(os.path.dirname(PartSeg.__file__)), "napari.yaml")
+        )
 
 
 def get_plugins():
-    if getattr(sys, "frozen", False):
+    if getattr(sys, "frozen", False):  # pragma: no cover
         new_path = [os.path.join(os.path.dirname(os.path.dirname(__path__[0])), "plugins")]
-        packages = pkgutil.iter_modules(new_path, "plugins.")
+        sys.path.append(new_path[0])
+        packages = pkgutil.iter_modules(new_path)
         register_napari_plugins()
     else:
-        packages = pkgutil.iter_modules(__path__, f"{__name__}.")
+        sys.path.append(os.path.dirname(__file__))
+        packages = list(pkgutil.iter_modules(__path__))
     packages2 = itertools.chain(
-        pkg_resources.iter_entry_points("PartSeg.plugins"),
-        pkg_resources.iter_entry_points("partseg.plugins"),
+        entry_points().get("PartSeg.plugins", []),
+        entry_points().get("partseg.plugins", []),
     )
     return [importlib.import_module(el.name) for el in packages] + [el.load() for el in packages2]
 

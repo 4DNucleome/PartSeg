@@ -24,22 +24,23 @@ def calculation_prepare(tmp_path, part_settings, qtbot):
 
 
 class TestCalculationPrepare:
-    def test_init(self, calculation_prepare, tmp_path):
-        files = [tmp_path / "test1.tif", tmp_path / "test2.tif"]
+    @pytest.mark.parametrize("files_li", [["test1.tif", "test2.tif"], ["test1.tif"]])
+    def test_init(self, calculation_prepare, tmp_path, files_li):
+        files = [tmp_path / x for x in files_li]
         for file in files:
             file.write_text("test")
         dial = calculation_prepare(file_list=files)
+        assert dial.all_file_prefix == str(tmp_path)
         assert dial.execute_btn.isEnabled()
 
     def test_show(self, calculation_prepare, tmp_path):
-        files = [tmp_path / "test1.tif", tmp_path / "test2.tif"]
+        files = [tmp_path / "test1.tif", tmp_path / "test2.tif", tmp_path / "test2.aaa"]
         for file in files:
             file.write_text("test")
         dial = calculation_prepare(file_list=files)
         assert dial.file_list_widget.topLevelItemCount() == 0
-        dial.show()
-        assert dial.file_list_widget.topLevelItemCount() == 2
-        dial.close()
+        dial._show_event_setup()
+        assert dial.file_list_widget.topLevelItemCount() == 3
 
     def test_no_file(self, calculation_prepare, tmp_path):
         files = [tmp_path / "test1.tif", tmp_path / "test2.tif"]

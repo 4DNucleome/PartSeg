@@ -28,6 +28,10 @@ on:
         required: false
         type: boolean
         default: False
+      timeout:
+        required: false
+        type: number
+        default: 60
 
 
 jobs:
@@ -35,7 +39,7 @@ jobs:
     name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }}
     runs-on: ${{ inputs.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         name: Install Python ${{ inputs.python_version }}
         with:
@@ -52,8 +56,9 @@ jobs:
       - uses: awalsh128/cache-apt-pkgs-action@latest
         if: runner.os == 'Linux'
         with:
-          packages: libegl1 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 x11-utils libxcb-cursor0
+          packages: libegl1 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 x11-utils libxcb-cursor0 libhdf5-dev
           version: 1.0
+
 
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
@@ -76,7 +81,7 @@ jobs:
 
       - name: Test with tox
         uses: aganders3/headless-gui@v1
-        timeout-minutes: 60
+        timeout-minutes: ${{ inputs.timeout }}
         with:
           run: python -m tox ${{ inputs.tox_args }}
         env:

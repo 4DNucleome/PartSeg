@@ -9,15 +9,12 @@ from functools import wraps
 from local_migrator import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
+from pydantic.fields import ModelField, UndefinedType
 from pydantic.main import ModelMetaclass
 from typing_extensions import Annotated
 
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
-
-if typing.TYPE_CHECKING:
-    from pydantic.fields import ModelField
-
 
 T = typing.TypeVar("T", bound="AlgorithmDescribeBase")
 
@@ -620,6 +617,9 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         name = cls.__register__.get_default()
         return cls(name=name, values=cls[name].get_default_values())
 
+    def algorithm(self):
+        return self.__register__[self.name]
+
 
 class ROIExtractionProfileMeta(ModelMetaclass):
     def __new__(cls, name, bases, attrs, **kwargs):
@@ -680,7 +680,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
         try:
             algorithm = algorithm_dict[self.algorithm]
         except KeyError:
-            return str(self)
+            return f"{self}\n "
         values = self.values if isinstance(self.values, dict) else self.values.dict()
         if self.name in {"", "Unknown"}:
             return (
@@ -770,7 +770,10 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
             )
         if issubclass(field.type_, AlgorithmSelection):
             value_type = AlgorithmDescribeBase
-            default_value = field.field_info.default.name
+            if isinstance(field.field_info.default, UndefinedType):
+                default_value = field.field_info.default_factory().name
+            else:
+                default_value = field.field_info.default.name
             possible_values = field.type_.__register__
 
     return AlgorithmProperty(
@@ -793,7 +796,7 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
     :return:
     """
     res = []
-    value: "ModelField"
+    value: ModelField
     if hasattr(obj, "header") and obj.header():
         res.append(obj.header())
     for name, value in obj.__fields__.items():

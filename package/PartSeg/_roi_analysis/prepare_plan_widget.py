@@ -7,6 +7,7 @@ from copy import copy, deepcopy
 from enum import Enum
 
 from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QAction,
     QCheckBox,
@@ -64,6 +65,7 @@ from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
 from PartSegCore.universal_const import Units
+from PartSegData import icons_dir
 
 group_sheet = (
     "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} "
@@ -406,7 +408,7 @@ class ROIExtractionOp(ProtectedGroupBox):
     roi_extraction_profile_add = Signal(object)
     roi_extraction_pipeline_add = Signal(object)
 
-    def __init__(self, settings: PartSettings, parent: QWidget = None):
+    def __init__(self, settings: PartSettings, parent: typing.Optional[QWidget] = None):
         super().__init__("ROI extraction", parent)
         self.settings = settings
 
@@ -437,6 +439,8 @@ class ROIExtractionOp(ProtectedGroupBox):
         self._refresh_profiles()
         self._refresh_pipelines()
         self._update_btn_text()
+        self.settings.roi_profiles_changed.connect(self._refresh_profiles)
+        self.settings.roi_pipelines_changed.connect(self._refresh_pipelines)
 
     def set_replace(self, replace: bool):
         super().set_replace(replace)
@@ -509,7 +513,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
     set_of_measurement_add = Signal(object)
     set_of_measurement_selected = Signal(object)
 
-    def __init__(self, settings: PartSettings, parent: QWidget = None):
+    def __init__(self, settings: PartSettings, parent: typing.Optional[QWidget] = None):
         super().__init__("Set of measurements:", parent)
         self.settings = settings
 
@@ -541,6 +545,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
 
         self.add_measurement_btn.setDisabled(True)
         self._refresh_measurement()
+        self.settings.measurement_profiles_changed.connect(self._refresh_measurement)
 
     def set_replace(self, replace: bool):
         super().set_replace(replace)
@@ -586,7 +591,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
 
 
 class StretchWrap(QWidget):
-    def __init__(self, widget: QWidget, parent: QWidget = None):
+    def __init__(self, widget: QWidget, parent: typing.Optional[QWidget] = None):
         super().__init__(parent)
         self.widget = widget
         lay = QVBoxLayout()
@@ -602,7 +607,7 @@ class StretchWrap(QWidget):
 class SelectMaskOp(ProtectedGroupBox):
     mask_step_add = Signal(object)
 
-    def __init__(self, settings: PartSettings, parent: QWidget = None):
+    def __init__(self, settings: PartSettings, parent: typing.Optional[QWidget] = None):
         super().__init__("Use mask from:", parent)
         self.settings = settings
         self.mask_set = {}
@@ -913,8 +918,12 @@ class CreatePlan(QWidget):
         else:
             self.information.setText(item.pretty_print(AnalysisAlgorithmSelection))
 
-    def edit_plan(self):
-        plan = self.sender().plan_to_edit  # type: CalculationPlan
+    def edit_plan(self, plan: CalculationPlan):
+        if plan.is_bad():
+            QMessageBox().warning(
+                self, "Cannot edit broken plan", f"Cannot edit broken plan. {plan.get_error_source()}"
+            )
+            return
         self.calculation_plan = copy(plan)
         self.plan.set_plan(self.calculation_plan)
         self.mask_set.clear()
@@ -931,10 +940,12 @@ class PlanPreview(QTreeWidget):
 
     def __init__(self, parent=None, calculation_plan=None):
         super().__init__(parent)
-        self.calculation_plan = calculation_plan
+        self.calculation_plan = None
         self.header().close()
         self.itemSelectionChanged.connect(self.set_path)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
+        if calculation_plan is not None:
+            self.set_plan(calculation_plan)
 
     def restore_path(self, widget, path):
         """
@@ -968,6 +979,11 @@ class PlanPreview(QTreeWidget):
         self.set_plan(calculation_plan)
 
     def set_plan(self, calculation_plan):
+        if calculation_plan is not None and calculation_plan.is_bad():
+            QMessageBox().warning(
+                self, "Cannot preview broken plan", f"Cannot preview broken plan. {calculation_plan.get_error_source()}"
+            )
+            return
         self.calculation_plan = calculation_plan
         self.setCurrentItem(self.topLevelItem(0))
         self.update_view(True)
@@ -1062,7 +1078,7 @@ class CalculateInfo(QWidget):
     :type settings: Settings
     """
 
-    plan_to_edit_signal = Signal()
+    plan_to_edit_signal = Signal(object)
 
     def __init__(self, settings: PartSettings):
         super().__init__()
@@ -1089,7 +1105,6 @@ class CalculateInfo(QWidget):
         info_chose_layout.addWidget(self.plan_view)
         info_layout.addLayout(info_chose_layout)
         self.setLayout(info_layout)
-        self.calculate_plans.addItems(sorted(self.settings.batch_plans.keys()))
         self.protect = False
         self.plan_to_edit = None
 
@@ -1101,6 +1116,7 @@ class CalculateInfo(QWidget):
         self.import_plans_btn.clicked.connect(self.import_plans)
         self.settings.batch_plans_changed.connect(self.update_plan_list)
         self.plan_view.customContextMenuRequested.connect(self._context_menu)
+        self.update_plan_list()
 
     def _context_menu(self, point):
         item = self.plan_view.itemAt(point)
@@ -1143,18 +1159,24 @@ class CalculateInfo(QWidget):
         return None
 
     def update_plan_list(self):
-        new_plan_list = sorted(self.settings.batch_plans.keys())
+        new_plan_list = sorted(self.settings.batch_plans.items(), key=lambda x: x[0])
         if self.calculate_plans.currentItem() is not None:
             text = str(self.calculate_plans.currentItem().text())
             try:
-                index = new_plan_list.index(text)
+                index = [x[0] for x in new_plan_list].index(text)
             except ValueError:
                 index = -1
         else:
             index = -1
         self.protect = True
         self.calculate_plans.clear()
-        self.calculate_plans.addItems(new_plan_list)
+
+        for name, plan in new_plan_list:
+            item = QListWidgetItem(name)
+            if plan.is_bad():
+                item.setIcon(QIcon(os.path.join(icons_dir, "task-reject.png")))
+                item.setToolTip(plan.get_error_source())
+            self.calculate_plans.addItem(item)
         if index != -1:
             self.calculate_plans.setCurrentRow(index)
         self.protect = False
@@ -1187,7 +1209,11 @@ class CalculateInfo(QWidget):
             res = dial.get_result()
             plans, err = res.load_class.load(res.load_location)
             if err:
-                show_warning("Import error", f"error during importing, part of data were filtered. {err}")
+                error_str = "\n".join(err)
+                show_warning("Import error", f"error during importing, part of data were filtered. {error_str}")
+            if not plans:
+                show_warning("Import error", "No plans were imported")
+                return
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview, CalculationPlan)
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():
@@ -1211,7 +1237,7 @@ class CalculateInfo(QWidget):
             return  # pragma: no cover
         if text in self.settings.batch_plans:
             self.plan_to_edit = self.settings.batch_plans[text]
-            self.plan_to_edit_signal.emit()
+            self.plan_to_edit_signal.emit(self.plan_to_edit)
 
     def plan_preview(self, text):
         if self.protect:
@@ -1220,7 +1246,8 @@ class CalculateInfo(QWidget):
         if not text.strip():
             return
         plan = self.settings.batch_plans[text]
-        self.plan_view.set_plan(plan)
+        if not plan.is_bad():
+            self.plan_view.set_plan(plan)
 
 
 class CalculatePlaner(QSplitter):

@@ -4,7 +4,6 @@ import os
 import shutil
 import sys
 import time
-import warnings
 from glob import glob
 from itertools import dropwhile
 from typing import Callable
@@ -21,6 +20,7 @@ from PartSegCore.analysis.batch_processing.batch_backend import (
     CalculationManager,
     CalculationProcess,
     ResponseData,
+    SheetData,
     do_calculation,
 )
 from PartSegCore.analysis.calculation_plan import (
@@ -41,7 +41,7 @@ from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEnt
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.io_utils import SaveBase
+from PartSegCore.io_utils import LoadPlanExcel, SaveBase
 from PartSegCore.mask.io_functions import MaskProjectTuple, SaveROI, SaveROIOptions
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.roi_info import ROIInfo
@@ -229,8 +229,29 @@ def calculation_plan_dummy_spacing(calculation_plan_dummy):
 def calculation_plan(ltww_segmentation, measurement_list):
     mask_suffix = MaskSuffix(name="", suffix="_mask")
     tree = CalculationTree(
-        RootType.Image,
-        [CalculationTree(mask_suffix, [CalculationTree(ltww_segmentation, [CalculationTree(measurement_list, [])])])],
+        operation=RootType.Image,
+        children=[
+            CalculationTree(mask_suffix, [CalculationTree(ltww_segmentation, [CalculationTree(measurement_list, [])])])
+        ],
+    )
+    return CalculationPlan(tree=tree, name="test")
+
+
+@pytest.fixture()
+def calculation_plan_long(ltww_segmentation, measurement_list):
+    mask_suffix = MaskSuffix(name="", suffix="_mask")
+    children = []
+    for i in range(20):
+        measurement = measurement_list.copy()
+        measurement.name_prefix = f"{i}_"
+        measurement.measurement_profile = measurement.measurement_profile.copy()
+        measurement.measurement_profile.name_prefix = f"{i}_"
+        children.append(
+            CalculationTree(mask_suffix, [CalculationTree(ltww_segmentation, [CalculationTree(measurement, [])])])
+        )
+    tree = CalculationTree(
+        operation=RootType.Image,
+        children=children,
     )
     return CalculationPlan(tree=tree, name="test")
 
@@ -420,9 +441,7 @@ def mask_operation_plan(request, simple_measurement_list):
 
 def wait_for_calculation(manager):
     for _ in range(int(120 / 0.1)):
-        res = manager.get_results()
-        if res.errors:
-            warnings.warn(str(res.errors), stacklevel=1)  # pragma: no cover
+        manager.get_results()
         if manager.has_work:
             time.sleep(0.1)
         else:
@@ -511,6 +530,37 @@ class TestCalculationProcess:
         assert df.shape == (8, 4)
         for i in range(8):
             assert os.path.basename(df.name.units[i]) == f"stack1_component{i+1}.tif"
+
+    @pytest.mark.filterwarnings("ignore:This method will be removed")
+    def test_full_pipeline_long(self, tmpdir, data_test_dir, monkeypatch, calculation_plan_long):
+        monkeypatch.setattr(batch_backend, "CalculationProcess", MockCalculationProcess)
+        file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
+        file_paths = sorted(glob(file_pattern))[:4]
+        assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
+        calc = Calculation(
+            file_paths,
+            base_prefix=data_test_dir,
+            result_prefix=data_test_dir,
+            measurement_file_path=os.path.join(tmpdir, "test.xlsx"),
+            sheet_name="Sheet1",
+            calculation_plan=calculation_plan_long,
+            voxel_size=(1, 1, 1),
+        )
+
+        manager = CalculationManager()
+        manager.set_number_of_workers(3)
+        manager.add_calculation(calc)
+        wait_for_calculation(manager)
+        res_path = os.path.join(tmpdir, "test.xlsx")
+        assert os.path.exists(res_path)
+        df = pd.read_excel(res_path, index_col=0, header=[0, 1], engine=ENGINE)
+        assert df.shape == (4, 20 * 3 + 1)
+        data, err = LoadPlanExcel.load([res_path])
+        assert not err
+        assert str(data["test"]) == str(calculation_plan_long)
+
+        df2 = pd.read_excel(res_path, header=[0, 1], engine=ENGINE, sheet_name="info test")
+        assert df2.shape == (154, 3)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_error(self, tmp_path, data_test_dir, monkeypatch, calculation_plan):
@@ -709,7 +759,7 @@ class TestCalculationProcess:
         res = calc_process.do_calculation(FileCalculation(file_path, calc))
         assert len(res) == 4
         assert sum(isinstance(x, ResponseData) for x in res) == 3
-        assert isinstance(list(dropwhile(lambda x: isinstance(x, ResponseData), res))[0][0], ValueError)
+        assert isinstance(next(iter(dropwhile(lambda x: isinstance(x, ResponseData), res)))[0], ValueError)
 
     @pytest.mark.usefixtures("_prepare_spacing_data")
     @pytest.mark.usefixtures("_register_dummy_spacing")
@@ -740,3 +790,27 @@ class MockCalculationProcess(CalculationProcess):
         if os.path.basename(calculation.file_path) == "stack1_component1.tif":
             time.sleep(0.5)
         return super().do_calculation(calculation)
+
+
+class TestSheetData:
+    def test_create(self):
+        cols = [("aa", "nm"), ("bb", "nm")]
+        sheet_data = SheetData("test_name", cols)
+        assert "test_name" in repr(sheet_data)
+        assert str(cols) in repr(sheet_data)
+        assert "wait_rows=0" in repr(sheet_data)
+
+    def test_add_data(self):
+        cols = [("aa", "nm"), ("bb", "nm")]
+        sheet_data = SheetData("test_name", cols)
+        with pytest.raises(ValueError, match="Wrong number of columns"):
+            sheet_data.add_data(["aa", 1, 2, 3], None)
+
+        with pytest.raises(ValueError, match="Wrong number of columns"):
+            sheet_data.add_data(["aa", 1], None)
+
+        sheet_data.add_data(["aa", 1, 2], None)
+        assert "wait_rows=1" in repr(sheet_data)
+
+        assert sheet_data.get_data_to_write()[0] == "test_name"
+        assert "wait_rows=0" in repr(sheet_data)

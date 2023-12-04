@@ -1,5 +1,6 @@
 import json
 
+from PartSegCore import Units
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
@@ -34,6 +35,13 @@ def test_error_reported(bundle_test_dir):
     assert len(error_data) == 2
     assert len(find_problematic_leafs(error_data[0][1])) == 1
     assert len(find_problematic_leafs(error_data[1][1])) == 2
+
+
+def test_plugin_bugfix():
+    data = '{"__class__": "plugins.PartSegCore.mask_partition_utils.BorderRimParameters", "__class_version_dkt__": {"plugins.PartSegCore.mask_partition_utils.BorderRimParameters": "0.0.0", "PartSegCore.utils.BaseModel": "0.0.0"}, "__values__": {"distance": 500, "units": {"__class__": "PartSegCore.universal_const.Units", "__class_version_dkt__": {"plugins.PartSegCore.universal_const.Units": "0.0.0"}, "__values__": {"value": 2}}}}'  # noqa: E501
+    res = json.loads(data, object_hook=partseg_object_hook)
+    assert res.distance == 500
+    assert res.units == Units.nm
 
 
 def _test_prepare(bundle_test_dir):  # pragma: no cover

@@ -9,7 +9,7 @@ from argparse import Namespace
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
@@ -447,7 +447,7 @@ class BaseSettings(ViewSettings):
     load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
-    save_locations_keys = []
+    save_locations_keys: ClassVar[List[str]] = []
 
     def __init__(self, json_path: Union[Path, str], profile_name: str = "default"):
         """
@@ -456,7 +456,7 @@ class BaseSettings(ViewSettings):
         """
         super().__init__()
         napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
-        self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
+        self.napari_settings: NapariSettings = napari_get_settings(napari_path)
         self._current_roi_dict = profile_name
         self._roi_dict = ProfileDict()
         self._last_algorithm_dict = ProfileDict()

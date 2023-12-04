@@ -8,6 +8,7 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
+import local_migrator
 from local_migrator import register_class, rename_key
 from pydantic import BaseModel as PydanticBaseModel
 
@@ -289,7 +290,7 @@ class PlanChanges(Enum):
     replace_node = 3  #:
 
 
-@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.CalculationTree"])
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.CalculationTree"], allow_errors_in_values=True)
 class CalculationTree:
     """
     Structure for describe calculation structure
@@ -313,6 +314,31 @@ class CalculationTree:
 
     def as_dict(self):
         return {"operation": self.operation, "children": self.children}
+
+    def is_bad(self):
+        return any(el.is_bad() for el in self.children) or isinstance(self.operation, dict)
+
+    def get_error_source(self):
+        res = []
+        for el in self.children:
+            res.extend(el.get_error_source())
+        if isinstance(self.operation, dict):
+            res.extend(self.get_source_error_dict(self.operation))
+        return res
+
+    @classmethod
+    def get_source_error_dict(cls, dkt):
+        if not isinstance(dkt, dict) or "__error__" not in dkt:
+            return []
+        if "not found in register" in dkt["__error__"]:
+            return [dkt["__error__"]]
+        if "__values__" not in dkt:
+            return []
+        fields = local_migrator.check_for_errors_in_dkt_values(dkt["__values__"])
+        res = []
+        for field in fields:
+            res.extend(cls.get_source_error_dict(dkt["__values__"][field]))
+        return res
 
 
 class NodeType(Enum):
@@ -466,6 +492,7 @@ class FileCalculation:
         return f"FileCalculation(file_path={self.file_path}, calculation={self.calculation})"
 
 
+@register_class(allow_errors_in_values=True)
 class CalculationPlan:
     """
     Clean description Calculation plan.
@@ -476,7 +503,7 @@ class CalculationPlan:
     :type execution_tree: CalculationTree
     """
 
-    correct_name = {
+    correct_name: typing.ClassVar[typing.Dict[str, typing.Union[BaseModel, Enum]]] = {
         MaskCreate.__name__: MaskCreate,
         MaskUse.__name__: MaskUse,
         Save.__name__: Save,
@@ -501,6 +528,12 @@ class CalculationPlan:
         self.current_pos = []
         self.changes = []
         self.current_node = None
+
+    def is_bad(self):
+        return self.execution_tree.is_bad()
+
+    def get_error_source(self):
+        return ", ".join(self.execution_tree.get_error_source())
 
     def as_dict(self):
         return {"tree": self.execution_tree, "name": self.name}

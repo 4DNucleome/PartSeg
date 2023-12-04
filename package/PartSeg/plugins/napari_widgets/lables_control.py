@@ -23,7 +23,7 @@ class NapariLabelShow(LabelShow):
         self.apply_label_btn.clicked.connect(self.apply_label)
 
     def update_preview(self, _event=None):
-        if len(self.viewer.layers.selection) == 1 and isinstance(list(self.viewer.layers.selection)[0], Labels):
+        if len(self.viewer.layers.selection) == 1 and isinstance(next(iter(self.viewer.layers.selection)), Labels):
             self.apply_label_btn.setEnabled(True)
             self.apply_label_btn.setToolTip("Apply labels to selected layer")
         else:
@@ -32,7 +32,7 @@ class NapariLabelShow(LabelShow):
 
     def apply_label(self):
         if len(self.viewer.layers.selection) == 1 and isinstance(
-            layer := list(self.viewer.layers.selection)[0], Labels
+            layer := next(iter(self.viewer.layers.selection)), Labels
         ):
             max_val = layer.data.max()
             labels = {i + 1: [x / 255 for x in self.label[i % len(self.label)]] for i in range(max_val + 5)}

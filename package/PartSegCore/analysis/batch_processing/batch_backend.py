@@ -20,8 +20,10 @@ Calculation hierarchy:
    }
 
 """
+import contextlib
 import json
 import logging
+import math
 import os
 import threading
 import traceback
@@ -60,11 +62,10 @@ from PartSegCore.analysis.calculation_plan import (
     get_save_path,
 )
 from PartSegCore.analysis.io_utils import ProjectTuple
-from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
-from PartSegCore.analysis.measurement_base import AreaType, PerComponent
+from PartSegCore.analysis.load_functions import LoadImageForBatch, LoadMaskSegmentation, LoadProject
+from PartSegCore.analysis.measurement_base import has_mask_components, has_roi_components
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
-from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
@@ -73,6 +74,11 @@ from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, report_empty_fun
 from PartSegCore.utils import iterate_names
 from PartSegImage import Image, TiffImageReader
+
+# https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3#ID0EDBD=Newer_versions
+# page with excel limits
+MAX_CHAR_IN_EXCEL_CELL = 30_000  # real limit is 32_767 but it is better to have some margin
+MAX_ROWS_IN_EXCEL_CELL = 50  # real limit is 253 but 50 provides better readability
 
 
 class ResponseData(NamedTuple):
@@ -83,6 +89,25 @@ class ResponseData(NamedTuple):
 CalculationResultList = List[ResponseData]
 ErrorInfo = Tuple[Exception, Union[StackSummary, Tuple[Dict, StackSummary]]]
 WrappedResult = Tuple[int, List[Union[ErrorInfo, ResponseData]]]
+
+
+def get_data_loader(
+    root_type: RootType, file_path: str
+) -> Tuple[Union[Type[LoadMaskSegmentation], Type[LoadProject], Type[LoadImageForBatch]], bool]:
+    """
+    Get data loader for given root type. Return indicator if file extension match to loader.
+
+    :param RootType root_type: type of loader
+    :param str file_path: path to file
+    :return: Loader and indicator if file extension match to loader
+    """
+
+    ext = path.splitext(file_path)[1].lower()
+    if root_type == RootType.Mask_project:
+        return LoadMaskSegmentation, ext in LoadMaskSegmentation.get_extensions()
+    if root_type == RootType.Project:
+        return LoadProject, ext in LoadProject.get_extensions()
+    return LoadImageForBatch, ext in LoadImageForBatch.get_extensions()
 
 
 def prepare_error_data(exception: Exception) -> ErrorInfo:
@@ -106,7 +131,8 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     :param file_info: index and path to file which should be processed
     :param calculation: calculation description
     """
-    SimpleITK.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
+    with contextlib.suppress(AttributeError):
+        SimpleITK.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
     calc = CalculationProcess()
     index, file_path = file_info
     try:
@@ -148,21 +174,15 @@ class CalculationProcess:
     @staticmethod
     def load_data(operation, calculation: FileCalculation) -> Union[ProjectTuple, List[ProjectTuple]]:
         metadata = {"default_spacing": calculation.voxel_size}
-        ext = path.splitext(calculation.file_path)[1]
-        if operation == RootType.Image:
-            for load_class in load_dict.values():
-                if load_class.partial() or load_class.number_of_files() != 1:
-                    continue
-                if ext in load_class.get_extensions():
-                    return load_class.load([calculation.file_path], metadata=metadata)
-            raise ValueError("File type not supported")
-        if operation == RootType.Project:
-            return LoadProject.load([calculation.file_path], metadata=metadata)
+
+        loader, ext_match = get_data_loader(operation, calculation.file_path)
+
         try:
-            return LoadProject.load([calculation.file_path], metadata=metadata)
-        except (KeyError, WrongFileTypeException):
-            # TODO identify exceptions
-            return LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
+            return loader.load([calculation.file_path], metadata=metadata)
+        except Exception as e:  # pragma: no cover
+            if ext_match:
+                raise e
+            raise ValueError(f"File {calculation.file_path} do not match to {operation}") from e
 
     def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
         """
@@ -575,6 +595,9 @@ class SheetData:
         self.row_list = []
         return self.name, self.data_frame
 
+    def __repr__(self):
+        return f"SheetData(name={self.name}, columns{list(self.columns)[1:]}, wait_rows={len(self.row_list)})"
+
 
 class FileData:
     """
@@ -678,13 +701,8 @@ class FileData:
         main_header = []
         for i, el in enumerate(component_information):
             local_header = []
-            component_seg = False
-            component_mask = False
-            for per_component, area in measurement[i].measurement_profile.get_component_and_area_info():
-                if per_component == PerComponent.Yes and area == AreaType.ROI:
-                    component_seg = True
-                if per_component == PerComponent.Yes and area != AreaType.ROI:
-                    component_mask = True
+            component_seg = has_roi_components(measurement[i].measurement_profile.get_component_and_area_info())
+            component_mask = has_mask_components(measurement[i].measurement_profile.get_component_and_area_info())
             if component_seg:
                 local_header.append(("Segmentation component", "num"))
             if component_mask:
@@ -826,12 +844,26 @@ class FileData:
         cell_format = book.add_format({"bold": True})
         sheet.write("A1", "Plan Description", cell_format)
         sheet.write("B1", "Plan JSON", cell_format)
-        description = calculation_plan.pretty_print()
-        sheet.write("A2", description)
-        sheet.set_row(1, description.count("\n") * 12 + 10)
-        sheet.set_column(0, 0, max(map(len, description.split("\n"))))
+        sheet.write("C1", "Plan JSON (readable)", cell_format)
+        description = calculation_plan.pretty_print().split("\n")
+        for i in range(math.ceil(len(description) / MAX_ROWS_IN_EXCEL_CELL)):
+            to_write = description[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
+            sheet.write(f"A{i+2}", "\n".join(to_write))
+            sheet.set_row(i + 1, len(to_write) * 11 + 10)
+
+        sheet.set_column(0, 0, max(map(len, description)))
         sheet.set_column(1, 1, 15)
-        sheet.write("B2", json.dumps(calculation_plan, cls=PartSegEncoder, indent=2))
+        calculation_plan_str = json.dumps(calculation_plan, cls=PartSegEncoder)
+        for i in range(math.ceil(len(calculation_plan_str) / MAX_CHAR_IN_EXCEL_CELL)):
+            sheet.write(f"B{i+2}", calculation_plan_str[i * MAX_CHAR_IN_EXCEL_CELL : (i + 1) * MAX_CHAR_IN_EXCEL_CELL])
+
+        calculation_plan_pretty = json.dumps(calculation_plan, cls=PartSegEncoder, indent=2).split("\n")
+        for i in range(math.ceil(len(calculation_plan_pretty) / MAX_ROWS_IN_EXCEL_CELL)):
+            to_write = calculation_plan_pretty[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
+            sheet.write(f"C{i+2}", "\n".join(to_write))
+            sheet.set_row(i + 1, len(to_write) * 11 + 10)
+
+        sheet.set_column(2, 2, max(map(len, calculation_plan_pretty)))
 
     def get_errors(self) -> List[ErrorInfo]:
         """

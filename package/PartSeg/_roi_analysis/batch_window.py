@@ -33,6 +33,7 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg import parsed_version, state_store
+from PartSeg._roi_analysis.export_batch import ExportProjectDialog
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.prepare_plan_widget import CalculatePlaner
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
@@ -42,7 +43,7 @@ from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.select_multiple_files import AddFiles
 from PartSeg.common_gui.universal_gui_part import Spacing, right_label
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
-from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
+from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager, get_data_loader
 from PartSegCore.analysis.calculation_plan import Calculation, CalculationPlan, MaskFile
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
@@ -244,6 +245,8 @@ class FileChoose(QWidget):
         self.result_file.setReadOnly(True)
         self.choose_result = QPushButton("Save result as", self)
         self.choose_result.clicked.connect(self.choose_result_file)
+        self.export_data_button = QPushButton("Export batch with data", self)
+        self.export_data_button.clicked.connect(self.export_data)
 
         self.run_button.clicked.connect(self.prepare_calculation)
         self.files_widget.file_list_changed.connect(self.change_situation)
@@ -256,6 +259,7 @@ class FileChoose(QWidget):
         calc_layout.addWidget(self.calculation_choose)
         calc_layout.addWidget(self.result_file)
         calc_layout.addWidget(self.choose_result)
+        calc_layout.addWidget(self.export_data_button)
         calc_layout.addStretch()
         calc_layout.addWidget(self.run_button)
         layout.addLayout(calc_layout)
@@ -263,6 +267,10 @@ class FileChoose(QWidget):
         self.setLayout(layout)
 
         self._refresh_batch_list()
+
+    def export_data(self):
+        dialog = ExportProjectDialog(self.result_file.text(), self.files_widget.paths_input.text(), self.settings, self)
+        dialog.exec_()
 
     def prepare_calculation(self):
         plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
@@ -281,7 +289,7 @@ class FileChoose(QWidget):
 
     def _refresh_batch_list(self):
         current_calc = str(self.calculation_choose.currentText())
-        new_list = ["<no calculation>", *sorted(self.settings.batch_plans.keys())]
+        new_list = ["<no calculation>", *sorted(n for n, p in self.settings.batch_plans.items() if not p.is_bad())]
         try:
             index = new_list.index(current_calc)
         except ValueError:
@@ -374,7 +382,7 @@ class CalculationPrepare(QDialog):
         measurement_file_path: os.PathLike,
         settings: PartSettings,
         batch_manager: CalculationManager,
-        parent: QWidget = None,
+        parent: typing.Optional[QWidget] = None,
     ):
         """
         :param file_list: list of files to proceed
@@ -395,11 +403,11 @@ class CalculationPrepare(QDialog):
             "<b><font color='red'>errors</font><b>"
         )
         self.voxel_size = Spacing("Voxel size", settings.image.spacing, settings.get("units_value", Units.nm))
-        all_prefix = os.path.commonprefix(file_list)
-        if not os.path.exists(all_prefix):
-            all_prefix = os.path.dirname(all_prefix)
-        if not os.path.isdir(all_prefix):
-            all_prefix = os.path.dirname(all_prefix)
+        if len(file_list) == 1:
+            all_prefix = os.path.dirname(file_list[0])
+        else:
+            all_prefix = os.path.commonpath(file_list)
+        self.all_file_prefix = all_prefix
         self.base_prefix = QLineEdit(all_prefix, self)
         self.base_prefix.setReadOnly(True)
         self.result_prefix = QLineEdit(all_prefix, self)
@@ -577,8 +585,11 @@ class CalculationPrepare(QDialog):
                     self.state_list[file_num, mask_num] = 1
         self.verify_data()
 
-    def showEvent(self, event):
+    def showEvent(self, event):  # pragma: no cover
         super().showEvent(event)
+        self._show_event_setup()
+
+    def _show_event_setup(self):
         self._check_start_conditions()
 
         icon_dkt = {
@@ -594,17 +605,21 @@ class CalculationPrepare(QDialog):
         }
 
         warn_state = np.amax(self.state_list, axis=1, initial=0)
-
-        all_prefix = os.path.commonprefix(self.file_list)
-        if not os.path.exists(all_prefix):
-            all_prefix = os.path.dirname(all_prefix)
         for file_num, file_path in enumerate(self.file_list):
             widget = QTreeWidgetItem(self.file_list_widget)
-            widget.setText(0, os.path.relpath(file_path, all_prefix))
+            widget.setText(0, os.path.relpath(file_path, self.all_file_prefix))
             if not os.path.exists(file_path):
                 widget.setIcon(0, icon_dkt[0])
                 widget.setToolTip(0, "File do not exists")
                 continue
+            loader, ext_match = get_data_loader(self.calculation_plan.execution_tree.operation, file_path)
+            if not ext_match:
+                warn_state[file_num] = 2
+                widget.setToolTip(
+                    0,
+                    "File extension suggest that format not supported. "
+                    f"Supported are {', '.join(loader.get_extensions())}",
+                )
             for mask_num, mask_mapper in enumerate(self.mask_mapper_list):
                 sub_widget = QTreeWidgetItem(widget)
                 sub_widget.setText(0, text_dkt[self.state_list[file_num, mask_num]].format(mask_mapper.name))

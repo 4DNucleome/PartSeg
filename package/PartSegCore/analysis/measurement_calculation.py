@@ -39,6 +39,8 @@ from PartSegCore.analysis.measurement_base import (
     MeasurementMethodBase,
     Node,
     PerComponent,
+    has_mask_components,
+    has_roi_components,
 )
 from PartSegCore.mask_partition_utils import BorderRim, MaskDistanceSplit
 from PartSegCore.roi_info import ROIInfo
@@ -170,16 +172,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         """
         if all_components and self.components_info.has_components():
             return True, True
-        has_mask_components = any(
-            (
-                x in {PerComponent.Yes, PerComponent.Per_Mask_component} and y != AreaType.ROI
-                for x, y in self._type_dict.values()
-            )
-        )
-        has_segmentation_components = any(
-            (x == PerComponent.Yes and y == AreaType.ROI for x, y in self._type_dict.values())
-        )
-        return has_mask_components, has_segmentation_components
+
+        return has_mask_components(self._type_dict.values()), has_roi_components(self._type_dict.values())
 
     def get_labels(self, expand=True, all_components=False) -> List[str]:
         """
@@ -190,12 +184,12 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
         if not expand:
             return list(self.keys())
-        has_mask_components, has_segmentation_components = self.get_component_info(all_components)
+        mask_components, roi_components = self.get_component_info(all_components)
         labels = list(self._data_dict.keys())
         index = 1 if FILE_NAME_STR in self._data_dict else 0
-        if has_mask_components:
+        if mask_components:
             labels.insert(index, "Mask component")
-        if has_segmentation_components:
+        if roi_components:
             labels.insert(index, "Segmentation component")
         return labels
 
@@ -225,9 +219,9 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
                 res.append(val)
         return res
 
-    def _get_component_info(self, has_mask_components, has_segmentation_components):
-        if has_mask_components:
-            if has_segmentation_components:
+    def _get_component_info(self, mask_components, roi_components):
+        if mask_components:
+            if roi_components:
                 translation = self.components_info.components_translation
                 return [(x, y) for x in translation for y in translation[x]]
             return [(0, x) for x in self.components_info.mask_components]
@@ -247,16 +241,16 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
     def get_separated(self, all_components=False) -> List[List[MeasurementValueType]]:
         """Get measurements separated for each component"""
-        has_mask_components, has_segmentation_components = self.get_component_info(all_components)
-        if not has_mask_components and not has_segmentation_components:
+        mask_components, roi_components = self.get_component_info(all_components)
+        if not mask_components and not roi_components:
             return [list(self._data_dict.values())]
-        component_info = self._get_component_info(has_mask_components, has_segmentation_components)
+        component_info = self._get_component_info(mask_components, roi_components)
         res, iterator = self._prepare_res_iterator(len(component_info))
 
         for i, num in enumerate(component_info):
-            if has_segmentation_components:
+            if roi_components:
                 res[i].append(num[0])
-            if has_mask_components:
+            if mask_components:
                 res[i].append(num[1])
 
         mask_to_pos = {val: i for i, val in enumerate(self.components_info.mask_components)}
@@ -567,6 +561,7 @@ class MeasurementProfile(BaseModel):
         Calculate measurements on given set of parameters
 
         :param image: image on which measurements should be calculated
+        :param channel_num: channel number on which measurements should be calculated
         :param roi: array with segmentation labeled as positive integers
         :param result_units: units which should be used to present results.
         :param range_changed: callback function to set information about steps range

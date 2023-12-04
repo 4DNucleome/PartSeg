@@ -385,6 +385,40 @@ Execute batch
    .. image::  images/batch_check_bad.png
       :alt: View on Properties Tab in Settings and Measurement.
 
+Export data and batch
+^^^^^^^^^^^^^^^^^^^^^
+The main output of PartSeg batch processing is excel file with output of all measurements. Next to it there is also
+spreadsheet with batch plan saved. This gives the ability to automatically prepare a package that will contain
+Batch plan, measurement outputs and input values. To use this please click Export batch with data in
+input files tab of Batch Processing window. This will open dialog with options to select files to export.
+
+.. image::  images/export_batch_all.png
+   :alt: Dialog for exporting whole project based on batch plan.
+
+
+After that select excel file with batch output and eventually correct
+Base folder path (need to be set for batch output created before PartSeg 0.15.3).
+If all required files are found on drive the Export button will be activated and allow to create archive containing all required files
+that can be used to share results with other users or create supplementary materials for publication.
+
+.. image::  images/export_zenodo_batch.png
+   :alt: Dialog variant for exporting whole batch to zenodo.
+
+If the user wants to share the data using zenodo then he/she needs to provide authorization token. The token can be generated
+in settings on `Zenodo page <https://sandbox.zenodo.org/account/settings/applications/>`_.
+To enable export button, next to the token, the title, author, author affiliation, and description need to be provided.
+Other authors could be provided, after creation of the record, on Zenodo page.
+
+.. image::  images/zenodo_token.png
+   :alt: View on Zenodo settings where user could generate token.
+
+When export is finished the user will be informed about link to the created record.
+
+.. image::  images/export_zenodo_finished.png
+   :alt: Link to the created record on zenodo.
+
+It could be also found in upload section on zenodo page. The record will be draft and need to be published manually.
+
 Common elements
 ---------------
 In this section common elements for "ROI Analysis GUI" and "ROI Mask GUI" are described.

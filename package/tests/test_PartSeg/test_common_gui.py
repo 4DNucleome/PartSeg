@@ -69,6 +69,7 @@ from PartSeg.common_gui.custom_load_dialog import (
     LoadProperty,
     LoadRegisterFileDialog,
     PLoadDialog,
+    SelectDirectoryDialog,
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
@@ -1704,7 +1705,7 @@ class TestAlgorithmChooseBase:
         assert widget.algorithm_choose.currentText() == BorderRim.get_name()
 
     def test_reload(self, qtbot, part_settings):
-        # Dummy test to check if code execute
+        # Simple test to check if code execute
         widget = AlgorithmChooseBase(part_settings, AnalysisAlgorithmSelection)
         qtbot.addWidget(widget)
         widget.reload()
@@ -1950,3 +1951,30 @@ def test_save_colormap_in_settings(part_settings):
     cmap2 = DummyColormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0.1, 0.9])
     save_colormap_in_settings(part_settings, cmap2, "custom_bbb")
     assert len(part_settings.colormap_dict["custom_bbb"][0].controls) == 4
+
+
+class TestSelectDirectoryDialog:
+    @pytest.mark.parametrize("settings_path", ["s_path", ["s_path", "s_path2"]])
+    def test_create(self, qtbot, base_settings, settings_path, tmp_path):
+        base_settings.set("s_path", str(tmp_path))
+        base_settings.set("s_path2", str(tmp_path / "aaa"))
+        w = SelectDirectoryDialog(settings=base_settings, settings_path=settings_path)
+        qtbot.addWidget(w)
+        assert Path(w.directory().absolutePath()).resolve() == tmp_path.resolve()
+
+    def test_accept(self, qtbot, base_settings, tmp_path, monkeypatch):
+        base_settings.set("s_path", str(tmp_path))
+        (tmp_path / "sample_dir").mkdir()
+        monkeypatch.setattr(
+            "PartSeg.common_gui.custom_load_dialog.SelectDirectoryDialog.selectedFiles",
+            lambda x: [str(tmp_path / "sample_dir")],
+        )
+        w = SelectDirectoryDialog(settings=base_settings, settings_path="s_path")
+        qtbot.addWidget(w)
+        w.selectFile(str(tmp_path / "sample_dir"))
+
+        assert not base_settings.get_path_history()
+        w.setResult(QFileDialog.DialogCode.Accepted)
+        w.accept()
+        assert base_settings.get_path_history()
+        assert Path(base_settings.get("s_path")).resolve() == (tmp_path / "sample_dir").resolve()

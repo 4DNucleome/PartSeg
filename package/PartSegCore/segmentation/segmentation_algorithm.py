@@ -1,5 +1,7 @@
 import operator
 from abc import ABC
+from itertools import product
+from math import ceil
 from typing import Callable, Optional
 
 import numpy as np
@@ -13,9 +15,11 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, ROIE
 from PartSegCore.segmentation.border_smoothing import NoneSmoothing, OpeningSmoothing, SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import BaseThreshold, DoubleThresholdSelection, ThresholdSelection
-from PartSegCore.segmentation.watershed import BaseWatershed, FlowMethodSelection
+from PartSegCore.segmentation.utils import close_small_holes
+from PartSegCore.segmentation.watershed import BaseWatershed, WatershedSelection
 from PartSegCore.utils import BaseModel, bisect
 from PartSegImage import Channel
+from PartSegImage.image import minimal_dtype
 
 
 class StackAlgorithm(ROIExtractionAlgorithm, ABC):
@@ -69,7 +73,7 @@ class ThresholdPreview(StackAlgorithm):
         return val
 
     def get_info_text(self):
-        return ""
+        return f"Threshold: {self.new_parameters.threshold}"
 
     @staticmethod
     def get_steps_num():
@@ -131,88 +135,6 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         return ""
 
 
-class MorphologicalWatershed(BaseThresholdAlgorithm):
-    def __init__(self):
-        super().__init__()
-        self.base_sizes = [0]
-
-    @classmethod
-    def get_name(cls):
-        return "Morphological Watersheed"
-
-    @staticmethod
-    def get_steps_num():
-        return 7
-
-    def _threshold_and_exclude(self, image, report_fun):
-        report_fun("Threshold calculation", 1)
-        threshold_algorithm: BaseThreshold = ThresholdSelection[self.new_parameters.threshold.name]
-        mask, _thr_val = threshold_algorithm.calculate_mask(
-            image, self.mask, self.new_parameters.threshold.values, operator.ge
-        )
-        report_fun("Threshold calculated", 2)
-        return mask
-
-    def calculation_run(self, report_fun):
-        report_fun("Noise removal", 0)
-        image = self.get_noise_filtered_channel(self.new_parameters.channel, self.new_parameters.noise_filtering)
-        mask = self._threshold_and_exclude(image, report_fun)
-        if self.new_parameters.close_holes:
-            report_fun("Filing holes", 3)
-            mask = close_small_holes(mask, self.new_parameters.close_holes_size)
-        report_fun("Smooth border", 4)
-        self.segmentation = SmoothAlgorithmSelection[self.new_parameters.smooth_border.name].smooth(
-            mask, self.new_parameters.smooth_border.values
-        )
-
-        report_fun("Components calculating", 5)
-        seg_image = sitk.GetImageFromArray(self.segmentation)
-        distance_map = sitk.SignedMaurerDistanceMap(
-            seg_image, insideIsPositive=False, squaredDistance=False, useImageSpacing=False
-        )
-
-        ws = sitk.MorphologicalWatershed(distance_map, markWatershedLine=False, level=1)
-        self.segmentation = sitk.GetArrayFromImage(
-            sitk.RelabelComponent(sitk.Mask(ws, sitk.Cast(seg_image, ws.GetPixelID())), 20)
-        )
-
-        self.base_sizes = np.bincount(self.segmentation.flat)
-        ind = bisect(self.base_sizes[1:], self.new_parameters.minimum_size, lambda x, y: x > y)
-        resp = np.copy(self.segmentation)
-        resp[resp > ind] = 0
-
-        if len(self.base_sizes) == 1:
-            info_text = "Please check the threshold parameter. There is no object bigger than 20 voxels."
-        elif ind == 0:
-            info_text = f"Please check the minimum size parameter. The biggest element has size {self.base_sizes[1]}"
-        else:
-            info_text = ""
-        self.sizes = self.base_sizes[: ind + 1]
-        if self.new_parameters.use_convex:
-            report_fun("convex hull", 6)
-            resp = convex_fill(resp)
-            self.sizes = np.bincount(resp.flat)
-
-        report_fun("Calculation done", 7)
-        return ROIExtractionResult(
-            roi=self.image.fit_array_to_image(resp),
-            parameters=self.get_segmentation_profile(),
-            additional_layers={
-                "denoised image": AdditionalLayerDescription(data=image, layer_type="image"),
-                "no size filtering": AdditionalLayerDescription(data=self.segmentation, layer_type="labels"),
-            },
-            info_text=info_text,
-            roi_annotation={i: {"voxels": v} for i, v in enumerate(self.sizes[1:], start=1)},
-        )
-
-    def get_info_text(self):
-        base_text = super().get_info_text()
-        base_sizes = self.base_sizes[: self.sizes.size]
-        if np.any(base_sizes != self.sizes):
-            base_text += "\nBase ROI sizes " + ", ".join(map(str, base_sizes))
-        return base_text
-
-
 class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
     def __init__(self):
         super().__init__()
@@ -228,6 +150,14 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
     def _threshold_and_exclude(self, image, report_fun):
         raise NotImplementedError
 
+    def _segmentation_calculation(self, binary_image):
+        return sitk.GetArrayFromImage(
+            sitk.RelabelComponent(
+                sitk.ConnectedComponent(sitk.GetImageFromArray(binary_image), not self.new_parameters.side_connection),
+                20,
+            )
+        )
+
     def calculation_run(self, report_fun):
         report_fun("Noise removal", 0)
         image = self.get_noise_filtered_channel(self.new_parameters.channel, self.new_parameters.noise_filtering)
@@ -236,23 +166,16 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             report_fun("Filing holes", 3)
             mask = close_small_holes(mask, self.new_parameters.close_holes_size)
         report_fun("Smooth border", 4)
-        self.segmentation = SmoothAlgorithmSelection[self.new_parameters.smooth_border.name].smooth(
+        segmentation = SmoothAlgorithmSelection[self.new_parameters.smooth_border.name].smooth(
             mask, self.new_parameters.smooth_border.values
         )
 
         report_fun("Components calculating", 5)
-        self.segmentation = sitk.GetArrayFromImage(
-            sitk.RelabelComponent(
-                sitk.ConnectedComponent(
-                    sitk.GetImageFromArray(self.segmentation), not self.new_parameters.side_connection
-                ),
-                20,
-            )
-        )
+        segmentation = self._segmentation_calculation(segmentation)
 
-        self.base_sizes = np.bincount(self.segmentation.flat)
+        self.base_sizes = np.bincount(segmentation.flat)
         ind = bisect(self.base_sizes[1:], self.new_parameters.minimum_size, lambda x, y: x > y)
-        resp = np.copy(self.segmentation)
+        resp = np.copy(segmentation)
         resp[resp > ind] = 0
 
         if len(self.base_sizes) == 1:
@@ -285,6 +208,34 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
         if np.any(base_sizes != self.sizes):
             base_text += "\nBase ROI sizes " + ", ".join(map(str, base_sizes))
         return base_text
+
+
+class MorphologicalWatershed(BaseSingleThresholdAlgorithm):
+    def __init__(self):
+        super().__init__()
+        self.base_sizes = [0]
+
+    @classmethod
+    def get_name(cls):
+        return "Morphological Watersheed"
+
+    def _threshold_and_exclude(self, image, report_fun):
+        report_fun("Threshold calculation", 1)
+        threshold_algorithm: BaseThreshold = ThresholdSelection[self.new_parameters.threshold.name]
+        mask, _thr_val = threshold_algorithm.calculate_mask(
+            image, self.mask, self.new_parameters.threshold.values, operator.ge
+        )
+        report_fun("Threshold calculated", 2)
+        return mask
+
+    def _segmentation_calculation(self, binary_image):
+        seg_image = sitk.GetImageFromArray(binary_image)
+        distance_map = sitk.SignedMaurerDistanceMap(
+            seg_image, insideIsPositive=False, squaredDistance=False, useImageSpacing=False
+        )
+
+        ws = sitk.MorphologicalWatershed(distance_map, markWatershedLine=False, level=1)
+        return sitk.GetArrayFromImage(sitk.RelabelComponent(sitk.Mask(ws, sitk.Cast(seg_image, sitk.sitkUInt8)), 20))
 
 
 class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
@@ -308,7 +259,7 @@ class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
 @register_class(version="0.0.1", migrations=[("0.0.1", rename_key("sprawl_type", "flow_type"))])
 class ThresholdFlowAlgorithmParameters(BaseThresholdAlgorithmParameters):
     threshold: DoubleThresholdSelection = Field(DoubleThresholdSelection.get_default())
-    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default())
+    flow_type: WatershedSelection = Field(WatershedSelection.get_default())
 
 
 class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
@@ -353,7 +304,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
         )
 
         report_fun("Flow calculation", 5)
-        sprawl_algorithm: BaseWatershed = FlowMethodSelection[self.new_parameters.flow_type.name]
+        sprawl_algorithm: BaseWatershed = WatershedSelection[self.new_parameters.flow_type.name]
         segmentation = sprawl_algorithm.sprawl(
             mask,
             core_objects,
@@ -423,7 +374,7 @@ class CellFromNucleusFlowParameters(BaseModel):
     cell_channel: Channel = Field(0, title="Cell Channel")
     cell_noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
     cell_threshold: ThresholdSelection = Field(ThresholdSelection.get_default(), title="Threshold")
-    flow_type: FlowMethodSelection = Field(FlowMethodSelection.get_default(), title="Flow type")
+    flow_type: WatershedSelection = Field(WatershedSelection.get_default(), title="Flow type")
     close_holes: bool = Field(True, title="Fill holes")
     close_holes_size: int = Field(200, title="Maximum holes size (px)", ge=0, le=10**5)
     smooth_border: SmoothAlgorithmSelection = Field(SmoothAlgorithmSelection.get_default(), title="Smooth borders")
@@ -439,6 +390,10 @@ class CellFromNucleusFlowParameters(BaseModel):
 class CellFromNucleusFlow(StackAlgorithm):
     __argument_class__ = CellFromNucleusFlowParameters
     new_parameters: CellFromNucleusFlowParameters
+
+    def __init__(self):
+        super().__init__()
+        self.found_nucleus = 0
 
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         report_fun("Nucleus noise removal", 0)
@@ -459,6 +414,7 @@ class CellFromNucleusFlow(StackAlgorithm):
         sizes = np.bincount(nucleus_objects.flat)
         ind = bisect(sizes[1:], self.new_parameters.minimum_size, lambda x, y: x > y)
         nucleus_objects[nucleus_objects > ind] = 0
+        self.found_nucleus = ind
         report_fun("Cell noise removal", 3)
         cell_channel = self.get_noise_filtered_channel(
             self.new_parameters.cell_channel, self.new_parameters.cell_noise_filtering
@@ -469,7 +425,7 @@ class CellFromNucleusFlow(StackAlgorithm):
         )
 
         report_fun("Flow calculation", 5)
-        sprawl_algorithm: BaseWatershed = FlowMethodSelection[self.new_parameters.flow_type.name]
+        sprawl_algorithm: BaseWatershed = WatershedSelection[self.new_parameters.flow_type.name]
         mean_brightness = np.mean(cell_channel[cell_mask > 0])
         if mean_brightness < cell_thr:
             mean_brightness = cell_thr + 10
@@ -502,7 +458,7 @@ class CellFromNucleusFlow(StackAlgorithm):
         )
 
     def get_info_text(self):
-        return ""
+        return f"Fond nucleus: {self.found_nucleus}"
 
     @staticmethod
     def get_steps_num():
@@ -513,6 +469,51 @@ class CellFromNucleusFlow(StackAlgorithm):
         return "Cell from nucleus flow"
 
 
+class SplitImageOnPartsParameters(BaseModel):
+    side_length: int = Field(1000, ge=100, le=10**5)
+
+
+class SplitImageOnParts(StackAlgorithm):
+    __argument_class__ = SplitImageOnPartsParameters
+    new_parameters: SplitImageOnPartsParameters
+
+    def __init__(self):
+        super().__init__()
+        self._components_count = -1
+
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
+        if self.image is None:  # pragma: no cover
+            raise ValueError("No image")
+        report_fun("Splitting image", 0)
+        image = self.image
+        size = self.new_parameters.side_length
+        count_components = ceil(image.shape[-1] / size) * ceil(image.shape[-2] / size)
+        dtype = minimal_dtype(count_components)
+        mask = np.zeros(image.shape, dtype=dtype)
+        x_step = ceil(image.shape[-1] / size)
+        y_step = ceil(image.shape[-2] / size)
+        for cnt, (i, j) in enumerate(product(range(x_step), range(y_step)), start=1):
+            mask[..., j * size : (j + 1) * size, i * size : (i + 1) * size] = cnt
+
+        report_fun("Done", 1)
+        self._components_count = count_components
+        return ROIExtractionResult(
+            roi=mask,
+            parameters=self.get_segmentation_profile(),
+        )
+
+    def get_info_text(self):
+        return f"Split on {self._components_count} parts"
+
+    @staticmethod
+    def get_steps_num():
+        return 2
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Split image on parts"
+
+
 final_algorithm_list = [
     ThresholdAlgorithm,
     ThresholdFlowAlgorithm,
@@ -520,16 +521,5 @@ final_algorithm_list = [
     ThresholdPreview,
     AutoThresholdAlgorithm,
     CellFromNucleusFlow,
+    SplitImageOnParts,
 ]
-
-
-def close_small_holes(image, max_hole_size):
-    if image.dtype == bool:
-        image = image.astype(np.uint8)
-    if len(image.shape) == 2:
-        rev_conn = sitk.ConnectedComponent(sitk.BinaryNot(sitk.GetImageFromArray(image)), True)
-        return sitk.GetArrayFromImage(sitk.BinaryNot(sitk.RelabelComponent(rev_conn, max_hole_size)))
-    for layer in image:
-        rev_conn = sitk.ConnectedComponent(sitk.BinaryNot(sitk.GetImageFromArray(layer)), True)
-        layer[...] = sitk.GetArrayFromImage(sitk.BinaryNot(sitk.RelabelComponent(rev_conn, max_hole_size)))
-    return image

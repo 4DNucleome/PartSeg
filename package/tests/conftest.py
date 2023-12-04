@@ -25,8 +25,9 @@ from PartSegImage import Image
 
 @pytest.fixture(scope="module")
 def data_test_dir():
-    """Return path to directory with test data"""
-    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "test_data")
+    """Return path to directory with test data that need to be downloaded"""
+    return Path(__file__).absolute().parent.parent.parent / "test_data"
+    # return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "test_data")
 
 
 @pytest.fixture(autouse=True)
@@ -36,7 +37,7 @@ def _mock_settings_path(tmp_path, monkeypatch):
 
 @pytest.fixture(scope="module")
 def bundle_test_dir():
-    """Return path to directory with test data"""
+    """Return path to directory with test data bundled in napari"""
     return Path(os.path.join(os.path.dirname(__file__), "test_data"))
 
 

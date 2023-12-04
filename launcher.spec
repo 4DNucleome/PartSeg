@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
 
 block_cipher = None
 import sys
@@ -80,6 +80,8 @@ hiddenimports = (
         "numpy.random.bounded_integers",
         "numpy.random.entropy",
         "PartSegCore.register",
+        "PartSegCore.channel_class",
+        "nme",
         "defusedxml.cElementTree",
         "vispy.app.backends._pyqt5",
         "scipy.spatial.transform._rotation_groups",
@@ -88,7 +90,9 @@ hiddenimports = (
         "psygnal._signal",
         "psygnal._dataclass_utils",
         "psygnal._weak_callback",
-        "imagecodecs._imagecodecs"
+        "imagecodecs._imagecodecs",
+        "PartSeg.plugins.napari_widgets",
+        "PartSegCore.napari_plugins",
     ]
     + [x.module_name for x in imageio_known_plugins.values()] + [x for x in collect_submodules("skimage") if "tests" not in x]
 )
@@ -123,13 +127,13 @@ napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
 napari_resource_dest_path = os.path.relpath(os.path.dirname(napari_resource_path), napari_base_path)
 
 packages = itertools.chain(
-    pkg_resources.iter_entry_points("PartSeg.plugins"),
-    pkg_resources.iter_entry_points("partseg.plugins"),
-    pkg_resources.iter_entry_points("PartSegCore.plugins"),
-    pkg_resources.iter_entry_points("partsegcore.plugins"),
+    importlib.metadata.entry_points().get("PartSeg.plugins", []),
+    importlib.metadata.entry_points().get("partseg.plugins", []),
+    importlib.metadata.entry_points().get("PartSegCore.plugins", []),
+    importlib.metadata.entry_points().get("partsegcore.plugins", []),
 )
 
-plugins_data = []
+plugins_data = [(os.path.join(base_path, "napari.yaml"), ".")]
 
 for package in packages:
     module = package.load()
@@ -173,9 +177,11 @@ a = Analysis(
     + collect_data_files("freetype")
     + collect_data_files("skimage")
     + collect_data_files("jsonschema_specifications")
+    + collect_data_files("PartSegCore-compiled-backend")
     + pyzmq_data
     + plugins_data
-    + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")],
+    + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")]
+    + copy_metadata("PartSeg", recursive=True),
     hiddenimports=hiddenimports,
     # + ["plugins." + x.name for x in plugins.get_plugins()],
     hookspath=[],

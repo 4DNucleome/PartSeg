@@ -20,6 +20,8 @@ cube = np.zeros((21, 21, 21), dtype=np.uint32)
 for i, v in [(2, 1000), (4, 10000), (6, 20000), (7, 21000), (8, 22000), (9, 23000)]:
     cube[i:-i, i:-i, i:-i] = v
 
+empty_square = np.zeros((21, 21))
+
 
 @pytest.mark.parametrize("method", ThresholdSelection.__register__.values())
 @pytest.mark.parametrize("data", [square, cube], ids=["square", "cube"])
@@ -41,7 +43,7 @@ def test_threshold(method: BaseThreshold, data, op, masking):
 
 
 @pytest.mark.parametrize("method", DoubleThresholdSelection.__register__.values())
-@pytest.mark.parametrize("data", [square, cube], ids=["square", "cube"])
+@pytest.mark.parametrize("data", [square, cube, empty_square], ids=["square", "cube", "empty_square"])
 @pytest.mark.parametrize("op", [operator.lt, operator.gt])
 @pytest.mark.parametrize("masking", [True, False])
 def test_double_threshold(method: BaseThreshold, data, op, masking):

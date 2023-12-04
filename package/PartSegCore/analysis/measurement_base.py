@@ -1,7 +1,7 @@
 import sys
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, ForwardRef, Optional, Set, Union
+from typing import Any, ClassVar, Dict, ForwardRef, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
 from local_migrator import REGISTER, class_to_str, register_class, rename_key
@@ -54,6 +54,19 @@ class AreaType(Enum):
 
     def __str__(self):
         return self.name.replace("_", " ")
+
+
+def has_mask_components(component_and_mask_info: Iterable[Tuple[PerComponent, AreaType]]) -> bool:
+    """Check if any measurement will return value per mask component"""
+    return any(
+        (cmp == PerComponent.Yes and area != AreaType.ROI) or cmp == PerComponent.Per_Mask_component
+        for cmp, area in component_and_mask_info
+    )
+
+
+def has_roi_components(component_and_mask_info: Iterable[Tuple[PerComponent, AreaType]]) -> bool:
+    """Check if any measurement will return value per ROI component"""
+    return any((cmp == PerComponent.Yes and area == AreaType.ROI) for cmp, area in component_and_mask_info)
 
 
 def _migrate_leaf_dict(dkt):
@@ -215,7 +228,7 @@ class Leaf(BaseModel):
     def need_mask(self) -> bool:
         """If this measurement need mast for proper calculation."""
         return (
-            self.area in [AreaType.Mask, AreaType.Mask_without_ROI]
+            self.area in {AreaType.Mask, AreaType.Mask_without_ROI}
             or self.per_component is PerComponent.Per_Mask_component
         )
 
@@ -325,7 +338,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
     text_info = "", ""
 
-    need_class_method = [
+    need_class_method: ClassVar[List[str]] = [
         "get_description",
         "is_component",
         "calculate_property",

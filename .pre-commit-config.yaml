@@ -2,13 +2,13 @@ default_language_version:
     python: python3.8
 
 repos:
--   repo: https://github.com/psf/black
-    rev: 23.3.0
+-   repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 23.10.1
     hooks:
     - id: black
       pass_filenames: true
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
     - id: check-json
     - id: check-yaml
@@ -20,16 +20,16 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.2.0
+    rev: v2.5.0
     hooks:
     - id: setup-cfg-fmt
       args: ["--include-version-classifiers", "--max-py-version", "3.11"]
--   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.267
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.3
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.4.0
+    rev: v3.15.0
     hooks:
     - id: pyupgrade
       args: ["--py38-plus"]
@@ -37,14 +37,19 @@ repos:
     rev: v1.10.0
     hooks:
     -   id: rst-backticks
--   repo: https://github.com/markdownlint/markdownlint
-    rev: v0.12.0  # Use the ref you want to point at
+-   repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.17  # Use the ref you want to point at
     hooks:
-    - id: markdownlint
-      exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
+    - id: mdformat
+      exclude: TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
+      args: ["--number"]
+      additional_dependencies:
+          - mdformat-gfm
+          - mdformat-black
+          - mdformat-toc
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.3.0'  # Use the sha / tag you want to point at
+    rev: 'v1.6.1'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
         files: ^package/PartSegImage/.+\.py
