@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 import dataclasses
 import json
@@ -21,7 +21,7 @@ from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.calculation_plan import CalculationPlan, MaskSuffix, MeasurementCalculate
-from PartSegCore.analysis.load_functions import LoadProject
+from PartSegCore.analysis.load_functions import LoadImageForBatch, LoadProject
 from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
@@ -34,6 +34,7 @@ from PartSegCore.io_utils import (
     find_problematic_entries,
     find_problematic_leafs,
     load_metadata_base,
+    load_metadata_part,
 )
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
@@ -55,6 +56,7 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
+from PartSegCore.segmentation.threshold import RangeThresholdSelection
 from PartSegCore.utils import ProfileDict, check_loaded_dict
 from PartSegImage import Image
 
@@ -122,7 +124,7 @@ def analysis_project_reversed() -> ProjectTuple:
     return ProjectTuple("test_data.tiff", image, roi_info=roi_info, mask=mask)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mask_prop():
     return MaskProperty.simple_mask()
 
@@ -267,7 +269,7 @@ class TestJsonLoad:
             with open(profile_path) as ff:
                 data = json.load(ff, object_hook=partseg_object_hook)
             assert check_loaded_dict(data)
-        except Exception:  # pylint: disable=W0703  # pragma: no cover
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
             pytest.fail("Fail in loading profile")
 
     def test_measure_load(self, data_test_dir):
@@ -277,7 +279,7 @@ class TestJsonLoad:
             with open(profile_path) as ff:
                 data = json.load(ff, object_hook=partseg_object_hook)
             assert check_loaded_dict(data)
-        except Exception:  # pylint: disable=W0703  # pragma: no cover
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
             pytest.fail("Fail in loading profile")
 
     def test_json_dump(self):
@@ -489,7 +491,7 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert (1,) + arr.shape == analysis_project.roi_info.roi.shape
+        assert (1, *arr.shape) == analysis_project.roi_info.roi.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": True, "clip": False, "units": Units.nm, "reverse": False}
@@ -498,13 +500,13 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 34, 84)
-        assert (1,) + arr.shape == analysis_project.roi_info.roi.shape
+        assert (1, *arr.shape) == analysis_project.roi_info.roi.shape
         assert steps == (5, 5, 10)
         arr, steps = self.read_cmap(os.path.join(tmpdir, "test2_comp2.cmap"))
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 55, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert (1,) + arr.shape == analysis_project.roi_info.roi.shape
+        assert (1, *arr.shape) == analysis_project.roi_info.roi.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": False, "clip": True, "units": Units.nm, "reverse": False}
@@ -538,7 +540,7 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert (1,) + arr.shape == analysis_project_reversed.roi_info.roi.shape
+        assert (1, *arr.shape) == analysis_project_reversed.roi_info.roi.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": True, "clip": True, "units": Units.nm, "reverse": True}
@@ -593,18 +595,18 @@ class TestSaveFunctions:
     def test_save_tiff(self, tmpdir, analysis_project):
         SaveAsTiff.save(os.path.join(tmpdir, "test1.tiff"), analysis_project)
         array = tifffile.imread(os.path.join(tmpdir, "test1.tiff"))
-        assert analysis_project.roi_info.roi.shape == (1,) + array.shape
+        assert analysis_project.roi_info.roi.shape == (1, *array.shape)
 
     def test_save_numpy(self, tmpdir, analysis_project):
         parameters = {"squeeze": False}
         SaveAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project, parameters)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
-        assert array.shape == (1,) + analysis_project.image.shape
+        assert array.shape == (1, *analysis_project.image.shape)
         assert np.all(array == analysis_project.image.get_data())
         parameters = {"squeeze": True}
         SaveAsNumpy.save(os.path.join(tmpdir, "test2.npy"), analysis_project, parameters)
         array = np.load(os.path.join(tmpdir, "test2.npy"))
-        assert (1,) + array.shape == analysis_project.roi_info.roi.shape
+        assert (1, *array.shape) == analysis_project.roi_info.roi.shape
         assert np.all(array == analysis_project.image.get_data().squeeze())
 
     def test_save_segmentation_numpy(self, tmpdir, analysis_project):
@@ -613,7 +615,7 @@ class TestSaveFunctions:
         assert np.all(array == analysis_project.roi_info.roi)
 
     @pytest.mark.parametrize(
-        "klass,ext_li",
+        ("klass", "ext_li"),
         [
             (SaveAsNumpy, [".npy"]),
             (SaveAsTiff, [".tiff", ".tif"]),
@@ -663,12 +665,34 @@ def test_load_plan_form_excel(bundle_test_dir):
     assert LoadPlanExcel.get_short_name() == "plan_excel"
 
 
+def test_load_plan_form_excel_problem(bundle_test_dir):
+    data, err = LoadPlanExcel.load([bundle_test_dir / "problematic_excel_batch.xlsx"])
+    assert len(err) == 1
+    assert len(data) == 0
+    assert "not found in register" in err[0]
+
+
 def test_load_json_plan(bundle_test_dir):
     data, err = LoadPlanJson.load([bundle_test_dir / "measurements_profile.json"])
     assert err == []
     assert len(data) == 1
     assert LoadPlanJson.get_name_with_suffix().endswith("(*.json)")
     assert LoadPlanJson.get_short_name() == "plan_json"
+
+
+def test_load_json_plan_problem(bundle_test_dir):
+    data, err = LoadPlanJson.load([bundle_test_dir / "problematic_json_batch.json"])
+    assert len(err) == 1
+    assert len(data) == 0
+    assert "not found in register" in err[0]
+
+
+def test_load_metadata_problem():
+    data, err = load_metadata_part(
+        '{"__class__": "PartSegCore.universal_const.Units1", "__class_version_dkt__": {"PartSegCore.universal_const.Units": "0.0.0"}, "__values__": {"value": 2}}'  # noqa: E501
+    )
+    assert len(err) == 1
+    assert len(data) == 0
 
 
 def test_find_problematic_leafs_base():
@@ -708,6 +732,27 @@ def test_find_problematic_entries_nested():
     assert find_problematic_entries(data) == [data["ccc"]]
     data = {"aaa": 1, "bbb": 2, "ccc": {"ddd": 1, "eee": 2, "__error__": True}, "kkk": {"__error__": True, "a": 1}}
     assert find_problematic_entries(data) == [data["ccc"], data["kkk"]]
+
+
+def test_load_range_algorithm(bundle_test_dir):
+    data, err = LoadPlanJson.load([bundle_test_dir / "range_profile.json"])
+    assert err == []
+    assert len(data) == 1
+    assert isinstance(data["test_range"].values.threshold, RangeThresholdSelection)
+    assert data["test_range"].values.threshold.name == "Range"
+
+
+def test_load_image_for_batch(data_test_dir):
+    assert LoadImageForBatch.get_name()
+    assert LoadImageForBatch.get_short_name()
+    assert LoadImageForBatch.get_extensions()
+    with pytest.raises(ValueError, match="Cannot load file"):
+        # assert to not try load points
+        LoadImageForBatch.load(["data.csv"])
+
+    proj = LoadImageForBatch.load([data_test_dir / "stack1_component1.tgz"])
+    assert proj.image.mask is None
+    assert proj.mask is None
 
 
 update_name_json = """

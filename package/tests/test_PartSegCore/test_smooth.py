@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 import itertools
 
@@ -101,7 +101,7 @@ class TestVoteSmoothing:
         res = VoteSmoothing.smooth(data, VoteSmoothingParams(neighbourhood_type=NeighType.sides, support_level=3))
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
-            res2[(0,) + pos] = 0
+            res2[(0, *pos)] = 0
         assert np.all(res2 == res)
         res = VoteSmoothing.smooth(data, VoteSmoothingParams(neighbourhood_type=NeighType.sides, support_level=4))
         res2 = np.zeros(data.shape, dtype=data.dtype)
@@ -118,7 +118,7 @@ class TestVoteSmoothing:
         res = VoteSmoothing.smooth(data, VoteSmoothingParams(neighbourhood_type=NeighType.edges, support_level=4))
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
-            res2[(0,) + pos] = 0
+            res2[(0, *pos)] = 0
         assert np.all(res2 == res)
         res = VoteSmoothing.smooth(data, VoteSmoothingParams(neighbourhood_type=NeighType.edges, support_level=5))
         assert np.all(res2 == res)
@@ -137,7 +137,7 @@ class TestVoteSmoothing:
         res = VoteSmoothing.smooth(data, VoteSmoothingParams(neighbourhood_type=NeighType.vertex, support_level=4))
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
-            res2[(0,) + pos] = 0
+            res2[(0, *pos)] = 0
         assert np.all(res2 == res)
         res = VoteSmoothing.smooth(data, VoteSmoothingParams(neighbourhood_type=NeighType.vertex, support_level=5))
         assert np.all(res2 == res)
@@ -401,7 +401,7 @@ class TestIterativeVoteSmoothing:
         )
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
-            res2[(0,) + pos] = 0
+            res2[(0, *pos)] = 0
         assert np.all(res2 == res)
         res = IterativeVoteSmoothing.smooth(
             data, IterativeSmoothingParams(neighbourhood_type=NeighType.sides, support_level=4, max_steps=1)
@@ -421,7 +421,7 @@ class TestIterativeVoteSmoothing:
             for pos in itertools.product([2, -3], repeat=2):
                 sign = np.sign(pos)
                 for shift in generate_neighbour_sides(i - 1, 2):
-                    res2[(0,) + calc_cord(pos, sign, shift)] = 0
+                    res2[(0, *calc_cord(pos, sign, shift))] = 0
             assert np.all(res == res2)
 
         for i in range(2, 8):
@@ -450,7 +450,7 @@ class TestIterativeVoteSmoothing:
         )
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
-            res2[(0,) + pos] = 0
+            res2[(0, *pos)] = 0
         assert np.all(res2 == res)
         res = IterativeVoteSmoothing.smooth(
             data, IterativeSmoothingParams(neighbourhood_type=NeighType.edges, support_level=5, max_steps=1)
@@ -469,7 +469,7 @@ class TestIterativeVoteSmoothing:
 
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
-            res2[(0,) + pos] = 0
+            res2[(0, *pos)] = 0
         for _ in range(2, 5):
             res = IterativeVoteSmoothing.smooth(
                 data, IterativeSmoothingParams(neighbourhood_type=NeighType.edges, support_level=4, max_steps=1)
@@ -483,7 +483,7 @@ class TestIterativeVoteSmoothing:
             for pos in itertools.product([2, -3], repeat=2):
                 sign = np.sign(pos)
                 for shift in generate_neighbour_edge(i - 1, 2):
-                    res2[(0,) + calc_cord(pos, sign, shift)] = 0
+                    res2[(0, *calc_cord(pos, sign, shift))] = 0
             assert np.all(res == res2)
         for i in range(2, 8):
             res = IterativeVoteSmoothing.smooth(
@@ -511,7 +511,7 @@ class TestIterativeVoteSmoothing:
         )
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
-            res2[(0,) + pos] = 0
+            res2[(0, *pos)] = 0
         assert np.all(res2 == res)
         res = IterativeVoteSmoothing.smooth(
             data, IterativeSmoothingParams(neighbourhood_type=NeighType.vertex, support_level=5, max_steps=1)
@@ -530,7 +530,7 @@ class TestIterativeVoteSmoothing:
 
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
-            res2[(0,) + pos] = 0
+            res2[(0, *pos)] = 0
         for _ in range(2, 5):
             res = IterativeVoteSmoothing.smooth(
                 data, IterativeSmoothingParams(neighbourhood_type=NeighType.vertex, support_level=4, max_steps=1)
@@ -544,7 +544,7 @@ class TestIterativeVoteSmoothing:
             for pos in itertools.product([2, -3], repeat=2):
                 sign = np.sign(pos)
                 for shift in generate_neighbour_edge(i - 1, 2):
-                    res2[(0,) + calc_cord(pos, sign, shift)] = 0
+                    res2[(0, *calc_cord(pos, sign, shift))] = 0
             assert np.all(res == res2)
         for i in range(2, 8):
             res = IterativeVoteSmoothing.smooth(
@@ -581,5 +581,5 @@ class TestOpeningSmooth:
         res = OpeningSmoothing.smooth(data, OpeningSmoothingParams(smooth_border_radius=2))
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
-            res2[(0,) + pos] = 0
+            res2[(0, *pos)] = 0
         assert np.all(res2 == res)

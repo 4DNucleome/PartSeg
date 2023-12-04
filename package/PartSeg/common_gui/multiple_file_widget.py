@@ -66,7 +66,7 @@ class MultipleFilesTreeWidget(QTreeWidget):
     def set_show_compare(self, compare: bool):
         self.compare = compare
 
-    def mouseMoveEvent(self, event):  # pylint: disable=R0201
+    def mouseMoveEvent(self, event):  # pylint: disable=no-self-use
         QApplication.setOverrideCursor(Qt.ArrowCursor)
         super().mouseMoveEvent(event)
 
@@ -129,6 +129,7 @@ class MultipleFileWidget(QWidget):
         self.load_files_btn = QPushButton("Load Files")
         self.load_recent_files_btn = QPushButton("Load recent Files")
         self.forget_btn = QPushButton("Forget")
+        self.forget_all_btn = QPushButton("Forget all")
 
         self.save_state_btn.clicked.connect(self.save_state)
         self.forget_btn.clicked.connect(self.forget)
@@ -136,6 +137,7 @@ class MultipleFileWidget(QWidget):
         self.load_recent_files_btn.clicked.connect(self.load_recent)
         self.file_view.itemDoubleClicked.connect(self.load_state)
         self.file_view.context_load.connect(self.load_state)
+        self.forget_all_btn.clicked.connect(self.forget_all)
         self.last_point = None
 
         self.custom_names_chk = QCheckBox("Custom names")
@@ -143,10 +145,11 @@ class MultipleFileWidget(QWidget):
         layout = QGridLayout()
         layout.addWidget(self.file_view, 0, 0, 1, 2)
         layout.addWidget(self.save_state_btn, 1, 0)
-        layout.addWidget(self.forget_btn, 1, 1)
-        layout.addWidget(self.load_files_btn, 2, 0)
+        layout.addWidget(self.load_files_btn, 1, 1)
         layout.addWidget(self.load_recent_files_btn, 2, 1)
-        layout.addWidget(self.custom_names_chk, 3, 0, 1, 2)
+        layout.addWidget(self.forget_btn, 2, 0)
+        layout.addWidget(self.forget_all_btn, 3, 0)
+        layout.addWidget(self.custom_names_chk, 3, 1)
 
         self.setLayout(layout)
         self.setMouseTracking(True)
@@ -221,7 +224,7 @@ class MultipleFileWidget(QWidget):
                 errors_message.setText("There are errors during load files")
                 errors_message.setInformativeText("During load files cannot found some of files on disc")
                 errors_message.setStandardButtons(QMessageBox.Ok)
-                text = "\n".join(f"File: {x[0]}" + "\n" + str(x[1]) for x in self.error_list)
+                text = "\n".join(f"File: {x[0]}\n{x[1]}" for x in self.error_list)
                 errors_message.setDetailedText(text)
                 errors_message.exec_()
 
@@ -255,6 +258,9 @@ class MultipleFileWidget(QWidget):
 
     def save_state_action(self, state: ProjectInfoBase, custom_name):
         # TODO left elipsis
+        if isinstance(state, list):
+            self.add_states(state)
+            return
         # state: ProjectInfoBase = self.get_state()
         if not isinstance(state, ProjectInfoBase):  # workaround for PointsInfo load
             return
@@ -299,6 +305,11 @@ class MultipleFileWidget(QWidget):
         self.forget_btn.setDisabled(True)
         item: QTreeWidgetItem = self.file_view.currentItem()
         self.forget_action(item)
+        QTimer().singleShot(500, self.enable_forget)
+
+    def forget_all(self):
+        for index in range(self.file_view.topLevelItemCount(), -1, -1):
+            self.forget_action(self.file_view.topLevelItem(index))
 
     def forget_action(self, item):
         if item is None:
@@ -322,7 +333,6 @@ class MultipleFileWidget(QWidget):
             del self.state_dict_count[text]
             self.file_list.remove(text)
             self.file_view.takeTopLevelItem(index)
-        QTimer().singleShot(500, self.enable_forget)
 
     @Slot()
     def enable_forget(self):
@@ -332,7 +342,7 @@ class MultipleFileWidget(QWidget):
         metric = QFontMetrics(self.file_view.font())
         width = self.file_view.width() - 45
         for i, text in enumerate(self.file_list):
-            clipped_text = metric.elidedText(text, Qt.ElideLeft, width)
+            clipped_text = metric.elidedText(text, Qt.TextElideMode.ElideLeft, width)
             item: QTreeWidgetItem = self.file_view.topLevelItem(i)
             item.setText(0, clipped_text)
 
@@ -342,10 +352,10 @@ class MultipleFileWidget(QWidget):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.x() > self.width() - 20:
-            QApplication.setOverrideCursor(Qt.SplitHCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.SplitHCursor)
         else:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
-        if self.last_point is None or not (event.buttons() & Qt.LeftButton):
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+        if self.last_point is None or not (event.buttons() & Qt.MouseButton.LeftButton):
             return
         new_width = event.x() + 10
         new_width = max(new_width, 150)
@@ -353,8 +363,8 @@ class MultipleFileWidget(QWidget):
 
         self.setMinimumWidth(new_width)
 
-    def leaveEvent(self, _):  # pylint: disable=R0201
-        QApplication.setOverrideCursor(Qt.ArrowCursor)
+    def leaveEvent(self, _):  # pylint: disable=no-self-use
+        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def mouseReleaseEvent(self, event: QMouseEvent):
         self.last_point = None

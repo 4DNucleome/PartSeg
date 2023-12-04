@@ -5,6 +5,7 @@ THis module contains widgets used for error reporting. The report backed is sent
 """
 import getpass
 import io
+import os
 import pprint
 import re
 import traceback
@@ -42,8 +43,13 @@ from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.utils import numpy_repr
 
-_email_regexp = re.compile(r"[\w+]+@\w+\.\w+")
-_feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
+try:
+    from qtpy import QT5
+except ImportError:  # pragma: no cover
+    QT5 = True
+
+_EMAIL_REGEXP = re.compile(r"[\w+]+@\w+\.\w+")
+_FEEDBACK_URL = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
     organization_slug="cent", project_slug="partseg"
 )
 
@@ -92,12 +98,22 @@ class ErrorDialog(QDialog):
         self.contact_info = QLineEdit()
         self.user_name = QLineEdit()
         self.cancel_btn.clicked.connect(self.reject)
-        self.send_report_btn.clicked.connect(self.send_information)
+        self.send_report_btn.clicked.connect(self.send_report)
         self.create_issue_btn.clicked.connect(self.create_issue)
 
-        layout = QVBoxLayout()
         self.desc = QLabel(description)
         self.desc.setWordWrap(True)
+
+        self.setup_ui()
+
+        if isinstance(additional_info, tuple):
+            self.exception_tuple = additional_info[0], None
+        else:
+            exec_info = exc_info_from_error(exception)
+            self.exception_tuple = event_from_exception(exec_info)
+
+    def setup_ui(self):
+        layout = QVBoxLayout()
         info_text = QLabel(
             "If you see these dialog it not means that you do something wrong. "
             "In such case you should see some message box not error report dialog."
@@ -126,14 +142,11 @@ class ErrorDialog(QDialog):
         btn_layout.addWidget(self.send_report_btn)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
-        if isinstance(additional_info, tuple):
-            self.exception_tuple = additional_info[0], None
-        else:
-            exec_info = exc_info_from_error(exception)
-            self.exception_tuple = event_from_exception(exec_info)
 
-    def exec(self):
-        self.exec_()
+    if QT5:
+
+        def exec(self):
+            self.exec_()
 
     def exec_(self):
         """
@@ -145,6 +158,7 @@ class ErrorDialog(QDialog):
             print_exc(self.exception)
             return False
         super().exec_()
+        return None
 
     def create_issue(self):
         """
@@ -155,7 +169,7 @@ class ErrorDialog(QDialog):
 
         url = "https://github.com/4DNucleome/PartSeg/issues/new?"
         data = {
-            "title": f"Error report from PartSeg `{repr(self.exception)}`",
+            "title": f"Error report from PartSeg `{self.exception!r}`",
             "body": f"This issue is created from PartSeg error dialog\n\n```"
             f"python\n{self.error_description.toPlainText()}\n```\n",
             "labels": "bug",
@@ -176,12 +190,12 @@ class ErrorDialog(QDialog):
 
         webbrowser.open(f"{url}{urllib.parse.urlencode(data)}")
 
-    def send_information(self):
+    def send_report(self):
         """
         Function with construct final error message and send it using sentry.
         """
         with sentry_sdk.push_scope() as scope:
-            text = self.desc.text() + "\n\nVersion: " + __version__ + "\n"
+            text = f"{self.desc.text()}\n\nVersion: {__version__}\n"
             if len(self.additional_notes) > 0:
                 scope.set_extra("additional_notes", self.additional_notes)
             if len(self.additional_info.toPlainText()) > 0:
@@ -204,24 +218,26 @@ class ErrorDialog(QDialog):
             data = {
                 "comments": self.additional_info.toPlainText(),
                 "event_id": event_id,
-                "email": contact_text if _email_regexp.match(contact_text) else "unknown@unknown.com",
-                "name": user_name or getpass.getuser(),
+                "email": contact_text if _EMAIL_REGEXP.match(contact_text) else "unknown@unknown.com",
+                "name": user_name or get_user(),
             }
 
-            r = requests.post(
-                url=_feedback_url,
-                data=data,
-                headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
-            )
-            if r.status_code != 200:
-                data["email"] = "unknown@unknown.com"
-                data["name"] = getpass.getuser()
-                requests.post(
-                    url=_feedback_url,
+            with suppress(requests.exceptions.Timeout):
+                r = requests.post(
+                    url=_FEEDBACK_URL,
                     data=data,
                     headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+                    timeout=3,
                 )
-
+                if r.status_code != 200:
+                    data["email"] = "unknown@unknown.com"
+                    data["name"] = get_user()
+                    requests.post(
+                        url=_FEEDBACK_URL,
+                        data=data,
+                        headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+                        timeout=3,
+                    )
         self.accept()
 
 
@@ -234,7 +250,9 @@ class ExceptionListItem(QListWidgetItem):
 
     # TODO Prevent from reporting disc error
     def __init__(
-        self, exception: typing.Union[Exception, typing.Tuple[Exception, typing.List]], parent: QListWidget = None
+        self,
+        exception: typing.Union[Exception, typing.Tuple[Exception, typing.List]],
+        parent: typing.Optional[QListWidget] = None,
     ):
         if isinstance(exception, Exception):
             traceback_summary = None
@@ -275,7 +293,7 @@ class DataImportErrorDialog(QDialog):
     def __init__(
         self,
         errors: typing.Dict[str, typing.Union[Exception, typing.List[typing.Tuple[str, dict]]]],
-        parent: QWidget = None,
+        parent: typing.Optional[QWidget] = None,
         text: str = "During import data part of the entries was filtered out",
     ):
         super().__init__(parent)
@@ -352,12 +370,12 @@ class QMessageFromException(QMessageBox):
         parent=None,
         title="",
         text="",
-        standard_buttons=QMessageBox.Ok,
-        default_button=QMessageBox.NoButton,
+        standard_buttons=QMessageBox.StandardButton.Ok,
+        default_button=QMessageBox.StandardButton.NoButton,
         exception=None,
-    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+    ) -> QMessageBox.StandardButton:  # pylint: disable=arguments-differ
         ob = cls(
-            icon=QMessageBox.Critical,
+            icon=QMessageBox.Icon.Critical,
             title=title,
             text=text,
             exception=exception,
@@ -373,12 +391,12 @@ class QMessageFromException(QMessageBox):
         parent=None,
         title="",
         text="",
-        standard_buttons=QMessageBox.Ok,
-        default_button=QMessageBox.NoButton,
+        standard_buttons=QMessageBox.StandardButton.Ok,
+        default_button=QMessageBox.StandardButton.NoButton,
         exception=None,
-    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+    ) -> QMessageBox.StandardButton:  # pylint: disable=arguments-differ
         ob = cls(
-            icon=QMessageBox.Information,
+            icon=QMessageBox.Icon.Information,
             title=title,
             text=text,
             exception=exception,
@@ -394,12 +412,12 @@ class QMessageFromException(QMessageBox):
         parent=None,
         title="",
         text="",
-        standard_buttons=QMessageBox.Ok,
-        default_button=QMessageBox.NoButton,
+        standard_buttons=QMessageBox.StandardButton.Ok,
+        default_button=QMessageBox.StandardButton.NoButton,
         exception=None,
-    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+    ) -> QMessageBox.StandardButton:  # pylint: disable=arguments-differ
         ob = cls(
-            icon=QMessageBox.Question,
+            icon=QMessageBox.Icon.Question,
             title=title,
             text=text,
             exception=exception,
@@ -415,12 +433,12 @@ class QMessageFromException(QMessageBox):
         parent=None,
         title="",
         text="",
-        standard_buttons=QMessageBox.Ok,
-        default_button=QMessageBox.NoButton,
+        standard_buttons=QMessageBox.StandardButton.Ok,
+        default_button=QMessageBox.StandardButton.NoButton,
         exception=None,
-    ) -> QMessageBox.StandardButtons:  # pylint: disable=arguments-differ
+    ) -> QMessageBox.StandardButton:  # pylint: disable=arguments-differ
         ob = cls(
-            icon=QMessageBox.Warning,
+            icon=QMessageBox.Icon.Warning,
             title=title,
             text=text,
             exception=exception,
@@ -429,3 +447,11 @@ class QMessageFromException(QMessageBox):
         )
         ob.setDefaultButton(default_button)
         return ob.exec_()
+
+
+def get_user() -> str:
+    try:
+        return getpass.getuser()
+    except ModuleNotFoundError:  # pragma: no cover
+        # On windows `pwd` module is not available
+        return os.getlogin()

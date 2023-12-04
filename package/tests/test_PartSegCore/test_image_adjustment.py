@@ -1,8 +1,10 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 import numpy as np
 
 from PartSegCore.image_transforming import InterpolateImage
+from PartSegCore.image_transforming.image_projection import ImageProjection, ImageProjectionParams
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 
@@ -33,34 +35,73 @@ def get_cube_image_up():
 class TestInterpolateImage:
     def test_simple(self):
         image = get_flat_image()
-        image_res = InterpolateImage.transform(image, {"scale": 1})
+        image_res, _ = InterpolateImage.transform(image, None, {"scale": 1})
         assert np.all(image.get_data() == image_res.get_data())
         image = get_cube_image()
-        image_res = InterpolateImage.transform(image, {"scale": 1})
+        image_res, _ = InterpolateImage.transform(image, None, {"scale": 1})
         assert np.all(image.get_data() == image_res.get_data())
 
     def test_nonzero_border(self):
         image = get_flat_image_up()
-        image_res = InterpolateImage.transform(image, {"scale": 2})
+        image_res, _ = InterpolateImage.transform(image, None, {"scale": 2})
         assert image_res.get_data().min() > 0
         assert image_res.spacing == (2.5, 2.5)
         image = get_cube_image_up()
-        image_res = InterpolateImage.transform(image, {"scale": 2})
+        image_res, _ = InterpolateImage.transform(image, None, {"scale": 2})
         assert image_res.get_data().min() > 0
         assert image_res.spacing == (5, 2.5, 2.5)
 
     def test_default_interpolate(self):
         image = get_flat_image()
-        image_res = InterpolateImage.transform(image, InterpolateImage.calculate_initial(image))
+        image_res, _ = InterpolateImage.transform(image, None, InterpolateImage.calculate_initial(image))
         assert image_res.spacing == (5, 5)
         assert image_res.get_data().shape == (1, 1, 1, 10, 10)
         image = get_cube_image()
-        image_res = InterpolateImage.transform(image, InterpolateImage.calculate_initial(image))
+        image_res, _ = InterpolateImage.transform(image, None, InterpolateImage.calculate_initial(image))
         assert image_res.spacing == (5, 5, 5)
         assert image_res.get_data().shape == (1, 1, 20, 10, 10)
 
     def test_multiple_interpolate(self):
         image = get_cube_image()
-        image_res = InterpolateImage.transform(image, {"scale_x": 2, "scale_y": 3, "scale_z": 4})
+        image_res, _ = InterpolateImage.transform(image, None, {"scale_x": 2, "scale_y": 3, "scale_z": 4})
         assert image_res.spacing == (2.5, 5 / 3, 2.5)
         assert image_res.get_data().shape == (1, 1, 40, 30, 20)
+
+
+class TestImageProjection:
+    def test_basic(self):
+        image = get_cube_image()
+        image_res, _ = ImageProjection.transform(image, ROIInfo(None), ImageProjectionParams())
+        assert image_res.shape == (1, 1, 10, 10)
+
+    def test_no_roi(self):
+        image = get_cube_image()
+        image_res, roi = ImageProjection.transform(image, ROIInfo(None), ImageProjectionParams(keep_roi=True))
+        assert image_res.shape == (1, 1, 10, 10)
+        assert roi is None
+
+    def test_no_mask(self):
+        image = get_cube_image()
+        image_res, _ = ImageProjection.transform(image, ROIInfo(None), ImageProjectionParams(keep_mask=True))
+        assert image_res.shape == (1, 1, 10, 10)
+        assert image_res.mask is None
+
+    def test_cast_roi(self):
+        image = get_cube_image()
+        roi_arr = np.zeros((10, 10, 10), dtype=np.uint8)
+        roi_arr[:, :5] = 1
+        roi_arr[:, 5:] = 2
+        image_res, roi_info = ImageProjection.transform(image, ROIInfo(roi_arr), ImageProjectionParams(keep_roi=True))
+        assert image_res.shape == (1, 1, 10, 10)
+        assert roi_info.roi.shape == (1, 1, 10, 10)
+        assert np.all(roi_info.roi[0, 0] == roi_arr[0])
+
+    def test_cast_mask(self):
+        image = get_cube_image()
+        mask_arr = np.zeros((10, 10, 10), dtype=np.uint8)
+        mask_arr[:, :5] = 1
+        mask_arr[:, 5:] = 2
+        image.set_mask(mask_arr)
+        image_res, _ = ImageProjection.transform(image, ROIInfo(None), ImageProjectionParams(keep_mask=True))
+        assert image_res.shape == (1, 1, 10, 10)
+        assert image_res.mask.shape == (1, 1, 10, 10)

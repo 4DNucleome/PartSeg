@@ -186,17 +186,19 @@ def add_classes(types_list, translate_dict, global_state):
         if type_ in translate_dict or isinstance(type_, omit_list):
             continue
         if hasattr(type_, "__module__") and type_.__module__ == "typing":
-            if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.abc.Iterable):
-                sub_types = [x for x in type_.__args__ if not isinstance(x, omit_list)]
-                if sub_types:
-                    add_classes(sub_types, translate_dict, global_state)
-                    if type_._name is None:  # pylint: disable=W0212
-                        type_str = str(type_.__origin__)
-                    else:
-                        type_str = f"typing.{str(type_._name)}"  # pylint: disable=W0212
-                    type_str += "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
-                    translate_dict[type_] = type_str
-                    continue
+            if (
+                hasattr(type_, "__args__")
+                and isinstance(type_.__args__, collections.abc.Iterable)
+                and (sub_types := [x for x in type_.__args__ if not isinstance(x, omit_list)])
+            ):
+                add_classes(sub_types, translate_dict, global_state)
+                if type_._name is None:  # pylint: disable=protected-access
+                    type_str = str(type_.__origin__)
+                else:
+                    type_str = f"typing.{type_._name!s}"  # pylint: disable=protected-access
+                type_str += "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
+                translate_dict[type_] = type_str
+                continue
 
             if isinstance(type_, typing.ForwardRef):
                 translate_dict[type_] = f"'{type_.__forward_arg__}'"
@@ -251,8 +253,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         field_definitions = ""
     init_sig = [f"self.{f_name} = {v_name}" for f_name, v_name in zip(slots, type_dict.keys())]
     tuple_list = [f"self.{name_}" for name_ in slots]
-    init_content = "\n        ".join(init_sig)
-    init_content += "\n        self.__post_init__()"
+    init_content = "\n        ".join(init_sig) + "\n        self.__post_init__()"
     class_definition = _class_template.format(
         imports="\n".join(import_set),
         typename=typename,
@@ -268,10 +269,10 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         base_classes=", ".join(translate_dict[x] for x in base_classes),
     )
 
-    global_state["__name__"] = "serialize_%s" % typename
+    global_state["__name__"] = f"serialize_{typename}"
     try:
         # pylint: disable=W0122
-        exec(class_definition, global_state)  # nosec
+        exec(class_definition, global_state)  # nosec  # noqa: S102
     except AttributeError:
         print(class_definition, file=sys.stderr)
         raise
@@ -282,18 +283,18 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
 
     result = global_state[typename]
     result._source = class_definition
-    result._field_defaults = defaults_dict  # pylint: disable=W0212
+    result._field_defaults = defaults_dict  # pylint: disable=protected-access
     result.__annotations__ = types
     with suppress(AttributeError):
         result.__signature__ = inspect.signature(result)
-    result._field_types = collections.OrderedDict(types)  # pylint: disable=W0212
+    result._field_types = collections.OrderedDict(types)  # pylint: disable=protected-access
     return result
 
 
 class BaseMeta(type):
-    def __new__(mcs, name, bases, attrs):
+    def __new__(cls, name, bases, attrs):
         if attrs.get("_root", False):
-            return super().__new__(mcs, name, bases, attrs)
+            return super().__new__(cls, name, bases, attrs)
         warnings.warn(
             "BaseSerializableClass is deprecated, use pydantic.BaseModel instead", FutureWarning, stacklevel=2
         )
@@ -352,23 +353,23 @@ class BaseSerializableClass(metaclass=BaseMeta):
     __old_names__ = ()
 
     def __init__(self, *args, **kwargs):
-        pass
+        """declare interface"""
 
     def __post_init__(self):
-        pass
+        """declare interface"""
 
     def asdict(self) -> collections.OrderedDict:
-        pass
+        """declare interface"""
 
     def replace_(self, **_kwargs):
         return self
 
     def as_tuple(self) -> typing.Tuple:
-        pass
+        """declare interface"""
 
     @classmethod
     def make_(cls, iterable):
-        pass
+        """declare interface"""
 
 
 class SerializeClassEncoder(json.JSONEncoder):

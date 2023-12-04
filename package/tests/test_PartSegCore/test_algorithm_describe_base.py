@@ -1,9 +1,9 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import typing
 from enum import Enum
 
 import pytest
-from nme import class_to_str, register_class
+from local_migrator import class_to_str, register_class
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, ValidationError
 
@@ -15,6 +15,8 @@ from PartSegCore.algorithm_describe_base import (
     _GetDescriptionClass,
     base_model_to_algorithm_property,
 )
+from PartSegCore.analysis import AnalysisAlgorithmSelection
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 
@@ -267,6 +269,16 @@ def test_base_model_to_algorithm_property_hline():
     assert isinstance(fields[2], str)
 
 
+def test_hidden_field():
+    class Model(BaseModel):
+        field1: int = Field(1, hidden=True)
+        field2: int = 1
+
+    fields = base_model_to_algorithm_property(Model)
+    assert len(fields) == 1
+    assert fields[0].name == "field2"
+
+
 class TestAlgorithmDescribeBase:
     def test_old_style_algorithm(self):
         class SampleAlgorithm(AlgorithmDescribeBase):
@@ -322,8 +334,9 @@ class TestAlgorithmDescribeBase:
 
             @classmethod
             def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-                return super().get_fields() + [
-                    AlgorithmProperty("name2", "Name 2", 3.0, options_range=(1, 10), help_text="deeeed")
+                return [
+                    *super().get_fields(),
+                    AlgorithmProperty("name2", "Name 2", 3.0, options_range=(1, 10), help_text="deeeed"),
                 ]
 
         assert SampleSubAlgorithm.get_name() == "sample2"
@@ -342,7 +355,18 @@ class TestAlgorithmDescribeBase:
             assert SampleSubAlgorithm.get_default_values() == {"name": 1, "name2": 3.0}
 
 
-def test_roi_extraction_profile():
-    ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
-    with pytest.warns(FutureWarning):
-        ROIExtractionProfile("aaa", "aaa", {})
+class TestROIExtractionProfile:
+    def test_roi_extraction_profile(self):
+        ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
+        with pytest.warns(FutureWarning):
+            ROIExtractionProfile("aaa", "aaa", {})
+
+    def test_pretty_print(self):
+        prof1 = ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
+        assert f"{prof1}\n " == prof1.pretty_print(AnalysisAlgorithmSelection)
+        prof2 = ROIExtractionProfile(
+            name="aaa",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        )
+        assert prof2.pretty_print(AnalysisAlgorithmSelection).count("\n") == 7

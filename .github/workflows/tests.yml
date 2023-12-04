@@ -3,7 +3,6 @@ name: Tests
 on:
   push:
     branches:
-      - master
       - develop
       - feature_prepare/**
       - main
@@ -22,7 +21,7 @@ jobs:
     name: Download test data
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
@@ -32,54 +31,78 @@ jobs:
           path: test_data
           retention-days: 5
 
-  test_pyqt5:
-    name: PyQt5
-    uses: ./.github/workflows/base_test_workflow.yml
-    needs: download_data
-    with:
-      test_data: True
-      python_version: >-
-        ["3.8", "3.10"]
-      os: >-
-        ["windows-2019", "ubuntu-20.04", "macos-11"]
-      qt_backend: >-
-        ["PyQt5"]
-
-  test_pyside2:
-    name: PySide2
-    uses: ./.github/workflows/base_test_workflow.yml
-    needs: download_data
-    with:
-      test_data: True
-      python_version: >-
-        ["3.8", "3.10"]
-      os: >-
-        ["ubuntu-20.04"]
-      qt_backend: >-
-        ["PySide2"]
-
   base-test:
-    name: Base Test
+    name: Base py${{ matrix.python_version }}
+    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.8", "3.9", "3.10"]
+        os: ["ubuntu-20.04"]
+        qt_backend: ["PyQt5"]
+        tox_args: [ "" ]
+        include:
+          - python_version: "3.9"
+            os: "macos-11"
+            qt_backend: "PyQt5"
+          - python_version: "3.9"
+            os: "windows-2019"
+            qt_backend: "PyQt5"
+          - python_version: "3.9"
+            os: "ubuntu-20.04"
+            qt_backend: "PySide2"
+          - python_version: "3.9"
+            os: "ubuntu-22.04"
+            qt_backend: "PySide6"
+          - python_version: "3.9"
+            os: "ubuntu-22.04"
+            qt_backend: "PyQt6"
+          - python_version: "3.11"
+            os: "ubuntu-22.04"
+            qt_backend: "PyQt5"
+            tox_args: "-vv -e py311-PyQt5-all"
     with:
       test_data: True
-      python_version: >-
-        ["3.9"]
-      os: >-
-        ["windows-2019", "ubuntu-20.04", "macos-12"]
+      python_version: ${{ matrix.python_version }}
+      os: ${{ matrix.os }}
+      qt_backend: ${{ matrix.qt_backend }}
+      tox_args: ${{ matrix.tox_args }}
+
+  base-test-main:
+    name: Base py${{ matrix.python_version }}
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/base_test_workflow.yml
+    needs: download_data
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.8", "3.9", "3.10"]
+        os: ["ubuntu-20.04", "macos-11", "windows-2019"]
+        qt_backend: ["PySide2", "PyQt5"]
+        include:
+          - python_version: "3.11"
+            qt_backend: "PyQt5"
+            os: "ubuntu-22.04"
+          - python_version: "3.9"
+            os: "ubuntu-22.04"
+            qt_backend: "PySide6"
+          - python_version: "3.9"
+            os: "ubuntu-22.04"
+            qt_backend: "PyQt6"
+    with:
+      test_data: True
+      python_version: ${{ matrix.python_version }}
+      os: ${{ matrix.os }}
+      qt_backend: ${{ matrix.qt_backend }}
 
   test_coverage:
     needs: download_data
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       test_data: True
-      python_version: >-
-        ["3.9"]
-      os: >-
-        ["ubuntu-20.04"]
-      qt_backend: >-
-        ["PyQt5"]
+      python_version: "3.8"
       tox_args: "-e py38-PyQt5-coverage"
       coverage: true
 
@@ -89,27 +112,25 @@ jobs:
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       test_data: True
-      python_version: >-
-        ["3.8"]
-      os: >-
-        ["ubuntu-20.04"]
-      qt_backend: >-
-        ["PyQt5"]
+      python_version: "3.8"
       tox_args: "-e py38-PyQt5-minimal"
+      coverage: true
 
   test_conda:
     name: Test PartSeg conda
     runs-on: ubuntu-20.04
     needs: download_data
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          miniconda-version: latest
+          miniforge-version: latest
+          miniforge-variant: mambaforge
+          use-mamba: true
           channels: conda-forge
           channel-priority: strict
-          python-version: 3.9
+          python-version: "3.9"
 
       - uses: tlambert03/setup-qt-libs@v1
 
@@ -119,10 +140,23 @@ jobs:
           name: test_data
           path: test_data
 
+      - name: Use mamba solver
+        shell: "bash -el {0}"
+        run: |
+          conda install -n base conda-libmamba-solver
+          conda config --set solver libmamba
+
       - name: Install dependencies
-        run: conda install -y tox tox-conda
+        shell: "bash -el {0}"
+        run: |
+          mamba install -y "tox-conda>=0.10.0"
+
+      - name: List environment packages
+        shell: "bash -el {0}"
+        run: conda list
 
       - name: create environment
+        shell: "bash -el {0}"
         run: bash build_utils/create_environment_yml.sh
 
       - name: Upload environment file
@@ -132,10 +166,14 @@ jobs:
           path: environment.yml
           retention-days: 5
 
+      - name: patch tox.ini
+        shell: "bash -el {0}"
+        run: sed -e "s/{sys_platform}/{platform}/g" tox.ini -i
+
       - name: Test with tox
-        uses: GabrielBB/xvfb-action@v1
+        uses: aganders3/headless-gui@v1
         with:
-          run: conda run --no-capture-output tox -e py39-PySide2-conda
+          run: conda run -n test --no-capture-output tox -e py39-PySide2-conda
         timeout-minutes: 60
 
   check-package:
@@ -143,7 +181,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: hynek/build-and-inspect-python-package@v1

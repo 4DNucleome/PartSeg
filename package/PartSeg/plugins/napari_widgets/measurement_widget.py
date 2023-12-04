@@ -10,6 +10,7 @@ from qtpy.QtWidgets import QCheckBox, QLabel, QTabWidget
 from PartSeg._roi_analysis.advanced_window import MeasurementSettings
 from PartSeg._roi_analysis.measurement_widget import NO_MEASUREMENT_STRING, FileNamesEnum, MeasurementWidgetBase
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
+from PartSeg.plugins import register as register_plugins
 from PartSeg.plugins.napari_widgets._settings import get_settings
 from PartSeg.plugins.napari_widgets.utils import NapariFormDialog, generate_image
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
@@ -56,7 +57,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
             return
         for name in compute_class.get_channels_num():
             if name not in self.napari_viewer.layers:
-                show_info("Cannot calculate this measurement because " f"image do not have layer {name}")
+                show_info(f"Cannot calculate this measurement because image do not have layer {name}")
                 return
         units = self.units_choose.currentEnum()
         image = generate_image(self.napari_viewer, self.channels_chose.value.name, *compute_class.get_channels_num())
@@ -118,6 +119,7 @@ class Measurement(QTabWidget):
         self.measurement_settings = NapariMeasurementSettings(self.settings)
         self.addTab(self.measurement_widget, "Measurements")
         self.addTab(self.measurement_settings, "Measurements settings")
+        register_plugins()
 
     def reset_choices(self, event=None):
         self.measurement_widget.reset_choices()

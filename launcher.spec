@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
 
 block_cipher = None
 import sys
@@ -11,6 +11,7 @@ import zmq
 import itertools
 import pkg_resources
 import debugpy._vendored
+import importlib.metadata
 
 sys.setrecursionlimit(5000)
 sys.path.append(os.path.abspath("__file__"))
@@ -47,6 +48,7 @@ else:
 
         return os.path.join(os.path.dirname(resources.__file__), "icons")
 
+import contextlib
 from dask import config
 
 import imagecodecs
@@ -60,7 +62,7 @@ if napari_version <= parse_version("0.4.16"):
 from imageio.config.plugins import known_plugins as imageio_known_plugins
 
 hiddenimports = (
-    ["imagecodecs._" + x for x in imagecodecs._extensions()]
+    [f"imagecodecs.{y}" for y in (x if x[0] == "_" else f"_{x}" for x in imagecodecs._extensions())]
     + ["imagecodecs._shared"]
     + plugins
     + ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"]
@@ -78,25 +80,37 @@ hiddenimports = (
         "numpy.random.bounded_integers",
         "numpy.random.entropy",
         "PartSegCore.register",
+        "PartSegCore.channel_class",
+        "nme",
         "defusedxml.cElementTree",
         "vispy.app.backends._pyqt5",
         "scipy.spatial.transform._rotation_groups",
         "magicgui.backends._qtpy",
         "freetype",
         "psygnal._signal",
+        "psygnal._dataclass_utils",
+        "psygnal._weak_callback",
+        "imagecodecs._imagecodecs",
+        "PartSeg.plugins.napari_widgets",
+        "PartSegCore.napari_plugins",
     ]
-    + [x.module_name for x in imageio_known_plugins.values()]
+    + [x.module_name for x in imageio_known_plugins.values()] + [x for x in collect_submodules("skimage") if "tests" not in x]
 )
 
 
-try:
+# psygnal handle
+for package_path in importlib.metadata.files("psygnal"):
+    if package_path.suffix in {".so", ".pyd"} and "psygnal" not in package_path.name:
+        hiddenimports.append(package_path.name.split(".")[0])
+
+hiddenimports.append("mypy_extensions")
+
+
+with contextlib.suppress(ImportError):
     from sentry_sdk.integrations import _AUTO_ENABLING_INTEGRATIONS
 
     for el in _AUTO_ENABLING_INTEGRATIONS:
         hiddenimports.append(os.path.splitext(el)[0])
-except ImportError:
-    pass
-
 qt_data = []
 
 # print(["plugins." + x.name for x in plugins.get_plugins()])
@@ -113,13 +127,13 @@ napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
 napari_resource_dest_path = os.path.relpath(os.path.dirname(napari_resource_path), napari_base_path)
 
 packages = itertools.chain(
-    pkg_resources.iter_entry_points("PartSeg.plugins"),
-    pkg_resources.iter_entry_points("partseg.plugins"),
-    pkg_resources.iter_entry_points("PartSegCore.plugins"),
-    pkg_resources.iter_entry_points("partsegcore.plugins"),
+    importlib.metadata.entry_points().get("PartSeg.plugins", []),
+    importlib.metadata.entry_points().get("partseg.plugins", []),
+    importlib.metadata.entry_points().get("PartSegCore.plugins", []),
+    importlib.metadata.entry_points().get("partsegcore.plugins", []),
 )
 
-plugins_data = []
+plugins_data = [(os.path.join(base_path, "napari.yaml"), ".")]
 
 for package in packages:
     module = package.load()
@@ -161,9 +175,13 @@ a = Analysis(
     + collect_data_files("vispy")
     + collect_data_files("napari")
     + collect_data_files("freetype")
+    + collect_data_files("skimage")
+    + collect_data_files("jsonschema_specifications")
+    + collect_data_files("PartSegCore-compiled-backend")
     + pyzmq_data
     + plugins_data
-    + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")],
+    + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")]
+    + copy_metadata("PartSeg", recursive=True),
     hiddenimports=hiddenimports,
     # + ["plugins." + x.name for x in plugins.get_plugins()],
     hookspath=[],

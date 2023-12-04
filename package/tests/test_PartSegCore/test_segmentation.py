@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 import operator
 from abc import ABC
@@ -20,7 +20,7 @@ from PartSegCore.roi_info import BoundInfo, ROIInfo
 from PartSegCore.segmentation import ROIExtractionAlgorithm, algorithm_base
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
-from PartSegCore.segmentation.watershed import FlowMethodSelection
+from PartSegCore.segmentation.watershed import WatershedSelection
 from PartSegImage import Image
 
 
@@ -120,7 +120,7 @@ class BaseThreshold:
         raise NotImplementedError
 
     def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class BaseOneThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
@@ -204,7 +204,7 @@ class TestRangeThresholdAlgorithm:
         alg = sa.RangeThresholdAlgorithm()
         parameters = sa.RangeThresholdAlgorithm.__argument_class__(
             threshold={
-                "name": "Base/Core",
+                "name": "Range",
                 "values": {
                     "base_threshold": {
                         "name": "Manual",
@@ -248,7 +248,7 @@ class TestRangeThresholdAlgorithm:
         alg = sa.RangeThresholdAlgorithm()
         parameters = sa.RangeThresholdAlgorithm.__argument_class__(
             threshold={
-                "name": "Base/Core",
+                "name": "Range",
                 "values": {
                     "base_threshold": {
                         "name": "Manual",
@@ -290,16 +290,16 @@ class TestRangeThresholdAlgorithm:
 
 
 class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
-    @pytest.mark.parametrize("sprawl_algorithm_name", FlowMethodSelection.__register__.keys())
+    @pytest.mark.parametrize("sprawl_algorithm_name", WatershedSelection.__register__.keys())
     @pytest.mark.parametrize("compare_op", [operator.eq, operator.ge])
-    @pytest.mark.parametrize("components", [2] + list(range(3, 15, 2)))
+    @pytest.mark.parametrize("components", [2, *list(range(3, 15, 2))])
     def test_multiple(self, sprawl_algorithm_name, compare_op, components):
         alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
         image = self.get_multiple_part(components)
         alg.set_image(image)
-        sprawl_algorithm = FlowMethodSelection[sprawl_algorithm_name]
-        parameters.flow_type = FlowMethodSelection(
+        sprawl_algorithm = WatershedSelection[sprawl_algorithm_name]
+        parameters.flow_type = WatershedSelection(
             name=sprawl_algorithm_name, values=sprawl_algorithm.get_default_values()
         )
         if compare_op(1, 0):
@@ -308,15 +308,15 @@ class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
         result = alg.calculation_run(empty)
         self.check_result(result, [4000] * components, compare_op, parameters)
 
-    @pytest.mark.parametrize("algorithm_name", FlowMethodSelection.__register__.keys())
+    @pytest.mark.parametrize("algorithm_name", WatershedSelection.__register__.keys())
     def test_side_connection(self, algorithm_name):
         image = self.get_side_object()
         alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
         parameters.side_connection = True
         alg.set_image(image)
-        val = FlowMethodSelection[algorithm_name]
-        parameters.flow_type = FlowMethodSelection(name=algorithm_name, values=val.get_default_values())
+        val = WatershedSelection[algorithm_name]
+        parameters.flow_type = WatershedSelection(name=algorithm_name, values=val.get_default_values())
         alg.set_parameters(parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000 + 5, 72000 + 5], operator.eq, parameters)
@@ -327,20 +327,18 @@ class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
     parameters = sa.LowerThresholdFlowAlgorithm.__argument_class__(
-        **{
-            "channel": 0,
-            "minimum_size": 30,
-            "threshold": {
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 55}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 45}},
-                },
+        channel=0,
+        minimum_size=30,
+        threshold={
+            "name": "Base/Core",
+            "values": {
+                "core_threshold": {"name": "Manual", "values": {"threshold": 55}},
+                "base_threshold": {"name": "Manual", "values": {"threshold": 45}},
             },
-            "noise_filtering": {"name": "None", "values": {}},
-            "side_connection": False,
-            "flow_type": {"name": "Euclidean", "values": {}},
-        }
+        },
+        noise_filtering={"name": "None", "values": {}},
+        side_connection=False,
+        flow_type={"name": "Euclidean", "values": {}},
     )
     shift = -6
     get_base_object = staticmethod(get_two_parts)
@@ -353,20 +351,18 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
 
 class TestUpperThresholdFlow(BaseFlowThreshold):
     parameters = sa.UpperThresholdFlowAlgorithm.__argument_class__(
-        **{
-            "channel": 0,
-            "minimum_size": 30,
-            "threshold": {
-                "name": "Base/Core",
-                "values": {
-                    "core_threshold": {"name": "Manual", "values": {"threshold": 45}},
-                    "base_threshold": {"name": "Manual", "values": {"threshold": 55}},
-                },
+        channel=0,
+        minimum_size=30,
+        threshold={
+            "name": "Base/Core",
+            "values": {
+                "core_threshold": {"name": "Manual", "values": {"threshold": 45}},
+                "base_threshold": {"name": "Manual", "values": {"threshold": 55}},
             },
-            "noise_filtering": {"name": "None", "values": {}},
-            "side_connection": False,
-            "flow_type": {"name": "Euclidean", "values": {}},
-        }
+        },
+        noise_filtering={"name": "None", "values": {}},
+        side_connection=False,
+        flow_type={"name": "Euclidean", "values": {}},
     )
     shift = 6
     get_base_object = staticmethod(get_two_parts_reversed)

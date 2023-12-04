@@ -5,7 +5,7 @@ import packaging.version
 import tifffile.tifffile
 from tifffile import TiffFile, TiffPage
 
-if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # noqa C901
+if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
     original_asarray = TiffPage.asarray
 
     def asarray(self, *args, **kwargs):
@@ -19,7 +19,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
         self.parent.report_func()
         return res
 
-    def _dummy_report_func(self):
+    def _dummy_report_func(self):  # noqa: ARG001
         """dummy function for report_func"""
 
     TiffFile.report_func = _dummy_report_func

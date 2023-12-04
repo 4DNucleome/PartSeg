@@ -67,7 +67,9 @@ class MaskWidget(QWidget):
         self.clip_to_mask.stateChanged.connect(self._value_changed_wrap)
         # noinspection PyUnresolvedReferences
         self.reversed_mask.stateChanged.connect(self._value_changed_wrap)
+        self.setup_ui()
 
+    def setup_ui(self):
         layout = QVBoxLayout()
         layout1 = QHBoxLayout()
         layout1.addWidget(QLabel("Dilate mask:"))
@@ -213,7 +215,7 @@ class MaskDialogBase(QDialog):
         self.reset_next_btn.setDisabled(True)
 
     def next_mask(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def prev_mask(self):
-        raise NotImplementedError()
+        raise NotImplementedError

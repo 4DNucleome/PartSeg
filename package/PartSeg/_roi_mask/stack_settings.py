@@ -22,7 +22,7 @@ from PartSegImage.image import minimal_dtype, reduce_array
 class StackSettings(BaseSettings):
     load_metadata = staticmethod(load_metadata)
     components_change_list = Signal([int, list])
-    save_locations_keys = [
+    save_locations_keys: typing.ClassVar[typing.List[str]] = [
         "save_batch",
         "save_components_directory",
         "save_segmentation_directory",
@@ -40,7 +40,7 @@ class StackSettings(BaseSettings):
 
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (
-            result.file_path is not None and result.file_path != "" and result.file_path != self.image.file_path
+            result.file_path is not None and result.file_path and result.file_path != self.image.file_path
         ):  # pragma: no cover
             if self._parent is not None:
                 # TODO change to non disrupting popup
@@ -158,7 +158,7 @@ class StackSettings(BaseSettings):
 
         components = sorted(data.roi_info.bound_info)
         for i in components:
-            _skip = data.roi_extraction_parameters[int(i)]  # noqa: F841
+            _skip = data.roi_extraction_parameters[int(i)]
         self.mask = data.mask
         if self.keep_chosen_components:
             if not self.compare_history(data.history) and self.chosen_components():
@@ -299,8 +299,8 @@ class StackSettings(BaseSettings):
         state = self.get_project_info()
         try:
             new_roi_info = new_roi_info.fit_to_image(self.image)
-        except ValueError:
-            raise ValueError("ROI do not fit to image")
+        except ValueError as e:
+            raise ValueError("ROI do not fit to image") from e
         if save_chosen:
             state2 = self.transform_state(state, new_roi_info, segmentation_parameters, list_of_components, save_chosen)
             self.chosen_components_widget.set_chose(

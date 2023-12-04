@@ -4,7 +4,7 @@ from abc import ABC
 from enum import Enum
 
 import numpy as np
-from nme import register_class, rename_key, update_argument
+from local_migrator import register_class, rename_key, update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
@@ -35,7 +35,7 @@ class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
         :param arguments: additional arguments defined by :py:meth:`get_fields`
         :return: channel array with removed noise
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class NoneNoiseFiltering(NoiseFilteringBase):

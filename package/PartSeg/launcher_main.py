@@ -11,7 +11,7 @@ multiprocessing.freeze_support()
 
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal
-def _test_imports():
+def _test_imports():  # pragma: no cover
     print("start_test_import")
     from qtpy.QtWidgets import QApplication
 
@@ -25,6 +25,19 @@ def _test_imports():
     from PartSeg._roi_analysis.main_window import MainWindow as AnalysisMain
     from PartSeg._roi_mask.main_window import MainWindow as MaskMain
     from PartSeg.common_backend.base_argparser import _setup_sentry
+    from PartSeg.plugins import napari_widgets
+    from PartSegCore import napari_plugins
+
+    if "BorderSmooth" not in dir(napari_widgets):
+        raise ImportError("napari_widgets not loaded")
+
+    if "load_image" not in dir(napari_plugins):
+        raise ImportError("napari_plugins not loaded")
+
+    with suppress(ImportError):
+        from napari.qt import get_app
+
+        get_app()
 
     _setup_sentry()
     freetype.get_handle()
@@ -62,16 +75,20 @@ def create_parser():
     return parser
 
 
-def main():
+def main():  # pragma: no cover
     if len(sys.argv) > 1 and sys.argv[1] == "_test":
         _test_imports()
         return
 
     parser = create_parser()
 
-    argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
+    argv = [x for x in sys.argv[1:] if not x.startswith(("parent", "pipe"))]
     args = parser.parse_args(argv)
 
+    try:
+        from qtpy import QT5
+    except ImportError:  # pragma: no cover
+        QT5 = True
     from qtpy.QtCore import Qt
     from qtpy.QtGui import QIcon
     from qtpy.QtWidgets import QApplication
@@ -85,7 +102,8 @@ def main():
     if platform.system() == "Darwin":
         multiprocessing.set_start_method("spawn")
 
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    if QT5:
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     my_app = QApplication(sys.argv)
     my_app.setApplicationName("PartSeg")
     my_app.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))
@@ -129,7 +147,8 @@ def select_window(args):
         wind = MainWindow(title=title)
         if args.batch:
             wind.main_menu.batch_window()
-    elif args.gui == "roi_mask":
+        return wind
+    if args.gui == "roi_mask":
         from PartSeg import plugins
 
         plugins.register()
@@ -139,14 +158,12 @@ def select_window(args):
         if args.image:
             image = TiffImageReader.read_image(args.image)
             MainWindow = partial(MainWindow, initial_image=image)
-        wind = MainWindow(title=title)
-    else:
-        from PartSeg._launcher.main_window import MainWindow
+        return MainWindow(title=title)
 
-        title = f"{APP_NAME} Launcher"
-        wind = MainWindow(title=title)
+    from PartSeg._launcher.main_window import MainWindow
 
-    return wind
+    title = f"{APP_NAME} Launcher"
+    return MainWindow(title=title)
 
 
 if __name__ == "__main__":

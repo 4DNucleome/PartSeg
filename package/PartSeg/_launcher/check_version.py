@@ -50,13 +50,13 @@ class CheckVersionThread(QThread):
                         return
                 os.remove(os.path.join(state_store.save_folder, IGNORE_FILE))
 
-            with urllib.request.urlopen(f"https://pypi.org/pypi/{self.package_name}/json") as r:  # nosec
+            with urllib.request.urlopen(f"https://pypi.org/pypi/{self.package_name}/json") as r:  # nosec  # noqa: S310
                 data = json.load(r)
             self.release = data["info"]["version"]
             self.url = data["info"]["home_page"]
         except (KeyError, urllib.error.URLError):  # pragma: no cover
             pass
-        except Exception as e:  # pylint: disable=W0703
+        except Exception as e:  # pylint: disable=broad-except
             with sentry_sdk.push_scope() as scope:
                 scope.set_tag("auto_report", "true")
                 scope.set_tag("check_version", "true")

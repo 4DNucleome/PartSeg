@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Type, Union, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -40,7 +40,7 @@ from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
 from PartSeg.common_gui.error_report import DataImportErrorDialog
 from PartSeg.common_gui.lock_checkbox import LockCheckBox
 from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
-from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile, get_fields_from_algorithm
 from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
@@ -48,6 +48,8 @@ from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, Measu
 from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
+
+_DialogType = Union[Type[str], Type[int], Type[float]]
 
 
 def h_line():
@@ -107,7 +109,9 @@ class Properties(QWidget):
         self.units.setCurrentEnum(units_value)
         # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
+        self.setup_ui()
 
+    def setup_ui(self):
         spacing_layout = QHBoxLayout()
         spacing_layout.addWidget(self.lock_spacing)
         for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
@@ -146,11 +150,12 @@ class Properties(QWidget):
 
     # @Slot(str)  # PySide bug
     def profile_chosen(self, text):
-        if text == "":
+        if not text:
             self.delete_btn.setEnabled(False)
             self.rename_btn.setEnabled(False)
             self.info_label.setPlainText("")
             return
+
         try:
             if self.sender() == self.profile_list.list_widget:
                 profile = self._settings.roi_profiles[text]
@@ -236,7 +241,7 @@ class Properties(QWidget):
         elif self.pipeline_list.selectedItems():
             text = self.pipeline_list.selectedItems()[0].text()
             dkt = self._settings.roi_pipelines
-        if text != "":
+        if text:
             self.delete_btn.setDisabled(True)
             del dkt[text]
             self.update_profile_list()
@@ -326,7 +331,7 @@ class Properties(QWidget):
         elif self.pipeline_list.selectedItems():
             profile_name = self.pipeline_list.selectedItems()[0].text()
             profiles_dict = self._settings.roi_pipelines
-        if profile_name == "":
+        if not profile_name:
             return
         text, ok = QInputDialog.getText(self, "New profile name", f"New name for {profile_name}", text=profile_name)
         if ok:
@@ -358,7 +363,7 @@ class MeasurementSettings(QWidget):
     :type settings: Settings
     """
 
-    def __init__(self, settings: PartSettings, parent=None):
+    def __init__(self, settings: PartSettings, parent=None):  # noqa: PLR0915
         super().__init__(parent)
         self.chosen_element: Optional[MeasurementListWidgetItem] = None
         self.chosen_element_area: Optional[Tuple[AreaType, float]] = None
@@ -423,7 +428,9 @@ class MeasurementSettings(QWidget):
         self.profile_options.itemSelectionChanged.connect(self.create_selection_changed)
         self.profile_options_chosen.itemSelectionChanged.connect(self.create_selection_chosen_changed)
         self.settings.measurement_profiles_changed.connect(self._refresh_profiles)
+        self.setup_ui()
 
+    def setup_ui(self):  # noqa: PLR0915
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Measurement set:"))
         profile_layout = QHBoxLayout()
@@ -603,7 +610,7 @@ class MeasurementSettings(QWidget):
             self.move_down.setDisabled(True)
 
     def good_name(self):
-        return str(self.profile_name.text()).strip() != ""
+        return str(self.profile_name.text()).strip()
 
     def move_down_fun(self):
         row = self.profile_options_chosen.currentRow()
@@ -644,7 +651,7 @@ class MeasurementSettings(QWidget):
             except ValueError as e:  # pragma: no cover
                 QMessageBox().warning(self, "Problem in add measurement", str(e))
         with suppress(KeyError):
-            arguments = MEASUREMENT_DICT[str(node.name)]._get_fields()  # pylint: disable=protected-access
+            arguments = get_fields_from_algorithm(MEASUREMENT_DICT[str(node.name)])
             if len(arguments) > 0 and not dict(node.parameters):
                 dial = self.form_dialog(arguments)
                 if dial.exec_():
@@ -724,7 +731,7 @@ class MeasurementSettings(QWidget):
         for i in range(self.profile_options_chosen.count()):
             txt = str(self.profile_options_chosen.item(i).text())
             selected_values.append((txt, str, txt))
-        val_dialog = MultipleInput("Set fields name", list(selected_values), parent=self)
+        val_dialog = MultipleInput("Set fields name", objects_list=list(selected_values), parent=self)
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
@@ -826,34 +833,17 @@ class SegAdvancedWindow(AdvancedWindow):
 
 
 class MultipleInput(QDialog):
-    def __init__(self, text, help_text, objects_list=None, parent=None):
-        if objects_list is None:
-            objects_list = help_text
-            help_text = ""
+    def __init__(
+        self,
+        text: str,
+        help_text: str = "",
+        objects_list: Optional[List[Union[Tuple[str, _DialogType], Tuple[str, _DialogType, str]]]] = None,
+        parent: Optional[QWidget] = None,
+    ):
+        if objects_list is None:  # pragma: no cover
+            raise ValueError("objects_list cannot be None")
 
-        def create_input_float(obj, ob2=None):
-            if ob2 is not None:
-                val = obj
-                obj = ob2
-            else:
-                val = 0
-            res = QDoubleSpinBox(obj)
-            res.setRange(-1000000, 1000000)
-            res.setValue(val)
-            return res
-
-        def create_input_int(obj, ob2=None):
-            if ob2 is not None:
-                val = obj
-                obj = ob2
-            else:
-                val = 0
-            res = QSpinBox(obj)
-            res.setRange(-1000000, 1000000)
-            res.setValue(val)
-            return res
-
-        field_dict = {str: QLineEdit, float: create_input_float, int: create_input_int}
+        field_dict = {str: QLineEdit, float: _create_input_float, int: _create_input_int}
         super().__init__(parent=parent)
         ok_butt = QPushButton("Ok", self)
         cancel_butt = QPushButton("Cancel", self)
@@ -862,12 +852,12 @@ class MultipleInput(QDialog):
         ok_butt.clicked.connect(self.accept_response)
         cancel_butt.clicked.connect(self.close)
         layout = QGridLayout()
-        layout.setAlignment(Qt.AlignVCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         for i, info in enumerate(objects_list):
             name = info[0]
             type_of = info[1]
             name_label = QLabel(name)
-            name_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            name_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             layout.addWidget(name_label, i, 0)
             if len(info) == 3:
                 item = field_dict[type_of](type_of(info[2]), self)
@@ -882,7 +872,7 @@ class MultipleInput(QDialog):
         font.setBold(True)
         main_text.setFont(font)
         main_layout.addWidget(main_text)
-        if help_text != "":
+        if help_text:
             help_label = QLabel(help_text)
             help_label.setWordWrap(True)
             main_layout.addWidget(help_label)
@@ -902,14 +892,36 @@ class MultipleInput(QDialog):
                 if not val.strip():
                     QMessageBox.warning(self, "Not all fields filled", "")
                     return
-                else:
-                    res[name] = val
             else:
                 val = type_of(item.value())
-                res[name] = val
+            res[name] = val
         self.result = res
         self.accept()
 
     @property
     def get_response(self):
         return self.result
+
+
+def _create_input_float(obj, ob2=None):
+    if ob2 is not None:
+        val = obj
+        obj = ob2
+    else:
+        val = 0
+    res = QDoubleSpinBox(obj)
+    res.setRange(-1000000, 1000000)
+    res.setValue(val)
+    return res
+
+
+def _create_input_int(obj, ob2=None):
+    if ob2 is not None:
+        val = obj
+        obj = ob2
+    else:
+        val = 0
+    res = QSpinBox(obj)
+    res.setRange(-1000000, 1000000)
+    res.setValue(val)
+    return res

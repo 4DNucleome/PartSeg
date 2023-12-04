@@ -6,33 +6,46 @@ on:
       - master
       - develop
       - main
+      - bugfix/fix_napari_widgets_tests
   pull_request:
     branches:
       - '**'
 
+concurrency:
+  group: test-napari-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  test-latest-release:
+    name: Test latest release ${{ matrix.napari }} ${{ matrix.qt_backend }}
+    strategy:
+      fail-fast: false
+      matrix:
+        qt_backend: ["PyQt5", "PySide2"]
+        os: ["ubuntu-22.04"]
+    uses: ./.github/workflows/base_test_workflow.yml
+    with:
+      python_version: "3.10"
+      os: ${{ matrix.os }}
+      napari: "napari417"
+      qt_backend: ${{ matrix.qt_backend }}
+      timeout: 10
+
   test-pyqt5:
     name: PyQt5 ${{ matrix.napari }}
+    strategy:
+      fail-fast: false
+      matrix:
+        napari: ["napari414", "napari415", "napari416"]
+        qt_backend: ["PyQt5"]
+        include:
+          - napari: "napari414"
+            qt_backend: "PySide2"
+    if: github.event_name == 'push'
     uses: ./.github/workflows/base_test_workflow.yml
     with:
-      python_version: >-
-        ["3.9"]
-      os: >-
-        ["ubuntu-20.04"]
-      napari: >-
-        ["napari414", "napari415", "napari416", "napari417"]
-      qt_backend: >-
-        ["PyQt5"]
-
-  test-pyside2:
-    name: PySide2 ${{ matrix.napari }}
-    uses: ./.github/workflows/base_test_workflow.yml
-    with:
-      python_version: >-
-        ["3.9"]
-      os: >-
-        ["ubuntu-20.04"]
-      napari: >-
-        ["napari414", "napari417"]
-      qt_backend: >-
-        ["PySide2"]
+      python_version: "3.9"
+      os: "ubuntu-20.04"
+      napari: ${{ matrix.napari }}
+      qt_backend: ${{ matrix.qt_backend }}
+      timeout: 10

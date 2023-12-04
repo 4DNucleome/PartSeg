@@ -1,4 +1,6 @@
+report-*.json
 environment.yml
+minimum-constrains.txt
 .isort.cfg
 pip-wheel-metadata/*
 node_modules

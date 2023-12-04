@@ -1,8 +1,9 @@
+import contextlib
+
 from pygments import highlight
 from pygments.formatter import Formatter
 from pygments.lexers import get_lexer_by_name
 from qtpy import QtGui
-
 
 # inspired by  https://github.com/Vector35/snippets/blob/master/QCodeEditor.py (MIT license) and
 # https://pygments.org/docs/formatterdevelopment/#html-3-2-formatter
@@ -24,7 +25,7 @@ def get_text_char_format(style):
         text_char_format.setBackground(QtGui.QColor(style["bgcolor"]))
 
     if style.get("bold"):
-        text_char_format.setFontWeight(QtGui.QFont.Bold)
+        text_char_format.setFontWeight(QtGui.QFont.Weight.Bold)
     if style.get("italic"):
         text_char_format.setFontItalic(True)
     if style.get("underline"):
@@ -74,7 +75,5 @@ class Pylighter(QtGui.QSyntaxHighlighter):
         # The core problem is that pygemnts by default use string streams,
         # that will not handle QTextCharFormat, so wee need use `data` property to work around this.
         for i in range(len(text)):
-            try:
+            with contextlib.suppress(IndexError):
                 self.setFormat(i, 1, self.formatter.data[p + i])
-            except IndexError:
-                pass

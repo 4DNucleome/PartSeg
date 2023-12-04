@@ -1,6 +1,7 @@
 """
 Code from https://github.com/napari/napari-console
 """
+# pylint: disable=no-value-for-parameter,unexpected-keyword-arg
 import re
 import sys
 from typing import TYPE_CHECKING
@@ -50,7 +51,7 @@ if sys.platform.startswith("win"):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
-class QtConsole(RichJupyterWidget):
+class QtConsole(RichJupyterWidget):  # pylint: disable=abstract-method
     """Qt view for the console, an integrated iPython terminal in napari.
     Parameters
     ----------
@@ -93,7 +94,7 @@ class QtConsole(RichJupyterWidget):
             self.kernel_client = kernel_client
             self.shell = kernel_manager.kernel.shell
             self.push = self.shell.push
-        elif type(shell) is InProcessInteractiveShell:  # pylint: disable=C0123
+        elif type(shell) is InProcessInteractiveShell:  # pylint: disable=unidiomatic-typecheck
             # If there is an existing running InProcessInteractiveShell
             # it is likely because multiple viewers have been launched from
             # the same process. In that case create a new kernel.
@@ -126,7 +127,7 @@ class QtConsole(RichJupyterWidget):
             self.shell = shell
             self.push = self.shell.push
         else:
-            raise ValueError("ipython shell not recognized; " f"got {type(shell)}")
+            raise ValueError(f"ipython shell not recognized; got {type(shell)}")
         # Add any user variables
         user_variables = user_variables or {}
         self.push(user_variables)

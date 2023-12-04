@@ -1,0 +1,118 @@
+{
+  "test_range": {
+    "__class__": "PartSegCore.algorithm_describe_base.ROIExtractionProfile",
+    "__class_version_dkt__": {
+      "PartSegCore.algorithm_describe_base.ROIExtractionProfile": "0.0.0",
+      "PartSegCore.utils.BaseModel": "0.0.0"
+    },
+    "__values__": {
+      "name": "test_range",
+      "algorithm": "Range threshold",
+      "values": {
+        "__class__": "PartSegCore.segmentation.restartable_segmentation_algorithms.RangeThresholdAlgorithmParameters",
+        "__class_version_dkt__": {
+          "PartSegCore.segmentation.restartable_segmentation_algorithms.RangeThresholdAlgorithmParameters": "0.0.2",
+          "PartSegCore.segmentation.restartable_segmentation_algorithms.ThresholdBaseAlgorithmParameters": "0.0.1",
+          "PartSegCore.utils.BaseModel": "0.0.0"
+        },
+        "__values__": {
+          "channel": {
+            "__class__": "PartSegImage.channel_class.Channel",
+            "__class_version_dkt__": {
+              "PartSegImage.channel_class.Channel": "0.0.0"
+            },
+            "__values__": {
+              "value": 1
+            }
+          },
+          "noise_filtering": {
+            "__class__": "PartSegCore.segmentation.noise_filtering.NoiseFilterSelection",
+            "__class_version_dkt__": {
+              "PartSegCore.segmentation.noise_filtering.NoiseFilterSelection": "0.0.0",
+              "PartSegCore.algorithm_describe_base.AlgorithmSelection": "0.0.0",
+              "PartSegCore.utils.BaseModel": "0.0.0"
+            },
+            "__values__": {
+              "name": "None",
+              "values": {
+                "__class__": "PartSegCore.utils.BaseModel",
+                "__class_version_dkt__": {
+                  "PartSegCore.utils.BaseModel": "0.0.0"
+                },
+                "__values__": {}
+              },
+              "class_path": "PartSegCore.segmentation.noise_filtering.NoneNoiseFiltering"
+            }
+          },
+          "minimum_size": 10,
+          "side_connection": false,
+          "threshold": {
+            "__class__": "PartSegCore.segmentation.threshold.DoubleThresholdSelection",
+            "__class_version_dkt__": {
+              "PartSegCore.segmentation.threshold.DoubleThresholdSelection": "0.0.0",
+              "PartSegCore.algorithm_describe_base.AlgorithmSelection": "0.0.0",
+              "PartSegCore.utils.BaseModel": "0.0.0"
+            },
+            "__values__": {
+              "name": "Base/Core",
+              "values": {
+                "__class__": "PartSegCore.segmentation.threshold.DoubleThresholdParams",
+                "__class_version_dkt__": {
+                  "PartSegCore.segmentation.threshold.DoubleThresholdParams": "0.0.0",
+                  "PartSegCore.utils.BaseModel": "0.0.0"
+                },
+                "__values__": {
+                  "core_threshold": {
+                    "__class__": "PartSegCore.segmentation.threshold.ThresholdSelection",
+                    "__class_version_dkt__": {
+                      "PartSegCore.segmentation.threshold.ThresholdSelection": "0.0.0",
+                      "PartSegCore.algorithm_describe_base.AlgorithmSelection": "0.0.0",
+                      "PartSegCore.utils.BaseModel": "0.0.0"
+                    },
+                    "__values__": {
+                      "name": "Manual",
+                      "values": {
+                        "__class__": "PartSegCore.segmentation.threshold.SingleThresholdParams",
+                        "__class_version_dkt__": {
+                          "PartSegCore.segmentation.threshold.SingleThresholdParams": "0.0.0",
+                          "PartSegCore.utils.BaseModel": "0.0.0"
+                        },
+                        "__values__": {
+                          "threshold": 20000.0
+                        }
+                      },
+                      "class_path": "PartSegCore.segmentation.threshold.ManualThreshold"
+                    }
+                  },
+                  "base_threshold": {
+                    "__class__": "PartSegCore.segmentation.threshold.ThresholdSelection",
+                    "__class_version_dkt__": {
+                      "PartSegCore.segmentation.threshold.ThresholdSelection": "0.0.0",
+                      "PartSegCore.algorithm_describe_base.AlgorithmSelection": "0.0.0",
+                      "PartSegCore.utils.BaseModel": "0.0.0"
+                    },
+                    "__values__": {
+                      "name": "Manual",
+                      "values": {
+                        "__class__": "PartSegCore.segmentation.threshold.SingleThresholdParams",
+                        "__class_version_dkt__": {
+                          "PartSegCore.segmentation.threshold.SingleThresholdParams": "0.0.0",
+                          "PartSegCore.utils.BaseModel": "0.0.0"
+                        },
+                        "__values__": {
+                          "threshold": 100.0
+                        }
+                      },
+                      "class_path": "PartSegCore.segmentation.threshold.ManualThreshold"
+                    }
+                  }
+                }
+              },
+              "class_path": "PartSegCore.segmentation.threshold.DoubleThreshold"
+            }
+          }
+        }
+      }
+    }
+  }
+}

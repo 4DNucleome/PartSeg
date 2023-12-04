@@ -35,6 +35,7 @@ from PartSeg.common_gui.custom_save_dialog import PSaveDialog
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
 from PartSeg.common_gui.universal_gui_part import TextShow
+from PartSeg.plugins import register as register_plugins
 from PartSeg.plugins.napari_widgets._settings import get_settings
 from PartSeg.plugins.napari_widgets.utils import NapariFormWidgetWithMask, generate_image
 from PartSegCore import UNIT_SCALE, Units
@@ -82,7 +83,7 @@ class NapariAlgorithmChoose(AlgorithmChooseBase):
 
 class ROIExtractionAlgorithms(QWidget):
     @staticmethod
-    def get_method_dict() -> AlgorithmSelection:  # pragma: no cover
+    def get_method_dict() -> typing.Type[AlgorithmSelection]:  # pragma: no cover
         raise NotImplementedError
 
     @staticmethod
@@ -135,6 +136,7 @@ class ROIExtractionAlgorithms(QWidget):
         self.profile_combo_box.textActivated.connect(self.select_profile)
 
         self.update_tooltips()
+        register_plugins()
 
     def _enable_calculation_btn(self):
         self.calculate_btn.setEnabled(True)

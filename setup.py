@@ -1,4 +1,5 @@
 import codecs
+import contextlib
 import os
 import re
 
@@ -20,12 +21,10 @@ def readme():
     with open(os.path.join(this_directory, "Readme.md")) as f:
         text = f.read()
         text = reg.sub(r"\1(https://raw.githubusercontent.com/4DNucleome/PartSeg/master/\2)", text)
-        try:
+        with contextlib.suppress(ImportError):
             from setuptools_scm import get_version
 
             text = reg2.sub(f"PartSeg-{get_version()}", text)
-        except ImportError:
-            pass
     with open(os.path.join(this_directory, "changelog.md")) as f:
         chg = f.read()
         text += "\n\n" + chg.replace("# ", "## ")
@@ -45,5 +44,4 @@ setup(
     include_package_data=True,
     long_description=readme(),
     long_description_content_type="text/markdown",
-    use_scm_version=True,
 )

@@ -3,7 +3,7 @@ from abc import ABC
 
 import numpy as np
 import SimpleITK as sitk
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
@@ -16,7 +16,7 @@ class BaseSmoothing(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class NoneSmoothing(BaseSmoothing):
@@ -77,7 +77,7 @@ class VoteSmoothing(BaseSmoothing):
         neighbourhood = get_neighbourhood(segmentation_bin.squeeze().shape, arguments.neighbourhood_type)
         axis = tuple(range(len(segmentation_bin.shape)))
         for shift in neighbourhood:
-            count_array += np.roll(segmentation_bin, shift, axis)
+            count_array += np.roll(segmentation_bin, shift[: segmentation_bin.ndim], axis)
         segmentation = segmentation.copy()
         count_array = count_array.reshape(segmentation.shape)
         segmentation[count_array < arguments.support_level] = 0
@@ -108,7 +108,7 @@ class IterativeVoteSmoothing(BaseSmoothing):
         axis = tuple(range(len(segmentation_bin.shape)))
         for _ in range(arguments.max_steps):
             for shift in neighbourhood:
-                count_array += np.roll(segmentation_bin, shift, axis)
+                count_array += np.roll(segmentation_bin, shift[: segmentation_bin.ndim], axis)
             segmentation_bin[count_array < arguments.support_level] = 0
             count_point2 = np.count_nonzero(segmentation_bin)
             if count_point2 == count_point:

@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import argparse
 import json
 import sys
@@ -7,8 +7,9 @@ from functools import partial
 from io import BytesIO
 from pathlib import Path
 from typing import Callable, Optional
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+import napari.layers
 import numpy as np
 import pytest
 import sentry_sdk
@@ -28,7 +29,7 @@ from PartSeg.common_backend import (
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
-from PartSegCore.io_utils import load_matadata_part
+from PartSegCore.io_utils import load_metadata_part
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
@@ -114,7 +115,7 @@ class TestExceptHook:
             error_list.append(value)
 
         def import_raise(_value):
-            raise ImportError()
+            raise ImportError
 
         monkeypatch.setattr(sys, "__excepthook__", excepthook_catch)
         monkeypatch.setattr(sys, "exit", exit_catch)
@@ -188,6 +189,13 @@ class TestBaseArgparse:
     def test_safe_repr(self):
         assert base_argparser.safe_repr(1) == "1"
         assert base_argparser.safe_repr(np.arange(3)) == "array([0, 1, 2])"
+
+    def test_safe_repr_napari_image(self):
+        assert (
+            base_argparser.safe_repr(napari.layers.Image(np.zeros((10, 10, 5))))
+            == "<Image of shape: (10, 10, 5), dtype: float64, slice"
+            " (0, slice(None, None, None), slice(None, None, None))>"
+        )
 
 
 class TestProgressThread:
@@ -342,7 +350,7 @@ class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
         if self.raise_:
             raise RuntimeError("ee")
         if self.return_none:
-            return
+            return None
         report_fun("text", 1)
         return ROIExtractionResult(
             roi=np.zeros((10, 10), dtype=np.uint8), parameters=ROIExtractionProfile(name="a", algorithm="a", values={})
@@ -369,9 +377,9 @@ class TestPartiallyConstDict:
         dkt = TestDict(data)
         assert set(dkt) == {"custom_a", "b", "c", "d"}
         assert len(dkt) == 4
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot write base item"):
             dkt["b"] = 1
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot write base item"):
             dkt["custom_a"] = 1
         with qtbot.waitSignal(dkt.item_added):
             dkt["e"] = 7
@@ -382,7 +390,7 @@ class TestPartiallyConstDict:
             dkt["w"] = dkt["k"]
         assert "w" not in dkt
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot delete base item"):
             del dkt["b"]
         with qtbot.waitSignal(dkt.item_removed):
             del dkt["e"]
@@ -412,13 +420,30 @@ class TestLoadBackup:
 
         load_backup.import_config()
 
+    @patch("PartSeg.common_backend.load_backup.QMessageBox.question", return_value=QMessageBox.Yes)
+    def test_backup_wrong_name(self, msg_box, monkeypatch, tmp_path, qtbot):
+        monkeypatch.setattr("PartSeg.state_store.save_folder", (tmp_path / "0.13.13"))
+        monkeypatch.setattr(load_backup, "parsed_version", parse("0.13.13"))
+        (tmp_path / "0.13.12").mkdir()
+        (tmp_path / "0.13.12" / "test.txt").touch()
+        (tmp_path / "0.13.11").mkdir()
+
+        (tmp_path / "0.13.12_").mkdir()
+        (tmp_path / "0.13.11_test").mkdir()
+        (tmp_path / "buka").mkdir()
+
+        load_backup.import_config()
+
+        msg_box.assert_called_once()
+
+        assert (tmp_path / "0.13.13" / "test.txt").exists()
+
     @pytest.mark.parametrize("response", [load_backup.QMessageBox.Yes, load_backup.QMessageBox.No])
     @pytest.mark.parametrize("ignore", [True, False])
     def test_older_exist(self, monkeypatch, tmp_path, response, ignore):
         def create_file(file_path: Path):
             file_path.parent.mkdir(exist_ok=True)
-            with open(file_path, "w") as f:
-                print(1, file=f)
+            file_path.write_text("1")
 
         def question(*args, **kwargs):
             return response
@@ -439,13 +464,13 @@ class TestLoadBackup:
             assert not (tmp_path / "0.13.13").exists()
 
 
-@pytest.fixture
+@pytest.fixture()
 def image(tmp_path):
     data = np.random.random((10, 10, 2))
     return Image(data=data, image_spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
 
 
-@pytest.fixture
+@pytest.fixture()
 def roi():
     data = np.zeros((10, 10), dtype=np.uint8)
     data[2:-2, 2:5] = 1
@@ -473,12 +498,12 @@ class TestBaseSettings:
         with qtbot.waitSignal(settings.image_spacing_changed):
             settings.image_spacing = (1, 8, 8)
         assert image.spacing == (8, 8)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="parameter should have length 2 or 3"):
             settings.image_spacing = (6,)
 
         assert settings.is_image_2d()
         assert settings.has_channels
-        with qtbot.waitSignal(settings.image_changed[str]):
+        with qtbot.waitSignal(settings.image_path_changed):
             settings.image_path = str(tmp_path / "test2.tiff")
         assert image.file_path == str(tmp_path / "test2.tiff")
 
@@ -504,7 +529,7 @@ class TestBaseSettings:
         assert settings.theme_name == "dark"
         assert hasattr(settings.theme, "text")
         assert isinstance(settings.style_sheet, str)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unsupported theme"):
             settings.theme_name = "aaaa"
         with qtbot.assertNotEmitted(settings.theme_changed):
             settings.theme_name = "dark"
@@ -534,7 +559,7 @@ class TestBaseSettings:
     def test_view_settings_labels(self, tmp_path, image, roi, qtbot):
         settings = base_settings.ViewSettings()
         assert settings.current_labels == "default"
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unknown label"):
             settings.current_labels = "a"
         settings.label_color_dict["aaaa"] = [(1, 1, 1)]
         with qtbot.waitSignal(settings.labels_changed):
@@ -639,7 +664,7 @@ class TestBaseSettings:
         mask = np.ones((10, 10), dtype=np.uint8)
         assert image.mask is None
         assert settings.mask is None
-        with qtbot.assertNotEmitted(settings.mask_changed), pytest.raises(ValueError):
+        with qtbot.assertNotEmitted(settings.mask_changed), pytest.raises(ValueError, match="mask do not fit to image"):
             settings.mask = mask[:2]
         with qtbot.waitSignal(settings.mask_changed):
             settings.mask = mask
@@ -679,9 +704,9 @@ class TestBaseSettings:
         settings.dump_part(tmp_path / "data.json", "aaa.bb")
         settings.dump_part(tmp_path / "data2.json", "aaa.bb", names=["cc", "dd"])
 
-        res = load_matadata_part(tmp_path / "data.json")
+        res = load_metadata_part(tmp_path / "data.json")
         assert res[0] == {"bb": 10, "cc": 11, "dd": 12, "ee": {"ff": 14, "gg": 15}}
-        res = load_matadata_part(tmp_path / "data2.json")
+        res = load_metadata_part(tmp_path / "data2.json")
         assert res[0] == {"cc": 11, "dd": 12}
 
     def test_base_settings_verify_image(self):

@@ -17,9 +17,9 @@ on:
 jobs:
   download_data:
     name: Download test data
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
@@ -37,17 +37,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-2019, macos-11, ubuntu-20.04]
+        platform: [windows-2022, macos-12, ubuntu-22.04]
         python: [3.9]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
-          cache-dependency-path: 'requirements/requirements_pyinstaller.txt'
+          cache-dependency-path: 'setup.cfg'
 
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
@@ -56,10 +56,7 @@ jobs:
           powershell gl-ci-helpers/appveyor/install_opengl.ps1
           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
 
-      - name: Install ubuntu libraries
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
+      - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
         uses: actions/download-artifact@v3
@@ -70,18 +67,19 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install setuptools tox tox-gh-actions
+          pip install setuptools tox tox-gh-actions>=2.12.0
 
       - name: Test with tox linux
         # run tests using pip install --pre
-        uses: GabrielBB/xvfb-action@v1
+        uses: aganders3/headless-gui@v1
         timeout-minutes: 60
         with:
           run: python -m tox -v --pre
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: None
+          NAPARI: latest
+          BACKEND: PyQt5
 
       # If something goes wrong, we can open an issue in the repo
       - name: Report Failures
@@ -101,22 +99,19 @@ jobs:
     name: "Test pyinstaller build"
     runs-on: "ubuntu-latest"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       name: Install Python 3.9
       with:
         python-version: 3.9
-    - name: Install ubuntu libraries
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
+    - uses: tlambert03/setup-qt-libs@v1
     - name: Install dependencies
       run: |
-        pip install --upgrade pip==21.1
+        pip install --upgrade pip
         pip install pip-tools
     - name: Compile and install PyInstaller requirements
       run: |
-        pip-compile --output-file requirements.txt requirements/requirements_pyinstaller.in --pre
+        pip-compile --upgrade -o requirements.txt setup.cfg --extra pyinstaller  --pre
         pip-sync
         pip install .
     - name: upload requirements
@@ -132,7 +127,7 @@ jobs:
         name: bundle
         path: dist2/
     - name: Test bundle
-      uses: GabrielBB/xvfb-action@v1
+      uses: aganders3/headless-gui@v1
       timeout-minutes: 60
       with:
         run: dist/PartSeg/PartSeg _test

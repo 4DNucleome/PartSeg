@@ -1,12 +1,5 @@
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    directory: "/requirements"
-    schedule:
-      interval: "daily"
-
-    target-branch: "develop"
-
   - package-ecosystem: "github-actions"
     directory: ""
     schedule:

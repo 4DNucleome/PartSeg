@@ -1,9 +1,10 @@
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple, Union
 
 from scipy.ndimage import zoom
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.image_transforming.transform_base import TransformBase
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 
@@ -13,9 +14,10 @@ class InterpolateImage(TransformBase):
         return ["It can be very slow.", AlgorithmProperty("scale", "Scale", 1.0)]
 
     @classmethod
-    def get_fields_per_dimension(cls, component_list: List[str]):
-        return ["it can be very slow"] + [
-            AlgorithmProperty(f"scale_{i.lower()}", f"Scale {i}", 1.0) for i in reversed(component_list)
+    def get_fields_per_dimension(cls, component_list: List[str]) -> List[Union[str, AlgorithmProperty]]:
+        return [
+            "it can be very slow",
+            *[AlgorithmProperty(f"scale_{i.lower()}", f"Scale {i}", 1.0) for i in reversed(component_list)],
         ]
 
     @classmethod
@@ -24,8 +26,12 @@ class InterpolateImage(TransformBase):
 
     @classmethod
     def transform(
-        cls, image: Image, arguments: dict, callback_function: Optional[Callable[[str, int], None]] = None
-    ) -> Image:
+        cls,
+        image: Image,
+        roi_info: Optional[ROIInfo],
+        arguments: dict,
+        callback_function: Optional[Callable[[str, int], None]] = None,
+    ) -> Tuple[Image, Optional[ROIInfo]]:
         keys = [x for x in arguments if x.startswith("scale")]
         keys_order = Image.axis_order.lower()
         scale_factor = [1.0] * len(keys_order)
@@ -46,7 +52,7 @@ class InterpolateImage(TransformBase):
             mask = zoom(image.mask, scale_factor[:-1], mode="mirror")
         else:
             mask = None
-        return image.substitute(data=array, image_spacing=spacing, mask=mask)
+        return image.substitute(data=array, image_spacing=spacing, mask=mask), None
 
     @classmethod
     def calculate_initial(cls, image: Image):

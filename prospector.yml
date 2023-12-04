@@ -1,0 +1,4 @@
+# https://mypy.readthedocs.io/en/stable/command_line.html
+mypy:
+    options:
+        ignore-missing-imports: true

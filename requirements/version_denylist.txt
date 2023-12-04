@@ -1,0 +1,10 @@
+PyQt5!=5.15.0
+PyQt5-sip!=12.12.0
+PySide2!=5.15.0
+# fix PySide6 when a new napari release is out
+PySide6 < 6.3.2 ; python_version < '3.10'
+PySide6 != 6.4.3, !=6.5.0, !=6.5.1, !=6.5.1.1, !=6.5.2; python_version >= '3.10'
+npe2!=0.2.2
+imageio != 2.22.1
+pydantic<2.0
+sentry-sdk!=1.29.0

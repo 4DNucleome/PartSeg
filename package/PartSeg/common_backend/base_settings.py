@@ -9,7 +9,7 @@ from argparse import Namespace
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
@@ -49,9 +49,10 @@ class ImageSettings(QObject):
     Base class for all PartSeg settings. Keeps information about current Image.
     """
 
-    image_changed = Signal([Image], [int], [str])
+    image_changed = Signal(Image)
+    image_path_changed = Signal(str)
+    image_channel_count_changed = Signal(int)
     image_spacing_changed = Signal()
-    """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
     roi_changed = Signal(ROIInfo)
     """
     :py:class:`.Signal`
@@ -76,7 +77,7 @@ class ImageSettings(QObject):
         raise AttributeError("full_segmentation not supported")
 
     @full_segmentation.setter
-    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=R0201
+    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=no-self-use
         raise AttributeError("full_segmentation not supported")
 
     @property
@@ -84,7 +85,7 @@ class ImageSettings(QObject):
         raise AttributeError("noise_remove_image_part not supported")
 
     @noise_remove_image_part.setter
-    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=R0201
+    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=no-self-use
         raise AttributeError("noise_remove_image_part not supported")
 
     @property
@@ -92,7 +93,7 @@ class ImageSettings(QObject):
         return self._additional_layers
 
     @additional_layers.setter
-    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=R0201
+    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=no-self-use
         raise AttributeError("additional_layers assign not supported")
 
     @property
@@ -109,7 +110,7 @@ class ImageSettings(QObject):
         if len(value) not in [2, 3]:
             raise ValueError(f"value parameter should have length 2 or 3. Current length is {len(value)}.")
         if len(value) == 2:
-            self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
+            self._image.set_spacing((self._image.spacing[0], *list(value)))
         else:
             self._image.set_spacing(value)
         self.image_spacing_changed.emit()
@@ -117,7 +118,7 @@ class ImageSettings(QObject):
     @property
     def segmentation(self) -> np.ndarray:  # pragma: no cover
         """current roi"""
-        warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning)
+        warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi
 
     @property
@@ -127,7 +128,7 @@ class ImageSettings(QObject):
 
     @property
     def segmentation_info(self) -> ROIInfo:  # pragma: no cover
-        warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning)
+        warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi_info
 
     @property
@@ -165,12 +166,12 @@ class ImageSettings(QObject):
             return
         self._image = value
         if value.file_path is not None:
-            self.image_changed[str].emit(value.file_path)
+            self.image_path_changed.emit(value.file_path)
         self._image_changed()
         self._roi_info = ROIInfo(None)
 
         self.image_changed.emit(self._image)
-        self.image_changed[int].emit(self._image.channels)
+        self.image_channel_count_changed.emit(self._image.channels)
 
     @property
     def has_channels(self):
@@ -191,7 +192,7 @@ class ImageSettings(QObject):
     @image_path.setter
     def image_path(self, value):
         self._image.file_path = value
-        self.image_changed[str].emit(self._image_path)
+        self.image_path_changed.emit(self._image_path)
 
     @property
     def channels(self):
@@ -302,7 +303,7 @@ class ViewSettings(ImageSettings):
         """Sequence of available themes"""
         try:
             return napari.utils.theme.available_themes()
-        except:  # noqa: E722  # pylint: disable=W0702  # pragma: no cover
+        except:  # noqa: E722  # pylint: disable=bare-except  # pragma: no cover
             return ("light",)
 
     @property
@@ -446,7 +447,7 @@ class BaseSettings(ViewSettings):
     load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
-    save_locations_keys = []
+    save_locations_keys: ClassVar[List[str]] = []
 
     def __init__(self, json_path: Union[Path, str], profile_name: str = "default"):
         """
@@ -455,7 +456,7 @@ class BaseSettings(ViewSettings):
         """
         super().__init__()
         napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
-        self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
+        self.napari_settings: NapariSettings = napari_get_settings(napari_path)
         self._current_roi_dict = profile_name
         self._roi_dict = ProfileDict()
         self._last_algorithm_dict = ProfileDict()
@@ -497,7 +498,7 @@ class BaseSettings(ViewSettings):
 
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (
-            result.file_path is not None and result.file_path != "" and result.file_path != self.image.file_path
+            result.file_path is not None and result.file_path and result.file_path != self.image.file_path
         ):  # pragma: no cover
             if self._parent is not None:
                 # TODO change to non disrupting popup
@@ -595,7 +596,7 @@ class BaseSettings(ViewSettings):
         for name in self.save_locations_keys:
             val = self.get(f"io.{name}", str(Path.home()))
             if val not in res:
-                res = res + [val]
+                res = [*res, val]
         return res
 
     @staticmethod
@@ -604,7 +605,7 @@ class BaseSettings(ViewSettings):
             data_list.remove(value)
         except ValueError:
             data_list = data_list[: keep_len - 1]
-        return [value] + data_list
+        return [value, *data_list]
 
     def get_last_files(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
         return self.get(FILE_HISTORY, [])
@@ -644,11 +645,7 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param value: value to store. The value need to be json serializable.
         """
-        if (
-            key_path.startswith("algorithms.")
-            or key_path.startswith("algorithm_widget_state.")
-            or key_path == "current_algorithm"
-        ):
+        if key_path.startswith(("algorithm_widget_state.", "algorithms.")) or key_path == "current_algorithm":
             warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
             self.set_algorithm(key_path, value)
             return
@@ -662,11 +659,7 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param default: default value if key is missed
         """
-        if (
-            key_path.startswith("algorithms.")
-            or key_path.startswith("algorithm_widget_state.")
-            or key_path == "current_algorithm"
-        ):
+        if key_path.startswith(("algorithms.", "algorithm_widget_state.")) or key_path == "current_algorithm":
             warnings.warn("Use `set_algorithm_state` instead of `set` for algorithm state", FutureWarning, stacklevel=2)
             return self.get_algorithm(key_path, default)
         return self._roi_dict.get(f"{self._current_roi_dict}.{key_path}", default)
@@ -714,7 +707,7 @@ class BaseSettings(ViewSettings):
         if self.napari_settings.save is not None:
             self.napari_settings.save()
         else:
-            self.napari_settings._save()  # pylint: disable=W0212
+            self.napari_settings._save()  # pylint: disable=protected-access
         if folder_path is None:
             folder_path = self.json_folder_path
         if not os.path.exists(folder_path):
@@ -725,7 +718,7 @@ class BaseSettings(ViewSettings):
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
                 with open(os.path.join(folder_path, el.file_name), "w", encoding="utf-8") as ff:
                     ff.write(dump_string)
-            except Exception as e:  # pylint: disable=W0703
+            except Exception as e:  # pylint: disable=broad-except
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
             logger.error(errors_list)
@@ -766,7 +759,7 @@ class BaseSettings(ViewSettings):
                 if error is not None:
                     errors_dict[file_path] = error
                 el.values.update(data)
-            except Exception as e:  # pylint: disable=W0703
+            except Exception as e:  # pylint: disable=broad-except
                 error = True
                 logger.error(e)
                 errors_dict[file_path] = e
@@ -775,6 +768,9 @@ class BaseSettings(ViewSettings):
                     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, f"{base_path}_{timestamp}{ext}")
+
+        self.label_color_dict._refresh_order()  # pylint: disable=protected-access
+        self.colormap_dict._refresh_order()  # pylint: disable=protected-access
 
         return errors_dict
 
@@ -790,10 +786,10 @@ class BaseSettings(ViewSettings):
     def verify_image(image: Image, silent=True) -> Union[Image, bool]:
         if image.is_time:
             if image.is_stack:
-                raise TimeAndStackException()
+                raise TimeAndStackException
             if silent:
                 return image.swap_time_and_stack()
-            raise SwapTimeStackException()
+            raise SwapTimeStackException
         return True
 
 

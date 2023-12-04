@@ -11,15 +11,15 @@ from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui import napari_image_view
 
 
-@pytest.fixture
-def base_settings(image, tmp_path, measurement_profiles):
+@pytest.fixture()
+def base_settings(image, tmp_path, measurement_profiles, qapp):
     settings = BaseSettings(tmp_path)
     settings.image = image
     return settings
 
 
-@pytest.fixture
-def part_settings(image, tmp_path, measurement_profiles):
+@pytest.fixture()
+def part_settings(image, tmp_path, measurement_profiles, qapp):
     settings = PartSettings(tmp_path)
     settings.image = image
     for el in measurement_profiles:
@@ -27,8 +27,8 @@ def part_settings(image, tmp_path, measurement_profiles):
     return settings
 
 
-@pytest.fixture
-def stack_settings(tmp_path, image):
+@pytest.fixture()
+def stack_settings(tmp_path, image, qapp):
     settings = StackSettings(tmp_path)
     settings.image = image
     chose = ChosenComponents()
@@ -37,8 +37,8 @@ def stack_settings(tmp_path, image):
     chose.deleteLater()
 
 
-@pytest.fixture
-def part_settings_with_project(image, analysis_segmentation2, tmp_path):
+@pytest.fixture()
+def part_settings_with_project(image, analysis_segmentation2, tmp_path, qapp):
     settings = PartSettings(tmp_path)
     settings.image = image
     settings.set_project_info(analysis_segmentation2)
@@ -46,7 +46,7 @@ def part_settings_with_project(image, analysis_segmentation2, tmp_path):
 
 
 @pytest.fixture(autouse=True)
-def disable_threads_viewer_patch_prepare_leyers(monkeypatch):
+def _disable_threads_viewer_patch_prepare_leyers(monkeypatch):
     def _prepare_layers(self, image, parameters, replace):
         self._add_image(napari_image_view._prepare_layers(image, parameters, replace))
 
@@ -54,7 +54,7 @@ def disable_threads_viewer_patch_prepare_leyers(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def disable_threads_viewer_patch_add_layer(monkeypatch, request):
+def _disable_threads_viewer_patch_add_layer(monkeypatch, request):
     if "no_patch_add_layer" in request.keywords:
         return
 
@@ -66,7 +66,7 @@ def disable_threads_viewer_patch_add_layer(monkeypatch, request):
 
 
 @pytest.fixture(autouse=True)
-def check_opened_windows(qapp):
+def _check_opened_windows(qapp):
     yield
     widgets = qapp.topLevelWidgets()
     for widget in widgets:
@@ -74,7 +74,7 @@ def check_opened_windows(qapp):
 
 
 @pytest.fixture(autouse=True)
-def block_threads(monkeypatch, request):
+def _block_threads(monkeypatch, request):
     if "enablethread" in request.keywords:
         return
 
@@ -99,7 +99,7 @@ def block_threads(monkeypatch, request):
 
 
 @pytest.fixture(autouse=True)
-def clean_settings():
+def _clean_settings():
     try:
         try:
             from napari.settings import SETTINGS
@@ -114,7 +114,7 @@ def clean_settings():
 
 
 @pytest.fixture(autouse=True)
-def reset_napari_settings(monkeypatch, tmp_path):
+def _reset_napari_settings(monkeypatch, tmp_path):
     def _mock_save(self, path=None, **dict_kwargs):
         return  # skipcq: PTC-W0049
 
@@ -125,11 +125,9 @@ def reset_napari_settings(monkeypatch, tmp_path):
     monkeypatch.setattr(settings.NapariSettings, "save", _mock_save)
     settings._SETTINGS = None
 
-    yield
-
 
 @pytest.fixture(autouse=True)
-def block_message_box(monkeypatch, request):
+def _block_message_box(monkeypatch, request):
     def raise_on_call(*_, **__):
         raise RuntimeError("exec_ call")  # pragma: no cover
 
@@ -169,10 +167,9 @@ class DummyThrottler:
 
 
 @pytest.fixture(autouse=True)
-def mock_throttler(monkeypatch):
+def _mock_throttler(monkeypatch):
     with contextlib.suppress(ImportError):
         from napari._qt import qt_main_window
 
         if hasattr(qt_main_window, "QSignalThrottler"):
             monkeypatch.setattr(qt_main_window, "QSignalThrottler", DummyThrottler)
-    yield

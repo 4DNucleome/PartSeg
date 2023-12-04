@@ -11,6 +11,7 @@ from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
 from napari.qt import create_worker
 
+from PartSeg.plugins import register as register_plugins
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import base_model_to_algorithm_property
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
@@ -34,6 +35,7 @@ class SimpleMeasurement(Container):
         self.calculate_btn = PushButton(text="Calculate")
         self.margins = (0, 0, 0, 0)
         self.measurement_result: Optional[MeasurementResult] = None
+        self.worker = None
 
         options_layout = HBox(
             widgets=(
@@ -56,6 +58,7 @@ class SimpleMeasurement(Container):
             warnings.simplefilter("ignore", FutureWarning)
             self.labels_choice.changed.connect(self._refresh_measurements)
             self.calculate_btn.changed.connect(self._calculate)
+        register_plugins()
 
     def _calculate(self, event=None):
         to_calculate = []
@@ -65,7 +68,7 @@ class SimpleMeasurement(Container):
                 leaf: Leaf = MEASUREMENT_DICT[chk.text].get_starting_leaf()
                 to_calculate.append(leaf.replace_(per_component=PerComponent.Yes, area=AreaType.ROI))
         if not to_calculate:  # pragma: no cover
-            warnings.warn("No measurement. Select at least one measurement")
+            warnings.warn("No measurement. Select at least one measurement", stacklevel=1)
             return
 
         profile = MeasurementProfile(
@@ -76,7 +79,9 @@ class SimpleMeasurement(Container):
 
         data_ndim = data_layer.data.ndim
         if data_ndim > 4:  # pragma: no cover
-            warnings.warn("Not Supported. Currently measurement engine does not support data over 4 dim (TZYX)")
+            warnings.warn(
+                "Not Supported. Currently measurement engine does not support data over 4 dim (TZYX)", stacklevel=1
+            )
             return
         data_scale = data_layer.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]
         image = Image(data_layer.data, data_scale, axes_order="TZYX"[-data_ndim:])
@@ -84,6 +89,7 @@ class SimpleMeasurement(Container):
         worker.returned.connect(self._calculate_next)
         worker.errored.connect(self._finished)
         worker.start()
+        self.worker = worker
         self.calculate_btn.enabled = False
 
     def _calculate_next(self, data):
@@ -107,6 +113,7 @@ class SimpleMeasurement(Container):
 
     def _finished(self):
         self.calculate_btn.enabled = True
+        self.worker = None
 
     def _clean_measurements(self):
         selected = set()

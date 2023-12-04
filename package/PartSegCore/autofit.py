@@ -94,8 +94,10 @@ def density_mass_center(image, voxel_size=(1.0, 1.0, 1.0)):
     return np.array(res) * voxel_size_array
 
 
-def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1.0, 1.0, 1.0]), mass_center=None):
+def calculate_density_momentum(image: np.ndarray, voxel_size=None, mass_center=None):
     """Calculates image momentum."""
+    if voxel_size is None:
+        voxel_size = np.array([1.0, 1.0, 1.0])
     image = image.squeeze()
     if not mass_center:
         mass_center = density_mass_center(image, voxel_size)

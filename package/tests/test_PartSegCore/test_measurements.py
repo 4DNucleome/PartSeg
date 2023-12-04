@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 import itertools
 import os
@@ -152,11 +152,11 @@ class TestLeaf:
         assert Leaf(name="aa").pretty_print({"aa": mock}).startswith("[PartSegPlugin]")
 
     def test_per_mask_component_create(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Per_Mask_component can be used only with ROI area"):
             Leaf(name="aa", per_component=PerComponent.Per_Mask_component, area=AreaType.Mask)
 
         leaf = Leaf(name="aa")
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Per_Mask_component can be used only with ROI area"):
             leaf.replace_(per_component=PerComponent.Per_Mask_component, area=AreaType.Mask)
 
 
@@ -400,7 +400,7 @@ class TestMaximumPixelBrightness:
 @pytest.mark.parametrize("threshold", [80, 60, 40, 0])
 @pytest.mark.parametrize("image", [get_square_image(), get_cube_image()], ids=["square", "cube"])
 @pytest.mark.parametrize(
-    "calc_class,np_method",
+    ("calc_class", "np_method"),
     [
         (MinimumPixelBrightness, np.min),
         (MaximumPixelBrightness, np.max),
@@ -510,12 +510,12 @@ class TestMainAxis:
         assert leaf.per_component is None
         assert leaf.channel is None
 
-    @pytest.mark.parametrize("image", (get_cube_image(), get_square_image()), ids=["cube", "square"])
+    @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
     @pytest.mark.parametrize(
-        "method,scalar,last",
+        ("method", "scalar", "last"),
         [(FirstPrincipalAxisLength, 20, 0), (SecondPrincipalAxisLength, 10, 0), (ThirdPrincipalAxisLength, 10, 1)],
     )
-    @pytest.mark.parametrize("threshold,len_scalar", [(40, 59), (60, 39)])
+    @pytest.mark.parametrize(("threshold", "len_scalar"), [(40, 59), (60, 39)])
     @pytest.mark.parametrize("result_scalar", [1, 0.5, 3])
     def test_cube(self, image, method, scalar, threshold, len_scalar, last, result_scalar):
         image = image.substitute(image_spacing=(10, 10, 20))
@@ -551,7 +551,7 @@ class TestMainAxis:
         )
 
     @pytest.mark.parametrize(
-        "method,result",
+        ("method", "result"),
         [(FirstPrincipalAxisLength, 20 * 59), (SecondPrincipalAxisLength, 10 * 59), (ThirdPrincipalAxisLength, 0)],
     )
     def test_without_help_dict(self, square_image, method, result):
@@ -839,7 +839,7 @@ class TestSphericity:
         )
 
 
-@pytest.fixture
+@pytest.fixture()
 def two_comp_img():
     data = np.zeros((30, 30, 60), dtype=np.uint16)
     data[5:-5, 5:-5, 5:29] = 60
@@ -859,7 +859,7 @@ class TestDistanceMaskSegmentation:
         assert leaf.channel is None
 
     @pytest.mark.parametrize(
-        "d_mask,d_seg", itertools.product([DistancePoint.Geometrical_center, DistancePoint.Mass_center], repeat=2)
+        ("d_mask", "d_seg"), itertools.product([DistancePoint.Geometrical_center, DistancePoint.Mass_center], repeat=2)
     )
     def test_cube_zero(self, cube_image, d_mask, d_seg):
         mask1 = cube_image.get_channel(0)[0] > 40
@@ -878,7 +878,7 @@ class TestDistanceMaskSegmentation:
         )
 
     @pytest.mark.parametrize(
-        "d_mask,d_seg,dist",
+        ("d_mask", "d_seg", "dist"),
         [
             (DistancePoint.Border, DistancePoint.Geometrical_center, 1400),
             (DistancePoint.Geometrical_center, DistancePoint.Border, 900),
@@ -903,7 +903,7 @@ class TestDistanceMaskSegmentation:
         )
 
     @pytest.mark.parametrize(
-        "comp1,comp2", itertools.product([DistancePoint.Geometrical_center, DistancePoint.Mass_center], repeat=2)
+        ("comp1", "comp2"), itertools.product([DistancePoint.Geometrical_center, DistancePoint.Mass_center], repeat=2)
     )
     @pytest.mark.parametrize(
         "area_gen", [partial(eq, 50), partial(eq, 60), partial(lt, 0)], ids=["eq50", "eq60", "all"]
@@ -1239,7 +1239,7 @@ class TestSplitOnPartVolume:
         )
 
     @pytest.mark.parametrize(
-        "nr,volume, diff_array",
+        ("nr", "volume", "diff_array"),
         [
             (1, (40 * 60 * 60 - 36 * 52 * 52), False),
             (2, (36 * 52 * 52 - 30 * 40 * 40), False),
@@ -1419,7 +1419,7 @@ class TestSplitOnPartPixelBrightnessSum:
         assert leaf.channel is None
 
     @pytest.mark.parametrize(
-        "nr, sum_val, diff_array",
+        ("nr", "sum_val", "diff_array"),
         [
             (1, (30 * 60 * 60 - 20 * 40 * 40) * 50, False),
             (2, (20 * 40 * 40 - 10 * 20 * 20) * 70, False),
@@ -1451,7 +1451,7 @@ class TestSplitOnPartPixelBrightnessSum:
         )
 
     @pytest.mark.parametrize(
-        "nr, sum_val, diff_array",
+        ("nr", "sum_val", "diff_array"),
         [
             (1, (40 * 60 * 60 - 36 * 52 * 52) * 50, False),
             (2, (36 * 52 * 52 - 30 * 40 * 40) * 50, False),
@@ -1486,7 +1486,7 @@ class TestSplitOnPartPixelBrightnessSum:
         )
 
     @pytest.mark.parametrize(
-        "nr, sum_val, diff_array, equal_volume",
+        ("nr", "sum_val", "diff_array", "equal_volume"),
         [
             (3, (60 * 60 - 40 * 40) * 50, False, False),
             (2, (60**2 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
@@ -2144,7 +2144,7 @@ class TestHaralick:
         Haralick.calculate_property(mask, data, distance=distance, feature=feature)
 
 
-@pytest.fixture
+@pytest.fixture()
 def roi_to_roi_extract():
     parameters = LowerThresholdAlgorithm.get_default_values()
     parameters.threshold.values.threshold = 1
@@ -2293,12 +2293,17 @@ def test_all_methods(method, dtype):
         _component_num=1,
         **dict(method.get_default_values()),
     )
-    if method.get_units(3) != "str":
+    if "str" not in str(method.get_units(3)):
         float(res)
 
 
 @pytest.mark.parametrize(
-    "method", (x for x in MEASUREMENT_DICT.values() if x.get_starting_leaf().per_component is None)
+    "method",
+    (
+        x
+        for x in MEASUREMENT_DICT.values()
+        if x.get_starting_leaf().per_component is None and "str" not in str(x.get_units(3))
+    ),
 )
 @pytest.mark.parametrize("area", [AreaType.ROI, AreaType.Mask])
 def test_per_component(method, area):

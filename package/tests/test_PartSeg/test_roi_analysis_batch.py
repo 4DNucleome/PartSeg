@@ -1,8 +1,9 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 from copy import copy
 from unittest.mock import patch
 
 import pytest
+from qtpy.QtWidgets import QTreeWidgetItem
 
 from PartSeg._roi_analysis import prepare_plan_widget
 from PartSegCore import Units
@@ -17,9 +18,11 @@ from PartSegCore.segmentation.restartable_segmentation_algorithms import (
     UpperThresholdAlgorithm,
 )
 
+NOT_FOUND_STR = "not found in register"
+
 
 @pytest.mark.parametrize(
-    "mask1,mask2,enabled",
+    ("mask1", "mask2", "enabled"),
     [
         ("mask1", "mask2", True),
         ("mask1", "", False),
@@ -27,14 +30,11 @@ from PartSegCore.segmentation.restartable_segmentation_algorithms import (
         ("", "", False),
         ("mask1", "mask1", False),
         ("mask2", "mask2", False),
-        ("mask1", "mask2", True),
         ("mask2", "mask1", True),
         ("mask", "mask2", False),
         ("mask2", "mask", False),
         ("mask", "mask1", False),
-        ("mask", "mask2", False),
         ("mask1", "mask", False),
-        ("mask2", "mask", False),
     ],
 )
 def test_two_mask_dialog(qtbot, mask1, mask2, enabled):
@@ -56,7 +56,7 @@ def test_two_mask_dialog_strip(qtbot):
 
 
 @pytest.mark.parametrize(
-    "mask,enabled",
+    ("mask", "enabled"),
     [
         ("mask", False),
         ("", False),
@@ -163,7 +163,7 @@ class TestFileMaskWidget:
         assert widget.first_text.text() == "file_path"
 
 
-@pytest.fixture
+@pytest.fixture()
 def calculation_plan(measurement_profiles):
     roi_extraction = AnalysisAlgorithmSelection.get_default()
     return prepare_plan_widget.CalculationPlan(
@@ -220,6 +220,22 @@ class TestCalculateInfo:
         part_settings.batch_plans["test2"] = calculation_plan2
         assert widget.calculate_plans.count() == 2
 
+    def test_add_bad_plan(self, qtbot, part_settings, calculation_plan):
+        bad_plan = copy(calculation_plan)
+        bad_plan.name = "test2"
+        bad_plan.execution_tree.children[0].operation = {"__error__": NOT_FOUND_STR}
+        part_settings.batch_plans[calculation_plan.name] = calculation_plan
+        part_settings.batch_plans[bad_plan.name] = bad_plan
+
+        widget = prepare_plan_widget.CalculateInfo(part_settings)
+        qtbot.addWidget(widget)
+
+        assert widget.calculate_plans.count() == 2
+        assert widget.calculate_plans.item(0).text() == calculation_plan.name
+        assert widget.calculate_plans.item(0).icon().isNull()
+        assert widget.calculate_plans.item(1).text() == bad_plan.name
+        assert not widget.calculate_plans.item(1).icon().isNull()
+
     def test_delete_plan(self, qtbot, part_settings, calculation_plan):
         part_settings.batch_plans["test"] = calculation_plan
         widget = prepare_plan_widget.CalculateInfo(part_settings)
@@ -266,7 +282,7 @@ class TestOtherOperations:
         assert widget.save_btn.text() == "Save"
         assert widget.choose_save_method.currentIndex() == 0
 
-    @pytest.mark.parametrize("root_type,replace", [(NodeType.root, False), (NodeType.mask, True)])
+    @pytest.mark.parametrize(("root_type", "replace"), [(NodeType.root, False), (NodeType.mask, True)])
     def test_set_current_node(self, qtbot, root_type, replace):
         widget = prepare_plan_widget.OtherOperations()
         qtbot.addWidget(widget)
@@ -343,9 +359,8 @@ class TestROIExtractionOp:
         with qtbot.waitSignal(widget.roi_extraction_profile_selected, check_params_cb=check_profile("test2")):
             widget.roi_profile.setCurrentRow(1)
 
-        with widget.enable_protect():
-            with qtbot.assert_not_emitted(widget.roi_extraction_profile_selected):
-                widget.roi_profile.setCurrentRow(0)
+        with widget.enable_protect(), qtbot.assert_not_emitted(widget.roi_extraction_profile_selected):
+            widget.roi_profile.setCurrentRow(0)
 
         part_settings.roi_profiles["test3"] = ROIExtractionProfile(
             name="test3",
@@ -414,9 +429,8 @@ class TestROIExtractionOp:
         with qtbot.waitSignal(widget.roi_extraction_pipeline_selected, check_params_cb=check_pipeline("test2")):
             widget.roi_pipeline.setCurrentRow(1)
 
-        with widget.enable_protect():
-            with qtbot.assert_not_emitted(widget.roi_extraction_pipeline_selected):
-                widget.roi_pipeline.setCurrentRow(0)
+        with widget.enable_protect(), qtbot.assert_not_emitted(widget.roi_extraction_pipeline_selected):
+            widget.roi_pipeline.setCurrentRow(0)
         with qtbot.waitSignal(widget.roi_extraction_pipeline_add, check_params_cb=check_pipeline("test")):
             widget._add_profile()
 
@@ -486,9 +500,8 @@ class TestSelectMeasurementOp:
             widget.measurements_list.setCurrentRow(0)
         with qtbot.waitSignal(widget.set_of_measurement_selected, check_params_cb=check_measurement("statistic2")):
             widget.measurements_list.setCurrentRow(1)
-        with widget.enable_protect():
-            with qtbot.assert_not_emitted(widget.set_of_measurement_selected):
-                widget.measurements_list.setCurrentRow(0)
+        with widget.enable_protect(), qtbot.assert_not_emitted(widget.set_of_measurement_selected):
+            widget.measurements_list.setCurrentRow(0)
 
     def test_set_current_node(self, qtbot, part_settings):
         widget = prepare_plan_widget.SelectMeasurementOp(part_settings)
@@ -604,7 +617,7 @@ class TestSelectMaskOp:
             widget._add_mask()
 
     @pytest.mark.parametrize(
-        "enum,klass",
+        ("enum", "klass"),
         [
             (prepare_plan_widget.MaskOperation.mask_intersection, prepare_plan_widget.MaskIntersection),
             (prepare_plan_widget.MaskOperation.mask_sum, prepare_plan_widget.MaskSum),
@@ -752,8 +765,52 @@ class TestCreatePlan:
         widget.create_mask(prepare_plan_widget.MaskCreate(name="test2", mask_property=mask_property_non_default))
         show_warning_patch.assert_called_once_with("Already exists", "Mask with this name already exists")
 
+    def test_edit_plan(self, qtbot, part_settings, calculation_plan):
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        assert count_tree_widget_items(widget.plan.topLevelItem(0)) == 1
+        widget.edit_plan(calculation_plan)
+        assert count_tree_widget_items(widget.plan.topLevelItem(0)) == 37
+
+    @patch("PartSeg._roi_analysis.prepare_plan_widget.QMessageBox.warning")
+    def test_edit_plan_bad_plan(self, message_patch, qtbot, part_settings, calculation_plan):
+        widget = prepare_plan_widget.CreatePlan(part_settings)
+        qtbot.addWidget(widget)
+        calculation_plan.execution_tree.children[0].operation = {"__error__": NOT_FOUND_STR}
+        widget.edit_plan(calculation_plan)
+        message_patch.assert_called_once()
+
 
 class TestCalculatePlaner:
     def test_create(self, qtbot, part_settings):
         widget = prepare_plan_widget.CalculatePlaner(part_settings)
         qtbot.addWidget(widget)
+
+
+class TestPlanPreview:
+    def test_create(self, qtbot, calculation_plan):
+        widget = prepare_plan_widget.PlanPreview(calculation_plan=calculation_plan)
+        qtbot.addWidget(widget)
+
+    @patch("PartSeg._roi_analysis.prepare_plan_widget.QMessageBox.warning")
+    def test_create_bad_plan(self, message_patch, qtbot, calculation_plan):
+        widget = prepare_plan_widget.PlanPreview()
+        qtbot.addWidget(widget)
+        calculation_plan.execution_tree.children[0].operation = {"__error__": NOT_FOUND_STR}
+        widget.set_plan(calculation_plan)
+        message_patch.assert_called_once()
+        assert widget.calculation_plan is None
+
+
+def test_calculation_plan_repr(calculation_plan):
+    assert "name='test'" in repr(calculation_plan)
+    assert "operation=<RootType.Image: 0>" in repr(calculation_plan)
+
+
+def count_tree_widget_items(tree_widget: QTreeWidgetItem):
+    count = 1
+    for i in range(tree_widget.childCount()):
+        count += count_tree_widget_items(tree_widget.child(i))
+        count += 1
+
+    return count

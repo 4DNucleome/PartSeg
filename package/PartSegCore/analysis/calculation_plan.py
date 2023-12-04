@@ -8,7 +8,8 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
-from nme import register_class, rename_key
+import local_migrator
+from local_migrator import register_class, rename_key
 from pydantic import BaseModel as PydanticBaseModel
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -255,16 +256,16 @@ class MaskFile(MaskMapper):
         self.path_to_file = value
 
     def parse_map(self, sep=";"):
-        if not os.path.exists(self.path_to_file):
-            logging.error(f"File does not exists: {self.path_to_file}")
+        if not os.path.exists(self.path_to_file):  # pragma: no cover
+            logging.error("File does not exists: %s", self.path_to_file)
             raise ValueError(f"File for mapping mask does not exists: {self.path_to_file}")
         with open(self.path_to_file, encoding="utf-8") as map_file:
             dir_name = os.path.dirname(self.path_to_file)
             for i, line in enumerate(map_file):
                 try:
                     file_name, mask_name = line.split(sep)
-                except ValueError:
-                    logging.error(f"Error in parsing map file\nline {i}\n{line}\nfrom file{self.path_to_file}")
+                except ValueError:  # pragma: no cover
+                    logging.error("Error in parsing map file\nline %s\n%s\nfrom file %s", i, line, self.path_to_file)
                     continue
                 file_name = file_name.strip()
                 mask_name = mask_name.strip()
@@ -289,7 +290,7 @@ class PlanChanges(Enum):
     replace_node = 3  #:
 
 
-@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.CalculationTree"])
+@register_class(old_paths=["PartSeg.utils.analysis.calculation_plan.CalculationTree"], allow_errors_in_values=True)
 class CalculationTree:
     """
     Structure for describe calculation structure
@@ -309,10 +310,35 @@ class CalculationTree:
         return f"{self.operation}:\n[{'n'.join([str(x) for x in self.children])}]"
 
     def __repr__(self):
-        return f"CalculationTree(operation={repr(self.operation)}, children={self.children})"
+        return f"CalculationTree(operation={self.operation!r}, children={self.children})"
 
     def as_dict(self):
         return {"operation": self.operation, "children": self.children}
+
+    def is_bad(self):
+        return any(el.is_bad() for el in self.children) or isinstance(self.operation, dict)
+
+    def get_error_source(self):
+        res = []
+        for el in self.children:
+            res.extend(el.get_error_source())
+        if isinstance(self.operation, dict):
+            res.extend(self.get_source_error_dict(self.operation))
+        return res
+
+    @classmethod
+    def get_source_error_dict(cls, dkt):
+        if not isinstance(dkt, dict) or "__error__" not in dkt:
+            return []
+        if "not found in register" in dkt["__error__"]:
+            return [dkt["__error__"]]
+        if "__values__" not in dkt:
+            return []
+        fields = local_migrator.check_for_errors_in_dkt_values(dkt["__values__"])
+        res = []
+        for field in fields:
+            res.extend(cls.get_source_error_dict(dkt["__values__"][field]))
+        return res
 
 
 class NodeType(Enum):
@@ -348,6 +374,7 @@ class BaseCalculation:
         sheet_name: str,
         calculation_plan: "CalculationPlan",
         voxel_size: typing.Sequence[float],
+        overwrite_voxel_size: bool = False,
     ):
         self.base_prefix = base_prefix
         self.result_prefix = result_prefix
@@ -356,10 +383,12 @@ class BaseCalculation:
         self.calculation_plan = calculation_plan
         self.uuid = uuid.uuid4()
         self.voxel_size = voxel_size
+        self.overwrite_voxel_size = overwrite_voxel_size
 
     def __repr__(self):
         return (
             f"{self.__class__.__name__}(calculation_plan={self.calculation_plan}, voxel_size={self.voxel_size}, "
+            f"overwrite_voxel_size={self.overwrite_voxel_size}), "
             f"base_prefix={self.base_prefix}, result_prefix={self.base_prefix}, "
             f"measurement_file_path{self.measurement_file_path}, sheet_name={self.sheet_name})"
         )
@@ -380,9 +409,25 @@ class Calculation(BaseCalculation):
     """
 
     def __init__(
-        self, file_list, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size
+        self,
+        file_list,
+        base_prefix,
+        result_prefix,
+        measurement_file_path,
+        sheet_name,
+        calculation_plan,
+        voxel_size,
+        overwrite_voxel_size=False,
     ):
-        super().__init__(base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size)
+        super().__init__(
+            base_prefix,
+            result_prefix,
+            measurement_file_path,
+            sheet_name,
+            calculation_plan,
+            voxel_size,
+            overwrite_voxel_size,
+        )
         self.file_list: typing.List[str] = file_list
 
     def get_base_calculation(self) -> BaseCalculation:
@@ -394,6 +439,7 @@ class Calculation(BaseCalculation):
             self.sheet_name,
             self.calculation_plan,
             self.voxel_size,
+            self.overwrite_voxel_size,
         )
         base.uuid = self.uuid
         return base
@@ -437,10 +483,16 @@ class FileCalculation:
         """default voxel size (for files which do not contains this information in metadata"""
         return self.calculation.voxel_size
 
+    @property
+    def overwrite_voxel_size(self):
+        """overwrite voxel size"""
+        return self.calculation.overwrite_voxel_size
+
     def __repr__(self):
         return f"FileCalculation(file_path={self.file_path}, calculation={self.calculation})"
 
 
+@register_class(allow_errors_in_values=True)
 class CalculationPlan:
     """
     Clean description Calculation plan.
@@ -451,7 +503,7 @@ class CalculationPlan:
     :type execution_tree: CalculationTree
     """
 
-    correct_name = {
+    correct_name: typing.ClassVar[typing.Dict[str, typing.Union[BaseModel, Enum]]] = {
         MaskCreate.__name__: MaskCreate,
         MaskUse.__name__: MaskUse,
         Save.__name__: Save,
@@ -477,6 +529,12 @@ class CalculationPlan:
         self.changes = []
         self.current_node = None
 
+    def is_bad(self):
+        return self.execution_tree.is_bad()
+
+    def get_error_source(self):
+        return ", ".join(self.execution_tree.get_error_source())
+
     def as_dict(self):
         return {"tree": self.execution_tree, "name": self.name}
 
@@ -490,7 +548,7 @@ class CalculationPlan:
         return f"CalculationPlan<{self.name}>\n{self.execution_tree}"
 
     def __repr__(self):
-        return f"CalculationPlan(name={repr(self.name)}, execution_tree={repr(self.execution_tree)})"
+        return f"CalculationPlan(name={self.name!r}, execution_tree={self.execution_tree!r})"
 
     def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
         """
@@ -593,20 +651,17 @@ class CalculationPlan:
         if not self.current_pos:
             return NodeType.root
         node = self.get_node(parent=parent)
-        if isinstance(node.operation, RootType):
-            return NodeType.root
-        if isinstance(node.operation, (MaskMapper, MaskIntersection, MaskSum)):
-            return NodeType.file_mask
-        if isinstance(node.operation, MaskCreate):
-            return NodeType.mask
-        if isinstance(node.operation, MeasurementCalculate):
-            return NodeType.measurement
-        if isinstance(node.operation, ROIExtractionProfile):
-            return NodeType.segment
-        if isinstance(node.operation, Save):
-            return NodeType.save
-        if isinstance(node.operation, MaskUse):
-            return NodeType.file_mask
+        for klass, node_type in [
+            (RootType, NodeType.root),
+            ((MaskMapper, MaskIntersection, MaskSum), NodeType.file_mask),
+            (MaskCreate, NodeType.mask),
+            (MeasurementCalculate, NodeType.measurement),
+            (ROIExtractionProfile, NodeType.segment),
+            (Save, NodeType.save),
+            (MaskUse, NodeType.file_mask),
+        ]:
+            if isinstance(node.operation, klass):
+                return node_type
         if isinstance(node.operation, Operations) and node.operation == Operations.reset_to_base:
             return NodeType.mask
         raise ValueError(f"[get_node_type] unknown node type {node.operation}")
@@ -687,6 +742,7 @@ class CalculationPlan:
                 return el.operation
             if isinstance(el.operation, MaskFile):
                 num -= 1
+        return None
 
     @classmethod
     def dict_load(cls, data_dict):
@@ -705,12 +761,12 @@ class CalculationPlan:
         return res_plan
 
     @staticmethod
-    def get_el_name(el):  # noqa C901
+    def get_el_name(el):  # noqa: C901, PLR0911, PLR0912
         """
         :param el: Plan element
         :return: str
         """
-        if el.__class__.__name__ not in CalculationPlan.correct_name.keys():
+        if el.__class__.__name__ not in CalculationPlan.correct_name:
             print(el, el.__class__.__name__, file=sys.stderr)
             raise ValueError(f"Unknown type {el.__class__.__name__}")
         if isinstance(el, RootType):
@@ -720,11 +776,11 @@ class CalculationPlan:
         if isinstance(el, ROIExtractionProfile):
             return f"Segmentation: {el.name}"
         if isinstance(el, MeasurementCalculate):
-            if el.name_prefix == "":
+            if not el.name_prefix:
                 return f"Measurement: {el.name}"
             return f"Measurement: {el.name} with prefix: {el.name_prefix}"
         if isinstance(el, MaskCreate):
-            return f"Create mask: {el.name}" if el.name != "" else "Create mask:"
+            return f"Create mask: {el.name}" if el.name else "Create mask:"
         if isinstance(el, MaskUse):
             return f"Use mask: {el.name}"
         if isinstance(el, MaskSuffix):
@@ -737,14 +793,14 @@ class CalculationPlan:
             base = el.short_name
             if el.directory:
                 return f"Save {base} in directory with name {el.suffix}"
-            return f"Save {base} with suffix {el.suffix}" if el.suffix != "" else f"Save {base}"
+            return f"Save {base} with suffix {el.suffix}" if el.suffix else f"Save {base}"
 
         if isinstance(el, MaskIntersection):
-            if el.name == "":
+            if not el.name:
                 return f"Mask intersection of mask {el.mask1} and {el.mask2}"
             return f"Mask {el.name} intersection of mask {el.mask1} and {el.mask2}"
         if isinstance(el, MaskSum):
-            if el.name == "":
+            if not el.name:
                 return f"Mask sum of mask {el.mask1} and {el.mask2}"
             return f"Mask {el.name} sum of mask {el.mask1} and {el.mask2}"
 

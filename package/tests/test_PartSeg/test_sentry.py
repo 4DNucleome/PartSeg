@@ -1,10 +1,12 @@
 import multiprocessing
+from importlib.metadata import version as package_version
 
 import numpy as np
 import pytest
 import sentry_sdk
 import sentry_sdk.serializer
 import sentry_sdk.utils
+from packaging.version import parse as parse_version
 from sentry_sdk.client import Client
 from sentry_sdk.hub import Hub
 from sentry_sdk.serializer import serialize
@@ -12,13 +14,20 @@ from sentry_sdk.serializer import serialize
 from PartSeg.common_backend.base_argparser import safe_repr
 from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
 
-DEFAULT_ERROR_REPORT = sentry_sdk.utils.MAX_STRING_LENGTH
+SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
+
+if SENTRY_GE_1_29:
+    DEFAULT_ERROR_REPORT = sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH
+    CONST_NAME = "DEFAULT_MAX_VALUE_LENGTH"
+else:
+    DEFAULT_ERROR_REPORT = sentry_sdk.utils.MAX_STRING_LENGTH
+    CONST_NAME = "MAX_STRING_LENGTH"
 
 
 def test_message_clip(monkeypatch):
     message = "a" * 5000
     assert len(sentry_sdk.utils.strip_string(message).value) == DEFAULT_ERROR_REPORT
-    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
+    monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, 10**4)
     assert len(sentry_sdk.utils.strip_string(message)) == 5000
 
 
@@ -27,12 +36,12 @@ def test_sentry_serialize_clip(monkeypatch):
     try:
         raise ValueError("eeee")
     except ValueError as e:
-        event, hint = sentry_sdk.utils.event_from_exception(e)
+        event, _hint = sentry_sdk.utils.event_from_exception(e)
         event["message"] = message
 
         cliped = serialize(event)
         assert len(cliped["message"]) == DEFAULT_ERROR_REPORT
-        monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
+        monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, 10**4)
         cliped = serialize(event)
         assert len(cliped["message"]) == 5000
 
@@ -86,7 +95,7 @@ def test_sentry_report(monkeypatch):
 def test_sentry_report_no_clip(monkeypatch):
     message = "a" * 5000
     happen = [False]
-    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
+    monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, 10**4)
 
     def check_event(event):
         happen[0] = True
@@ -98,7 +107,10 @@ def test_sentry_report_no_clip(monkeypatch):
     except ValueError as e:
         event, hint = sentry_sdk.utils.event_from_exception(e)
         event["message"] = message
-        client = Client("https://aaa@test.pl/77")
+        if SENTRY_GE_1_29:
+            client = Client("https://aaa@test.pl/77", max_value_length=10**4)
+        else:
+            client = Client("https://aaa@test.pl/77")
         Hub.current.bind_client(client)
         monkeypatch.setattr(client.transport, "capture_event", check_event)
         with sentry_sdk.push_scope() as scope:

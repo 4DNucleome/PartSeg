@@ -20,6 +20,8 @@ IORegister = typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase), str,
 
 
 class IOMethodMock:
+    __new_style__ = False
+
     def __init__(self, name: str):
         self.name = name
 
@@ -84,9 +86,9 @@ class CustomLoadDialog(LoadRegisterFileDialog):
         history: typing.Optional[typing.List[str]] = None,
     ):
         super().__init__(load_register, caption, parent)
-        self.setOption(QFileDialog.DontUseNativeDialog, True)
-        self.setFileMode(QFileDialog.ExistingFile)
-        self.setAcceptMode(QFileDialog.AcceptOpen)
+        self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+        self.setFileMode(QFileDialog.FileMode.ExistingFile)
+        self.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
         self.files_list = []
         self.setWindowTitle("Open File")
         if history is not None:
@@ -94,10 +96,12 @@ class CustomLoadDialog(LoadRegisterFileDialog):
             self.setHistory(history)
 
     def accept(self):
-        selected_files = [x for x in self.selectedFiles() if self.fileMode == QFileDialog.Directory or isfile(x)]
+        selected_files = [
+            x for x in self.selectedFiles() if self.fileMode == QFileDialog.FileMode.Directory or isfile(x)
+        ]
         if not selected_files:
             return
-        if len(selected_files) == 1 and self.fileMode != QFileDialog.Directory and isdir(selected_files[0]):
+        if len(selected_files) == 1 and self.fileMode != QFileDialog.FileMode.Directory and isdir(selected_files[0]):
             super().accept()
             return
 
@@ -123,11 +127,13 @@ class PLoadDialog(CustomLoadDialog):
         *,
         settings: "BaseSettings",
         path: str,
-        default_directory=str(Path.home()),
+        default_directory: typing.Optional[str] = None,
         filter_path="",
         parent=None,
         caption="Load file",
     ):
+        if default_directory is None:
+            default_directory = str(Path.home())
         super().__init__(
             load_register=load_register,
             parent=parent,
@@ -150,3 +156,37 @@ class PLoadDialog(CustomLoadDialog):
         self.settings.set(self.path_in_dict, directory)
         if self.filter_path:
             self.settings.set(self.filter_path, self.selectedNameFilter())
+
+
+class SelectDirectoryDialog(QFileDialog):
+    def __init__(
+        self,
+        settings: "BaseSettings",
+        settings_path: typing.Union[str, typing.List[str]],
+        default_directory: typing.Optional[str] = None,
+        parent=None,
+    ) -> None:
+        super().__init__(parent, "Select directory")
+        if default_directory is None:
+            default_directory = str(Path.home())
+        self.settings = settings
+        self.setFileMode(QFileDialog.FileMode.Directory)
+        self.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
+        if isinstance(settings_path, list):
+            for path_ in reversed(settings_path):
+                default_directory = self.settings.get(path_, default_directory)
+            self.setDirectory(default_directory)
+            self.path_in_dict = settings_path[0]
+        else:
+            self.setDirectory(self.settings.get(settings_path, default_directory))
+            self.path_in_dict = settings_path
+        history = self.history() + settings.get_path_history()
+        self.setHistory(history)
+
+    def accept(self) -> None:
+        super().accept()
+        if self.result() != QFileDialog.DialogCode.Accepted:
+            return
+        directory = self.selectedFiles()[0]
+        self.settings.add_path_history(directory)
+        self.settings.set(self.path_in_dict, directory)

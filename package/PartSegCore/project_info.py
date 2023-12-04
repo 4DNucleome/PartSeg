@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Protocol, Tuple, Union, runtime_checkable
+from typing import Any, ClassVar, Dict, List, Optional, Protocol, Tuple, Union, runtime_checkable
 
 import numpy as np
 
@@ -93,9 +93,9 @@ class ProjectInfoBase(Protocol):
     file_path: str
     image: Image
     roi_info: ROIInfo = ROIInfo(None)
-    additional_layers: Dict[str, AdditionalLayerDescription] = {}
+    additional_layers: ClassVar[Dict[str, AdditionalLayerDescription]] = {}
     mask: Optional[np.ndarray] = None
-    history: List[HistoryElement] = []
+    history: ClassVar[List[HistoryElement]] = []
     errors: str = ""
     points: Optional[np.ndarray] = None
 

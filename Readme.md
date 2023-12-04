@@ -1,5 +1,6 @@
 # PartSeg
 
+![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen.svg)
 ![Tests](https://github.com/4DNucleome/PartSeg/workflows/Tests/badge.svg?branch=develop)
 [![PyPI version](https://badge.fury.io/py/PartSeg.svg)](https://badge.fury.io/py/PartSeg)
 [![Anaconda version](https://anaconda.org/conda-forge/partseg/badges/version.svg)](https://anaconda.org/conda-forge/partseg)
@@ -11,10 +12,9 @@
 [![Licence: BSD3](https://img.shields.io/github/license/4DNucleome/PartSeg)](https://github.com/4DNucleome/PartSeg/blob/master/License.txt)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen.svg)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/alerts/)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/context:python)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f9b0f1eb2c92486d9efd99ed5b2ef326)](https://www.codacy.com/gh/4DNucleome/PartSeg/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=4DNucleome/PartSeg&amp;utm_campaign=Badge_Grade)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff)
+[![CodeQL](https://github.com/4DNucleome/PartSeg/actions/workflows/codeql-analysis.yml/badge.svg?branch=develop)](https://github.com/4DNucleome/PartSeg/actions/workflows/codeql-analysis.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f9b0f1eb2c92486d9efd99ed5b2ef326)](https://www.codacy.com/gh/4DNucleome/PartSeg/dashboard?utm_source=github.com&utm_medium=referral&utm_content=4DNucleome/PartSeg&utm_campaign=Badge_Grade)
 [![codecov](https://codecov.io/gh/4DNucleome/PartSeg/branch/develop/graph/badge.svg?token=nbAbkOAe1C)](https://codecov.io/gh/4DNucleome/PartSeg)
 [![DeepSource](https://deepsource.io/gh/4DNucleome/PartSeg.svg/?label=active+issues&show_trend=true&token=RuuHPIzqyqGaU-bKtOKPFWTg)](https://deepsource.io/gh/4DNucleome/PartSeg/?ref=repository-badge)
 
@@ -26,35 +26,42 @@ This application is designed to help biologist with segmentation based on thresh
 
 ## Tutorials
 
--   Tutorial: **Chromosome 1 (as gui)** [link](https://github.com/4DNucleome/PartSeg/blob/master/tutorials/tutorial-chromosome-1/tutorial-chromosome1_16.md)
--   Data for chromosome 1 tutorial [link](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg_samples.zip)
--   Tutorial: **Different neuron types (as library)** [link](https://github.com/4DNucleome/PartSeg/blob/master/tutorials/tutorial_neuron_types/Neuron_types_example.ipynb)
+- Tutorial: **Chromosome 1 (as gui)** [link](https://github.com/4DNucleome/PartSeg/blob/master/tutorials/tutorial-chromosome-1/tutorial-chromosome1_16.md)
+- Data for chromosome 1 tutorial [link](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg_samples.zip)
+- Tutorial: **Different neuron types (as library)** [link](https://github.com/4DNucleome/PartSeg/blob/master/tutorials/tutorial_neuron_types/Neuron_types_example.ipynb)
 
 ## Installation
 
--   From binaries:
-    -   [Windows](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-windows.zip) (build on Windows 10)
-    -   [Linux](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-linux.zip) (build on Ubuntu 20.04)
-    -   [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS 11)
-        There are reported problems with permissions systems on macOS. If you have problem with starting application please try to run it from terminal.
+- From binaries:
 
--   With pip:
-    -   From pypi: `pip install PartSeg[all]`
-    -   From repository: `pip install git+https://github.com/4DNucleome/PartSeg.git`
+  - [Windows](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-windows.zip) (build on Windows 10)
+  - [Linux](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-linux.zip) (build on Ubuntu 20.04)
+  - [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS 11)
+    There are reported problems with permissions systems on macOS. If you have problem with starting application please try to run it from terminal.
 
--   With conda:
-    -   `conda install -c conda-forge partseg`
-    -   `mamba install -c conda-forge partseg` - As mamba is faster than conda
+- With pip:
 
--   With napari:
+  - From pypi: `pip install PartSeg[all]`
+  - From repository: `pip install git+https://github.com/4DNucleome/PartSeg.git`
 
-    If you do not know how to setup python environment on your system you may use [napari](https://napari.org/) to run PartSeg.
-    It is a GUI for scientific image analysis. PartSeg is also a plugin for napari so could be installed from plugin dialog.
-    To install napari bundle please download it [napari bundle](https://github.com/napari/napari/releases/latest)
-    and follow [installation instructions](https://napari.org/stable/tutorials/fundamentals/installation.html#install-as-a-bundled-app).
+- With conda:
+
+  - `conda install -c conda-forge partseg`
+  - `mamba install -c conda-forge partseg` - As mamba is faster than conda
+
+- With napari:
+
+  If you do not know how to setup python environment on your system you may use [napari](https://napari.org/) to run PartSeg.
+  It is a GUI for scientific image analysis. PartSeg is also a plugin for napari so could be installed from plugin dialog.
+  To install napari bundle please download it [napari bundle](https://github.com/napari/napari/releases/latest)
+  and follow [installation instructions](https://napari.org/stable/tutorials/fundamentals/installation.html#install-as-a-bundled-app).
 
 Installation troubleshooting information could be found in wiki: [wiki](https://github.com/4DNucleome/PartSeg/wiki/Instalation-troubleshoot).
 If this information does not solve problem you can open [issue](https://github.com/4DNucleome/PartSeg/issues).
+
+### Qt 6 support
+
+PartSeg development branch support (and stable since 0.15.0) has experimental Qt6 support. Test are passing but not whole GUI code is covered by tests. Inf you Find any problem please report it.
 
 ## Running
 
@@ -65,10 +72,10 @@ First option does not work on Windows.
 
 PartSeg export few commandline options:
 
--   `--no_report` - disable error reporting
--   `--no_dialog` - disable error reporting and error dialog. Use only when running from terminal.
--   `roi` - skip launcher and start *ROI analysis* gui
--   `mask`- skip launcher and start *ROI mask* gui
+- `--no_report` - disable error reporting
+- `--no_dialog` - disable error reporting and error dialog. Use only when running from terminal.
+- `roi` - skip launcher and start *ROI analysis* gui
+- `mask`- skip launcher and start *ROI mask* gui
 
 ## napari plugin
 
@@ -79,7 +86,7 @@ PartSeg provides napari plugins for io to allow reading projects format in napar
 Saved projects are tar files compressed with gzip or bz2.
 
 Metadata is saved in data.json file (in json format).
-Images/masks are saved as *.npy (numpy array format).
+Images/masks are saved as \*.npy (numpy array format).
 
 ## Interface
 

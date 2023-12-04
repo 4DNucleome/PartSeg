@@ -8,6 +8,7 @@ from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import napari
 import numpy as np
+from local_migrator import register_class
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
@@ -15,7 +16,6 @@ from napari.layers.labels import Labels
 from napari.qt import QtViewer
 from napari.qt.threading import thread_worker
 from napari.utils.colormaps.colormap import ColormapInterpolationMode
-from nme import register_class
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
@@ -157,11 +157,6 @@ class ImageView(QWidget):
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
         self.viewer_widget = NapariQtViewer(self.viewer)
-        if hasattr(self.viewer_widget.canvas, "background_color_override"):
-            self.viewer_widget.canvas.background_color_override = "black"
-            if _napari_ge_4_17:
-                self.viewer.scale_bar.color = "white"
-                self.viewer.scale_bar.colored = True
 
         self._update_scale_bar_ticks()
 
@@ -184,40 +179,14 @@ class ImageView(QWidget):
         self.mask_label.setVisible(False)
 
         self.btn_layout = QHBoxLayout()
-        self.btn_layout.addWidget(self.reset_view_button)
-        self.btn_layout.addWidget(self.ndim_btn)
-        self.btn_layout.addWidget(self.roll_dim_button)
-        self.btn_layout.addWidget(self.points_view_button)
-        self.btn_layout.addWidget(self.search_roi_btn)
-        self.btn_layout.addWidget(self.channel_control, 1)
-        self.btn_layout.addWidget(self.mask_label)
-        self.btn_layout.addWidget(self.mask_chk)
         self.btn_layout2 = QHBoxLayout()
-        layout = QVBoxLayout()
-        layout.addLayout(self.btn_layout)
-        layout.addLayout(self.btn_layout2)
-        layout.addWidget(self.viewer_widget)
-
-        self.setLayout(layout)
+        self.setup_ui()
 
         self.channel_control.change_channel.connect(self.change_visibility)
         self.viewer.events.status.connect(self.print_info)
 
-        settings.mask_changed.connect(self.set_mask)
-        settings.roi_changed.connect(self.set_roi)
-        settings.roi_clean.connect(self.set_roi)
-        settings.image_changed.connect(self.set_image)
-        settings.image_spacing_changed.connect(self.update_spacing_info)
-        settings.points_changed.connect(self.update_points)
-        settings.connect_to_profile(RENDERING_MODE_NAME_STR, self.update_rendering)
-        settings.labels_changed.connect(self.update_roi_coloring)
-        settings.connect_to_profile(f"{name}.image_state.opacity", self.update_roi_coloring)
-        settings.connect_to_profile(f"{name}.image_state.only_border", self.update_roi_border)
-        settings.connect_to_profile(f"{name}.image_state.border_thick", self.update_roi_border)
-        settings.connect_to_profile(f"{name}.image_state.show_label", self.update_roi_labeling)
-        settings.connect_to_profile("mask_presentation_opacity", self.update_mask_parameters)
-        settings.connect_to_profile("mask_presentation_color", self.update_mask_parameters)
-        settings.connect_to_profile("scale_bar_ticks", self._update_scale_bar_ticks)
+        self._connect_to_settings()
+
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
@@ -227,6 +196,45 @@ class ImageView(QWidget):
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self.camera_change, position="last")
         self.viewer.events.reset_view.connect(self._view_changed, position="last")
+
+    def setup_ui(self):
+        self.btn_layout.addWidget(self.reset_view_button)
+        self.btn_layout.addWidget(self.ndim_btn)
+        self.btn_layout.addWidget(self.roll_dim_button)
+        self.btn_layout.addWidget(self.points_view_button)
+        self.btn_layout.addWidget(self.search_roi_btn)
+        self.btn_layout.addWidget(self.channel_control, 1)
+        self.btn_layout.addWidget(self.mask_label)
+        self.btn_layout.addWidget(self.mask_chk)
+        layout = QVBoxLayout()
+        layout.addLayout(self.btn_layout)
+        layout.addLayout(self.btn_layout2)
+        layout.addWidget(self.viewer_widget)
+
+        self.setLayout(layout)
+
+        if hasattr(self.viewer_widget.canvas, "background_color_override"):
+            self.viewer_widget.canvas.background_color_override = "black"
+            if _napari_ge_4_17:
+                self.viewer.scale_bar.color = "white"
+                self.viewer.scale_bar.colored = True
+
+    def _connect_to_settings(self):
+        self.settings.mask_changed.connect(self.set_mask)
+        self.settings.roi_changed.connect(self.set_roi)
+        self.settings.roi_clean.connect(self.set_roi)
+        self.settings.image_changed.connect(self.set_image)
+        self.settings.image_spacing_changed.connect(self.update_spacing_info)
+        self.settings.points_changed.connect(self.update_points)
+        self.settings.connect_to_profile(RENDERING_MODE_NAME_STR, self.update_rendering)
+        self.settings.labels_changed.connect(self.update_roi_coloring)
+        self.settings.connect_to_profile(f"{self.name}.image_state.opacity", self.update_roi_coloring)
+        self.settings.connect_to_profile(f"{self.name}.image_state.only_border", self.update_roi_border)
+        self.settings.connect_to_profile(f"{self.name}.image_state.border_thick", self.update_roi_border)
+        self.settings.connect_to_profile(f"{self.name}.image_state.show_label", self.update_roi_labeling)
+        self.settings.connect_to_profile("mask_presentation_opacity", self.update_mask_parameters)
+        self.settings.connect_to_profile("mask_presentation_color", self.update_mask_parameters)
+        self.settings.connect_to_profile("scale_bar_ticks", self._update_scale_bar_ticks)
 
     def _update_scale_bar_ticks(self):
         self.viewer.scale_bar.ticks = self.settings.get_from_profile("scale_bar_ticks", True)
@@ -326,7 +334,7 @@ class ImageView(QWidget):
     def _coordinates(self):
         active_layer = self._active_layer()
         if active_layer is None:
-            return
+            return None
         if (
             hasattr(self.viewer, "cursor")
             and hasattr(self.viewer.cursor, "position")
@@ -348,12 +356,16 @@ class ImageView(QWidget):
             moved_coords = image_info.translated_coords(cords)
             bright_array.extend(layer.data[tuple(moved_coords)] for layer in image_info.layers if layer.visible)
 
-            if image_info.roi_info.roi is not None and image_info.roi is not None:
-                if val := image_info.roi_info.roi[tuple(moved_coords)]:
-                    components.append(val)
-            if self.roi_alternative_selection in image_info.roi_info.alternative:
-                if val := image_info.roi_info.alternative[self.roi_alternative_selection][tuple(moved_coords)]:
-                    alt_components.append(val)
+            if (
+                image_info.roi_info.roi is not None
+                and image_info.roi is not None
+                and (val := image_info.roi_info.roi[tuple(moved_coords)])
+            ):
+                components.append(val)
+            if self.roi_alternative_selection in image_info.roi_info.alternative and (
+                val := image_info.roi_info.alternative[self.roi_alternative_selection][tuple(moved_coords)]
+            ):
+                alt_components.append(val)
 
         if not bright_array and not components:
             self.text_info_change.emit("")
@@ -362,16 +374,8 @@ class ImageView(QWidget):
         if bright_array:
             text += str(bright_array[0]) if len(bright_array) == 1 else str(bright_array)
         self.components = components
-        if components:
-            if len(components) == 1:
-                text += f" component: {components[0]}"
-            else:
-                text += f" components: {components}"
-        if alt_components:
-            if len(alt_components) == 1:
-                text += f" alt:  {alt_components[0]}"
-            else:
-                text += f" alt: {alt_components}"
+        text += _print_list(components, " component")
+        text += _print_list(alt_components, " alt")
         self.text_info_change.emit(text)
 
     def mask_opacity(self) -> float:
@@ -462,14 +466,14 @@ class ImageView(QWidget):
         ):
             image_info.roi.colormap = Colormap([[0, 0, 0, 0], [0, 0, 0, 0]])
 
-        res = [list(colors[(x - 1) % colors.shape[0]]) + [1] for x in range(image_info.roi_count + 1)]
+        res = [[*list(colors[(x - 1) % colors.shape[0]]), 1] for x in range(image_info.roi_count + 1)]
         res[0] = [0, 0, 0, 0]
         if len(res) < 2:
             res += [[0, 0, 0, 0] for _ in range(2 - len(res))]
 
         image_info.roi.colormap = Colormap(colors=res, interpolation=ColormapInterpolationMode.ZERO)
         max_val = image_info.roi_count + 1
-        image_info.roi._all_vals = np.array(  # pylint: disable=W0212
+        image_info.roi._all_vals = np.array(  # pylint: disable=protected-access
             [0] + [(x + 1) / (max_val + 1) for x in range(1, max_val)]
         )
 
@@ -618,6 +622,14 @@ class ImageView(QWidget):
         if data_ is not None:
             layer_.data = data_
 
+    def _add_or_move_layer(self, layer: Optional[Layer], index):
+        if layer is None:
+            return
+        if layer not in self.viewer.layers:
+            self.viewer.add_layer(layer)
+        else:
+            self.viewer.layers.move(self.viewer.layers.index(layer), index)
+
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
         image_info, replace = image_data
         image = image_info.image
@@ -639,11 +651,9 @@ class ImageView(QWidget):
         self.image_info[image.file_path].layers = image_info.layers
         self.current_image = image.file_path
         mask_layer = self.image_info[image.file_path].mask
-        if mask_layer is not None and mask_layer not in self.viewer.layers:
-            self.viewer.add_layer(mask_layer)
+        self._add_or_move_layer(mask_layer, -1)
         roi_layer = self.image_info[image.file_path].roi
-        if roi_layer is not None and roi_layer not in self.viewer.layers:
-            self.viewer.add_layer(roi_layer)
+        self._add_or_move_layer(roi_layer, -1)
         self.viewer.reset_view()
         if self.viewer.layers:
             if hasattr(self.viewer.layers, "selection"):
@@ -784,9 +794,8 @@ class ImageView(QWidget):
         return " ".join(text_list)
 
     def event(self, event: QEvent):
-        if event.type() == QEvent.ToolTip and self.components:
-            if text := self.get_tool_tip_text():
-                QToolTip.showText(event.globalPos(), text, self)
+        if event.type() == QEvent.Type.ToolTip and self.components and (text := self.get_tool_tip_text()):
+            QToolTip.showText(event.globalPos(), text, self)
         return super().event(event)
 
     def _search_component(self):
@@ -911,7 +920,7 @@ class ImageView(QWidget):
 
     @staticmethod
     def _data_to_world(layer: Layer, cords):
-        return layer._transforms[1:3].simplified(cords)  # pylint: disable=W0212
+        return layer._transforms[1:3].simplified(cords)  # pylint: disable=protected-access
 
     def _bounding_box(self, num) -> Optional[Tuple[np.ndarray, np.ndarray]]:
         lower_bound_list = []
@@ -924,7 +933,7 @@ class ImageView(QWidget):
             upper_bound_list.append(self._data_to_world(image_info.roi, bound_info.upper))
 
         if not lower_bound_list:
-            return
+            return None
 
         lower_bound = np.min(lower_bound_list, axis=0)
         upper_bound = np.min(upper_bound_list, axis=0)
@@ -936,7 +945,7 @@ class NapariQtViewer(QtViewer):
         super().__init__(viewer, show_welcome_screen=False)
         self.widget(0).layout().setContentsMargins(0, 5, 0, 2)
 
-    def dragEnterEvent(self, event):  # pylint: disable=R0201
+    def dragEnterEvent(self, event):  # pylint: disable=no-self-use
         """
         ignore napari reading mechanism
         """
@@ -1031,8 +1040,8 @@ calc_layer_filter = thread_worker(_calc_layer_filter)
 
 
 def _print_dict(dkt: MutableMapping, indent="") -> str:
-    if not isinstance(dkt, MutableMapping):
-        logging.error(f"{type(dkt)} instead of dict passed to _print_dict")
+    if not isinstance(dkt, MutableMapping):  # pragma: no cover
+        logging.error("%s instead of dict passed to _print_dict", type(dkt))
         return indent + str(dkt)
     res = []
     for k, v in dkt.items():
@@ -1041,3 +1050,11 @@ def _print_dict(dkt: MutableMapping, indent="") -> str:
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)
+
+
+def _print_list(lst: list, prefix: str) -> str:
+    if not lst:
+        return ""
+    if len(lst) == 1:
+        return f"{prefix}: {lst[0]}"
+    return f"{prefix}s: {lst}"

@@ -73,7 +73,7 @@ class FlowLayout(QLayout):
         self.itemList.append(layout)
 
     def addStretch(self):
-        pass
+        """To satisfy the QLayout API"""
 
     def count(self):
         return len(self.itemList)
@@ -95,10 +95,10 @@ class FlowLayout(QLayout):
         element = self.itemList.pop(i)
         self.itemList.insert(index, element)
 
-    def expandingDirections(self):  # pylint: disable=R0201
-        return Qt.Orientations(Qt.Orientation(0))
+    def expandingDirections(self):  # pylint: disable=no-self-use
+        return Qt.Orientation(0)
 
-    def hasHeightForWidth(self):  # pylint: disable=R0201
+    def hasHeightForWidth(self):  # pylint: disable=no-self-use
         return True
 
     def heightForWidth(self, width):

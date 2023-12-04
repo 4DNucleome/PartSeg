@@ -4,7 +4,7 @@ from functools import partial
 
 import qtawesome as qta
 from napari.utils import Colormap
-from qtpy.QtCore import QEvent, QMargins, QModelIndex, QPoint, QRect, QSize, Qt, Signal
+from qtpy.QtCore import QEvent, QMargins, QModelIndex, QPoint, QPointF, QRect, QSize, Qt, Signal
 from qtpy.QtGui import QColor, QIcon, QMouseEvent, QPainter, QPaintEvent, QPen, QPolygonF, QShowEvent
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -24,12 +24,28 @@ from superqt import QEnumComboBox
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
 from PartSeg.common_gui.numpy_qimage import create_colormap_image
+from PartSeg.common_gui.qt_util import get_mouse_x
 from PartSeg.common_gui.universal_gui_part import CustomSpinBox
 from PartSegCore.image_operations import NoiseFilterType
 
 image_dict = {}  # dict to store QImages generated from colormap
 
 ColorMapDict = typing.MutableMapping[str, typing.Tuple[Colormap, bool]]
+
+try:
+    from qtpy import PYQT6
+except ImportError:  # pragma: no cover
+    PYQT6 = False
+
+if PYQT6:
+
+    def _has_focus_state(state: QStyle.StateFlag) -> bool:
+        return QStyle.StateFlag.State_HasFocus in state
+
+else:
+
+    def _has_focus_state(state: QStyle.StateFlag) -> bool:
+        return bool(state & QStyle.State(QStyle.StateFlag.State_HasFocus))
 
 
 class ColorStyledDelegate(QStyledItemDelegate):
@@ -51,8 +67,8 @@ class ColorStyledDelegate(QStyledItemDelegate):
         rect = QRect(style.rect.x(), style.rect.y() + 2, style.rect.width() - 150, style.rect.height() - 4)
         painter.drawImage(rect, image_dict[model.data()])
         rect2 = QRect(style.rect.x() + style.rect.width() - 140, style.rect.y() + 2, 140, style.rect.height() - 4)
-        painter.drawText(rect2, Qt.AlignLeft, model.data())
-        if int(style.state & QStyle.State_HasFocus):
+        painter.drawText(rect2, Qt.AlignmentFlag.AlignLeft, model.data())
+        if _has_focus_state(style.state):
             painter.save()
             pen = QPen()
             pen.setWidth(5)
@@ -71,11 +87,11 @@ class ColorComboBox(QComboBox):
     """
     Combobox showing colormap instead of text
 
-    :param id_num: id which be emit in signals. Designed to inform which channel information is changed
-    :param colors: list of colors which should be able to chose. All needs to be keys in `color_dict`
+    :param id_num: id which be emmit in signals. Designed to inform which channel information is changed
+    :param colors: list of colors which should be able to choose. All needs to be keys in `color_dict`
     :param color_dict: dict from name to colormap definition
     :param colormap: initial colormap
-    :param base_height: initial height of widgethow information that
+    :param base_height: initial height of widget
     :param lock: show lock padlock to inform that fixed range is used
     :param blur: show info about blur selected
     """
@@ -87,7 +103,7 @@ class ColorComboBox(QComboBox):
     channel_visible_changed = Signal(int, bool)
     """Signal with information about change of channel visibility (ch_num, visible)"""
     channel_colormap_changed = Signal(int, str)
-    """Signal with information about colormap change. (ch_num, name_of_colorma)"""
+    """Signal with information about colormap change. (ch_num, name_of_colormap)"""
 
     def __init__(
         self,
@@ -203,15 +219,15 @@ class ColorComboBox(QComboBox):
             size = QSize(20, self.height() // 2)
             rect = QRect(point1, size)
             painter.fillRect(rect, QColor("white"))
-            triangle.append(point1 + QPoint(dist, dist))
-            triangle.append(point1 + QPoint(size.width() - dist, dist))
-            triangle.append(point1 + QPoint(size.width() // 2, size.height() - dist))
-            painter.setBrush(Qt.black)
-            painter.drawPolygon(triangle, Qt.WindingFill)
+            triangle.append(QPointF(point1) + QPointF(dist, dist))
+            triangle.append(QPointF(point1) + QPointF(size.width() - dist, dist))
+            triangle.append(QPointF(point1) + QPointF(size.width() // 2, size.height() - dist))
+            painter.setBrush(Qt.GlobalColor.black)
+            painter.drawPolygon(triangle, Qt.FillRule.WindingFill)
             painter.restore()
 
     def mousePressEvent(self, event: QMouseEvent):
-        if event.x() > self.width() - self.triangle_width:
+        if get_mouse_x(event) > self.width() - self.triangle_width:
             super().mousePressEvent(event)
         self.clicked.emit(self.id)
 
@@ -312,6 +328,9 @@ class ChannelProperty(QWidget):
         self.collapse_widget.add_hide_element(self.filter_radius)
         self.collapse_widget.add_hide_element(self.gamma_value)
 
+        self.setup_ui()
+
+    def setup_ui(self):
         layout = QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.collapse_widget, 0, 0, 1, 4)
@@ -440,7 +459,7 @@ class ColorComboBoxGroup(QWidget):
 
     coloring_update = Signal()
     """information about global change of coloring"""
-    change_channel = Signal([str, int])
+    change_channel = Signal(str, int)
     """information which channel change"""
 
     def __init__(

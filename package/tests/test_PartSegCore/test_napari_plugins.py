@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 import os
 
@@ -6,11 +6,20 @@ import numpy as np
 import pytest
 from napari.layers import Image, Labels, Layer
 
+from PartSegCore.mask.io_functions import LoadROIFromTIFF
 from PartSegCore.napari_plugins.load_image import napari_get_reader as napari_get_reader_image
 from PartSegCore.napari_plugins.load_mask_project import napari_get_reader as napari_get_reader_mask
 from PartSegCore.napari_plugins.load_masked_image import napari_get_reader as napari_get_reader_mask_image
 from PartSegCore.napari_plugins.load_roi_project import napari_get_reader as napari_get_reader_roi
 from PartSegCore.napari_plugins.loader import project_to_layers
+from PartSegCore.napari_plugins.save_mask_roi import napari_write_labels
+from PartSegCore.napari_plugins.save_tiff_layer import (
+    napari_write_images,
+)
+from PartSegCore.napari_plugins.save_tiff_layer import (
+    napari_write_labels as napari_write_labels_tiff,
+)
+from PartSegImage import GenericImageReader
 
 
 def test_project_to_layers_analysis(analysis_segmentation):
@@ -78,3 +87,59 @@ def test_load_roi_project(load_data):
     assert data[1][2] == "image"
     assert data[2][2] == "labels"
     assert data[3][2] == "labels"
+
+
+def test_write_labels(tmp_path):
+    data = np.zeros((1, 10, 10, 10), dtype=np.uint8)
+    assert napari_write_labels(str(tmp_path / "test.seg"), [], {"scale": [10, 10]}) is None
+    assert not (tmp_path / "test.seg").exists()
+
+    assert napari_write_labels(str(tmp_path / "test.seg"), data, {"scale": [10, 10]}) == str(tmp_path / "test.seg")
+    assert (tmp_path / "test.seg").exists()
+
+    assert napari_write_labels(str(tmp_path / "test.txt"), data, {"scale": [10, 10]}) is None
+    assert not (tmp_path / "test.txt").exists()
+
+
+def test_save_load_axis_order(tmp_path):
+    data = np.zeros((1, 10, 20, 30), dtype=np.uint8)
+    layer = Labels(data)
+    data_path = str(tmp_path / "test.tif")
+    assert napari_write_labels_tiff(data_path, *layer.as_layer_data_tuple()[:2])
+    proj = LoadROIFromTIFF.load([data_path])
+    assert proj.roi_info.roi.shape == data.shape
+
+
+@pytest.fixture(params=[(1, 4), (1, 3), (3, 4), (3, 3), (10, 4)])
+def image_layer_tuples(request):
+    res = []
+    for i in range(request.param[0]):
+        data = np.zeros((1, 10, 20, 30)[-request.param[1] :], dtype=np.uint8)
+        data[:, 1:-1, 1:-1] = i + 1
+        res.append(Image(data, scale=(1, 1, 1, 1)[-request.param[1] :]).as_layer_data_tuple())
+    return res
+
+
+def test_napari_write_images(image_layer_tuples, tmp_path):
+    data_path = str(tmp_path / "test.tif")
+    assert len(napari_write_images(data_path, image_layer_tuples)) == 1
+    image = GenericImageReader.read_image(data_path)
+    assert image.channels == len(image_layer_tuples)
+
+
+def test_write_multichannel(tmp_path):
+    data = np.zeros((1, 10, 20, 30, 5), dtype=np.uint8)
+    data[:, 1:-1, 1:-1, 1:-1] = 1
+    layer = Image(data)
+    data_path = str(tmp_path / "test.tif")
+    assert napari_write_images(data_path, [layer.as_layer_data_tuple()])
+    image = GenericImageReader.read_image(data_path)
+    assert image.channels == 5
+
+
+def test_different_shapes(tmp_path):
+    layer1 = Image(np.eye(10, dtype=np.uint8))
+    layer2 = Image(np.eye(20, dtype=np.uint8))
+    data_path = str(tmp_path / "test.tif")
+    assert not napari_write_images(data_path, [layer1.as_layer_data_tuple(), layer2.as_layer_data_tuple()])
+    assert not (tmp_path / "test.tif").exists()

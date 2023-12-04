@@ -1,5 +1,4 @@
 import os
-import sre_constants
 from functools import partial
 from glob import glob
 from pathlib import Path
@@ -24,7 +23,11 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_gui.custom_load_dialog import SelectDirectoryDialog
+from PartSeg.common_gui.main_window import OPEN_DIRECTORY
 from PartSegCore.analysis.calculation_plan import MaskMapper
+
+IO_BATCH_DIRECTORY = "io.batch_directory"
 
 
 class AcceptFiles(QDialog):
@@ -68,7 +71,7 @@ class FileListItem(QListWidgetItem):
         size = os.stat(file_path).st_size
         size = float(size) / (1024**2)
         super().__init__(f"{file_path:s} ({size:.2f} MB)")
-        self.setTextAlignment(Qt.AlignRight)
+        self.setTextAlignment(Qt.AlignmentFlag.AlignRight)
         self.file_path = file_path
 
 
@@ -142,14 +145,14 @@ class AddFiles(QWidget):
 
     def _load_file(self):
         file_path = self.selected_files.item(self.selected_files.currentRow()).file_path
-        self.settings._load_files_call([file_path])  # pylint: disable=W0212
+        self.settings._load_files_call([file_path])  # pylint: disable=protected-access
 
     def _load_file_with_mask(self, mask_mapper: MaskMapper):
         file_path = self.selected_files.item(self.selected_files.currentRow()).file_path
         mask_path = mask_mapper.get_mask_path(file_path)
-        self.settings._load_files_call([file_path, mask_path])  # pylint: disable=W0212
+        self.settings._load_files_call([file_path, mask_path])  # pylint: disable=protected-access
 
-    def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=R0201
+    def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=no-self-use
         if event.mimeData().hasFormat("text/plain"):
             event.acceptProposedAction()
 
@@ -183,11 +186,9 @@ class AddFiles(QWidget):
             self.update_files_list(res_list)
 
     def find_all(self):
-        try:
-            paths = glob(str(self.paths_input.text()))
-        except sre_constants.error as e:
-            QMessageBox().warning(self, "Bad path", f"During search of files an error '{e.msg}` occurred")
-            return
+        # When it fails again then there is a need to provide test
+        # with input that causes crash
+        paths = glob(str(self.paths_input.text()))
 
         paths = sorted(x for x in (set(paths) - self.files_to_proceed) if not os.path.isdir(x))
         if len(paths) > 0:
@@ -207,12 +208,10 @@ class AddFiles(QWidget):
 
     def select_files(self):
         dial = QFileDialog(self, "Select files")
-        dial.setDirectory(
-            self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", str(Path.home())))
-        )
+        dial.setDirectory(self.settings.get(IO_BATCH_DIRECTORY, self.settings.get(OPEN_DIRECTORY, str(Path.home()))))
         dial.setFileMode(QFileDialog.ExistingFiles)
         if dial.exec_():
-            self.settings.set("io.batch_directory", os.path.dirname(str(dial.selectedFiles()[0])))
+            self.settings.set(IO_BATCH_DIRECTORY, os.path.dirname(str(dial.selectedFiles()[0])))
             new_paths = sorted(set(map(str, dial.selectedFiles())) - self.files_to_proceed)
             for path in new_paths:
                 self.selected_files.addItem(FileListItem(path))
@@ -220,14 +219,14 @@ class AddFiles(QWidget):
             self.file_list_changed.emit(self.files_to_proceed)
 
     def select_directory(self):
-        dial = QFileDialog(self, "Select directory")
-        dial.setDirectory(
-            self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", str(Path.home())))
+        dial = SelectDirectoryDialog(
+            settings=self.settings,
+            settings_path=[IO_BATCH_DIRECTORY, OPEN_DIRECTORY],
+            default_directory=None,
+            parent=self,
         )
-        dial.setFileMode(QFileDialog.Directory)
         if dial.exec_():
             self.paths_input.setText(dial.selectedFiles()[0])
-            self.settings.set("io.batch_directory", str(dial.selectedFiles()[0]))
 
     def file_chosen(self):
         self.delete_button.setEnabled(True)

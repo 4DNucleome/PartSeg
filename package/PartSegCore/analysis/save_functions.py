@@ -24,6 +24,7 @@ __all__ = [
     "SaveXYZ",
     "SaveAsTiff",
     "SaveAsNumpy",
+    "SaveProfilesToJSON",
     "save_dict",
 ]
 
@@ -174,7 +175,7 @@ class SaveProject(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info: ProjectTuple,
-        parameters: dict = None,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -218,7 +219,6 @@ class SaveCmap(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-
         if project_info.image.shape[project_info.image.time_pos] != 1:
             raise NotSupportedImage("This save method o not support time data")
         data = project_info.image.get_data_by_axis(c=parameters["channel"], t=0)
@@ -334,7 +334,7 @@ class SaveAsTiff(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict = None,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):

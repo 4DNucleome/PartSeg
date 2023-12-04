@@ -1,11 +1,10 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 from napari.utils.colormaps import make_colorbar
-from qtpy import PYQT5
 from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QImage
 
@@ -17,7 +16,13 @@ from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
 
-if PYQT5:
+try:
+    from qtpy import PYQT5, PYQT6
+except ImportError:  # pragma: no cover
+    PYQT5 = True
+    PYQT6 = False
+
+if PYQT5 or PYQT6:
 
     def array_from_image(image: QImage):
         size = image.size().width() * image.size().height()
@@ -30,9 +35,37 @@ else:
         return np.frombuffer(image.bits(), dtype=np.uint8, count=size * image.depth() // 8)
 
 
+@pytest.fixture()
+def base_settings(tmp_path, qapp):
+    return BaseSettings(tmp_path)
+
+
+@pytest.fixture()
+def ch_property(base_settings, qtbot):
+    ch_prop = ChannelProperty(base_settings, start_name="test")
+    qtbot.add_widget(ch_prop)
+    return ch_prop
+
+
+@pytest.fixture()
+def image_view(base_settings, ch_property, qtbot):
+    image_view = ImageView(base_settings, ch_property, "test")
+    qtbot.add_widget(image_view)
+    image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
+    with qtbot.waitSignal(image_view.image_added, timeout=10**6):
+        base_settings.image = image
+
+    channels_num = image.channels
+    assert image_view.channel_control.channels_count == channels_num
+
+    image_view.channel_control.set_active(1)
+
+    return image_view
+
+
 class TestChannelProperty:
     def test_fail_construct(self, base_settings):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="non empty start_name"):
             ChannelProperty(base_settings, start_name="")
 
     def test_collapse(self, base_settings, qtbot):
@@ -51,7 +84,7 @@ class TestChannelProperty:
         mock = MagicMock()
         mock.viewer_name = "test"
         ch_prop.register_widget(mock)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="name test already register"):
             ch_prop.register_widget(mock)
         assert ch_prop.minimum_value.value() == 100
         assert ch_prop.maximum_value.value() == 300
@@ -61,7 +94,7 @@ class TestChannelProperty:
         base_settings.set_in_profile("test.range_1", (20, 50))
         assert ch_prop.minimum_value.value() == 200
         assert ch_prop.maximum_value.value() == 500
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="name test7 not in register"):
             ch_prop.change_current("test7", 1)
 
 
@@ -132,6 +165,15 @@ class TestColorComboBox:
         assert box.count() == len(starting_colors) - 1
         box.change_colors(starting_colors[1:])
         assert box.count() == len(starting_colors) - 1
+
+    def test_item_delegate(self, qtbot):
+        dkt = ColormapDict({})
+        box = ColorComboBox(0, starting_colors, dkt)
+        qtbot.add_widget(box)
+        box.show()
+        box.showPopup()
+        qtbot.wait(100)
+        box.hide()
 
 
 class TestColorComboBoxGroup:
@@ -247,18 +289,9 @@ class TestColorComboBoxGroup:
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.filter_radius.setValue(0.5)
 
-    @pytest.mark.windows_ci_skip
+    @pytest.mark.windows_ci_skip()
     @pytest.mark.parametrize("filter_value", NoiseFilterType.__members__.values())
-    def test_image_view_integration_filter(self, qtbot, tmp_path, filter_value):
-        settings = BaseSettings(tmp_path)
-        ch_property = ChannelProperty(settings, "test")
-        image_view = ImageView(settings, ch_property, "test")
-        qtbot.addWidget(image_view)
-        qtbot.addWidget(ch_property)
-        image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
-        with qtbot.waitSignal(image_view.image_added, timeout=10**6):
-            settings.image = image
-
+    def test_image_view_integration_filter(self, qtbot, tmp_path, filter_value, ch_property, image_view):
         image_view.channel_control.set_active(1)
 
         def check_parameters(name, index):
@@ -278,23 +311,11 @@ class TestColorComboBoxGroup:
             filter_value == NoiseFilterType.No and np.any(image4 == 255)
         )
 
-    @pytest.mark.windows_ci_skip
-    def test_image_view_integration(self, qtbot, tmp_path):
-        settings = BaseSettings(tmp_path)
-        ch_property = ChannelProperty(settings, "test")
-        image_view = ImageView(settings, ch_property, "test")
-        qtbot.addWidget(image_view)
-        qtbot.addWidget(ch_property)
-        image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
-        with qtbot.waitSignal(image_view.image_added, timeout=10**6):
-            settings.image = image
-        channels_num = image.channels
-        assert image_view.channel_control.channels_count == channels_num
-
-        image_view.viewer_widget.screenshot()
+    @pytest.mark.windows_ci_skip()
+    def test_image_view_integration(self, qtbot, tmp_path, ch_property, image_view):
+        image_view.viewer_widget.screenshot(flash=False)
         image1 = image_view.viewer_widget.canvas.render()
         assert np.any(image1 != 255)
-        image_view.channel_control.set_active(1)
         ch_property.minimum_value.setValue(100)
         ch_property.maximum_value.setValue(10000)
         ch_property.filter_radius.setValue(0.5)
@@ -326,7 +347,7 @@ class TestColorComboBoxGroup:
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.maximum_value.setValue(11000)
-        image3 = image_view.viewer_widget.screenshot()
+        image3 = image_view.viewer_widget.screenshot(flash=False)
         assert np.any(image3 != 255)
         assert np.any(image2 != image3)
         assert np.any(image1 != image3)
@@ -336,7 +357,7 @@ class TestColorComboBoxGroup:
         ):
             ch_property.fixed.setChecked(False)
 
-        image1 = image_view.viewer_widget.screenshot()
+        image1 = image_view.viewer_widget.screenshot(flash=False)
         assert np.any(image1 != 255)
         assert np.any(image1 != image2)
         assert np.any(image1 != image3)
@@ -345,7 +366,7 @@ class TestColorComboBoxGroup:
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.use_filter.setCurrentEnum(NoiseFilterType.Gauss)
-        image4 = image_view.viewer_widget.screenshot()
+        image4 = image_view.viewer_widget.screenshot(flash=False)
         assert np.any(image4 != 255)
         assert np.any(image1 != image4)
         assert np.any(image2 != image4)
@@ -354,12 +375,20 @@ class TestColorComboBoxGroup:
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.filter_radius.setValue(1)
-        image5 = image_view.viewer_widget.screenshot()
+        image5 = image_view.viewer_widget.screenshot(flash=False)
         assert np.any(image5 != 255)
         assert np.any(image1 != image5)
         assert np.any(image2 != image5)
         assert np.any(image3 != image5)
         assert np.any(image4 != image5)
+
+    @pytest.mark.windows_ci_skip()
+    def test_image_view_integration_gauss(self, qtbot, tmp_path, ch_property, image_view):
+        def check_parameters(name, index):
+            return name == "test" and index == 1
+
+        ch_property.use_filter.setCurrentEnum(NoiseFilterType.Gauss)
+        ch_property.filter_radius.setValue(1)
         # Test gauss and fixed range
         ch_property.minimum_value.setValue(100)
         ch_property.maximum_value.setValue(10000)
@@ -367,8 +396,8 @@ class TestColorComboBoxGroup:
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.fixed.setChecked(True)
-
-        image1 = image_view.viewer_widget.screenshot()
+        image_view.viewer_widget.screenshot(flash=False)
+        image1 = image_view.viewer_widget.canvas.render()
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):

@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Callable
 
 import numpy as np
-from nme import update_argument
+from local_migrator import update_argument
 from pydantic import Field
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmSelection
@@ -56,7 +56,7 @@ class BaseWatershed(AlgorithmDescribeBase, ABC):
         :param upper_bound: data value upper bound
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class PathWatershed(BaseWatershed):
@@ -182,7 +182,7 @@ class PathDistanceWatershed(BaseWatershed):
 
 
 class MSOWatershedParams(BaseModel):
-    step_limits: int = Field(100, ge=1, le=1000, title="Threshold", description="Limits of Steps")
+    step_limits: int = Field(100, ge=1, le=1000, title="Steep limits", description="Limits of Steps")
     reflective: bool = False
 
 
@@ -220,8 +220,8 @@ class MSOWatershed(BaseWatershed):
         mso.set_use_background(False)
         try:
             mu_array = calculate_mu(data.copy("C"), lower_bound, upper_bound, MuType.base_mu)
-        except OverflowError:
-            raise SegmentationLimitException("Wrong range for ")
+        except OverflowError as e:
+            raise SegmentationLimitException("Wrong range for ") from e
         if arguments.reflective:
             mu_array[mu_array < 0.5] = 1 - mu_array[mu_array < 0.5]
         mso.set_mu_array(mu_array)
@@ -229,7 +229,7 @@ class MSOWatershed(BaseWatershed):
             mso.run_MSO(arguments.step_limits)
         except RuntimeError as e:
             if e.args[0] == "to many steps: constrained dilation":
-                raise SegmentationLimitException(*e.args)
+                raise SegmentationLimitException(*e.args) from e
             raise
 
         result = mso.get_result_catted()
@@ -237,15 +237,17 @@ class MSOWatershed(BaseWatershed):
         return result
 
 
-class FlowMethodSelection(AlgorithmSelection, class_methods=["sprawl"], suggested_base_class=BaseWatershed):
+class WatershedSelection(AlgorithmSelection, class_methods=["sprawl"], suggested_base_class=BaseWatershed):
     """This register contains algorithms for sprawl area from core object."""
 
 
-FlowMethodSelection.register(MSOWatershed, old_names=["MultiScale Opening sprawl"])
-FlowMethodSelection.register(PathWatershed, old_names=["Path sprawl"])
-FlowMethodSelection.register(DistanceWatershed, old_names=["Euclidean sprawl"])
-FlowMethodSelection.register(PathDistanceWatershed, old_names=["Path euclidean sprawl"])
-FlowMethodSelection.register(FDTWatershed, old_names=["Fuzzy distance sprawl"])
+WatershedSelection.register(MSOWatershed, old_names=["MultiScale Opening sprawl"])
+WatershedSelection.register(PathWatershed, old_names=["Path sprawl"])
+WatershedSelection.register(DistanceWatershed, old_names=["Euclidean sprawl"])
+WatershedSelection.register(PathDistanceWatershed, old_names=["Path euclidean sprawl"])
+WatershedSelection.register(FDTWatershed, old_names=["Fuzzy distance sprawl"])
+
+FlowMethodSelection = WatershedSelection
 
 
 def __getattr__(name):  # pragma: no cover
@@ -253,12 +255,12 @@ def __getattr__(name):  # pragma: no cover
         warnings.warn(
             "flow_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
         )
-        return FlowMethodSelection.__register__
+        return WatershedSelection.__register__
     if name == "sprawl_dict":
         warnings.warn(
             "sprawl_dict is deprecated. Please use FlowMethodSelection instead", category=FutureWarning, stacklevel=2
         )
-        return FlowMethodSelection.__register__
+        return WatershedSelection.__register__
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
@@ -287,7 +289,7 @@ def calculate_distances_array(spacing, neigh_type: NeighType):
         neighbourhood_array = neighbourhood2d
         if neigh_type == NeighType.sides:
             neighbourhood_array = neighbourhood_array[:4]
-        normalized_spacing = [0] + normalized_spacing
+        normalized_spacing = [0, *normalized_spacing]
     else:
         neighbourhood_array = neighbourhood[: neigh_type.value]
     normalized_spacing = np.array(normalized_spacing)

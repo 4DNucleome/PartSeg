@@ -6,17 +6,15 @@ from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
 from functools import wraps
 
-from nme import REGISTER, class_to_str
+from local_migrator import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
+from pydantic.fields import ModelField, UndefinedType
 from pydantic.main import ModelMetaclass
 from typing_extensions import Annotated
 
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
-
-if typing.TYPE_CHECKING:
-    from pydantic.fields import ModelField
 
 
 class AlgorithmDescribeNotFound(Exception):
@@ -77,7 +75,7 @@ class AlgorithmProperty:
         return (
             f"{self.__class__.__module__}.{self.__class__.__name__}(name='{self.name}',"
             f" user_name='{self.user_name}', "
-            + f"default_value={self.default_value}, type={self.value_type}, range={self.range},"
+            f"default_value={self.default_value}, type={self.value_type}, range={self.range},"
             f"possible_values={self.possible_values})"
         )
 
@@ -126,7 +124,7 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
 
         :return: list of algorithm parameters and comments
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __new__(mcs, name, bases, attrs, **kwargs):
         cls = super().__new__(mcs, name, bases, attrs, **kwargs)
@@ -153,7 +151,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     @classmethod
     def get_doc_from_fields(cls):
         resp = "{\n"
-        for el in cls._get_fields():
+        for el in get_fields_from_algorithm(cls):
             if isinstance(el, AlgorithmProperty):
                 resp += f"  {el.name}: {el.value_type} - "
                 if el.help_text:
@@ -171,7 +169,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
         :return: name of algorithm
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     @_partial_abstractmethod
@@ -188,7 +186,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
                 stacklevel=2,
             )
             return base_model_to_algorithm_property(cls.__argument_class__)
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def _get_fields(cls):
@@ -196,12 +194,12 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     def get_fields_dict(cls) -> typing.Dict[str, AlgorithmProperty]:
-        return {v.name: v for v in cls._get_fields() if isinstance(v, AlgorithmProperty)}
+        return {v.name: v for v in get_fields_from_algorithm(cls) if isinstance(v, AlgorithmProperty)}
 
     @classmethod
     def get_default_values(cls):
         if cls.__new_style__:
-            return cls.__argument_class__()  # pylint: disable=E1102
+            return cls.__argument_class__()  # pylint: disable=not-callable
         return {
             el.name: {
                 "name": el.default_value,
@@ -212,6 +210,12 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
             for el in cls.get_fields()
             if isinstance(el, AlgorithmProperty)
         }
+
+
+def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    if ald_desc.__new_style__:
+        return base_model_to_algorithm_property(ald_desc.__argument_class__)
+    return ald_desc.get_fields()
 
 
 def is_static(fun):
@@ -282,9 +286,8 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         self.check_function(value, "get_name", True)
         try:
             name = value.get_name()
-        except NotImplementedError as e:
-            raise ValueError(f"Class {value} need to implement get_name class method") from e
-
+        except NotImplementedError:
+            raise ValueError(f"Class {value} need to implement get_name class method") from None
         if name in self and not replace:
             raise ValueError(
                 f"Object {self[name]} with this name: {name} already exist and register is not in replace mode"
@@ -320,9 +323,8 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         self.check_function(value, "get_fields", True)
         try:
             val = value.get_name()
-        except NotImplementedError as e:
-            raise ValueError(f"Method get_name of class {value} need to be implemented") from e
-
+        except NotImplementedError:
+            raise ValueError(f"Method get_name of class {value} need to be implemented") from None
         if not isinstance(val, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(val)}")
         if key != val:
@@ -332,9 +334,8 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
                 val = value.get_fields()
                 if not isinstance(val, list):
                     raise ValueError(f"Function get_fields of class {value} need return list not {type(val)}")
-            except NotImplementedError as exc:
-                raise ValueError(f"Method get_fields of class {value} need to be implemented") from exc
-
+            except NotImplementedError:
+                raise ValueError(f"Method get_fields of class {value} need to be implemented") from None
         for el in self.class_methods:
             self.check_function(value, el, True)
         for el in self.methods:
@@ -350,8 +351,8 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         """
         try:
             return next(iter(self.keys()))
-        except StopIteration as e:
-            raise ValueError("Register does not contain any algorithm.") from e
+        except StopIteration:
+            raise ValueError("Register does not contain any algorithm.") from None
 
 
 class AddRegisterMeta(ModelMetaclass):
@@ -429,6 +430,9 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         name = cls.__register__.get_default()
         return cls(name=name, values=cls[name].get_default_values())
 
+    def algorithm(self):
+        return self.__register__[self.name]
+
 
 class ROIExtractionProfileMeta(ModelMetaclass):
     def __new__(cls, name, bases, attrs, **kwargs):
@@ -464,7 +468,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
     values: typing.Any
 
     @validator("values")
-    def validate_values(cls, v, values):  # pylint: disable=R0201
+    def validate_values(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, dict):
             return v
         if "algorithm" not in values:
@@ -489,7 +493,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
         try:
             algorithm = algorithm_dict[self.algorithm]
         except KeyError:
-            return str(self)
+            return f"{self}\n "
         values = self.values if isinstance(self.values, dict) else self.values.dict()
         if self.name in {"", "Unknown"}:
             return (
@@ -499,8 +503,9 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
                 + self._pretty_print(values, algorithm.get_fields_dict())
             )
         return (
-            ((f"ROI extraction profile name: {self.name}" + "\nAlgorithm: ") + self.algorithm) + "\n"
-        ) + self._pretty_print(values, algorithm.get_fields_dict())
+            f"ROI extraction profile name: {self.name}\nAlgorithm: {self.algorithm}\n"
+            f"{self._pretty_print(values, algorithm.get_fields_dict())}"
+        )
 
     @classmethod
     def _pretty_print(
@@ -564,7 +569,8 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     user_name = field.field_info.title
     value_range = None
     possible_values = None
-    value_type = field.type_
+
+    value_type = getattr(field, "annotation", field.type_)
     default_value = field.field_info.default
     help_text = field.field_info.description
     if user_name is None:
@@ -577,7 +583,10 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
             )
         if issubclass(field.type_, AlgorithmSelection):
             value_type = AlgorithmDescribeBase
-            default_value = field.field_info.default.name
+            if isinstance(field.field_info.default, UndefinedType):
+                default_value = field.field_info.default_factory().name
+            else:
+                default_value = field.field_info.default.name
             possible_values = field.type_.__register__
 
     return AlgorithmProperty(
@@ -600,11 +609,13 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
     :return:
     """
     res = []
-    value: "ModelField"
+    value: ModelField
     if hasattr(obj, "header") and obj.header():
         res.append(obj.header())
     for name, value in obj.__fields__.items():
         ap = _field_to_algorithm_property(name, value)
+        if value.field_info.extra.get("hidden", False):
+            continue
         pos = len(res)
         if "position" in value.field_info.extra:
             pos = value.field_info.extra["position"]

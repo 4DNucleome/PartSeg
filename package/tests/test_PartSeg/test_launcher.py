@@ -22,7 +22,7 @@ def test_create_parser():
 
 @pytest.mark.skipif(API.startswith("pyside"), reason="problem with make_napari_viewer fixture")
 @pytest.mark.parametrize(
-    "gui, klass", (("roi_analysis", AnalysisMain), ("roi_mask", MaskMain), ("launcher", LauncherMain))
+    ("gui", "klass"), [("roi_analysis", AnalysisMain), ("roi_mask", MaskMain), ("launcher", LauncherMain)]
 )
 def test_select_window(qtbot, gui, klass):
     args = ArgsMock(gui=gui)

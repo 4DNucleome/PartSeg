@@ -14,7 +14,7 @@ from pydantic import BaseModel as PydanticBaseModel
 
 __author__ = "Grzegorz Bokota"
 
-from nme import register_class
+from local_migrator import register_class
 from psygnal import Signal
 
 
@@ -41,11 +41,11 @@ def numpy_repr(val: np.ndarray):
 class CallbackBase(ABC):
     @abstractmethod
     def is_alive(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def __call__(self, *args, **kwarg):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class CallbackFun(CallbackBase):
@@ -199,14 +199,10 @@ class EventedDict(typing.MutableMapping):
         return {k: v.as_dict_deep() if isinstance(v, EventedDict) else v for k, v in self._dict.items()}
 
     def __str__(self):
-        if self._klass is not None:
-            return f"EventedDict[{self._klass}]({self._dict})"
-        return f"EventedDict({self._dict})"
+        return f"EventedDict[{self._klass}]({self._dict})"
 
     def __repr__(self):
-        if self._klass is not None:
-            return f"EventedDict(klass={self._klass}, {repr(self._dict)})"
-        return f"EventedDict({repr(self._dict)})"
+        return f"EventedDict(klass={self._klass}, {self._dict!r})"
 
     def _propagate_setitem(self, key):
         # Fixme when partial disconnect will work
@@ -404,7 +400,7 @@ class ProfileDict:
         return check_loaded_dict(self.my_dict)
 
     def filter_data(self):  # pragma: no cover
-        warnings.warn("Deprecated, use pop errors instead", FutureWarning)
+        warnings.warn("Deprecated, use pop errors instead", FutureWarning, stacklevel=2)
         self.pop_errors()
 
     def pop_errors(self) -> typing.List[typing.Tuple[str, dict]]:

@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import gc
 from functools import partial
 from unittest.mock import MagicMock
@@ -45,7 +45,7 @@ def test_print_dict():
     assert lines[2].startswith("  e")
 
 
-@pytest.fixture
+@pytest.fixture()
 def image_view(base_settings, image2, qtbot, request):
     ch_prop = ChannelProperty(base_settings, "test")
     view = ImageView(base_settings, channel_property=ch_prop, name=request.function.__name__)
@@ -162,8 +162,8 @@ class TestImageView:
         image_view.update_spacing_info()
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10**5, 10**5, 10**5))
 
-    @pytest.mark.windows_ci_skip
-    def test_mask_control_visibility(self, base_settings, image_view, qtbot, tmp_path):
+    @pytest.mark.windows_ci_skip()
+    def test_mask_control_visibility(self, base_settings, image_view, qtbot):
         image_view.show()
         assert not image_view.mask_chk.isVisible()
         image_view.set_mask()
@@ -176,7 +176,7 @@ class TestImageView:
         assert not image_view.mask_chk.isVisible()
         image_view.hide()
 
-    def test_points_rendering(self, base_settings, image_view, tmp_path):
+    def test_points_rendering(self, base_settings, image_view):
         assert image_view.points_layer is None
         base_settings.points = [(0, 5, 5, 5)]
         assert image_view.points_layer is not None
@@ -184,8 +184,8 @@ class TestImageView:
         image_view.toggle_points_visibility()
         assert not image_view.points_layer.visible
 
-    @pytest.mark.windows_ci_skip
-    def test_points_button_visibility(self, base_settings, image_view, qtbot, tmp_path):
+    @pytest.mark.windows_ci_skip()
+    def test_points_button_visibility(self, base_settings, image_view):
         image_view.show()
         assert not image_view.points_view_button.isVisible()
         base_settings.points = [(0, 5, 5, 5)]
@@ -194,7 +194,7 @@ class TestImageView:
         assert not image_view.points_view_button.isVisible()
         image_view.hide()
 
-    def test_dim_menu(self, base_settings, image_view, monkeypatch):
+    def test_dim_menu(self, image_view, monkeypatch):
         called = []
 
         from PartSeg.common_gui import napari_image_view
@@ -236,7 +236,7 @@ class TestImageView:
         image_view.component_mark(10, False)
         assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
 
-    @pytest.mark.enablethread
+    @pytest.mark.enablethread()
     def test_marking_component_flash(self, base_settings, image_view, tmp_path, qtbot):
         roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
         roi[..., 2:-2, 2:-2, 2:-2] = 1
@@ -302,16 +302,16 @@ class TestImageView:
         assert filtered.shape == ch.shape
         assert (filter_type == NoiseFilterType.No) != (filtered is not ch)
 
-    @pytest.mark.no_patch_add_layer
-    @pytest.mark.enablethread
-    def test_add_layer_util_check_init(self, base_settings, image_view, qtbot):
+    @pytest.mark.no_patch_add_layer()
+    @pytest.mark.enablethread()
+    def test_add_layer_util_check_init(self, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0
 
         qtbot.waitUntil(has_layers)
 
-    @pytest.mark.no_patch_add_layer
-    def test_add_layer_util(self, base_settings, image_view, qtbot):
+    @pytest.mark.no_patch_add_layer()
+    def test_add_layer_util(self, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0
 

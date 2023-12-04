@@ -10,7 +10,7 @@ from enum import Enum
 
 from magicgui import register_type
 from magicgui.widgets import Combobox
-from qtpy import PYQT5
+from qtpy import PYSIDE2
 from qtpy.QtCore import QPointF, QRect, Qt, QTimer
 from qtpy.QtGui import QColor, QFontMetrics, QPainter, QPaintEvent, QPalette, QPolygonF
 from qtpy.QtWidgets import (
@@ -28,7 +28,7 @@ from superqt import QEnumComboBox
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Channel
 
-enum_type = Enum if PYQT5 else object
+enum_type = object if PYSIDE2 else Enum
 
 
 class ChannelComboBox(QComboBox):
@@ -136,7 +136,7 @@ class Spacing(QWidget):
         layout.addWidget(QLabel(f"<strong>{title}</strong>"))
         self.elements = []
         if len(data_sequence) == 2:
-            data_sequence = (1,) + tuple(data_sequence)
+            data_sequence = (1, *tuple(data_sequence))
         for name, value in zip(["z", "y", "x"], data_sequence):
             lab = QLabel(f"{name}:")
             layout.addWidget(lab)
@@ -234,7 +234,7 @@ class ProgressCircle(QWidget):
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         size = min(self.width(), self.height())
         rect = QRect(0, 0, size, size)
         painter.setBrush(self.background_color)
@@ -255,10 +255,7 @@ class ProgressCircle(QWidget):
         point = mid_point + QPointF(
             math.cos(math.pi * (factor * 2)) * radius, -math.sin(math.pi * (factor * 2)) * radius
         )
-        polygon = QPolygonF()
-        polygon += mid_point
-        polygon += zero_point
-        polygon += point
+        polygon = QPolygonF([mid_point, zero_point, point])
         painter.drawPolygon(polygon)
         painter.restore()
 

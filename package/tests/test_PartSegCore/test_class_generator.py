@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 
 import sys
 import typing
@@ -23,7 +23,7 @@ def setup_module():
 
     from PartSegCore import class_generator
 
-    global copy_register  # pylint: disable=W0603
+    global copy_register  # pylint: disable=W0603  # noqa: PLW0603
     copy_register = deepcopy(class_generator.base_serialize_register)
 
 
@@ -37,7 +37,7 @@ def teardown_module():
 
 
 def empty(*_):
-    pass
+    """Empty function to avoid unused variable warning."""
 
 
 def test_readonly():
@@ -109,7 +109,7 @@ def test_name_collision():
         field1: str
 
     empty(Test4)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="class already registered"):
 
         class Test4(BaseSerializableClass):  # pylint: disable=E0102
             field1: str
@@ -167,9 +167,9 @@ def test_typing():
 
 
 def test_forward_ref():
-    class Test(BaseSerializableClass):  # pylint: disable=W0612
+    class Test(BaseSerializableClass):  # pylint: disable=W0612 # skipcq: PTC-W0065
         val: int
-        child: typing.Optional["Test"] = None  # noqa F821
+        child: typing.Optional["Test"] = None
 
     base_serialize_register.clear()
 

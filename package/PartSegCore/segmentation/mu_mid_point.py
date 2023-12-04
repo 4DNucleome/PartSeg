@@ -13,7 +13,7 @@ class BaseMuMid(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def value(cls, sprawl_area: np.ndarray, data: np.ndarray, lower_bound, upper_bound, arguments: dict):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class MeanBound(BaseMuMid):

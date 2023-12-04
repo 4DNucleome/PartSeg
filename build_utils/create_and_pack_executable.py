@@ -19,11 +19,10 @@ SYSTEM_NAME_DICT = {"Linux": "linux", "Windows": "windows", "Darwin": "macos"}
 def create_archive(working_dir):
     os.makedirs(os.path.join(working_dir, "dist2"), exist_ok=True)
     file_name = f"PartSeg-{PartSeg.__version__}-{SYSTEM_NAME_DICT[platform.system()]}"
-    if platform.system() == "Darwin":
-        arch_file = tarfile.open(os.path.join(working_dir, "dist2", f"{file_name}.tgz"), "w:gz")
-        arch_file.write = arch_file.add
-    else:
-        arch_file = zipfile.ZipFile(os.path.join(working_dir, "dist2", f"{file_name}.zip"), "w", zipfile.ZIP_DEFLATED)
+    if platform.system() != "Darwin":
+        return zipfile.ZipFile(os.path.join(working_dir, "dist2", f"{file_name}.zip"), "w", zipfile.ZIP_DEFLATED)
+    arch_file = tarfile.open(os.path.join(working_dir, "dist2", f"{file_name}.tgz"), "w:gz")
+    arch_file.write = arch_file.add
     return arch_file
 
 
@@ -44,7 +43,7 @@ def create_bundle(spec_path, working_dir):
         "--workpath",
         os.path.join(working_dir, "build"),
     ]
-    logger.info("run PyInstaller" + " ".join(pyinstaller_args))
+    logger.info("run PyInstaller %s", " ".join(pyinstaller_args))
 
     pyinstaller_run(pyinstaller_args)
 

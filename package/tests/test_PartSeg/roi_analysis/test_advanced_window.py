@@ -1,5 +1,7 @@
 # pylint: disable=no-self-use
-from PartSeg._roi_analysis.advanced_window import MeasurementSettings, Properties
+from unittest.mock import Mock
+
+from PartSeg._roi_analysis.advanced_window import MeasurementSettings, MultipleInput, Properties
 from PartSeg._roi_analysis.advanced_window import QInputDialog as advanced_module_input
 from PartSeg._roi_analysis.advanced_window import QMessageBox as advanced_message_box
 from PartSegCore.analysis import AnalysisAlgorithmSelection
@@ -160,6 +162,32 @@ class TestMeasurementSettings:
         widget.hide()
 
 
+def test_multiple_input(qtbot, monkeypatch):
+    mock = Mock()
+    monkeypatch.setattr(advanced_message_box, "warning", mock)
+    widget = MultipleInput(
+        text="sample text",
+        help_text="help",
+        objects_list=[
+            ("A", str),
+            ("B", int, 5),
+            ("C", float, 5.0),
+            ("D", int),
+            ("E", float),
+        ],
+    )
+    qtbot.addWidget(widget)
+    assert widget.result is None
+    widget.accept_response()
+    assert widget.result is None
+    mock.assert_called_once()
+    mock.reset_mock()
+    widget.object_dict["A"][1].setText("test")
+    widget.accept_response()
+    mock.assert_not_called()
+    assert widget.result == {"A": "test", "B": 5, "C": 5.0, "D": 0, "E": 0.0}
+
+
 def check_text(expected, to_return):
     def _check(*_, text=None, **_kwargs):
         assert text == expected
@@ -169,4 +197,7 @@ def check_text(expected, to_return):
 
 
 def _empty():
-    pass
+    """
+    Empty function for monkeypatching to prevent recursive call
+    in `test_rename_profile` test
+    """

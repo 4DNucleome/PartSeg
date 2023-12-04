@@ -9,9 +9,9 @@ on:
 jobs:
   download_data:
     name: Download test data
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
@@ -28,11 +28,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ ubuntu-20.04 ]
+        platform: [ ubuntu-22.04 ]
         python: ['3.8', '3.9' , '3.10']
         napari_version: [repo]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4
@@ -46,10 +46,7 @@ jobs:
           powershell gl-ci-helpers/appveyor/install_opengl.ps1
           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
 
-      - name: Install ubuntu libraries
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
+      - uses: tlambert03/setup-qt-libs@v1
 
       - name: Install dependencies
         run: |
@@ -64,7 +61,7 @@ jobs:
 
       - name: Test with tox
         # run tests using pip install --pre
-        uses: GabrielBB/xvfb-action@v1
+        uses: aganders3/headless-gui@v1
         timeout-minutes: 60
         with:
           run: tox

@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import os
 
 import numpy as np
@@ -115,18 +115,19 @@ class TestImageBase:
         self.image_class(
             np.zeros(initial_shape), (5, 5, 5), mask=np.zeros((1, 10, 50, 50)), axes_order=self.image_class.axis_order
         )
-        with pytest.raises(ValueError):
+        data_shape = (1,) * (len(self.image_class.axis_order) - 4) + (10, 50, 50, 4)
+        with pytest.raises(ValueError, match="Wrong array shape"):
             self.image_class(
-                np.zeros((1, 10, 50, 50, 4)),
+                np.zeros(data_shape),
                 (5, 5, 5),
-                mask=np.zeros((1, 10, 50, 40)),
+                mask=np.zeros(data_shape[:-2] + (40,)),
                 axes_order=self.image_class.axis_order,
             )
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Wrong array shape"):
             self.image_class(
-                np.zeros((1, 10, 50, 50, 4)),
+                np.zeros(data_shape),
                 (5, 5, 5),
-                mask=np.zeros((1, 10, 50, 50, 4)),
+                mask=np.zeros(data_shape),
                 axes_order=self.image_class.axis_order,
             )
         mask = np.zeros((1, 10, 50, 50))
@@ -139,7 +140,7 @@ class TestImageBase:
         assert fixed_array.shape == self.image_shape((10, 20), "XY")
         fixed_image = self.image_class(np.zeros((10, 20)), image_spacing=(1, 1, 1), axes_order="XY")
         assert fixed_image.shape == self.image_shape((10, 20), "XY")
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="need to be equal to length of axes"):
             Image.reorder_axes(np.zeros((10, 20)), axes="XYZ")
 
     def test_reorder_axes_with_mask(self):
@@ -149,13 +150,11 @@ class TestImageBase:
         assert im.shape == self.image_shape((50, 10, 50, 4), "YZXC")  # (1, 10, 50, 50, 4)
 
     def test_wrong_dim_create(self):
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError, match="Data should"):
             self.image_class(np.zeros((10, 20)), (1, 1, 1), axes_order="XYZ")
-        assert "Data should" in str(exception_info.value)
 
-        with pytest.raises(ValueError) as exception_info:
+        with pytest.raises(ValueError, match="Data should"):
             self.image_class([np.zeros((10, 20)), np.zeros((10,))], (1, 1, 1), axes_order="XYZ")
-        assert "Data should" in str(exception_info.value)
 
     def test_get_dimension_number(self):
         assert (
@@ -297,9 +296,9 @@ class TestImageBase:
         image.set_spacing((1, 2, 3))
         assert image.spacing == (1, 2, 3)
         assert image.voxel_size == (1, 2, 3)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Correction of spacing fail"):
             image.set_spacing((1, 2, 3, 4))
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError, match="is not iterable"):
             # noinspection PyTypeChecker
             image.set_spacing(1)
         image.set_spacing((1, 0, 4))
@@ -448,7 +447,7 @@ class TestMergeImage:
     def test_merge_fail(self):
         image1 = Image(data=np.zeros((4, 10, 10), dtype=np.uint8), axes_order="ZXY", image_spacing=(1, 1, 1))
         image2 = Image(data=np.zeros((3, 10, 10), dtype=np.uint8), axes_order="ZXY", image_spacing=(1, 1, 1))
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Shape of arrays are different"):
             image1.merge(image2, "C")
 
     @pytest.mark.parametrize("axis_mark", Image.axis_order)
@@ -464,10 +463,10 @@ class TestMergeImage:
 
     def test_merge_channel_name(self):
         image1 = Image(
-            data=np.zeros((4, 10, 10), dtype=np.uint8),
-            axes_order="ZXY",
+            data=np.zeros((2, 4, 10, 10), dtype=np.uint8),
+            axes_order="CZXY",
             image_spacing=(1, 1, 1),
-            channel_names=["channel 1"],
+            channel_names=["channel 1", "channel 3"],
         )
         image2 = Image(
             data=np.zeros((4, 10, 10), dtype=np.uint8),
@@ -482,9 +481,9 @@ class TestMergeImage:
             channel_names=["channel 5"],
         )
         res_image = image1.merge(image2, "C")
-        assert res_image.channel_names == ["channel 1", "channel 2"]
+        assert res_image.channel_names == ["channel 1", "channel 3", "channel 1 (1)"]
         res_image = image1.merge(image3, "C")
-        assert res_image.channel_names == ["channel 1", "channel 5"]
+        assert res_image.channel_names == ["channel 1", "channel 3", "channel 5"]
 
     def test_different_axes_order(self):
         image1 = Image(data=np.zeros((3, 10, 10), dtype=np.uint8), axes_order="ZXY", image_spacing=(1, 1, 1))

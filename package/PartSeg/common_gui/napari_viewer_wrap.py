@@ -69,7 +69,7 @@ class SynchronizeWidget(QWidget):
                     layer.scale = scale
                 name_list.remove(name)
                 return layer
-            except Exception:  # pragma: no cover  pylint: disable=W0703
+            except Exception:  # pragma: no cover  pylint: disable=broad-except
                 del self.viewer.layers[name]
         layer = self.viewer.add_image(
             data,
@@ -91,7 +91,7 @@ class SynchronizeWidget(QWidget):
                     layer.scale = scale
                 name_list.remove(name)
                 return layer
-            except Exception:  # pragma: no cover pylint: disable=W0703
+            except Exception:  # pragma: no cover pylint: disable=broad-except
                 del self.viewer.layers[name]
         layer = self.viewer.add_labels(
             data,
@@ -110,7 +110,7 @@ class SynchronizeWidget(QWidget):
                 layer.scale = scale
                 name_list.remove(name)
                 return layer
-            except Exception:  # pragma: no cover pylint: disable=W0703
+            except Exception:  # pragma: no cover pylint: disable=broad-except
                 del self.viewer.layers[name]
         layer = self.viewer.add_points(
             data,
@@ -135,7 +135,6 @@ class SynchronizeWidget(QWidget):
         current_layers = []
         scale = image.normalized_scaling()
         for i in range(image.channels):
-
             channel_name = image.channel_names[i]
             layer = self._substitute_image_layer(
                 channel_name, image.get_channel(i), scale, colormap_list[i], image_layers

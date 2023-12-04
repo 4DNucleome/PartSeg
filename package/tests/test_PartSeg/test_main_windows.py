@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import os
 import platform
 from functools import partial
@@ -25,9 +25,9 @@ class TestLauncherMainWindow:
         qtbot.addWidget(main_window)
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
-    @pytest.mark.enablethread
-    @pytest.mark.pyside_skip
-    @pytest.mark.windows_ci_skip
+    @pytest.mark.enablethread()
+    @pytest.mark.pyside_skip()
+    @pytest.mark.windows_ci_skip()
     def test_open_mask(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(mask_main_window, "CONFIG_FOLDER", str(tmp_path))
         if platform.system() == "Linux" and GITHUB_ACTIONS:
@@ -42,9 +42,9 @@ class TestLauncherMainWindow:
         qtbot.wait(50)
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
-    @pytest.mark.enablethread
-    @pytest.mark.windows_ci_skip
-    @pytest.mark.pyside_skip
+    @pytest.mark.enablethread()
+    @pytest.mark.windows_ci_skip()
+    @pytest.mark.pyside_skip()
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(analysis_main_window, "CONFIG_FOLDER", str(tmp_path))
         if platform.system() in {"Darwin", "Linux"} and GITHUB_ACTIONS:

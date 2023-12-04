@@ -2,7 +2,7 @@ import json
 import os
 import re
 import typing
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, StringIO, TextIOBase
@@ -42,7 +42,7 @@ def check_segmentation_type(tar_file: TarFile) -> SegmentationType:
         return SegmentationType.analysis
     if "metadata.json" in names:
         return SegmentationType.mask
-    raise WrongFileTypeException()
+    raise WrongFileTypeException
 
 
 def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
@@ -57,7 +57,7 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
 
 
 class SaveBase(AlgorithmDescribeBase, ABC):
-    need_functions = [
+    need_functions: typing.ClassVar[typing.List[str]] = [
         "save",
         "get_short_name",
         "get_name_with_suffix",
@@ -67,10 +67,12 @@ class SaveBase(AlgorithmDescribeBase, ABC):
     ]
 
     @classmethod
+    @abstractmethod
     def get_short_name(cls):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
@@ -87,7 +89,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         :param range_changed: report function for inform about steps num
         :param step_changed: report function for progress
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def get_name_with_suffix(cls):
@@ -118,7 +120,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
 
 class LoadBase(AlgorithmDescribeBase, ABC):
-    need_functions = [
+    need_functions: typing.ClassVar[typing.List[str]] = [
         "load",
         "get_short_name",
         "get_name_with_suffix",
@@ -129,15 +131,17 @@ class LoadBase(AlgorithmDescribeBase, ABC):
     ]
 
     @classmethod
+    @abstractmethod
     def get_short_name(cls):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
         """
@@ -149,7 +153,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         :param metadata: additional information needed by function. Like default spacing for load image
         :return: Project info or list of project info
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def get_name_with_suffix(cls):
@@ -200,13 +204,13 @@ def load_metadata_base(data: typing.Union[str, Path]):
     except ValueError as e:
         try:
             decoded_data = json.loads(str(data), object_hook=partseg_object_hook)
-        except Exception:
-            raise e
+        except Exception:  # pragma: no cover
+            raise e  # noqa: B904
 
     return decoded_data
 
 
-def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[typing.Tuple[str, dict]]]:
+def load_metadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[typing.Tuple[str, dict]]]:
     """
     Load serialized data. Get valid entries.
 
@@ -216,11 +220,18 @@ def load_matadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any
     # TODO extract to function
     data = load_metadata_base(data)
     bad_key = []
+    if isinstance(data, typing.MutableMapping) and "__error__" in data:
+        bad_key.append(data)
+        data = {}
     if isinstance(data, typing.MutableMapping) and not check_loaded_dict(data):
         bad_key.extend((k, data.pop(k)) for k, v in list(data.items()) if not check_loaded_dict(v))
     elif isinstance(data, ProfileDict) and not data.verify_data():
         bad_key = data.pop_errors()
     return data, bad_key
+
+
+load_matadata_part = load_metadata_part
+# backward compatibility
 
 
 def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapping]:
@@ -402,7 +413,7 @@ class SaveROIAsNumpy(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict = None,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -426,8 +437,8 @@ class LoadPoints(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ) -> PointsInfo:
         df = pd.read_csv(load_locations[0], delimiter=",", index_col=0)
@@ -441,6 +452,10 @@ class LoadPoints(LoadBase):
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         return ["text"]
 
+    @classmethod
+    def partial(cls):
+        return True
+
 
 class LoadPlanJson(LoadBase):
     @classmethod
@@ -451,11 +466,21 @@ class LoadPlanJson(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
-        return load_matadata_part(load_locations[0])
+        from PartSegCore.analysis.calculation_plan import CalculationPlan
+
+        res, err = load_metadata_part(load_locations[0])
+        res_dkt = {}
+        err_li = []
+        for key, value in res.items():
+            if isinstance(value, CalculationPlan) and value.is_bad():
+                err_li.append(f"Problem with load {value.name} because of {value.get_error_source()}")
+            else:
+                res_dkt[key] = value
+        return res_dkt, err + err_li
 
     @classmethod
     def get_name(cls) -> str:
@@ -471,8 +496,8 @@ class LoadPlanExcel(LoadBase):
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Callable[[int, int], typing.Any] = None,
-        step_changed: typing.Callable[[int], typing.Any] = None,
+        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
+        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
         data_list, error_list = [], []
@@ -481,9 +506,14 @@ class LoadPlanExcel(LoadBase):
         try:
             for sheet_name in xlsx.sheetnames:
                 if sheet_name.startswith("info"):
-                    data = xlsx[sheet_name].cell(row=2, column=2).value
+                    data = ""
+                    index = 2  # skip header
+                    while xlsx[sheet_name].cell(row=index, column=2).value:
+                        data += xlsx[sheet_name].cell(row=index, column=2).value
+                        index += 1
+
                     try:
-                        data, err = load_matadata_part(data)
+                        data, err = load_metadata_part(data)
                         data_list.append(data)
                         error_list.extend(err)
                     except ValueError:  # pragma: no cover
@@ -492,6 +522,9 @@ class LoadPlanExcel(LoadBase):
             xlsx.close()
         data_dict = {}
         for calc_plan in data_list:
+            if calc_plan.is_bad():
+                error_list.append(f"Problem with load {calc_plan.name} because of {calc_plan.get_error_source()}")
+                continue
             new_name = iterate_names(calc_plan.name, data_dict)
             if new_name is None:  # pragma: no cover
                 error_list.append(f"Cannot determine proper name for {calc_plan.name}")
@@ -502,3 +535,7 @@ class LoadPlanExcel(LoadBase):
     @classmethod
     def get_name(cls) -> str:
         return "Calculation plans from result (*.xlsx)"
+
+
+IO_LABELS_COLORMAP = "io.labels_colormap_dir"
+IO_MASK_METADATA_FILE = "metadata.json"

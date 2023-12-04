@@ -10,6 +10,13 @@ from PartSeg._launcher.check_version import IGNORE_FILE
 from PartSeg.common_backend import napari_get_settings
 
 
+def _parse_version(name):
+    try:
+        return packaging.version.parse(name)
+    except packaging.version.InvalidVersion:
+        return None
+
+
 def import_config():
     """
     Check if settings folder for current version already exists.
@@ -25,7 +32,7 @@ def import_config():
     versions = sorted(
         (
             x
-            for x in [packaging.version.parse(os.path.basename(y)) for y in possible_folders]
+            for x in [_parse_version(os.path.basename(y)) for y in possible_folders]
             if isinstance(x, packaging.version.Version)
         ),
         reverse=True,
@@ -49,5 +56,5 @@ def import_config():
             napari_settings = napari_get_settings(state_store.save_folder)
             if hasattr(napari_settings, "load") and napari_settings.load is not None:
                 napari_settings.load()
-            elif hasattr(napari_settings, "_load") and napari_settings._load is not None:  # pylint: disable=W0212
-                napari_settings._load()  # pylint: disable=W0212
+            elif getattr(napari_settings, "_load", None) is not None:
+                napari_settings._load()  # pylint: disable=protected-access

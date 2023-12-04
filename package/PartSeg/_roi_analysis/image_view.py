@@ -1,3 +1,4 @@
+import contextlib
 from typing import Optional
 
 from qtpy.QtCore import QObject, QSignalBlocker, Slot
@@ -95,12 +96,10 @@ class ResultImageView(ImageView):
         block = self.roi_alternative_select.signalsBlocked()
         self.roi_alternative_select.blockSignals(True)
         self.roi_alternative_select.clear()
-        values = ["ROI"] + list(alternatives)
+        values = ["ROI", *list(alternatives)]
         self.roi_alternative_select.addItems(values)
-        try:
+        with contextlib.suppress(ValueError):
             self.roi_alternative_select.setCurrentIndex(values.index(text))
-        except ValueError:
-            pass
         self.roi_alternative_select.blockSignals(block)
 
     def resizeEvent(self, event: QResizeEvent):
@@ -153,6 +152,6 @@ class SynchronizeView(QObject):
             origin, dest = self.image_view1, self.image_view2
         else:
             origin, dest = self.image_view2, self.image_view1
-        _block = QSignalBlocker(dest)  # noqa F841
+        _block = QSignalBlocker(dest)
         if origin.viewer.dims.ndim == dest.viewer.dims.ndim:
             dest.set_state(origin.get_state())

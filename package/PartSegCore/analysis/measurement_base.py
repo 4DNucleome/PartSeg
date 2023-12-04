@@ -1,10 +1,10 @@
 import sys
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, ForwardRef, Optional, Set, Union
+from typing import Any, ClassVar, Dict, ForwardRef, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
-from nme import REGISTER, class_to_str, register_class, rename_key
+from local_migrator import REGISTER, class_to_str, register_class, rename_key
 from pydantic import Field, validator
 from sympy import Symbol, symbols
 
@@ -56,6 +56,19 @@ class AreaType(Enum):
         return self.name.replace("_", " ")
 
 
+def has_mask_components(component_and_mask_info: Iterable[Tuple[PerComponent, AreaType]]) -> bool:
+    """Check if any measurement will return value per mask component"""
+    return any(
+        (cmp == PerComponent.Yes and area != AreaType.ROI) or cmp == PerComponent.Per_Mask_component
+        for cmp, area in component_and_mask_info
+    )
+
+
+def has_roi_components(component_and_mask_info: Iterable[Tuple[PerComponent, AreaType]]) -> bool:
+    """Check if any measurement will return value per ROI component"""
+    return any((cmp == PerComponent.Yes and area == AreaType.ROI) for cmp, area in component_and_mask_info)
+
+
 def _migrate_leaf_dict(dkt):
     from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
 
@@ -88,7 +101,7 @@ class Leaf(BaseModel):
     channel: Optional[Channel] = None
 
     @validator("parameters")
-    def _validate_parameters(cls, v, values):  # pylint: disable=R0201
+    def _validate_parameters(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, dict) or "name" not in values:
             return v
         from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
@@ -104,7 +117,7 @@ class Leaf(BaseModel):
         return method.__argument_class__(**v)
 
     @validator("per_component")
-    def _validate_per_component(cls, v, values):  # pylint: disable=R0201
+    def _validate_per_component(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, PerComponent) or "area" not in values or values["area"] is None:
             return v
         if v == PerComponent.Per_Mask_component and values["area"] != AreaType.ROI:
@@ -215,7 +228,7 @@ class Leaf(BaseModel):
     def need_mask(self) -> bool:
         """If this measurement need mast for proper calculation."""
         return (
-            self.area in [AreaType.Mask, AreaType.Mask_without_ROI]
+            self.area in {AreaType.Mask, AreaType.Mask_without_ROI}
             or self.per_component is PerComponent.Per_Mask_component
         )
 
@@ -259,9 +272,9 @@ class Node(BaseModel):
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
     def __str__(self):  # pragma: no cover
-        left_text = f"({str(self.left)})" if isinstance(self.left, Node) else str(self.left)
+        left_text = f"({self.left!s})" if isinstance(self.left, Node) else str(self.left)
 
-        right_text = f"({str(self.right)})" if isinstance(self.right, Node) else str(self.right)
+        right_text = f"({self.right!s})" if isinstance(self.right, Node) else str(self.right)
 
         return left_text + self.op + right_text
 
@@ -325,7 +338,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
     text_info = "", ""
 
-    need_class_method = [
+    need_class_method: ClassVar[List[str]] = [
         "get_description",
         "is_component",
         "calculate_property",
@@ -377,7 +390,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
         List incomplete.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def get_starting_leaf(cls) -> Leaf:
@@ -391,7 +404,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_units(cls, ndim) -> symbols:
         """Return units for measurement. They are shown to user"""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def need_channel(cls):

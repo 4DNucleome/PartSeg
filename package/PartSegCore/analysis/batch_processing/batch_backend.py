@@ -20,8 +20,10 @@ Calculation hierarchy:
    }
 
 """
+import contextlib
 import json
 import logging
+import math
 import os
 import threading
 import traceback
@@ -60,11 +62,10 @@ from PartSegCore.analysis.calculation_plan import (
     get_save_path,
 )
 from PartSegCore.analysis.io_utils import ProjectTuple
-from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
-from PartSegCore.analysis.measurement_base import AreaType, PerComponent
+from PartSegCore.analysis.load_functions import LoadImageForBatch, LoadMaskSegmentation, LoadProject
+from PartSegCore.analysis.measurement_base import has_mask_components, has_roi_components
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
-from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
@@ -73,6 +74,11 @@ from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, report_empty_fun
 from PartSegCore.utils import iterate_names
 from PartSegImage import Image, TiffImageReader
+
+# https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3#ID0EDBD=Newer_versions
+# page with excel limits
+MAX_CHAR_IN_EXCEL_CELL = 30_000  # real limit is 32_767 but it is better to have some margin
+MAX_ROWS_IN_EXCEL_CELL = 50  # real limit is 253 but 50 provides better readability
 
 
 class ResponseData(NamedTuple):
@@ -83,6 +89,25 @@ class ResponseData(NamedTuple):
 CalculationResultList = List[ResponseData]
 ErrorInfo = Tuple[Exception, Union[StackSummary, Tuple[Dict, StackSummary]]]
 WrappedResult = Tuple[int, List[Union[ErrorInfo, ResponseData]]]
+
+
+def get_data_loader(
+    root_type: RootType, file_path: str
+) -> Tuple[Union[Type[LoadMaskSegmentation], Type[LoadProject], Type[LoadImageForBatch]], bool]:
+    """
+    Get data loader for given root type. Return indicator if file extension match to loader.
+
+    :param RootType root_type: type of loader
+    :param str file_path: path to file
+    :return: Loader and indicator if file extension match to loader
+    """
+
+    ext = path.splitext(file_path)[1].lower()
+    if root_type == RootType.Mask_project:
+        return LoadMaskSegmentation, ext in LoadMaskSegmentation.get_extensions()
+    if root_type == RootType.Project:
+        return LoadProject, ext in LoadProject.get_extensions()
+    return LoadImageForBatch, ext in LoadImageForBatch.get_extensions()
 
 
 def prepare_error_data(exception: Exception) -> ErrorInfo:
@@ -106,12 +131,13 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     :param file_info: index and path to file which should be processed
     :param calculation: calculation description
     """
-    SimpleITK.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
+    with contextlib.suppress(AttributeError):
+        SimpleITK.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
     calc = CalculationProcess()
     index, file_path = file_info
     try:
         return index, calc.do_calculation(FileCalculation(file_path, calculation))
-    except Exception as e:  # pylint: disable=W0703
+    except Exception as e:  # pylint: disable=broad-except
         return index, [prepare_error_data(e)]
 
 
@@ -135,6 +161,29 @@ class CalculationProcess:
         self.algorithm_parameters: dict = {}
         self.results: CalculationResultList = []
 
+    def _reset_image_cache(self):
+        self.image = None
+        self.roi_info = None
+        self.additional_layers = {}
+        self.mask = None
+        self.history = []
+        self.algorithm_parameters = {}
+        self.measurement = []
+        self.reused_mask = set()
+
+    @staticmethod
+    def load_data(operation, calculation: FileCalculation) -> Union[ProjectTuple, List[ProjectTuple]]:
+        metadata = {"default_spacing": calculation.voxel_size}
+
+        loader, ext_match = get_data_loader(operation, calculation.file_path)
+
+        try:
+            return loader.load([calculation.file_path], metadata=metadata)
+        except Exception as e:  # pragma: no cover
+            if ext_match:
+                raise e
+            raise ValueError(f"File {calculation.file_path} do not match to {operation}") from e
+
     def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
         """
         Main function for calculation process
@@ -148,48 +197,34 @@ class CalculationProcess:
         self.measurement = []
         self.results = []
         operation = calculation.calculation_plan.execution_tree.operation
-        ext = path.splitext(calculation.file_path)[1]
-        metadata = {"default_spacing": calculation.voxel_size}
-        if operation == RootType.Image:
-            for load_class in load_dict.values():
-                if load_class.partial() or load_class.number_of_files() != 1:
-                    continue
-                if ext in load_class.get_extensions():
-                    projects = load_class.load([calculation.file_path], metadata=metadata)
-                    break
-            else:  # pragma: no cover
-                raise ValueError("File type not supported")
-        elif operation == RootType.Project:
-            projects = LoadProject.load([calculation.file_path], metadata=metadata)
-        else:  # operation == RootType.Mask_project
-            try:
-                projects = LoadProject.load([calculation.file_path], metadata=metadata)
-            except (KeyError, WrongFileTypeException):
-                # TODO identify exceptions
-                projects = LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
+        projects = self.load_data(operation, calculation)
 
         if isinstance(projects, ProjectTuple):
             projects = [projects]
         for project in projects:
-            project: ProjectTuple
-            self.image = project.image
-            if operation == RootType.Mask_project:
-                self.mask = project.mask
-            if operation == RootType.Project:
-                self.mask = project.mask
-                # FIXME when load annotation from project is done
-                self.roi_info = project.roi_info
-                self.additional_layers = project.additional_layers
-                self.history = project.history
-                self.algorithm_parameters = project.algorithm_parameters
+            try:
+                self.image = project.image
+                if calculation.overwrite_voxel_size:
+                    self.image.set_spacing(calculation.voxel_size)
+                if operation == RootType.Mask_project:
+                    self.mask = project.mask
+                if operation == RootType.Project:
+                    self.mask = project.mask
+                    # FIXME when load annotation from project is done
+                    self.roi_info = project.roi_info
+                    self.additional_layers = project.additional_layers
+                    self.history = project.history
+                    self.algorithm_parameters = project.algorithm_parameters
 
-            self.iterate_over(calculation.calculation_plan.execution_tree)
-            for el in self.measurement:
-                el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
-            self.results.append(
-                ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
-            )
-            self.measurement = []
+                self.iterate_over(calculation.calculation_plan.execution_tree)
+                for el in self.measurement:
+                    el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
+                self.results.append(
+                    ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
+                )
+            except Exception as e:  # pylint: disable=broad-except
+                self.results.append(prepare_error_data(e))
+            self._reset_image_cache()
         return self.results
 
     def iterate_over(self, node: Union[CalculationTree, List[CalculationTree]]):
@@ -214,7 +249,7 @@ class CalculationProcess:
         :param List[CalculationTree] children: list of nodes to iterate over with applied mask
         """
         mask_path = operation.get_mask_path(self.calculation.file_path)
-        if mask_path == "":  # pragma: no cover
+        if not mask_path:  # pragma: no cover
             raise ValueError("Empty path to mask.")
         if not os.path.exists(mask_path):
             raise OSError(f"Mask file {mask_path} does not exists")
@@ -230,8 +265,8 @@ class CalculationProcess:
         try:
             mask = self.image.fit_array_to_image(mask)[0]
             # TODO fix this time bug fix
-        except ValueError:  # pragma: no cover
-            raise ValueError("Mask do not fit to given image")
+        except ValueError as e:  # pragma: no cover
+            raise ValueError("Mask do not fit to given image") from e
         old_mask = self.mask
         self.mask = mask
         self.iterate_over(children)
@@ -476,7 +511,7 @@ class CalculationManager:
 
         :param int val: number of workers.
         """
-        logging.debug(f"Number off process {val}")
+        logging.debug("Number off process %s", val)
         self.batch_manager.set_number_of_process(val)
 
     def get_results(self) -> BatchResultDescription:
@@ -526,7 +561,7 @@ class SheetData:
         if raw:
             self.columns = pd.MultiIndex.from_tuples(columns)
         else:
-            self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
+            self.columns = pd.MultiIndex.from_tuples([("name", "units"), *columns])
         self.data_frame = pd.DataFrame([], columns=self.columns)
         self.row_list: List[Any] = []
 
@@ -559,6 +594,9 @@ class SheetData:
         self.data_frame = df2.reset_index(drop=True)
         self.row_list = []
         return self.name, self.data_frame
+
+    def __repr__(self):
+        return f"SheetData(name={self.name}, columns{list(self.columns)[1:]}, wait_rows={len(self.row_list)})"
 
 
 class FileData:
@@ -663,13 +701,8 @@ class FileData:
         main_header = []
         for i, el in enumerate(component_information):
             local_header = []
-            component_seg = False
-            component_mask = False
-            for per_component, area in measurement[i].measurement_profile.get_component_and_area_info():
-                if per_component == PerComponent.Yes and area == AreaType.ROI:
-                    component_seg = True
-                if per_component == PerComponent.Yes and area != AreaType.ROI:
-                    component_mask = True
+            component_seg = has_roi_components(measurement[i].measurement_profile.get_component_and_area_info())
+            component_mask = has_mask_components(measurement[i].measurement_profile.get_component_and_area_info())
             if component_seg:
                 local_header.append(("Segmentation component", "num"))
             if component_mask:
@@ -763,8 +796,8 @@ class FileData:
                         file_path = f"{base}({i}){ext}"
                 if i == 100:  # pragma: no cover
                     raise PermissionError(f"Fail to write result excel {self.file_path}")
-            except Exception as e:  # pragma: no cover   # pylint: disable=W0703
-                logging.error(f"[batch_backend] {e}")
+            except Exception as e:  # pragma: no cover   # pylint: disable=broad-except
+                logging.error("[batch_backend] %s", e)
                 self.error_queue.put(prepare_error_data(e))
             finally:
                 self.writing = False
@@ -773,7 +806,7 @@ class FileData:
     def write_to_excel(
         cls, file_path: str, data: Tuple[List[Tuple[str, pd.DataFrame]], List[CalculationPlan], List[Tuple[str, str]]]
     ):
-        with pd.ExcelWriter(file_path) as writer:
+        with pd.ExcelWriter(file_path) as writer:  # pylint: disable=abstract-class-instantiated
             new_sheet_names = []
             ind = 0
             sheets, plans, errors = data
@@ -811,12 +844,26 @@ class FileData:
         cell_format = book.add_format({"bold": True})
         sheet.write("A1", "Plan Description", cell_format)
         sheet.write("B1", "Plan JSON", cell_format)
-        description = calculation_plan.pretty_print()
-        sheet.write("A2", description)
-        sheet.set_row(1, description.count("\n") * 12 + 10)
-        sheet.set_column(0, 0, max(map(len, description.split("\n"))))
+        sheet.write("C1", "Plan JSON (readable)", cell_format)
+        description = calculation_plan.pretty_print().split("\n")
+        for i in range(math.ceil(len(description) / MAX_ROWS_IN_EXCEL_CELL)):
+            to_write = description[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
+            sheet.write(f"A{i+2}", "\n".join(to_write))
+            sheet.set_row(i + 1, len(to_write) * 11 + 10)
+
+        sheet.set_column(0, 0, max(map(len, description)))
         sheet.set_column(1, 1, 15)
-        sheet.write("B2", json.dumps(calculation_plan, cls=PartSegEncoder, indent=2))
+        calculation_plan_str = json.dumps(calculation_plan, cls=PartSegEncoder)
+        for i in range(math.ceil(len(calculation_plan_str) / MAX_CHAR_IN_EXCEL_CELL)):
+            sheet.write(f"B{i+2}", calculation_plan_str[i * MAX_CHAR_IN_EXCEL_CELL : (i + 1) * MAX_CHAR_IN_EXCEL_CELL])
+
+        calculation_plan_pretty = json.dumps(calculation_plan, cls=PartSegEncoder, indent=2).split("\n")
+        for i in range(math.ceil(len(calculation_plan_pretty) / MAX_ROWS_IN_EXCEL_CELL)):
+            to_write = calculation_plan_pretty[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
+            sheet.write(f"C{i+2}", "\n".join(to_write))
+            sheet.set_row(i + 1, len(to_write) * 11 + 10)
+
+        sheet.set_column(2, 2, max(map(len, calculation_plan_pretty)))
 
     def get_errors(self) -> List[ErrorInfo]:
         """

@@ -10,6 +10,7 @@ import numpy as np
 from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
+from pydantic.fields import UndefinedType
 from qtpy.QtCore import QMargins, QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -28,6 +29,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from sentry_sdk.integrations.logging import ignore_logger
 from superqt import QEnumComboBox
 
 from PartSeg.common_backend.base_settings import BaseSettings
@@ -47,6 +49,9 @@ from PartSegCore.segmentation.algorithm_base import (
     SegmentationLimitException,
 )
 from PartSegImage import Channel, Image
+
+logger = logging.getLogger(__name__)
+ignore_logger(__name__)
 
 
 def recursive_update(d, u):
@@ -84,7 +89,7 @@ class ProfileSelect(QComboBox):
         self._update_choices()
 
     def get_value(self):
-        if self._settings is not None and hasattr(self._settings, "roi_profiles") and self.currentText() != "":
+        if self._settings is not None and hasattr(self._settings, "roi_profiles") and self.currentText():
             return self._settings.roi_profiles[self.currentText()]
         return None
 
@@ -122,7 +127,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         try:
             return self._setter(self._widget, val)
         except (TypeError, ValueError) as e:
-            logging.error(f"Error {e} setting value {val} to {self.name}")
+            logger.error("Error %s setting value %s to %s", e, val, self.name)
 
     def get_field(self) -> QWidget:
         """
@@ -205,9 +210,24 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(ap.value_type, BaseModel):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
         else:
-            res = create_widget(value=ap.default_value, annotation=ap.value_type, options=ap.mgi_options)
-            if isinstance(res, EmptyWidget):
-                raise ValueError(f"Unknown type {ap.value_type}")
+            res = cls._get_field_magicgui(ap)
+        return res
+
+    @classmethod
+    def _get_field_magicgui(cls, ap: AlgorithmProperty) -> Widget:
+        if isinstance(ap.default_value, UndefinedType) or ap.default_value is Ellipsis:
+            res = create_widget(annotation=ap.value_type, options=ap.mgi_options)
+        else:
+            try:
+                res = create_widget(value=ap.default_value, annotation=ap.value_type, options=ap.mgi_options)
+            except ValueError as e:
+                if "None is not a valid choice." in str(e):
+                    res = create_widget(annotation=ap.value_type, options=ap.mgi_options)
+                else:  # pragma: no cover
+                    raise e
+
+        if isinstance(res, EmptyWidget):  # pragma: no cover
+            raise ValueError(f"Unknown type {ap.value_type}")
         return res
 
     def _get_field(self) -> typing.Union[QWidget, Widget]:
@@ -220,7 +240,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             self.per_dimension = True
             res = ListInput(prop, 3)
         elif not inspect.isclass(self.value_type):
-            res = create_widget(value=self.default_value, annotation=self.value_type, options=self.mgi_options)
+            res = self._get_field_magicgui(self)
         elif hasattr(self.value_type, "get_object"):
             res = self.value_type.get_object()
         else:
@@ -230,11 +250,11 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if isinstance(res, QWidget):
             res.setToolTip(tool_tip_text)
         if isinstance(res, Widget):
-            res.tooltip = tool_tip_text  # pylint: disable=W0201 # false positive
+            res.tooltip = tool_tip_text  # pylint: disable=attribute-defined-outside-init # false positive
         return res
 
     @staticmethod
-    def get_change_signal(widget: typing.Union[QWidget, Widget]):
+    def get_change_signal(widget: typing.Union[QWidget, Widget]):  # noqa: PLR0911
         if isinstance(widget, Widget):
             return widget.changed
         if isinstance(widget, QComboBox):
@@ -256,14 +276,14 @@ class QtAlgorithmProperty(AlgorithmProperty):
         raise ValueError(f"Unsupported type: {type(widget)}")
 
     @staticmethod
-    def get_getter_and_setter_function(
+    def get_getter_and_setter_function(  # noqa: PLR0911
         widget: typing.Union[QWidget, Widget],
     ) -> typing.Tuple[
         typing.Callable[
             [typing.Union[QWidget, Widget]],
             typing.Any,
         ],
-        typing.Callable[[QWidget, typing.Any], None],  # noqa E231
+        typing.Callable[[typing.Union[QWidget, Widget], typing.Any], None],
     ]:
         """
         For each widget type return proper functions. This functions need instance as first argument
@@ -478,11 +498,11 @@ class SubAlgorithmWidget(QWidget):
         super().__init__()
         if not isinstance(algorithm_property.possible_values, typing.MutableMapping):
             raise ValueError(
-                "algorithm_property.possible_values should be dict." f"It is {type(algorithm_property.possible_values)}"
+                f"algorithm_property.possible_values should be dict. It is {type(algorithm_property.possible_values)}"
             )
         if not isinstance(algorithm_property.default_value, str):
             raise ValueError(
-                "algorithm_property.default_value should be str." f"It is {type(algorithm_property.default_value)}"
+                f"algorithm_property.default_value should be str. It is {type(algorithm_property.default_value)}"
             )
         self.starting_values = {}
         self.property = algorithm_property
@@ -646,7 +666,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     def show_info(self, text):
         self.info_label.setText(text)
-        self.info_label.setVisible(text != "")
+        self.info_label.setVisible(bool(text))
 
     def image_changed(self, image: Image):
         self.form_widget.image_changed(image)
@@ -796,7 +816,7 @@ class AlgorithmChooseBase(QWidget):
         )
         return result
 
-    def change_algorithm(self, name, values: dict = None):
+    def change_algorithm(self, name, values: typing.Optional[dict] = None):
         self.settings.set_algorithm("current_algorithm", name)
         widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
         blocked = self.blockSignals(True)
@@ -841,11 +861,11 @@ class AlgorithmChoose(AlgorithmChooseBase):
         self.value_changed.emit()
 
 
-def _value_get(self):
+def _value_get(self: Widget):
     return self.value
 
 
-def _value_set(self, value):
+def _value_set(self: Widget, value: typing.Any):
     if isinstance(self, ComboBox) and issubclass(self.annotation, Layer) and isinstance(value, str):
         for el in self.choices:
             if el.name == value:

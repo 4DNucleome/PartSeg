@@ -7,15 +7,18 @@ from pathlib import Path
 from threading import Lock
 
 import numpy as np
-import tifffile.tifffile
+import tifffile
 from czifile.czifile import CziFile
 from defusedxml import ElementTree
 from oiffile import OifFile
-from tifffile import TiffFile, natural_sorted
 
 from PartSegImage.image import Image
 
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
+
+
+if typing.TYPE_CHECKING:
+    from xml.etree.ElementTree import Element  # nosec
 
 
 def _empty(_, __):
@@ -58,7 +61,7 @@ class BaseImageReader:
         spacing = tuple(spacing)
         if len(spacing) == 2:
             # one micrometer
-            spacing = (10**-6,) + spacing
+            spacing = (10 ** (-6), *spacing)
         if len(spacing) != 3:
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
@@ -71,11 +74,11 @@ class BaseImageReader:
 
         :param image_path: path to image or buffer
         :param mask_path: path to mask or buffer
-        :param ext: extension if need to decide algorithm, if absent and image_path is path then
+        :param ext: extension to decide algorithm, if absent and image_path is path then
             should be deduced from path
         :return: image structure
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def read_image(
@@ -101,14 +104,36 @@ class BaseImageReader:
             instance.set_default_spacing(default_spacing)
         return instance.read(image_path, mask_path)
 
+    @staticmethod
+    def _reduce_obsolete_dummy_axes(array, axes) -> typing.Tuple[np.ndarray, str]:
+        """
+        If there are duplicates in axes string then remove dimensions of size one
+
+        :return: reduced array and axes
+        """
+        if len(axes) == len(set(axes)):
+            return array, axes
+
+        ax_li = []
+        shape_li = []
+        for dim, ax in zip(array.shape, axes):
+            if dim != 1:
+                ax_li.append(ax)
+                shape_li.append(dim)
+        axes = "".join(ax_li)
+        array = np.reshape(array, shape_li)
+        return array, axes
+
     @classmethod
     def update_array_shape(cls, array: np.ndarray, axes: str):
         """
         Rearrange order of array axes to get proper internal axes order
 
         :param array: array to reorder
-        :param axes_li: current order of array axes as string like "TZYXC"
+        :param axes: current order of array axes as string like "TZYXC"
         """
+        array, axes = cls._reduce_obsolete_dummy_axes(array, axes)
+
         try:
             final_mapping_dict = {letter: i for i, letter in enumerate(cls.return_order())}
             for let1, let2 in [("Z", "I"), ("Z", "Q"), ("C", "S")]:
@@ -138,8 +163,7 @@ class BaseImageReader:
         if len(array.shape) < len(cls.return_order()):
             array = np.reshape(array, array.shape + (1,) * (len(cls.return_order()) - len(array.shape)))
 
-        array = np.moveaxis(array, list(range(len(axes_li))), final_mapping)
-        return array
+        return np.moveaxis(array, list(range(len(axes_li))), final_mapping)
 
 
 class BaseImageReaderBuffer(BaseImageReader):
@@ -155,7 +179,7 @@ class BaseImageReaderBuffer(BaseImageReader):
             should be deduced from path
         :return: image structure
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def read_image(
@@ -195,10 +219,12 @@ class GenericImageReader(BaseImageReaderBuffer):
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
-            assert not isinstance(image_path, BytesIO)  # nosec
+            if isinstance(image_path, BytesIO):  # pragma: no cover
+                raise NotImplementedError("Oif format is not supported for BytesIO")
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext == ".obsep":
-            assert not isinstance(image_path, BytesIO)  # nosec
+            if isinstance(image_path, BytesIO):  # pragma: no cover
+                raise NotImplementedError("Obsep format is not supported for BytesIO")
             return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
@@ -206,32 +232,35 @@ class GenericImageReader(BaseImageReaderBuffer):
 class OifImagReader(BaseImageReader):
     def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         with OifFile(image_path) as image_file:
-            tiffs = natural_sorted(image_file.glob("*.tif"))
-            with TiffFile(image_file.open_file(tiffs[0]), name=tiffs[0]) as tif_file:
+            tiffs = tifffile.natural_sorted(image_file.glob("*.tif"))
+            with tifffile.TiffFile(image_file.open_file(tiffs[0]), name=tiffs[0]) as tif_file:
                 axes = image_file.series[0].axes + tif_file.series[0].axes
             image_data = image_file.asarray()
             image_data = self.update_array_shape(image_data, axes)
             with suppress(KeyError):
-                flat_parm = image_file.mainfile["Reference Image Parameter"]
-                x_scale = flat_parm["HeightConvertValue"] * name_to_scalar[flat_parm["HeightUnit"]]
-                y_scale = flat_parm["WidthConvertValue"] * name_to_scalar[flat_parm["WidthUnit"]]
-                i = 0
-                while True:
-                    name = f"Axis {i} Parameters Common"
-                    if name not in image_file.mainfile:
-                        z_scale = 1
-                        break
-                    axis_info = image_file.mainfile[name]
-                    if axis_info["AxisCode"] == "Z":
-                        z_scale = axis_info["Interval"] * name_to_scalar[axis_info["UnitName"]]
-                        break
-                    i += 1
-
-                self.spacing = z_scale, x_scale, y_scale
-            # TODO add mask reading
+                self._read_scale_parameter(image_file)
+                # TODO add mask reading
         return self.image_class(
             image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
         )
+
+    def _read_scale_parameter(self, image_file):
+        flat_parm = image_file.mainfile["Reference Image Parameter"]
+        x_scale = flat_parm["HeightConvertValue"] * name_to_scalar[flat_parm["HeightUnit"]]
+        y_scale = flat_parm["WidthConvertValue"] * name_to_scalar[flat_parm["WidthUnit"]]
+        i = 0
+        while True:
+            name = f"Axis {i} Parameters Common"
+            if name not in image_file.mainfile:  # pragma: no cover
+                z_scale = 1
+                break
+            axis_info = image_file.mainfile[name]
+            if axis_info["AxisCode"] == "Z":
+                z_scale = axis_info["Interval"] * name_to_scalar[axis_info["UnitName"]]
+                break
+            i += 1
+
+        self.spacing = z_scale, x_scale, y_scale
 
 
 class CziImageReader(BaseImageReaderBuffer):
@@ -275,38 +304,41 @@ class CziImageReader(BaseImageReaderBuffer):
 
 
 class ObsepImageReader(BaseImageReader):
+    def _search_for_files(
+        self,
+        directory: Path,
+        channels: typing.List["Element"],
+        suffix: str = "",
+        required: bool = False,
+    ) -> typing.List[Image]:
+        possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
+        channel_list = []
+        for channel in channels:
+            try:
+                name = next(iter(channel)).attrib["val"] + suffix
+            except StopIteration as e:  # pragma: no cover
+                raise ValueError("Missed information about channel name in obsep file") from e
+            for ex in possible_extensions:
+                if (directory / (name + ex)).exists():
+                    name += ex
+                    break
+            else:  # pragma: no cover
+                if required:
+                    raise ValueError(f"Not found file for key {name}")
+                continue
+            channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
+        return channel_list
+
     def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         directory = Path(os.path.dirname(image_path))
         xml_doc = ElementTree.parse(image_path).getroot()
         channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
         if not channels:
             raise ValueError("Information about channel images not found")
-        possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
-        channel_list = []
-        for channel in channels:
-            try:
-                name = next(iter(channel)).attrib["val"]
-            except StopIteration:  # pragma: no cover
-                raise ValueError("Missed information about channel name in obsep file")
-            for ex in possible_extensions:
-                if (directory / (name + ex)).exists():
-                    name += ex
-                    break
-            else:  # pragma: no cover
-                raise ValueError(f"Not found file for key {name}")
-            channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
-        for channel in channels:
-            try:
-                name = next(iter(channel)).attrib["val"] + "_deconv"
-            except StopIteration:  # pragma: no cover
-                raise ValueError("Missed information about channel name in obsep file")
-            for ex in possible_extensions:
-                if (directory / (name + ex)).exists():
-                    name += ex
-                    break
-            if (directory / name).exists():
-                channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
-
+        channel_list = [
+            *self._search_for_files(directory, channels, required=True),
+            *self._search_for_files(directory, channels, "_deconv"),
+        ]
         image = channel_list[0]
         for el in channel_list[1:]:
             image = image.merge(el, "C")
@@ -324,8 +356,8 @@ class TiffImageReader(BaseImageReaderBuffer):
     """
     TIFF/LSM files reader. Base reading with :py:meth:`BaseImageReader.read_image`
 
-    image_file: TiffFile
-    mask_file: TiffFile
+    image_file: tifffile.TiffFile
+    mask_file: tifffile.TiffFile
     """
 
     def __init__(self, callback_function=None):
@@ -341,7 +373,7 @@ class TiffImageReader(BaseImageReaderBuffer):
         Read tiff image from tiff_file
         """
         self.spacing, self.colors, self.channel_names, self.ranges = self.default_spacing, None, None, None
-        with TiffFile(image_path) as image_file:
+        with tifffile.TiffFile(image_path) as image_file:
             total_pages_num = len(image_file.series[0])
 
             axes = image_file.series[0].axes
@@ -353,8 +385,8 @@ class TiffImageReader(BaseImageReaderBuffer):
             elif image_file.is_ome:
                 self.read_ome_metadata(image_file)
             else:
-                x_spac, y_spac = self.read_resolution_from_tags(image_file)
-                self.spacing = self.default_spacing[0], y_spac, x_spac
+                x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
+                self.spacing = self.default_spacing[0], y_spacing, x_spacing
             mutex = Lock()
             count_pages = [0]
 
@@ -365,7 +397,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                 mutex.release()
 
             if mask_path is not None:
-                with TiffFile(mask_path) as mask_file:
+                with tifffile.TiffFile(mask_path) as mask_file:
                     self.callback_function("max", total_pages_num + len(mask_file.series[0]))
                     self.verify_mask(mask_file, image_file)
                     mask_file.report_func = report_func
@@ -378,13 +410,14 @@ class TiffImageReader(BaseImageReaderBuffer):
 
             else:
                 mask_data = None
-                self.callback_function("max", total_pages_num)
+                if total_pages_num > 1:
+                    self.callback_function("max", total_pages_num)
 
             image_file.report_func = report_func
             try:
                 image_data = image_file.asarray()
             except ValueError as e:  # pragma: no cover
-                raise TiffFileException(*e.args)
+                raise TiffFileException(*e.args) from e
             image_data = self.update_array_shape(image_data, axes)
 
         if not isinstance(image_path, (str, Path)):
@@ -417,8 +450,8 @@ class TiffImageReader(BaseImageReaderBuffer):
                 continue
             try:
                 j = image_series.axes.index(pos)
-            except ValueError:  # pragma: no cover
-                raise ValueError(f"{INCOMPATIBLE_IMAGE_MASK} (axes)")
+            except ValueError as e:  # pragma: no cover
+                raise ValueError(f"{INCOMPATIBLE_IMAGE_MASK} (axes)") from e
                 # TODO add verification if problem with T/Z/I
             if image_series.shape[j] != mask_series.shape[i]:  # pragma: no cover
                 raise ValueError(INCOMPATIBLE_IMAGE_MASK)
@@ -437,7 +470,6 @@ class TiffImageReader(BaseImageReaderBuffer):
     def read_resolution_from_tags(self, image_file):
         tags = image_file.pages[0].tags
         try:
-
             if image_file.is_imagej:
                 scalar = name_to_scalar[image_file.imagej_metadata["unit"]]
             else:
@@ -521,4 +553,4 @@ name_to_scalar = {
     "centimeter": 10**-2,
     "cm": 10**-2,
     "cal": 2.54 * 10**-2,
-}  #: dict with known names of scalar to scalar value. May be some missed
+}  #: dict with known names of scalar to scalar value. Some may be  missed

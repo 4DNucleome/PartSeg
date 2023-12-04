@@ -1,6 +1,6 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["setuptools>=42.0.0", "wheel>=0.34.2", "setuptools_scm[toml]>=3.4"]  # PEP 508 specifications.
+requires = ["setuptools>=42.0.0", "wheel>=0.34.2", "setuptools_scm[toml]>=8"]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
@@ -8,7 +8,7 @@ write_to = "package/PartSeg/version.py"
 
 [tool.black]
 line-length = 120
-target-version = ['py36']
+target-version = ['py38']
 include = '\.pyi?$'
 exclude = '''
 
@@ -33,8 +33,38 @@ exclude = '''
 
 [tool.ruff]
 line-length = 120
-select = ["E", "F", "I", "U", "C", "A" ,"YTT"]
-ignore = ["A003"]
+select = [
+    "F", # Pyflakes
+    "E", "W", # pycodestyle
+    "C90", # mccabe
+    "I", # isort
+    "UP", # pyupgrade
+    "A", # flake8-builtins
+    "YTT", # flake8-2020
+    "S", # flake8-bandit
+    # "BLE", # flake8-blind-except
+    "B", # lake8-bugbear
+    "A", #flake8-builtins
+    "C4", # flake8-comprehensions
+    "ISC", # flake8-implicit-str-concat
+    "ICN", # flake8-import-conventions
+    "G", # flake8-logging-format
+    "PIE", # flake8-pie
+    "PT", # flake8-pytest-style
+    "Q", # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "ARG", # flake8-unused-arguments
+    "PGH", # pygrep-hooks
+    "PLC", "PLE", "PLR", "PLW", # pylint
+    "NPY", # NumPy-specific rules
+    "RUF", # Ruff-specific rules
+]
+ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
+    "PLR0913" # should be reenabled in future version
+]
 exclude = ["examples/call_simple_threshold.py"]
 target-version = "py38"
 fix = true
@@ -42,6 +72,9 @@ fix = true
 [tool.ruff.isort]
 known-first-party=['PartSeg', 'PartSegData','PartSegCore','PartSegImage', 'PartSegCore_compiled_backend']
 
+[tool.ruff.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
 
 [tool.ruff.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
@@ -49,11 +82,19 @@ max-complexity = 15
 
 [tool.ruff.per-file-ignores]
 "docs/conf.py" = ["A001"]
-
+"package/tests/**" = ["ARG", "PLC1901", "S101", "RUF012"]
+"package/PartSegCore/sphinx/*" = ["ARG"]
+"package/tests/**.py" = ["PLR2004"]
+"package/PartSegCore/_old_json_hooks.py" = ["PLR0912", "PLR0911"]
+"package/PartSegCore/class_generator.py" = ["PLR0912"]
+"build_utils/**.py" = ["S603", "S607"]
+"package/PartSeg/common_gui/show_directory_dialog.py" = ["S603", "S606", "S607"]
 
 [tool.check-manifest]
 ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]
 
+[tool.mypy]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tifffile.*"

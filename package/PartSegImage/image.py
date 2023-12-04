@@ -91,7 +91,7 @@ class Image:
 
     def __new__(cls, *args, **kwargs):
         if hasattr(cls, "return_order"):  # pragma: no cover
-            warnings.warn("Using return_order is deprecated since PartSeg 0.11.0", DeprecationWarning)
+            warnings.warn("Using return_order is deprecated since PartSeg 0.11.0", DeprecationWarning, stacklevel=2)
             cls.axis_order = cls.return_order
         cls.array_axis_order = cls.axis_order.replace("C", "")
         return super().__new__(cls)
@@ -166,9 +166,7 @@ class Image:
                 data_shape.pop(axes_order.index("C"))
 
         mask = cls._fit_array_to_image(data_shape, mask)
-        mask = cls.reorder_axes(mask, axes_order.replace("C", ""))
-
-        return mask
+        return cls.reorder_axes(mask, axes_order.replace("C", ""))
 
     @staticmethod
     def _prepare_channel_names(channel_names, channels_num) -> typing.List[str]:
@@ -189,14 +187,17 @@ class Image:
         if isinstance(data, list) and not axes_order.startswith("C"):  # pragma: no cover
             raise ValueError("When passing data as list of numpy arrays then Channel must be first axis.")
         if "C" not in axes_order:
-            assert isinstance(data, np.ndarray)  # nosec
+            if not isinstance(data, np.ndarray):  # pragma: no cover
+                raise TypeError("If `axes_order` does not contain `C` then data must be numpy array.")
             return [cls.reorder_axes(data, axes_order)]
         if axes_order.startswith("C"):
             if isinstance(data, list):
                 dtype = np.result_type(*data)
                 return [cls.reorder_axes(x, axes_order[1:]).astype(dtype) for x in data]
             return [cls.reorder_axes(x, axes_order[1:]) for x in data]
-        assert isinstance(data, np.ndarray)  # nosec
+
+        if not isinstance(data, np.ndarray):
+            raise TypeError("If `data` is list of arrays then `axes_order` must start with `C`")  # pragma: no cover
         pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(data.ndim)]
         c_pos = axes_order.index("C")
         res = []
@@ -214,12 +215,12 @@ class Image:
         for name in new_channel_names:
             match = reg.match(name)
             new_name = name
-            if match and name in base_channel_names:
-                name = "channel"
+            base_name = name
+            if match and base_name in base_channel_names:
                 new_name = f"channel {len(base_channel_names) + 1}"
             i = 1
             while new_name in base_channel_names:
-                new_name = f"{name} ({i})"
+                new_name = f"{base_name} ({i})"
                 i += 1
                 if i > 10000:  # pragma: no cover
                     raise ValueError("fail when try to fix channel name")
@@ -408,6 +409,8 @@ class Image:
         which fit all information
         """
         array = self.fit_array_to_image(array)
+        if np.max(array) == 1:
+            return array.astype(np.uint8)
         unique = np.unique(array)
         if unique.size == 2 and unique[1] == 1:
             return array.astype(np.uint8)
@@ -589,8 +592,8 @@ class Image:
 
     def normalized_scaling(self, factor=DEFAULT_SCALE_FACTOR) -> Spacing:
         if self.is_2d:
-            return (1, 1) + tuple(np.multiply(self.spacing, factor))
-        return (1,) + tuple(np.multiply(self.spacing, factor))
+            return (1, 1, *tuple(np.multiply(self.spacing, factor)))
+        return (1, *tuple(np.multiply(self.spacing, factor)))
 
     @property
     def shift(self):
@@ -606,7 +609,7 @@ class Image:
         if 0 in value:
             return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
-            value = (1.0,) + tuple(value)
+            value = (1.0, *tuple(value))
         if len(value) != len(self._image_spacing):  # pragma: no cover
             raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)
@@ -786,7 +789,7 @@ class Image:
         mask_info = f"mask=True, mask_dtype={self._mask_array.dtype}" if self.mask is not None else "mask=False"
         return (
             f"Image(shape={self._channel_arrays[0].shape} dtype={self._channel_arrays[0].dtype}, spacing={self.spacing}"
-            f", labels={self.channel_names}, channels={self.channels}, axes={repr(self.axis_order)}, {mask_info})"
+            f", labels={self.channel_names}, channels={self.channels}, axes={self.axis_order!r}, {mask_info})"
         )
 
     @classmethod

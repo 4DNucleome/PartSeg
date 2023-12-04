@@ -1,4 +1,4 @@
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 import datetime
 import io
 import os
@@ -14,11 +14,13 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import qtpy
+from local_migrator import register_class
 from magicgui import register_type
 from magicgui.widgets import Container, Widget, create_widget
-from nme import register_class
+from napari.utils import Colormap
 from pydantic import Field
-from qtpy.QtCore import QPoint, QSize, Qt
+from qtpy.QtCore import QPoint, QRect, QSize, Qt
+from qtpy.QtGui import QPaintEvent
 from qtpy.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -45,6 +47,7 @@ from PartSeg.common_gui.advanced_tabs import (
     SEARCH_ZOOM_FACTOR_STR,
     AdvancedWindow,
     Appearance,
+    ColorControl,
 )
 from PartSeg.common_gui.algorithms_description import (
     AlgorithmChoose,
@@ -59,17 +62,26 @@ from PartSeg.common_gui.algorithms_description import (
     SubAlgorithmWidget,
 )
 from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
+from PartSeg.common_gui.colormap_creator import ColormapLoad, ColormapSave, save_colormap_in_settings
 from PartSeg.common_gui.custom_load_dialog import (
     CustomLoadDialog,
     IOMethodMock,
     LoadProperty,
     LoadRegisterFileDialog,
     PLoadDialog,
+    SelectDirectoryDialog,
 )
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog, FormDialog, PSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
-from PartSeg.common_gui.error_report import DataImportErrorDialog, ErrorDialog, QMessageFromException, _print_traceback
+from PartSeg.common_gui.error_report import (
+    _FEEDBACK_URL,
+    DataImportErrorDialog,
+    ErrorDialog,
+    QMessageFromException,
+    _print_traceback,
+)
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog, ImageAdjustTuple
+from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelShow, LabelsLoad, LabelsSave
 from PartSeg.common_gui.main_window import OPEN_DIRECTORY, OPEN_FILE, OPEN_FILE_FILTER, BaseMainWindow
 from PartSeg.common_gui.mask_widget import MaskDialogBase, MaskWidget
 from PartSeg.common_gui.multiple_file_widget import (
@@ -89,6 +101,7 @@ from PartSeg.common_gui.universal_gui_part import (
     Hline,
     InfoLabel,
     MguiChannelComboBox,
+    ProgressCircle,
     Spacing,
 )
 from PartSegCore import Units
@@ -102,11 +115,13 @@ from PartSegCore.algorithm_describe_base import (
 )
 from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.analysis.calculation_plan import MaskSuffix
-from PartSegCore.analysis.load_functions import LoadProject, LoadStackImage, load_dict
+from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, LoadStackImage, load_dict
 from PartSegCore.analysis.save_functions import SaveAsTiff, SaveProject, save_dict
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadPlanExcel, LoadPlanJson, SaveBase
+from PartSegCore.mask.io_functions import MaskProjectTuple, SaveROI, SaveROIOptions
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
 from PartSegCore.utils import BaseModel
@@ -133,6 +148,38 @@ class Enum2(Enum):
         return f"{self.name} eee"
 
 
+@pytest.fixture()
+def _example_tiff_files(tmp_path):
+    for i in range(5):
+        ImageWriter.save(
+            Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
+        )
+
+
+@pytest.fixture()
+def mf_widget(qtbot, part_settings):
+    res = MultipleFileWidget(
+        part_settings,
+        {
+            LoadStackImage.get_name(): LoadStackImage,
+            LoadMaskSegmentation.get_name(): LoadMaskSegmentation,
+        },
+    )
+    qtbot.add_widget(res)
+    return res
+
+
+@pytest.fixture()
+def _example_mask_project_files(tmp_path):
+    data = np.zeros((10, 10), dtype=np.uint8)
+    data[:5] = 1
+    data[5:] = 2
+    image = Image(data, image_spacing=(1, 1), axes_order="XY", file_path=str(tmp_path / "mask.tif"))
+    ImageWriter.save(image, image.file_path)
+    project = MaskProjectTuple(file_path=image.file_path, image=image, roi_info=ROIInfo(image.fit_array_to_image(data)))
+    SaveROI.save(tmp_path / "proj.seg", project, SaveROIOptions())
+
+
 @pytest.mark.filterwarnings("ignore:EnumComboBox is deprecated")
 class TestEnumComboBox:
     def test_enum1(self, qtbot):
@@ -152,15 +199,15 @@ class TestEnumComboBox:
             widget.set_value(Enum2.test2)
 
 
-@pytest.fixture
-def mock_accept_files(monkeypatch):
+@pytest.fixture()
+def _mock_accept_files(monkeypatch):
     def accept(*_):
         return True
 
     monkeypatch.setattr(select_multiple_files.AcceptFiles, "exec_", accept)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_warning(monkeypatch):
     warning_show = [0]
 
@@ -171,7 +218,7 @@ def mock_warning(monkeypatch):
     return warning_show
 
 
-@pytest.mark.usefixtures("mock_accept_files")
+@pytest.mark.usefixtures("_mock_accept_files")
 class TestAddFiles:
     def test_update_files_list(self, qtbot, tmp_path, part_settings):
         for i in range(20):
@@ -247,7 +294,6 @@ class TestAddFiles:
         widget.selected_files.setCurrentRow(2)
 
         def check_res(val):
-
             return val == [str(tmp_path / "test_2.txt")]
 
         with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res):
@@ -514,15 +560,10 @@ class TestMultipleFileWidget:
     def check_load_files(parameter, custom_name):
         return not custom_name and os.path.basename(parameter.file_path) == "img_4.tif"
 
-    @pytest.mark.enablethread
-    @pytest.mark.enabledialog
-    def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path):
-        widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
-        qtbot.add_widget(widget)
-        for i in range(5):
-            ImageWriter.save(
-                Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
-            )
+    @pytest.mark.enablethread()
+    @pytest.mark.enabledialog()
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [
             [
                 [
@@ -532,49 +573,70 @@ class TestMultipleFileWidget:
             ]
             for i in range(5)
         ]
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.load_recent_fun(file_list, lambda x, y: True, lambda x: True)
         assert part_settings.get_last_files_multiple() == file_list
-        assert widget.file_view.topLevelItemCount() == 5
-        widget.file_view.clear()
-        widget.state_dict.clear()
-        widget.file_list.clear()
+        assert mf_widget.file_view.topLevelItemCount() == 5
+        mf_widget.file_view.clear()
+        mf_widget.state_dict.clear()
+        mf_widget.file_list.clear()
         monkeypatch.setattr(LoadRecentFiles, "exec_", lambda x: True)
         monkeypatch.setattr(LoadRecentFiles, "get_files", lambda x: file_list)
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.load_recent()
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.load_recent()
         assert part_settings.get_last_files_multiple() == file_list
-        assert widget.file_view.topLevelItemCount() == 5
+        assert mf_widget.file_view.topLevelItemCount() == 5
 
-    @pytest.mark.enablethread
-    @pytest.mark.enabledialog
-    def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path):
-        widget = MultipleFileWidget(part_settings, {LoadStackImage.get_name(): LoadStackImage})
-        qtbot.add_widget(widget)
-        for i in range(5):
-            ImageWriter.save(
-                Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
-            )
+    @pytest.mark.enablethread()
+    @pytest.mark.enabledialog()
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [[[str(tmp_path / f"img_{i}.tif")], LoadStackImage.get_name()] for i in range(5)]
         load_property = LoadProperty(
             [str(tmp_path / f"img_{i}.tif") for i in range(5)], LoadStackImage.get_name(), LoadStackImage
         )
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
-        assert widget.file_view.topLevelItemCount() == 5
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert mf_widget.file_view.topLevelItemCount() == 5
         assert part_settings.get_last_files_multiple() == file_list
-        widget.file_view.clear()
-        widget.state_dict.clear()
-        widget.file_list.clear()
+        mf_widget.file_view.clear()
+        mf_widget.state_dict.clear()
+        mf_widget.file_list.clear()
         monkeypatch.setattr(MultipleLoadDialog, "exec_", lambda x: True)
         monkeypatch.setattr(MultipleLoadDialog, "get_result", lambda x: load_property)
-        with qtbot.waitSignal(widget._add_state, check_params_cb=self.check_load_files):
-            widget.load_files()
-        assert widget.file_view.topLevelItemCount() == 5
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.load_files()
+        assert mf_widget.file_view.topLevelItemCount() == 5
         assert part_settings.get_last_files_multiple() == file_list
         part_settings.dump()
         part_settings.load()
         assert part_settings.get_last_files_multiple() == file_list
+
+    @pytest.mark.enablethread()
+    @pytest.mark.enabledialog()
+    @pytest.mark.usefixtures("_example_mask_project_files")
+    def test_load_mask_project(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
+        load_property = LoadProperty(
+            [str(tmp_path / "proj.seg")], LoadMaskSegmentation.get_name(), LoadMaskSegmentation
+        )
+
+        with qtbot.waitSignal(mf_widget._add_state):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert part_settings.get_last_files_multiple() == [
+            [[str(tmp_path / "proj.seg")], LoadMaskSegmentation.get_name()]
+        ]
+        assert mf_widget.file_view.topLevelItemCount() == 2
+
+    @pytest.mark.usefixtures("_example_tiff_files")
+    def test_forget_all(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
+        load_property = LoadProperty(
+            [str(tmp_path / f"img_{i}.tif") for i in range(5)], LoadStackImage.get_name(), LoadStackImage
+        )
+        with qtbot.waitSignal(mf_widget._add_state, check_params_cb=self.check_load_files):
+            mf_widget.execute_load_files(load_property, lambda x, y: True, lambda x: True)
+        assert mf_widget.file_view.topLevelItemCount() == 5
+        mf_widget.forget_all()
+        assert mf_widget.file_view.topLevelItemCount() == 0
 
 
 class TestBaseMainWindow:
@@ -582,8 +644,8 @@ class TestBaseMainWindow:
         window = BaseMainWindow(config_folder=tmp_path)
         qtbot.add_widget(window)
 
-    @pytest.mark.enablethread
-    @pytest.mark.enabledialog
+    @pytest.mark.enablethread()
+    @pytest.mark.enabledialog()
     def test_recent(self, tmp_path, qtbot, monkeypatch):
         load_mock = MagicMock()
         load_mock.load = MagicMock(return_value=1)
@@ -624,7 +686,7 @@ class TestQtPopup:
     def test_move_to_error_no_parent(self, qtbot):
         popup = QtPopup(None)
         qtbot.add_widget(popup)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="possible if the popup has a parent"):
             popup.move_to()
 
     @pytest.mark.parametrize("pos", ["top", "bottom", "left", "right", (10, 10, 10, 10), (15, 10, 10, 10)])
@@ -642,10 +704,10 @@ class TestQtPopup:
         widget = QWidget()
         window.setCentralWidget(widget)
         popup = QtPopup(widget)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="position must be one of"):
             popup.move_to("dummy_text")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Wrong type of position"):
             popup.move_to({})
 
     def test_click(self, qtbot, monkeypatch):
@@ -975,6 +1037,9 @@ class TestFormWidget:
                 self.nullable = nullable
                 super().__init__(**kwargs)
 
+            def __setitem__(self, key, value):
+                """to satisfy the Container"""
+
         register_type(DummyClass, widget_type=DummyWidget)
 
         form_widget = FormWidget([AlgorithmProperty("dummy", "dummy", DummyClass(1))])
@@ -988,7 +1053,7 @@ class TestFormWidget:
         layout = w.layout()
         assert isinstance(layout.itemAt(0).widget(), Hline)
         assert isinstance(layout.itemAt(1).widget(), QLabel)
-        assert isinstance(layout.itemAt(2, QFormLayout.FieldRole).widget(), QSpinBox)
+        assert isinstance(layout.itemAt(2, QFormLayout.ItemRole.FieldRole).widget(), QSpinBox)
         assert isinstance(layout.itemAt(4).widget(), Hline)
 
 
@@ -1044,11 +1109,11 @@ class TestQtAlgorithmProperty:
         assert isinstance(res, QtAlgorithmProperty)
         qtbot.add_widget(res.get_field())
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="unknown parameter type"):
             QtAlgorithmProperty.from_algorithm_property(1)
 
     @pytest.mark.parametrize(
-        "data_type,default_value,expected_type,next_value",
+        ("data_type", "default_value", "expected_type", "next_value"),
         [
             (Channel, Channel(1), ChannelComboBox, Channel(2)),
             (bool, True, QCheckBox, False),
@@ -1089,13 +1154,13 @@ class TestQtAlgorithmProperty:
 
     def test_numeric_type_default_value_error(self):
         ap = AlgorithmProperty(name="test", user_name="Test", default_value="a", value_type=int)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incompatible types"):
             QtAlgorithmProperty.from_algorithm_property(ap)
         ap.default_value = 1.0
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incompatible types"):
             QtAlgorithmProperty.from_algorithm_property(ap)
         ap = AlgorithmProperty(name="test", user_name="Test", default_value="a", value_type=float)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incompatible types"):
             QtAlgorithmProperty.from_algorithm_property(ap)
 
     def test_per_dimension(self, qtbot):
@@ -1235,7 +1300,7 @@ class TestMaskWidget:
         assert widget.get_dilate_radius() == [1, 11, 11]
 
     @pytest.mark.parametrize(
-        "name,func,value",
+        ("name", "func", "value"),
         [
             ("fill_holes", "setCurrentEnum", RadiusType.R2D),
             ("max_holes_size", "setValue", 10),
@@ -1280,6 +1345,11 @@ class TestSpacing:
 
         qtbot.addWidget(widget)
 
+    def test_create_2d(self, qtbot):
+        widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9), unit=Units.nm)
+
+        qtbot.addWidget(widget)
+
     def test_get_values(self, qtbot):
         widget = Spacing(title="Test", data_sequence=(10**-9, 10**-9, 10**-9), unit=Units.nm)
         qtbot.addWidget(widget)
@@ -1303,7 +1373,7 @@ def test_info_label(qtbot, monkeypatch):
     qtbot.wait(30)
 
 
-@pytest.mark.parametrize("platform,program", [("linux", "xdg-open"), ("linux2", "xdg-open"), ("darwin", "open")])
+@pytest.mark.parametrize(("platform", "program"), [("linux", "xdg-open"), ("linux2", "xdg-open"), ("darwin", "open")])
 def test_show_directory_dialog(qtbot, monkeypatch, platform, program):
     called = []
 
@@ -1501,7 +1571,7 @@ class TestBaseAlgorithmSettingsWidget:
         qtbot.addWidget(widget)
 
     @pytest.mark.parametrize(
-        "exc, expected",
+        ("exc", "expected"),
         [
             (SegmentationLimitException("Test text"), "During segmentation process algorithm meet"),
             (
@@ -1635,7 +1705,7 @@ class TestAlgorithmChooseBase:
         assert widget.algorithm_choose.currentText() == BorderRim.get_name()
 
     def test_reload(self, qtbot, part_settings):
-        # Dummy test to check if code execute
+        # Simple test to check if code execute
         widget = AlgorithmChooseBase(part_settings, AnalysisAlgorithmSelection)
         qtbot.addWidget(widget)
         widget.reload()
@@ -1671,6 +1741,40 @@ class TestErrorDialog:
         dialog.create_issue()
         assert "title=Error" in mock_web.call_args.args[0]
         assert "body=This" in mock_web.call_args.args[0]
+
+    @patch("requests.post")
+    @patch("sentry_sdk.push_scope")
+    def test_send_report(self, sentry_mock, request_mock, qtbot):
+        dialog = ErrorDialog(ValueError("aaa"), "Test text")
+        qtbot.addWidget(dialog)
+        assert dialog.additional_info.toPlainText() == ""
+        dialog.send_report()
+        sentry_mock.assert_called_once()
+        request_mock.assert_not_called()
+
+    @patch("requests.post")
+    @patch("sentry_sdk.push_scope")
+    @pytest.mark.parametrize(
+        ("email", "expected", "return_code", "post_call_count"),
+        [
+            ("test@test.pl", "test@test.pl", 200, 1),
+            ("test#test.pl", "unknown@unknown.com", 200, 1),
+            ("test@test.pl", "unknown@unknown.com", 300, 2),
+        ],
+    )
+    def test_send_report_with_message(  # pylint: disable=too-many-arguments
+        self, sentry_mock, request_mock, qtbot, email, expected, return_code, post_call_count
+    ):
+        request_mock.return_value = MagicMock(status_code=return_code)
+        dialog = ErrorDialog(ValueError("aaa"), "Test text")
+        qtbot.addWidget(dialog)
+        dialog.additional_info.setText("Test message")
+        dialog.contact_info.setText(email)
+        dialog.send_report()
+        sentry_mock.assert_called_once()
+        assert request_mock.call_count == post_call_count
+        assert request_mock.call_args.kwargs["url"] == _FEEDBACK_URL
+        assert request_mock.call_args.kwargs["data"]["email"] == expected
 
 
 class TestMguiChannelComboBox:
@@ -1713,7 +1817,7 @@ def test_print_traceback_context():
         try:
             raise ValueError("foo")
         except ValueError:
-            raise RuntimeError("bar")
+            raise RuntimeError("bar") from None
     except RuntimeError as e2:
         stream = io.StringIO()
         _print_traceback(e2, file_=stream)
@@ -1738,7 +1842,6 @@ class TestQMessageFromException:
 
     @pytest.mark.parametrize("method", ["critical", "information", "question", "warning"])
     def test_methods(self, monkeypatch, qtbot, method):
-
         called = False
 
         def exec_mock(self):
@@ -1758,3 +1861,120 @@ class TestQMessageFromException:
             getattr(QMessageFromException, method)(None, "Test", "test", exception=e)
 
             assert called
+
+
+class TestLabelCreate:
+    # Test all class from PartSeg.common_gui.label_create module
+    def test_base_color_show(self, qtbot):
+        q = ColorShow((0, 0, 0))
+        qtbot.addWidget(q)
+        q.set_color((1, 1, 1))
+
+    def test_base_label_show(self, qtbot):
+        q = LabelShow("test", [(0, 0, 0), (10, 10, 10)], removable=True)
+        qtbot.addWidget(q)
+        assert not q.radio_btn.isChecked()
+        assert q.remove_btn.isEnabled()
+        with qtbot.wait_signal(q.remove_labels):
+            q.remove_btn.click()
+        with qtbot.wait_signal(q.selected):
+            q.set_checked(True)
+        assert q.radio_btn.isChecked()
+        assert not q.remove_btn.isEnabled()
+        with qtbot.wait_signal(q.edit_labels):
+            q.edit_btn.click()
+
+    def test_base_label_chose(self, qtbot, part_settings):
+        q = LabelChoose(part_settings)
+        qtbot.addWidget(q)
+        q.refresh()
+        assert q.layout().count() == 2
+        part_settings.label_color_dict["test"] = [(0, 0, 0), (10, 10, 10)]
+        q.refresh()
+        assert q.layout().count() == 3
+
+
+def test_color_control(qtbot, part_settings):
+    w = ColorControl(part_settings, ["test"])
+    qtbot.addWidget(w)
+    assert w.count() == 6
+    w._set_label_editor()
+    assert w.currentWidget() == w.label_editor
+    w._set_colormap_editor()
+    assert w.currentWidget() == w.colormap_editor
+
+
+def test_progress_circle(qtbot):
+    w = ProgressCircle()
+    qtbot.addWidget(w)
+    w.set_fraction(0.5)
+    w.paintEvent(QPaintEvent(QRect(0, 0, 100, 100)))
+
+
+def test_colormap_io(tmp_path):
+    cmap = Colormap([[0, 0, 0], [0.5, 0.5, 0.5], [1, 1, 1]], controls=[0, 0.3, 1])
+    ColormapSave.save(tmp_path / "cmap.json", cmap)
+    cmap2 = ColormapLoad.load([tmp_path / "cmap.json"])
+    assert cmap2 == cmap
+
+
+@pytest.mark.parametrize("cls_", [ColormapSave, ColormapLoad])
+def test_colormap_meth(cls_):
+    assert cls_.get_short_name() == "colormap_json"
+    assert cls_.get_name().startswith("Colormap")
+    assert cls_.get_extensions() == [".colormap.json"]
+
+
+def test_labels_io(tmp_path):
+    data = [[128, 0, 130], [0, 180, 120]]
+    LabelsSave.save(tmp_path / "labels.json", data)
+    data2 = LabelsLoad.load([tmp_path / "labels.json"])
+    assert data == data2
+
+
+@pytest.mark.parametrize("cls_", [LabelsSave, LabelsLoad])
+def test_labels_meth(cls_):
+    assert cls_.get_short_name() == "label_json"
+    assert cls_.get_name().startswith("Labels")
+    assert cls_.get_extensions() == [".label.json"]
+
+
+def test_save_colormap_in_settings(part_settings):
+    class DummyColormap(typing.NamedTuple):
+        colors: typing.List[typing.List[float]]
+        controls: typing.List[float]
+
+    assert "custom_aaa" not in part_settings.colormap_dict
+    cmap = Colormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0, 1])
+    save_colormap_in_settings(part_settings, cmap, "custom_aaa")
+    assert len(part_settings.colormap_dict["custom_aaa"][0].controls) == 2
+    cmap2 = DummyColormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0.1, 0.9])
+    save_colormap_in_settings(part_settings, cmap2, "custom_bbb")
+    assert len(part_settings.colormap_dict["custom_bbb"][0].controls) == 4
+
+
+class TestSelectDirectoryDialog:
+    @pytest.mark.parametrize("settings_path", ["s_path", ["s_path", "s_path2"]])
+    def test_create(self, qtbot, base_settings, settings_path, tmp_path):
+        base_settings.set("s_path", str(tmp_path))
+        base_settings.set("s_path2", str(tmp_path / "aaa"))
+        w = SelectDirectoryDialog(settings=base_settings, settings_path=settings_path)
+        qtbot.addWidget(w)
+        assert Path(w.directory().absolutePath()).resolve() == tmp_path.resolve()
+
+    def test_accept(self, qtbot, base_settings, tmp_path, monkeypatch):
+        base_settings.set("s_path", str(tmp_path))
+        (tmp_path / "sample_dir").mkdir()
+        monkeypatch.setattr(
+            "PartSeg.common_gui.custom_load_dialog.SelectDirectoryDialog.selectedFiles",
+            lambda x: [str(tmp_path / "sample_dir")],
+        )
+        w = SelectDirectoryDialog(settings=base_settings, settings_path="s_path")
+        qtbot.addWidget(w)
+        w.selectFile(str(tmp_path / "sample_dir"))
+
+        assert not base_settings.get_path_history()
+        w.setResult(QFileDialog.DialogCode.Accepted)
+        w.accept()
+        assert base_settings.get_path_history()
+        assert Path(base_settings.get("s_path")).resolve() == (tmp_path / "sample_dir").resolve()

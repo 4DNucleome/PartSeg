@@ -15,7 +15,7 @@ from PartSegImage import Image
 
 
 def _empty_fun(_a1, _a2):
-    pass
+    """Empty function for calculation run callback"""
 
 
 @dataclass(frozen=True)

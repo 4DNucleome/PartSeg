@@ -12,6 +12,7 @@ import sentry_sdk
 from qtpy.QtCore import QByteArray, Qt, QTimer
 from qtpy.QtGui import QIcon, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
+    QCheckBox,
     QDialog,
     QFileDialog,
     QGridLayout,
@@ -32,6 +33,7 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg import parsed_version, state_store
+from PartSeg._roi_analysis.export_batch import ExportProjectDialog
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.prepare_plan_widget import CalculatePlaner
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
@@ -41,8 +43,8 @@ from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.select_multiple_files import AddFiles
 from PartSeg.common_gui.universal_gui_part import Spacing, right_label
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
-from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
-from PartSegCore.analysis.calculation_plan import Calculation, MaskFile
+from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager, get_data_loader
+from PartSegCore.analysis.calculation_plan import Calculation, CalculationPlan, MaskFile
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.universal_const import Units
@@ -65,7 +67,7 @@ class SaveExcel(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        pass
+        """empty function to satisfy interface"""
 
     @classmethod
     def get_name(cls) -> str:
@@ -113,10 +115,18 @@ class ProgressView(QWidget):
         self.number_of_process.setToolTip("Number of process used in batch calculation")
         self.number_of_process.valueChanged.connect(self.process_num_timer_start)
         self.progress_item_dict = {}
+        self.setup_ui()
+        self.preview_timer = QTimer()
+        self.preview_timer.setInterval(1000)
+        self.preview_timer.timeout.connect(self.update_info)
+        self.task_view.selectionModel().currentChanged.connect(self.task_selection_change)
+        self.cancel_remove_btn.clicked.connect(self.task_cancel_remove)
+
+    def setup_ui(self):
         layout = QGridLayout()
-        layout.addWidget(self.whole_label, 0, 0, Qt.AlignRight)
+        layout.addWidget(self.whole_label, 0, 0, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.whole_progress, 0, 1, 1, 2)
-        layout.addWidget(self.part_label, 1, 0, Qt.AlignRight)
+        layout.addWidget(self.part_label, 1, 0, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.part_progress, 1, 1, 1, 2)
         lab = QLabel("Number of process:")
         lab.setToolTip("Number of process used in batch calculation")
@@ -128,11 +138,6 @@ class ProgressView(QWidget):
         layout.setColumnMinimumWidth(2, 10)
         layout.setColumnStretch(2, 1)
         self.setLayout(layout)
-        self.preview_timer = QTimer()
-        self.preview_timer.setInterval(1000)
-        self.preview_timer.timeout.connect(self.update_info)
-        self.task_view.selectionModel().currentChanged.connect(self.task_selection_change)
-        self.cancel_remove_btn.clicked.connect(self.task_cancel_remove)
 
     def task_selection_change(self, new, old):
         task: CalculationProcessItem = self.task_que.item(new.row(), new.column())
@@ -234,12 +239,14 @@ class FileChoose(QWidget):
         self.run_button.setDisabled(True)
         self.calculation_choose = SearchComboBox()
         self.calculation_choose.addItem("<no calculation>")
-        self.calculation_choose.currentIndexChanged[str].connect(self.change_situation)
+        self.calculation_choose.currentTextChanged.connect(self.change_situation)
         self.result_file = QLineEdit(self)
-        self.result_file.setAlignment(Qt.AlignRight)
+        self.result_file.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.result_file.setReadOnly(True)
-        self.chose_result = QPushButton("Save result as", self)
-        self.chose_result.clicked.connect(self.chose_result_file)
+        self.choose_result = QPushButton("Save result as", self)
+        self.choose_result.clicked.connect(self.choose_result_file)
+        self.export_data_button = QPushButton("Export batch with data", self)
+        self.export_data_button.clicked.connect(self.export_data)
 
         self.run_button.clicked.connect(self.prepare_calculation)
         self.files_widget.file_list_changed.connect(self.change_situation)
@@ -251,7 +258,8 @@ class FileChoose(QWidget):
         calc_layout.addWidget(QLabel("Batch workflow:"))
         calc_layout.addWidget(self.calculation_choose)
         calc_layout.addWidget(self.result_file)
-        calc_layout.addWidget(self.chose_result)
+        calc_layout.addWidget(self.choose_result)
+        calc_layout.addWidget(self.export_data_button)
         calc_layout.addStretch()
         calc_layout.addWidget(self.run_button)
         layout.addLayout(calc_layout)
@@ -259,6 +267,10 @@ class FileChoose(QWidget):
         self.setLayout(layout)
 
         self._refresh_batch_list()
+
+    def export_data(self):
+        dialog = ExportProjectDialog(self.result_file.text(), self.files_widget.paths_input.text(), self.settings, self)
+        dialog.exec_()
 
     def prepare_calculation(self):
         plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
@@ -277,7 +289,7 @@ class FileChoose(QWidget):
 
     def _refresh_batch_list(self):
         current_calc = str(self.calculation_choose.currentText())
-        new_list = ["<no calculation>"] + sorted(self.settings.batch_plans.keys())
+        new_list = ["<no calculation>", *sorted(n for n, p in self.settings.batch_plans.items() if not p.is_bad())]
         try:
             index = new_list.index(current_calc)
         except ValueError:
@@ -302,11 +314,11 @@ class FileChoose(QWidget):
         else:
             self.files_widget.mask_list = []
 
-    def chose_result_file(self):
+    def choose_result_file(self):
         dial = PSaveDialog(SaveExcel, system_widget=False, settings=self.settings, path=IO_SAVE_DIRECTORY)
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            if os.path.splitext(file_path)[1] == "":
+            if not os.path.splitext(file_path)[1]:
                 file_path += ".xlsx"
             self.result_file.setText(file_path)
             self.change_situation()
@@ -346,10 +358,10 @@ class BatchWindow(QTabWidget):
             ret = QMessageBox.warning(
                 self,
                 "Batch work",
-                "Batch work is not finished. " "Would you like to terminate it?",
-                QMessageBox.No | QMessageBox.Yes,
+                "Batch work is not finished. Would you like to terminate it?",
+                QMessageBox.StandardButton.No | QMessageBox.StandardButton.Yes,
             )
-            if ret == QMessageBox.Yes:
+            if ret == QMessageBox.StandardButton.Yes:
                 self.terminate()
             else:
                 event.ignore()
@@ -363,20 +375,23 @@ class CalculationPrepare(QDialog):
     :type mask_mapper_list: list[MaskMapper]
     """
 
-    def __init__(self, file_list, calculation_plan, measurement_file_path, settings, batch_manager):
+    def __init__(
+        self,
+        file_list: typing.List[os.PathLike],
+        calculation_plan: CalculationPlan,
+        measurement_file_path: os.PathLike,
+        settings: PartSettings,
+        batch_manager: CalculationManager,
+        parent: typing.Optional[QWidget] = None,
+    ):
         """
-
         :param file_list: list of files to proceed
-        :type file_list: list[str]
         :param calculation_plan: calculation plan for this run
-        :type calculation_plan: CalculationPlan
         :param measurement_file_path: path to measurement result file
-        :type measurement_file_path: str
         :param settings: settings object
-        :type settings: PartSettings
         :type batch_manager: CalculationManager
         """
-        super().__init__()
+        super().__init__(parent=parent)
         self.setWindowTitle("Calculation start")
         self.file_list = file_list
         self.calculation_plan = calculation_plan
@@ -384,14 +399,15 @@ class CalculationPrepare(QDialog):
         self.settings = settings
         self.batch_manager = batch_manager
         self.info_label = QLabel(
-            "Information, <i><font color='blue'>warnings</font></i>, " "<b><font color='red'>errors</font><b>"
+            f"Information, <i><font color='{self._warning_color()}'>warnings</font></i>, "
+            "<b><font color='red'>errors</font><b>"
         )
         self.voxel_size = Spacing("Voxel size", settings.image.spacing, settings.get("units_value", Units.nm))
-        all_prefix = os.path.commonprefix(file_list)
-        if not os.path.exists(all_prefix):
-            all_prefix = os.path.dirname(all_prefix)
-        if not os.path.isdir(all_prefix):
-            all_prefix = os.path.dirname(all_prefix)
+        if len(file_list) == 1:
+            all_prefix = os.path.dirname(file_list[0])
+        else:
+            all_prefix = os.path.commonpath(file_list)
+        self.all_file_prefix = all_prefix
         self.base_prefix = QLineEdit(all_prefix, self)
         self.base_prefix.setReadOnly(True)
         self.result_prefix = QLineEdit(all_prefix, self)
@@ -402,16 +418,33 @@ class CalculationPrepare(QDialog):
         self.result_prefix_btn.clicked.connect(self.choose_result_prefix)
         self.sheet_name = QLineEdit("Sheet1")
         self.sheet_name.textChanged.connect(self.verify_data)
-        self.measurement_file_path_view = QLineEdit(measurement_file_path)
+        self.measurement_file_path_view = QLineEdit(str(measurement_file_path))
         self.measurement_file_path_view.setReadOnly(True)
+
+        self.overwrite_voxel_size_check = QCheckBox("Overwrite voxel size")
+        self.overwrite_voxel_size_check.stateChanged.connect(self._overwrite_voxel_size_check_changed)
 
         self.mask_path_list = []
         self.mask_mapper_list = self.calculation_plan.get_list_file_mask()
         mask_file_list = [(i, el) for i, el in enumerate(self.mask_mapper_list) if isinstance(el, MaskFile)]
 
+        self.state_list = np.zeros((len(self.file_list), len(self.mask_mapper_list)), dtype=np.uint8)
+
+        self.file_list_widget = QTreeWidget()
+        self.file_list_widget.header().close()
+
+        self.execute_btn = QPushButton("Execute")
+        self.execute_btn.clicked.connect(self.accept)
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.clicked.connect(self.close)
+
+        self.setup_ui(mask_file_list)
+        self.verify_data()
+
+    def setup_ui(self, mask_file_list):
         mask_path_layout = QGridLayout()
         for i, (pos, mask_file) in enumerate(mask_file_list):
-            if mask_file.name == "":
+            if not mask_file.name:
                 mask_path_layout.addWidget(right_label(f"Path to file {i + 1} with mask mapping"))
             else:
                 mask_path_layout.addWidget(
@@ -425,31 +458,22 @@ class CalculationPrepare(QDialog):
             mask_path_layout.addWidget(mask_path, i, 1)
             mask_path_layout.addWidget(set_path, i, 2)
 
-        self.state_list = np.zeros((len(self.file_list), len(self.mask_mapper_list)), dtype=np.uint8)
-
-        self.file_list_widget = QTreeWidget()
-        self.file_list_widget.header().close()
-
-        self.execute_btn = QPushButton("Execute")
-        self.execute_btn.clicked.connect(self.accept)
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.clicked.connect(self.close)
-
         layout = QGridLayout()
         layout.addWidget(self.info_label, 0, 0, 1, 5)
         layout.addWidget(self.voxel_size, 1, 0, 1, 5)
-        layout.addWidget(right_label("Measurement sheet name:"), 3, 3)
-        layout.addWidget(self.sheet_name, 3, 4)
-        layout.addWidget(right_label("Measurement file path:"), 2, 3)
-        layout.addWidget(self.measurement_file_path_view, 2, 4)
+        layout.addWidget(self.overwrite_voxel_size_check, 2, 0, 1, 5)
+        layout.addWidget(right_label("Measurement sheet name:"), 4, 3)
+        layout.addWidget(self.sheet_name, 4, 4)
+        layout.addWidget(right_label("Measurement file path:"), 3, 3)
+        layout.addWidget(self.measurement_file_path_view, 3, 4)
 
-        layout.addWidget(right_label("Data prefix:"), 2, 0)
-        layout.addWidget(self.base_prefix, 2, 1)
-        layout.addWidget(self.base_prefix_btn, 2, 2)
-        layout.addWidget(right_label("Save prefix:"), 3, 0)
-        layout.addWidget(self.result_prefix, 3, 1)
-        layout.addWidget(self.result_prefix_btn, 3, 2)
-        layout.addLayout(mask_path_layout, 4, 0, 1, 0)
+        layout.addWidget(right_label("Data prefix:"), 3, 0)
+        layout.addWidget(self.base_prefix, 3, 1)
+        layout.addWidget(self.base_prefix_btn, 3, 2)
+        layout.addWidget(right_label("Save prefix:"), 4, 0)
+        layout.addWidget(self.result_prefix, 4, 1)
+        layout.addWidget(self.result_prefix_btn, 4, 2)
+        layout.addLayout(mask_path_layout, 5, 0, 1, 0)
 
         layout.addWidget(self.file_list_widget, 5, 0, 3, 6)
         btn_layout = QHBoxLayout()
@@ -458,12 +482,21 @@ class CalculationPrepare(QDialog):
         btn_layout.addWidget(self.cancel_btn)
         layout.addLayout(btn_layout, 8, 0, 1, 0)
         self.setLayout(layout)
+
+    def _warning_color(self):
+        return "yellow" if self.settings.theme_name == "dark" else "blue"
+
+    def _overwrite_voxel_size_check_changed(self):
         self.verify_data()
+        if self.overwrite_voxel_size_check.isChecked():
+            text = self.info_label.text()
+            text += "<br><strong>Overwrite voxel size is checked. File metadata will be ignored</strong>"
+            self.info_label.setText(text)
 
     def choose_data_prefix(self):
         dial = QFileDialog()
-        dial.setAcceptMode(QFileDialog.AcceptOpen)
-        dial.setFileMode(QFileDialog.Directory)
+        dial.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
+        dial.setFileMode(QFileDialog.FileMode.Directory)
         dial.setDirectory(self.base_prefix.text())
         dial.setHistory(dial.history() + self.settings.get_path_history())
         if dial.exec_():
@@ -472,9 +505,9 @@ class CalculationPrepare(QDialog):
 
     def choose_result_prefix(self):
         dial = QFileDialog()
-        dial.setOption(QFileDialog.DontUseNativeDialog, True)
-        dial.setAcceptMode(QFileDialog.AcceptOpen)
-        dial.setFileMode(QFileDialog.Directory)
+        dial.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+        dial.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
+        dial.setFileMode(QFileDialog.FileMode.Directory)
         dial.setDirectory(self.result_prefix.text())
         dial.setHistory(dial.history() + self.settings.get_path_history())
         if dial.exec_():
@@ -486,9 +519,9 @@ class CalculationPrepare(QDialog):
             dial = QFileDialog(self, "Select file")
             dial.setHistory(dial.history() + self.settings.get_path_history())
             base_path = str(self.base_prefix.text()).strip()
-            if base_path != "":
+            if base_path:
                 dial.setDirectory(base_path)
-            dial.setFileMode(QFileDialog.ExistingFile)
+            dial.setFileMode(QFileDialog.FileMode.ExistingFile)
             if dial.exec_():
                 path = str(dial.selectedFiles())
                 self.mask_path_list[i].setText(path)
@@ -506,78 +539,93 @@ class CalculationPrepare(QDialog):
             "sheet_name": str(self.sheet_name.text()),
             "calculation_plan": self.calculation_plan,
             "voxel_size": self.voxel_size.get_values(),
+            "overwrite_voxel_size": self.overwrite_voxel_size_check.isChecked(),
         }
         return Calculation(**res)
 
     def verify_data(self):
         self.execute_btn.setEnabled(True)
+        warning_color = self._warning_color()
         text = (
-            "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font></b><br>"
+            f"information, <i><font color='{warning_color}'>warnings</font></i>,"
+            f" <b><font color='red'>errors</font></b><br>"
             "The voxel size is for file in which metadata do not contains this information<br>"
         )
         if not self.batch_manager.is_valid_sheet_name(
             str(self.measurement_file_path_view.text()), str(self.sheet_name.text())
         ):
-            text += "<i><font color='blue'>Sheet name already in use</i></font><br>"
+            text += f"<i><font color='{warning_color}'>Sheet name already in use</i></font><br>"
             self.execute_btn.setDisabled(True)
         if self.state_list.size > 0:
             val = np.unique(self.state_list)
             if 1 in val:
                 self.execute_btn.setDisabled(True)
-                text += "<i><font color='blue'>Some mask map file are not set</font></i><br>"
+                text += f"<i><font color='{warning_color}'>Some mask map file are not set</font></i><br>"
             if 2 in val:
                 self.execute_btn.setDisabled(True)
                 text += "<b><font color='red'>Some mask do not exists</font><b><br>"
 
+        if not all(os.path.exists(f) for f in self.file_list):
+            self.execute_btn.setDisabled(True)
+            text += "<b><font color='red'>Some files do not exists</font><b><br>"
+
         text = text[:-4]
         self.info_label.setText(text)
 
-    def showEvent(self, event):
-        super().showEvent(event)
-        ok_icon = QIcon(os.path.join(icons_dir, "task-accepted.png"))
-        bad_icon = QIcon(os.path.join(icons_dir, "task-reject.png"))
-        warn_icon = QIcon(os.path.join(icons_dir, "task-attempt.png"))
-        all_prefix = os.path.commonprefix(self.file_list)
-        if not os.path.exists(all_prefix):
-            all_prefix = os.path.dirname(all_prefix)
+    def _check_start_conditions(self):
         for file_num, file_path in enumerate(self.file_list):
-            widget = QTreeWidgetItem(self.file_list_widget)
-            widget.setText(0, os.path.relpath(file_path, all_prefix))
-            if not os.path.exists(file_path):
-                widget.setIcon(0, bad_icon)
-                widget.setToolTip(0, "File do not exists")
-                sub_widget = QTreeWidgetItem(widget)
-                sub_widget.setText(0, "File do not exists")
-                continue
             for mask_num, mask_mapper in enumerate(self.mask_mapper_list):
                 if mask_mapper.is_ready():
                     mask_path = mask_mapper.get_mask_path(file_path)
                     if os.path.exists(mask_path):
-                        sub_widget = QTreeWidgetItem(widget)
-                        sub_widget.setText(0, f"Mask {mask_mapper.name} ok")
-                        sub_widget.setIcon(0, ok_icon)
                         self.state_list[file_num, mask_num] = 0
                     else:
-                        sub_widget = QTreeWidgetItem(widget)
-                        sub_widget.setText(
-                            0,
-                            f"Mask {mask_mapper.name} do not exists (path: {os.path.relpath(mask_path, all_prefix)})",
-                        )
-
-                        sub_widget.setIcon(0, bad_icon)
                         self.state_list[file_num, mask_num] = 2
                 else:
-                    sub_widget = QTreeWidgetItem(widget)
-                    sub_widget.setText(0, f"Mask {mask_mapper.name} unknown")
-                    sub_widget.setIcon(0, warn_icon)
                     self.state_list[file_num, mask_num] = 1
-            state = 0 if self.state_list.shape[1] == 0 else self.state_list[file_num].max()
-            if state == 0:
-                widget.setIcon(0, ok_icon)
-            elif state == 1:
-                widget.setIcon(0, warn_icon)
-            else:
-                widget.setIcon(0, bad_icon)
+        self.verify_data()
+
+    def showEvent(self, event):  # pragma: no cover
+        super().showEvent(event)
+        self._show_event_setup()
+
+    def _show_event_setup(self):
+        self._check_start_conditions()
+
+        icon_dkt = {
+            0: QIcon(os.path.join(icons_dir, "task-accepted.png")),
+            1: QIcon(os.path.join(icons_dir, "task-reject.png")),
+            2: QIcon(os.path.join(icons_dir, "task-attempt.png")),
+        }
+
+        text_dkt = {
+            0: "Mask {} ok",
+            1: "Mask {} unknown",
+            2: "Mask {} file does not exists",
+        }
+
+        warn_state = np.amax(self.state_list, axis=1, initial=0)
+        for file_num, file_path in enumerate(self.file_list):
+            widget = QTreeWidgetItem(self.file_list_widget)
+            widget.setText(0, os.path.relpath(file_path, self.all_file_prefix))
+            if not os.path.exists(file_path):
+                widget.setIcon(0, icon_dkt[0])
+                widget.setToolTip(0, "File do not exists")
+                continue
+            loader, ext_match = get_data_loader(self.calculation_plan.execution_tree.operation, file_path)
+            if not ext_match:
+                warn_state[file_num] = 2
+                widget.setToolTip(
+                    0,
+                    "File extension suggest that format not supported. "
+                    f"Supported are {', '.join(loader.get_extensions())}",
+                )
+            for mask_num, mask_mapper in enumerate(self.mask_mapper_list):
+                sub_widget = QTreeWidgetItem(widget)
+                sub_widget.setText(0, text_dkt[self.state_list[file_num, mask_num]].format(mask_mapper.name))
+                sub_widget.setIcon(0, icon_dkt[self.state_list[file_num, mask_num]])
+
+            widget.setIcon(0, icon_dkt[warn_state[file_num]])
 
 
 class CalculationProcessItem(QStandardItem):

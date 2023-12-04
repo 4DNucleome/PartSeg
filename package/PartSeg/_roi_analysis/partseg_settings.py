@@ -31,7 +31,7 @@ class PartSettings(BaseSettings):
     json_encoder_class = PartSegEncoder
     load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
-    save_locations_keys = [
+    save_locations_keys: typing.ClassVar[typing.List[str]] = [
         "open_directory",
         "save_directory",
         "export_directory",
@@ -129,7 +129,8 @@ class PartSettings(BaseSettings):
             self.algorithm_changed.emit()
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
-        return super().get_save_list() + [
+        return [
+            *super().get_save_list(),
             SaveSettingsDescription("segmentation_pipeline_save.json", self._segmentation_pipelines_dict),
             SaveSettingsDescription("segmentation_profiles_save.json", self._segmentation_profiles_dict),
             SaveSettingsDescription("statistic_profiles_save.json", self._measurement_profiles_dict),
