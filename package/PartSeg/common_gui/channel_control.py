@@ -677,7 +677,7 @@ class LockedInfoWidget(QWidget):
         painter.setPen(QColor("white"))
         painter.setBrush(QColor("white"))
         painter.drawRect(self.rect() - self.margin)
-        icon: QIcon = qta.icon("fa5s.lock")
+        icon: QIcon = qta.icon("fa5s.lock", color="black")
         icon.paint(painter, self.rect() - self.margin * 2)
         painter.restore()
 
@@ -701,7 +701,7 @@ class BlurInfoWidget(QWidget):
         painter.setPen(QColor("white"))
         painter.setBrush(QColor("white"))
         painter.drawRect(self.rect() - self.margin)
-        icon: QIcon = qta.icon("mdi.blur")
+        icon: QIcon = qta.icon("mdi.blur", color="black")
         icon.paint(painter, self.rect())
         painter.restore()
 
@@ -721,6 +721,6 @@ class GammaInfoWidget(QWidget):
         painter.setPen(QColor("white"))
         painter.setBrush(QColor("white"))
         painter.drawRect(self.rect() - self.margin)
-        icon: QIcon = qta.icon("mdi.chart-bell-curve-cumulative")
+        icon: QIcon = qta.icon("mdi.chart-bell-curve-cumulative", color="black")
         icon.paint(painter, self.rect())
         painter.restore()
