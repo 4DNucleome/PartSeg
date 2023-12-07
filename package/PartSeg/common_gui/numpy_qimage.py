@@ -19,7 +19,7 @@ class NumpyQImage(QImage):
             image.shape[1],
             image.shape[0],
             image.dtype.itemsize * image.shape[1] * image.shape[2],
-            QImage.Format_RGBA8888,
+            QImage.Format.Format_RGBA8888,
         )
         self.image = image
 

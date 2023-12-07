@@ -13,8 +13,8 @@ class CollapseCheckbox(QCheckBox):
     Check box for hide widgets. It is painted as:
     ▶, {info_text}, line
 
-    If triangle is ▶ then widgets are hidden
-    If triangle is ▼ then widgets are shown
+    If triangle is ▶ then widgets are hidden.
+    If triangle is ▼ then widgets are shown.
 
     :param info_text: optional text to be show
     """
@@ -25,7 +25,7 @@ class CollapseCheckbox(QCheckBox):
         self.stateChanged.connect(self.hide_element)
 
         metrics = QFontMetrics(QFont())
-        self.text_size = metrics.size(Qt.TextSingleLine, info_text)
+        self.text_size = metrics.size(Qt.TextFlag.TextSingleLine, info_text)
         self.info_text = info_text
 
     def add_hide_element(self, val: QWidget):

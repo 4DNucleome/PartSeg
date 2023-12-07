@@ -72,8 +72,8 @@ def _pretty_print(data, indent=2) -> str:
 
 
 class ProfileSelect(QComboBox):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
         self._settings = None
 
     def _update_choices(self):
@@ -189,7 +189,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
     @classmethod
     def _get_field_from_value_type(cls, ap: AlgorithmProperty):
         if issubclass(ap.value_type, Channel):
-            res = ChannelComboBox()
+            res = ChannelComboBox(parent=None)
             res.change_channels_num(10)
         elif issubclass(ap.value_type, AlgorithmDescribeBase):
             res = SubAlgorithmWidget(ap)
@@ -205,7 +205,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(ap.value_type, ROIExtractionProfile):
             res = ProfileSelect()
         elif issubclass(ap.value_type, list):
-            res = QComboBox()
+            res = QComboBox(parent=None)
             res.addItems(list(map(str, ap.possible_values)))
         elif issubclass(ap.value_type, BaseModel):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])

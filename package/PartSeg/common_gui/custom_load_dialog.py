@@ -149,7 +149,7 @@ class PLoadDialog(CustomLoadDialog):
 
     def accept(self):
         super().accept()
-        if self.result() != QFileDialog.Accepted:
+        if self.result() != QFileDialog.DialogCode.Accepted:
             return
         directory = dirname(self.selectedFiles()[0])
         self.settings.add_path_history(directory)
