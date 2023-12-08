@@ -74,7 +74,7 @@ class SegmentationInfoDialog(QWidget):
         self.set_parameters(parameters.algorithm, parameters.values)
 
     def event(self, event: QEvent):
-        if event.type() == QEvent.WindowActivate:
+        if event.type() == QEvent.Type.WindowActivate:
             index = self.components.currentRow()
             self.components.clear()
             self.components.addItems(list(map(str, self.get_parameters.keys())))

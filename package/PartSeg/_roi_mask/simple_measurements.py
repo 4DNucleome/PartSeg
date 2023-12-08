@@ -141,11 +141,11 @@ class SimpleMeasurements(QWidget):
             self.measurement_layout.addWidget(chk)
 
     def keyPressEvent(self, e: QKeyEvent):
-        if not e.modifiers() & Qt.ControlModifier:
+        if not e.modifiers() & Qt.KeyboardModifier.ControlModifier:
             return
         selected = self.result_view.selectedRanges()
 
-        if e.key() == Qt.Key_C:  # copy
+        if e.key() == Qt.Key.Key_C:  # copy
             s = ""
 
             for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
@@ -158,7 +158,7 @@ class SimpleMeasurements(QWidget):
             QApplication.clipboard().setText(s)
 
     def event(self, event: QEvent) -> bool:
-        if event.type() == QEvent.WindowActivate:
+        if event.type() == QEvent.Type.WindowActivate:
             if self.settings.image is not None:
                 self.channel_select.change_channels_num(self.settings.image.channels)
             self.refresh_measurements()
