@@ -38,7 +38,7 @@ class AcceptFiles(QDialog):
         discard = QPushButton("Discard", self)
         discard.clicked.connect(self.close)
         self.files = QListWidget(self)
-        self.files.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.files.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         for file_name in files:
             self.files.addItem(file_name)
         for i in range(self.files.count()):
@@ -78,7 +78,7 @@ class FileListItem(QListWidgetItem):
 class FileListWidget(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
 
 class AddFiles(QWidget):
@@ -195,7 +195,7 @@ class AddFiles(QWidget):
             self.update_files_list(paths)
 
         else:
-            QMessageBox.warning(self, "No new files", "No new files found", QMessageBox.Ok)
+            QMessageBox.warning(self, "No new files", "No new files found", QMessageBox.StandardButton.Ok)
 
     def update_files_list(self, paths):
         dialog = AcceptFiles(paths)
@@ -209,7 +209,7 @@ class AddFiles(QWidget):
     def select_files(self):
         dial = QFileDialog(self, "Select files")
         dial.setDirectory(self.settings.get(IO_BATCH_DIRECTORY, self.settings.get(OPEN_DIRECTORY, str(Path.home()))))
-        dial.setFileMode(QFileDialog.ExistingFiles)
+        dial.setFileMode(QFileDialog.FileMode.ExistingFiles)
         if dial.exec_():
             self.settings.set(IO_BATCH_DIRECTORY, os.path.dirname(str(dial.selectedFiles()[0])))
             new_paths = sorted(set(map(str, dial.selectedFiles())) - self.files_to_proceed)

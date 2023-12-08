@@ -259,9 +259,9 @@ class ExceptionListItem(QListWidgetItem):
         else:
             exception, traceback_summary = exception
         if isinstance(exception, SegmentationLimitException):
-            super().__init__(f"{exception}", parent, QListWidgetItem.UserType)
+            super().__init__(f"{exception}", parent, QListWidgetItem.ItemType.UserType)
         elif isinstance(exception, Exception):
-            super().__init__(f"{type(exception)}: {exception}", parent, QListWidgetItem.UserType)
+            super().__init__(f"{type(exception)}: {exception}", parent, QListWidgetItem.ItemType.UserType)
             self.setToolTip("Double click for report")
         self.exception = exception
         self.additional_info = traceback_summary
@@ -357,7 +357,7 @@ class QMessageFromException(QMessageBox):
 
     """
 
-    def __init__(self, icon, title, text, exception, standard_buttons=QMessageBox.Ok, parent=None):
+    def __init__(self, icon, title, text, exception, standard_buttons=QMessageBox.StandardButton.Ok, parent=None):
         super().__init__(icon, title, text, standard_buttons, parent)
         self.exception = exception
         stream = io.StringIO()
