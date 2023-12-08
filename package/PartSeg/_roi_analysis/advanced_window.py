@@ -100,7 +100,7 @@ class Properties(QWidget):
 
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
-            el.setAlignment(Qt.AlignRight)
+            el.setAlignment(Qt.AlignmentFlag.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 1000000)
             # noinspection PyUnresolvedReferences
@@ -225,7 +225,7 @@ class Properties(QWidget):
         self.update_spacing()
 
     def event(self, event: QEvent):
-        if event.type() == QEvent.WindowActivate and self.isVisible():
+        if event.type() == QEvent.Type.WindowActivate and self.isVisible():
             self.update_spacing()
         return super().event(event)
 

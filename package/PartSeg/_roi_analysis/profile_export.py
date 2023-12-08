@@ -45,7 +45,7 @@ class StringViewer(ObjectPreview):
 
 class ProfileDictViewer(ObjectPreview):
     """
-    Preview of :py:class"`SegmentationProfile`.
+    Preview of :py:class:`SegmentationProfile`.
     Serialized using :py:meth:`ObjectPreview.pretty_print`.
     """
 
@@ -66,8 +66,8 @@ class ExportDialog(QDialog):
         for el in sorted(export_dict.keys()):
             item = QListWidgetItem(el)
             # noinspection PyTypeChecker
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            item.setCheckState(Qt.Checked)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Checked)
             self.list_view.addItem(item)
 
         self.checked_num = len(export_dict)
@@ -100,7 +100,7 @@ class ExportDialog(QDialog):
         self.setLayout(layout)
 
     def checked_change(self, item):
-        if item.checkState() == Qt.Unchecked:
+        if item.checkState() == Qt.CheckState.Unchecked:
             self.checked_num -= 1
         else:
             self.checked_num += 1
@@ -118,14 +118,14 @@ class ExportDialog(QDialog):
     def check_change(self):
         item = self.list_view.currentItem()  # type: QListWidgetItem
         index = self.list_view.currentRow()
-        checked = item.checkState() == Qt.Checked
+        checked = item.checkState() == Qt.CheckState.Checked
         self.check_state[index] = checked
         self.export_btn.setEnabled(np.any(self.check_state))
 
     def uncheck_all(self):
         for index in range(self.list_view.count()):
             item = self.list_view.item(index)
-            item.setCheckState(Qt.Unchecked)
+            item.setCheckState(Qt.CheckState.Unchecked)
         self.check_state[...] = False
         self.export_btn.setDisabled(True)
         self.checked_num = 0
@@ -133,7 +133,7 @@ class ExportDialog(QDialog):
     def check_all(self):
         for index in range(self.list_view.count()):
             item = self.list_view.item(index)
-            item.setCheckState(Qt.Checked)
+            item.setCheckState(Qt.CheckState.Checked)
         self.checked_num = len(self.export_dict)
         self.check_state[...] = True
         self.export_btn.setDisabled(False)
@@ -142,7 +142,7 @@ class ExportDialog(QDialog):
         res = []
         for num in range(self.list_view.count()):
             item = self.list_view.item(num)
-            if item.checkState() == Qt.Checked:
+            if item.checkState() == Qt.CheckState.Checked:
                 res.append(str(item.text()))
         return res
 
@@ -190,8 +190,8 @@ class ImportDialog(QDialog):
             item = QTreeWidgetItem()
             item.setText(0, name)
             # noinspection PyTypeChecker
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            item.setCheckState(0, Qt.Checked)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(0, Qt.CheckState.Checked)
             self.list_view.addTopLevelItem(item)
             if name in conflicts:
                 group = QButtonGroup()
@@ -288,7 +288,7 @@ class ImportDialog(QDialog):
             self.local_viewer.clear()
 
     def checked_change(self, item, _):
-        if item.checkState(0) == Qt.Unchecked:
+        if item.checkState(0) == Qt.CheckState.Unchecked:
             self.checked_num -= 1
             if self.list_view.itemWidget(item, 1) is not None:
                 self.list_view.itemWidget(item, 1).setDisabled(True)
@@ -309,7 +309,7 @@ class ImportDialog(QDialog):
         res = []
         for index in range(self.list_view.topLevelItemCount()):
             item = self.list_view.topLevelItem(index)
-            if item.checkState(0) == Qt.Checked:
+            if item.checkState(0) == Qt.CheckState.Checked:
                 chk = self.list_view.itemWidget(item, 2)
                 if chk is not None and typing.cast(QRadioButton, chk).isChecked():
                     res.append((item.text(0), typing.cast(QLineEdit, self.list_view.itemWidget(item, 3)).text()))
@@ -321,13 +321,13 @@ class ImportDialog(QDialog):
     def uncheck_all(self):
         for index in range(self.list_view.topLevelItemCount()):
             item = self.list_view.topLevelItem(index)
-            item.setCheckState(0, Qt.Unchecked)
+            item.setCheckState(0, Qt.CheckState.Unchecked)
         self.import_btn.setDisabled(True)
         self.checked_num = 0
 
     def check_all(self):
         for index in range(self.list_view.topLevelItemCount()):
             item = self.list_view.topLevelItem(index)
-            item.setCheckState(0, Qt.Checked)
+            item.setCheckState(0, Qt.CheckState.Checked)
         self.checked_num = len(self.import_dict)
         self.import_btn.setDisabled(False)

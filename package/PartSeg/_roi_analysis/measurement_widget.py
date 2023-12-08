@@ -284,11 +284,11 @@ class MeasurementWidgetBase(QWidget):
         raise NotImplementedError
 
     def keyPressEvent(self, e: QKeyEvent):
-        if not e.modifiers() & Qt.ControlModifier:
+        if not e.modifiers() & Qt.KeyboardModifier.ControlModifier:
             return
         selected = self.info_field.selectedRanges()
 
-        if e.key() == Qt.Key_C:  # copy
+        if e.key() == Qt.Key.Key_C:  # copy
             s = ""
 
             for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):

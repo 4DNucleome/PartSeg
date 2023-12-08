@@ -9,7 +9,7 @@ from PartSegImage import Image
 
 
 class CalculatePipelineThread(ProgressTread):
-    result: PipelineResult
+    result: typing.Optional[PipelineResult]
 
     def __init__(self, image: Image, mask: typing.Union[np.ndarray, None], pipeline: SegmentationPipeline, parent=None):
         super().__init__(parent=parent)
