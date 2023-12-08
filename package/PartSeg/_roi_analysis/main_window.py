@@ -229,19 +229,19 @@ class Options(QWidget):
 
     def update_tooltips(self):
         for i in range(1, self.choose_profile.count()):
-            if self.choose_profile.itemData(i, Qt.ToolTipRole) is not None:
+            if self.choose_profile.itemData(i, Qt.ItemDataRole.ToolTipRole) is not None:
                 continue
             text = self.choose_profile.itemText(i)
             profile: ROIExtractionProfile = self._settings.roi_profiles[text]
             tool_tip_text = str(profile)
-            self.choose_profile.setItemData(i, tool_tip_text, Qt.ToolTipRole)
+            self.choose_profile.setItemData(i, tool_tip_text, Qt.ItemDataRole.ToolTipRole)
         for i in range(1, self.choose_pipe.count()):
-            if self.choose_pipe.itemData(i, Qt.ToolTipRole) is not None:
+            if self.choose_pipe.itemData(i, Qt.ItemDataRole.ToolTipRole) is not None:
                 continue
             text = self.choose_pipe.itemText(i)
             profile: SegmentationPipeline = self._settings.roi_pipelines[text]
             tool_tip_text = str(profile)
-            self.choose_pipe.setItemData(i, tool_tip_text, Qt.ToolTipRole)
+            self.choose_pipe.setItemData(i, tool_tip_text, Qt.ItemDataRole.ToolTipRole)
 
     @staticmethod
     def update_combo_box(combo_box: QComboBox, dkt: dict):
@@ -260,7 +260,10 @@ class Options(QWidget):
             combo_box.addItems(sorted(new_names))
 
     def keyPressEvent(self, event: QKeyEvent):
-        if event.key() in [Qt.Key_Enter, Qt.Key_Return] and event.modifiers() == Qt.ControlModifier:
+        if (
+            event.key() in [Qt.Key.Key_Enter, Qt.Key.Key_Return]
+            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
+        ):
             self.execute_btn.click()
 
     def save_profile(self):
@@ -383,7 +386,7 @@ class MainMenu(BaseMainMenu):
         self.advanced_btn.clicked.connect(self.advanced_window_show)
         self.mask_manager_btn.clicked.connect(self.mask_manager)
         self.batch_processing_btn.clicked.connect(self.batch_window)
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() < 800:
@@ -608,7 +611,7 @@ class MainWindow(BaseMainWindow):
         info_layout = QHBoxLayout()
         info_layout.addWidget(self.left_stack.selector)
         info_layout.addWidget(self.options_panel.compare_btn)
-        info_layout.addWidget(self.info_text, 1, Qt.AlignHCenter)
+        info_layout.addWidget(self.info_text, 1, Qt.AlignmentFlag.AlignHCenter)
 
         image_layout = EqualColumnLayout()
         image_layout.addWidget(self.left_stack)

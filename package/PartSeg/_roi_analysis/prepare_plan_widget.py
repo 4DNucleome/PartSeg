@@ -80,7 +80,7 @@ class MaskDialog(QDialog):
         super().__init__()
         self.mask_names = mask_names
         completer = QCompleter(list(mask_names))
-        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.setWindowTitle("Masks name choose")
         self.mask1_name = QLineEdit()
         self.cancel_btn = QPushButton("Cancel")
@@ -119,7 +119,7 @@ class TwoMaskDialog(QDialog):
         super().__init__()
         self.mask_names = mask_names
         completer = QCompleter(list(mask_names))
-        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.setWindowTitle("Masks name choose")
         self.mask1_name = QLineEdit()
         self.mask2_name = QLineEdit()
@@ -943,7 +943,7 @@ class PlanPreview(QTreeWidget):
         self.calculation_plan = None
         self.header().close()
         self.itemSelectionChanged.connect(self.set_path)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         if calculation_plan is not None:
             self.set_plan(calculation_plan)
 
@@ -1001,7 +1001,7 @@ class PlanPreview(QTreeWidget):
         widget.setText(0, CalculationPlan.get_el_name(node_plan.operation))
         self.setCurrentItem(widget)
         if isinstance(node_plan.operation, (MeasurementCalculate, ROIExtractionProfile)):
-            widget.setData(0, Qt.UserRole, node_plan.operation)
+            widget.setData(0, Qt.ItemDataRole.UserRole, node_plan.operation)
         if isinstance(node_plan.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
@@ -1120,7 +1120,7 @@ class CalculateInfo(QWidget):
 
     def _context_menu(self, point):
         item = self.plan_view.itemAt(point)
-        data = item.data(0, Qt.UserRole)
+        data = item.data(0, Qt.ItemDataRole.UserRole)
         if data is None:
             return
 
