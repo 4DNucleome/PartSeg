@@ -105,6 +105,13 @@ jobs:
             ./htmlcov
           retention-days: 7
 
+      - name: Upload coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: ./coverage.xml
+          retention-days: 7
+
       - uses: codecov/codecov-action@v3
         if: ${{ inputs.coverage }}
         with:
