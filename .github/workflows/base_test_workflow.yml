@@ -40,7 +40,7 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         name: Install Python ${{ inputs.python_version }}
         with:
           python-version: ${{ inputs.python_version }}
