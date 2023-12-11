@@ -80,7 +80,7 @@ jobs:
           pip list
 
       - name: Test with tox
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
           run: python -m tox ${{ inputs.tox_args }}

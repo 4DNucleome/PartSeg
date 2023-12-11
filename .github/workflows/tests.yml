@@ -171,7 +171,7 @@ jobs:
         run: sed -e "s/{sys_platform}/{platform}/g" tox.ini -i
 
       - name: Test with tox
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         with:
           run: conda run -n test --no-capture-output tox -e py39-PySide2-conda
         timeout-minutes: 60
