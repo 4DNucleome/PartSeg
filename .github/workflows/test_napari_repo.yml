@@ -61,7 +61,7 @@ jobs:
 
       - name: Test with tox
         # run tests using pip install --pre
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         timeout-minutes: 60
         with:
           run: tox
