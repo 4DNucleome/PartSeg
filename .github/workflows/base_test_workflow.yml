@@ -1,3 +1,5 @@
+name: Base Test Workflow
+
 on:
   workflow_call:
     inputs:
@@ -97,25 +99,10 @@ jobs:
             ./report-*.json
           retention-days: 7
 
-      - name: Upload coverage report ${{ inputs.tox_args }}
+      - name: Upload coverage data
         uses: actions/upload-artifact@v3
         if: ${{ inputs.coverage }}
         with:
-          name: coverage_report ${{ inputs.tox_args }}
+          name: coverage reports
           path: |
-            ./htmlcov
-          retention-days: 7
-
-      - name: Upload coverage raw data
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage_raw ${{ inputs.tox_args }}
-          path: ./coverage.xml
-          retention-days: 7
-
-      - uses: codecov/codecov-action@v3
-        if: ${{ inputs.coverage }}
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+            ./.coverage.*
