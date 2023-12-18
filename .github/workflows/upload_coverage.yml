@@ -12,33 +12,28 @@ jobs:
         name: Upload coverage
         runs-on: ubuntu-latest
         steps:
-        - uses: actions/checkout@v4
-
-        - uses: actions/setup-python@v5
+        - name: Download Coverage Data
+          uses: actions/github-script@v6
           with:
-            python-version: "3.x"
-            cache-dependency-path: setup.cfg
-            cache: 'pip'
-
-        - name: Install Dependencies
-          run: |
-            pip install --upgrade pip
-            pip install codecov
-
-        - name: Download coverage data
-          uses: actions/download-artifact@v3
-          with:
-            name: coverage reports
-            path: coverage
-
-        - name: combine coverage data
-          run: |
-            python -Im coverage combine coverage
-            python -Im coverage xml -o coverage.xml
-
-            # Report and write to summary.
-            python -Im coverage report --format=markdown --skip-empty --skip-covered >> $GITHUB_STEP_SUMMARY
-
+            script: |
+              let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                 owner: context.repo.owner,
+                 repo: context.repo.repo,
+                 run_id: context.payload.workflow_run.id,
+              });
+              let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+                return artifact.name == "coverage_xml"
+              })[0];
+              let download = await github.rest.actions.downloadArtifact({
+                 owner: context.repo.owner,
+                 repo: context.repo.repo,
+                 artifact_id: matchArtifact.id,
+                 archive_format: 'zip',
+              });
+              let fs = require('fs');
+              fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/coverage_xml.zip`, Buffer.from(download.data));
+        - name: 'Unzip artifact'
+          run: unzip coverage_xml.zip
         - name: Upload coverage data
           uses: codecov/codecov-action@v3
           with:
