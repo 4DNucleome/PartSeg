@@ -151,6 +151,12 @@ jobs:
           path: coverage.xml
           retention-days: 5
 
+      - name: Upload coverage data
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   test_conda:
     name: Test PartSeg conda
     runs-on: ubuntu-20.04
