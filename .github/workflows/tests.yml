@@ -116,11 +116,6 @@ jobs:
       tox_args: "-e py38-PyQt5-minimal"
       coverage: true
 
-  coverage_upload:
-    name: Upload coverage
-    needs: [test_coverage, test_minimal]
-    uses: ./.github/workflows/reusable_coverage_upload.yml
-
   test_conda:
     name: Test PartSeg conda
     runs-on: ubuntu-20.04
