@@ -25,7 +25,7 @@ jobs:
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -195,7 +195,7 @@ jobs:
         run: bash build_utils/create_environment_yml.sh
 
       - name: Upload environment file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: environment
           path: environment.yml
