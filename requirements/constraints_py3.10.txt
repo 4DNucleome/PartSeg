@@ -236,7 +236,7 @@ partsegdata==0.10.0
     # via PartSeg (setup.cfg)
 pexpect==4.9.0
     # via ipython
-pillow==10.1.0
+pillow==10.2.0
     # via
     #   imageio
     #   napari
