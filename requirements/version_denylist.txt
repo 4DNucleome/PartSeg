@@ -8,8 +8,3 @@ npe2!=0.2.2
 imageio != 2.22.1
 pydantic<2.0
 sentry-sdk!=1.29.0
-sphinxcontrib-applehelp!=1.0.8
-sphinxcontrib-devhelp!=1.0.6
-sphinxcontrib-htmlhelp!=2.0.5
-sphinxcontrib-qthelp!=1.0.7
-sphinxcontrib-serializinghtml!=1.1.10
