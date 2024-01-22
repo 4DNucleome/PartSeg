@@ -394,8 +394,10 @@ sphinx-autodoc-typehints==1.19.1
     # via PartSeg (setup.cfg)
 sphinx-qt-documentation==0.4.1
     # via PartSeg (setup.cfg)
-sphinxcontrib-applehelp==1.0.7
-    # via sphinx
+sphinxcontrib-applehelp==1.0.4
+    # via
+    #   -r requirements/version_denylist.txt
+    #   sphinx
 sphinxcontrib-devhelp==1.0.6
     # via sphinx
 sphinxcontrib-htmlhelp==2.0.5
