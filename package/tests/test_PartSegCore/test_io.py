@@ -234,7 +234,7 @@ class TestSaveHistory:
             alt2[alt2 > 0] = i + 5
             roi_info2 = ROIInfo(
                 roi=project.roi_info.roi,
-                annotations={i: f"a{i}_{j}" for j in range(1, 5)},
+                annotations={j: f"a{i}_{j}" for j in range(1, 5)},
                 alternative={f"test{i}": alt2},
             )
             history.append(
@@ -257,7 +257,7 @@ class TestSaveHistory:
             assert set(roi_info3.alternative) == {f"test{i}"}
             assert np.all(roi_info3.alternative[f"test{i}"][alt1 > 0] == i + 5)
             assert np.all(roi_info3.alternative[f"test{i}"][alt1 == 0] == 0)
-            assert roi_info3.annotations == {i: f"a{i}_{j}" for j in range(1, 5)}
+            assert roi_info3.annotations == {j: f"a{i}_{j}" for j in range(1, 5)}
             assert proj2.history[i].roi_extraction_parameters == {"algorithm_name": f"task_{i}", "values": {"a": 1}}
 
 
