@@ -53,6 +53,7 @@ jobs:
             python${pyv}  -m pip install -U pip pip-tools
             python${pyv}  -m piptools compile --upgrade -o requirements/constraints_py${pyv}.txt  setup.cfg requirements/version_denylist.txt ${flags}
           done
+          python3.11 -m piptools compile --upgrade -o requirements/constraints_py3.11_docs.txt  setup.cfg requirements/version_denylist.txt --allow-unsafe --strip-extras --extra docs --extra pyqt6
       # END PYTHON DEPENDENCIES
 
       - name: Check updated packages
