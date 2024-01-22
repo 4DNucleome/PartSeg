@@ -83,7 +83,7 @@ class EnumComboBox(QEnumComboBox):
         For proper showing labels overload the ``__str__`` function of given :py:class:`enum.Enum`
     """
 
-    def __init__(self, enum: type(EnumType), parent=None):
+    def __init__(self, enum, parent=None):
         warnings.warn(
             "EnumComboBox is deprecated, use superqt.QEnumComboBox instead", category=DeprecationWarning, stacklevel=2
         )
