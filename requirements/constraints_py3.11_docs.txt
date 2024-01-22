@@ -56,7 +56,7 @@ defusedxml==0.7.1
     # via PartSeg (setup.cfg)
 docstring-parser==0.15
     # via magicgui
-docutils==0.20.1
+docutils==0.17.1
     # via
     #   sphinx
     #   sphinx-qt-documentation
@@ -154,7 +154,7 @@ mpmath==1.3.0
     # via sympy
 mypy-extensions==1.0.0
     # via psygnal
-napari==0.4.19rc3
+napari==0.4.18
     # via PartSeg (setup.cfg)
 napari-console==0.0.9
     # via napari
@@ -192,7 +192,7 @@ numpy==1.26.3
     #   scipy
     #   tifffile
     #   vispy
-numpydoc==1.6.0
+numpydoc==1.5.0
     # via napari
 oiffile==2023.8.30
     # via PartSeg (setup.cfg)
@@ -382,14 +382,15 @@ six==1.16.0
     #   python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==7.2.6
+sphinx==4.5.0
     # via
     #   PartSeg (setup.cfg)
     #   autodoc-pydantic
+    #   napari
     #   numpydoc
     #   sphinx-autodoc-typehints
     #   sphinx-qt-documentation
-sphinx-autodoc-typehints==1.25.2
+sphinx-autodoc-typehints==1.19.1
     # via PartSeg (setup.cfg)
 sphinx-qt-documentation==0.4.1
     # via PartSeg (setup.cfg)
@@ -414,8 +415,6 @@ superqt==0.6.1
     #   napari
 sympy==1.12
     # via PartSeg (setup.cfg)
-tabulate==0.9.0
-    # via numpydoc
 tifffile==2023.12.9
     # via
     #   PartSeg (setup.cfg)
@@ -465,7 +464,7 @@ urllib3==2.1.0
     # via
     #   requests
     #   sentry-sdk
-vispy==0.14.1
+vispy==0.12.2
     # via
     #   PartSeg (setup.cfg)
     #   napari
