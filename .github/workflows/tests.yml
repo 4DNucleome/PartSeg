@@ -202,7 +202,7 @@ jobs:
         run: bash build_utils/create_environment_yml.sh
 
       - name: Upload environment file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: environment
           path: environment.yml
