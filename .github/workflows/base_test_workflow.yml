@@ -71,7 +71,7 @@ jobs:
 
       - name: Download test data
         if: ${{ inputs.test_data }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -100,9 +100,9 @@ jobs:
           retention-days: 7
 
       - name: Upload coverage data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ inputs.coverage }}
         with:
-          name: coverage reports
+          name: cov-reports-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}
           path: |
             ./.coverage.*
