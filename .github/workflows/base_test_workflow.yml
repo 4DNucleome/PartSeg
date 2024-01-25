@@ -92,9 +92,9 @@ jobs:
           BACKEND: ${{ inputs.qt_backend }}
           PIP_CONSTRAINT: requirements/constraints_py${{ inputs.python_version }}.txt
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: upload pytest timing reports as json
+          name: timing-report-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}
           path: |
             ./report-*.json
           retention-days: 7
