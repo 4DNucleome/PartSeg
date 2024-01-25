@@ -94,7 +94,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: timing-report-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}
+          name: timing-report-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}-${{ inputs.coverage }}
           path: |
             ./report-*.json
           retention-days: 7
