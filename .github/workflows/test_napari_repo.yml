@@ -15,7 +15,7 @@ jobs:
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -54,7 +54,7 @@ jobs:
           pip install setuptools tox tox-gh-actions
 
       - name: Download test data
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test_data
           path: test_data
