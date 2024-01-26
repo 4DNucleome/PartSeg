@@ -23,7 +23,7 @@ jobs:
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
@@ -59,7 +59,7 @@ jobs:
       - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -71,7 +71,7 @@ jobs:
 
       - name: Test with tox linux
         # run tests using pip install --pre
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         timeout-minutes: 60
         with:
           run: python -m tox -v --pre
@@ -100,7 +100,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       name: Install Python 3.9
       with:
         python-version: 3.9
@@ -115,19 +115,19 @@ jobs:
         pip-sync
         pip install .
     - name: upload requirements
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: requirements
         path: requirements.txt
     - name: Run PyInstaller
       run: python  build_utils/create_and_pack_executable.py
     - name: Upload bundle
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: bundle
         path: dist2/
     - name: Test bundle
-      uses: aganders3/headless-gui@v1
+      uses: aganders3/headless-gui@v2
       timeout-minutes: 60
       with:
         run: dist/PartSeg/PartSeg _test

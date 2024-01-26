@@ -171,7 +171,7 @@ class ImageView(QWidget):
         self.search_roi_btn.clicked.connect(self._search_component)
         self.search_roi_btn.setDisabled(True)
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
-        self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.roll_dim_button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
         self.mask_chk = QCheckBox()
         self.mask_chk.setVisible(False)

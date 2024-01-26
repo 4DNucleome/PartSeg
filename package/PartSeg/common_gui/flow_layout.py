@@ -131,10 +131,10 @@ class FlowLayout(QLayout):
             wid = item.widget()
             if wid is not None:
                 space_x = self.spacing() + wid.style().layoutSpacing(
-                    QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal
+                    QSizePolicy.ControlType.PushButton, QSizePolicy.ControlType.PushButton, Qt.Orientation.Horizontal
                 )
                 space_y = self.spacing() + wid.style().layoutSpacing(
-                    QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical
+                    QSizePolicy.ControlType.PushButton, QSizePolicy.ControlType.PushButton, Qt.Orientation.Vertical
                 )
             else:
                 space_x = self.spacing()  # + wid.layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton,

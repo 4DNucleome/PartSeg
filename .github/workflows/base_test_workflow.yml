@@ -1,3 +1,5 @@
+name: Base Test Workflow
+
 on:
   workflow_call:
     inputs:
@@ -40,7 +42,7 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         name: Install Python ${{ inputs.python_version }}
         with:
           python-version: ${{ inputs.python_version }}
@@ -69,7 +71,7 @@ jobs:
 
       - name: Download test data
         if: ${{ inputs.test_data }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -80,7 +82,7 @@ jobs:
           pip list
 
       - name: Test with tox
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
           run: python -m tox ${{ inputs.tox_args }}
@@ -90,31 +92,17 @@ jobs:
           BACKEND: ${{ inputs.qt_backend }}
           PIP_CONSTRAINT: requirements/constraints_py${{ inputs.python_version }}.txt
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: upload pytest timing reports as json
+          name: timing-report-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}-${{ inputs.coverage }}
           path: |
             ./report-*.json
           retention-days: 7
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
         if: ${{ inputs.coverage }}
         with:
-          name: coverage_report ${{ inputs.tox_args }}
+          name: cov-reports-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}
           path: |
-            ./htmlcov
-          retention-days: 7
-
-      - uses: codecov/codecov-action@v3
-        if: ${{ inputs.coverage }}
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage
-          path: ./coverage.xml
-          retention-days: 5
+            ./.coverage.*
