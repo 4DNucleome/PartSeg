@@ -68,7 +68,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     @abstractmethod
-    def get_short_name(cls):
+    def get_short_name(cls) -> str:
         raise NotImplementedError
 
     @classmethod
@@ -134,7 +134,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     @abstractmethod
-    def get_short_name(cls):
+    def get_short_name(cls) -> str:
         raise NotImplementedError
 
     @classmethod

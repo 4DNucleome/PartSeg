@@ -376,7 +376,7 @@ class TestAlgorithmDescribeBase:
             ClassForTestFromFunc.from_function(sample_function, info="sample", alpha=1.0, additions="sample3")
 
     def test_missing_return_annotation(self):
-        with pytest.raises(RuntimeError, match="Method get_sample should have return annotation"):
+        with pytest.raises(RuntimeError, match="Method get_sample of .*SampleClass need to have return type defined.*"):
 
             class SampleClass(AlgorithmDescribeBase):  # pylint: disable=unused-variable
                 @classmethod

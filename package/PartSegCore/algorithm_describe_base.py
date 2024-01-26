@@ -156,8 +156,16 @@ class AlgorithmDescribeBaseMeta(ABCMeta):
             # get all abstract methods that starts with `get_`
             for method_name in cls2.__abstractmethods__:
                 if method_name.startswith("get_"):
-                    if "return" not in getattr(cls2, method_name).__annotations__:
-                        raise RuntimeError(f"Method {method_name} should have return annotation")
+                    method = getattr(cls2, method_name)
+                    if "return" not in method.__annotations__:
+                        msg = f"Method {method_name} of {cls2.__qualname__} need to have return type defined"
+                        try:
+                            file_name = inspect.getsourcefile(method)
+                            line = inspect.getsourcelines(method)[1]
+                            msg += f" in {file_name}:{line}"
+                        except TypeError:
+                            pass
+                        raise RuntimeError(msg)
 
                     abstract_getters[method_name[4:]] = getattr(cls2, method_name).__annotations__["return"]
                 elif method_name != calculation_method:
