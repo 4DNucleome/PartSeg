@@ -191,12 +191,14 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
         if cls.__new_style__:
             return cls.__argument_class__()  # pylint: disable=not-callable
         return {
-            el.name: {
-                "name": el.default_value,
-                "values": el.possible_values[el.default_value].get_default_values(),
-            }
-            if issubclass(el.value_type, AlgorithmDescribeBase)
-            else el.default_value
+            el.name: (
+                {
+                    "name": el.default_value,
+                    "values": el.possible_values[el.default_value].get_default_values(),
+                }
+                if issubclass(el.value_type, AlgorithmDescribeBase)
+                else el.default_value
+            )
             for el in cls.get_fields()
             if isinstance(el, AlgorithmProperty)
         }

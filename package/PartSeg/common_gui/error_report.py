@@ -3,6 +3,7 @@ THis module contains widgets used for error reporting. The report backed is sent
 
 .. _sentry: https://sentry.io
 """
+
 import getpass
 import io
 import os

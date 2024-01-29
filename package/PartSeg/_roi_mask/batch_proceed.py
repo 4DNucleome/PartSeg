@@ -80,9 +80,11 @@ class BatchProceed(QThread):
                 state2 = StackSettings.transform_state(
                     project_tuple,
                     segmentation.roi_info,
-                    {i: segmentation.parameters for i in segmentation.roi_info.bound_info}
-                    if segmentation.roi_info is not None
-                    else {},
+                    (
+                        {i: segmentation.parameters for i in segmentation.roi_info.bound_info}
+                        if segmentation.roi_info is not None
+                        else {}
+                    ),
                     [],
                 )
                 if isinstance(task.save_prefix, tuple):

@@ -1,6 +1,7 @@
 """
 This module contains widgets to create and manage labels scheme
 """
+
 import json
 import typing
 from copy import deepcopy

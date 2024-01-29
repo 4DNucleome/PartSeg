@@ -2,7 +2,6 @@
 This module contains simple, useful widgets which implementation is too short to create separated files for them
 """
 
-
 import math
 import typing
 import warnings

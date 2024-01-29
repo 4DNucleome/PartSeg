@@ -2,6 +2,7 @@
 This module contains base for the advanced window for PartSeg.
 At this moment controlling colormaps tabs and developer PartSegCore
 """
+
 import importlib
 import sys
 from contextlib import suppress

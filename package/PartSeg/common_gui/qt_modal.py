@@ -1,4 +1,5 @@
 """from napari._qt.dialog.modal """
+
 from qtpy.QtCore import QPoint, QRect, Qt
 from qtpy.QtGui import QCursor, QGuiApplication, QKeyEvent
 from qtpy.QtWidgets import QDialog, QFrame, QVBoxLayout
