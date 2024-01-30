@@ -12,6 +12,7 @@ register: function for registering operation in inner structures.
 
 register_dict: holds information where register given operation type. Strongly suggest to use register function instead.
 """
+
 from enum import Enum
 from typing import Type
 

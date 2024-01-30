@@ -8,6 +8,7 @@ Then do not need to manage algorithm parameters in places where it is used.
 
 Both class from this module are designed for spherical mask, but may be useful als for others.
 """
+
 import typing
 
 import numpy as np

@@ -45,9 +45,11 @@ class LoadPartSegOld(LoadBase):
             "channel": 0,
             "minimum_size": algorithm_dict["minimum_size"],
             "threshold": {"name": "Manual", "values": {"threshold": algorithm_dict["threshold"]}},
-            "noise_removal": {"name": "Gauss", "values": {"gauss_type": DimensionType.Layer, "radius": 1.0}}
-            if algorithm_dict["use_gauss"]
-            else {"name": "None", "values": {}},
+            "noise_removal": (
+                {"name": "Gauss", "values": {"gauss_type": DimensionType.Layer, "radius": 1.0}}
+                if algorithm_dict["use_gauss"]
+                else {"name": "None", "values": {}}
+            ),
             "side_connection": True,
         }
 

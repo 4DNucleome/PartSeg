@@ -14,6 +14,7 @@ and consume results (:py:meth:`BatchManager.get_result`) until
    }
 
 """
+
 import logging
 import multiprocessing
 import os

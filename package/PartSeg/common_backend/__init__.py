@@ -1,6 +1,7 @@
 """
 This module contains non gui Qt based components
 """
+
 import os.path
 from typing import TYPE_CHECKING
 

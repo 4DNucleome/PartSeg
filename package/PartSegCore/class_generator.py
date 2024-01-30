@@ -238,9 +238,11 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     del global_state[typename]
 
     signature = ", ".join(
-        f"{name_}: {translate_dict[type_]} = {pprint.pformat(defaults_dict[name_])}"
-        if name_ in defaults_dict
-        else f"{name_}: {translate_dict[type_]}"
+        (
+            f"{name_}: {translate_dict[type_]} = {pprint.pformat(defaults_dict[name_])}"
+            if name_ in defaults_dict
+            else f"{name_}: {translate_dict[type_]}"
+        )
         for name_, type_ in types.items()
     )
 

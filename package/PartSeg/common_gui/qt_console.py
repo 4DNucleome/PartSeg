@@ -1,6 +1,7 @@
 """
 Code from https://github.com/napari/napari-console
 """
+
 # pylint: disable=no-value-for-parameter,unexpected-keyword-arg
 import re
 import sys

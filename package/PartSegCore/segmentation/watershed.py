@@ -1,6 +1,7 @@
 """
 This module contains PartSeg wrappers for function for :py:mod:`..sprawl_utils.find_split`.
 """
+
 import warnings
 from abc import ABC
 from enum import Enum
