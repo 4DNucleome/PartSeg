@@ -6,3 +6,7 @@ updates:
       interval: "weekly"
 
     target-branch: "develop"
+    groups:
+      github-actions:
+        patterns:
+          - "actions/*"
