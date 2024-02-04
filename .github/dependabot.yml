@@ -7,6 +7,6 @@ updates:
 
     target-branch: "develop"
     groups:
-      actions:
+      github-actions:
         patterns:
           - "actions/*"
