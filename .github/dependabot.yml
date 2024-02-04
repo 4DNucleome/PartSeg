@@ -6,3 +6,7 @@ updates:
       interval: "weekly"
 
     target-branch: "develop"
+    groups:
+      actions:
+        patterns:
+          - "actions/*"
