@@ -100,7 +100,7 @@ def load_project_from_tar(tar_file, file_path):
 
     if version == Version("1.0"):
         seg_dict = np.load(tar_to_buff(tar_file, "segmentation.npz"))
-        mask = seg_dict["mask"] if "mask" in seg_dict else None
+        mask = seg_dict.get("mask")
         roi = seg_dict["segmentation"]
     else:
         roi = tifffile.imread(tar_to_buff(tar_file, "segmentation.tif"))

@@ -97,7 +97,7 @@ class MaskDialog(MaskDialogBase):
             history.roi_extraction_parameters["selected"],
             history.roi_extraction_parameters["parameters"],
         )
-        self.settings.mask = seg["mask"] if "mask" in seg else None
+        self.settings.mask = seg.get("mask")
         self.close()
 
 
