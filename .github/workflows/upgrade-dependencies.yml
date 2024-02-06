@@ -67,7 +67,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create PR updating vendored modules
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           commit-message: Update bundle dependencies.
           branch: ${{ env.BRANCH_NAME }}
