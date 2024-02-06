@@ -13,6 +13,7 @@ from PartSegCore.utils import (
     ProfileDict,
     get_callback,
     iterate_names,
+    kwargs_to_model,
     recursive_update_dict,
 )
 
@@ -361,3 +362,34 @@ def test_base_model_getitem():
         assert ob["c"] == "3"
     with pytest.raises(KeyError):
         ob["d"]  # pylint: disable=pointless-statement
+
+
+def test_kwargs_to_model():
+    class SampleModel(BaseModel):
+        a: int
+        b: float
+        c: str
+
+    class SampleModel2(BaseModel):
+        d: int
+
+    @kwargs_to_model(old_args_order=["a", "b"])
+    def func(par1: SampleModel, par2: SampleModel2):
+        return f"{par1.a} {par1.b} {par1.c} {par2.d}"
+
+    assert func(SampleModel(a=1, b=2.0, c="a"), SampleModel2(d=3)) == "1 2.0 a 3"
+
+    with pytest.warns(FutureWarning, match="called using old signature"):
+        assert func(a=1, b=2.0, c="a", d=4) == "1 2.0 a 4"
+
+    with pytest.warns(FutureWarning, match="called using old signature"):
+        assert func(1, b=2.0, c="a", d=5) == "1 2.0 a 5"
+
+    with pytest.warns(FutureWarning, match="called using old signature"):
+        assert func(1, 2.0, c="a", d=6) == "1 2.0 a 6"
+
+    with pytest.raises(TypeError, match="Too many positional arguments"):
+        func(1, 2.0, "a", d=4)
+
+    with pytest.raises(TypeError, match="Unexpected keyword argument e"):
+        assert func(a=1, b=2.0, c="a", d=4, e=1) == "1 2.0 a 4"

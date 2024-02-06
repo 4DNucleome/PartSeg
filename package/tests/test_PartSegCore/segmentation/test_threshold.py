@@ -12,11 +12,11 @@ from PartSegCore.segmentation.threshold import (
     ThresholdSelection,
 )
 
-square = np.zeros((21, 21))
+square = np.zeros((21, 21), dtype=np.uint32)
 for i, v in [(2, 1000), (4, 10000), (6, 20000), (7, 21000), (8, 22000), (9, 23000)]:
     square[i:-i, i:-i] = v
 
-cube = np.zeros((21, 21, 21))
+cube = np.zeros((21, 21, 21), dtype=np.uint32)
 for i, v in [(2, 1000), (4, 10000), (6, 20000), (7, 21000), (8, 22000), (9, 23000)]:
     cube[i:-i, i:-i, i:-i] = v
 
@@ -39,7 +39,7 @@ def test_threshold(method: BaseThreshold, data, op, masking):
             pytest.xfail("IntermodesThreshold sigma problem")
         raise
     assert isinstance(data, np.ndarray)
-    assert isinstance(thr_info, (int, float))
+    assert isinstance(thr_info, (int, float, np.integer)), type(thr_info)
 
 
 @pytest.mark.parametrize("method", DoubleThresholdSelection.__register__.values())
@@ -52,5 +52,5 @@ def test_double_threshold(method: BaseThreshold, data, op, masking):
     data, thr_info = method.calculate_mask(data=data, mask=mask, arguments=method.get_default_values(), operator=op)
 
     assert isinstance(data, np.ndarray)
-    assert isinstance(thr_info[0], (int, float))
-    assert isinstance(thr_info[1], (int, float))
+    assert isinstance(thr_info[0], (int, float, np.integer))
+    assert isinstance(thr_info[1], (int, float, np.integer))

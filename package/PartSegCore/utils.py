@@ -7,6 +7,7 @@ import weakref
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from contextlib import suppress
+from functools import wraps
 from types import MethodType
 
 import numpy as np
@@ -462,3 +463,84 @@ def iterate_names(base_name: str, data_dict, max_length=None) -> typing.Optional
         if res_name not in data_dict:
             return res_name
     return None
+
+
+def _get_translation_dicts_from_signature(signature: inspect.Signature) -> typing.Tuple[dict, dict]:
+    kwargs_to_field = {}
+    par_to_class = {}
+
+    for par in signature.parameters.values():
+        if par.annotation is par.empty or not issubclass(par.annotation, BaseModel):
+            raise TypeError(f"This decorator can be used only with functions with BaseModel parameters. {par} is not.")
+        par_to_class[par.name] = par.annotation
+        for field in par.annotation.__fields__.values():
+            if field.name in kwargs_to_field:
+                raise TypeError(
+                    f"Two parameters have same field name {field.name}. "
+                    f"{kwargs_to_field[field.name]} and {par.name}."
+                )
+            kwargs_to_field[field.name] = par.name
+
+    return kwargs_to_field, par_to_class
+
+
+def _get_kwargs_from_old_args(old_args_order: typing.List[str], args, kwargs):
+    if len(args) > len(old_args_order):
+        raise TypeError("Too many positional arguments, please use keyword argument or update old_args_order")
+    kwargs = kwargs.copy()
+    for name, arg in zip(old_args_order, args):
+        kwargs[name] = arg
+    return kwargs
+
+
+def _map_kwargs_to_model(kwargs_to_field, par_to_class, kwargs):
+    class_kwargs = {name: {} for name in par_to_class}
+
+    for key, value in kwargs.items():
+        if key in kwargs_to_field:
+            class_kwargs[kwargs_to_field[key]][key] = value
+        else:
+            raise TypeError(f"Unexpected keyword argument {key}")
+
+    return {name: par_to_class[name](**class_kwargs[name]) for name in par_to_class}
+
+
+def kwargs_to_model(func=None, old_args_order: typing.Optional[typing.List[str]] = None):
+    """
+    Decorator for converting kwargs to base models before calling function.
+
+    This decorator is to provide backward compatibility layer.
+    """
+
+    if old_args_order is None:
+        old_args_order = []
+
+    def decorator(func_):
+        # get functions parameters type annotation to checks its model fields.
+
+        signature = inspect.signature(func_)
+
+        kwargs_to_field, par_to_class = _get_translation_dicts_from_signature(signature)
+
+        @wraps(func_)
+        def wrapper(*args, **kwargs):
+            try:
+                return func_(*args, **kwargs)
+            except TypeError as e:
+                if "unexpected keyword argument" not in str(e):
+                    raise e
+            kwargs = _get_kwargs_from_old_args(old_args_order, args, kwargs)
+            kwargs = _map_kwargs_to_model(kwargs_to_field, par_to_class, kwargs)
+            warnings.warn(
+                "The function is called using old signature. There is try to fix it. Please update function call",
+                FutureWarning,
+                stacklevel=2,
+            )
+
+            return func_(**kwargs)
+
+        return wrapper
+
+    if func:
+        return decorator(func)
+    return decorator

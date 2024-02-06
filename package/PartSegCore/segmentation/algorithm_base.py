@@ -204,7 +204,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_info_text(self):
+    def get_info_text(self) -> str:
         raise NotImplementedError
 
     def get_channel(self, channel_idx):

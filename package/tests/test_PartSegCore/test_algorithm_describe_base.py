@@ -1,5 +1,6 @@
 # pylint: disable=no-self-use
 import typing
+from abc import ABC, abstractmethod
 from enum import Enum
 
 import pytest
@@ -9,6 +10,7 @@ from pydantic import Field, ValidationError
 
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
+    AlgorithmDescribeBaseMeta,
     AlgorithmProperty,
     AlgorithmSelection,
     ROIExtractionProfile,
@@ -354,6 +356,148 @@ class TestAlgorithmDescribeBase:
         with pytest.warns(FutureWarning, match=r"Class has __argument_class__ defined"):
             assert SampleSubAlgorithm.get_default_values() == {"name": 1, "name2": 3.0}
 
+    def test_generate_class_from_function_lack_of_methods(self):
+        def sample_function(params: dict) -> dict:
+            """For test purpose"""
+
+        with pytest.raises(ValueError, match="missing: alpha, info"):
+            ClassForTestFromFunc.from_function(sample_function)
+
+        with pytest.raises(ValueError, match="missing: info"):
+            ClassForTestFromFunc.from_function(sample_function, alpha=1.0)
+
+        with pytest.raises(ValueError, match="missing: alpha"):
+            ClassForTestFromFunc.from_function(sample_function, info="sample")
+
+        with pytest.raises(ValueError, match="missing: alpha, info.*call: info2"):
+            ClassForTestFromFunc.from_function(sample_function, info2="sample")
+
+        with pytest.raises(ValueError, match="call: additions"):
+            ClassForTestFromFunc.from_function(sample_function, info="sample", alpha=1.0, additions="sample3")
+
+    def test_missing_return_annotation(self):
+        with pytest.raises(RuntimeError, match="Method get_sample of .*SampleClass need to have return type defined.*"):
+
+            class SampleClass(AlgorithmDescribeBase):  # pylint: disable=unused-variable
+                @classmethod
+                @abstractmethod
+                def get_sample(cls):
+                    raise NotImplementedError
+
+    def test_not_supported_from_function(self):
+        def sample_function(params: dict) -> dict:
+            """For test purpose"""
+
+        class SampleClass(AlgorithmDescribeBase):
+            @classmethod
+            @abstractmethod
+            def sample(cls) -> dict:
+                raise NotImplementedError
+
+        with pytest.raises(RuntimeError, match="This class does not support from_function method"):
+            SampleClass.from_function(sample_function)
+
+    def test_wrong_type(self):
+        def func(params: dict) -> dict:
+            """For test purpose"""
+
+        with pytest.raises(TypeError, match="Value for info should be <class 'str'>"):
+            ClassForTestFromFunc.from_function(func, info=1, name="sample", alpha=1.0)
+
+    def test_generate_class_from_function(self):
+        def sample_function(params: dict) -> dict:
+            params["a"] = 1
+            return params
+
+        new_cls = ClassForTestFromFunc.from_function(sample_function, name="sample1", info="sample2", alpha=2.0)
+        assert issubclass(new_cls, ClassForTestFromFunc)
+        assert new_cls.get_name() == "sample1"
+        assert new_cls.get_info() == "sample2"
+        assert new_cls.get_alpha() == 2.0
+        assert new_cls.calculate(params={"b": 2}, scalar=1) == {"b": 2, "a": 1}
+        assert new_cls.calculate(params={"b": 2}) == {"b": 2, "a": 1}
+        with pytest.raises(ValueError, match="Parameter params is defined twice"):
+            new_cls.calculate({"a": 1}, params={})
+        assert new_cls.__argument_class__ == dict
+        assert new_cls.__name__ == "SampleFunction"
+        assert new_cls(params={"b": 2}, scalar=1) == {"b": 2, "a": 1}  # pylint: disable=not-callable
+        assert new_cls({"b": 2}) == {"b": 2, "a": 1}  # pylint: disable=not-callable
+
+    def test_generate_class_from_function_without_params(self):
+        @ClassForTestFromFunc.from_function(info="sample2", alpha=2.0)
+        def sample_function(scalar: int) -> dict:
+            return {"a": scalar}
+
+        assert issubclass(sample_function, ClassForTestFromFunc)
+        assert sample_function.get_name() == "Sample Function"
+        assert sample_function.__name__ == "SampleFunction"
+        assert sample_function.calculate(scalar=1, params={"b": 2}) == {"a": 1}
+        assert sample_function.__argument_class__.__name__ == "BaseModel"
+
+    def test_additional_function_parameter_error(self):
+        def sample_function(params: dict, beta: float) -> dict:
+            """for test purpose only"""
+
+        with pytest.raises(ValueError, match="Parameter beta is not defined"):
+            ClassForTestFromFunc.from_function(sample_function, info="sample", alpha=1.0)
+
+    def test_positional_only_argument(self):
+        def sample_function(params: dict, /) -> dict:
+            """for test purpose only"""
+
+        with pytest.raises(ValueError, match="Function .*sample_function.* should not have positional only parameters"):
+            ClassForTestFromFunc.from_function(sample_function, info="sample", alpha=1.0)
+
+    def test_fom_function_as_decorator(self):
+        class SampleClass(ABC, metaclass=AlgorithmDescribeBaseMeta):
+            @classmethod
+            @abstractmethod
+            def get_sample(cls) -> str:
+                raise NotImplementedError
+
+            @classmethod
+            def get_fields(cls):
+                raise NotImplementedError
+
+        class SampleClass2(SampleClass, method_from_fun="calculate"):
+            @classmethod
+            @abstractmethod
+            def calculate(cls, a: int, arguments: dict) -> str:
+                raise NotImplementedError
+
+        @SampleClass2.from_function(sample="aaa")
+        def calc(a: int) -> str:
+            return f"aaa {a}"
+
+        assert calc.calculate(a=1, arguments={}) == "aaa 1"
+
+    def test_class_without_user_provided_attributes(self):
+        class SampleClass(AlgorithmDescribeBase, method_from_fun="calculate", additional_parameters="parameters"):
+            @classmethod
+            @abstractmethod
+            def calculate(cls, a: int, b: int) -> int:
+                raise NotImplementedError
+
+        @SampleClass.from_function()
+        def calc(a: int, b: int) -> int:
+            return a + b
+
+        assert calc.calculate(a=1, b=2) == 3
+
+    def test_functions_with_kwargs(self):
+        @ClassForTestFromFunc.from_function(info="sample2", alpha=2.0)
+        def sample_function(params: dict, **kwargs) -> dict:
+            params["scalar"] = kwargs["scalar"]
+            return params
+
+        assert sample_function.calculate(params={"b": 2}, scalar=1) == {"b": 2, "scalar": 1}
+
+
+def test_roi_extraction_profile():
+    ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
+    with pytest.warns(FutureWarning):
+        ROIExtractionProfile("aaa", "aaa", {})
+
 
 class TestROIExtractionProfile:
     def test_roi_extraction_profile(self):
@@ -370,3 +514,22 @@ class TestROIExtractionProfile:
             values=LowerThresholdAlgorithm.get_default_values(),
         )
         assert prof2.pretty_print(AnalysisAlgorithmSelection).count("\n") == 7
+
+
+class ClassForTestFromFuncBase(AlgorithmDescribeBase):
+    @classmethod
+    @abstractmethod
+    def get_alpha(cls) -> float:
+        raise NotImplementedError
+
+
+class ClassForTestFromFunc(ClassForTestFromFuncBase, method_from_fun="calculate"):
+    @classmethod
+    @abstractmethod
+    def get_info(cls) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def calculate(cls, params: BaseModel, scalar: float) -> dict:
+        raise NotImplementedError

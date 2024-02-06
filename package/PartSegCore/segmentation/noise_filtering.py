@@ -1,6 +1,6 @@
 import typing
 import warnings
-from abc import ABC
+from abc import ABC, abstractmethod
 from enum import Enum
 
 import numpy as np
@@ -22,10 +22,11 @@ class DimensionType(Enum):
         return self.name.replace("_", " ")
 
 
-class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
+class NoiseFilteringBase(AlgorithmDescribeBase, ABC, method_from_fun="noise_filter"):
     """Base class for noise filtering operations"""
 
     @classmethod
+    @abstractmethod
     def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray:
         """
         This function need be overloaded in implementation

@@ -11,7 +11,7 @@ from PartSegCore.segmentation.watershed import NeighType, get_neighbourhood
 from PartSegCore.utils import BaseModel
 
 
-class BaseSmoothing(AlgorithmDescribeBase, ABC):
+class BaseSmoothing(AlgorithmDescribeBase, ABC, method_from_fun="smooth"):
     __argument_class__ = BaseModel
 
     @classmethod

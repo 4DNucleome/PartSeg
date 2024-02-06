@@ -2,6 +2,7 @@ import typing
 import warnings
 from abc import ABC
 
+import mahotas
 import numpy as np
 import SimpleITK as sitk
 from local_migrator import register_class, rename_key, update_argument
@@ -36,7 +37,7 @@ class MultipleOtsuThresholdParams(BaseModel):
     bins: int = Field(128, title="Number of histogram bins", ge=8, le=2**16)
 
 
-class BaseThreshold(AlgorithmDescribeBase, ABC):
+class BaseThreshold(AlgorithmDescribeBase, ABC, method_from_fun="calculate_mask"):
     @classmethod
     def calculate_mask(
         cls,
@@ -275,6 +276,53 @@ class MultipleOtsuThreshold(BaseThreshold):
         return "Multiple Otsu"
 
 
+class MahotasThreshold(BaseModel):
+    ignore_zeros: bool = False
+
+
+@BaseThreshold.from_function()
+def riddler_calvard(
+    data: np.ndarray, mask: np.ndarray, arguments: MahotasThreshold, operator: typing.Callable[[object, object], bool]
+):
+    """
+    Riddler-Calvard thresholding algorithm from mahotas
+
+    Parameters
+    ----------
+    data : ndarray
+        Image data.
+    mask : ndarray
+        Mask data.
+    arguments : MahotasThreshold
+        method parameter
+    operator : callable
+        operator to use for thresholding
+
+    Returns
+    -------
+    mask : ndarray
+        Computed mask
+    References
+    ----------
+    .. [1] C. A. Riddler, and G. S. Calvard, "Picture thresholding using an iterative selection method,"
+    """
+
+    try:
+        threshold = mahotas.rc(data, ignore_zeros=arguments.ignore_zeros)
+    except TypeError as e:  # pragma: no cover
+        if "This function only accepts integer types" in e.args[0]:
+            raise SegmentationLimitException(*e.args) from e
+        raise
+    if operator(1, 0):
+        res = (data >= threshold).astype(np.uint8)
+    else:
+        res = (data < threshold).astype(np.uint8)
+
+    if mask is not None:
+        res = res * (mask > 0)
+    return res, threshold
+
+
 class ThresholdSelection(AlgorithmSelection, class_methods=["calculate_mask"], suggested_base_class=BaseThreshold):
     pass
 
@@ -293,6 +341,7 @@ ThresholdSelection.register(KittlerIllingworthThreshold)
 ThresholdSelection.register(MomentsThreshold)
 ThresholdSelection.register(MaximumEntropyThreshold)
 ThresholdSelection.register(MultipleOtsuThreshold)
+ThresholdSelection.register(riddler_calvard)
 
 
 class DoubleThresholdParams(BaseModel):
