@@ -572,7 +572,7 @@ class SubAlgorithmWidget(QWidget):
         if name not in self.widgets_dict:
             if name not in self.property.possible_values:
                 return
-            start_dict = {} if name not in self.starting_values else self.starting_values[name]
+            start_dict = self.starting_values.get(name, {})
             self.widgets_dict[name] = self._get_form_widget(self.property.possible_values[name], start_dict)
 
             self.layout().addWidget(self.widgets_dict[name])
