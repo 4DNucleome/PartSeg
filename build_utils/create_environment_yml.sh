@@ -10,5 +10,6 @@ channels:
   - conda-forge
 dependencies:
 $dependencies
+  - pyside2
   - python=3.11
 EOF
