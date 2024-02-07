@@ -10,7 +10,5 @@ channels:
   - conda-forge
 dependencies:
 $dependencies
-  - python=3.9
-  - pip:
-    - fonticon-fontawesome6
+  - python=3.11
 EOF
