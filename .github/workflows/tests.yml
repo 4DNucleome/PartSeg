@@ -172,7 +172,7 @@ jobs:
           use-mamba: true
           channels: conda-forge
           channel-priority: strict
-          python-version: "3.9"
+          python-version: "3.11"
 
       - uses: tlambert03/setup-qt-libs@v1
 
@@ -215,7 +215,7 @@ jobs:
       - name: Test with tox
         uses: aganders3/headless-gui@v2
         with:
-          run: conda run -n test --no-capture-output tox -e py39-PySide2-conda
+          run: conda run -n test --no-capture-output tox -e py311-PySide2-conda
         timeout-minutes: 60
 
   check-package:
