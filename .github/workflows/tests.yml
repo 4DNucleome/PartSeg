@@ -172,7 +172,7 @@ jobs:
           use-mamba: true
           channels: conda-forge
           channel-priority: strict
-          python-version: "3.9"
+          python-version: "3.11"
 
       - uses: tlambert03/setup-qt-libs@v1
 
