@@ -75,6 +75,12 @@ def test_scaling_imagej(tmp_path):
     assert np.all(np.isclose(image.spacing, read_image.spacing))
 
 
+def test_scaling_imagej_fail(tmp_path):
+    image = Image(np.zeros((10, 50, 50), dtype=np.float64), (30, 0.1, 0.1), axes_order="ZYX")
+    with pytest.raises(ValueError, match="Data type float64"):
+        IMAGEJImageWriter.save(image, tmp_path / "image.tif")
+
+
 def test_save_mask_imagej(tmp_path):
     data = np.zeros((10, 40, 40), dtype=np.uint8)
     data[1:-1, 1:-1, 1:-1] = 1

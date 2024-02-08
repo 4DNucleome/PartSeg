@@ -3,6 +3,7 @@ import typing
 import warnings
 from collections.abc import Iterable
 from contextlib import suppress
+from typing import Union
 
 import numpy as np
 
@@ -111,7 +112,7 @@ class Image:
     ):
         # TODO add time distance to image spacing
         if axes_order is None:
-            warnings.warn(
+            warnings.warn(  # pragma: no cover
                 f"axes_order should be provided, Currently it uses {self.__class__}.axis_order",
                 category=DeprecationWarning,
                 stacklevel=2,
@@ -261,7 +262,7 @@ class Image:
     @property
     def channel_pos(self) -> int:
         """Channel axis. Need to have 'C' in :py:attr:`axis_order`"""
-        warnings.warn(
+        warnings.warn(  # pragma: no cover
             "channel_pos is deprecated and code its using may not work properly", category=FutureWarning, stacklevel=2
         )
         return self.axis_order.index("C")
@@ -425,9 +426,11 @@ class Image:
         """
         :return: numpy array in imagej tiff order axes
         """
-        return self._reorder_axes(
-            np.stack(self._channel_arrays, axis=self.axis_order.index("C")), self.axis_order, "TZCYX"
-        )
+        if "C" in self.axis_order:
+            return self._reorder_axes(
+                np.stack(self._channel_arrays, axis=self.axis_order.index("C")), self.axis_order, "TZCYX"
+            )
+        return self._reorder_axes(self._channel_arrays[0], self.axis_order, "TZCYX")
 
     def get_mask_for_save(self) -> typing.Optional[np.ndarray]:
         """
@@ -553,11 +556,11 @@ class Image:
                 slices[axis_pos[n]] = kwargs[name]
         return array[tuple(slices)]
 
-    def get_channel(self, num) -> np.ndarray:
+    def get_channel(self, num: Union[int, str, Channel]) -> np.ndarray:
         """
         Alias for :py:func:`get_sub_data` with argument ``c=num``
 
-        :param int | str num: channel num to be extracted
+        :param int | str | Channel num: channel num or name to be extracted
         :return: given channel array
         :rtype: numpy.ndarray
         """
