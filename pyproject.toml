@@ -215,6 +215,7 @@ source = [
     "PartSeg",
     "PartSegCore",
     "PartSegImage",
+    "tests",
 ]
 omit = [
     ".tox/*",
