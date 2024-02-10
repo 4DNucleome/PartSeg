@@ -260,9 +260,9 @@ class Image:
         return self._channel_names[:]
 
     @property
-    def channel_pos(self) -> int:
+    def channel_pos(self) -> int:  # pragma: no cover
         """Channel axis. Need to have 'C' in :py:attr:`axis_order`"""
-        warnings.warn(  # pragma: no cover
+        warnings.warn(
             "channel_pos is deprecated and code its using may not work properly", category=FutureWarning, stacklevel=2
         )
         return self.axis_order.index("C")

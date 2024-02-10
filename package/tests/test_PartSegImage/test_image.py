@@ -542,3 +542,16 @@ def test_cut_with_roi():
         assert cut_image[0].shape == (1, 1, 15, 15)
         assert np.all(cut_image[0][0, 0, 2:-2, 2:-2][diam > 0])
         assert np.all(cut_mask[0, 0, 2:-2, 2:-2] == diam)
+
+
+def test_str_and_repr_mask_presence():
+    image = Image(np.zeros((10, 10), np.uint8), (1, 1), "test", axes_order="XY")
+
+    assert "mask: False" in str(image)
+    assert "mask=False" in repr(image)
+    assert "coloring: None" in str(image)
+
+    image.set_mask(np.zeros((10, 10), np.uint8))
+
+    assert "mask: True" in str(image)
+    assert "mask=True" in repr(image)

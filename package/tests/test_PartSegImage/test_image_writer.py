@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.testing as npt
 import pytest
 import tifffile
 from lxml import etree  # nosec
@@ -79,6 +80,17 @@ def test_scaling_imagej_fail(tmp_path):
     image = Image(np.zeros((10, 50, 50), dtype=np.float64), (30, 0.1, 0.1), axes_order="ZYX")
     with pytest.raises(ValueError, match="Data type float64"):
         IMAGEJImageWriter.save(image, tmp_path / "image.tif")
+
+
+def test_imagej_write_all_metadata(tmp_path, data_test_dir):
+    image = TiffImageReader.read_image(data_test_dir / "stack1_components" / "stack1_component1.tif")
+    assert "coloring: " in str(image)
+    assert "coloring: None" not in str(image)
+    IMAGEJImageWriter.save(image, tmp_path / "image.tif")
+
+    image2 = TiffImageReader.read_image(tmp_path / "image.tif")
+
+    npt.assert_array_equal(image2.default_coloring, image.default_coloring)
 
 
 def test_save_mask_imagej(tmp_path):
