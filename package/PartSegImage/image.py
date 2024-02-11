@@ -3,6 +3,7 @@ import typing
 import warnings
 from collections.abc import Iterable
 from contextlib import suppress
+from typing import Union
 
 import numpy as np
 
@@ -110,7 +111,7 @@ class Image:
         name: str = "",
     ):
         # TODO add time distance to image spacing
-        if axes_order is None:
+        if axes_order is None:  # pragma: no cover
             warnings.warn(
                 f"axes_order should be provided, Currently it uses {self.__class__}.axis_order",
                 category=DeprecationWarning,
@@ -259,7 +260,7 @@ class Image:
         return self._channel_names[:]
 
     @property
-    def channel_pos(self) -> int:
+    def channel_pos(self) -> int:  # pragma: no cover
         """Channel axis. Need to have 'C' in :py:attr:`axis_order`"""
         warnings.warn(
             "channel_pos is deprecated and code its using may not work properly", category=FutureWarning, stacklevel=2
@@ -412,8 +413,6 @@ class Image:
         if np.max(array) == 1:
             return array.astype(np.uint8)
         unique = np.unique(array)
-        if unique.size == 2 and unique[1] == 1:
-            return array.astype(np.uint8)
         if unique.size == 1:
             if unique[0] != 0:
                 return np.ones(array.shape, dtype=np.uint8)
@@ -425,9 +424,11 @@ class Image:
         """
         :return: numpy array in imagej tiff order axes
         """
-        return self._reorder_axes(
-            np.stack(self._channel_arrays, axis=self.axis_order.index("C")), self.axis_order, "TZCYX"
-        )
+        if "C" in self.axis_order:
+            return self._reorder_axes(
+                np.stack(self._channel_arrays, axis=self.axis_order.index("C")), self.axis_order, "TZCYX"
+            )
+        return self._reorder_axes(self._channel_arrays[0], self.axis_order, "TZCYX")
 
     def get_mask_for_save(self) -> typing.Optional[np.ndarray]:
         """
@@ -511,13 +512,10 @@ class Image:
         """
         slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.array_axis_order))]
         axis_pos = self.get_array_axis_positions()
+        if "c" in kwargs:
+            kwargs["C"] = kwargs.pop("c")
         if "C" in kwargs and isinstance(kwargs["C"], str):
             kwargs["C"] = self.channel_names.index(kwargs["C"])
-        if "c" in kwargs:
-            if isinstance(kwargs["c"], str):
-                kwargs["C"] = self.channel_names.index(kwargs.pop("c"))
-            else:
-                kwargs["C"] = kwargs.pop("c")
 
         channel = kwargs.pop("C", slice(None) if "C" in self.axis_order else 0)
         if isinstance(channel, Channel):
@@ -531,8 +529,6 @@ class Image:
                     axis_order = axis_order.replace(name.upper(), "")
 
         slices_t = tuple(slices)
-        if isinstance(channel, str):
-            channel = self._channel_names.index(channel)
         if isinstance(channel, int):
             return self._channel_arrays[channel][slices_t]
         return np.stack([x[slices_t] for x in self._channel_arrays[channel]], axis=axis_order.index("C"))
@@ -553,11 +549,11 @@ class Image:
                 slices[axis_pos[n]] = kwargs[name]
         return array[tuple(slices)]
 
-    def get_channel(self, num) -> np.ndarray:
+    def get_channel(self, num: Union[int, str, Channel]) -> np.ndarray:
         """
         Alias for :py:func:`get_sub_data` with argument ``c=num``
 
-        :param int | str num: channel num to be extracted
+        :param int | str | Channel num: channel num or name to be extracted
         :return: given channel array
         :rtype: numpy.ndarray
         """
