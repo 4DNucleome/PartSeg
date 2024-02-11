@@ -111,7 +111,7 @@ jobs:
         pip install pip-tools
     - name: Compile and install PyInstaller requirements
       run: |
-        pip-compile --upgrade -o requirements.txt setup.cfg --extra pyinstaller  --pre
+        pip-compile --upgrade -o requirements.txt pyproject.toml --extra pyinstaller  --pre
         pip-sync
         pip install .
     - name: upload requirements
