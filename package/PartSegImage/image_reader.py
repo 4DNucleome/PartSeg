@@ -334,7 +334,7 @@ class ObsepImageReader(BaseImageReader):
         xml_doc = ElementTree.parse(image_path).getroot()
         channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
         if not channels:
-            raise ValueError("Information about channel images not found")
+            raise ValueError("Information about channel images not found")  # pragma: no cover
         channel_list = [
             *self._search_for_files(directory, channels, required=True),
             *self._search_for_files(directory, channels, "_deconv"),

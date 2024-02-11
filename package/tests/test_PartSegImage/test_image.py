@@ -411,6 +411,11 @@ class TestImageBase:
         assert set(image.get_axis_positions()) == set(image.axis_order)
         assert len(set(image.get_axis_positions().values())) == len(image.axis_order)
 
+    def test_get_data(self):
+        data = np.zeros((10, 10), np.uint8)
+        image = self.image_class(data, (1, 1), axes_order="XY")
+        assert np.all(image.get_data() == data)
+
 
 class ChangeChannelPosImage(Image):
     axis_order = "TZCYX"
@@ -515,6 +520,29 @@ class TestMergeImage:
         res_image = image1.merge(image3, "C")
         assert res_image.channel_names == ["channel 1", "channel 3", "channel 5"]
 
+    def test_channel_name_form_str(self):
+        image1 = Image(
+            data=np.zeros((1, 4, 10, 10), dtype=np.uint8),
+            axes_order="CZXY",
+            image_spacing=(1, 1, 1),
+            channel_names=["channel 1"],
+        )
+        assert image1.channel_names == ["channel 1"]
+        image2 = Image(
+            data=np.zeros((2, 4, 10, 10), dtype=np.uint8),
+            axes_order="CZXY",
+            image_spacing=(1, 1, 1),
+            channel_names="channel",
+        )
+        assert image2.channel_names == ["channel", "channel 2"]
+        image3 = Image(
+            data=np.zeros((2, 4, 10, 10), dtype=np.uint8),
+            axes_order="CZXY",
+            image_spacing=(1, 1, 1),
+            channel_names="channel 1",
+        )
+        assert image3.channel_names == ["channel 1", "channel 2"]
+
     def test_different_axes_order(self):
         image1 = Image(data=np.zeros((3, 10, 10), dtype=np.uint8), axes_order="ZXY", image_spacing=(1, 1, 1))
         image2 = ChangeChannelPosImage(
@@ -524,6 +552,14 @@ class TestMergeImage:
         assert res_image.channels == 2
         assert isinstance(res_image, Image)
         assert isinstance(image2.merge(image1, "C"), ChangeChannelPosImage)
+
+    def test_get_data_by_axis(self):
+        image = Image(data=np.zeros((2, 3, 10, 10), dtype=np.uint8), axes_order="CZXY", image_spacing=(1, 1, 1))
+        assert image.get_data_by_axis(c=0).shape == (1, 3, 10, 10)
+        assert image.get_data_by_axis(C=1).shape == (1, 3, 10, 10)
+        assert image.get_data_by_axis(z=0).shape == (2, 1, 10, 10)
+        assert image.get_data_by_axis(Z=1).shape == (2, 1, 10, 10)
+        assert image.get_data_by_axis(C="channel 1").shape == (1, 3, 10, 10)
 
 
 def test_cut_with_roi():
@@ -546,7 +582,6 @@ def test_cut_with_roi():
 
 def test_str_and_repr_mask_presence():
     image = Image(np.zeros((10, 10), np.uint8), (1, 1), "test", axes_order="XY")
-
     assert "mask: False" in str(image)
     assert "mask=False" in repr(image)
     assert "coloring: None" in str(image)

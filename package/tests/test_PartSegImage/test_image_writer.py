@@ -33,6 +33,9 @@ def test_save_mask(tmp_path):
 
     read_mask = TiffImageReader.read_image(tmp_path / "mask.tif")
     assert np.all(np.isclose(read_mask.spacing, image.spacing))
+    image.set_mask(None)
+    ImageWriter.save_mask(image, tmp_path / "mask2.tif")
+    assert not (tmp_path / "mask2.tif").exists()
 
 
 @pytest.mark.parametrize("z_size", [1, 10])
