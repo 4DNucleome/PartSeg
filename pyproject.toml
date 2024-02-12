@@ -288,6 +288,7 @@ select = [
     "G", # flake8-logging-format
     "PIE", # flake8-pie
     "T20", # flake8-print
+    "PYI",
     "PT", # flake8-pytest-style
     "Q", # flake8-quotes
     "RSE", # flake8-raise
