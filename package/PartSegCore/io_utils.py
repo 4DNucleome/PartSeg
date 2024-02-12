@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import re
@@ -42,7 +43,7 @@ def check_segmentation_type(tar_file: TarFile) -> SegmentationType:
         return SegmentationType.analysis
     if "metadata.json" in names:
         return SegmentationType.mask
-    raise WrongFileTypeException
+    raise WrongFileTypeException  # pragma: no cover
 
 
 def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
@@ -56,7 +57,23 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
     return tar_info
 
 
-class SaveBase(AlgorithmDescribeBase, ABC):
+class _IOBase(AlgorithmDescribeBase, ABC):
+    @classmethod
+    def get_name_with_suffix(cls):
+        return cls.get_name()
+
+    @classmethod
+    def get_extensions(cls) -> typing.List[str]:
+        match = re.match(r".*\((.*)\)", cls.get_name())
+        if match is None:
+            raise ValueError(f"No extensions found in {cls.get_name()}")
+        extensions = match[1].split(" ")
+        if not all(x.startswith("*.") for x in extensions):
+            raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
+        return [x[1:] for x in extensions]
+
+
+class SaveBase(_IOBase, ABC):
     need_functions: typing.ClassVar[typing.List[str]] = [
         "save",
         "get_short_name",
@@ -92,15 +109,6 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         raise NotImplementedError
 
     @classmethod
-    def get_name_with_suffix(cls):
-        return cls.get_name()
-
-    @classmethod
-    def get_default_extension(cls):
-        match = re.search(r"\(\*(\.\w+)", cls.get_name_with_suffix())
-        return match[1] if match else ""
-
-    @classmethod
     def need_segmentation(cls):
         return True
 
@@ -109,17 +117,12 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         return False
 
     @classmethod
-    def get_extensions(cls) -> typing.List[str]:
-        match = re.match(r".*\((.*)\)", cls.get_name())
-        if match is None:
-            raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match[1].split(" ")
-        if not all(x.startswith("*.") for x in extensions):
-            raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
-        return [x[1:] for x in extensions]
+    def get_default_extension(cls):
+        match = re.search(r"\(\*(\.\w+)", cls.get_name_with_suffix())
+        return match[1] if match else ""
 
 
-class LoadBase(AlgorithmDescribeBase, ABC):
+class LoadBase(_IOBase, ABC):
     need_functions: typing.ClassVar[typing.List[str]] = [
         "load",
         "get_short_name",
@@ -156,20 +159,6 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         raise NotImplementedError
 
     @classmethod
-    def get_name_with_suffix(cls):
-        return cls.get_name()
-
-    @classmethod
-    def get_extensions(cls) -> typing.List[str]:
-        match = re.match(r".*\((.*)\)", cls.get_name())
-        if match is None:
-            raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match[1].split(" ")
-        if not all(x.startswith("*.") for x in extensions):
-            raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
-        return [x[1:] for x in extensions]
-
-    @classmethod
     def get_fields(cls):
         return []
 
@@ -192,9 +181,9 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         return False
 
 
-def load_metadata_base(data: typing.Union[str, Path]):
+def load_metadata_base(data: typing.Union[str, Path, typing.TextIO]):
     try:
-        if isinstance(data, typing.TextIO):
+        if isinstance(data, io.TextIOBase):
             decoded_data = json.load(data, object_hook=partseg_object_hook)
         elif os.path.exists(data):
             with open(data, encoding="utf-8") as ff:

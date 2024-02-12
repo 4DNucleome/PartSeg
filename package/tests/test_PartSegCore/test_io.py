@@ -29,6 +29,7 @@ from PartSegCore.io_utils import (
     LoadBase,
     LoadPlanExcel,
     LoadPlanJson,
+    LoadPoints,
     SaveBase,
     SaveROIAsNumpy,
     find_problematic_entries,
@@ -303,7 +304,7 @@ class TestJsonLoad:
         data = load_metadata_base(file_path)
 
     def test_update_name(self):
-        data = load_metadata_base(update_name_json)
+        data = load_metadata_base(UPDATE_NAME_JSON)
         mp = data["problematic set"]
         assert isinstance(mp, MeasurementProfile)
         assert isinstance(mp.chosen_fields[0], MeasurementEntry)
@@ -326,6 +327,13 @@ class TestJsonLoad:
         assert isinstance(measurement_profile, MeasurementProfile)
         for entry in measurement_profile.chosen_fields:
             assert entry.calculation_tree.name in MEASUREMENT_DICT
+
+    def test_load_workflow_from_text(self, bundle_test_dir):
+        with open(os.path.join(bundle_test_dir, "workflow.json")) as ff:
+            data_text = ff.read()
+        assert isinstance(load_metadata_base(data_text)["workflow"], CalculationPlan)
+        with open(os.path.join(bundle_test_dir, "workflow.json")) as ff:
+            isinstance(load_metadata_base(ff)["workflow"], CalculationPlan)
 
 
 class TestSegmentationMask:
@@ -643,6 +651,7 @@ def test_json_parameters_mask_2(stack_segmentation1, tmp_path):
 
 @pytest.mark.parametrize("file_path", (Path(__file__).parent.parent / "test_data" / "notebook").glob("*.json"))
 def test_load_notebook_json(file_path):
+    """Check if all notebook files can be loaded"""
     load_metadata_base(file_path)
 
 
@@ -755,7 +764,39 @@ def test_load_image_for_batch(data_test_dir):
     assert proj.mask is None
 
 
-update_name_json = """
+def test_save_base_extension_parse_no_ext():
+    class Save(SaveBase):
+        @classmethod
+        def get_name(cls) -> str:
+            return "Sample save"
+
+    with pytest.raises(ValueError, match="No extensions"):
+        Save.get_extensions()
+
+
+def test_save_base_extension_parse_nmalformated_ext():
+    class Save(SaveBase):
+        @classmethod
+        def get_name(cls) -> str:
+            return "Sample save (a.txt)"
+
+    with pytest.raises(ValueError, match="Error with parsing"):
+        Save.get_extensions()
+
+
+def test_load_points(tmp_path):
+    data_path = tmp_path / "sample.csv"
+    with data_path.open("w") as fp:
+        fp.write(POINTS_DATA)
+
+    res = LoadPoints.load([data_path])
+    assert res.file_path == data_path
+    assert res.points.shape == (5, 4)
+
+    assert LoadPoints.get_short_name() == "point_csv"
+
+
+UPDATE_NAME_JSON = """
 {"problematic set": {
       "__MeasurementProfile__": true,
       "name": "problematic set",
@@ -833,4 +874,13 @@ update_name_json = """
       "name_prefix": ""
     }
   }
+"""
+
+
+POINTS_DATA = """index,axis-0,axis-1,axis-2,axis-3
+0.0,0.0,22.0,227.90873370570543,65.07832834070409
+1.0,0.0,22.0,91.94021739981048,276.7482348060973
+2.0,0.0,22.0,194.83531082048773,380.3782931797794
+3.0,0.0,22.0,391.07095327277943,268.6636259303818
+4.0,0.0,22.0,152.20734354620717,256.1692217292996
 """
