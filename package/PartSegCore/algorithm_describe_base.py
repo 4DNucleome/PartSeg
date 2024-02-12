@@ -3,7 +3,6 @@ import textwrap
 import typing
 import warnings
 from abc import ABC, ABCMeta, abstractmethod
-from enum import Enum
 from functools import wraps
 
 from local_migrator import REGISTER, class_to_str
@@ -534,19 +533,6 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
                 res += str(v)
             res += "\n"
         return res[:-1]
-
-    @classmethod
-    def print_dict(cls, dkt, indent=0, name: str = "") -> str:
-        if isinstance(dkt, Enum):
-            return dkt.name
-        if not isinstance(dkt, typing.MutableMapping):
-            # FIXME update in future method of proper printing channel number
-            if name.startswith("channel") and isinstance(dkt, int):
-                return str(dkt + 1)
-            return str(dkt)
-        return "\n" + "\n".join(
-            " " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}" for k, v in dkt.items()
-        )
 
     def __eq__(self, other):
         return (

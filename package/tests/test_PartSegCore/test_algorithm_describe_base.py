@@ -21,6 +21,28 @@ from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 
 
+def test_algorithm_property():
+    ap = AlgorithmProperty("test", "Test", 1)
+    assert ap.name == "test"
+    assert "user_name='Test'" in repr(ap)
+
+
+def test_algorithm_property_warn():
+    with pytest.warns(DeprecationWarning, match="use value_type instead"):
+        ap = AlgorithmProperty("test", "Test", 1, property_type=int)
+    assert ap.value_type == int
+
+
+def test_algorithm_property_no_kwargs():
+    with pytest.raises(ValueError, match="are not expected"):
+        AlgorithmProperty("test", "Test", 1, a=1)
+
+
+def test_algorithm_property_list_exc():
+    with pytest.raises(ValueError, match="should be one of possible values"):
+        AlgorithmProperty("test", "Test", 1, possible_values=[2, 3], value_type=list)
+
+
 def test_get_description_class():
     class SampleClass:
         __test_class__ = _GetDescriptionClass()
@@ -76,6 +98,11 @@ def test_algorithm_selection():
         TestSelection(name="test3", values={})
 
     assert TestSelection["test1"] is Class1
+
+    assert TestSelection.__register__ != TestSelection2.__register__
+
+    ts = TestSelection(name="test1", values={})
+    assert ts.algorithm() == Class1
 
 
 def test_algorithm_selection_convert_subclass(clean_register):
@@ -363,6 +390,8 @@ class TestROIExtractionProfile:
 
     def test_pretty_print(self):
         prof1 = ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
+        assert f"{prof1}\n " == prof1.pretty_print(AnalysisAlgorithmSelection)
+        prof1 = ROIExtractionProfile(name="", algorithm="aaa", values={})
         assert f"{prof1}\n " == prof1.pretty_print(AnalysisAlgorithmSelection)
         prof2 = ROIExtractionProfile(
             name="aaa",
