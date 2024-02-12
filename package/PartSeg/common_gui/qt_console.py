@@ -56,8 +56,8 @@ class QtConsole(RichJupyterWidget):  # pylint: disable=abstract-method
     """Qt view for the console, an integrated iPython terminal in napari.
     Parameters
     ----------
-    user_variables : dict
-        Dictionary of user variables to declare in console name space.
+    main_window : BaseMainWindow
+        Parent widget.
     Attributes
     ----------
     kernel_client : qtconsole.inprocess.QtInProcessKernelClient,
