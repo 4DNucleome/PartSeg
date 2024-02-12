@@ -50,7 +50,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
+          cache-dependency-path: 'pyproject.toml'
 
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
