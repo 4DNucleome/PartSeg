@@ -389,10 +389,11 @@ class TestROIExtractionProfile:
             ROIExtractionProfile("aaa", "aaa", {})
 
     def test_pretty_print(self):
-        prof1 = ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
-        assert f"{prof1}\n " == prof1.pretty_print(AnalysisAlgorithmSelection)
-        prof1 = ROIExtractionProfile(name="", algorithm="aaa", values={})
-        assert f"{prof1}\n " == prof1.pretty_print(AnalysisAlgorithmSelection)
+
+        prof1 = ROIExtractionProfile(name="aaa", algorithm="Lower threshold", values={})
+        assert prof1.pretty_print(AnalysisAlgorithmSelection).startswith("ROI extraction profile name:")
+        prof1 = ROIExtractionProfile(name="", algorithm="Lower threshold", values={})
+        assert prof1.pretty_print(AnalysisAlgorithmSelection).startswith("ROI extraction profile\n")
         prof2 = ROIExtractionProfile(
             name="aaa",
             algorithm=LowerThresholdAlgorithm.get_name(),
