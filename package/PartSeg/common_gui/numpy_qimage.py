@@ -36,7 +36,7 @@ def convert_colormap_to_image(colormap: Colormap) -> NumpyQImage:
 
 def create_colormap_image(colormap: str, color_dict: ColorMapDict) -> NumpyQImage:
     """
-    Convert named colormap to image of szie (512, 1)
+    Convert named colormap to image of size (512, 1)
 
     :param colormap: must be key in color_dict
     :param color_dict: dict mapping name to definition of colormap

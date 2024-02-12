@@ -25,7 +25,7 @@ There are three classes
   from this file. This is designed for preprocess step of removing noise from image.
   Currently only "None" and gauss blur are available.
   Other implementations should inherit from `NoiseRemovalBase` from this file.
-  They need to implement `noise_remove(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray`
+  They need to implement `noise_remove(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray`
   interface where `arguments` contains data defined in `get_fields()`
 
 - Threshold - `partseg_utils.segmentation.threshold`. There are two registers here:

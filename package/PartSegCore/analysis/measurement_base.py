@@ -331,7 +331,8 @@ class MeasurementEntry(BaseModel):
 class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     """
     This is base class For all measurement calculation classes
-    based on text_info[0] the measurement name wil be generated, based_on text_info[1] the description is generated
+    based on text_info[0] the measurement name will be generated,
+    based_on text_info[1] the description is generated
     """
 
     __argument_class__ = BaseModel

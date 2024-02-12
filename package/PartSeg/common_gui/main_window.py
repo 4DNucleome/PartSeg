@@ -235,7 +235,7 @@ class BaseMainWindow(QMainWindow):
 
     def additional_layers_show(self, with_channels=False):
         if not self.settings.additional_layers:
-            QMessageBox().information(self, "No data", "Last executed algoritm does not provide additional data")
+            QMessageBox().information(self, "No data", "Last executed algorithm does not provide additional data")
             return
         viewer = Viewer(title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info)
         viewer.theme = self.settings.theme_name
@@ -384,6 +384,6 @@ class BaseMainWindow(QMainWindow):
         """Remove after drop napari 0.4.16"""
         if NAPARI_LE_4_16 and self._scale_bar_warning and self.settings.theme_name == "light":  # pragma: no cover
             QMessageBox.warning(
-                self, "Not supported", "Scale bar is not supported for light theme and napari bellow 0.4.17"
+                self, "Not supported", "Scale bar is not supported for light theme and napari below 0.4.17"
             )
             self._scale_bar_warning = False

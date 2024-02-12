@@ -251,7 +251,7 @@ class ProfileDict:
     Dict for storing recursive data. The path is dot separated.
 
     :param klass: class of stored data. Same as in :py:class:`EventedDict`
-    :parma kwargs: initial data
+    :param kwargs: initial data
 
     >>> dkt = ProfileDict()
     >>> dkt.set(["aa", "bb", "c1"], 7)
