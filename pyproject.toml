@@ -295,6 +295,7 @@ select = [
     "RET", # flake8-return
     "SIM", # flake8-simplify
     "TID", # flake8-tidy-imports
+    "TCH", # flake8-type-checking
     "ARG", # flake8-unused-arguments
     "PGH", # pygrep-hooks
     "PLC", "PLE", "PLR", "PLW", # pylint

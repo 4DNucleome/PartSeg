@@ -1,16 +1,19 @@
 # pylint: disable=no-self-use
 
 import os.path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 
-from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.io_utils import load_metadata_base
-from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
 from PartSegCore.utils import check_loaded_dict
 from PartSegImage import TiffImageReader
+
+if TYPE_CHECKING:
+    from PartSegCore.algorithm_describe_base import ROIExtractionProfile
+    from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
 
 
 def empty(_a, _b):

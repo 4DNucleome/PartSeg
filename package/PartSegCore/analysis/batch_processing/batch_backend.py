@@ -34,13 +34,12 @@ from enum import Enum
 from os import path
 from queue import Queue
 from traceback import StackSummary
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
 import SimpleITK
 import tifffile
-import xlsxwriter
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
@@ -71,10 +70,14 @@ from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, report_empty_fun
 from PartSegCore.utils import iterate_names
 from PartSegImage import Image, TiffImageReader
+
+if TYPE_CHECKING:
+    import xlsxwriter
+
+    from PartSegCore.segmentation import RestartableAlgorithm
 
 # https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3#ID0EDBD=Newer_versions
 # page with excel limits
