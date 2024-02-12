@@ -93,7 +93,7 @@ Now select each of the elements that need replacement and update using the *Repl
 1. In case some errors are detected during batch processing, a list of files and descriptions of errors appears in the bottom left panel (8).
    Information on errors is automatically sent out and helps us to improve the next version of Partseg.
 
-2. For files with complete segmentation failure a separate spreadsheet entitled "Erorrs" with a list of files will be created to inform the user.
+2. For files with complete segmentation failure a separate spreadsheet entitled "Errors" with a list of files will be created to inform the user.
 
 3. Files can be transferred directly from the spreadsheet to the “input file” widget for batch processing.
 

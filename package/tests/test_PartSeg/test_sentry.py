@@ -39,11 +39,11 @@ def test_sentry_serialize_clip(monkeypatch):
         event, _hint = sentry_sdk.utils.event_from_exception(e)
         event["message"] = message
 
-        cliped = serialize(event)
-        assert len(cliped["message"]) == DEFAULT_ERROR_REPORT
+        clipped = serialize(event)
+        assert len(clipped["message"]) == DEFAULT_ERROR_REPORT
         monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, 10**4)
-        cliped = serialize(event)
-        assert len(cliped["message"]) == 5000
+        clipped = serialize(event)
+        assert len(clipped["message"]) == 5000
 
 
 def test_sentry_variables_clip(monkeypatch):
@@ -57,12 +57,12 @@ def test_sentry_variables_clip(monkeypatch):
         vars_dict = event["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]
         for letter in letters:
             assert letter in vars_dict
-        cliped = serialize(event)
-        assert len(cliped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == 10
+        clipped = serialize(event)
+        assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == 10
         monkeypatch.setattr(sentry_sdk.serializer, "MAX_DATABAG_BREADTH", 100)
-        cliped = serialize(event)
-        assert len(cliped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == len(vars_dict)
-        assert len(cliped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) > 10
+        clipped = serialize(event)
+        assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == len(vars_dict)
+        assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) > 10
 
         client = Client("https://aaa@test.pl/77")
         Hub.current.bind_client(client)

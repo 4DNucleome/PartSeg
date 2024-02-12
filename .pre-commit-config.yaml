@@ -49,6 +49,13 @@ repos:
     -   id: mypy
         files: ^package/PartSegImage/.+\.py
 
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+    - id: codespell
+      additional_dependencies:
+      - tomli
+
 
 ci:
     autoupdate_commit_msg: 'ci: [pre-commit.ci] pre-commit autoupdate'

@@ -48,7 +48,7 @@ class BaseWatershed(AlgorithmDescribeBase, ABC):
         :param sprawl_area: Mask area to which sprawl should be limited
         :param core_objects: Starting objects for sprawl
         :param data: density information
-        :param components_num: numer of components in core_objects
+        :param components_num: number of components in core_objects
         :param spacing: Image spacing. Needed for sprawls which use metrics
         :param side_connection:
         :param operator:

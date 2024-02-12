@@ -149,7 +149,7 @@ class ColormapEdit(QWidget):
 
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         """
-        If click near marker remove it. Otherwise emmit `double_click` signal with event position factor.
+        If click near marker remove it. Otherwise emit `double_click` signal with event position factor.
         """
         ratio = self._get_ratio(event)
         if ratio is None:

@@ -190,7 +190,7 @@ class Options(QWidget):
             return
         values = self._settings.get_algorithm(f"algorithms.{name}", {})
         if isinstance(values, (dict, EventedDict)) and len(values) == 0:
-            QMessageBox.information(self, "Some problem", "Pleas run execution again", QMessageBox.Ok)
+            QMessageBox.information(self, "Some problem", "Please run execution again", QMessageBox.Ok)
             return
         current_segmentation = ROIExtractionProfile(name="Unknown", algorithm=name, values=values)
 
@@ -546,7 +546,7 @@ class MainWindow(BaseMainWindow):
         self.channel_info = "result_image"
         self.files_num = 2
         self.setMinimumWidth(600)
-        # thi isinstance is only for hinting in IDE
+        # this isinstance is only for type hinting in IDE
         self.main_menu = MainMenu(self.settings, self)
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_image")
         self.raw_image = CompareImageView(self.settings, self.channel_control2, "raw_image")

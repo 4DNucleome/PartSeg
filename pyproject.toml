@@ -299,7 +299,7 @@ select = [
     "RUF", # Ruff-specific rules
 ]
 ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
-    "PLR0913" # should be reenabled in future version
+    "PLR0913" # should be re-enabled in a future version
 ]
 
 [tool.ruff.lint.isort]
@@ -347,3 +347,7 @@ ignore_missing_imports = true
 
 [tool.check-wheel-contents]
 toplevel = ["PartSeg", "PartSegCore", "PartSegImage"]
+
+[tool.codespell]
+skip = "package/tests/test_data/ome.xsd.xml,launcher.spec,publications,dist,_build"
+ignore-words-list = "setted"

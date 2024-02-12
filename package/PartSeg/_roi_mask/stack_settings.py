@@ -281,7 +281,7 @@ class StackSettings(BaseSettings):
         )
 
     def compare_history(self, history: typing.List[HistoryElement]):
-        # TODO check dict comparision
+        # TODO check dict comparison
         if len(history) != self.history_size():
             return False
         return not any(

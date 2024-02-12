@@ -552,7 +552,7 @@ class CalculationPlan:
 
     def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
         """
-        Get all measurement Calculation bellow given node
+        Get all measurement Calculation below given node
 
         :param node: Node for start, if absent then start from plan root
         :return: list of measurements
@@ -807,7 +807,7 @@ class CalculationPlan:
         raise ValueError(f"Unknown type {type(el)}")
 
     def pretty_print(self) -> str:
-        return f"Calcualation Plan: {self.name}\n{self._pretty_print(self.execution_tree, 0)}"
+        return f"Calculation Plan: {self.name}\n{self._pretty_print(self.execution_tree, 0)}"
 
     def _pretty_print(self, elem: CalculationTree, indent) -> str:
         if isinstance(elem.operation, str):

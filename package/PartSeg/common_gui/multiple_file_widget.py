@@ -257,7 +257,7 @@ class MultipleFileWidget(QWidget):
         self.save_state_action(state, custom_name)
 
     def save_state_action(self, state: ProjectInfoBase, custom_name):
-        # TODO left elipsis
+        # TODO left ellipsis
         if isinstance(state, list):
             self.add_states(state)
             return
