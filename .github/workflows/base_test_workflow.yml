@@ -47,7 +47,7 @@ jobs:
         with:
           python-version: ${{ inputs.python_version }}
           cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
+          cache-dependency-path: 'pyproject.toml'
 
 #      - name: Install ubuntu libraries
 #        if: runner.os == 'Linux'
