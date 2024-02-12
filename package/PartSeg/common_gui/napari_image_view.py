@@ -645,7 +645,7 @@ class ImageView(QWidget):
         for i, layer in enumerate(image_info.layers):
             try:
                 self._add_layer_util(i, layer, filters)
-            except AssertionError:
+            except AssertionError:  # noqa: PERF203
                 layer.colormap = "gray"
                 self._add_layer_util(i, layer, filters)
 

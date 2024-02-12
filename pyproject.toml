@@ -302,6 +302,7 @@ select = [
     "PGH", # pygrep-hooks
     "PLC", "PLE", "PLR", "PLW", # pylint
     "NPY", # NumPy-specific rules
+    "PERF", # perflint
     "RUF", # Ruff-specific rules
 ]
 ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",

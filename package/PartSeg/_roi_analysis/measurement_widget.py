@@ -234,7 +234,7 @@ class MeasurementWidgetBase(QWidget):
             for c in range(self.info_field.columnCount()):
                 try:
                     s += str(self.info_field.item(r, c).text()) + "\t"
-                except AttributeError:
+                except AttributeError:  # noqa: PERF203
                     s += "\t"
             s = s[:-1] + "\n"  # eliminate last '\t'
         self.clip.setText(s)
@@ -295,7 +295,7 @@ class MeasurementWidgetBase(QWidget):
                 for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
                     try:
                         s += str(self.info_field.item(r, c).text()) + "\t"
-                    except AttributeError:
+                    except AttributeError:  # noqa: PERF203
                         s += "\t"
                 s = s[:-1] + "\n"  # eliminate last '\t'
             self.clip.setText(s)

@@ -351,10 +351,8 @@ class MainMenu(BaseMainMenu):
             return
         res = dial.get_result()
         potential_names = self.settings.get_file_names_for_save_result(res.save_destination)
-        conflict = []
-        for el in potential_names:
-            if os.path.exists(el):
-                conflict.append(el)
+        conflict = [el for el in potential_names if os.path.exists(el)]
+
         if conflict:
             # TODO modify because of long lists
             conflict_str = "\n".join(conflict)
