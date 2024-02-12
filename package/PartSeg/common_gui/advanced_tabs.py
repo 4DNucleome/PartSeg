@@ -4,7 +4,7 @@ At this moment controlling colormaps tabs and developer PartSegCore
 """
 
 import importlib
-import sys
+import logging
 from contextlib import suppress
 from typing import List
 
@@ -66,13 +66,13 @@ class DevelopTab(QWidget):
     def reload_algorithm_action(self):
         """Function for reload plugins and algorithms"""
         for val in register.reload_module_list:
-            print(val, file=sys.stderr)
+            logging.info("Reloading %s", val.__name__)
             importlib.reload(val)
         for el in plugins.get_plugins():
-            print(el, file=sys.stderr)
+            logging.info("Reloading %s", val.__name__)
             importlib.reload(el)
         for el in core_plugins.get_plugins():
-            print(el, file=sys.stderr)
+            logging.info("Reloading %s", val.__name__)
             importlib.reload(el)
         importlib.reload(register)
         importlib.reload(plugins)

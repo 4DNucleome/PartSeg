@@ -1,7 +1,7 @@
 import contextlib
 import json
+import logging
 import os
-import sys
 import tarfile
 import typing
 from contextlib import suppress
@@ -126,7 +126,10 @@ def load_project_from_tar(tar_file, file_path):
             history=history,
             algorithm_parameters=algorithm_dict,
         )
-    print("This project is from new version of PartSeg:", version, project_version_info, file=sys.stderr)
+    logging.warning(
+        "This project {proj_ver} is from new version of PartSeg: {version} ",
+        extra={"version": version, "proj_ver": project_version_info},
+    )
     return ProjectTuple(
         file_path=file_path,
         image=image,

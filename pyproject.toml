@@ -277,8 +277,9 @@ select = [
     "UP", # pyupgrade
     "A", # flake8-builtins
     "YTT", # flake8-2020
+#    "ANN", # flake8-annotations
     "S", # flake8-bandit
-    # "BLE", # flake8-blind-except
+#    "BLE", # flake8-blind-except
     "B", # lake8-bugbear
     "A", #flake8-builtins
     "C4", # flake8-comprehensions
@@ -286,6 +287,7 @@ select = [
     "ICN", # flake8-import-conventions
     "G", # flake8-logging-format
     "PIE", # flake8-pie
+    "T20", # flake8-print
     "PT", # flake8-pytest-style
     "Q", # flake8-quotes
     "RSE", # flake8-raise
@@ -299,7 +301,8 @@ select = [
     "RUF", # Ruff-specific rules
 ]
 ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
-    "PLR0913" # should be re-enabled in a future version
+    "PLR0913", # should be reenabled in future version
+    "ANN101", "ANN102",
 ]
 
 [tool.ruff.lint.isort]
@@ -315,13 +318,15 @@ max-complexity = 15
 
 [tool.ruff.lint.per-file-ignores]
 "docs/conf.py" = ["A001"]
-"package/tests/**" = ["ARG", "PLC1901", "S101", "RUF012"]
+"package/tests/**" = ["ARG", "PLC1901", "S101", "RUF012", "ANN", "FBT"]
 "package/PartSegCore/sphinx/*" = ["ARG"]
 "package/tests/**.py" = ["PLR2004"]
 "package/PartSegCore/_old_json_hooks.py" = ["PLR0912", "PLR0911"]
-"package/PartSegCore/class_generator.py" = ["PLR0912"]
-"build_utils/**.py" = ["S603", "S607"]
+"package/PartSegCore/class_generator.py" = ["PLR0912", "T20"]
+"build_utils/**.py" = ["S603", "S607", "T20"]
+"examples/**.py" = ["T20"]
 "package/PartSeg/common_gui/show_directory_dialog.py" = ["S603", "S606", "S607"]
+"package/PartSeg/launcher_main.py" = ["T20"]
 
 [tool.check-manifest]
 ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]

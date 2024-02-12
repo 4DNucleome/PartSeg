@@ -114,11 +114,6 @@ class TestColorComboBox:
         with qtbot.waitSignal(box.currentTextChanged):
             box.set_color(starting_colors[index])
         img = np.array(make_colorbar(dkt[starting_colors[index]][0], size=(1, 512)))
-        print(array_from_image(box.image), array_from_image(box.image).size)
-        print(img)
-        print(img.flatten(), img.size, img.shape)
-        print(dkt[starting_colors[index]][0])
-        print(box.image, box.image.size(), box.image.depth())
         assert np.all(array_from_image(box.image) == img.flatten())
         box.hide()
 

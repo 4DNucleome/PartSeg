@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 import textwrap
 import typing
 import uuid
@@ -767,7 +766,6 @@ class CalculationPlan:
         :return: str
         """
         if el.__class__.__name__ not in CalculationPlan.correct_name:
-            print(el, el.__class__.__name__, file=sys.stderr)
             raise ValueError(f"Unknown type {el.__class__.__name__}")
         if isinstance(el, RootType):
             return f"Root: {el}"

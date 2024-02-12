@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import tarfile
 import time
@@ -391,7 +392,7 @@ def sleep_with_rate(response: requests.Response):
     reset = int(response.headers["X-RateLimit-Reset"])
     sleep_time = reset - time.time()
     if sleep_time > 0:
-        print(f"Sleeping for {sleep_time} seconds")
+        logging.info("Sleeping for {sleep_time} seconds", extra={"sleep_time": sleep_time})
         time.sleep(sleep_time)
 
 
