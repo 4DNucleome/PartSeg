@@ -135,12 +135,6 @@ class QtConsole(RichJupyterWidget):  # pylint: disable=abstract-method
 
         self.enable_calltips = False
 
-        # Set stylings
-        # self._update_theme()
-
-        # TODO: Try to get console from jupyter to run without a shift click
-        # self.execute_on_complete_input = True
-
     def _update_theme(self, event=None):
         """Update the napari GUI theme."""
         from napari.qt import get_stylesheet
@@ -154,9 +148,6 @@ class QtConsole(RichJupyterWidget):  # pylint: disable=abstract-method
         theme = get_theme(self.viewer.theme)
         self.style_sheet = template(raw_stylesheet, **theme)
 
-        # After napari 0.4.6 the following syntax will be allowed
-        # self.style_sheet = get_stylesheet(self.viewer.theme)
-
         # Set syntax styling and highlighting using theme
         self.syntax_style = theme["syntax_style"]
         bracket_color = QColor(*str_to_rgb(theme["highlight"]))
@@ -164,8 +155,6 @@ class QtConsole(RichJupyterWidget):  # pylint: disable=abstract-method
 
     def closeEvent(self, event):
         """Clean up the integrated console in napari."""
-        # Disconnect theme update
-        # self.viewer.events.theme.disconnect(self._update_theme)
 
         if self.kernel_client is not None:
             self.kernel_client.stop_channels()

@@ -366,10 +366,6 @@ class MeasurementWidget(MeasurementWidgetBase):
             return
         units = self.units_choose.currentEnum()
 
-        # FIXME find which errors should be displayed as warning
-        # def exception_hook(exception):
-        #    QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
-
         for num in compute_class.get_channels_num():
             if num >= self.settings.image.channels:
                 QMessageBox.warning(

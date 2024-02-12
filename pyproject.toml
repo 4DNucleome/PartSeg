@@ -297,13 +297,15 @@ select = [
     "TID", # flake8-tidy-imports
     "TCH", # flake8-type-checking
     "ARG", # flake8-unused-arguments
+#    "PTH", # flake8-use-pathlib
+    "ERA", # eradicate
     "PGH", # pygrep-hooks
     "PLC", "PLE", "PLR", "PLW", # pylint
     "NPY", # NumPy-specific rules
     "RUF", # Ruff-specific rules
 ]
 ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
-    "PLR0913", # should be reenabled in future version
+    "PLR0913", # should be re-enabled in a future version
     "ANN101", "ANN102",
 ]
 

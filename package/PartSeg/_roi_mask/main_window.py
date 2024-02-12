@@ -89,8 +89,6 @@ class MaskDialog(MaskDialogBase):
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
-        # TODO Check me
-        # self.settings.roi = seg["segmentation"]
         self.settings._set_roi_info(  # pylint: disable=protected-access
             ROIInfo(seg["segmentation"]),
             False,
@@ -532,8 +530,6 @@ class AlgorithmOptions(QWidget):
         self.choose_components.check_change_signal.connect(image_view.refresh_selected)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
         self.choose_components.mouse_enter.connect(image_view.component_mark)
-        # WARNING works only with one channels algorithms
-        # SynchronizeValues.add_synchronization("channels_chose", widgets_list)
         self.chosen_list = []
         self.progress_bar2 = QProgressBar()
         self.progress_bar2.setHidden(True)
