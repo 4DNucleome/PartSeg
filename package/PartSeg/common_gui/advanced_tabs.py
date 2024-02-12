@@ -65,14 +65,15 @@ class DevelopTab(QWidget):
 
     def reload_algorithm_action(self):
         """Function for reload plugins and algorithms"""
+        msg = "Reloading {mod_name}"
         for val in register.reload_module_list:
-            logging.info("Reloading %s", val.__name__)
+            logging.info(msg, extra={"mod_name": val.__name__})
             importlib.reload(val)
         for el in plugins.get_plugins():
-            logging.info("Reloading %s", val.__name__)
+            logging.info(msg, extra={"mod_name": el.__name__})
             importlib.reload(el)
         for el in core_plugins.get_plugins():
-            logging.info("Reloading %s", val.__name__)
+            logging.info(msg, extra={"mod_name": el.__name__})
             importlib.reload(el)
         importlib.reload(register)
         importlib.reload(plugins)
