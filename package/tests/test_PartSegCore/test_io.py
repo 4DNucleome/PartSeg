@@ -483,6 +483,32 @@ class TestSegmentationMask:
         cmp_dict = {str(k): v for k, v in stack_segmentation1.roi_extraction_parameters.items()}
         assert str(res.history[0].roi_extraction_parameters["parameters"]) == str(cmp_dict)
 
+    def test_mask_project_tuple(self):
+        mask = np.zeros((10, 10), dtype=np.uint8)
+        mask[1:-1, 1:-1] = 2
+        mask2 = np.copy(mask)
+        mask2[2:-2, 2:-2] = 4
+        roi_info = ROIInfo(mask2)
+        mask_prop = MaskProperty.simple_mask()
+        elem = HistoryElement.create(roi_info, mask, {}, mask_prop)
+        proj = MaskProjectTuple(
+            file_path="test_data.tiff",
+            image=Image(np.zeros((10, 10), dtype=np.uint8), (1, 1), "", axes_order="YX"),
+            mask=mask,
+            roi_info=roi_info,
+            history=[elem],
+            selected_components=[1, 2],
+            roi_extraction_parameters={},
+        )
+        assert not proj.is_raw()
+        assert proj.is_masked()
+        raw_proj = proj.get_raw_copy()
+        assert raw_proj.is_raw()
+        assert not raw_proj.is_masked()
+        raw_masked_proj = proj.get_raw_mask_copy()
+        assert raw_masked_proj.is_masked()
+        assert raw_masked_proj.is_raw()
+
 
 class TestSaveFunctions:
     @staticmethod
