@@ -21,6 +21,8 @@ Calculation hierarchy:
 
 """
 
+from __future__ import annotations
+
 import contextlib
 import json
 import logging
@@ -28,13 +30,12 @@ import math
 import os
 import threading
 import traceback
-import uuid
 from collections import OrderedDict
 from enum import Enum
 from os import path
 from queue import Queue
 from traceback import StackSummary
-from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -64,7 +65,6 @@ from PartSegCore.analysis.calculation_plan import (
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadImageForBatch, LoadMaskSegmentation, LoadProject
 from PartSegCore.analysis.measurement_base import has_mask_components, has_roi_components
-from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.mask_create import calculate_mask
@@ -75,8 +75,11 @@ from PartSegCore.utils import iterate_names
 from PartSegImage import Image, TiffImageReader
 
 if TYPE_CHECKING:
+    import uuid
+
     import xlsxwriter
 
+    from PartSegCore.analysis.measurement_calculation import MeasurementResult
     from PartSegCore.segmentation import RestartableAlgorithm
 
 # https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3#ID0EDBD=Newer_versions
@@ -87,7 +90,7 @@ MAX_ROWS_IN_EXCEL_CELL = 50  # real limit is 253 but 50 provides better readabil
 
 class ResponseData(NamedTuple):
     path_to_file: str
-    values: List[MeasurementResult]
+    values: list[MeasurementResult]
 
 
 CalculationResultList = List[ResponseData]
@@ -97,7 +100,7 @@ WrappedResult = Tuple[int, List[Union[ErrorInfo, ResponseData]]]
 
 def get_data_loader(
     root_type: RootType, file_path: str
-) -> Tuple[Union[Type[LoadMaskSegmentation], Type[LoadProject], Type[LoadImageForBatch]], bool]:
+) -> tuple[type[LoadMaskSegmentation | LoadProject | LoadImageForBatch], bool]:
     """
     Get data loader for given root type. Return indicator if file extension match to loader.
 
@@ -126,7 +129,7 @@ def prepare_error_data(exception: Exception) -> ErrorInfo:
         return exception, traceback.extract_tb(exception.__traceback__)
 
 
-def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> WrappedResult:
+def do_calculation(file_info: tuple[int, str], calculation: BaseCalculation) -> WrappedResult:
     """
     Main function which will be used for run calculation.
     It create :py:class:`.CalculationProcess` and call it method
@@ -156,12 +159,12 @@ class CalculationProcess:
         self.reused_mask = set()
         self.mask_dict = {}
         self.calculation = None
-        self.measurement: List[MeasurementResult] = []
-        self.image: Optional[Image] = None
-        self.roi_info: Optional[ROIInfo] = None
-        self.additional_layers: Dict[str, AdditionalLayerDescription] = {}
-        self.mask: Optional[np.ndarray] = None
-        self.history: List[HistoryElement] = []
+        self.measurement: list[MeasurementResult] = []
+        self.image: Image | None = None
+        self.roi_info: ROIInfo | None = None
+        self.additional_layers: dict[str, AdditionalLayerDescription] = {}
+        self.mask: np.ndarray | None = None
+        self.history: list[HistoryElement] = []
         self.algorithm_parameters: dict = {}
         self.results: CalculationResultList = []
 
@@ -176,7 +179,7 @@ class CalculationProcess:
         self.reused_mask = set()
 
     @staticmethod
-    def load_data(operation, calculation: FileCalculation) -> Union[ProjectTuple, List[ProjectTuple]]:
+    def load_data(operation, calculation: FileCalculation) -> ProjectTuple | list[ProjectTuple]:
         metadata = {"default_spacing": calculation.voxel_size}
 
         loader, ext_match = get_data_loader(operation, calculation.file_path)
@@ -231,7 +234,7 @@ class CalculationProcess:
             self._reset_image_cache()
         return self.results
 
-    def iterate_over(self, node: Union[CalculationTree, List[CalculationTree]]):
+    def iterate_over(self, node: CalculationTree | list[CalculationTree]):
         """
         Execute calculation on node children or list oof nodes
 
@@ -244,7 +247,7 @@ class CalculationProcess:
         for el in node:
             self.recursive_calculation(el)
 
-    def step_load_mask(self, operation: MaskMapper, children: List[CalculationTree]):
+    def step_load_mask(self, operation: MaskMapper, children: list[CalculationTree]):
         """
         Load mask using mask mapper (mask can be defined with suffix, substitution, or file with mapping saved,
         then iterate over ``children`` nodes.
@@ -261,7 +264,7 @@ class CalculationProcess:
             mask = mask_file.asarray()
             mask = TiffImageReader.update_array_shape(mask, mask_file.series[0].axes)
             if "C" in TiffImageReader.image_class.axis_order:
-                pos: List[Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]
+                pos: list[slice | int] = [slice(None) for _ in range(mask.ndim)]
                 pos[TiffImageReader.image_class.axis_order.index("C")] = 0
                 mask = mask[tuple(pos)]
 
@@ -276,7 +279,7 @@ class CalculationProcess:
         self.iterate_over(children)
         self.mask = old_mask
 
-    def step_segmentation(self, operation: ROIExtractionProfile, children: List[CalculationTree]):
+    def step_segmentation(self, operation: ROIExtractionProfile, children: list[CalculationTree]):
         """
         Perform segmentation and iterate over ``children`` nodes
 
@@ -301,7 +304,7 @@ class CalculationProcess:
         self.iterate_over(children)
         self.roi_info, self.additional_layers, self.algorithm_parameters = backup_data
 
-    def step_mask_use(self, operation: MaskUse, children: List[CalculationTree]):
+    def step_mask_use(self, operation: MaskUse, children: list[CalculationTree]):
         """
         use already defined mask and iterate over ``children`` nodes
 
@@ -314,7 +317,7 @@ class CalculationProcess:
         self.iterate_over(children)
         self.mask = old_mask
 
-    def step_mask_operation(self, operation: Union[MaskSum, MaskIntersection], children: List[CalculationTree]):
+    def step_mask_operation(self, operation: MaskSum | MaskIntersection, children: list[CalculationTree]):
         """
         Generate new mask by sum or intersection of existing and iterate over ``children`` nodes
 
@@ -354,7 +357,7 @@ class CalculationProcess:
         os.makedirs(save_dir, exist_ok=True)
         save_class.save(save_path, project_tuple, operation.values)
 
-    def step_mask_create(self, operation: MaskCreate, children: List[CalculationTree]):
+    def step_mask_create(self, operation: MaskCreate, children: list[CalculationTree]):
         """
         Create mask from current segmentation state using definition
 
@@ -390,7 +393,7 @@ class CalculationProcess:
         """
         channel = operation.channel
         if channel == -1:
-            segmentation_class: Type[ROIExtractionAlgorithm] = AnalysisAlgorithmSelection.get(
+            segmentation_class: type[ROIExtractionAlgorithm] = AnalysisAlgorithmSelection.get(
                 self.algorithm_parameters["algorithm_name"]
             )
             if segmentation_class is None:  # pragma: no cover
@@ -444,9 +447,9 @@ class BatchResultDescription(NamedTuple):
     Tuple to handle information about part of calculation result.
     """
 
-    errors: List[Tuple[str, ErrorInfo]]  #: list of errors occurred during calculation
+    errors: list[tuple[str, ErrorInfo]]  #: list of errors occurred during calculation
     global_counter: int  #: total number of calculated steps
-    jobs_status: Dict[uuid.UUID, int]  #: for each job information about progress
+    jobs_status: dict[uuid.UUID, int]  #: for each job information about progress
 
 
 class CalculationManager:
@@ -458,7 +461,7 @@ class CalculationManager:
     def __init__(self):
         self.batch_manager = BatchManager()
         self.calculation_queue = Queue()
-        self.calculation_dict: Dict[uuid.UUID, Calculation] = OrderedDict()
+        self.calculation_dict: dict[uuid.UUID, Calculation] = OrderedDict()
         self.calculation_sizes = []
         self.calculation_size = 0
         self.calculation_done = 0
@@ -525,8 +528,8 @@ class CalculationManager:
         :return: information about calculation status
         :rtype: BatchResultDescription
         """
-        responses: List[Tuple[uuid.UUID, WrappedResult]] = self.batch_manager.get_result()
-        new_errors: List[Tuple[str, ErrorInfo]] = []
+        responses: list[tuple[uuid.UUID, WrappedResult]] = self.batch_manager.get_result()
+        new_errors: list[tuple[str, ErrorInfo]] = []
         for uuid_id, (ind, result_list) in responses:
             self.calculation_done += 1
             self.counter_dict[uuid_id] += 1
@@ -558,7 +561,7 @@ class SheetData:
     Store single sheet information
     """
 
-    def __init__(self, name: str, columns: List[Tuple[str, str]], raw=False):
+    def __init__(self, name: str, columns: list[tuple[str, str]], raw=False):
         if len(columns) != len(set(columns)):
             raise ValueError(f"Columns should be unique: {columns}")
         self.name = name
@@ -567,7 +570,7 @@ class SheetData:
         else:
             self.columns = pd.MultiIndex.from_tuples([("name", "units"), *columns])
         self.data_frame = pd.DataFrame([], columns=self.columns)
-        self.row_list: List[Any] = []
+        self.row_list: list[Any] = []
 
     def add_data(self, data, ind):
         if len(data) != len(self.columns):
@@ -585,7 +588,7 @@ class SheetData:
         for x in data:
             self.add_data(x, ind)
 
-    def get_data_to_write(self) -> Tuple[str, pd.DataFrame]:
+    def get_data_to_write(self) -> tuple[str, pd.DataFrame]:
         """
         Get data for write
 
@@ -652,7 +655,7 @@ class FileData:
         """check if any data wait on write to disc"""
         return not self.writing and self.wrote_queue.empty()
 
-    def good_sheet_name(self, name: str) -> Tuple[bool, str]:
+    def good_sheet_name(self, name: str) -> tuple[bool, str]:
         """
         Check if sheet name can be used in current file.
         Return False if:
@@ -735,7 +738,7 @@ class FileData:
         self.sheet_set.update(sheet_list)
         self.calculation_info[calculation.uuid] = calculation.calculation_plan
 
-    def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData, ind: Optional[int] = None):
+    def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData, ind: int | None = None):
         """
         Add information to be stored in output file
 
@@ -808,7 +811,7 @@ class FileData:
 
     @classmethod
     def write_to_excel(
-        cls, file_path: str, data: Tuple[List[Tuple[str, pd.DataFrame]], List[CalculationPlan], List[Tuple[str, str]]]
+        cls, file_path: str, data: tuple[list[tuple[str, pd.DataFrame]], list[CalculationPlan], list[tuple[str, str]]]
     ):
         with pd.ExcelWriter(file_path) as writer:  # pylint: disable=abstract-class-instantiated
             new_sheet_names = []
@@ -869,7 +872,7 @@ class FileData:
 
         sheet.set_column(2, 2, max(map(len, calculation_plan_pretty)))
 
-    def get_errors(self) -> List[ErrorInfo]:
+    def get_errors(self) -> list[ErrorInfo]:
         """
         Get list of errors occurred in last write
         """
@@ -891,7 +894,7 @@ class DataWriter:
     """
 
     def __init__(self):
-        self.file_dict: Dict[str, FileData] = {}
+        self.file_dict: dict[str, FileData] = {}
 
     def is_empty_sheet(self, file_path: str, sheet_name: str) -> bool:
         """
@@ -921,9 +924,7 @@ class DataWriter:
         if calculation.measurement_file_path in self.file_dict:
             self.file_dict[calculation.measurement_file_path].remove_data_part(calculation)
 
-    def add_result(
-        self, data: ResponseData, calculation: BaseCalculation, ind: Optional[int] = None
-    ) -> List[ErrorInfo]:
+    def add_result(self, data: ResponseData, calculation: BaseCalculation, ind: int | None = None) -> list[ErrorInfo]:
         """
         Add calculation result to file writer
 
@@ -948,7 +949,7 @@ class DataWriter:
         for file_data in self.file_dict.values():
             file_data.finish()
 
-    def calculation_finished(self, calculation) -> List[ErrorInfo]:
+    def calculation_finished(self, calculation) -> list[ErrorInfo]:
         """
         Force write data for given calculation.
 
