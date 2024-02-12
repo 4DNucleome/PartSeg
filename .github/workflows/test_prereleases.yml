@@ -8,9 +8,12 @@ on:
     branches:
       - master
       - develop
-      - bugfix/fix_pre_tests
   schedule:
     - cron: '0 */12 * * *'  # every 12 hours
+  pull_request:
+    paths:
+      - '.github/workflows/test_prereleases.yml'
+      - 'pyproject.toml'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
