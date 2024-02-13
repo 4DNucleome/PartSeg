@@ -105,6 +105,78 @@ def test_algorithm_selection():
     assert ts.algorithm() == Class1
 
 
+def test_register_errors():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1:
+        pass
+
+    class Alg2(AlgorithmDescribeBase):
+        pass
+
+    class Alg3(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return 1
+
+        @classmethod
+        def get_fields(cls):
+            return []
+
+    with pytest.raises(ValueError, match="Class .* need to define classmethod 'get_name'"):
+        TestSelection.register(Alg1)
+
+    with pytest.raises(ValueError, match="Class .* need to implement classmethod 'get_name'"):
+        TestSelection.register(Alg2)
+
+    with pytest.raises(ValueError, match="Function get_name of class .* need return string not .*int"):
+        TestSelection.register(Alg3)
+
+
+def test_register_name_collsion():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            return []
+
+    class Alg2(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            return []
+
+    class Alg3(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "2"
+
+        @classmethod
+        def get_fields(cls):
+            return []
+
+    TestSelection.register(Alg1, old_names=["0"])
+    with pytest.raises(
+        ValueError, match="Object .* with this name: '1' already exist and register is not in replace mode"
+    ):
+        TestSelection.register(Alg2)
+
+    assert len(TestSelection.__register__) == 1
+
+    with pytest.raises(ValueError, match="Old value mapping for name '0' already registered"):
+        TestSelection.register(Alg3, old_names=["0"])
+
+
 def test_algorithm_selection_convert_subclass(clean_register):
     class TestSelection(AlgorithmSelection):
         pass

@@ -210,6 +210,8 @@ def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> typing.List[ty
 
 
 def is_static(fun):
+    if fun is None:
+        return False
     args = inspect.getfullargspec(fun).args
     return True if len(args) == 0 else args[0] != "self"
 
@@ -255,6 +257,9 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             and self.suggested_base_class == other.suggested_base_class
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __getitem__(self, item) -> AlgorithmType:
         # FIXME add better strategy to get proper class when there is conflict of names
         try:
@@ -277,11 +282,11 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         self.check_function(value, "get_name", True)
         try:
             name = value.get_name()
-        except NotImplementedError:
-            raise ValueError(f"Class {value} need to implement get_name class method") from None
+        except (NotImplementedError, AttributeError):
+            raise ValueError(f"Class {value} need to implement classmethod 'get_name'") from None
         if name in self and not replace:
             raise ValueError(
-                f"Object {self[name]} with this name: {name} already exist and register is not in replace mode"
+                f"Object {self[name]} with this name: '{name}' already exist and register is not in replace mode"
             )
         if not isinstance(name, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(name)}")
@@ -291,8 +296,8 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             for old_name in old_names:
                 if old_name in self._old_mapping and not replace:
                     raise ValueError(
-                        f"Old value mapping for name {old_name} already registered."
-                        f" Currently pointing to {self._old_mapping[name]}"
+                        f"Old value mapping for name '{old_name}' already registered."
+                        f" Currently pointing to {self._old_mapping[old_name]}"
                     )
                 self._old_mapping[old_name] = name
         return value
@@ -303,7 +308,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         if not is_class and not inspect.isfunction(fun):
             raise ValueError(f"Class {ob} need to define method {function_name}")
         if is_class and not inspect.ismethod(fun) and not is_static(fun):
-            raise ValueError(f"Class {ob} need to define classmethod {function_name}")
+            raise ValueError(f"Class {ob} need to define classmethod '{function_name}'")
 
     def __setitem__(self, key: str, value: AlgorithmType):
         if not issubclass(value, AlgorithmDescribeBase):
@@ -414,7 +419,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         :param replace: replace existing algorithm, be patient with
         :param old_names: list of old names for registered class
         """
-        return cls.__register__.register(value, replace, old_names)
+        return cls.__register__.register(value, replace=replace, old_names=old_names)
 
     @classmethod
     def get_default(cls):
