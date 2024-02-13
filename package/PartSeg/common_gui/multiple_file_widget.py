@@ -257,11 +257,10 @@ class MultipleFileWidget(QWidget):
         self.save_state_action(state, custom_name)
 
     def save_state_action(self, state: ProjectInfoBase, custom_name):
-        # TODO left elipsis
+        # TODO left ellipsis
         if isinstance(state, list):
             self.add_states(state)
             return
-        # state: ProjectInfoBase = self.get_state()
         if not isinstance(state, ProjectInfoBase):  # workaround for PointsInfo load
             return
         normed_file_path = os.path.normpath(state.file_path)

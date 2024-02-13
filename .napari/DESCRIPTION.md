@@ -17,7 +17,7 @@ https://user-images.githubusercontent.com/3826210/149146100-973498c7-7d2e-4298-a
 
 The above video presents simple segmentation and measurement of various parameters of this segmentation (ROI).
 
-As bellow described, algorithms are the result of porting PartSeg utilities to napari
+As below described, algorithms are the result of porting PartSeg utilities to napari
 then detailed description could be found in PartSeg documentation/
 
 ## ROI Extraction (Segmentation, pixel labeling)

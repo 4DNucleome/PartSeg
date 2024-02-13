@@ -1,3 +1,4 @@
+import logging
 import sys
 
 import sentry_sdk
@@ -34,7 +35,7 @@ def my_excepthook(type_, value, trace_back):
         except ImportError:
             sys.__excepthook__(type_, value, trace_back)
     elif isinstance(value, KeyboardInterrupt):
-        print("KeyboardInterrupt close", file=sys.stderr)
+        logging.warning("KeyboardInterrupt close")
         sys.exit(1)
     else:
         # then call the default handler

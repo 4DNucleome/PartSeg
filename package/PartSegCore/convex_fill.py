@@ -4,7 +4,7 @@ from scipy.spatial import ConvexHull
 try:
     from scipy.spatial import QhullError
 except ImportError:
-    # Scipy bellow 1.8.0
+    # Scipy below 1.8.0
     from scipy.spatial.qhull import QhullError
 # this two functions are from
 # https://stackoverflow.com/questions/37117878/generating-a-filled-polygon-inside-a-numpy-array/37123933#37123933

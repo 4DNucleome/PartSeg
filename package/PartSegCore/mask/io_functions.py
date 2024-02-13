@@ -447,8 +447,6 @@ class LoadROIImage(LoadBase):
             callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"],
         )
-        # noinspection PyProtectedMember
-        # image.file_path = load_locations[0]
         return dataclasses.replace(
             seg, file_path=image.file_path, image=image, roi_info=seg.roi_info.fit_to_image(image)
         )

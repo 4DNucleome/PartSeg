@@ -87,7 +87,7 @@ class ColorComboBox(QComboBox):
     """
     Combobox showing colormap instead of text
 
-    :param id_num: id which be emmit in signals. Designed to inform which channel information is changed
+    :param id_num: id which be emit in signals. Designed to inform which channel information is changed
     :param colors: list of colors which should be able to choose. All needs to be keys in `color_dict`
     :param color_dict: dict from name to colormap definition
     :param colormap: initial colormap
@@ -281,7 +281,7 @@ class ColorComboBox(QComboBox):
 
 class ChannelProperty(QWidget):
     """
-    For manipulate chanel properties.
+    For manipulate channel properties.
         1. Apply gaussian blur to channel
         2. Fixed range for coloring
 

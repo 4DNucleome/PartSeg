@@ -18,7 +18,7 @@ class ProjectionType(Enum):
 
 
 class ImageProjectionParams(BaseModel):
-    projection_type: ProjectionType = Field(ProjectionType.MAX, suffix="Mask and ROI projection will allways use max")
+    projection_type: ProjectionType = Field(ProjectionType.MAX, suffix="Mask and ROI projection will always use max")
     keep_mask = False
     keep_roi = False
 

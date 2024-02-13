@@ -18,7 +18,6 @@ and consume results (:py:meth:`BatchManager.get_result`) until
 import logging
 import multiprocessing
 import os
-import sys
 import time
 import traceback
 import uuid
@@ -231,10 +230,7 @@ class BatchWorker:
             res = fun(data, global_data)
             self.result_queue.put((task_uuid, res))
         except Exception as e:  # pragma: no cover # pylint: disable=broad-except
-            traceback.print_exc()
-            exc_type, _exc_obj, exc_tb = sys.exc_info()
-            f_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(exc_type, f_name, exc_tb.tb_lineno, file=sys.stderr)
+            logging.exception("Exception in worker")
             self.result_queue.put((task_uuid, (-1, [(e, traceback.extract_tb(e.__traceback__))])))
 
     def run(self):

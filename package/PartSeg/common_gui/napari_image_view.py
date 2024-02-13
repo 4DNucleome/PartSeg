@@ -4,7 +4,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
-from typing import Dict, List, MutableMapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, MutableMapping, Optional, Tuple, Union
 
 import napari
 import numpy as np
@@ -23,7 +23,6 @@ from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
 from vispy.color import Color, Colormap
 from vispy.geometry.rect import Rect
-from vispy.scene import BaseCamera
 
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME_STR, SEARCH_ZOOM_FACTOR_STR
@@ -33,6 +32,9 @@ from PartSeg.common_gui.qt_modal import QtPopup
 from PartSegCore.image_operations import NoiseFilterType, bilateral, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
+
+if TYPE_CHECKING:
+    from vispy.scene import BaseCamera
 
 try:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
@@ -643,7 +645,7 @@ class ImageView(QWidget):
         for i, layer in enumerate(image_info.layers):
             try:
                 self._add_layer_util(i, layer, filters)
-            except AssertionError:
+            except AssertionError:  # noqa: PERF203
                 layer.colormap = "gray"
                 self._add_layer_util(i, layer, filters)
 

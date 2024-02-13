@@ -18,7 +18,7 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
     item_added = Signal(object)
     """Signal with item added to dict"""
     item_removed = Signal(object)
-    """Signal with item remove fom dict"""
+    """Signal with item remove from dict"""
     const_item_dict: ClassVar[Dict[str, Any]] = {}
     """Dict with non removable elements"""
 
@@ -69,7 +69,7 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
 
     def get_position(self, key: str) -> int:
         """
-        Get item position as unique int. For soring purpose
+        Get item position as unique int. For sorting purpose
 
         :raise KeyError: if element not in dict
         """
