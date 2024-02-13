@@ -415,7 +415,6 @@ class MeasurementProfile(BaseModel):
         if node.per_component == PerComponent.No:
             return method.calculate_property(**kw)
         # TODO use cache for per component calculate
-        # kw["_cache"] = False
         val = []
         if method.area_type(node.area) == AreaType.ROI and node.per_component != PerComponent.Per_Mask_component:
             components = segmentation_mask_map.roi_components

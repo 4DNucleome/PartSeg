@@ -83,7 +83,9 @@ def test_update_argument(clean_register):
         @classmethod
         @update_argument("arg")
         def call_func(cls, aa, arg: MigrateClass):
-            print(aa, arg.a)
+            assert arg.a == 1
+            assert arg.b == 2
+            assert aa == 1
 
     ClassToCall.call_func(aa=1, arg={"a": 1, "b": 2})
     ClassToCall.call_func(1, {"a": 1, "b": 2})

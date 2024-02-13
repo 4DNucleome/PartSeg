@@ -27,7 +27,6 @@ from PartSegImage import Image
 def data_test_dir():
     """Return path to directory with test data that need to be downloaded"""
     return Path(__file__).absolute().parent.parent.parent / "test_data"
-    # return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "test_data")
 
 
 @pytest.fixture(autouse=True)

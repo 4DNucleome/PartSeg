@@ -335,17 +335,16 @@ class ProfileDict:
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         curr_dict = self.my_dict
-
-        for i, key in enumerate(key_path[:-1]):
-            try:
+        i = 0
+        try:
+            for i, key in enumerate(key_path[:-1]):  # noqa: B007
                 # TODO add check if next step element is dict and create custom information
                 curr_dict = curr_dict[key]
-            except KeyError:
-                for key2 in key_path[i:-1]:
-                    with curr_dict.setted.blocked():
-                        curr_dict[key2] = {}
-                    curr_dict = curr_dict[key2]
-                break
+        except KeyError:
+            for key2 in key_path[i:-1]:
+                with curr_dict.setted.blocked():
+                    curr_dict[key2] = {}
+                curr_dict = curr_dict[key2]
         if isinstance(value, dict):
             value = EventedDict(**value)
         curr_dict[key_path[-1]] = value
@@ -381,15 +380,15 @@ class ProfileDict:
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         curr_dict = self.my_dict
-        for key in key_path:
-            try:
+        try:
+            for key in key_path:
                 curr_dict = curr_dict[key]
-            except KeyError as e:
-                if default is None:
-                    raise e
+        except KeyError as e:
+            if default is None:
+                raise e
 
-                val = copy.deepcopy(default)
-                return self.set(key_path, val)
+            val = copy.deepcopy(default)
+            return self.set(key_path, val)
 
         return curr_dict
 

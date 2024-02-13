@@ -2,7 +2,7 @@ import importlib
 import os
 import warnings
 from functools import partial
-from typing import Type
+from typing import TYPE_CHECKING, Type
 
 from qtpy.QtCore import QSize, Qt, QThread, Signal
 from qtpy.QtGui import QIcon
@@ -12,9 +12,11 @@ from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME, state_store
 from PartSeg.common_backend import napari_get_settings
 from PartSeg.common_backend.base_settings import BaseSettings, get_stylesheet, get_theme, napari_template
 from PartSeg.common_backend.load_backup import import_config
-from PartSeg.common_gui.main_window import BaseMainWindow
 from PartSegData import icons_dir
 from PartSegImage import TiffImageReader
+
+if TYPE_CHECKING:
+    from PartSeg.common_gui.main_window import BaseMainWindow
 
 
 class Prepare(QThread):

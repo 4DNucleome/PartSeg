@@ -305,7 +305,6 @@ class DoubleThreshold(BaseThreshold):
 
     @classmethod
     def get_name(cls):
-        # return "Double Choose"
         return "Base/Core"
 
     @classmethod

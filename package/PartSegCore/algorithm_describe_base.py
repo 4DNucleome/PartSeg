@@ -38,7 +38,7 @@ class AlgorithmProperty:
         self,
         name: str,
         user_name: str,
-        default_value: typing.Union[str, int, float, object],
+        default_value: typing.Union[str, float, object],
         options_range=None,
         possible_values=None,
         value_type=None,
