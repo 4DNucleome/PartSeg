@@ -160,7 +160,6 @@ class ProgressView(QWidget):
         else:
             self.calculation_manager.cancel_calculation(task.calculation)
         self.task_que.takeRow(index.row())
-        print(task)
 
     def new_task(self):
         self.whole_progress.setMaximum(self.calculation_manager.calculation_size)

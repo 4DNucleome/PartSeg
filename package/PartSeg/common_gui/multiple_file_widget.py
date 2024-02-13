@@ -261,7 +261,6 @@ class MultipleFileWidget(QWidget):
         if isinstance(state, list):
             self.add_states(state)
             return
-        # state: ProjectInfoBase = self.get_state()
         if not isinstance(state, ProjectInfoBase):  # workaround for PointsInfo load
             return
         normed_file_path = os.path.normpath(state.file_path)

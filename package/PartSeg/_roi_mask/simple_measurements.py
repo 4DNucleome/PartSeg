@@ -152,7 +152,7 @@ class SimpleMeasurements(QWidget):
                 for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
                     try:
                         s += str(self.result_view.item(r, c).text()) + "\t"
-                    except AttributeError:
+                    except AttributeError:  # noqa: PERF203
                         s += "\t"
                 s = s[:-1] + "\n"  # eliminate last '\t'
             QApplication.clipboard().setText(s)

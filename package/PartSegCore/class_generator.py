@@ -149,8 +149,6 @@ def extract_type_name(type_):
 
 def extract_type_info(type_):
     # noinspection PyUnresolvedReferences
-    # if issubclass(type_, (typing.Any, typing.Union)):
-    #    return str(type_), type_.__module__
     if not hasattr(type_, "__module__"):
         return type_.__name__, None
 
