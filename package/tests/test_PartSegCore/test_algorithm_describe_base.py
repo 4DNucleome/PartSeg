@@ -130,11 +130,14 @@ def test_register_errors():
     with pytest.raises(ValueError, match="Class .* need to implement classmethod 'get_name'"):
         TestSelection.register(Alg2)
 
+    with pytest.raises(ValueError, match="Class .* need to implement classmethod 'get_name'"):
+        TestSelection.__register__["test1"] = Alg2
+
     with pytest.raises(ValueError, match="Function get_name of class .* need return string not .*int"):
         TestSelection.register(Alg3)
 
 
-def test_register_name_collsion():
+def test_register_name_collision():
     class TestSelection(AlgorithmSelection):
         pass
 
@@ -154,7 +157,7 @@ def test_register_name_collsion():
 
         @classmethod
         def get_fields(cls):
-            return []
+            return []  # pragma: no cover
 
     class Alg3(AlgorithmDescribeBase):
         @classmethod
@@ -175,6 +178,80 @@ def test_register_name_collsion():
 
     with pytest.raises(ValueError, match="Old value mapping for name '0' already registered"):
         TestSelection.register(Alg3, old_names=["0"])
+
+
+def test_register_not_subclass():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1:
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            return []
+
+    with pytest.raises(ValueError, match="Class .* need to be subclass of .*AlgorithmDescribeBase"):
+        TestSelection.register(Alg1)
+
+
+def test_register_validate_name_assignment():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            return []
+
+    class Alg2(Alg1):
+        @classmethod
+        def get_name(cls):
+            return 2
+
+    with pytest.raises(ValueError, match="need return string"):
+        TestSelection.__register__["1"] = Alg2
+
+    with pytest.raises(ValueError, match="under name returned by get_name function"):
+        TestSelection.__register__["2"] = Alg1
+
+
+def test_register_get_fields_validity():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            raise NotImplementedError
+
+    class Alg2(Alg1):
+        @classmethod
+        def get_fields(cls):
+            return ()
+
+    with pytest.raises(ValueError, match="need to be implemented"):
+        TestSelection.register(Alg1)
+    with pytest.raises(ValueError, match="need return list not"):
+        TestSelection.register(Alg2)
+
+
+def test_register_no_default_value():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    with pytest.raises(ValueError, match="Register does not contain any algorithm"):
+        TestSelection.get_default()
 
 
 def test_algorithm_selection_convert_subclass(clean_register):

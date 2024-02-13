@@ -313,18 +313,18 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
     def __setitem__(self, key: str, value: AlgorithmType):
         if not issubclass(value, AlgorithmDescribeBase):
             raise ValueError(
-                f"Class {value} need to inherit from {AlgorithmDescribeBase.__module__}.AlgorithmDescribeBase"
+                f"Class {value} need to be subclass of {AlgorithmDescribeBase.__module__}.AlgorithmDescribeBase"
             )
         self.check_function(value, "get_name", True)
         self.check_function(value, "get_fields", True)
         try:
             val = value.get_name()
-        except NotImplementedError:
-            raise ValueError(f"Method get_name of class {value} need to be implemented") from None
+        except (NotImplementedError, AttributeError):
+            raise ValueError(f"Class {value} need to implement classmethod 'get_name'") from None
         if not isinstance(val, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(val)}")
         if key != val:
-            raise ValueError("Object need to be registered under name returned by gey_name function")
+            raise ValueError("Object need to be registered under name returned by get_name function")
         if not value.__new_style__:
             try:
                 val = value.get_fields()
