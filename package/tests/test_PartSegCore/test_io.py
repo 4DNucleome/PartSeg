@@ -809,7 +809,7 @@ def test_save_base_extension_parse_no_ext():
         Save.get_extensions()
 
 
-def test_save_base_extension_parse_nmalformated_ext():
+def test_save_base_extension_parse_malformatted_ext():
     class Save(SaveBase):
         @classmethod
         def get_name(cls) -> str:
