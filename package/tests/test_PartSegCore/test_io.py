@@ -8,6 +8,7 @@ import tarfile
 from copy import deepcopy
 from enum import Enum
 from glob import glob
+from io import BytesIO
 from pathlib import Path
 from typing import Type
 
@@ -29,17 +30,22 @@ from PartSegCore.io_utils import (
     LoadBase,
     LoadPlanExcel,
     LoadPlanJson,
+    LoadPoints,
     SaveBase,
+    SaveMaskAsTiff,
     SaveROIAsNumpy,
+    SaveScreenshot,
     find_problematic_entries,
     find_problematic_leafs,
     load_metadata_base,
     load_metadata_part,
+    open_tar_file,
 )
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
     LoadROI,
+    LoadROIFromTIFF,
     LoadROIImage,
     LoadROIParameters,
     LoadStackImage,
@@ -200,6 +206,10 @@ class TestSaveHistory:
         self.perform_roi_info_test(stack_segmentation2, tmp_path, SaveROI, LoadROI)
 
     def perform_roi_info_test(self, project, save_path, save_method: Type[SaveBase], load_method: Type[LoadBase]):
+        assert save_method.get_short_name().lower() == save_method.get_short_name()
+        assert save_method.get_short_name().isalpha()
+        assert load_method.get_short_name().lower() == load_method.get_short_name()
+        assert load_method.get_short_name().isalpha()
         alt1 = np.copy(project.roi_info.roi)
         alt1[alt1 > 0] += 3
         roi_info = ROIInfo(
@@ -303,7 +313,7 @@ class TestJsonLoad:
         data = load_metadata_base(file_path)
 
     def test_update_name(self):
-        data = load_metadata_base(update_name_json)
+        data = load_metadata_base(UPDATE_NAME_JSON)
         mp = data["problematic set"]
         assert isinstance(mp, MeasurementProfile)
         assert isinstance(mp.chosen_fields[0], MeasurementEntry)
@@ -326,6 +336,13 @@ class TestJsonLoad:
         assert isinstance(measurement_profile, MeasurementProfile)
         for entry in measurement_profile.chosen_fields:
             assert entry.calculation_tree.name in MEASUREMENT_DICT
+
+    def test_load_workflow_from_text(self, bundle_test_dir):
+        with open(os.path.join(bundle_test_dir, "workflow.json")) as ff:
+            data_text = ff.read()
+        assert isinstance(load_metadata_base(data_text)["workflow"], CalculationPlan)
+        with open(os.path.join(bundle_test_dir, "workflow.json")) as ff:
+            isinstance(load_metadata_base(ff)["workflow"], CalculationPlan)
 
 
 class TestSegmentationMask:
@@ -474,6 +491,32 @@ class TestSegmentationMask:
         assert res.history[0].mask_property == mask_property
         cmp_dict = {str(k): v for k, v in stack_segmentation1.roi_extraction_parameters.items()}
         assert str(res.history[0].roi_extraction_parameters["parameters"]) == str(cmp_dict)
+
+    def test_mask_project_tuple(self):
+        mask = np.zeros((10, 10), dtype=np.uint8)
+        mask[1:-1, 1:-1] = 2
+        mask2 = np.copy(mask)
+        mask2[2:-2, 2:-2] = 4
+        roi_info = ROIInfo(mask2)
+        mask_prop = MaskProperty.simple_mask()
+        elem = HistoryElement.create(roi_info, mask, {}, mask_prop)
+        proj = MaskProjectTuple(
+            file_path="test_data.tiff",
+            image=Image(np.zeros((10, 10), dtype=np.uint8), (1, 1), "", axes_order="YX"),
+            mask=mask,
+            roi_info=roi_info,
+            history=[elem],
+            selected_components=[1, 2],
+            roi_extraction_parameters={},
+        )
+        assert not proj.is_raw()
+        assert proj.is_masked()
+        raw_proj = proj.get_raw_copy()
+        assert raw_proj.is_raw()
+        assert not raw_proj.is_masked()
+        raw_masked_proj = proj.get_raw_mask_copy()
+        assert raw_masked_proj.is_masked()
+        assert raw_masked_proj.is_raw()
 
 
 class TestSaveFunctions:
@@ -643,6 +686,7 @@ def test_json_parameters_mask_2(stack_segmentation1, tmp_path):
 
 @pytest.mark.parametrize("file_path", (Path(__file__).parent.parent / "test_data" / "notebook").glob("*.json"))
 def test_load_notebook_json(file_path):
+    """Check if all notebook files can be loaded"""
     load_metadata_base(file_path)
 
 
@@ -755,7 +799,120 @@ def test_load_image_for_batch(data_test_dir):
     assert proj.mask is None
 
 
-update_name_json = """
+def test_save_base_extension_parse_no_ext():
+    class Save(SaveBase):
+        @classmethod
+        def get_name(cls) -> str:
+            return "Sample save"
+
+    with pytest.raises(ValueError, match="No extensions"):
+        Save.get_extensions()
+
+
+def test_save_base_extension_parse_malformatted_ext():
+    class Save(SaveBase):
+        @classmethod
+        def get_name(cls) -> str:
+            return "Sample save (a.txt)"
+
+    with pytest.raises(ValueError, match="Error with parsing"):
+        Save.get_extensions()
+
+
+def test_load_points(tmp_path):
+    data_path = tmp_path / "sample.csv"
+    with data_path.open("w") as fp:
+        fp.write(POINTS_DATA)
+
+    res = LoadPoints.load([data_path])
+    assert res.file_path == data_path
+    assert res.points.shape == (5, 4)
+
+    assert LoadPoints.get_short_name() == "point_csv"
+
+
+def test_open_tar_file_with_tarfile_object(tmp_path):
+    tar_file_path = tmp_path / "test.tar"
+    tar_file = tarfile.TarFile.open(tar_file_path, "w")
+    tar_file.close()
+    result_tar_file, result_file_path = open_tar_file(tar_file)
+    assert isinstance(result_tar_file, tarfile.TarFile)
+    assert result_file_path == ""
+
+
+def test_open_tar_file_with_path(tmp_path):
+    tar_file_path = tmp_path / "test.tar"
+    tar_file = tarfile.TarFile.open(tar_file_path, "w")
+    tar_file.close()
+    result_tar_file, result_file_path = open_tar_file(tar_file_path)
+    assert isinstance(result_tar_file, tarfile.TarFile)
+    assert result_file_path == str(tar_file_path)
+
+
+def test_open_tar_file_with_buffer(tmp_path):
+    buffer = BytesIO()
+    tar_file = tarfile.TarFile.open(fileobj=buffer, mode="w")
+    tar_file.close()
+    buffer.seek(0)
+    result_tar_file, result_file_path = open_tar_file(buffer)
+    assert isinstance(result_tar_file, tarfile.TarFile)
+    assert result_file_path == ""
+
+
+def test_open_tar_file_with_invalid_type(tmp_path):
+    with pytest.raises(ValueError, match="wrong type of file_data argument"):
+        open_tar_file(123)
+
+
+def test_save_mask_as_tiff(tmp_path, analysis_segmentation2):
+    file_path = tmp_path / "test.tiff"
+    file_path2 = tmp_path / "test2.tiff"
+    assert analysis_segmentation2.image.mask is None
+    SaveMaskAsTiff.save(file_path, analysis_segmentation2)
+    assert file_path.exists()
+    assert tifffile.TiffFile(str(file_path)).asarray().shape == analysis_segmentation2.mask.squeeze().shape
+    seg = dataclasses.replace(
+        analysis_segmentation2, image=analysis_segmentation2.image.substitute(mask=analysis_segmentation2.mask)
+    )
+    SaveMaskAsTiff.save(file_path2, seg)
+    assert file_path2.exists()
+    assert tifffile.TiffFile(str(file_path2)).asarray().shape == analysis_segmentation2.mask.squeeze().shape
+
+
+class TestSaveScreenshot:
+    def test_get_name(self):
+        assert SaveScreenshot.get_default_extension() == ".png"
+        assert SaveScreenshot.get_name().startswith("Screenshot")
+        assert SaveScreenshot.get_short_name() == "screenshot"
+        assert SaveScreenshot.get_fields() == []
+        assert {".png", ".jpg", ".jpeg"}.issubset(set(SaveScreenshot.get_extensions()))
+
+    def test_saving(self, tmp_path):
+        file_path = tmp_path / "test.png"
+        data = np.zeros((100, 100, 3), dtype=np.uint8)
+        SaveScreenshot.save(file_path, data)
+        assert file_path.exists()
+        assert file_path.stat().st_size > 0
+
+
+class TestLoadROIFromTIFF:
+    def test_get_name(self):
+        assert LoadROIFromTIFF.get_name().startswith("ROI from tiff")
+        assert LoadROIFromTIFF.get_short_name() == "roi_tiff"
+        assert set(LoadROIFromTIFF.get_extensions()) == {".tiff", ".tif"}
+
+    def test_load(self, tmp_path):
+        data = np.zeros((100, 100), dtype=np.uint8)
+        data[10:20, 10:20] = 1
+        data[30:40, 30:40] = 2
+        tifffile.imwrite(tmp_path / "test.tiff", data=data)
+        res = LoadROIFromTIFF.load([tmp_path / "test.tiff"])
+        assert isinstance(res, MaskProjectTuple)
+        assert res.image is None
+        assert res.roi_info.roi.shape == (1, 1, 100, 100)
+
+
+UPDATE_NAME_JSON = """
 {"problematic set": {
       "__MeasurementProfile__": true,
       "name": "problematic set",
@@ -833,4 +990,13 @@ update_name_json = """
       "name_prefix": ""
     }
   }
+"""
+
+
+POINTS_DATA = """index,axis-0,axis-1,axis-2,axis-3
+0.0,0.0,22.0,227.90873370570543,65.07832834070409
+1.0,0.0,22.0,91.94021739981048,276.7482348060973
+2.0,0.0,22.0,194.83531082048773,380.3782931797794
+3.0,0.0,22.0,391.07095327277943,268.6636259303818
+4.0,0.0,22.0,152.20734354620717,256.1692217292996
 """

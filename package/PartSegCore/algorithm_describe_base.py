@@ -3,7 +3,6 @@ import textwrap
 import typing
 import warnings
 from abc import ABC, ABCMeta, abstractmethod
-from enum import Enum
 from functools import wraps
 
 from local_migrator import REGISTER, class_to_str
@@ -211,6 +210,8 @@ def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> typing.List[ty
 
 
 def is_static(fun):
+    if fun is None:
+        return False
     args = inspect.getfullargspec(fun).args
     return True if len(args) == 0 else args[0] != "self"
 
@@ -256,6 +257,9 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             and self.suggested_base_class == other.suggested_base_class
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __getitem__(self, item) -> AlgorithmType:
         # FIXME add better strategy to get proper class when there is conflict of names
         try:
@@ -278,11 +282,11 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         self.check_function(value, "get_name", True)
         try:
             name = value.get_name()
-        except NotImplementedError:
-            raise ValueError(f"Class {value} need to implement get_name class method") from None
+        except (NotImplementedError, AttributeError):
+            raise ValueError(f"Class {value} need to implement classmethod 'get_name'") from None
         if name in self and not replace:
             raise ValueError(
-                f"Object {self[name]} with this name: {name} already exist and register is not in replace mode"
+                f"Object {self[name]} with this name: '{name}' already exist and register is not in replace mode"
             )
         if not isinstance(name, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(name)}")
@@ -292,8 +296,8 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
             for old_name in old_names:
                 if old_name in self._old_mapping and not replace:
                     raise ValueError(
-                        f"Old value mapping for name {old_name} already registered."
-                        f" Currently pointing to {self._old_mapping[name]}"
+                        f"Old value mapping for name '{old_name}' already registered."
+                        f" Currently pointing to {self._old_mapping[old_name]}"
                     )
                 self._old_mapping[old_name] = name
         return value
@@ -304,23 +308,23 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         if not is_class and not inspect.isfunction(fun):
             raise ValueError(f"Class {ob} need to define method {function_name}")
         if is_class and not inspect.ismethod(fun) and not is_static(fun):
-            raise ValueError(f"Class {ob} need to define classmethod {function_name}")
+            raise ValueError(f"Class {ob} need to define classmethod '{function_name}'")
 
     def __setitem__(self, key: str, value: AlgorithmType):
         if not issubclass(value, AlgorithmDescribeBase):
             raise ValueError(
-                f"Class {value} need to inherit from {AlgorithmDescribeBase.__module__}.AlgorithmDescribeBase"
+                f"Class {value} need to be subclass of {AlgorithmDescribeBase.__module__}.AlgorithmDescribeBase"
             )
         self.check_function(value, "get_name", True)
         self.check_function(value, "get_fields", True)
         try:
             val = value.get_name()
-        except NotImplementedError:
-            raise ValueError(f"Method get_name of class {value} need to be implemented") from None
+        except (NotImplementedError, AttributeError):
+            raise ValueError(f"Class {value} need to implement classmethod 'get_name'") from None
         if not isinstance(val, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(val)}")
         if key != val:
-            raise ValueError("Object need to be registered under name returned by gey_name function")
+            raise ValueError("Object need to be registered under name returned by get_name function")
         if not value.__new_style__:
             try:
                 val = value.get_fields()
@@ -415,7 +419,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         :param replace: replace existing algorithm, be patient with
         :param old_names: list of old names for registered class
         """
-        return cls.__register__.register(value, replace, old_names)
+        return cls.__register__.register(value, replace=replace, old_names=old_names)
 
     @classmethod
     def get_default(cls):
@@ -534,19 +538,6 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
                 res += str(v)
             res += "\n"
         return res[:-1]
-
-    @classmethod
-    def print_dict(cls, dkt, indent=0, name: str = "") -> str:
-        if isinstance(dkt, Enum):
-            return dkt.name
-        if not isinstance(dkt, typing.MutableMapping):
-            # FIXME update in future method of proper printing channel number
-            if name.startswith("channel") and isinstance(dkt, int):
-                return str(dkt + 1)
-            return str(dkt)
-        return "\n" + "\n".join(
-            " " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}" for k, v in dkt.items()
-        )
 
     def __eq__(self, other):
         return (

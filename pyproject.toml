@@ -221,6 +221,7 @@ omit = [
     ".tox/*",
     "**/changelog.py",
     "**/version.py",
+    "**/PartSegCore/class_generator.py",
 ]
 parallel = true
 

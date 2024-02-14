@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from napari.layers import Image, Labels, Layer
 
+from PartSegCore.analysis import ProjectTuple
 from PartSegCore.mask.io_functions import LoadROIFromTIFF
 from PartSegCore.napari_plugins.load_image import napari_get_reader as napari_get_reader_image
 from PartSegCore.napari_plugins.load_mask_project import napari_get_reader as napari_get_reader_mask
@@ -20,6 +21,7 @@ from PartSegCore.napari_plugins.save_tiff_layer import (
     napari_write_labels as napari_write_labels_tiff,
 )
 from PartSegImage import GenericImageReader
+from PartSegImage import Image as PImage
 
 
 def test_project_to_layers_analysis(analysis_segmentation):
@@ -39,6 +41,16 @@ def test_project_to_layers_analysis(analysis_segmentation):
     assert l3.name == "test"
     assert np.allclose(l3.scale[1:] / 1e9, analysis_segmentation.image.spacing)
     assert not l3.visible
+
+
+def test_project_to_layers_roi():
+    data = np.zeros((1, 1, 10, 10, 10), dtype=np.uint8)
+    img = PImage(data, image_spacing=(1, 1, 1), name="ROI")
+    proj = ProjectTuple(file_path="", image=img)
+    res = project_to_layers(proj)
+    assert len(res) == 1
+    assert isinstance(res[0][0], np.ndarray)
+    assert res[0][2] == "labels"
 
 
 def test_project_to_layers_mask(stack_segmentation1):
@@ -108,6 +120,7 @@ def test_save_load_axis_order(tmp_path):
     assert napari_write_labels_tiff(data_path, *layer.as_layer_data_tuple()[:2])
     proj = LoadROIFromTIFF.load([data_path])
     assert proj.roi_info.roi.shape == data.shape
+    assert napari_write_labels_tiff(str(tmp_path / "test.seg"), *layer.as_layer_data_tuple()[:2]) is None
 
 
 @pytest.fixture(params=[(1, 4), (1, 3), (3, 4), (3, 3), (10, 4)])

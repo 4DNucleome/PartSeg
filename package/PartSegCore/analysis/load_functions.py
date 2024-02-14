@@ -222,11 +222,6 @@ class LoadImageMask(LoadBase):
         return 2
 
     @classmethod
-    def correct_files_order(cls, paths):
-        name1, name2 = (os.path.basename(os.path.splitext(x)[0]) for x in paths)
-        return [name1, name2] if name2.endswith("_mask") else paths
-
-    @classmethod
     def load(
         cls,
         load_locations: typing.List[typing.Union[str, BytesIO, Path]],

@@ -106,7 +106,7 @@ class MaskProjectTuple(ProjectInfoBase):
         return MaskProjectTuple(file_path=self.file_path, image=self.image.substitute(), mask=self.mask)
 
     @property
-    def roi(self):
+    def roi(self):  # pragma: no cover
         warnings.warn("roi is deprecated", DeprecationWarning, stacklevel=2)
         return self.roi_info.roi
 
