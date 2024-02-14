@@ -95,9 +95,9 @@ def partseg_loader(loader: typing.Type[LoadBase], path: str):
 
     try:
         project_info = loader.load(load_locations)
-    except WrongFileTypeException:
+    except WrongFileTypeException:  # pragma: no cover
         return None
 
     if isinstance(project_info, (ProjectTuple, MaskProjectTuple)):
         return project_to_layers(project_info)
-    return None
+    return None  # pragma: no cover
