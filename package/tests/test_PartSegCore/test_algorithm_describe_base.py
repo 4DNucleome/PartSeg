@@ -122,7 +122,7 @@ def test_register_errors():
 
         @classmethod
         def get_fields(cls):
-            return []
+            return []  # pragma: no cover
 
     with pytest.raises(ValueError, match="Class .* need to define classmethod 'get_name'"):
         TestSelection.register(Alg1)
@@ -191,7 +191,7 @@ def test_register_not_subclass():
 
         @classmethod
         def get_fields(cls):
-            return []
+            return []  # pragma: no cover
 
     with pytest.raises(ValueError, match="Class .* need to be subclass of .*AlgorithmDescribeBase"):
         TestSelection.register(Alg1)
@@ -208,7 +208,7 @@ def test_register_validate_name_assignment():
 
         @classmethod
         def get_fields(cls):
-            return []
+            return []  # pragma: no cover
 
     class Alg2(Alg1):
         @classmethod
