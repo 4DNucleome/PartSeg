@@ -288,7 +288,7 @@ def open_tar_file(
         tar_file = TarFile.open(fileobj=file_data)
         file_path = ""
     else:
-        raise ValueError(f"wrong type of file_ argument: {type(file_data)}")
+        raise ValueError(f"wrong type of file_data argument: {type(file_data)}")
     return tar_file, file_path
 
 
@@ -314,13 +314,14 @@ class SaveMaskAsTiff(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):
         if project_info.image.mask is None and project_info.mask is not None:
             ImageWriter.save_mask(project_info.image.substitute(mask=project_info.mask), save_location)
-        ImageWriter.save_mask(project_info.image, save_location)
+        else:
+            ImageWriter.save_mask(project_info.image, save_location)
 
 
 def tar_to_buff(tar_file, member_name) -> BytesIO:
@@ -341,7 +342,7 @@ class SaveScreenshot(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):

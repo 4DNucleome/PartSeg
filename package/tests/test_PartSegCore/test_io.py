@@ -8,6 +8,7 @@ import tarfile
 from copy import deepcopy
 from enum import Enum
 from glob import glob
+from io import BytesIO
 from pathlib import Path
 from typing import Type
 
@@ -31,11 +32,14 @@ from PartSegCore.io_utils import (
     LoadPlanJson,
     LoadPoints,
     SaveBase,
+    SaveMaskAsTiff,
     SaveROIAsNumpy,
+    SaveScreenshot,
     find_problematic_entries,
     find_problematic_leafs,
     load_metadata_base,
     load_metadata_part,
+    open_tar_file,
 )
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
@@ -820,6 +824,69 @@ def test_load_points(tmp_path):
     assert res.points.shape == (5, 4)
 
     assert LoadPoints.get_short_name() == "point_csv"
+
+
+def test_open_tar_file_with_tarfile_object(tmp_path):
+    tar_file_path = tmp_path / "test.tar"
+    tar_file = tarfile.TarFile.open(tar_file_path, "w")
+    tar_file.close()
+    result_tar_file, result_file_path = open_tar_file(tar_file)
+    assert isinstance(result_tar_file, tarfile.TarFile)
+    assert result_file_path == ""
+
+
+def test_open_tar_file_with_path(tmp_path):
+    tar_file_path = tmp_path / "test.tar"
+    tar_file = tarfile.TarFile.open(tar_file_path, "w")
+    tar_file.close()
+    result_tar_file, result_file_path = open_tar_file(tar_file_path)
+    assert isinstance(result_tar_file, tarfile.TarFile)
+    assert result_file_path == str(tar_file_path)
+
+
+def test_open_tar_file_with_buffer(tmp_path):
+    buffer = BytesIO()
+    tar_file = tarfile.TarFile.open(fileobj=buffer, mode="w")
+    tar_file.close()
+    buffer.seek(0)
+    result_tar_file, result_file_path = open_tar_file(buffer)
+    assert isinstance(result_tar_file, tarfile.TarFile)
+    assert result_file_path == ""
+
+
+def test_open_tar_file_with_invalid_type(tmp_path):
+    with pytest.raises(ValueError, match="wrong type of file_data argument"):
+        open_tar_file(123)
+
+
+def test_save_mask_as_fiff(tmp_path, stack_segmentation1, analysis_segmentation2):
+    file_path = tmp_path / "test.tiff"
+    file_path2 = tmp_path / "test2.tiff"
+    SaveMaskAsTiff.save(file_path, stack_segmentation1)
+    assert not file_path.exists()
+    assert analysis_segmentation2.image.mask is None
+    SaveMaskAsTiff.save(file_path, analysis_segmentation2)
+    assert file_path.exists()
+    assert tifffile.TiffFile(str(file_path)).asarray().shape == analysis_segmentation2.mask.squeeze().shape
+    seg = dataclasses.replace(
+        analysis_segmentation2, image=analysis_segmentation2.image.substitute(mask=analysis_segmentation2.mask)
+    )
+    SaveMaskAsTiff.save(file_path2, seg)
+    assert file_path2.exists()
+    assert tifffile.TiffFile(str(file_path2)).asarray().shape == analysis_segmentation2.mask.squeeze().shape
+
+
+def test_save_screenshot(tmp_path):
+    file_path = tmp_path / "test.png"
+    data = np.zeros((100, 100, 3), dtype=np.uint8)
+    SaveScreenshot.save(file_path, data)
+    assert file_path.exists()
+    assert file_path.stat().st_size > 0
+
+    assert SaveScreenshot.get_default_extension() == ".png"
+    assert SaveScreenshot.get_short_name() == "screenshot"
+    assert SaveScreenshot.get_fields() == []
+    assert {".png", ".jpg", ".jpeg"}.issubset(set(SaveScreenshot.get_extensions()))
 
 
 UPDATE_NAME_JSON = """
