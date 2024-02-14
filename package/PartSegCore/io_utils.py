@@ -128,7 +128,6 @@ class LoadBase(_IOBase, ABC):
         "get_short_name",
         "get_name_with_suffix",
         "number_of_files",
-        "correct_files_order",
         "get_next_file",
         "partial",
     ]
@@ -168,10 +167,6 @@ class LoadBase(_IOBase, ABC):
         return 1
 
     @classmethod
-    def correct_files_order(cls, paths):
-        return paths
-
-    @classmethod
     def get_next_file(cls, file_paths: typing.List[str]):
         return file_paths[0]
 
@@ -190,10 +185,10 @@ def load_metadata_base(data: typing.Union[str, Path, typing.TextIO]):
                 decoded_data = json.load(ff, object_hook=partseg_object_hook)
         else:
             decoded_data = json.loads(data, object_hook=partseg_object_hook)
-    except ValueError as e:
+    except ValueError as e:  # pragma: no cover
         try:
             decoded_data = json.loads(str(data), object_hook=partseg_object_hook)
-        except Exception:  # pragma: no cover
+        except Exception:
             raise e  # noqa: B904
 
     return decoded_data
