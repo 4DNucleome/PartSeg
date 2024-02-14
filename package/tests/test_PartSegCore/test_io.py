@@ -45,6 +45,7 @@ from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
     LoadROI,
+    LoadROIFromTIFF,
     LoadROIImage,
     LoadROIParameters,
     LoadStackImage,
@@ -205,6 +206,10 @@ class TestSaveHistory:
         self.perform_roi_info_test(stack_segmentation2, tmp_path, SaveROI, LoadROI)
 
     def perform_roi_info_test(self, project, save_path, save_method: Type[SaveBase], load_method: Type[LoadBase]):
+        assert save_method.get_short_name().lower() == save_method.get_short_name()
+        assert save_method.get_short_name().isalpha()
+        assert load_method.get_short_name().lower() == load_method.get_short_name()
+        assert load_method.get_short_name().isalpha()
         alt1 = np.copy(project.roi_info.roi)
         alt1[alt1 > 0] += 3
         roi_info = ROIInfo(
@@ -876,17 +881,37 @@ def test_save_mask_as_fiff(tmp_path, stack_segmentation1, analysis_segmentation2
     assert tifffile.TiffFile(str(file_path2)).asarray().shape == analysis_segmentation2.mask.squeeze().shape
 
 
-def test_save_screenshot(tmp_path):
-    file_path = tmp_path / "test.png"
-    data = np.zeros((100, 100, 3), dtype=np.uint8)
-    SaveScreenshot.save(file_path, data)
-    assert file_path.exists()
-    assert file_path.stat().st_size > 0
+class TestSaveScreenshot:
+    def test_get_name(self):
+        assert SaveScreenshot.get_default_extension() == ".png"
+        assert SaveScreenshot.get_name().startswith("Screenshot")
+        assert SaveScreenshot.get_short_name() == "screenshot"
+        assert SaveScreenshot.get_fields() == []
+        assert {".png", ".jpg", ".jpeg"}.issubset(set(SaveScreenshot.get_extensions()))
 
-    assert SaveScreenshot.get_default_extension() == ".png"
-    assert SaveScreenshot.get_short_name() == "screenshot"
-    assert SaveScreenshot.get_fields() == []
-    assert {".png", ".jpg", ".jpeg"}.issubset(set(SaveScreenshot.get_extensions()))
+    def test_saving(self, tmp_path):
+        file_path = tmp_path / "test.png"
+        data = np.zeros((100, 100, 3), dtype=np.uint8)
+        SaveScreenshot.save(file_path, data)
+        assert file_path.exists()
+        assert file_path.stat().st_size > 0
+
+
+class TestLoadROIFromTIFF:
+    def test_get_name(self):
+        assert LoadROIFromTIFF.get_name().startswith("ROI from tiff")
+        assert LoadROIFromTIFF.get_short_name() == "roi_tiff"
+        assert set(LoadROIFromTIFF.get_extensions()) == {".tiff", ".tif"}
+
+    def test_load(self, tmp_path):
+        data = np.zeros((100, 100), dtype=np.uint8)
+        data[10:20, 10:20] = 1
+        data[30:40, 30:40] = 2
+        tifffile.imwrite(tmp_path / "test.tiff", data=data)
+        res = LoadROIFromTIFF.load([tmp_path / "test.tiff"])
+        assert isinstance(res, MaskProjectTuple)
+        assert res.image is None
+        assert res.roi_info.roi.shape == (1, 1, 100, 100)
 
 
 UPDATE_NAME_JSON = """
