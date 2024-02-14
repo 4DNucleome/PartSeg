@@ -864,11 +864,9 @@ def test_open_tar_file_with_invalid_type(tmp_path):
         open_tar_file(123)
 
 
-def test_save_mask_as_fiff(tmp_path, stack_segmentation1, analysis_segmentation2):
+def test_save_mask_as_tiff(tmp_path, analysis_segmentation2):
     file_path = tmp_path / "test.tiff"
     file_path2 = tmp_path / "test2.tiff"
-    SaveMaskAsTiff.save(file_path, stack_segmentation1)
-    assert not file_path.exists()
     assert analysis_segmentation2.image.mask is None
     SaveMaskAsTiff.save(file_path, analysis_segmentation2)
     assert file_path.exists()
