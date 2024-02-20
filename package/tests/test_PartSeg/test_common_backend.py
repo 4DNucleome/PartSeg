@@ -467,7 +467,7 @@ class TestLoadBackup:
 
 @pytest.fixture()
 def image(tmp_path):
-    data = np.random.random((10, 10, 2))
+    data = np.random.default_rng().uniform(size=(10, 10, 2))
     return Image(data=data, image_spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
 
 

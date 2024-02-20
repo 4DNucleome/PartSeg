@@ -152,7 +152,8 @@ class Enum2(Enum):
 def _example_tiff_files(tmp_path):
     for i in range(5):
         ImageWriter.save(
-            Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
+            Image(np.random.default_rng().uniform(size=(10, 10)), image_spacing=(1, 1), axes_order="XY"),
+            tmp_path / f"img_{i}.tif",
         )
 
 
