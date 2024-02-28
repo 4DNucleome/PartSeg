@@ -4,7 +4,7 @@ import subprocess  # nosec
 import sys
 from pathlib import Path
 
-from tomli import loads
+from tomllib import loads
 
 name_re = re.compile(r"[\w-]+")
 changed_name_re = re.compile(r"\+([\w-]+)")
