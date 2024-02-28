@@ -2,8 +2,9 @@ import argparse
 import re
 import subprocess  # nosec
 import sys
-from configparser import ConfigParser
 from pathlib import Path
+
+from tomllib import loads
 
 name_re = re.compile(r"[\w-]+")
 changed_name_re = re.compile(r"\+([\w-]+)")
@@ -31,12 +32,14 @@ if not args.main_packages:
     sys.exit(0)
 
 
-config = ConfigParser()
-config.read(src_dir / "setup.cfg")
+config = loads((src_dir / "pyproject.toml").read_text())
+
+metadata = config["project"]
+
 packages = (
-    config["options"]["install_requires"].split("\n")
-    + config["options.extras_require"]["pyinstaller"].split("\n")
-    + config["options.extras_require"]["all"].split("\n")
+    metadata["dependencies"]
+    + metadata["optional-dependencies"]["pyinstaller"]
+    + metadata["optional-dependencies"]["all"]
 )
 packages = [name_re.match(package).group().lower() for package in packages if name_re.match(package)]
 
