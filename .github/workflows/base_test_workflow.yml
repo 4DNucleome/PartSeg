@@ -94,7 +94,7 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
-          PIP_CONSTRAINT: requirements/constraints_py${{ inputs.python_version }}{{ inputs.pydantic }}.txt
+          PIP_CONSTRAINT: requirements/constraints_py${{ inputs.python_version }}${{ inputs.pydantic }}.txt
 
       - uses: actions/upload-artifact@v4
         with:
