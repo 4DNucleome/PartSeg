@@ -1,4 +1,8 @@
-from typing import Union
+from typing import TYPE_CHECKING, Any, Union
+
+if TYPE_CHECKING:
+    from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
+    from pydantic_core.core_schema import CoreSchema
 
 
 def check_type(value):
@@ -54,3 +58,22 @@ class Channel:
         field_schema["title"] = "Channel"
         field_schema["type"] = "object"
         field_schema["properties"] = {"value": {"title": "value", "anyOf": [{"type": "string"}, {"type": "integer"}]}}
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type: Any, handler: "GetCoreSchemaHandler") -> "CoreSchema":
+        from pydantic_core import core_schema
+
+        return core_schema.typed_dict_schema(
+            {
+                "value": core_schema.typed_dict_field(
+                    core_schema.union_schema([core_schema.int_schema(), core_schema.str_schema()])
+                )
+            },
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, core_schema: "CoreSchema", handler: "GetJsonSchemaHandler"):
+        json_schema = handler(core_schema)
+        json_schema = handler.resolve_ref_schema(json_schema)
+        json_schema["title"] = "Channel"
+        return json_schema
