@@ -2,6 +2,8 @@
 #    uv pip compile --python-version 3.11 --output-file requirements/constraints_py3.11_docs.txt pyproject.toml requirements/version_denylist.txt --extra docs --extra pyqt6
 alabaster==0.7.16
     # via sphinx
+annotated-types==0.6.0
+    # via pydantic
 app-model==0.2.4
     # via napari
 appdirs==1.4.4
@@ -14,7 +16,7 @@ attrs==23.2.0
     # via
     #   jsonschema
     #   referencing
-autodoc-pydantic==1.9.0
+autodoc-pydantic==2.0.1
 babel==2.14.0
     # via sphinx
 build==1.0.3
@@ -223,15 +225,20 @@ pure-eval==0.2.2
     # via stack-data
 pyconify==0.1.6
     # via superqt
-pydantic==1.10.14
+pydantic==2.6.3
     # via
     #   app-model
     #   autodoc-pydantic
     #   napari
     #   npe2
     #   pydantic-compat
+    #   pydantic-settings
 pydantic-compat==0.1.2
     # via app-model
+pydantic-core==2.16.3
+    # via pydantic
+pydantic-settings==2.2.1
+    # via autodoc-pydantic
 pygments==2.17.2
     # via
     #   ipython
@@ -266,6 +273,8 @@ python-dateutil==2.8.2
     # via
     #   jupyter-client
     #   pandas
+python-dotenv==1.0.1
+    # via pydantic-settings
 pytz==2024.1
     # via pandas
 pyyaml==6.0.1
@@ -393,6 +402,7 @@ typing-extensions==4.10.0
     #   pint
     #   psygnal
     #   pydantic
+    #   pydantic-core
     #   superqt
     #   typer
 tzdata==2024.1
