@@ -1,0 +1,2 @@
+mpmath!=1.4.0a0
+sentry-sdk!=2.0.0a1,!=2.0.0a2
