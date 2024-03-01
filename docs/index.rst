@@ -19,6 +19,7 @@ The documentation is incomplete. Many utilities are undocumented.
    interface-overview/interface-overview
    state_store
    error_reporting
+   plugins_creation
 
 
 Indices and tables
