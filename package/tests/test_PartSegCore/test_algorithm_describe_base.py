@@ -490,7 +490,7 @@ class TestAlgorithmDescribeBase:
         assert "ceeeec" in SampleAlgorithm.get_doc_from_fields()
         assert "(default values: 1)" in SampleAlgorithm.get_doc_from_fields()
         assert len(SampleAlgorithm.get_fields_dict()) == 1
-        assert SampleAlgorithm.get_default_values() == {"name": 1}
+        assert SampleAlgorithm.get_default_values() == DataModel(name=1)
 
     def test_new_style_algorithm_with_old_style_subclass(self):
         class DataModel(BaseModel):
@@ -536,6 +536,15 @@ class TestROIExtractionProfile:
         ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
         with pytest.warns(FutureWarning):
             ROIExtractionProfile("aaa", "aaa", {})
+
+    def test_dump_dict(self):
+        prof = ROIExtractionProfile(
+            name="aaa",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        )
+        assert prof.values.threshold.values.threshold == 8000
+        assert prof.dict()["values"]["threshold"]["values"]["threshold"] == 8000
 
     def test_pretty_print(self):
 

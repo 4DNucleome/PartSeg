@@ -1096,8 +1096,8 @@ class EnumQtAl(Enum):
 
 
 class ModelQtAl(BaseModel):
-    field1 = 1
-    field2 = 2.0
+    field1: int = 1
+    field2: float = 2.0
 
 
 class TestQtAlgorithmProperty:

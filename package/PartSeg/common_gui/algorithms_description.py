@@ -10,7 +10,6 @@ import numpy as np
 from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
-from pydantic.fields import UndefinedType
 from qtpy.QtCore import QMargins, QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -49,6 +48,11 @@ from PartSegCore.segmentation.algorithm_base import (
     SegmentationLimitException,
 )
 from PartSegImage import Channel, Image
+
+try:
+    from pydantic.fields import UndefinedType
+except ImportError:  # pragma: no cover
+    UndefinedType = type(None)
 
 logger = logging.getLogger(__name__)
 ignore_logger(__name__)
