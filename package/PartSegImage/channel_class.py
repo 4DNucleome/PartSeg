@@ -1,18 +1,38 @@
-from typing import TYPE_CHECKING, Any, Union
+from importlib.metadata import PackageNotFoundError, version
+from typing import TYPE_CHECKING, Dict, Union
+
+try:
+    PYDANTIC_2 = version("pydantic") >= "2.0.0"
+except PackageNotFoundError:
+    PYDANTIC_2 = False
+
 
 if TYPE_CHECKING:
-    from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
+    from pydantic import GetJsonSchemaHandler
     from pydantic_core.core_schema import CoreSchema
 
 
-def check_type(value):
-    if isinstance(value, Channel):
-        return value
-    if value.__class__.__module__.startswith("napari"):
-        value = value.name
-    if not isinstance(value, (str, int)):
-        raise TypeError(f"Channel need to be int or str, provided {type(value)}")
-    return Channel(value)
+if PYDANTIC_2:
+
+    def check_type(value, _validation_info=None, **_):
+        if isinstance(value, Channel):
+            return value
+        if value.__class__.__module__.startswith("napari"):
+            value = value.name
+        if not isinstance(value, (str, int)):
+            raise TypeError(f"Channel need to be int or str, provided {type(value)}")
+        return Channel(value)
+
+else:
+
+    def check_type(value):  # type: ignore [misc]
+        if isinstance(value, Channel):
+            return value
+        if value.__class__.__module__.startswith("napari"):
+            value = value.name
+        if not isinstance(value, (str, int)):
+            raise TypeError(f"Channel need to be int or str, provided {type(value)}")
+        return Channel(value)
 
 
 class Channel:
@@ -54,26 +74,14 @@ class Channel:
 
     @classmethod
     def __modify_schema__(cls, field_schema):
+        """Pydantic 1 dataclass schema modification method. It is used to modify schema for this class"""
         # TODO check if still required
         field_schema["title"] = "Channel"
         field_schema["type"] = "object"
         field_schema["properties"] = {"value": {"title": "value", "anyOf": [{"type": "string"}, {"type": "integer"}]}}
 
     @classmethod
-    def __get_pydantic_core_schema__(cls, source_type: Any, handler: "GetCoreSchemaHandler") -> "CoreSchema":
-        from pydantic_core import core_schema
-
-        return core_schema.typed_dict_schema(
-            {
-                "value": core_schema.typed_dict_field(
-                    core_schema.union_schema([core_schema.int_schema(), core_schema.str_schema()])
-                )
-            },
-        )
-
-    @classmethod
     def __get_pydantic_json_schema__(cls, core_schema: "CoreSchema", handler: "GetJsonSchemaHandler"):
-        json_schema = handler(core_schema)
-        json_schema = handler.resolve_ref_schema(json_schema)
-        json_schema["title"] = "Channel"
+        json_schema: Dict[str, Union[str, dict]] = {}
+        cls.__modify_schema__(json_schema)
         return json_schema
