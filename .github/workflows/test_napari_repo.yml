@@ -29,8 +29,8 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ ubuntu-22.04 ]
-        python: ['3.8', '3.9' , '3.10']
-        napari_version: [repo]
+        python: ['3.8', '3.9' , '3.10', '3.11']
+        napari_version: ['repo']
     steps:
       - uses: actions/checkout@v4
 

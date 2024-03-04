@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.8", "3.9", "3.10"]
+        python_version: ["3.8", "3.9", "3.10", "3.11"]
         os: ["ubuntu-20.04"]
         qt_backend: ["PyQt5"]
         tox_args: [ "" ]
@@ -56,17 +56,13 @@ jobs:
           - python_version: "3.9"
             os: "ubuntu-22.04"
             qt_backend: "PySide6"
-          - python_version: "3.9"
+          - python_version: "3.10"
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
-          - python_version: "3.9"
+          - python_version: "3.10"
             os: "ubuntu-22.04"
             qt_backend: "PyQt5"
             pydantic: "_pydantic_1"
-          - python_version: "3.11"
-            os: "ubuntu-22.04"
-            qt_backend: "PyQt5"
-            tox_args: "-vv -e py311-PyQt5-all"
     with:
       test_data: True
       python_version: ${{ matrix.python_version }}
