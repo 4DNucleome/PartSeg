@@ -1,5 +1,5 @@
 # pylint: disable=no-self-use
-
+import json
 import os
 import shutil
 import sys
@@ -42,6 +42,7 @@ from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadPlanExcel, SaveBase
+from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.mask.io_functions import MaskProjectTuple, SaveROI, SaveROIOptions
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.roi_info import ROIInfo
@@ -814,3 +815,8 @@ class TestSheetData:
 
         assert sheet_data.get_data_to_write()[0] == "test_name"
         assert "wait_rows=0" in repr(sheet_data)
+
+
+def test_calculation_plan_serialize(calculation_plan_long):
+    text = json.dumps(calculation_plan_long, cls=PartSegEncoder, indent=2)
+    assert text.count("\n") == 7707
