@@ -561,7 +561,7 @@ class TestCalculationProcess:
         assert str(data["test"]) == str(calculation_plan_long)
 
         df2 = pd.read_excel(res_path, header=[0, 1], engine=ENGINE, sheet_name="info test")
-        assert df2.shape == (154, 3)
+        assert df2.shape == (152, 3)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_error(self, tmp_path, data_test_dir, monkeypatch, calculation_plan):
@@ -819,4 +819,4 @@ class TestSheetData:
 
 def test_calculation_plan_serialize(calculation_plan_long):
     text = json.dumps(calculation_plan_long, cls=PartSegEncoder, indent=2)
-    assert text.count("\n") == 7707
+    assert text.count("\n") == 7627

@@ -885,6 +885,7 @@ class TestFormWidget:
         qtbot.add_widget(form)
         assert form.has_elements()
         assert isinstance(form.get_values(), SampleModel)
+        assert form.get_values().check_selection.values == {"field": 1}
         assert form.get_values() == SampleModel(
             field1=10, check_selection=SampleSelection(name="1", values={"field": 1})
         )
@@ -1098,6 +1099,14 @@ class EnumQtAl(Enum):
 class ModelQtAl(BaseModel):
     field1: int = 1
     field2: float = 2.0
+
+    def __eq__(self, other):
+        if isinstance(other, dict):
+            try:
+                return self.field1 == other["field1"] and self.field2 == other["field2"]
+            except KeyError:
+                return False
+        return super().__eq__(other)
 
 
 class TestQtAlgorithmProperty:

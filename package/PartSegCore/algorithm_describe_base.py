@@ -400,10 +400,13 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
     """
 
     name: str
-    values: typing.Union[PydanticBaseModel, typing.Dict[str, typing.Any]]
+    values: typing.Union[typing.Dict[str, typing.Any], PydanticBaseModel]
     class_path: str = ""
     if typing.TYPE_CHECKING:
         __register__: Register
+
+    class Config:
+        smart_union = True
 
     @validator("name")
     def check_name(cls, v):
