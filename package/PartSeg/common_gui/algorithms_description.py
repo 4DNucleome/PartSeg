@@ -52,7 +52,7 @@ from PartSegImage import Channel, Image
 try:
     from pydantic.fields import UndefinedType
 except ImportError:  # pragma: no cover
-    UndefinedType = type(None)
+    from pydantic_core import PydanticUndefinedType as UndefinedType
 
 logger = logging.getLogger(__name__)
 ignore_logger(__name__)

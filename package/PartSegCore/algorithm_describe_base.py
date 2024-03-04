@@ -34,9 +34,7 @@ except ImportError:
     # pydantic 2
     from pydantic import field_serializer
     from pydantic._internal._model_construction import ModelMetaclass
-
-    class UndefinedType:
-        pass
+    from pydantic_core import PydanticUndefinedType as UndefinedType
 
 
 class AlgorithmDescribeNotFound(Exception):
