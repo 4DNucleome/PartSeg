@@ -1099,6 +1099,7 @@ class EnumQtAl(Enum):
 class ModelQtAl(BaseModel):
     field1: int = 1
     field2: float = 2.0
+    __hash__ = None
 
     def __eq__(self, other):
         if isinstance(other, dict):

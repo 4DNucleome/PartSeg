@@ -6,7 +6,6 @@ from abc import ABC, ABCMeta, abstractmethod
 from functools import wraps
 from importlib.metadata import version
 
-import annotated_types as at
 from local_migrator import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
@@ -578,6 +577,25 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
         )
 
 
+def _calc_value_range(field_info: FieldInfo):
+    if field_info.metadata is None:
+        return (0, 1000)
+
+    import annotated_types as at
+
+    value_range = (0, 1000)
+    for el in field_info.metadata:
+        if isinstance(el, at.Ge):
+            value_range = el.ge, value_range[1]
+        if isinstance(el, at.Gt):
+            value_range = el.gt, value_range[1]
+        if isinstance(el, at.Le):
+            value_range = value_range[0], el.le
+        if isinstance(el, at.Lt):
+            value_range = value_range[0], el.lt
+    return value_range
+
+
 def _field_to_algorithm_property_pydantic_2(name: str, field_info: FieldInfo):
     user_name = field_info.title
 
@@ -591,16 +609,8 @@ def _field_to_algorithm_property_pydantic_2(name: str, field_info: FieldInfo):
         user_name = name.replace("_", " ").capitalize()
     if not hasattr(value_type, "__origin__"):
         if issubclass(value_type, (int, float)):
-            value_range = (0, 1000)
-            for el in field_info.metadata:
-                if isinstance(el, at.Ge):
-                    value_range = el.ge, value_range[1]
-                if isinstance(el, at.Gt):
-                    value_range = el.gt, value_range[1]
-                if isinstance(el, at.Le):
-                    value_range = value_range[0], el.le
-                if isinstance(el, at.Lt):
-                    value_range = value_range[0], el.lt
+            value_range = _calc_value_range(field_info)
+
         if issubclass(field_info.annotation, AlgorithmSelection):
             value_type = AlgorithmDescribeBase
             if isinstance(field_info.default, UndefinedType):
