@@ -1,4 +1,6 @@
 # pylint: disable=no-self-use
+import math
+import sys
 import typing
 from enum import Enum
 
@@ -350,6 +352,23 @@ def test_base_model_to_algorithm_property_base():
     assert converted[3].user_name == "Channel"
 
 
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="requires python 3.9 or higher")
+def test_gt_lt_conversion():
+    class Sample(BaseModel):
+        field1: int = Field(0, le=100, ge=0, title="Field 1")
+        field2: int = Field(0, lt=100, gt=0, title="Field 2")
+        field3: float = Field(0, le=100, ge=0, title="Field 3")
+        field4: float = Field(0, lt=100, gt=0, title="Field 4")
+        field5: int = Field(0, title="Field 5")
+
+    converted = base_model_to_algorithm_property(Sample)
+    assert converted[0].range == (0, 100)
+    assert converted[1].range == (1, 99)
+    assert converted[2].range == (0, 100)
+    assert converted[3].range == (math.nextafter(0, math.inf), math.nextafter(100, -math.inf))
+    assert converted[4].range == (0, 1000)
+
+
 def test_base_model_to_algorithm_property_algorithm_describe_base():
     class SampleSelection(AlgorithmSelection):
         pass
@@ -490,7 +509,7 @@ class TestAlgorithmDescribeBase:
         assert "ceeeec" in SampleAlgorithm.get_doc_from_fields()
         assert "(default values: 1)" in SampleAlgorithm.get_doc_from_fields()
         assert len(SampleAlgorithm.get_fields_dict()) == 1
-        assert SampleAlgorithm.get_default_values() == {"name": 1}
+        assert SampleAlgorithm.get_default_values() == DataModel(name=1)
 
     def test_new_style_algorithm_with_old_style_subclass(self):
         class DataModel(BaseModel):
@@ -536,6 +555,15 @@ class TestROIExtractionProfile:
         ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
         with pytest.warns(FutureWarning):
             ROIExtractionProfile("aaa", "aaa", {})
+
+    def test_dump_dict(self):
+        prof = ROIExtractionProfile(
+            name="aaa",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        )
+        assert prof.values.threshold.values.threshold == 8000
+        assert prof.dict()["values"]["threshold"]["values"]["threshold"] == 8000
 
     def test_pretty_print(self):
 

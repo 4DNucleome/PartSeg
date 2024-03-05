@@ -4,6 +4,8 @@ alabaster==0.7.16
     # via sphinx
 altgraph==0.17.4
     # via pyinstaller
+annotated-types==0.6.0
+    # via pydantic
 app-model==0.2.4
     # via napari
 appdirs==1.4.4
@@ -237,7 +239,7 @@ pure-eval==0.2.2
     # via stack-data
 pyconify==0.1.6
     # via superqt
-pydantic==1.10.14
+pydantic==2.6.3
     # via
     #   app-model
     #   napari
@@ -245,6 +247,8 @@ pydantic==1.10.14
     #   pydantic-compat
 pydantic-compat==0.1.2
     # via app-model
+pydantic-core==2.16.3
+    # via pydantic
 pygments==2.17.2
     # via
     #   ipython
@@ -421,6 +425,7 @@ typing-extensions==4.10.0
     #   pint
     #   psygnal
     #   pydantic
+    #   pydantic-core
     #   superqt
     #   typer
 tzdata==2024.1

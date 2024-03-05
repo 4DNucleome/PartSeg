@@ -9,17 +9,14 @@ from contextlib import suppress
 from importlib.metadata import version as package_version
 from typing import Optional, Sequence
 
-import numpy as np
 import sentry_sdk
 import sentry_sdk.serializer
 import sentry_sdk.utils
-from napari.layers import Image
 from packaging.version import parse as parse_version
-from sentry_sdk.utils import safe_repr as _safe_repr
 
 from PartSeg import __version__, state_store
 from PartSeg.common_backend.except_hook import my_excepthook
-from PartSegCore.utils import numpy_repr
+from PartSegCore.utils import safe_repr
 
 SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
 
@@ -155,18 +152,3 @@ def _setup_sentry():  # pragma: no cover
                 "id": zlib.adler32(f"{getpass.getuser()}#{platform.node()}".encode()),
             }
         )
-
-
-def napari_image_repr(image: Image) -> str:
-    return (
-        f"<Image of shape: {image.data.shape}, dtype: {image.data.dtype}, "
-        f"slice {getattr(image, '_slice_indices', None)}>"
-    )
-
-
-def safe_repr(val):
-    if isinstance(val, np.ndarray):
-        return numpy_repr(val)
-    if isinstance(val, Image):
-        return napari_image_repr(val)
-    return _safe_repr(val)

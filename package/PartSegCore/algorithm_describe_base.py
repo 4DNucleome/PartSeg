@@ -1,19 +1,40 @@
 import inspect
+import math
 import textwrap
 import typing
 import warnings
 from abc import ABC, ABCMeta, abstractmethod
 from functools import wraps
+from importlib.metadata import version
 
 from local_migrator import REGISTER, class_to_str
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
-from pydantic.fields import ModelField, UndefinedType
-from pydantic.main import ModelMetaclass
+from pydantic.fields import FieldInfo
 from typing_extensions import Annotated
 
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
+
+if typing.TYPE_CHECKING:
+    from pydantic.fields import ModelField
+
+try:
+    # pydantic 1
+    from pydantic.fields import UndefinedType
+    from pydantic.main import ModelMetaclass
+
+    def field_serializer(_):
+        def decorator(func):
+            return func
+
+        return decorator
+
+except ImportError:
+    # pydantic 2
+    from pydantic import field_serializer
+    from pydantic._internal._model_construction import ModelMetaclass
+    from pydantic_core import PydanticUndefinedType as UndefinedType
 
 
 class AlgorithmDescribeNotFound(Exception):
@@ -379,10 +400,13 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
     """
 
     name: str
-    values: typing.Union[PydanticBaseModel, typing.Dict[str, typing.Any]]
+    values: typing.Union[typing.Dict[str, typing.Any], PydanticBaseModel]
     class_path: str = ""
     if typing.TYPE_CHECKING:
         __register__: Register
+
+    class Config:
+        smart_union = True
 
     @validator("name")
     def check_name(cls, v):
@@ -396,6 +420,12 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
             return v
         klass = cls.__register__[values["name"]]
         return class_to_str(klass)
+
+    @field_serializer("values")
+    def val_serializer(self, value, _info):
+        if isinstance(value, PydanticBaseModel):
+            return value.dict()
+        return value
 
     @validator("values", pre=True)
     def update_values(cls, v, values):
@@ -548,7 +578,80 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
         )
 
 
-def _field_to_algorithm_property(name: str, field: "ModelField"):
+def _next_after(type_, value, inf):
+    if issubclass(type_, int):
+        if inf == math.inf:
+            return value + 1
+        return value - 1
+    if hasattr(math, "nextafter"):
+        # TODO fix after drop python 3.8
+        return math.nextafter(value, inf)
+    return value
+
+
+def _next_after_with_none(type_, value, inf):
+    if value is None:
+        return None
+    return _next_after(type_, value, inf)
+
+
+def _calc_value_range(field_info: FieldInfo):
+    if field_info.metadata is None:
+        return (0, 1000)
+
+    import annotated_types as at
+
+    value_range = (0, 1000)
+    for el in field_info.metadata:
+        if isinstance(el, at.Ge):
+            value_range = el.ge, value_range[1]
+        elif isinstance(el, at.Gt):
+            value_range = _next_after(field_info.annotation, el.gt, math.inf), value_range[1]
+        elif isinstance(el, at.Le):
+            value_range = value_range[0], el.le
+        elif isinstance(el, at.Lt):
+            value_range = value_range[0], _next_after(field_info.annotation, el.lt, -math.inf)
+    return value_range
+
+
+def _field_to_algorithm_property_pydantic_2(name: str, field_info: FieldInfo):
+    user_name = field_info.title
+
+    value_range = None
+    possible_values = None
+
+    value_type = field_info.annotation
+    default_value = field_info.default
+    help_text = field_info.description
+    if user_name is None:
+        user_name = name.replace("_", " ").capitalize()
+    if not hasattr(value_type, "__origin__"):
+        if issubclass(value_type, (int, float)):
+            value_range = _calc_value_range(field_info)
+
+        if issubclass(field_info.annotation, AlgorithmSelection):
+            value_type = AlgorithmDescribeBase
+            if isinstance(field_info.default, UndefinedType):
+                default_value = field_info.default_factory().name
+            else:
+                default_value = field_info.default.name
+            possible_values = field_info.annotation.__register__
+
+    extra = field_info.json_schema_extra or {}
+
+    return AlgorithmProperty(
+        name=name,
+        user_name=user_name,
+        default_value=default_value,
+        options_range=value_range,
+        value_type=value_type,
+        possible_values=possible_values,
+        help_text=help_text,
+        mgi_options=extra.get("options", {}),
+    )
+
+
+def _field_to_algorithm_property_pydantic_1(name: str, field: "ModelField"):
     user_name = field.field_info.title
     value_range = None
     possible_values = None
@@ -561,8 +664,8 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     if not hasattr(field.type_, "__origin__"):
         if issubclass(field.type_, (int, float)):
             value_range = (
-                field.field_info.ge or field.field_info.gt or 0,
-                field.field_info.le or field.field_info.lt or 1000,
+                field.field_info.ge or _next_after_with_none(field.type_, field.field_info.gt, math.inf) or 0,
+                field.field_info.le or _next_after_with_none(field.type_, field.field_info.lt, -math.inf) or 1000,
             )
         if issubclass(field.type_, AlgorithmSelection):
             value_type = AlgorithmDescribeBase
@@ -584,7 +687,9 @@ def _field_to_algorithm_property(name: str, field: "ModelField"):
     )
 
 
-def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List[typing.Union[str, AlgorithmProperty]]:
+def base_model_to_algorithm_property_pydantic_1(
+    obj: typing.Type[BaseModel],
+) -> typing.List[typing.Union[str, AlgorithmProperty]]:
     """
     Convert pydantic model to list of AlgorithmPropert nad strings.
 
@@ -611,3 +716,43 @@ def base_model_to_algorithm_property(obj: typing.Type[BaseModel]) -> typing.List
         if "suffix" in value.field_info.extra:
             res.insert(pos + 1, value.field_info.extra["suffix"])
     return res
+
+
+def base_model_to_algorithm_property_pydantic_2(
+    obj: typing.Type[BaseModel],
+) -> typing.List[typing.Union[str, AlgorithmProperty]]:
+    """
+    Convert pydantic model to list of AlgorithmPropert nad strings.
+
+    :param obj:
+    :return:
+    """
+    res = []
+    field_info: FieldInfo
+    if hasattr(obj, "header") and obj.header():
+        res.append(obj.header())
+    for name, field_info in obj.__fields__.items():
+        ap = _field_to_algorithm_property(name, field_info)
+        extra = field_info.json_schema_extra or {}
+        if extra.get("hidden", False):
+            continue
+        pos = len(res)
+        if "position" in extra:
+            pos = extra["position"]
+        if "prefix" in extra:
+            res.insert(pos, extra["prefix"])
+            pos += 1
+
+        res.insert(pos, ap)
+
+        if "suffix" in extra:
+            res.insert(pos + 1, extra["suffix"])
+    return res
+
+
+if version("pydantic") < "2":
+    _field_to_algorithm_property = _field_to_algorithm_property_pydantic_1
+    base_model_to_algorithm_property = base_model_to_algorithm_property_pydantic_1
+else:
+    _field_to_algorithm_property = _field_to_algorithm_property_pydantic_2
+    base_model_to_algorithm_property = base_model_to_algorithm_property_pydantic_2

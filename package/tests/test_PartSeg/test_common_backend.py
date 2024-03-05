@@ -16,6 +16,7 @@ import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
 
+import PartSegCore.utils
 from PartSeg import state_store
 from PartSeg.common_backend import (
     base_argparser,
@@ -188,12 +189,12 @@ class TestBaseArgparse:
         parser.parse_args([])
 
     def test_safe_repr(self):
-        assert base_argparser.safe_repr(1) == "1"
-        assert base_argparser.safe_repr(np.arange(3)) == "array([0, 1, 2])"
+        assert PartSegCore.utils.safe_repr(1) == "1"
+        assert PartSegCore.utils.safe_repr(np.arange(3)) == "array([0, 1, 2])"
 
     def test_safe_repr_napari_image(self):
         assert (
-            base_argparser.safe_repr(napari.layers.Image(np.zeros((10, 10, 5))))
+            PartSegCore.utils.safe_repr(napari.layers.Image(np.zeros((10, 10, 5))))
             == "<Image of shape: (10, 10, 5), dtype: float64, slice"
             " (0, slice(None, None, None), slice(None, None, None))>"
         )

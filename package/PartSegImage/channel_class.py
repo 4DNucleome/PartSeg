@@ -1,7 +1,18 @@
-from typing import Union
+from importlib.metadata import PackageNotFoundError, version
+from typing import TYPE_CHECKING, Dict, Union
+
+try:
+    PYDANTIC_2 = version("pydantic") >= "2.0.0"
+except PackageNotFoundError:  # pragma: no cover
+    PYDANTIC_2 = False
 
 
-def check_type(value):
+if TYPE_CHECKING:
+    from pydantic import GetJsonSchemaHandler
+    from pydantic_core.core_schema import CoreSchema
+
+
+def check_type(value):  # type: ignore [misc]
     if isinstance(value, Channel):
         return value
     if value.__class__.__module__.startswith("napari"):
@@ -9,6 +20,17 @@ def check_type(value):
     if not isinstance(value, (str, int)):
         raise TypeError(f"Channel need to be int or str, provided {type(value)}")
     return Channel(value)
+
+
+if PYDANTIC_2:
+
+    def check_type_(value, _validation_info=None, **_):
+        return check_type(value)
+
+else:
+
+    def check_type_(value):  # type: ignore [misc]
+        return check_type(value)
 
 
 class Channel:
@@ -46,11 +68,18 @@ class Channel:
 
     @classmethod
     def __get_validators__(cls):
-        yield check_type
+        yield check_type_
 
     @classmethod
     def __modify_schema__(cls, field_schema):
+        """Pydantic 1 dataclass schema modification method. It is used to modify schema for this class"""
         # TODO check if still required
         field_schema["title"] = "Channel"
         field_schema["type"] = "object"
         field_schema["properties"] = {"value": {"title": "value", "anyOf": [{"type": "string"}, {"type": "integer"}]}}
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, core_schema: "CoreSchema", handler: "GetJsonSchemaHandler"):
+        json_schema: Dict[str, Union[str, dict]] = {}
+        cls.__modify_schema__(json_schema)
+        return json_schema

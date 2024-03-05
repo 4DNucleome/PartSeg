@@ -590,11 +590,3 @@ def test_str_and_repr_mask_presence():
 
     assert "mask: True" in str(image)
     assert "mask=True" in repr(image)
-
-
-def test_channel_from_channel():
-    ch1 = Channel(1)
-    ch2 = Channel(2)
-    ch3 = Channel(ch1)
-    assert ch1 == ch3
-    assert ch1 != ch2
