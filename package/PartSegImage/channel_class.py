@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Dict, Union
 
 try:
     PYDANTIC_2 = version("pydantic") >= "2.0.0"
-except PackageNotFoundError:
+except PackageNotFoundError:  # pragma: no cover
     PYDANTIC_2 = False
 
 

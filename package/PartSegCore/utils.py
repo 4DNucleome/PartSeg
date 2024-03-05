@@ -10,12 +10,15 @@ from contextlib import suppress
 from types import MethodType
 
 import numpy as np
+from local_migrator import register_class
+from psygnal import Signal
 from pydantic import BaseModel as PydanticBaseModel
+from sentry_sdk.utils import safe_repr as _safe_repr
 
 __author__ = "Grzegorz Bokota"
 
-from local_migrator import register_class
-from psygnal import Signal
+if typing.TYPE_CHECKING:
+    from napari.layers import Image
 
 
 def bisect(arr, val, comp):
@@ -461,3 +464,20 @@ def iterate_names(base_name: str, data_dict, max_length=None) -> typing.Optional
         if res_name not in data_dict:
             return res_name
     return None
+
+
+def napari_image_repr(image: "Image") -> str:
+    return (
+        f"<Image of shape: {image.data.shape}, dtype: {image.data.dtype}, "
+        f"slice {getattr(image, '_slice_indices', None)}>"
+    )
+
+
+def safe_repr(val):
+    from napari.layers import Image
+
+    if isinstance(val, np.ndarray):
+        return numpy_repr(val)
+    if isinstance(val, Image):
+        return napari_image_repr(val)
+    return _safe_repr(val)

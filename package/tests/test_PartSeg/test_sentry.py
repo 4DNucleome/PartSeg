@@ -11,8 +11,8 @@ from sentry_sdk.client import Client
 from sentry_sdk.hub import Hub
 from sentry_sdk.serializer import serialize
 
-from PartSeg.common_backend.base_argparser import safe_repr
 from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
+from PartSegCore.utils import safe_repr
 
 SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
 
