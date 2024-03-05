@@ -1101,7 +1101,8 @@ class ModelQtAl(BaseModel):
     field2: float = 2.0
     __hash__ = None
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # pragma: no cover
+        """For testing purposes only"""
         if isinstance(other, dict):
             try:
                 return self.field1 == other["field1"] and self.field2 == other["field2"]

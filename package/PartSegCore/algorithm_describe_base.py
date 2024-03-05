@@ -1,4 +1,5 @@
 import inspect
+import math
 import textwrap
 import typing
 import warnings
@@ -577,6 +578,20 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
         )
 
 
+def _next_after(type_, value, inf):
+    if issubclass(type_, int):
+        if inf == math.inf:
+            return value + 1
+        return value - 1
+    return math.nextafter(value, inf)
+
+
+def _next_after_with_none(type_, value, inf):
+    if value is None:
+        return None
+    return _next_after(type_, value, inf)
+
+
 def _calc_value_range(field_info: FieldInfo):
     if field_info.metadata is None:
         return (0, 1000)
@@ -587,12 +602,12 @@ def _calc_value_range(field_info: FieldInfo):
     for el in field_info.metadata:
         if isinstance(el, at.Ge):
             value_range = el.ge, value_range[1]
-        if isinstance(el, at.Gt):
-            value_range = el.gt, value_range[1]
-        if isinstance(el, at.Le):
+        elif isinstance(el, at.Gt):
+            value_range = _next_after(field_info.annotation, el.gt, math.inf), value_range[1]
+        elif isinstance(el, at.Le):
             value_range = value_range[0], el.le
-        if isinstance(el, at.Lt):
-            value_range = value_range[0], el.lt
+        elif isinstance(el, at.Lt):
+            value_range = value_range[0], _next_after(field_info.annotation, el.lt, -math.inf)
     return value_range
 
 
@@ -646,8 +661,8 @@ def _field_to_algorithm_property_pydantic_1(name: str, field: "ModelField"):
     if not hasattr(field.type_, "__origin__"):
         if issubclass(field.type_, (int, float)):
             value_range = (
-                field.field_info.ge or field.field_info.gt or 0,
-                field.field_info.le or field.field_info.lt or 1000,
+                field.field_info.ge or _next_after_with_none(field.type_, field.field_info.gt, math.inf) or 0,
+                field.field_info.le or _next_after_with_none(field.type_, field.field_info.lt, -math.inf) or 1000,
             )
         if issubclass(field.type_, AlgorithmSelection):
             value_type = AlgorithmDescribeBase

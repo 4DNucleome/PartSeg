@@ -1,4 +1,5 @@
 # pylint: disable=no-self-use
+import math
 import typing
 from enum import Enum
 
@@ -348,6 +349,22 @@ def test_base_model_to_algorithm_property_base():
     assert converted[3].value_type is Channel
     assert converted[3].name == "channel"
     assert converted[3].user_name == "Channel"
+
+
+def test_gt_lt_conversion():
+    class Sample(BaseModel):
+        field1: int = Field(0, le=100, ge=0, title="Field 1")
+        field2: int = Field(0, lt=100, gt=0, title="Field 2")
+        field3: float = Field(0, le=100, ge=0, title="Field 3")
+        field4: float = Field(0, lt=100, gt=0, title="Field 4")
+        field5: int = Field(0, title="Field 5")
+
+    converted = base_model_to_algorithm_property(Sample)
+    assert converted[0].range == (0, 100)
+    assert converted[1].range == (1, 99)
+    assert converted[2].range == (0, 100)
+    assert converted[3].range == (math.nextafter(0, math.inf), math.nextafter(100, -math.inf))
+    assert converted[4].range == (0, 1000)
 
 
 def test_base_model_to_algorithm_property_algorithm_describe_base():
