@@ -583,7 +583,10 @@ def _next_after(type_, value, inf):
         if inf == math.inf:
             return value + 1
         return value - 1
-    return math.nextafter(value, inf)
+    if hasattr(math, "nextafter"):
+        # TODO fix after drop python 3.8
+        return math.nextafter(value, inf)
+    return value
 
 
 def _next_after_with_none(type_, value, inf):

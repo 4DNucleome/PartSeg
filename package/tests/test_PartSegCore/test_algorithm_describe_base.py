@@ -1,5 +1,6 @@
 # pylint: disable=no-self-use
 import math
+import sys
 import typing
 from enum import Enum
 
@@ -351,6 +352,7 @@ def test_base_model_to_algorithm_property_base():
     assert converted[3].user_name == "Channel"
 
 
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="requires python 3.9 or higher")
 def test_gt_lt_conversion():
     class Sample(BaseModel):
         field1: int = Field(0, le=100, ge=0, title="Field 1")
