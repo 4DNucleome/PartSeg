@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.8", "3.9", "3.10", "3.11"]
+        python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         os: ["ubuntu-20.04"]
         qt_backend: ["PyQt5"]
         tox_args: [ "" ]
@@ -78,7 +78,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.8", "3.9", "3.10"]
+        python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         os: ["ubuntu-20.04", "macos-11", "windows-2019"]
         qt_backend: ["PySide2", "PyQt5"]
         include:

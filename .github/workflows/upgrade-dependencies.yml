@@ -35,7 +35,7 @@ jobs:
           pip install -U uv
           flags=(--extra pyqt5 --extra pyqt6 --extra pyside2 --extra pyside6 --extra test --extra pyinstaller)
 
-          for pyv in 3.8 3.9 3.10 3.11; do
+          for pyv in 3.8 3.9 3.10 3.11 3.12; do
             uv pip compile --python-version ${pyv} --upgrade --output-file requirements/constraints_py${pyv}.txt pyproject.toml requirements/version_denylist.txt "${flags[@]}"
             uv pip compile --python-version ${pyv} --upgrade --output-file requirements/constraints_py${pyv}_pydantic_1.txt pyproject.toml requirements/version_denylist.txt "${flags[@]}" --constraint requirements/pydantic_1.txt
           done
