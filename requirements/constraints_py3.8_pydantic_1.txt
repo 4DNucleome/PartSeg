@@ -20,7 +20,7 @@ babel==2.14.0
     # via sphinx
 backcall==0.2.0
     # via ipython
-build==1.0.3
+build==1.1.1
     # via npe2
 cachey==0.2.1
     # via napari
@@ -132,7 +132,7 @@ local-migrator==0.1.10
 locket==1.0.0
     # via partd
 lxml==5.1.0
-magicgui==0.8.1
+magicgui==0.8.2
     # via napari
 mahotas==1.4.13
 markdown-it-py==3.0.0
@@ -269,7 +269,7 @@ pygments==2.17.2
     #   sphinx
     #   superqt
 pyinstaller==6.4.0
-pyinstaller-hooks-contrib==2024.1
+pyinstaller-hooks-contrib==2024.2
     # via pyinstaller
 pyopengl==3.1.7
     # via napari
@@ -300,7 +300,7 @@ pytest==8.0.2
     #   pytest-timeout
 pytest-qt==4.4.0
 pytest-timeout==2.2.0
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
     #   pandas
