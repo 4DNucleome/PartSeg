@@ -4,7 +4,7 @@ alabaster==0.7.13
     # via sphinx
 altgraph==0.17.4
     # via pyinstaller
-app-model==0.2.4
+app-model==0.2.6
     # via napari
 appdirs==1.4.4
     # via
@@ -61,7 +61,7 @@ executing==2.0.1
 fonticon-fontawesome6==6.4.0
 freetype-py==2.4.0
     # via vispy
-fsspec==2024.3.0
+fsspec==2024.3.1
     # via dask
 h5py==3.10.0
 heapdict==1.0.1
@@ -78,7 +78,7 @@ imageio==2.34.0
     #   scikit-image
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==7.0.2
+importlib-metadata==7.1.0
     # via
     #   build
     #   dask
@@ -86,12 +86,12 @@ importlib-metadata==7.0.2
     #   pyinstaller
     #   pyinstaller-hooks-contrib
     #   sphinx
-importlib-resources==6.3.1
+importlib-resources==6.4.0
     # via
     #   jsonschema
     #   jsonschema-specifications
     #   vispy
-in-n-out==0.1.9
+in-n-out==0.2.0
     # via app-model
 iniconfig==2.0.0
     # via pytest
@@ -135,7 +135,7 @@ locket==1.0.0
 lxml==5.1.0
 magicgui==0.8.2
     # via napari
-mahotas==1.4.13
+mahotas==1.4.14
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.5
@@ -162,7 +162,7 @@ nest-asyncio==1.6.0
 networkx==3.1
     # via scikit-image
 nme==0.1.8
-npe2==0.7.4
+npe2==0.7.5
     # via napari
 numpy==1.24.4
     # via
@@ -350,7 +350,7 @@ scipy==1.10.1
     # via
     #   napari
     #   scikit-image
-sentry-sdk==1.42.0
+sentry-sdk==1.43.0
 setuptools==69.2.0
     # via
     #   pyinstaller
@@ -428,7 +428,7 @@ traitlets==5.14.2
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.9.0
+typer==0.10.0
     # via npe2
 typing-extensions==4.10.0
     # via
