@@ -104,7 +104,7 @@ stages:
               path: $(pip_cache_dir)
           - bash: |
               python -m pip install tox
-            displayName: Test notebook
+            displayName: "Install tox"
           - bash: tox -e jupyter
             displayName: "Run Notebook"
             env:
