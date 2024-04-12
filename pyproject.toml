@@ -60,7 +60,7 @@ dependencies = [
     "pandas>=1.1.0",
     "psygnal>=0.3.1",
     "pydantic>=1.9.1",
-    "pygments>=2.4.0",
+    "pygments>=2.12.0",
     "qtconsole>=4.7.7",
     "requests>=2.18.0",
     "scipy>=1.4.1",
@@ -134,7 +134,7 @@ pyside6 = [
 ]
 test = [
     "coverage",
-    "lxml",
+    "lxml[html_clean]",
     "pytest>=7.0.0",
     "pytest-qt",
     "pytest-timeout",

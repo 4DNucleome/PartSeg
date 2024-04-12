@@ -97,16 +97,18 @@ stages:
           DATA_PATH: typy_neuronow2
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.11', architecture: x64}}
           - template: .azure-pipelines/pip_cache.yaml
             parameters:
-              key: notebook | requirements/constraints_py3.9.txt | "$(PY)"
+              key: notebook | requirements/constraints_py3.11.txt | "$(PY)"
               path: $(pip_cache_dir)
           - bash: |
               python -m pip install tox
-            displayName: Test notebook
+            displayName: "Install tox"
           - bash: tox -e jupyter
             displayName: "Run Notebook"
+            env:
+              PIP_CONSTRAINT: requirements/constraints_py3.11.txt
 
   - stage: Tests_linux
     dependsOn: [GetTestData, formatting_check]
