@@ -68,7 +68,7 @@ heapdict==1.0.1
     # via cachey
 hsluv==5.0.4
     # via vispy
-idna==3.6
+idna==3.7
     # via requests
 imagecodecs==2024.1.1
 imageio==2.34.0
