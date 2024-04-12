@@ -134,7 +134,7 @@ pyside6 = [
 ]
 test = [
     "coverage",
-    "lxml",
+    "lxml[html_clean]",
     "pytest>=7.0.0",
     "pytest-qt",
     "pytest-timeout",
