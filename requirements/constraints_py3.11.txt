@@ -118,6 +118,9 @@ local-migrator==0.1.10
 locket==1.0.0
     # via partd
 lxml==5.2.1
+    # via lxml-html-clean
+lxml-html-clean==0.1.1
+    # via lxml
 magicgui==0.8.2
     # via napari
 mahotas==1.4.15
