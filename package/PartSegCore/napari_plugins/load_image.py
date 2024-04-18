@@ -9,7 +9,7 @@ def napari_get_reader(path: str):
         (
             functools.partial(partseg_loader, LoadStackImage)
             for extension in LoadStackImage.get_extensions()
-            if path.endswith(extension)
+            if path.lower().endswith(extension.lower())
         ),
         None,
     )
