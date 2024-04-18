@@ -78,6 +78,9 @@ def test_sentry_report(monkeypatch):
         assert len(event["message"]) == DEFAULT_ERROR_REPORT
         assert len(event["extra"]["lorem"]) == DEFAULT_ERROR_REPORT
 
+    def check_envelope(envelope):
+        check_event(envelope.get_event())
+
     try:
         raise ValueError("eeee")
     except ValueError as e:
@@ -86,6 +89,9 @@ def test_sentry_report(monkeypatch):
         client = Client("https://aaa@test.pl/77")
         Hub.current.bind_client(client)
         monkeypatch.setattr(client.transport, "capture_event", check_event)
+        # handle sentry-sdk 2
+        monkeypatch.setattr(client.transport, "capture_envelope", check_envelope, raising=False)
+
         with sentry_sdk.push_scope() as scope:
             scope.set_extra("lorem", message)
             sentry_sdk.capture_event(event, hint=hint)
@@ -102,6 +108,9 @@ def test_sentry_report_no_clip(monkeypatch):
         assert len(event["message"]) == 5000
         assert len(event["extra"]["lorem"]) == 5000
 
+    def check_envelope(envelope):
+        check_event(envelope.get_event())
+
     try:
         raise ValueError("eeee")
     except ValueError as e:
@@ -113,6 +122,8 @@ def test_sentry_report_no_clip(monkeypatch):
             client = Client("https://aaa@test.pl/77")
         Hub.current.bind_client(client)
         monkeypatch.setattr(client.transport, "capture_event", check_event)
+        # handle sentry-sdk 2
+        monkeypatch.setattr(client.transport, "capture_envelope", check_envelope, raising=False)
         with sentry_sdk.push_scope() as scope:
             scope.set_extra("lorem", message)
             event_id = sentry_sdk.capture_event(event, hint=hint)
