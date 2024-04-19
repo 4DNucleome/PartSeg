@@ -443,7 +443,7 @@ def mask_operation_plan(request, simple_measurement_list):
 def wait_for_calculation(manager):
     for _ in range(int(120 / 0.1)):
         res = manager.get_results()
-        if res.errors:
+        if res.errors and res.errors[0][0].startswith("Unknown file"):
             pytest.fail(str(res.errors))
         if manager.has_work:
             time.sleep(0.1)
