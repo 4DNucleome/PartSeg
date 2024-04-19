@@ -31,8 +31,8 @@ def get_plugins():
         sys.path.append(os.path.dirname(__file__))
         packages = list(pkgutil.iter_modules(__path__))
     packages2 = itertools.chain(
-        entry_points().get("PartSeg.plugins", []),
-        entry_points().get("partseg.plugins", []),
+        entry_points().select(group="PartSeg.plugins"),
+        entry_points().select(group="partseg.plugins"),
     )
     return [importlib.import_module(el.name) for el in packages] + [el.load() for el in packages2]
 

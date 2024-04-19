@@ -8,8 +8,8 @@ from importlib.metadata import entry_points
 def get_plugins():
     packages = pkgutil.iter_modules(__path__, f"{__name__}.")
     packages2 = itertools.chain(
-        entry_points().get("PartSegCore.plugins", []),
-        entry_points().get("partsegcore.plugins", []),
+        entry_points().select(group="PartSegCore.plugins"),
+        entry_points().select(group="partsegcore.plugins"),
     )
     return [importlib.import_module(el.name) for el in packages] + [el.load() for el in packages2]
 
