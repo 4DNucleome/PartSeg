@@ -268,10 +268,13 @@ def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, cal
     :param result_queue: Queue for calculation result
     :param calculation_dict: dict with global parameters
     """
-    register_if_need()
-    with suppress(ImportError):
-        from PartSeg.plugins import register_if_need as register
+    try:
+        register_if_need()
+        with suppress(ImportError):
+            from PartSeg.plugins import register_if_need as register
 
-        register()
-    worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
-    worker.run()
+            register()
+        worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
+        worker.run()
+    except Exception as e:  # pragma: no cover # pylint: disable=broad-except
+        result_queue.put(("-1", (-1, [(e, traceback.extract_tb(e.__traceback__))])))
