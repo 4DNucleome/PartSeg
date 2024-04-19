@@ -531,7 +531,7 @@ class CalculationManager:
         responses: list[tuple[uuid.UUID, WrappedResult]] = self.batch_manager.get_result()
         new_errors: list[tuple[str, ErrorInfo]] = []
         for uuid_id, (ind, result_list) in responses:
-            if uuid_id == "-1":
+            if uuid_id == "-1":  # pragma: no cover
                 self.errors_list.append((f"Unknown file {ind}", result_list))
                 new_errors.append((f"Unknown file {ind}", result_list))
                 continue

@@ -444,7 +444,7 @@ def wait_for_calculation(manager):
     for _ in range(int(120 / 0.1)):
         res = manager.get_results()
         if res.errors and res.errors[0][0].startswith("Unknown file"):
-            pytest.fail(str(res.errors))
+            pytest.fail(str(res.errors))  # pragma: no cover
         if manager.has_work:
             time.sleep(0.1)
         else:
