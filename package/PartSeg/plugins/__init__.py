@@ -1,11 +1,9 @@
 import contextlib
 import importlib
-import itertools
 import os
 import pkgutil
 import sys
 import typing
-from importlib.metadata import entry_points
 
 import PartSegCore.plugins
 
@@ -30,10 +28,7 @@ def get_plugins():
     else:
         sys.path.append(os.path.dirname(__file__))
         packages = list(pkgutil.iter_modules(__path__))
-    packages2 = itertools.chain(
-        entry_points().get("PartSeg.plugins", []),
-        entry_points().get("partseg.plugins", []),
-    )
+    packages2 = PartSegCore.plugins.iter_entrypoints("PartSeg.plugins")
     return [importlib.import_module(el.name) for el in packages] + [el.load() for el in packages2]
 
 
