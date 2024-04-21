@@ -91,6 +91,11 @@ jobs:
           - python_version: "3.9"
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
+        exclude:
+          - python_version: "3.11"
+            qt_backend: "PySide2"
+          - python_version: "3.12"
+            qt_backend: "PySide2"
     with:
       test_data: True
       python_version: ${{ matrix.python_version }}
