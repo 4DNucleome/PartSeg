@@ -10,7 +10,6 @@ import numpy as np
 from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
-from pydantic.fields import UndefinedType
 from qtpy.QtCore import QMargins, QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -50,6 +49,11 @@ from PartSegCore.segmentation.algorithm_base import (
 )
 from PartSegImage import Channel, Image
 
+try:
+    from pydantic.fields import UndefinedType
+except ImportError:  # pragma: no cover
+    from pydantic_core import PydanticUndefinedType as UndefinedType
+
 logger = logging.getLogger(__name__)
 ignore_logger(__name__)
 
@@ -72,8 +76,8 @@ def _pretty_print(data, indent=2) -> str:
 
 
 class ProfileSelect(QComboBox):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
         self._settings = None
 
     def _update_choices(self):
@@ -189,7 +193,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
     @classmethod
     def _get_field_from_value_type(cls, ap: AlgorithmProperty):
         if issubclass(ap.value_type, Channel):
-            res = ChannelComboBox()
+            res = ChannelComboBox(parent=None)
             res.change_channels_num(10)
         elif issubclass(ap.value_type, AlgorithmDescribeBase):
             res = SubAlgorithmWidget(ap)
@@ -205,7 +209,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(ap.value_type, ROIExtractionProfile):
             res = ProfileSelect()
         elif issubclass(ap.value_type, list):
-            res = QComboBox()
+            res = QComboBox(parent=None)
             res.addItems(list(map(str, ap.possible_values)))
         elif issubclass(ap.value_type, BaseModel):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
@@ -572,7 +576,7 @@ class SubAlgorithmWidget(QWidget):
         if name not in self.widgets_dict:
             if name not in self.property.possible_values:
                 return
-            start_dict = {} if name not in self.starting_values else self.starting_values[name]
+            start_dict = self.starting_values.get(name, {})
             self.widgets_dict[name] = self._get_form_widget(self.property.possible_values[name], start_dict)
 
             self.layout().addWidget(self.widgets_dict[name])

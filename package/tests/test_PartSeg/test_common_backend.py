@@ -16,6 +16,7 @@ import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
 
+import PartSegCore.utils
 from PartSeg import state_store
 from PartSeg.common_backend import (
     base_argparser,
@@ -96,7 +97,7 @@ class TestExceptHook:
         except_hook.show_warning(header, text, exception)
         assert len(exec_list) == 1
 
-    def test_my_excepthook(self, monkeypatch, capsys):
+    def test_my_excepthook(self, monkeypatch, caplog):
         catch_list = []
         error_list = []
         exit_list = []
@@ -126,7 +127,8 @@ class TestExceptHook:
         monkeypatch.setattr(state_store, "show_error_dialog", False)
         except_hook.my_excepthook(KeyboardInterrupt, KeyboardInterrupt(), [])
         assert exit_list == [1]
-        assert capsys.readouterr().err == "KeyboardInterrupt close\n"
+        assert "KeyboardInterrupt close\n" in caplog.text
+        caplog.clear()
 
         except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
         assert len(catch_list) == 1
@@ -137,7 +139,7 @@ class TestExceptHook:
 
         except_hook.my_excepthook(KeyboardInterrupt, KeyboardInterrupt(), [])
         assert exit_list == [1, 1]
-        assert capsys.readouterr().err == "KeyboardInterrupt close\n"
+        assert "KeyboardInterrupt close\n" in caplog.text
 
         except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
         assert len(error_list) == 1
@@ -187,12 +189,12 @@ class TestBaseArgparse:
         parser.parse_args([])
 
     def test_safe_repr(self):
-        assert base_argparser.safe_repr(1) == "1"
-        assert base_argparser.safe_repr(np.arange(3)) == "array([0, 1, 2])"
+        assert PartSegCore.utils.safe_repr(1) == "1"
+        assert PartSegCore.utils.safe_repr(np.arange(3)) == "array([0, 1, 2])"
 
     def test_safe_repr_napari_image(self):
         assert (
-            base_argparser.safe_repr(napari.layers.Image(np.zeros((10, 10, 5))))
+            PartSegCore.utils.safe_repr(napari.layers.Image(np.zeros((10, 10, 5))))
             == "<Image of shape: (10, 10, 5), dtype: float64, slice"
             " (0, slice(None, None, None), slice(None, None, None))>"
         )
@@ -247,12 +249,12 @@ class TestProgressThread:
 
 
 class TestSegmentationThread:
-    def test_empty_image(self, capsys):
+    def test_empty_image(self, caplog):
         thr = segmentation_thread.SegmentationThread(ROIExtractionAlgorithmForTest())
         assert thr.get_info_text() == "text"
         thr.set_parameters(a=1)
         thr.run()
-        assert capsys.readouterr().err.startswith("No image in")
+        assert "No image in" in caplog.text
 
     def test_run(self, qtbot):
         algorithm = ROIExtractionAlgorithmForTest()
@@ -466,7 +468,7 @@ class TestLoadBackup:
 
 @pytest.fixture()
 def image(tmp_path):
-    data = np.random.random((10, 10, 2))
+    data = np.random.default_rng().uniform(size=(10, 10, 2))
     return Image(data=data, image_spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
 
 

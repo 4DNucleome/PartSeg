@@ -1,6 +1,7 @@
 """from napari._qt.dialog.modal """
+
 from qtpy.QtCore import QPoint, QRect, Qt
-from qtpy.QtGui import QCursor, QGuiApplication
+from qtpy.QtGui import QCursor, QGuiApplication, QKeyEvent
 from qtpy.QtWidgets import QDialog, QFrame, QVBoxLayout
 
 
@@ -37,7 +38,7 @@ class QtPopup(QDialog):
         super().__init__(parent)
         self.setObjectName("QtModalPopup")
         self.setModal(False)  # if False, then clicking anywhere else closes it
-        self.setWindowFlags(Qt.Popup | Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
         self.setLayout(QVBoxLayout())
 
         self.frame = QFrame()
@@ -121,15 +122,15 @@ class QtPopup(QDialog):
         top = max(min(screen_geometry.bottom() - height, top), screen_geometry.top())
         self.setGeometry(left, top, width, height)
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QKeyEvent):
         """Close window on return, else pass event through to super class.
 
         Parameters
         ----------
-        event : qtpy.QtCore.QEvent
+        event : qtpy.QtGui.QKeyEvent
             Event from the Qt context.
         """
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.close()
             return
         super().keyPressEvent(event)

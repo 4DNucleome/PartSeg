@@ -15,6 +15,6 @@ This module contains utils needed for transform multichannel image to RGB
 
 .. py:data:: default_colormap_dict
 
-   Dict with default colormaps avaliable in PartSeg.
+   Dict with default colormaps available in PartSeg.
 
 a

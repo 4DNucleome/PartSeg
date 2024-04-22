@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from skimage.morphology import diamond
 
-from PartSegImage import Image, ImageWriter, TiffImageReader
+from PartSegImage import Channel, Image, ImageWriter, TiffImageReader
 from PartSegImage.image import FRAME_THICKNESS
 
 
@@ -115,6 +115,14 @@ class TestImageBase:
         self.image_class(
             np.zeros(initial_shape), (5, 5, 5), mask=np.zeros((1, 10, 50, 50)), axes_order=self.image_class.axis_order
         )
+        mask = np.zeros((1, 10, 50, 50))
+        mask[0, 2:-2] = 1
+        im = self.image_class(np.zeros(initial_shape), (5, 5, 5), mask=mask, axes_order=self.image_class.axis_order)
+        assert np.all(im.mask == mask)
+
+    def test_image_mask_exception(self):
+        if "C" not in self.image_class.axis_order:
+            pytest.skip("Lack of channel axis")
         data_shape = (1,) * (len(self.image_class.axis_order) - 4) + (10, 50, 50, 4)
         with pytest.raises(ValueError, match="Wrong array shape"):
             self.image_class(
@@ -130,10 +138,6 @@ class TestImageBase:
                 mask=np.zeros(data_shape),
                 axes_order=self.image_class.axis_order,
             )
-        mask = np.zeros((1, 10, 50, 50))
-        mask[0, 2:-2] = 1
-        im = self.image_class(np.zeros(initial_shape), (5, 5, 5), mask=mask, axes_order=self.image_class.axis_order)
-        assert np.all(im.mask == mask)
 
     def test_reorder_axes(self):
         fixed_array = self.image_class.reorder_axes(np.zeros((10, 20)), axes="XY")
@@ -242,10 +246,18 @@ class TestImageBase:
         assert image.mask.shape == self.mask_shape((1, 10, 20, 30), "TZYX")
 
     def test_get_image_for_save(self):
+        if "C" not in self.image_class.array_axis_order:
+            pytest.skip("No channel axis")
         image = self.image_class(np.zeros((1, 10, 3, 20, 30), np.uint8), (1, 1, 1), "", axes_order="TZCYX")
         assert image.get_image_for_save().shape == (1, 10, 3, 20, 30)
         image = self.image_class(np.zeros((1, 10, 20, 30, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC")
         assert image.get_image_for_save().shape == (1, 10, 3, 20, 30)
+
+    def test_get_image_for_save_no_channel(self):
+        image = self.image_class(np.zeros((1, 10, 20, 30), np.uint8), (1, 1, 1), "", axes_order="TZYX")
+        assert image.get_image_for_save().shape == (1, 10, 1, 20, 30)
+        image = self.image_class(np.zeros((1, 10, 20, 30), np.uint8), (1, 1, 1), "", axes_order="TZYX")
+        assert image.get_image_for_save().shape == (1, 10, 1, 20, 30)
 
     def test_get_mask_for_save(self):
         image = self.image_class(np.zeros((1, 10, 3, 20, 30), np.uint8), (1, 1, 1), "", axes_order="TZCYX")
@@ -366,6 +378,8 @@ class TestImageBase:
         assert image.get_um_spacing() == (1, 1)
 
     def test_save(self, tmp_path):
+        if "C" not in self.image_class.axis_order:
+            pytest.skip("No channel axis")
         data = np.zeros((1, 10, 20, 30, 3), np.uint8)
         data[..., :10, 0] = 2
         data[..., :10, 1] = 20
@@ -397,6 +411,11 @@ class TestImageBase:
         assert set(image.get_axis_positions()) == set(image.axis_order)
         assert len(set(image.get_axis_positions().values())) == len(image.axis_order)
 
+    def test_get_data(self):
+        data = np.zeros((10, 10), np.uint8)
+        image = self.image_class(data, (1, 1), axes_order="XY")
+        assert np.all(image.get_data() == data)
+
 
 class ChangeChannelPosImage(Image):
     axis_order = "TZCYX"
@@ -404,6 +423,21 @@ class ChangeChannelPosImage(Image):
 
 class TestInheritanceImageChannelPos(TestImageBase):
     image_class = ChangeChannelPosImage
+
+
+class NoChannelImage(Image):
+    axis_order = "TZYX"
+
+
+class TestInheritanceNoChannelImage(TestImageBase):
+    image_class = NoChannelImage
+
+    def prepare_image_initial_shape(self, shape, channel):
+        return self.prepare_mask_shape(shape)
+
+    def needed_layer_shape(self, shape, axes: str, drop: str):
+        axes = axes.replace("C", "")
+        return super().needed_layer_shape(shape, axes, drop)
 
 
 class ChangeTimePosImage(Image):
@@ -442,6 +476,7 @@ class TestMergeImage:
         assert res_image.channels == 2
         assert np.all(res_image.get_channel(0) == 0)
         assert np.all(res_image.get_channel(1) == 1)
+        assert np.all(res_image.get_channel(Channel(1)) == 1)
         assert res_image.dtype == check_dtype
 
     def test_merge_fail(self):
@@ -485,6 +520,29 @@ class TestMergeImage:
         res_image = image1.merge(image3, "C")
         assert res_image.channel_names == ["channel 1", "channel 3", "channel 5"]
 
+    def test_channel_name_form_str(self):
+        image1 = Image(
+            data=np.zeros((1, 4, 10, 10), dtype=np.uint8),
+            axes_order="CZXY",
+            image_spacing=(1, 1, 1),
+            channel_names=["channel 1"],
+        )
+        assert image1.channel_names == ["channel 1"]
+        image2 = Image(
+            data=np.zeros((2, 4, 10, 10), dtype=np.uint8),
+            axes_order="CZXY",
+            image_spacing=(1, 1, 1),
+            channel_names="channel",
+        )
+        assert image2.channel_names == ["channel", "channel 2"]
+        image3 = Image(
+            data=np.zeros((2, 4, 10, 10), dtype=np.uint8),
+            axes_order="CZXY",
+            image_spacing=(1, 1, 1),
+            channel_names="channel 1",
+        )
+        assert image3.channel_names == ["channel 1", "channel 2"]
+
     def test_different_axes_order(self):
         image1 = Image(data=np.zeros((3, 10, 10), dtype=np.uint8), axes_order="ZXY", image_spacing=(1, 1, 1))
         image2 = ChangeChannelPosImage(
@@ -494,6 +552,14 @@ class TestMergeImage:
         assert res_image.channels == 2
         assert isinstance(res_image, Image)
         assert isinstance(image2.merge(image1, "C"), ChangeChannelPosImage)
+
+    def test_get_data_by_axis(self):
+        image = Image(data=np.zeros((2, 3, 10, 10), dtype=np.uint8), axes_order="CZXY", image_spacing=(1, 1, 1))
+        assert image.get_data_by_axis(c=0).shape == (1, 3, 10, 10)
+        assert image.get_data_by_axis(C=1).shape == (1, 3, 10, 10)
+        assert image.get_data_by_axis(z=0).shape == (2, 1, 10, 10)
+        assert image.get_data_by_axis(Z=1).shape == (2, 1, 10, 10)
+        assert image.get_data_by_axis(C="channel 1").shape == (1, 3, 10, 10)
 
 
 def test_cut_with_roi():
@@ -512,3 +578,15 @@ def test_cut_with_roi():
         assert cut_image[0].shape == (1, 1, 15, 15)
         assert np.all(cut_image[0][0, 0, 2:-2, 2:-2][diam > 0])
         assert np.all(cut_mask[0, 0, 2:-2, 2:-2] == diam)
+
+
+def test_str_and_repr_mask_presence():
+    image = Image(np.zeros((10, 10), np.uint8), (1, 1), "test", axes_order="XY")
+    assert "mask: False" in str(image)
+    assert "mask=False" in repr(image)
+    assert "coloring: None" in str(image)
+
+    image.set_mask(np.zeros((10, 10), np.uint8))
+
+    assert "mask: True" in str(image)
+    assert "mask=True" in repr(image)

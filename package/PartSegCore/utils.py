@@ -10,12 +10,15 @@ from contextlib import suppress
 from types import MethodType
 
 import numpy as np
+from local_migrator import register_class
+from psygnal import Signal
 from pydantic import BaseModel as PydanticBaseModel
+from sentry_sdk.utils import safe_repr as _safe_repr
 
 __author__ = "Grzegorz Bokota"
 
-from local_migrator import register_class
-from psygnal import Signal
+if typing.TYPE_CHECKING:
+    from napari.layers import Image
 
 
 def bisect(arr, val, comp):
@@ -169,7 +172,7 @@ class EventedDict(typing.MutableMapping):
         if k in self._dict and isinstance(self._dict[k], EventedDict):
             self._dict[k].setted.disconnect(self._propagate_setitem)
             self._dict[k].deleted.disconnect(self._propagate_del)
-        old_value = self._dict[k] if k in self._dict else None
+        old_value = self._dict.get(k)
         with suppress(ValueError):
             if old_value == v:
                 return
@@ -251,7 +254,7 @@ class ProfileDict:
     Dict for storing recursive data. The path is dot separated.
 
     :param klass: class of stored data. Same as in :py:class:`EventedDict`
-    :parma kwargs: initial data
+    :param kwargs: initial data
 
     >>> dkt = ProfileDict()
     >>> dkt.set(["aa", "bb", "c1"], 7)
@@ -335,17 +338,16 @@ class ProfileDict:
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         curr_dict = self.my_dict
-
-        for i, key in enumerate(key_path[:-1]):
-            try:
+        i = 0
+        try:
+            for i, key in enumerate(key_path[:-1]):  # noqa: B007
                 # TODO add check if next step element is dict and create custom information
                 curr_dict = curr_dict[key]
-            except KeyError:
-                for key2 in key_path[i:-1]:
-                    with curr_dict.setted.blocked():
-                        curr_dict[key2] = {}
-                    curr_dict = curr_dict[key2]
-                break
+        except KeyError:
+            for key2 in key_path[i:-1]:
+                with curr_dict.setted.blocked():
+                    curr_dict[key2] = {}
+                curr_dict = curr_dict[key2]
         if isinstance(value, dict):
             value = EventedDict(**value)
         curr_dict[key_path[-1]] = value
@@ -381,15 +383,15 @@ class ProfileDict:
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         curr_dict = self.my_dict
-        for key in key_path:
-            try:
+        try:
+            for key in key_path:
                 curr_dict = curr_dict[key]
-            except KeyError as e:
-                if default is None:
-                    raise e
+        except KeyError as e:
+            if default is None:
+                raise e
 
-                val = copy.deepcopy(default)
-                return self.set(key_path, val)
+            val = copy.deepcopy(default)
+            return self.set(key_path, val)
 
         return curr_dict
 
@@ -462,3 +464,20 @@ def iterate_names(base_name: str, data_dict, max_length=None) -> typing.Optional
         if res_name not in data_dict:
             return res_name
     return None
+
+
+def napari_image_repr(image: "Image") -> str:
+    return (
+        f"<Image of shape: {image.data.shape}, dtype: {image.data.dtype}, "
+        f"slice {getattr(image, '_slice_indices', None)}>"
+    )
+
+
+def safe_repr(val):
+    from napari.layers import Image
+
+    if isinstance(val, np.ndarray):
+        return numpy_repr(val)
+    if isinstance(val, Image):
+        return napari_image_repr(val)
+    return _safe_repr(val)

@@ -1,9 +1,10 @@
 """
-This module contains base for advanced window for PartSeg.
-In this moment controlling colormaps tabs and developer PartSegCore
+This module contains base for the advanced window for PartSeg.
+At this moment controlling colormaps tabs and developer PartSegCore
 """
+
 import importlib
-import sys
+import logging
 from contextlib import suppress
 from typing import List
 
@@ -41,22 +42,22 @@ class DevelopTab(QWidget):
     """
     Widget for developer utilities. Currently only contains button for reload algorithms and
 
-    To enable it run program with `--develop` flag.
+    To enable it run program with a `--develop` flag.
 
-    If you would like to use it for developing your own algorithm and modify same of ParsSeg class
-    please protect this part of code with something like:
+    If you would like to use it for developing your own algorithm and modify some of the PartSeg class.
+    Please protect this part of code with something like:
 
     >>> if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.image_reader":
 
     This is taken from :py:mod:`PartSegImage.image_reader`
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
 
         # noinspection PyArgumentList
         self.reload_btn = QPushButton("Reload algorithms", clicked=self.reload_algorithm_action)
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         layout.addWidget(self.reload_btn, 0, 0)
         layout.setColumnStretch(1, 1)
         layout.setRowStretch(1, 1)
@@ -64,14 +65,15 @@ class DevelopTab(QWidget):
 
     def reload_algorithm_action(self):
         """Function for reload plugins and algorithms"""
+        msg = "Reloading {mod_name}"
         for val in register.reload_module_list:
-            print(val, file=sys.stderr)
+            logging.info(msg, extra={"mod_name": val.__name__})
             importlib.reload(val)
         for el in plugins.get_plugins():
-            print(el, file=sys.stderr)
+            logging.info(msg, extra={"mod_name": el.__name__})
             importlib.reload(el)
         for el in core_plugins.get_plugins():
-            print(el, file=sys.stderr)
+            logging.info(msg, extra={"mod_name": el.__name__})
             importlib.reload(el)
         importlib.reload(register)
         importlib.reload(plugins)
@@ -83,15 +85,15 @@ class DevelopTab(QWidget):
 
 
 class MaskControl(QWidget):
-    def __init__(self, settings: ViewSettings):
-        super().__init__()
+    def __init__(self, settings: ViewSettings, parent=None):
+        super().__init__(parent=parent)
         self.settings = settings
         self.color_picker = QColorDialog()
         self.color_picker.setWindowFlag(Qt.WindowType.Widget)
         self.color_picker.setOptions(
             QColorDialog.ColorDialogOption.DontUseNativeDialog | QColorDialog.ColorDialogOption.NoButtons
         )
-        self.opacity_spin = QDoubleSpinBox()
+        self.opacity_spin = QDoubleSpinBox(self)
         self.opacity_spin.setRange(0, 1)
         self.opacity_spin.setSingleStep(0.1)
         self.opacity_spin.setDecimals(2)
@@ -233,7 +235,7 @@ class AdvancedWindow(QTabWidget):
     :param image_view_names: passed as second argument to :py:class:`~.PColormapList`
     """
 
-    def __init__(self, settings: ViewSettings, image_view_names: List[str], reload_list=None, parent=None):
+    def __init__(self, settings: BaseSettings, image_view_names: List[str], reload_list=None, parent=None):
         super().__init__(parent)
         self.color_control = ColorControl(settings, image_view_names)
         self.settings = settings

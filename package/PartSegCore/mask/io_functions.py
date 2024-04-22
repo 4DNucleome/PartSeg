@@ -106,7 +106,7 @@ class MaskProjectTuple(ProjectInfoBase):
         return MaskProjectTuple(file_path=self.file_path, image=self.image.substitute(), mask=self.mask)
 
     @property
-    def roi(self):
+    def roi(self):  # pragma: no cover
         warnings.warn("roi is deprecated", DeprecationWarning, stacklevel=2)
         return self.roi_info.roi
 
@@ -293,11 +293,11 @@ def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, 
     step_changed(6)
     return MaskProjectTuple(
         file_path=file_path,
-        image=metadata["base_file"] if "base_file" in metadata else None,
+        image=metadata.get("base_file"),
         roi_info=roi_info,
         selected_components=metadata["components"],
         mask=mask,
-        roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
+        roi_extraction_parameters=metadata.get("parameters"),
         history=history,
         spacing=([10 ** (-9), *list(spacing)]) if spacing is not None else None,
         frame_thickness=metadata.get("frame_thickness", FRAME_THICKNESS),
@@ -447,8 +447,6 @@ class LoadROIImage(LoadBase):
             callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"],
         )
-        # noinspection PyProtectedMember
-        # image.file_path = load_locations[0]
         return dataclasses.replace(
             seg, file_path=image.file_path, image=image, roi_info=seg.roi_info.fit_to_image(image)
         )

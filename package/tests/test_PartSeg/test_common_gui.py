@@ -152,7 +152,8 @@ class Enum2(Enum):
 def _example_tiff_files(tmp_path):
     for i in range(5):
         ImageWriter.save(
-            Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
+            Image(np.random.default_rng().uniform(size=(10, 10)), image_spacing=(1, 1), axes_order="XY"),
+            tmp_path / f"img_{i}.tif",
         )
 
 
@@ -884,6 +885,7 @@ class TestFormWidget:
         qtbot.add_widget(form)
         assert form.has_elements()
         assert isinstance(form.get_values(), SampleModel)
+        assert form.get_values().check_selection.values == {"field": 1}
         assert form.get_values() == SampleModel(
             field1=10, check_selection=SampleSelection(name="1", values={"field": 1})
         )
@@ -1095,8 +1097,18 @@ class EnumQtAl(Enum):
 
 
 class ModelQtAl(BaseModel):
-    field1 = 1
-    field2 = 2.0
+    field1: int = 1
+    field2: float = 2.0
+    __hash__ = None
+
+    def __eq__(self, other):  # pragma: no cover
+        """For testing purposes only"""
+        if isinstance(other, dict):
+            try:
+                return self.field1 == other["field1"] and self.field2 == other["field2"]
+            except KeyError:
+                return False
+        return super().__eq__(other)
 
 
 class TestQtAlgorithmProperty:

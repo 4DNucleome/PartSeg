@@ -8,9 +8,13 @@ on:
     branches:
       - master
       - develop
-      - bugfix/fix_pre_tests
   schedule:
     - cron: '0 */12 * * *'  # every 12 hours
+  pull_request:
+    paths:
+      - '.github/workflows/test_prereleases.yml'
+      - 'pyproject.toml'
+      - 'requirements/pre_test_problematic_version.txt'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -23,7 +27,7 @@ jobs:
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -43,11 +47,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
+          cache-dependency-path: 'pyproject.toml'
 
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
@@ -59,7 +63,7 @@ jobs:
       - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -71,7 +75,7 @@ jobs:
 
       - name: Test with tox linux
         # run tests using pip install --pre
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         timeout-minutes: 60
         with:
           run: python -m tox -v --pre
@@ -80,6 +84,7 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: latest
           BACKEND: PyQt5
+          PIP_CONSTRAINT: requirements/pre_test_problematic_version.txt
 
       # If something goes wrong, we can open an issue in the repo
       - name: Report Failures
@@ -100,7 +105,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       name: Install Python 3.9
       with:
         python-version: 3.9
@@ -111,23 +116,23 @@ jobs:
         pip install pip-tools
     - name: Compile and install PyInstaller requirements
       run: |
-        pip-compile --upgrade -o requirements.txt setup.cfg --extra pyinstaller  --pre
+        pip-compile --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller  --pre
         pip-sync
         pip install .
     - name: upload requirements
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: requirements
         path: requirements.txt
     - name: Run PyInstaller
       run: python  build_utils/create_and_pack_executable.py
     - name: Upload bundle
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: bundle
         path: dist2/
     - name: Test bundle
-      uses: aganders3/headless-gui@v1
+      uses: aganders3/headless-gui@v2
       timeout-minutes: 60
       with:
         run: dist/PartSeg/PartSeg _test

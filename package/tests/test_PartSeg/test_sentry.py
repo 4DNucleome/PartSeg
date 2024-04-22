@@ -11,8 +11,8 @@ from sentry_sdk.client import Client
 from sentry_sdk.hub import Hub
 from sentry_sdk.serializer import serialize
 
-from PartSeg.common_backend.base_argparser import safe_repr
 from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
+from PartSegCore.utils import safe_repr
 
 SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
 
@@ -39,11 +39,11 @@ def test_sentry_serialize_clip(monkeypatch):
         event, _hint = sentry_sdk.utils.event_from_exception(e)
         event["message"] = message
 
-        cliped = serialize(event)
-        assert len(cliped["message"]) == DEFAULT_ERROR_REPORT
+        clipped = serialize(event)
+        assert len(clipped["message"]) == DEFAULT_ERROR_REPORT
         monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, 10**4)
-        cliped = serialize(event)
-        assert len(cliped["message"]) == 5000
+        clipped = serialize(event)
+        assert len(clipped["message"]) == 5000
 
 
 def test_sentry_variables_clip(monkeypatch):
@@ -57,12 +57,12 @@ def test_sentry_variables_clip(monkeypatch):
         vars_dict = event["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]
         for letter in letters:
             assert letter in vars_dict
-        cliped = serialize(event)
-        assert len(cliped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == 10
+        clipped = serialize(event)
+        assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == 10
         monkeypatch.setattr(sentry_sdk.serializer, "MAX_DATABAG_BREADTH", 100)
-        cliped = serialize(event)
-        assert len(cliped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == len(vars_dict)
-        assert len(cliped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) > 10
+        clipped = serialize(event)
+        assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == len(vars_dict)
+        assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) > 10
 
         client = Client("https://aaa@test.pl/77")
         Hub.current.bind_client(client)
@@ -78,6 +78,9 @@ def test_sentry_report(monkeypatch):
         assert len(event["message"]) == DEFAULT_ERROR_REPORT
         assert len(event["extra"]["lorem"]) == DEFAULT_ERROR_REPORT
 
+    def check_envelope(envelope):
+        check_event(envelope.get_event())
+
     try:
         raise ValueError("eeee")
     except ValueError as e:
@@ -86,6 +89,9 @@ def test_sentry_report(monkeypatch):
         client = Client("https://aaa@test.pl/77")
         Hub.current.bind_client(client)
         monkeypatch.setattr(client.transport, "capture_event", check_event)
+        # handle sentry-sdk 2
+        monkeypatch.setattr(client.transport, "capture_envelope", check_envelope, raising=False)
+
         with sentry_sdk.push_scope() as scope:
             scope.set_extra("lorem", message)
             sentry_sdk.capture_event(event, hint=hint)
@@ -102,6 +108,9 @@ def test_sentry_report_no_clip(monkeypatch):
         assert len(event["message"]) == 5000
         assert len(event["extra"]["lorem"]) == 5000
 
+    def check_envelope(envelope):
+        check_event(envelope.get_event())
+
     try:
         raise ValueError("eeee")
     except ValueError as e:
@@ -113,6 +122,8 @@ def test_sentry_report_no_clip(monkeypatch):
             client = Client("https://aaa@test.pl/77")
         Hub.current.bind_client(client)
         monkeypatch.setattr(client.transport, "capture_event", check_event)
+        # handle sentry-sdk 2
+        monkeypatch.setattr(client.transport, "capture_envelope", check_envelope, raising=False)
         with sentry_sdk.push_scope() as scope:
             scope.set_extra("lorem", message)
             event_id = sentry_sdk.capture_event(event, hint=hint)

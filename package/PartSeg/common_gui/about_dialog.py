@@ -10,8 +10,8 @@ from PartSeg.common_gui.universal_gui_part import TextShow
 
 
 class AboutDialog(QDialog):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
         self.setWindowTitle("About PartSeg")
         text = (
             f"<strong>PartSeg</strong> ({PartSeg.__version__})<br>"
@@ -46,8 +46,8 @@ class AboutDialog(QDialog):
             self.cite_as.setMarkdown(cite_as_text)
         ok_but = QPushButton("Ok")
         ok_but.clicked.connect(self.accept)
-        text_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        layout = QGridLayout()
+        text_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout = QGridLayout(self)
         layout.addWidget(text_label, 0, 0, 1, 3)
         layout.addWidget(self.change_log, 1, 0, 1, 3)
         layout.addWidget(QLabel("Cite as:"), 2, 0, 1, 3)

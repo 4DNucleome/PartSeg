@@ -718,7 +718,7 @@ class BaseSettings(ViewSettings):
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
                 with open(os.path.join(folder_path, el.file_name), "w", encoding="utf-8") as ff:
                     ff.write(dump_string)
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except   # noqa: PERF203
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
             logger.error(errors_list)

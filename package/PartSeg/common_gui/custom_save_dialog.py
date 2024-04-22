@@ -59,12 +59,12 @@ class CustomSaveDialog(LoadRegisterFileDialog):
         parent=None,
         caption="Save file",
         history: typing.Optional[typing.List[str]] = None,
-        file_mode=QFileDialog.AnyFile,
+        file_mode=QFileDialog.FileMode.AnyFile,
     ):
         super().__init__(save_register, caption, parent)
         self.setFileMode(file_mode)
-        self.setOption(QFileDialog.DontUseNativeDialog, not system_widget)
-        self.setAcceptMode(QFileDialog.AcceptSave)
+        self.setOption(QFileDialog.Option.DontUseNativeDialog, not system_widget)
+        self.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
         self.filterSelected.connect(self.change_filter)
         self.accepted_native = False
         self.values = {}
@@ -86,7 +86,6 @@ class CustomSaveDialog(LoadRegisterFileDialog):
 
             layout = self.layout()
             if isinstance(layout, QGridLayout):
-                # print(layout.columnCount(), layout.rowCount())
                 # noinspection PyArgumentList
                 layout.addWidget(widget, 0, layout.columnCount(), layout.rowCount(), 1)
             else:
@@ -161,7 +160,7 @@ class PSaveDialog(CustomSaveDialog):
         base_values: typing.Optional[dict] = None,
         parent=None,
         caption="Save file",
-        file_mode=QFileDialog.AnyFile,
+        file_mode=QFileDialog.FileMode.AnyFile,
     ):
         if default_directory is None:
             default_directory = str(Path.home())
@@ -183,7 +182,7 @@ class PSaveDialog(CustomSaveDialog):
 
     def accept(self):
         super().accept()
-        if self.result() != QDialog.Accepted:
+        if self.result() != QDialog.DialogCode.Accepted:
             return
         directory = os.path.dirname(self.selectedFiles()[0])
         self.settings.add_path_history(directory)

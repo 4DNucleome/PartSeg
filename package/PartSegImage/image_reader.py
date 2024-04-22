@@ -63,7 +63,7 @@ class BaseImageReader:
             # one micrometer
             spacing = (10 ** (-6), *spacing)
         if len(spacing) != 3:
-            raise ValueError(f"wrong spacing {spacing}")
+            raise ValueError(f"wrong spacing {spacing}")  # pragma: no cover
         self.default_spacing = spacing
 
     @abstractmethod
@@ -158,7 +158,7 @@ class BaseImageReader:
             raise NotImplementedError(
                 f"Data type not supported ({e.args[0]}). Please contact with author for update code"
             ) from e
-        if len(final_mapping) != len(set(final_mapping)):
+        if len(final_mapping) != len(set(final_mapping)):  # pragma: no cover
             raise NotImplementedError("Data type not supported. Please contact with author for update code")
         if len(array.shape) < len(cls.return_order()):
             array = np.reshape(array, array.shape + (1,) * (len(cls.return_order()) - len(array.shape)))
@@ -219,11 +219,11 @@ class GenericImageReader(BaseImageReaderBuffer):
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
-            if isinstance(image_path, BytesIO):  # pragma: no cover
+            if isinstance(image_path, BytesIO):
                 raise NotImplementedError("Oif format is not supported for BytesIO")
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext == ".obsep":
-            if isinstance(image_path, BytesIO):  # pragma: no cover
+            if isinstance(image_path, BytesIO):
                 raise NotImplementedError("Obsep format is not supported for BytesIO")
             return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
@@ -334,7 +334,7 @@ class ObsepImageReader(BaseImageReader):
         xml_doc = ElementTree.parse(image_path).getroot()
         channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
         if not channels:
-            raise ValueError("Information about channel images not found")
+            raise ValueError("Information about channel images not found")  # pragma: no cover
         channel_list = [
             *self._search_for_files(directory, channels, required=True),
             *self._search_for_files(directory, channels, "_deconv"),

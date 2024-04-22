@@ -1,6 +1,7 @@
 """
 Module with default values of application state
 """
+
 import os
 import sys
 

@@ -1,10 +1,243 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["setuptools>=42.0.0", "wheel>=0.34.2", "setuptools_scm[toml]>=8"]  # PEP 508 specifications.
+requires = ["setuptools>=61.2.0", "setuptools_scm[toml]>=8"]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 write_to = "package/PartSeg/version.py"
+
+[project]
+name = "PartSeg"
+description = "PartSeg is python GUI and set of napari plugins for bio imaging analysis especially nucleus analysis,"
+authors = [
+    { name = "Grzegorz Bokota", email = "g.bokota@uw.edu.pl" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: napari",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+keywords = [
+    "bioimaging",
+    "GUI",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "IPython>=7.7.0",
+    "PartSegCore-compiled-backend>=0.13.11,<0.16.0",
+    "PartSegData==0.10.0",
+    "QtAwesome!=1.2.0,>=1.0.3",
+    "QtPy>=1.10.0",
+    "SimpleITK>=2.0.0",
+    "appdirs>=1.4.4",
+    "czifile>=2019.5.22",
+    "defusedxml>=0.6.0",
+    "fonticon-fontawesome6>=6.1.1",
+    "h5py>=3.3.0",
+    "imagecodecs>=2020.5.30",
+    "imageio>=2.5.0",
+    "ipykernel>=5.2.0",
+    "local-migrator>=0.1.7",
+    "magicgui!=0.5.0,>=0.4.0",
+    "mahotas>=1.4.10",
+    "napari>=0.4.14",
+    "nme>=0.1.7",
+    "numpy>=1.18.5",
+    "oiffile>=2020.1.18",
+    "openpyxl>=2.5.7",
+    "packaging>=20.0",
+    "pandas>=1.1.0",
+    "psygnal>=0.3.1",
+    "pydantic>=1.9.1",
+    "pygments>=2.12.0",
+    "qtconsole>=4.7.7",
+    "requests>=2.18.0",
+    "scipy>=1.4.1",
+    "sentry-sdk>=0.14.3",
+    "six>=1.11.0",
+    "superqt>=0.3.0",
+    "sympy>=1.1.1",
+    "tifffile>=2020.9.30",
+    "traceback-with-variables>=2.0.4",
+    "vispy>=0.9.4",
+    "xlrd>=1.1.0",
+    "xlsxwriter>=2.0.0",
+]
+dynamic = [
+    "version",
+]
+[project.readme]
+file = "Readme.md"
+content-type = "text/markdown"
+
+[project.license]
+text = "BSD-3-Clause"
+
+[project.urls]
+Homepage = "https://4dnucleome.cent.uw.edu.pl/PartSeg/"
+Documentation = "https://partseg.readthedocs.io/en/stable/"
+"Source Code" = "https://github.com/4DNucleome/PartSeg"
+"User Support" = "https://github.com/4DNucleome/PartSeg/issues"
+"Bug Tracker" = "https://github.com/4DNucleome/PartSeg/issues"
+
+[project.entry-points."napari.manifest"]
+PartSeg = "PartSeg:napari.yaml"
+
+[project.optional-dependencies]
+accelerate = [
+    "PyOpenGL-accelerate>=3.1.5",
+]
+all = [
+    "PyOpenGL-accelerate>=3.1.5",
+    "PyQt5!=5.15.0,>=5.12.3",
+]
+docs = [
+    "autodoc-pydantic",
+    "sphinx!=3.0.0,!=3.5.0",
+    "sphinx-autodoc-typehints",
+    "sphinx-qt-documentation",
+]
+pyinstaller = [
+    "PyOpenGL-accelerate>=3.1.5",
+    "PyQt5!=5.15.0,>=5.12.3",
+    "PyInstaller",
+    "pydantic",
+]
+pyqt = [
+    "PyQt5!=5.15.0,>=5.12.3",
+]
+pyqt5 = [
+    "PyQt5!=5.15.0,>=5.12.3",
+]
+pyqt6 = [
+    "PyQt6",
+]
+pyside = [
+    "PySide2!=5.15.0,>=5.12.3",
+]
+pyside2 = [
+    "PySide2!=5.15.0,>=5.12.3",
+]
+pyside6 = [
+    "PySide6",
+]
+test = [
+    "coverage",
+    "lxml[html_clean]",
+    "pytest>=7.0.0",
+    "pytest-qt",
+    "pytest-timeout",
+    "scikit-image",
+]
+testing = [
+    "pytest",
+    "pytest-qt",
+    "lxml",
+]
+
+[project.scripts]
+PartSeg = "PartSeg.launcher_main:main"
+
+[tool.setuptools]
+include-package-data = true
+platforms = [
+    "Linux",
+    "Windows",
+    "MacOs",
+]
+license-files = [
+    "License.txt",
+]
+
+[tool.setuptools.package-dir]
+"" = "package"
+
+[tool.setuptools.packages.find]
+where = [
+    "package",
+]
+namespaces = false
+
+[tool.setuptools.package-data]
+partsegcore = [
+    "napari.yaml",
+]
+
+[tool.pytest.ini_options]
+addopts = "--maxfail=5 --durations=5"
+testpaths = [
+    "package/tests",
+]
+junit_family = "legacy"
+timeout = 900
+filterwarnings = [
+    "ignore:invalid value encountered",
+    "ignore:The 'junit_family' encountered",
+    "ignore:numpy.ufunc size changed, may indicate",
+    "ignore:tostring.*is deprecated",
+    "ignore:emitter camera is deprecated,",
+    "ignore:`np.float` is a deprecated alias",
+    "ignore:divide by zero encountered in true_divide",
+    "ignore:the imp module is deprecated in favour of importlib",
+    "ignore:distutils Version classes are deprecated.",
+    "ignore:Please import PackageMetadata from 'npe2' or from 'npe2.manifest'",
+    "ignore:Please use `zoom` from the `scipy.ndimage` namespace",
+    "ignore:Converting `np.character` to a dtype",
+    "ignore:Public access to Window.qt_viewer",
+]
+markers = [
+    "enablethread: Allow to use thread in test",
+    "enabledialog: Allow to use dialog in test",
+    "no_patch_add_layer: Do not patch napari viewer",
+    "windows_ci_skip: Skip test when running on windows CI",
+    "pyside_skip: Skip test when using pyside qt backend",
+]
+
+[tool.coverage.paths]
+source = [
+    "package",
+    "*/site-packages",
+]
+
+[tool.coverage.run]
+source = [
+    "PartSeg",
+    "PartSegCore",
+    "PartSegImage",
+    "package/tests",
+]
+omit = [
+    ".tox/*",
+    "**/changelog.py",
+    "**/version.py",
+    "**/PartSegCore/class_generator.py",
+]
+parallel = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "raise RuntimeError()",
+    "pass",
+]
+exclude_also = [
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+]
 
 [tool.black]
 line-length = 120
@@ -33,6 +266,11 @@ exclude = '''
 
 [tool.ruff]
 line-length = 120
+exclude = ["examples/call_simple_threshold.py"]
+target-version = "py38"
+fix = true
+
+[tool.ruff.lint]
 select = [
     "F", # Pyflakes
     "E", "W", # pycodestyle
@@ -41,8 +279,9 @@ select = [
     "UP", # pyupgrade
     "A", # flake8-builtins
     "YTT", # flake8-2020
+#    "ANN", # flake8-annotations
     "S", # flake8-bandit
-    # "BLE", # flake8-blind-except
+#    "BLE", # flake8-blind-except
     "B", # lake8-bugbear
     "A", #flake8-builtins
     "C4", # flake8-comprehensions
@@ -50,45 +289,51 @@ select = [
     "ICN", # flake8-import-conventions
     "G", # flake8-logging-format
     "PIE", # flake8-pie
+    "T20", # flake8-print
+    "PYI",
     "PT", # flake8-pytest-style
     "Q", # flake8-quotes
     "RSE", # flake8-raise
     "RET", # flake8-return
     "SIM", # flake8-simplify
     "TID", # flake8-tidy-imports
+    "TCH", # flake8-type-checking
     "ARG", # flake8-unused-arguments
+#    "PTH", # flake8-use-pathlib
+    "ERA", # eradicate
     "PGH", # pygrep-hooks
     "PLC", "PLE", "PLR", "PLW", # pylint
     "NPY", # NumPy-specific rules
+    "PERF", # perflint
     "RUF", # Ruff-specific rules
 ]
 ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
-    "PLR0913" # should be reenabled in future version
+    "PLR0913", # should be re-enabled in a future version
+    "ANN101", "ANN102",
 ]
-exclude = ["examples/call_simple_threshold.py"]
-target-version = "py38"
-fix = true
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party=['PartSeg', 'PartSegData','PartSegCore','PartSegImage', 'PartSegCore_compiled_backend']
 
-[tool.ruff.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports]
 # Disallow all relative imports.
 ban-relative-imports = "all"
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 15
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "docs/conf.py" = ["A001"]
-"package/tests/**" = ["ARG", "PLC1901", "S101", "RUF012"]
+"package/tests/**" = ["ARG", "PLC1901", "S101", "RUF012", "ANN", "FBT"]
 "package/PartSegCore/sphinx/*" = ["ARG"]
 "package/tests/**.py" = ["PLR2004"]
 "package/PartSegCore/_old_json_hooks.py" = ["PLR0912", "PLR0911"]
-"package/PartSegCore/class_generator.py" = ["PLR0912"]
-"build_utils/**.py" = ["S603", "S607"]
+"package/PartSegCore/class_generator.py" = ["PLR0912", "T20"]
+"build_utils/**.py" = ["S603", "S607", "T20"]
+"examples/**.py" = ["T20"]
 "package/PartSeg/common_gui/show_directory_dialog.py" = ["S603", "S606", "S607"]
+"package/PartSeg/launcher_main.py" = ["T20"]
 
 [tool.check-manifest]
 ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]
@@ -114,3 +359,7 @@ ignore_missing_imports = true
 
 [tool.check-wheel-contents]
 toplevel = ["PartSeg", "PartSegCore", "PartSegImage"]
+
+[tool.codespell]
+skip = "package/tests/test_data/ome.xsd.xml,launcher.spec,publications,dist,_build"
+ignore-words-list = "setted"

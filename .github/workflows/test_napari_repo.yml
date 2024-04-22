@@ -15,7 +15,7 @@ jobs:
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -29,13 +29,13 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ ubuntu-22.04 ]
-        python: ['3.8', '3.9' , '3.10']
-        napari_version: [repo]
+        python: ['3.8', '3.9' , '3.10', '3.11']
+        napari_version: ['repo']
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
 
@@ -54,14 +54,14 @@ jobs:
           pip install setuptools tox tox-gh-actions
 
       - name: Download test data
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test_data
           path: test_data
 
       - name: Test with tox
         # run tests using pip install --pre
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         timeout-minutes: 60
         with:
           run: tox

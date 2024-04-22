@@ -1,4 +1,6 @@
 # pylint: disable=no-self-use
+import math
+import sys
 import typing
 from enum import Enum
 
@@ -19,6 +21,28 @@ from PartSegCore.analysis import AnalysisAlgorithmSelection
 from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
+
+
+def test_algorithm_property():
+    ap = AlgorithmProperty("test", "Test", 1)
+    assert ap.name == "test"
+    assert "user_name='Test'" in repr(ap)
+
+
+def test_algorithm_property_warn():
+    with pytest.warns(DeprecationWarning, match="use value_type instead"):
+        ap = AlgorithmProperty("test", "Test", 1, property_type=int)
+    assert ap.value_type == int
+
+
+def test_algorithm_property_no_kwargs():
+    with pytest.raises(ValueError, match="are not expected"):
+        AlgorithmProperty("test", "Test", 1, a=1)
+
+
+def test_algorithm_property_list_exc():
+    with pytest.raises(ValueError, match="should be one of possible values"):
+        AlgorithmProperty("test", "Test", 1, possible_values=[2, 3], value_type=list)
 
 
 def test_get_description_class():
@@ -76,6 +100,160 @@ def test_algorithm_selection():
         TestSelection(name="test3", values={})
 
     assert TestSelection["test1"] is Class1
+
+    assert TestSelection.__register__ != TestSelection2.__register__
+
+    ts = TestSelection(name="test1", values={})
+    assert ts.algorithm() == Class1
+
+
+def test_register_errors():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1:
+        pass
+
+    class Alg2(AlgorithmDescribeBase):
+        pass
+
+    class Alg3(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return 1
+
+        @classmethod
+        def get_fields(cls):
+            return []  # pragma: no cover
+
+    with pytest.raises(ValueError, match="Class .* need to define classmethod 'get_name'"):
+        TestSelection.register(Alg1)
+
+    with pytest.raises(ValueError, match="Class .* need to implement classmethod 'get_name'"):
+        TestSelection.register(Alg2)
+
+    with pytest.raises(ValueError, match="Class .* need to implement classmethod 'get_name'"):
+        TestSelection.__register__["test1"] = Alg2
+
+    with pytest.raises(ValueError, match="Function get_name of class .* need return string not .*int"):
+        TestSelection.register(Alg3)
+
+
+def test_register_name_collision():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            return []
+
+    class Alg2(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            return []  # pragma: no cover
+
+    class Alg3(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "2"
+
+        @classmethod
+        def get_fields(cls):
+            return []
+
+    TestSelection.register(Alg1, old_names=["0"])
+    with pytest.raises(
+        ValueError, match="Object .* with this name: '1' already exist and register is not in replace mode"
+    ):
+        TestSelection.register(Alg2)
+
+    assert len(TestSelection.__register__) == 1
+
+    with pytest.raises(ValueError, match="Old value mapping for name '0' already registered"):
+        TestSelection.register(Alg3, old_names=["0"])
+
+
+def test_register_not_subclass():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1:
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            return []  # pragma: no cover
+
+    with pytest.raises(ValueError, match="Class .* need to be subclass of .*AlgorithmDescribeBase"):
+        TestSelection.register(Alg1)
+
+
+def test_register_validate_name_assignment():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            return []  # pragma: no cover
+
+    class Alg2(Alg1):
+        @classmethod
+        def get_name(cls):
+            return 2
+
+    with pytest.raises(ValueError, match="need return string"):
+        TestSelection.__register__["1"] = Alg2
+
+    with pytest.raises(ValueError, match="under name returned by get_name function"):
+        TestSelection.__register__["2"] = Alg1
+
+
+def test_register_get_fields_validity():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    class Alg1(AlgorithmDescribeBase):
+        @classmethod
+        def get_name(cls):
+            return "1"
+
+        @classmethod
+        def get_fields(cls):
+            raise NotImplementedError
+
+    class Alg2(Alg1):
+        @classmethod
+        def get_fields(cls):
+            return ()
+
+    with pytest.raises(ValueError, match="need to be implemented"):
+        TestSelection.register(Alg1)
+    with pytest.raises(ValueError, match="need return list not"):
+        TestSelection.register(Alg2)
+
+
+def test_register_no_default_value():
+    class TestSelection(AlgorithmSelection):
+        pass
+
+    with pytest.raises(ValueError, match="Register does not contain any algorithm"):
+        TestSelection.get_default()
 
 
 def test_algorithm_selection_convert_subclass(clean_register):
@@ -172,6 +350,23 @@ def test_base_model_to_algorithm_property_base():
     assert converted[3].value_type is Channel
     assert converted[3].name == "channel"
     assert converted[3].user_name == "Channel"
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="requires python 3.9 or higher")
+def test_gt_lt_conversion():
+    class Sample(BaseModel):
+        field1: int = Field(0, le=100, ge=0, title="Field 1")
+        field2: int = Field(0, lt=100, gt=0, title="Field 2")
+        field3: float = Field(0, le=100, ge=0, title="Field 3")
+        field4: float = Field(0, lt=100, gt=0, title="Field 4")
+        field5: int = Field(0, title="Field 5")
+
+    converted = base_model_to_algorithm_property(Sample)
+    assert converted[0].range == (0, 100)
+    assert converted[1].range == (1, 99)
+    assert converted[2].range == (0, 100)
+    assert converted[3].range == (math.nextafter(0, math.inf), math.nextafter(100, -math.inf))
+    assert converted[4].range == (0, 1000)
 
 
 def test_base_model_to_algorithm_property_algorithm_describe_base():
@@ -314,7 +509,7 @@ class TestAlgorithmDescribeBase:
         assert "ceeeec" in SampleAlgorithm.get_doc_from_fields()
         assert "(default values: 1)" in SampleAlgorithm.get_doc_from_fields()
         assert len(SampleAlgorithm.get_fields_dict()) == 1
-        assert SampleAlgorithm.get_default_values() == {"name": 1}
+        assert SampleAlgorithm.get_default_values() == DataModel(name=1)
 
     def test_new_style_algorithm_with_old_style_subclass(self):
         class DataModel(BaseModel):
@@ -361,9 +556,21 @@ class TestROIExtractionProfile:
         with pytest.warns(FutureWarning):
             ROIExtractionProfile("aaa", "aaa", {})
 
+    def test_dump_dict(self):
+        prof = ROIExtractionProfile(
+            name="aaa",
+            algorithm=LowerThresholdAlgorithm.get_name(),
+            values=LowerThresholdAlgorithm.get_default_values(),
+        )
+        assert prof.values.threshold.values.threshold == 8000
+        assert prof.dict()["values"]["threshold"]["values"]["threshold"] == 8000
+
     def test_pretty_print(self):
-        prof1 = ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
-        assert f"{prof1}\n " == prof1.pretty_print(AnalysisAlgorithmSelection)
+
+        prof1 = ROIExtractionProfile(name="aaa", algorithm="Lower threshold", values={})
+        assert prof1.pretty_print(AnalysisAlgorithmSelection).startswith("ROI extraction profile name:")
+        prof1 = ROIExtractionProfile(name="", algorithm="Lower threshold", values={})
+        assert prof1.pretty_print(AnalysisAlgorithmSelection).startswith("ROI extraction profile\n")
         prof2 = ROIExtractionProfile(
             name="aaa",
             algorithm=LowerThresholdAlgorithm.get_name(),

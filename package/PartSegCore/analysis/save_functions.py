@@ -122,14 +122,14 @@ def _save_cmap(
             meta_group.attrs[key] = val
 
     grp = cmap_file["Chimera"]
-    grp.attrs["CLASS"] = np.string_("GROUP")
-    grp.attrs["TITLE"] = np.string_("")
-    grp.attrs["VERSION"] = np.string_("1.0")
+    grp.attrs["CLASS"] = np.bytes_("GROUP")
+    grp.attrs["TITLE"] = np.bytes_("")
+    grp.attrs["VERSION"] = np.bytes_("1.0")
 
     grp = cmap_file["Chimera/image1"]
-    grp.attrs["CLASS"] = np.string_("GROUP")
-    grp.attrs["TITLE"] = np.string_("")
-    grp.attrs["VERSION"] = np.string_("1.0")
+    grp.attrs["CLASS"] = np.bytes_("GROUP")
+    grp.attrs["TITLE"] = np.bytes_("")
+    grp.attrs["VERSION"] = np.bytes_("1.0")
     grp.attrs["step"] = np.array(spacing, dtype=np.float32)[::-1] * UNIT_SCALE[cmap_profile["units"].value]
 
     return cmap_file

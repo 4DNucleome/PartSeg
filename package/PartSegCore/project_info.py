@@ -72,7 +72,7 @@ class HistoryElement(BaseModel):
         self.arrays.seek(0)
         alternative = {name: array for name, array in seg.items() if name not in {"roi", "mask"}}
         roi_info = ROIInfo(seg["roi"], annotations=self.annotations, alternative=alternative)
-        mask = seg["mask"] if "mask" in seg else None
+        mask = seg.get("mask")
         return roi_info, mask
 
 

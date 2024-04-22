@@ -1,3 +1,5 @@
+name: Base Test Workflow
+
 on:
   workflow_call:
     inputs:
@@ -32,6 +34,10 @@ on:
         required: false
         type: number
         default: 60
+      pydantic:
+        required: false
+        type: string
+        default: ""
 
 
 jobs:
@@ -40,12 +46,12 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         name: Install Python ${{ inputs.python_version }}
         with:
           python-version: ${{ inputs.python_version }}
           cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
+          cache-dependency-path: 'pyproject.toml'
 
 #      - name: Install ubuntu libraries
 #        if: runner.os == 'Linux'
@@ -69,7 +75,7 @@ jobs:
 
       - name: Download test data
         if: ${{ inputs.test_data }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test_data
           path: test_data
@@ -80,7 +86,7 @@ jobs:
           pip list
 
       - name: Test with tox
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
           run: python -m tox ${{ inputs.tox_args }}
@@ -88,26 +94,19 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
-          PIP_CONSTRAINT: requirements/constraints_py${{ inputs.python_version }}.txt
+          PIP_CONSTRAINT: requirements/constraints_py${{ inputs.python_version }}${{ inputs.pydantic }}.txt
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: upload pytest timing reports as json
+          name: timing-report-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}-${{ inputs.coverage }}
           path: |
             ./report-*.json
           retention-days: 7
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
         if: ${{ inputs.coverage }}
         with:
-          name: coverage_report ${{ inputs.tox_args }}
+          name: cov-reports-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}
           path: |
-            ./htmlcov
-          retention-days: 7
-
-      - uses: codecov/codecov-action@v3
-        if: ${{ inputs.coverage }}
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+            ./.coverage.*

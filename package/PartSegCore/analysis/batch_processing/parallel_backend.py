@@ -14,10 +14,10 @@ and consume results (:py:meth:`BatchManager.get_result`) until
    }
 
 """
+
 import logging
 import multiprocessing
 import os
-import sys
 import time
 import traceback
 import uuid
@@ -230,10 +230,7 @@ class BatchWorker:
             res = fun(data, global_data)
             self.result_queue.put((task_uuid, res))
         except Exception as e:  # pragma: no cover # pylint: disable=broad-except
-            traceback.print_exc()
-            exc_type, _exc_obj, exc_tb = sys.exc_info()
-            f_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(exc_type, f_name, exc_tb.tb_lineno, file=sys.stderr)
+            logging.exception("Exception in worker")
             self.result_queue.put((task_uuid, (-1, [(e, traceback.extract_tb(e.__traceback__))])))
 
     def run(self):
@@ -271,10 +268,13 @@ def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, cal
     :param result_queue: Queue for calculation result
     :param calculation_dict: dict with global parameters
     """
-    register_if_need()
-    with suppress(ImportError):
-        from PartSeg.plugins import register_if_need as register
+    try:
+        register_if_need()
+        with suppress(ImportError):
+            from PartSeg.plugins import register_if_need as register
 
-        register()
-    worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
-    worker.run()
+            register()
+        worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
+        worker.run()
+    except Exception as e:  # pragma: no cover # pylint: disable=broad-except
+        result_queue.put(("-1", (-1, [(e, traceback.extract_tb(e.__traceback__))])))

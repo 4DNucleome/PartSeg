@@ -234,7 +234,7 @@ class MeasurementWidgetBase(QWidget):
             for c in range(self.info_field.columnCount()):
                 try:
                     s += str(self.info_field.item(r, c).text()) + "\t"
-                except AttributeError:
+                except AttributeError:  # noqa: PERF203
                     s += "\t"
             s = s[:-1] + "\n"  # eliminate last '\t'
         self.clip.setText(s)
@@ -284,18 +284,18 @@ class MeasurementWidgetBase(QWidget):
         raise NotImplementedError
 
     def keyPressEvent(self, e: QKeyEvent):
-        if not e.modifiers() & Qt.ControlModifier:
+        if not e.modifiers() & Qt.KeyboardModifier.ControlModifier:
             return
         selected = self.info_field.selectedRanges()
 
-        if e.key() == Qt.Key_C:  # copy
+        if e.key() == Qt.Key.Key_C:  # copy
             s = ""
 
             for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
                 for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
                     try:
                         s += str(self.info_field.item(r, c).text()) + "\t"
-                    except AttributeError:
+                    except AttributeError:  # noqa: PERF203
                         s += "\t"
                 s = s[:-1] + "\n"  # eliminate last '\t'
             self.clip.setText(s)
@@ -365,10 +365,6 @@ class MeasurementWidget(MeasurementWidgetBase):
         if self.settings.roi is None:
             return
         units = self.units_choose.currentEnum()
-
-        # FIXME find which errors should be displayed as warning
-        # def exception_hook(exception):
-        #    QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
 
         for num in compute_class.get_channels_num():
             if num >= self.settings.image.channels:

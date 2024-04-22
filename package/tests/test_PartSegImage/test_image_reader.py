@@ -97,6 +97,19 @@ class TestImageClass:
         GenericImageReader.read_image(os.path.join(data_test_dir, "Image0003_01.oif"))
         GenericImageReader.read_image(os.path.join(data_test_dir, "N2A_H2BGFP_dapi_falloidin_cycling1.oib"))
 
+    def test_generic_reader_from_buffer(self, data_test_dir):
+        file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif")
+        with open(file_path, "rb") as f_p:
+            buffer = BytesIO(f_p.read())
+        GenericImageReader().read(buffer)
+        with open(file_path, "rb") as f_p:
+            buffer = BytesIO(f_p.read())
+        GenericImageReader().read(buffer, ext=".tif")
+        with pytest.raises(NotImplementedError, match="Oif format is not supported"):
+            GenericImageReader().read(buffer, ext=".oif")
+        with pytest.raises(NotImplementedError, match="Obsep format is not supported"):
+            GenericImageReader().read(buffer, ext=".obsep")
+
     def test_decode_int(self):
         assert TiffImageReader.decode_int(0) == [0, 0, 0, 0]
         assert TiffImageReader.decode_int(15) == [0, 0, 0, 15]

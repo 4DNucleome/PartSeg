@@ -33,8 +33,9 @@ def test_color_conversion():
 
 
 class TestColormapEdit:
-    def test_click(self, qtbot: QtBot):
+    def test_click(self, qtbot: QtBot, qapp):
         widget = ColormapEdit()
+        widget.show()
         qtbot.addWidget(widget)
         width = widget.width() - 20
         with qtbot.waitSignal(widget.double_clicked):
@@ -47,6 +48,8 @@ class TestColormapEdit:
         with qtbot.assertNotEmitted(widget.double_clicked):
             qtbot.mouseDClick(widget, Qt.LeftButton, pos=QPoint(30, widget.height() // 2))
         assert len(widget.colormap.colors) == 3
+        qapp.processEvents()
+        widget.hide()
 
     def test_distribute_evenly(self, qtbot: QtBot):
         widget = ColormapEdit()

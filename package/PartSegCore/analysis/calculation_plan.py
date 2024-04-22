@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 import textwrap
 import typing
 import uuid
@@ -552,7 +551,7 @@ class CalculationPlan:
 
     def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
         """
-        Get all measurement Calculation bellow given node
+        Get all measurement Calculation below given node
 
         :param node: Node for start, if absent then start from plan root
         :return: list of measurements
@@ -767,7 +766,6 @@ class CalculationPlan:
         :return: str
         """
         if el.__class__.__name__ not in CalculationPlan.correct_name:
-            print(el, el.__class__.__name__, file=sys.stderr)
             raise ValueError(f"Unknown type {el.__class__.__name__}")
         if isinstance(el, RootType):
             return f"Root: {el}"
@@ -807,7 +805,7 @@ class CalculationPlan:
         raise ValueError(f"Unknown type {type(el)}")
 
     def pretty_print(self) -> str:
-        return f"Calcualation Plan: {self.name}\n{self._pretty_print(self.execution_tree, 0)}"
+        return f"Calculation Plan: {self.name}\n{self._pretty_print(self.execution_tree, 0)}"
 
     def _pretty_print(self, elem: CalculationTree, indent) -> str:
         if isinstance(elem.operation, str):

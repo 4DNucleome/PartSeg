@@ -27,7 +27,7 @@ jobs:
     with:
       python_version: "3.10"
       os: ${{ matrix.os }}
-      napari: "napari417"
+      napari: "napari419"
       qt_backend: ${{ matrix.qt_backend }}
       timeout: 10
 
@@ -36,10 +36,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        napari: ["napari414", "napari415", "napari416"]
+        napari: ["napari417", "napari418"]
         qt_backend: ["PyQt5"]
         include:
-          - napari: "napari414"
+          - napari: "napari417"
             qt_backend: "PySide2"
     if: github.event_name == 'push'
     uses: ./.github/workflows/base_test_workflow.yml

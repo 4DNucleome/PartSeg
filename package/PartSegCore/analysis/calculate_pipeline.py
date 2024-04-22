@@ -9,9 +9,11 @@ from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, ROIExtractionResult
 from PartSegImage import Image
+
+if typing.TYPE_CHECKING:
+    from PartSegCore.segmentation import RestartableAlgorithm
 
 
 def _empty_fun(_a1, _a2):

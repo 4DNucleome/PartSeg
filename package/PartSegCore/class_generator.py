@@ -149,8 +149,6 @@ def extract_type_name(type_):
 
 def extract_type_info(type_):
     # noinspection PyUnresolvedReferences
-    # if issubclass(type_, (typing.Any, typing.Union)):
-    #    return str(type_), type_.__module__
     if not hasattr(type_, "__module__"):
         return type_.__name__, None
 
@@ -238,9 +236,11 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     del global_state[typename]
 
     signature = ", ".join(
-        f"{name_}: {translate_dict[type_]} = {pprint.pformat(defaults_dict[name_])}"
-        if name_ in defaults_dict
-        else f"{name_}: {translate_dict[type_]}"
+        (
+            f"{name_}: {translate_dict[type_]} = {pprint.pformat(defaults_dict[name_])}"
+            if name_ in defaults_dict
+            else f"{name_}: {translate_dict[type_]}"
+        )
         for name_, type_ in types.items()
     )
 

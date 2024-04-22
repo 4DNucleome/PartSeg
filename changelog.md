@@ -27,11 +27,11 @@
 - Bump os version for main tests workflow. (#979)
 - Ensure that the module `PartSegCore.channel_class` is present in bundle (#980)
 - Lower npe2 schema version to work with older napari version (#981)
-- Generate test report per platfom (#978)
+- Generate test report per platform (#978)
 - Importing plugins in bundle keeping proper module names (#983)
 - Fix napari repo workflow (#985)
-- Fix bug in read tiff files with double `Q` in axes but one related to dummy dimmension (#992)
-- Fix bug that lead to corupted state when saving calculation plan to excel file (#995)
+- Fix bug in read tiff files with double `Q` in axes but one related to dummy dimension (#992)
+- Fix bug that lead to corrupted state when saving calculation plan to excel file (#995)
 - Enable python 3.11 test on CI, fix minor errors (#869)
 
 ### Features
@@ -113,12 +113,12 @@
 - Add option to create projection alongside z-axis (#919)
 - Add napari image custom representation for better error report via sentry (#861)
 - Add import and export operation for labels and colormaps (#936)
-- Implement napari widgets for colormap and lables control (#935)
+- Implement napari widgets for colormap and labels control (#935)
 - Add forget all button to multiple files widget (#942)
 - Do not abort processing whole mask segmentation project during exception on single component (#943)
 - Add distance based watersheed to flow methods (#915)
-- Add napari widgets for all group of algoritms (#958)
-- Add napari widget to copy lables along z-axis (#968)
+- Add napari widgets for all group of algorithms (#958)
+- Add napari widget to copy labels along z-axis (#968)
 
 ### Miscellaneous Tasks
 
@@ -292,7 +292,7 @@
 ### Refactor
 
 - Refactor the creation batch plan widgets and add tests for it (#587)
-- Drop napari bellow 0.4.12 (#592)
+- Drop napari below 0.4.12 (#592)
 - Update the order of ROI Mask algorithms to be the same as in older PartSeg versions (#600)
 
 ## 0.14.0 - 2022-04-14
@@ -415,7 +415,7 @@
 ### Features
 
 - Add randomization option for correlation calculation (#421)
-- Add Imagej TIFF writter for image. (#405)
+- Add Imagej TIFF writer for image. (#405)
 - Mask create widget for napari (#395)
 - In napari roi extraction method show information from roi extraction method (#408)
 - Add `*[0-9].tif` button in batch processing window (#412)

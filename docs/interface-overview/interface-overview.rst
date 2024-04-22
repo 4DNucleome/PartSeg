@@ -34,10 +34,10 @@ On top of the window there are 6 buttons:
    The path can be absolute (may not work on another computer) or
    relative (may not work when the saved file has been moved).
 *  **Advanced settings** - currently contains only colormap and labeling administration.
-*  **Mask manager** - Allows to add new mask based on the current segmentation. New mask can be adjusted by dilation, filling of holes existing in current segmentation or by reverisng segmented area.
+*  **Mask manager** - Allows to add new mask based on the current segmentation. New mask can be adjusted by dilation, filling of holes existing in current segmentation or by reversing segmented area.
 *  **Simple measurements** - a subset of selected, basic measurements for quick analysis. The full list is available in `Measurements`_ in ROI analysis
 
-1.  `Multiple files panel`_ anables managing multiple files. Each loaded image is shown as raw image, and can be saved after each segmentation as a separate state. It allows for comparison of segmentations performed with different parameters. This panel is visible by default, but can be hidden in the `image tab`_.
+1.  `Multiple files panel`_ enables managing multiple files. Each loaded image is shown as raw image, and can be saved after each segmentation as a separate state. It allows for comparison of segmentations performed with different parameters. This panel is visible by default, but can be hidden in the `image tab`_.
 2.  Colorbar - Shows relation of the currently used color map and brightness values for the selected channel.
     The selection of colormap is described in the `Image View`_.
 3.  `Image View`_. Shows a preview of the current file and its segmentation result.
@@ -78,11 +78,11 @@ On top of the window there are 6 buttons:
 13. Selects all checkboxes.
 14. Removes selection from all checkboxes.
 15. Selection of a single component. Selection/deselection of components can be done by clicking on a component in `Image view`_.
-    or enebling apopriate checkbox. Pointing checkbox with a coursor highlits selected component in `Image view`_.
+    or enabling appropriate checkbox. Pointing checkbox with a cursor highlights selected component in `Image view`_.
     Only components selected in checkboxes are saved using **Save components** tab.
-    Components wich are selected are omitted, when the next round of segmentation is performed.
+    Components which are selected are omitted, when the next round of segmentation is performed.
 
-16. When selected allows for comaprison of segmentations made with different parameters. To do so enable **Save selected components** checkbox, than perform segmentation and select chosen components. Next save segmentation by **Save Segmenation**. Use **Unselect all** and perform another segmentation with a diffeternt parameters. Select chosen components and load previously done segmentation using **Load Segmentation**. Now selected components from both segmentations are displayed in the `Image view`_ and each is represented as a separate checkbox. The same can be done using `Multiple files panel`_ and saving each segmentation as a separate state using **Save state** tab.
+16. When selected allows for comparison of segmentations made with different parameters. To do so enable **Save selected components** checkbox, than perform segmentation and select chosen components. Next save segmentation by **Save Segmentation**. Use **Unselect all** and perform another segmentation with a different parameters. Select chosen components and load previously done segmentation using **Load Segmentation**. Now selected components from both segmentations are displayed in the `Image view`_ and each is represented as a separate checkbox. The same can be done using `Multiple files panel`_ and saving each segmentation as a separate state using **Save state** tab.
 
 17. Opens the window with a preview of segmentation parameters for each component.
     **Reuse parameters** button from this window restores selected parameters.
@@ -110,7 +110,7 @@ ROI Analysis GUI
 .. image::  images/main_window.png
    :alt: Main Roi Analysis GUI
 
-Bottons visible in the top row of the main window:
+Buttons visible in the top row of the main window:
 
 
 *   **Open** - loads data.
@@ -168,9 +168,9 @@ In PartSeg there are three defined ways of saving segmentation.
 The first two options save only segmentation parameters:
 
 *  **Profile** - saves parameters set for segmentation algorithm.
-*  **Pipeline** - saves sequence of segmentation, mask created based on this segmentation with help of **Mask manager** and next round of segmentation, which is made within masked area. This steps can be repeated several times to create pipiline, which can be later used in batch processing.
+*  **Pipeline** - saves sequence of segmentation, mask created based on this segmentation with help of **Mask manager** and next round of segmentation, which is made within masked area. This steps can be repeated several times to create pipeline, which can be later used in batch processing.
 
-The list of profiles and pipelines and their properties is avaliable in
+The list of profiles and pipelines and their properties is available in
 **Properties** tab of **Settings and Measurement**.
 
 The third option is to save the current work as a project. Project will contain:
@@ -188,7 +188,7 @@ This bottom enables popup window with 4 tabs: Properties, Color control, Measure
 
 Properties
 ^^^^^^^^^^
-Shows properties of the currnet image, list of profiles and pipelines and their properties.
+Shows properties of the current image, list of profiles and pipelines and their properties.
 
 .. image::  images/segmentation_advanced.png
    :alt: View on Properties Tab in Settings and Measurement.
@@ -199,7 +199,7 @@ Shows properties of the currnet image, list of profiles and pipelines and their 
 4.  List of segmentation pipelines.
 5.  Preview of properties of the selected Profile/pipeline.
 
-Additionally, bellow the preview of propertes 6 buttons are avaliable to control export, import, deletion and renaming of pipelines and profiles.
+Additionally, below the preview of properties 6 buttons are available to control export, import, deletion and renaming of pipelines and profiles.
 
 
 Measurements settings
@@ -213,7 +213,7 @@ The upper part of this window is designed to manage existing sets of measurement
 1. Contains a list of already defined measurement sets.
 2. Gives a preview of properties of selected measurement set.
 
-    Four botton placed below the list of efined measurement sets are used to
+    Four button placed below the list of defined measurement sets are used to
     delete, export, import, and edit of saved sets of measurement.
 
 
@@ -227,16 +227,16 @@ The upper part of this window is designed to manage existing sets of measurement
 
 6. Selects how the measurement element handles area components.
 
-   * **No** - measurment will be made for the whole segmented area.
-   * **Yes** - measurment will be made for each component separately.
-   * **Mean** - measurment will be made for each component of area and then mean value will be calculated.
+   * **No** - measurement will be made for the whole segmented area.
+   * **Yes** - measurement will be made for each component separately.
+   * **Mean** - measurement will be made for each component of area and then mean value will be calculated.
 
 7. Adding selected elements to created measurement set
 
    *  **→** - Moves the element to the list on the right (newly created measurement set).
    *  **←** - Moves the element to the list on the left. Allows to define new element for the future use.
    *  **Ratio** - Allows to create a ratio of two measurements from the list.
-      First select the numerator, next selecte **Ratio** then select the denominator and confirm with selecing **Ratio** again.
+      First select the numerator, next select **Ratio** then select the denominator and confirm with selecting **Ratio** again.
    *  **Clear** - clears chosen element from the list
 
 8. Controls the position of the single elements on the list:
@@ -251,9 +251,9 @@ Measurements
 .. image::  images/measurement_calculate.png
    :alt: View on measurement calculation widget.
 
-This widget can be enabled as the left panel of the main window by chosing Measurments tab placed above left window.
+This widget can be enabled as the left panel of the main window by choosing Measurements tab placed above left window.
 
-1. Shows numerical features calculated for the currently segmented area using selected measurment set .
+1. Shows numerical features calculated for the currently segmented area using selected measurement set .
 2. Selects measurement set.
 3. Removes result showed in 1. and replaces it with the result of the new calculation.
 4. Adds the new result of the new calculation to the existing ones.
@@ -332,7 +332,7 @@ Prepare batch plan
 Execute batch
 ^^^^^^^^^^^^^
 .. image::  images/batch_select_files.png
-   :alt: Wiew on widget for select files to proceed.
+   :alt: View on widget for select files to proceed.
 
 .. _select multiple files:
 
@@ -366,7 +366,7 @@ Execute batch
     Can be adjusted during runtime.
 9.  Error log. For a report double click on the entry.
 10. Information about task status.
-11. Launches batch calculation, by opening a popout window described bellow, which allows to check if everything is set correctly.
+11. Launches batch calculation, by opening a popout window described below, which allows to check if everything is set correctly.
 
     .. image::  images/batch_check_ok.png
        :alt: View on Properties Tab in Settings and Measurement.
@@ -380,7 +380,7 @@ Execute batch
 
     3. Settings for a resulting spreadsheet localisation and name
     4. Gives information if PartSeg can find all the needed data for each entry.
-       The image placed bellow image shows a View on Properties Tab in Settings and Measurement containing errors.
+       The image placed below image shows a View on Properties Tab in Settings and Measurement containing errors.
 
    .. image::  images/batch_check_bad.png
       :alt: View on Properties Tab in Settings and Measurement.
@@ -435,9 +435,9 @@ The zoom of the image can be also changed by a Ctrl+Mouse scroll.
 2.  Changes view to a 3D rendering.
 3.  Channel view control. Only Channels with a selected checkbox are visible. `Color map`_ for the current channel
     can be selected when clicking in the triangle in the upper right corner
-    |channel_select|. This triangle is visible when the coursor is placed over the widget.
-4.  Switches the view of segmenation between showing only segmentation borders or the whole segmented area.
-5.  Set the opacity of segmenattion view.
+    |channel_select|. This triangle is visible when the cursor is placed over the widget.
+4.  Switches the view of segmentation between showing only segmentation borders or the whole segmented area.
+5.  Set the opacity of segmentation view.
 6.  Marks mask visible or not.
 7.  Controls which layer is visible.
     If the image contains time data, then a similar
@@ -481,7 +481,7 @@ Color maps
 *  Color maps are available for channels with a checked checkbox and can be selected in the
    `Image View`_ controls aaa
 *  Only custom created color maps can be deleted with a |delete| button.
-*  Some of the existing color maps and all custom created masps can be used as a base for
+*  Some of the existing color maps and all custom created maps can be used as a base for
    creation of a new color map using the |edit| button.
 
 Color Map creator
@@ -502,7 +502,7 @@ Select labels
 In this tab, users can select the coloring scheme of segmentation components labels.
 
 *  Current scheme is chosen with the radio button (|radio_button|) on the left.
-*  Custom creted schemes can be deleted with the |delete| button.
+*  Custom created schemes can be deleted with the |delete| button.
 *  New scheme can be defined based on the old one using the |edit| button.
 
 Create labels
@@ -543,12 +543,12 @@ of current segmentation into a new mask.
 
 1. Select to use dilation (2d or 3d) with a set radius in pixels. If dilation is in 3d then the radius in the z plane is calculated base on the image spacing. Negative values of the radius will reduce the mask size.
 2. Select to fill up holes in a current segmentation. Holes are parts of the background, which are not connected (in 2d or 3d - depends on selection) to a border of the image.
-   If the maximum size is set to -1 then all holes within segmentation area will be included in the segemntation.
+   If the maximum size is set to -1 then all holes within segmentation area will be included in the segmentation.
 3. **Save components** allows to create a new mask made of multiple components present in current segmentation.
    **Clip to previous mask** option is useful when using positive radius in Dilate mask to fit it in a previously defined mask.
 4. Creates a mask based on the negative of the current selection (disables **Save components** option).
 5. Shows calculated dilation radius in x, y, z for the current image.
-6. Undos of last masking operation.
+6. Undo of last masking operation.
 7. Creates a new mask or draws back to the previously undone one.
 8. Cleans redo history.
 9. Takes mask creation parameters from the next mask and to set in the interface.

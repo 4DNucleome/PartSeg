@@ -89,15 +89,13 @@ class MaskDialog(MaskDialogBase):
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
-        # TODO Check me
-        # self.settings.roi = seg["segmentation"]
         self.settings._set_roi_info(  # pylint: disable=protected-access
             ROIInfo(seg["segmentation"]),
             False,
             history.roi_extraction_parameters["selected"],
             history.roi_extraction_parameters["parameters"],
         )
-        self.settings.mask = seg["mask"] if "mask" in seg else None
+        self.settings.mask = seg.get("mask")
         self.close()
 
 
@@ -211,11 +209,11 @@ class MainMenu(BaseMainMenu):
                 self,
                 "Not supported",
                 "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             )
 
-            if res == QMessageBox.Yes:
+            if res == QMessageBox.StandardButton.Yes:
                 image = image.swap_time_and_stack()
             else:
                 return False
@@ -314,7 +312,9 @@ class MainMenu(BaseMainMenu):
         save_location, _selected_filter, save_class, values = dial.get_result()
 
         def exception_hook(exception):
-            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
+            QMessageBox.critical(
+                self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.StandardButton.Ok
+            )
             raise exception
 
         dial = ExecuteFunctionDialog(
@@ -326,8 +326,12 @@ class MainMenu(BaseMainMenu):
         dial.exec_()
 
     def save_result(self):
-        if self.settings.image_path is not None and QMessageBox.Yes == QMessageBox.question(
-            self, "Copy", "Copy name to clipboard?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes
+        if self.settings.image_path is not None and QMessageBox.StandardButton.Yes == QMessageBox.question(
+            self,
+            "Copy",
+            "Copy name to clipboard?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
         ):
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(os.path.splitext(os.path.basename(self.settings.image_path))[0])
@@ -347,24 +351,24 @@ class MainMenu(BaseMainMenu):
             return
         res = dial.get_result()
         potential_names = self.settings.get_file_names_for_save_result(res.save_destination)
-        conflict = []
-        for el in potential_names:
-            if os.path.exists(el):
-                conflict.append(el)
+        conflict = [el for el in potential_names if os.path.exists(el)]
+
         if conflict:
             # TODO modify because of long lists
             conflict_str = "\n".join(conflict)
-            if QMessageBox.No == QMessageBox.warning(
+            if QMessageBox.StandardButton.No == QMessageBox.warning(
                 self,
                 "Overwrite",
                 f"Overwrite files:\n {conflict_str}",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             ):
                 self.save_result()
 
         def exception_hook(exception):
-            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
+            QMessageBox.critical(
+                self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.StandardButton.Ok
+            )
 
         dial = ExecuteFunctionDialog(
             res.save_class.save,
@@ -392,7 +396,7 @@ class ComponentCheckBox(QCheckBox):
 
 class ChosenComponents(QWidget):
     """
-    :type check_box: dict[int, QCheckBox]
+    :type check_box: dict[int, ComponentCheckBox]
     """
 
     check_change_signal = Signal()
@@ -524,8 +528,6 @@ class AlgorithmOptions(QWidget):
         self.choose_components.check_change_signal.connect(image_view.refresh_selected)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
         self.choose_components.mouse_enter.connect(image_view.component_mark)
-        # WARNING works only with one channels algorithms
-        # SynchronizeValues.add_synchronization("channels_chose", widgets_list)
         self.chosen_list = []
         self.progress_bar2 = QProgressBar()
         self.progress_bar2.setHidden(True)
@@ -769,7 +771,7 @@ class ImageInformation(QWidget):
         super().__init__(parent)
         self._settings = settings
         self.path = QTextEdit("<b>Path:</b> example image")
-        self.path.setWordWrapMode(QTextOption.WrapAnywhere)
+        self.path.setWordWrapMode(QTextOption.WrapMode.WrapAnywhere)
         self.path.setReadOnly(True)
         self.setMinimumHeight(20)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
@@ -785,8 +787,8 @@ class ImageInformation(QWidget):
         self.sync_dirs.stateChanged.connect(self.set_sync_dirs)
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
-            el.setAlignment(Qt.AlignRight)
-            el.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            el.setAlignment(Qt.AlignmentFlag.AlignRight)
+            el.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
             el.setRange(0, 100000)
             # noinspection PyUnresolvedReferences
             el.valueChanged.connect(self.image_spacing_change)
@@ -898,7 +900,7 @@ class MainWindow(BaseMainWindow):
         self.image_view = StackImageView(self.settings, self.channel_control, name="channelcontrol")
         self.image_view.setMinimumWidth(450)
         self.info_text = QLabel()
-        self.info_text.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self.info_text.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.image_view.text_info_change.connect(self.info_text.setText)
         self.options_panel = Options(self.settings, self.image_view)
         self.main_menu = MainMenu(self.settings, self)
@@ -930,7 +932,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Toggle scale bar").triggered.connect(self._toggle_scale_bar)
         action = view_menu.addAction("Screenshot")
         action.triggered.connect(self.screenshot(self.image_view))
-        action.setShortcut(QKeySequence.Print)
+        action.setShortcut(QKeySequence.StandardKey.Print)
         image_menu = menu_bar.addMenu("Image operations")
         image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
         help_menu = menu_bar.addMenu("Help")

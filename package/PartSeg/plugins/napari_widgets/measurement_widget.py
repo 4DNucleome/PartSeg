@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from magicgui.widgets import create_widget
 from napari import Viewer
@@ -13,8 +13,10 @@ from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSeg.plugins import register as register_plugins
 from PartSeg.plugins.napari_widgets._settings import get_settings
 from PartSeg.plugins.napari_widgets.utils import NapariFormDialog, generate_image
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from PartSegCore.roi_info import ROIInfo
+
+if TYPE_CHECKING:
+    from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 
 
 class NapariMeasurementSettings(MeasurementSettings):

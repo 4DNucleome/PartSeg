@@ -88,9 +88,9 @@ class ColormapEdit(QWidget):
         for pos_factor in self.position_list:
             pos = width * pos_factor
             point = QPointF(pos + margin, self.height() / 2)
-            painter.setBrush(QBrush(Qt.black))
+            painter.setBrush(QBrush(Qt.GlobalColor.black))
             painter.drawEllipse(point, 5, 5)
-            painter.setBrush(QBrush(Qt.white))
+            painter.setBrush(QBrush(Qt.GlobalColor.white))
             painter.drawEllipse(point, 3, 3)
 
         painter.restore()
@@ -149,7 +149,7 @@ class ColormapEdit(QWidget):
 
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         """
-        If click near marker remove it. Otherwise emmit `double_click` signal with event position factor.
+        If click near marker remove it. Otherwise emit `double_click` signal with event position factor.
         """
         ratio = self._get_ratio(event)
         if ratio is None:
@@ -495,7 +495,7 @@ class ColormapList(QWidget):
         self.colormap_map = colormap_map
         self._widget_dict: Dict[str, ChannelPreview] = {}
         self.scroll_area = QScrollArea()
-        self.central_widget = QWidget()
+        self.central_widget = QWidget(self)
         layout2 = QVBoxLayout()
         self.grid_layout = QGridLayout()
         layout2.addLayout(self.grid_layout)

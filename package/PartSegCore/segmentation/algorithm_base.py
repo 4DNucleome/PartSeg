@@ -228,7 +228,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.mask = None
 
     def set_parameters(self, _params=None, **kwargs):
-        # FIXME when drop python 3.7 use postional only argument
+        # FIXME when drop python 3.7 use positional only argument
         if _params is not None:
             if isinstance(_params, dict):
                 kwargs = _params
