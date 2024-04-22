@@ -39,7 +39,7 @@ comm==0.2.2
     # via ipykernel
 coverage==7.4.4
 czifile==2019.7.2
-dask==2024.4.1
+dask==2024.4.2
     # via napari
 debugpy==1.8.1
     # via ipykernel
@@ -67,7 +67,7 @@ hsluv==5.0.4
 idna==3.7
     # via requests
 imagecodecs==2024.1.1
-imageio==2.34.0
+imageio==2.34.1
     # via
     #   napari
     #   napari-svg
@@ -114,6 +114,9 @@ local-migrator==0.1.10
 locket==1.0.0
     # via partd
 lxml==5.2.1
+    # via lxml-html-clean
+lxml-html-clean==0.1.1
+    # via lxml
 magicgui==0.8.2
     # via napari
 mahotas==1.4.15
@@ -203,7 +206,7 @@ platformdirs==4.2.0
     # via
     #   jupyter-core
     #   pooch
-pluggy==1.4.0
+pluggy==1.5.0
     # via
     #   pytest
     #   pytest-qt
@@ -286,7 +289,7 @@ pyyaml==6.0.1
     #   dask
     #   napari
     #   npe2
-pyzmq==26.0.0
+pyzmq==26.0.2
     # via
     #   ipykernel
     #   jupyter-client
@@ -319,7 +322,7 @@ rpds-py==0.18.0
     # via
     #   jsonschema
     #   referencing
-scikit-image==0.23.1
+scikit-image==0.23.2
     # via napari
 scipy==1.13.0
     # via
@@ -346,7 +349,7 @@ six==1.16.0
     #   python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==7.3.5
+sphinx==7.3.7
     # via numpydoc
 sphinxcontrib-applehelp==1.0.8
     # via sphinx
@@ -369,7 +372,7 @@ superqt==0.6.3
 sympy==1.12
 tabulate==0.9.0
     # via numpydoc
-tifffile==2024.2.12
+tifffile==2024.4.18
     # via
     #   czifile
     #   napari
@@ -389,7 +392,7 @@ tornado==6.4
 tqdm==4.66.2
     # via napari
 traceback-with-variables==2.0.4
-traitlets==5.14.2
+traitlets==5.14.3
     # via
     #   comm
     #   ipykernel

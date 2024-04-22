@@ -54,7 +54,7 @@ docutils==0.20.1
     # via sphinx
 et-xmlfile==1.1.0
     # via openpyxl
-exceptiongroup==1.2.0
+exceptiongroup==1.2.1
     # via pytest
 executing==2.0.1
     # via stack-data
@@ -71,7 +71,7 @@ hsluv==5.0.4
 idna==3.7
     # via requests
 imagecodecs==2023.3.16
-imageio==2.34.0
+imageio==2.34.1
     # via
     #   napari
     #   napari-svg
@@ -228,7 +228,7 @@ platformdirs==4.2.0
     # via
     #   jupyter-core
     #   pooch
-pluggy==1.4.0
+pluggy==1.5.0
     # via
     #   pytest
     #   pytest-qt
@@ -315,7 +315,7 @@ pyyaml==6.0.1
     #   dask
     #   napari
     #   npe2
-pyzmq==26.0.0
+pyzmq==26.0.2
     # via
     #   ipykernel
     #   jupyter-client
@@ -425,7 +425,7 @@ tornado==6.4
 tqdm==4.66.2
     # via napari
 traceback-with-variables==2.0.4
-traitlets==5.14.2
+traitlets==5.14.3
     # via
     #   comm
     #   ipykernel
