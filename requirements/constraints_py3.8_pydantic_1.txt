@@ -39,7 +39,7 @@ cloudpickle==3.0.0
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.4.4
+coverage==7.5.0
 czifile==2019.7.2
 dask==2023.5.0
     # via napari
@@ -91,7 +91,7 @@ importlib-resources==6.4.0
     #   jsonschema
     #   jsonschema-specifications
     #   vispy
-in-n-out==0.2.0
+in-n-out==0.2.1
     # via app-model
 iniconfig==2.0.0
     # via pytest
@@ -224,7 +224,7 @@ pint==0.21.1
     # via napari
 pkgutil-resolve-name==1.3.10
     # via jsonschema
-platformdirs==4.2.0
+platformdirs==4.2.1
     # via
     #   jupyter-core
     #   pooch
@@ -269,20 +269,20 @@ pygments==2.17.2
     #   sphinx
     #   superqt
 pyinstaller==6.6.0
-pyinstaller-hooks-contrib==2024.4
+pyinstaller-hooks-contrib==2024.5
     # via pyinstaller
 pyopengl==3.1.7
     # via napari
 pyopengl-accelerate==3.1.7
-pyproject-hooks==1.0.0
+pyproject-hooks==1.1.0
     # via build
 pyqt5==5.15.10
 pyqt5-qt5==5.15.2
     # via pyqt5
 pyqt5-sip==12.13.0
     # via pyqt5
-pyqt6==6.6.1
-pyqt6-qt6==6.6.3
+pyqt6==6.7.0
+pyqt6-qt6==6.7.0
     # via pyqt6
 pyqt6-sip==13.6.0
     # via pyqt6
@@ -294,7 +294,7 @@ pyside6-essentials==6.3.1
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.1.1
+pytest==8.2.0
     # via
     #   pytest-qt
     #   pytest-timeout
@@ -331,7 +331,7 @@ qtpy==2.4.1
     #   qtawesome
     #   qtconsole
     #   superqt
-referencing==0.34.0
+referencing==0.35.0
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -354,7 +354,7 @@ scipy==1.10.1
     # via
     #   napari
     #   scikit-image
-sentry-sdk==1.45.0
+sentry-sdk==2.0.1
 setuptools==69.5.1
     # via
     #   pyinstaller
@@ -391,7 +391,7 @@ sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.6.3
+superqt==0.6.4
     # via
     #   magicgui
     #   napari
@@ -409,7 +409,6 @@ tomli==2.0.1
     #   build
     #   npe2
     #   numpydoc
-    #   pyproject-hooks
     #   pytest
 tomli-w==1.0.0
     # via npe2
