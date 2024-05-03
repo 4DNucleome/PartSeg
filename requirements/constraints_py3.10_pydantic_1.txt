@@ -404,7 +404,7 @@ tornado==6.4
     # via
     #   ipykernel
     #   jupyter-client
-tqdm==4.66.2
+tqdm==4.66.3
     # via napari
 traceback-with-variables==2.0.4
 traitlets==5.14.3
