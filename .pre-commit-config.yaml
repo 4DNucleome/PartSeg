@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.4.0
+    rev: 24.4.2
     hooks:
     - id: black
       pass_filenames: true
@@ -20,7 +20,7 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.1
+    rev: v0.4.3
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
@@ -44,7 +44,7 @@ repos:
           - mdformat-toc
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.9.0'  # Use the sha / tag you want to point at
+    rev: 'v1.10.0'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
         files: ^package/PartSegImage/.+\.py
