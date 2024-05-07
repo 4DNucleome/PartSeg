@@ -18,7 +18,7 @@ attrs==23.2.0
     # via
     #   jsonschema
     #   referencing
-babel==2.14.0
+babel==2.15.0
     # via sphinx
 backcall==0.2.0
     # via ipython
@@ -41,7 +41,7 @@ cloudpickle==3.0.0
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.5.0
+coverage==7.5.1
 czifile==2019.7.2
 dask==2023.5.0
     # via napari
@@ -107,9 +107,9 @@ ipython==8.12.3
     #   napari-console
 jedi==0.19.1
     # via ipython
-jinja2==3.1.3
+jinja2==3.1.4
     # via sphinx
-jsonschema==4.21.1
+jsonschema==4.22.0
     # via napari
 jsonschema-specifications==2023.12.1
     # via jsonschema
@@ -242,7 +242,7 @@ psutil==5.9.8
     # via
     #   ipykernel
     #   napari
-psygnal==0.11.0
+psygnal==0.11.1
     # via
     #   app-model
     #   magicgui
@@ -264,7 +264,7 @@ pydantic-compat==0.1.2
     # via app-model
 pydantic-core==2.18.2
     # via pydantic
-pygments==2.17.2
+pygments==2.18.0
     # via
     #   ipython
     #   napari
@@ -319,13 +319,13 @@ pyyaml==6.0.1
     #   dask
     #   napari
     #   npe2
-pyzmq==26.0.2
+pyzmq==26.0.3
     # via
     #   ipykernel
     #   jupyter-client
     #   qtconsole
 qtawesome==1.3.1
-qtconsole==5.5.1
+qtconsole==5.5.2
     # via napari-console
 qtpy==2.4.1
     # via
@@ -335,7 +335,7 @@ qtpy==2.4.1
     #   qtawesome
     #   qtconsole
     #   superqt
-referencing==0.35.0
+referencing==0.35.1
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -348,7 +348,7 @@ rich==13.7.1
     # via
     #   npe2
     #   typer
-rpds-py==0.18.0
+rpds-py==0.18.1
     # via
     #   jsonschema
     #   referencing
@@ -358,7 +358,7 @@ scipy==1.10.1
     # via
     #   napari
     #   scikit-image
-sentry-sdk==2.0.1
+sentry-sdk==2.1.1
 setuptools==69.5.1
     # via
     #   pyinstaller
@@ -395,7 +395,7 @@ sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.6.4
+superqt==0.6.5
     # via
     #   magicgui
     #   napari
@@ -425,7 +425,7 @@ tornado==6.4
     # via
     #   ipykernel
     #   jupyter-client
-tqdm==4.66.2
+tqdm==4.66.4
     # via napari
 traceback-with-variables==2.0.4
 traitlets==5.14.3
