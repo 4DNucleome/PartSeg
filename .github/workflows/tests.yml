@@ -45,7 +45,7 @@ jobs:
         tox_args: [ "" ]
         include:
           - python_version: "3.9"
-            os: "macos-11"
+            os: "macos-13"
             qt_backend: "PyQt5"
           - python_version: "3.9"
             os: "windows-2019"
@@ -79,7 +79,7 @@ jobs:
       fail-fast: false
       matrix:
         python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        os: ["ubuntu-20.04", "macos-11", "windows-2019"]
+        os: ["ubuntu-20.04", "macos-13", "windows-2019"]
         qt_backend: ["PySide2", "PyQt5"]
         include:
           - python_version: "3.11"
