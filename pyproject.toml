@@ -77,10 +77,12 @@ dependencies = [
 ]
 dynamic = [
     "version",
+    "readme",
 ]
-[project.readme]
-file = "Readme.md"
-content-type = "text/markdown"
+
+#[project.readme]
+#file = "Readme.md"
+#content-type = "text/markdown"
 
 [project.license]
 text = "BSD-3-Clause"
