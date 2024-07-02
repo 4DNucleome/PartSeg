@@ -6,6 +6,7 @@ import shutil
 import tarfile
 import zipfile
 
+import tqdm
 from PyInstaller.__main__ import run as pyinstaller_run
 
 import PartSeg
@@ -16,9 +17,12 @@ logger.setLevel(logging.INFO)
 SYSTEM_NAME_DICT = {"Linux": "linux", "Windows": "windows", "Darwin": "macos"}
 
 
-def create_archive(working_dir):
+def create_archive(working_dir, with_version=True):
     os.makedirs(os.path.join(working_dir, "dist2"), exist_ok=True)
-    file_name = f"PartSeg-{PartSeg.__version__}-{SYSTEM_NAME_DICT[platform.system()]}"
+    if with_version:
+        file_name = f"PartSeg-{PartSeg.__version__}-{SYSTEM_NAME_DICT[platform.system()]}"
+    else:
+        file_name = f"PartSeg-{SYSTEM_NAME_DICT[platform.system()]}"
     if platform.system() != "Darwin":
         return zipfile.ZipFile(os.path.join(working_dir, "dist2", f"{file_name}.zip"), "w", zipfile.ZIP_DEFLATED)
     arch_file = tarfile.open(os.path.join(working_dir, "dist2", f"{file_name}.tgz"), "w:gz")
@@ -48,11 +52,13 @@ def create_bundle(spec_path, working_dir):
     pyinstaller_run(pyinstaller_args)
 
 
-def archive_build(working_dir, dir_name):
+def archive_build(working_dir, dir_name, with_version=True):
     base_zip_path = os.path.join(working_dir, "dist")
 
-    with create_archive(working_dir) as arch_file:
-        for root, _dirs, files in os.walk(os.path.join(working_dir, "dist", dir_name), topdown=False, followlinks=True):
+    with create_archive(working_dir, with_version=with_version) as arch_file:
+        for root, _dirs, files in tqdm.tqdm(
+            os.walk(os.path.join(working_dir, "dist", dir_name), topdown=False, followlinks=True)
+        ):
             for file_name in files:
                 arch_file.write(
                     os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path)
@@ -74,6 +80,7 @@ def main():
 
     fix_qt_location(args.working_dir, dir_name)
     archive_build(args.working_dir, dir_name)
+    archive_build(args.working_dir, dir_name, with_version=False)
 
 
 if __name__ == "__main__":

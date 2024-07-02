@@ -34,10 +34,10 @@ This application is designed to help biologist with segmentation based on thresh
 
 - From binaries:
 
-  - [Windows](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-windows.zip) (build on Windows 10)
-  - [Linux](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-linux.zip) (build on Ubuntu 20.04)
-  - [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS 11)
-    There are reported problems with permissions systems on macOS. If you have problem with starting application please try to run it from terminal.
+  - [Windows](https://github.com/4DNucleome/PartSeg/releases/latest/download/PartSeg-windows.zip) (build on Windows 10)
+  - [Linux](https://github.com/4DNucleome/PartSeg/releases/latest/download/PartSeg-linux.zip) (build on Ubuntu 20.04)
+  - [macOS](https://github.com/4DNucleome/PartSeg/releases/latest/download/PartSeg-macos.zip) (build on macOS 11)
+    There are reported problems with permissions systems on macOS. If you have a problem with starting the application, please try to run it from the terminal.
 
 - With pip:
 

@@ -152,7 +152,7 @@ stages:
     dependsOn: GetTestData
     jobs:
       - job: sdist
-        pool: {vmImage: 'Ubuntu-20.04'}
+        pool: {vmImage: 'Ubuntu-22.04'}
         steps:
           - task: UsePythonVersion@0
           - bash: pip install -r requirements/requirements_dev.txt
