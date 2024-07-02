@@ -42,6 +42,7 @@ except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
 _napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
 _napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
+_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 
 
 class QtViewerPushButton(QtViewerPushButton_):
@@ -838,7 +839,7 @@ class ImageView(QWidget):
                 component_mark,
                 scale=image_info.roi.scale,
                 blending="translucent",
-                color={0: (0, 0, 0, 0), 1: "white"},
+                colormap={0: (0, 0, 0, 0), 1: "white", None: (0, 0, 0, 0)},
                 opacity=0.7,
             )
             self.viewer.layers.selection.active = active_layer
@@ -964,6 +965,12 @@ class NapariQtViewer(QtViewer):
     def closeEvent(self, event):
         self.close()
         super().closeEvent(event)
+
+    if _napari_ge_5:
+
+        @property
+        def view(self):
+            return self.canvas.view
 
 
 class SearchComponentModal(QtPopup):
