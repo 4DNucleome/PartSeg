@@ -86,7 +86,7 @@ class ErrorDialog(QDialog):
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
         if _napari_ge_5:
-            theme = get_theme(get_settings().appearance.theme).to_rgb_dict()
+            theme = get_theme(get_settings().appearance.theme)
         else:
             theme = get_theme(get_settings().appearance.theme, as_dict=False)
         self._highlight = Pylighter(self.error_description.document(), "python", theme.syntax_style)
