@@ -17,6 +17,7 @@ from napari.qt import get_stylesheet
 from napari.utils import Colormap
 from napari.utils.theme import get_theme
 from napari.utils.theme import template as napari_template
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QObject, Signal
 from qtpy.QtWidgets import QMessageBox, QWidget
 
@@ -36,6 +37,8 @@ from PartSegImage import Image
 if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
 logger = logging.getLogger(__name__)
+
+_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
@@ -268,6 +271,8 @@ class ViewSettings(ImageSettings):
     @property
     def theme(self):
         """Theme as structure."""
+        if _napari_ge_5:
+            return get_theme(self.theme_name)
         try:
             return get_theme(self.theme_name, as_dict=False)
         except TypeError:  # pragma: no cover

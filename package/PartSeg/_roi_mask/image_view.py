@@ -1,8 +1,13 @@
+from importlib.metadata import version
+
+from packaging.version import parse as parse_version
 from vispy.app import MouseEvent
 
 from PartSeg._roi_mask.stack_settings import StackSettings
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.napari_image_view import ImageInfo, ImageView, LabelEnum
+
+_napari_ge_0_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
 
 
 class StackImageView(ImageView):
@@ -14,7 +19,10 @@ class StackImageView(ImageView):
 
     def __init__(self, settings: StackSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
-        self.viewer_widget.canvas.events.mouse_press.connect(self.component_click)
+        if _napari_ge_0_5_0:
+            self.viewer_widget.canvas._scene_canvas.events.mouse_press.connect(self.component_click)
+        else:
+            self.viewer_widget.canvas.events.mouse_press.connect(self.component_click)
 
     def refresh_selected(self):
         if (
