@@ -1,6 +1,7 @@
 import contextlib
 import gc
 import json
+from importlib.metadata import version
 from unittest.mock import patch
 
 import numpy as np
@@ -10,6 +11,7 @@ from local_migrator import object_hook
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from napari.utils import Colormap
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QObject, QTimer, Signal
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
@@ -54,6 +56,28 @@ from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
 from PartSegCore.segmentation.watershed import WatershedSelection
+
+NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
+
+if NAPARI_GE_5_0:
+
+    def check_auto_mode(layer):
+        from napari.utils.colormaps import CyclicLabelColormap
+
+        assert isinstance(layer.colormap, CyclicLabelColormap)
+
+    def check_direct_mode(layer):
+        from napari.utils.colormaps import DirectLabelColormap
+
+        assert isinstance(layer.colormap, DirectLabelColormap)
+
+else:
+
+    def check_auto_mode(layer):
+        assert layer.color_mode == "auto"
+
+    def check_direct_mode(layer):
+        assert layer.color_mode == "direct"
 
 
 @pytest.fixture(autouse=True)
@@ -351,9 +375,9 @@ def test_napari_label_show(viewer_with_data, qtbot):
     assert not widget.apply_label_btn.isEnabled()
     viewer_with_data.layers.selection.remove(viewer_with_data.layers["image"])
     assert widget.apply_label_btn.isEnabled()
-    assert viewer_with_data.layers["label"].color_mode == "auto"
+    check_auto_mode(viewer_with_data.layers["label"])
     widget.apply_label_btn.click()
-    assert viewer_with_data.layers["label"].color_mode == "direct"
+    check_direct_mode(viewer_with_data.layers["label"])
 
 
 def test_napari_colormap_control(viewer_with_data, qtbot):

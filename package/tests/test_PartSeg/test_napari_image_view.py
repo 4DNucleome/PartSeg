@@ -1,12 +1,14 @@
 # pylint: disable=no-self-use
 import gc
 from functools import partial
+from importlib.metadata import version
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 from napari.layers import Image as NapariImage
 from napari.qt import QtViewer
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QPoint
 from vispy.geometry import Rect
 
@@ -24,6 +26,14 @@ from PartSeg.common_gui.napari_image_view import (
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
+
+NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
+
+
+if NAPARI_GE_5_0:
+    EXPECTED_RANGE = (0, 0, 1)
+else:
+    EXPECTED_RANGE = (0, 1, 1)
 
 
 def test_image_info():
@@ -246,7 +256,7 @@ class TestImageView:
         assert "timer" in image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata
         timer = image_view.image_info[str(tmp_path / "test2.tiff")].highlight.metadata["timer"]
         assert timer.isActive()
-        assert image_view.viewer.dims.range[0] == (0, 1, 1)
+        assert image_view.viewer.dims.range[0] == EXPECTED_RANGE
         qtbot.wait(800)
         image_view.component_unmark(0)
         assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
