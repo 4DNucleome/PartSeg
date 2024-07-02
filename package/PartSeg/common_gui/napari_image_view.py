@@ -42,6 +42,17 @@ except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
 _napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
 _napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
+_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
+
+
+def get_highlight_colormap():
+    cmap_dict = {0: (0, 0, 0, 0), 1: "white", None: (0, 0, 0, 0)}
+    if _napari_ge_5:
+        from napari.utils.colormaps import DirectLabelColormap
+
+        return {"colormap": DirectLabelColormap(color_dict=cmap_dict)}
+
+    return {"color": cmap_dict}
 
 
 class QtViewerPushButton(QtViewerPushButton_):
@@ -838,8 +849,8 @@ class ImageView(QWidget):
                 component_mark,
                 scale=image_info.roi.scale,
                 blending="translucent",
-                color={0: (0, 0, 0, 0), 1: "white"},
                 opacity=0.7,
+                **get_highlight_colormap(),
             )
             self.viewer.layers.selection.active = active_layer
         else:
@@ -964,6 +975,17 @@ class NapariQtViewer(QtViewer):
     def closeEvent(self, event):
         self.close()
         super().closeEvent(event)
+
+    def _render(self):
+        if _napari_ge_5:
+            return self.canvas._scene_canvas.render()
+        return self.canvas.render()
+
+    if _napari_ge_5:
+
+        @property
+        def view(self):
+            return self.canvas.view
 
 
 class SearchComponentModal(QtPopup):

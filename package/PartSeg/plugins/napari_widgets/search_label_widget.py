@@ -8,7 +8,7 @@ from napari.utils.notifications import show_info
 from qtpy.QtCore import QTimer
 from vispy.geometry import Rect
 
-from PartSeg.common_gui.napari_image_view import SearchType
+from PartSeg.common_gui.napari_image_view import SearchType, get_highlight_colormap
 from PartSegCore.roi_info import ROIInfo
 
 HIGHLIGHT_LABEL_NAME = ".Highlight"
@@ -77,8 +77,8 @@ class SearchLabel(Container):
                 name=HIGHLIGHT_LABEL_NAME,
                 scale=labels.scale,
                 blending="translucent",
-                color={0: (0, 0, 0, 0), 1: "white"},
                 opacity=0.7,
+                **get_highlight_colormap(),
             )
 
             def flash_fun(layer_=layer):

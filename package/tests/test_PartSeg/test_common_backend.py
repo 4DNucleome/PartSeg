@@ -193,10 +193,8 @@ class TestBaseArgparse:
         assert PartSegCore.utils.safe_repr(np.arange(3)) == "array([0, 1, 2])"
 
     def test_safe_repr_napari_image(self):
-        assert (
-            PartSegCore.utils.safe_repr(napari.layers.Image(np.zeros((10, 10, 5))))
-            == "<Image of shape: (10, 10, 5), dtype: float64, slice"
-            " (0, slice(None, None, None), slice(None, None, None))>"
+        assert PartSegCore.utils.safe_repr(napari.layers.Image(np.zeros((10, 10, 5)))).startswith(
+            "<Image of shape: (10, 10, 5), dtype: float64, slice"
         )
 
 
