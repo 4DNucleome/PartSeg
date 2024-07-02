@@ -625,7 +625,7 @@ class ColorComboBoxGroup(QWidget):
         ]
 
     def get_limits(self) -> typing.List[typing.Union[typing.Tuple[int, int], None]]:
-        resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = [(0, 0)] * self.layout().count()  #
+        resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = [(0, 0)] * self.layout().count()
         for i in range(self.layout().count()):
             resp[i] = (
                 self.settings.get_from_profile(f"{self.viewer_name}.range_{i}", (0, 65000))
