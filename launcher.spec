@@ -176,6 +176,7 @@ a = Analysis(
     + collect_data_files("napari")
     + collect_data_files("freetype")
     + collect_data_files("skimage")
+    + collect_data_files("fonticon_fa6")
     + collect_data_files("jsonschema_specifications")
     + collect_data_files("PartSegCore-compiled-backend")
     + pyzmq_data
