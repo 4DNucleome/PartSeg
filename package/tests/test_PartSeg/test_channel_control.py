@@ -309,12 +309,12 @@ class TestColorComboBoxGroup:
     @pytest.mark.windows_ci_skip()
     def test_image_view_integration(self, qtbot, tmp_path, ch_property, image_view):
         image_view.viewer_widget.screenshot(flash=False)
-        image1 = image_view.viewer_widget.canvas.render()
+        image1 = image_view.viewer_widget._render()
         assert np.any(image1 != 255)
         ch_property.minimum_value.setValue(100)
         ch_property.maximum_value.setValue(10000)
         ch_property.filter_radius.setValue(0.5)
-        image2 = image_view.viewer_widget.canvas.render()
+        image2 = image_view.viewer_widget._render()
         assert np.any(image2 != 255)
 
         assert np.all(image1 == image2)
@@ -328,13 +328,13 @@ class TestColorComboBoxGroup:
         ):
             ch_property.fixed.setChecked(True)
 
-        image1 = image_view.viewer_widget.canvas.render()
+        image1 = image_view.viewer_widget._render()
         assert np.any(image1 != 255)
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.minimum_value.setValue(20)
-        image2 = image_view.viewer_widget.canvas.render()
+        image2 = image_view.viewer_widget._render()
         assert np.any(image2 != 255)
         assert np.any(image1 != image2)
 
@@ -392,7 +392,7 @@ class TestColorComboBoxGroup:
         ):
             ch_property.fixed.setChecked(True)
         image_view.viewer_widget.screenshot(flash=False)
-        image1 = image_view.viewer_widget.canvas.render()
+        image1 = image_view.viewer_widget._render()
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):

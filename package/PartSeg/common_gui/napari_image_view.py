@@ -976,6 +976,11 @@ class NapariQtViewer(QtViewer):
         self.close()
         super().closeEvent(event)
 
+    def _render(self):
+        if _napari_ge_5:
+            return self.canvas._scene_canvas.render()
+        return self.canvas.render()
+
     if _napari_ge_5:
 
         @property
