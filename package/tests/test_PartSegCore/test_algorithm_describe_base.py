@@ -32,7 +32,7 @@ def test_algorithm_property():
 def test_algorithm_property_warn():
     with pytest.warns(DeprecationWarning, match="use value_type instead"):
         ap = AlgorithmProperty("test", "Test", 1, property_type=int)
-    assert ap.value_type == int
+    assert ap.value_type is int
 
 
 def test_algorithm_property_no_kwargs():
@@ -554,7 +554,7 @@ class TestROIExtractionProfile:
     def test_roi_extraction_profile(self):
         ROIExtractionProfile(name="aaa", algorithm="aaa", values={})
         with pytest.warns(FutureWarning):
-            ROIExtractionProfile("aaa", "aaa", {})
+            ROIExtractionProfile("aaa", "aaa", {})  # pylint: disable=too-many-function-args
 
     def test_dump_dict(self):
         prof = ROIExtractionProfile(

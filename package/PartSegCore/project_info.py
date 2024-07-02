@@ -52,8 +52,7 @@ class HistoryElement(BaseModel):
             raise ValueError("name")
         arrays = BytesIO()
         arrays_dict = {"roi": roi_info.roi}
-        for name, array in roi_info.alternative.items():
-            arrays_dict[name] = array
+        arrays_dict.update(roi_info.alternative.items())
         if mask is not None:
             arrays_dict["mask"] = mask
 

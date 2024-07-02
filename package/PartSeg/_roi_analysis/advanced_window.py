@@ -887,7 +887,7 @@ class MultipleInput(QDialog):
     def accept_response(self):
         res = {}
         for name, (type_of, item) in self.object_dict.items():
-            if type_of == str:
+            if type_of is str:
                 val = str(item.text())
                 if not val.strip():
                     QMessageBox.warning(self, "Not all fields filled", "")

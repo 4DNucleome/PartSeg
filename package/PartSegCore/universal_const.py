@@ -7,7 +7,7 @@ from local_migrator import register_class
 @register_class(old_paths=["PartSeg.utils.universal_const.Units"])
 class Units(Enum):
     mm = 0
-    µm = 1
+    µm = 1  # noqa: PLC2401
     nm = 2
     pm = 3
 
