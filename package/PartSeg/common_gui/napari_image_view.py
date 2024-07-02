@@ -15,7 +15,7 @@ from napari.layers.image import Image as NapariImage
 from napari.layers.labels import Labels
 from napari.qt import QtViewer
 from napari.qt.threading import thread_worker
-from napari.utils.colormaps.colormap import ColormapInterpolationMode
+from napari.utils.colormaps.colormap import ColormapInterpolationMode, DirectLabelColormap
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
@@ -839,7 +839,7 @@ class ImageView(QWidget):
                 component_mark,
                 scale=image_info.roi.scale,
                 blending="translucent",
-                colormap={0: (0, 0, 0, 0), 1: "white", None: (0, 0, 0, 0)},
+                colormap=DirectLabelColormap(color_dict={0: (0, 0, 0, 0), 1: "white", None: (0, 0, 0, 0)}),
                 opacity=0.7,
             )
             self.viewer.layers.selection.active = active_layer

@@ -4,6 +4,7 @@ import numpy as np
 from magicgui.widgets import Container, HBox, PushButton, SpinBox, create_widget
 from napari import Viewer
 from napari.layers import Labels
+from napari.utils import DirectLabelColormap
 from napari.utils.notifications import show_info
 from qtpy.QtCore import QTimer
 from vispy.geometry import Rect
@@ -77,7 +78,7 @@ class SearchLabel(Container):
                 name=HIGHLIGHT_LABEL_NAME,
                 scale=labels.scale,
                 blending="translucent",
-                color={0: (0, 0, 0, 0), 1: "white"},
+                colormap=DirectLabelColormap(color_dict={0: (0, 0, 0, 0), 1: "white", None: (0, 0, 0, 0)}),
                 opacity=0.7,
             )
 
