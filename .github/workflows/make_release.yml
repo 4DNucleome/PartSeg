@@ -74,7 +74,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          patterns: 'PartSeg_bundle_*'
+          pattern: 'PartSeg_bundle_*'
           path: pyinstaller
           merge-multiple: true
       - uses: actions/download-artifact@v4
@@ -85,6 +85,10 @@ jobs:
         run: |
           RELEASE_NOTES=$(python build_utils/cut_changelog.py)
           echo "${RELEASE_NOTES}"
+          # https://github.community/t5/GitHub-Actions/set-output-Truncates-Multiline-Strings/m-p/38372/highlight/true#M3322
+          RELEASE_NOTES="${RELEASE_NOTES//'%'/'%25'}"
+          RELEASE_NOTES="${RELEASE_NOTES//$'\n'/'%0A'}"
+          RELEASE_NOTES="${RELEASE_NOTES//$'\r'/'%0D'}"
           echo "name=contents=${RELEASE_NOTES}" >> $GITHUB_ENV
 
       - name: Create Release
