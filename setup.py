@@ -35,9 +35,9 @@ def readme():
 changelog_path = os.path.join(os.path.dirname(__file__), "changelog.md")
 changelog_result_path = os.path.join(os.path.dirname(__file__), "package", "PartSeg", "changelog.py")
 if os.path.exists(changelog_path):
-    with open(changelog_path) as ff:
+    with open(changelog_path, encoding="utf8") as ff:
         changelog_str = ff.read()
-    with open(changelog_result_path, "w") as ff:
+    with open(changelog_result_path, "w", encoding="utf8") as ff:
         ff.write(f'changelog = """\n{changelog_str}"""\n')
 
 
