@@ -17,6 +17,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  actionlint:
+    name: Action lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check workflow files
+        run: |
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color -ignore SC2129
+        shell: bash
+
   download_data:
     name: Download test data
     runs-on: ubuntu-20.04
@@ -148,7 +159,7 @@ jobs:
           python -Im coverage combine coverage
           python -Im coverage xml -o coverage.xml
           # Report and write to summary.
-          python -Im coverage report --format=markdown --skip-empty --skip-covered >> $GITHUB_STEP_SUMMARY
+          python -Im coverage report --format=markdown --skip-empty --skip-covered >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4

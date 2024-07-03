@@ -65,13 +65,13 @@ jobs:
           packages: libegl1 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 x11-utils libxcb-cursor0 libhdf5-dev
           version: 1.0
 
-
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
         run: |
           git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
           powershell gl-ci-helpers/appveyor/install_opengl.ps1
           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
+        shell: powershell
 
       - name: Download test data
         if: ${{ inputs.test_data }}

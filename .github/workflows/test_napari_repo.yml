@@ -45,6 +45,7 @@ jobs:
           git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
           powershell gl-ci-helpers/appveyor/install_opengl.ps1
           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
+        shell: powershell
 
       - uses: tlambert03/setup-qt-libs@v1
 

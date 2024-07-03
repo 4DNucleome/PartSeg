@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   test-latest-release:
-    name: Test latest release ${{ matrix.napari }} ${{ matrix.qt_backend }}
+    name: Test latest release ${{ matrix.qt_backend }}
     strategy:
       fail-fast: false
       matrix:
