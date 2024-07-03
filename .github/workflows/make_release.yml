@@ -56,7 +56,9 @@ jobs:
           path: dist2
 
       - name: Test PartSeg bundle
-        run: dist/PartSeg/PartSeg _test
+        uses: aganders3/headless-gui@v2
+        with:
+          run: dist/PartSeg/PartSeg _test
 
 
 
