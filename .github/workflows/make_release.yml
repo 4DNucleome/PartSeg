@@ -1,0 +1,84 @@
+name: Make release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+      - .github/workflows/make_release.yml
+
+jobs:
+  build_wheels: # This job builds the wheels
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: hynek/build-and-inspect-python-package@v2
+        with:
+          attest-build-provenance-github: 'true'
+
+
+  build_pyinstaller_bundle:
+    name: Build PyInstaller bundle
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-20.04", "windows-2019", "macos-13", "macos-14"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.10
+      - uses: tlambert03/setup-qt-libs@v
+      - name: Install Windows OpenGL
+        if: runner.os == 'Windows'
+        run: |
+          git clone --depth 1 https://github.com/pyvista/gl-ci-helpers.git
+          powershell gl-ci-helpers/appveyor/install_opengl.ps1
+          if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
+        shell: powershell
+      - name: Install PartSeg
+        run: python -m pip install -e .[pyinstaller] -c requirements/constraints_py3.10.txt
+
+      - name: Build PartSeg bundle
+        run: python build_utils/create_and_pack_executable.py
+
+      - name: Publish PartSeg bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: PartSeg_bundle_${{ matrix.os }}
+          path: dist2
+
+      - name: Test PartSeg bundle
+        run: dist/PartSeg/PartSeg _test
+
+
+
+  create_release:
+    name: Create release
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    needs:
+      - build_wheels
+      - build_pyinstaller_bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          patterns: 'PartSeg_bundle_*'
+          path: pyinstaller
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: Packages
+          path: dist
+
+      - name: Publish package distributions to PyPI
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: pypa/gh-action-pypi-publish@release/v1
