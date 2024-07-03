@@ -80,6 +80,24 @@ jobs:
         with:
           name: Packages
           path: dist
+      - name: generate release notes
+        run: |
+          RELEASE_NOTES=$(python build_utils/cut_changelog.py)
+          echo "${RELEASE_NOTES}"
+          echo "name=contents=${RELEASE_NOTES}" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: "softprops/action-gh-release@v2"
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        with:
+          tag_name: ${{ github.ref }}
+          name: ${{ env.tag }}
+          body: ${{ steps.release_notes.outputs.contents }}
+          draft: false
+          prerelease: ${{ contains(github.ref, 'rc') }}
+          files: |
+            dist/*
+            pyinstaller/*
 
       - name: Publish package distributions to PyPI
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
