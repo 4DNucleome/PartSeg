@@ -1,5 +1,3 @@
-PyQt5!=5.15.0
-PyQt5-sip!=12.12.0
 PySide2!=5.15.0
 # fix PySide6 when a new napari release is out
 PySide6 < 6.3.2 ; python_version < '3.10'
