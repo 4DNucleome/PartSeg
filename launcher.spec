@@ -9,7 +9,6 @@ from packaging.version import parse as parse_version
 import platform
 import zmq
 import itertools
-import pkg_resources
 import debugpy._vendored
 import importlib.metadata
 
