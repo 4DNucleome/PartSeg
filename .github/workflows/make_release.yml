@@ -44,7 +44,7 @@ jobs:
           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
         shell: powershell
       - name: Install PartSeg
-        run: python -m pip install -e .[pyinstaller] -c requirements/constraints_py3.10.txt
+        run: python -m pip install --editable .[pyinstaller] --constraint requirements/constraints_py3.10.txt
 
       - name: Build PartSeg bundle
         run: python build_utils/create_and_pack_executable.py
@@ -82,6 +82,7 @@ jobs:
           name: Packages
           path: dist
       - name: generate release notes
+        id: release_notes
         run: |
           RELEASE_NOTES=$(python build_utils/cut_changelog.py)
           echo "${RELEASE_NOTES}"
@@ -91,6 +92,23 @@ jobs:
           RELEASE_NOTES="${RELEASE_NOTES//$'\r'/'%0D'}"
           echo "name=contents=${RELEASE_NOTES}" >> $GITHUB_ENV
 
+      - name: check if prerelease
+        id: prerelease
+        run: |
+          regex='^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+([ab][0-9]+|rc[0-9]+)$'
+
+          check_version() {
+              if [[ $1 =~ $regex ]]; then
+                  return "true"
+              else
+                  return "false"
+              fi
+          }
+          echo $(check_version ${{ github.ref }})
+          echo "name=prerelease=$(check_version ${{ github.ref }})" >> "$GITHUB_ENV"
+
+        shell: bash
+
       - name: Create Release
         uses: "softprops/action-gh-release@v2"
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -99,7 +117,7 @@ jobs:
           name: ${{ env.tag }}
           body: ${{ steps.release_notes.outputs.contents }}
           draft: false
-          prerelease: ${{ contains(github.ref, 'rc') }}
+          prerelease: ${{ steps.prerelease.outputs.prerelease  == 'true' }}
           files: |
             dist/*
             pyinstaller/*
