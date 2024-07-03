@@ -112,8 +112,10 @@ docs = [
     "sphinx-qt-documentation",
 ]
 pyinstaller = [
+    "PartSeg[pyinstaller_base,pyqt5]",
+]
+pyinstaller_base = [
     "PyOpenGL-accelerate>=3.1.5",
-    "PyQt5!=5.15.0,>=5.12.3",
     "PyInstaller",
     "pydantic",
 ]
