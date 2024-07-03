@@ -18,7 +18,7 @@ def readme():
     this_directory = os.path.abspath(os.path.dirname(__file__))
     reg = re.compile(r"(!\[[^]]*\])\((images/[^)]*)\)")
     reg2 = re.compile(r"releases/latest/download/PartSeg")
-    with open(os.path.join(this_directory, "Readme.md")) as f:
+    with open(os.path.join(this_directory, "Readme.md"), encoding="utf8") as f:
         text = f.read()
         text = reg.sub(r"\1(https://raw.githubusercontent.com/4DNucleome/PartSeg/master/\2)", text)
         with contextlib.suppress(ImportError):
@@ -26,7 +26,7 @@ def readme():
 
             text = reg2.sub(f"releases/download/v{get_version()}/PartSeg-{get_version()}", text)
 
-    with open(os.path.join(this_directory, "changelog.md")) as f:
+    with open(os.path.join(this_directory, "changelog.md"), encoding="utf8") as f:
         chg = f.read()
         text += "\n\n" + chg.replace("# ", "## ")
     return text
