@@ -99,11 +99,12 @@ jobs:
 
           check_version() {
               if [[ $1 =~ $regex ]]; then
-                  return "true"
+                  echo "true"
               else
-                  return "false"
+                  echo "false"
               fi
           }
+          echo ${{ github.ref }}
           echo $(check_version ${{ github.ref }})
           echo "name=prerelease=$(check_version ${{ github.ref }})" >> "$GITHUB_ENV"
 
