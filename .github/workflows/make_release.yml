@@ -61,7 +61,6 @@ jobs:
           run: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
 
 
-
   create_release:
     name: Create release
     permissions:
