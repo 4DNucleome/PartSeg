@@ -7,6 +7,8 @@ import sys
 from contextlib import suppress
 from functools import partial
 
+from PartSeg._launcher.check_form import CheckSurveyThread
+
 multiprocessing.freeze_support()
 
 
@@ -127,6 +129,8 @@ def main():  # pragma: no cover
     my_app.aboutToQuit.connect(wait_for_workers_to_quit)
     check_version = CheckVersionThread()
     check_version.start()
+    check_survey = CheckSurveyThread()
+    check_survey.start()
     wind.show()
     rc = my_app.exec_()
     del wind  # skipcq: PTC-W0043`
