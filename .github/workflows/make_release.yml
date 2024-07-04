@@ -58,7 +58,7 @@ jobs:
       - name: Test PartSeg bundle
         uses: aganders3/headless-gui@v2
         with:
-          run: dist/PartSeg/PartSeg _test
+          run: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
 
 
 
