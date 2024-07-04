@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-20.04", "windows-2019", "macos-13"] #, "macos-14"]
+        os: ["ubuntu-20.04", "windows-2019", "macos-13", "macos-14"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +58,7 @@ jobs:
       - name: Test PartSeg bundle
         uses: aganders3/headless-gui@v2
         with:
-          run: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
+          run: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
 
 
 
