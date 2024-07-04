@@ -9,7 +9,6 @@ from packaging.version import parse as parse_version
 import platform
 import zmq
 import itertools
-import pkg_resources
 import debugpy._vendored
 import importlib.metadata
 
@@ -65,7 +64,7 @@ hiddenimports = (
     [f"imagecodecs.{y}" for y in (x if x[0] == "_" else f"_{x}" for x in imagecodecs._extensions())]
     + ["imagecodecs._shared"]
     + plugins
-    + ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"]
+    + ["pkg_resources.py2_warn", "ipykernel.datapub"]
     + [
         "numpy.core._dtype_ctypes",
         "sentry_sdk.integrations.logging",
@@ -84,7 +83,6 @@ hiddenimports = (
         "nme",
         "defusedxml.cElementTree",
         "vispy.app.backends._pyqt5",
-        "scipy.spatial.transform._rotation_groups",
         "magicgui.backends._qtpy",
         "freetype",
         "psygnal._signal",
@@ -94,7 +92,9 @@ hiddenimports = (
         "PartSeg.plugins.napari_widgets",
         "PartSegCore.napari_plugins",
     ]
-    + [x.module_name for x in imageio_known_plugins.values()] + [x for x in collect_submodules("skimage") if "tests" not in x]
+    + [x.module_name for x in imageio_known_plugins.values()]
+    + [x for x in collect_submodules("skimage") if "tests" not in x]
+    + collect_submodules("scipy")
 )
 
 

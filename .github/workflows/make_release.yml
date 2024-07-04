@@ -1,0 +1,128 @@
+name: Make release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+      - .github/workflows/make_release.yml
+
+jobs:
+  build_wheels: # This job builds the wheels
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: hynek/build-and-inspect-python-package@v2
+        with:
+          attest-build-provenance-github: 'true'
+
+
+  build_pyinstaller_bundle:
+    name: Build PyInstaller bundle
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-20.04", "windows-2019", "macos-13"] #, "macos-14"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - uses: tlambert03/setup-qt-libs@v1
+      - name: Install Windows OpenGL
+        if: runner.os == 'Windows'
+        run: |
+          git clone --depth 1 https://github.com/pyvista/gl-ci-helpers.git
+          powershell gl-ci-helpers/appveyor/install_opengl.ps1
+          if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
+        shell: powershell
+      - name: Install PartSeg
+        run: python -m pip install --editable .[pyinstaller] --constraint requirements/constraints_py3.10.txt
+
+      - name: Build PartSeg bundle
+        run: python build_utils/create_and_pack_executable.py
+
+      - name: Publish PartSeg bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: PartSeg_bundle_${{ matrix.os }}
+          path: dist2
+
+      - name: Test PartSeg bundle
+        uses: aganders3/headless-gui@v2
+        with:
+          run: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
+
+
+
+  create_release:
+    name: Create release
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    needs:
+      - build_wheels
+      - build_pyinstaller_bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 'PartSeg_bundle_*'
+          path: pyinstaller
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: Packages
+          path: dist
+      - name: generate release notes
+        id: release_notes
+        run: |
+          RELEASE_NOTES=$(python build_utils/cut_changelog.py)
+          echo "${RELEASE_NOTES}"
+          # https://github.community/t5/GitHub-Actions/set-output-Truncates-Multiline-Strings/m-p/38372/highlight/true#M3322
+          RELEASE_NOTES="${RELEASE_NOTES//'%'/'%25'}"
+          RELEASE_NOTES="${RELEASE_NOTES//$'\n'/'%0A'}"
+          RELEASE_NOTES="${RELEASE_NOTES//$'\r'/'%0D'}"
+          echo "name=contents=${RELEASE_NOTES}" >> $GITHUB_ENV
+
+      - name: check if prerelease
+        id: prerelease
+        run: |
+          regex='^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+([ab][0-9]+|rc[0-9]+)$'
+
+          check_version() {
+              if [[ $1 =~ $regex ]]; then
+                  echo "true"
+              else
+                  echo "false"
+              fi
+          }
+          echo ${{ github.ref }}
+          echo $(check_version ${{ github.ref }})
+          echo "name=prerelease=$(check_version ${{ github.ref }})" >> "$GITHUB_ENV"
+
+        shell: bash
+
+      - name: Create Release
+        uses: "softprops/action-gh-release@v2"
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        with:
+          tag_name: ${{ github.ref }}
+          name: ${{ env.tag }}
+          body: ${{ steps.release_notes.outputs.contents }}
+          draft: false
+          prerelease: ${{ steps.prerelease.outputs.prerelease  == 'true' }}
+          files: |
+            dist/*
+            pyinstaller/*
+
+      - name: Publish package distributions to PyPI
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: pypa/gh-action-pypi-publish@release/v1
