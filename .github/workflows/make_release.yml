@@ -91,7 +91,9 @@ jobs:
           RELEASE_NOTES="${RELEASE_NOTES//'%'/'%25'}"
           RELEASE_NOTES="${RELEASE_NOTES//$'\n'/'%0A'}"
           RELEASE_NOTES="${RELEASE_NOTES//$'\r'/'%0D'}"
-          echo "name=contents=${RELEASE_NOTES}" >> "$GITHUB_ENV"
+          echo ------------------
+          echo "${RELEASE_NOTES}"
+          echo "contents=${RELEASE_NOTES}" >> "$GITHUB_OUTPUT"
 
       - name: check if prerelease
         id: prerelease
@@ -107,8 +109,7 @@ jobs:
           }
           echo ${{ github.ref }}
           check_version ${{ github.ref }}
-          echo "name=prerelease=$(check_version ${{ github.ref }})" >> "$GITHUB_ENV"
-
+          echo "prerelease=$(check_version ${{ github.ref }})" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Create Release
