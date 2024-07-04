@@ -17,18 +17,27 @@ logger.setLevel(logging.INFO)
 SYSTEM_NAME_DICT = {"Linux": "linux", "Windows": "windows", "Darwin": "macos"}
 
 
-def create_archive(working_dir, with_version=True):
-    os.makedirs(os.path.join(working_dir, "dist2"), exist_ok=True)
+def get_file_path(working_dir, with_version=True):
     if with_version:
         file_name = f"PartSeg-{PartSeg.__version__}-{SYSTEM_NAME_DICT[platform.system()]}"
     else:
         file_name = f"PartSeg-{SYSTEM_NAME_DICT[platform.system()]}"
-    # if it is macos and arm64 the add arm64 to the name
-    if platform.system() == "Darwin" and os.uname().machine == "arm64":
+    if platform.system() != "Darwin" and os.uname().machine == "arm64":
         file_name += "-arm64"
     if platform.system() != "Darwin":
-        return zipfile.ZipFile(os.path.join(working_dir, "dist2", f"{file_name}.zip"), "w", zipfile.ZIP_DEFLATED)
-    arch_file = tarfile.open(os.path.join(working_dir, "dist2", f"{file_name}.tgz"), "w:gz")
+        file_name += ".zip"
+    else:
+        file_name += ".tgz"
+
+    return os.path.join(working_dir, "dist2", file_name)
+
+
+def create_archive(working_dir):
+    os.makedirs(os.path.join(working_dir, "dist2"), exist_ok=True)
+    file_path = get_file_path(working_dir)
+    if file_path.endswith(".zip"):
+        return zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED)
+    arch_file = tarfile.open(file_path, "w:gz")
     arch_file.write = arch_file.add
     return arch_file
 
@@ -55,10 +64,10 @@ def create_bundle(spec_path, working_dir):
     pyinstaller_run(pyinstaller_args)
 
 
-def archive_build(working_dir, dir_name, with_version=True):
+def archive_build(working_dir, dir_name):
     base_zip_path = os.path.join(working_dir, "dist")
 
-    with create_archive(working_dir, with_version=with_version) as arch_file:
+    with create_archive(working_dir) as arch_file:
         for root, _dirs, files in tqdm.tqdm(
             os.walk(os.path.join(working_dir, "dist", dir_name), topdown=False, followlinks=True)
         ):
@@ -66,6 +75,7 @@ def archive_build(working_dir, dir_name, with_version=True):
                 arch_file.write(
                     os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path)
                 )
+    shutil.copy(get_file_path(working_dir), get_file_path(working_dir, with_version=False))
 
 
 def main():
@@ -83,7 +93,6 @@ def main():
 
     fix_qt_location(args.working_dir, dir_name)
     archive_build(args.working_dir, dir_name)
-    archive_build(args.working_dir, dir_name, with_version=False)
 
 
 if __name__ == "__main__":
