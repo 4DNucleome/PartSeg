@@ -110,11 +110,7 @@ jobs:
           echo ${{ github.ref }}
           check_version ${{ github.ref }}
           echo "prerelease=$(check_version ${{ github.ref }})" >> "$GITHUB_OUTPUT"
-
         shell: bash
-
-      - name: check release notes
-        run: echo ${{ steps.release_notes.outputs.contents }}
 
       - name: Create Release
         uses: "softprops/action-gh-release@v2"
