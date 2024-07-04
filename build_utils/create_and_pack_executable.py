@@ -22,7 +22,7 @@ def get_file_path(working_dir, with_version=True):
         file_name = f"PartSeg-{PartSeg.__version__}-{SYSTEM_NAME_DICT[platform.system()]}"
     else:
         file_name = f"PartSeg-{SYSTEM_NAME_DICT[platform.system()]}"
-    if platform.system() != "Darwin" and os.uname().machine == "arm64":
+    if platform.system() == "Darwin" and os.uname().machine == "arm64":
         file_name += "-arm64"
     if platform.system() != "Darwin":
         file_name += ".zip"
