@@ -35,7 +35,7 @@ jobs:
 
 
   test:
-    name: ${{ matrix.platform }} py${{ matrix.python }} ${{ matrix.backend }} --pre
+    name: ${{ matrix.platform }} py${{ matrix.python }} --pre
     runs-on: ${{ matrix.platform }}
     needs: download_data
     strategy:
@@ -59,6 +59,7 @@ jobs:
           git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
           powershell gl-ci-helpers/appveyor/install_opengl.ps1
           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
+        shell: powershell
 
       - uses: tlambert03/setup-qt-libs@v1
 
@@ -106,9 +107,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
-      name: Install Python 3.9
+      name: Install Python 3.11
       with:
-        python-version: 3.9
+        python-version: 3.11
     - uses: tlambert03/setup-qt-libs@v1
     - name: Install dependencies
       run: |
@@ -143,8 +144,8 @@ jobs:
       uses: JasonEtco/create-an-issue@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PLATFORM: ${{ matrix.platform }}
-        PYTHON: ${{ matrix.python }}
+        PLATFORM: "linux"
+        PYTHON: "3.11"
         RUN_ID: ${{ github.run_id }}
         TITLE: '[test-bot] pyinstaller bundle --pre is failing'
       with:
