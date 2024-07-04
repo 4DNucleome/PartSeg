@@ -99,7 +99,7 @@ PartSeg = "PartSeg:napari.yaml"
 
 [project.optional-dependencies]
 accelerate = [
-    "PyOpenGL-accelerate>=3.1.5",
+    "PyOpenGL-accelerate>=3.1.5 ; platform_machine != 'arm64'",
 ]
 all = [
     "PyOpenGL-accelerate>=3.1.5",
@@ -115,7 +115,7 @@ pyinstaller = [
     "PartSeg[pyinstaller_base,pyqt5]",
 ]
 pyinstaller_base = [
-    "PyOpenGL-accelerate>=3.1.5",
+    "PyOpenGL-accelerate>=3.1.5 ; platform_machine != 'arm64'",
     "PyInstaller",
     "pydantic",
 ]

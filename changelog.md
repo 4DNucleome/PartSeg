@@ -1,5 +1,108 @@
 # Changelog
 
+## 0.15.3 - 2024-07-03
+
+### 🚀 Features
+
+- Pydantic 2 compatybility (#1084)
+
+### 🐛 Bug Fixes
+
+- Fix rendering icons in colormap preview (#1040)
+- Fix test for validation length of message for sentry-sdk 2.0 release (#1098)
+- When fix reader check lowercase extension for validate compatybility (#1097)
+- Fix napari 0.5.0 compatybility (#1116)
+
+### 🚜 Refactor
+
+- Fix Qt flags (#1041)
+- Fix qt flags in roi mask code (#1042)
+- Fix qt flags in roi analysis (#1043)
+- Migrate from setup.cfg to `pyproject.toml` (#1070)
+
+### 📚 Documentation
+
+- Allow to use newer release of build docs dependencies (#1057)
+
+### 🧪 Testing
+
+- \[Automatic\] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `ipython`, `numpy`, `oiffile`, `pandas`, `psygnal`, `pyinstaller`, `qtconsole`, `qtpy`, `sentry-sdk`, `simpleitk`, `superqt`, `tifffile`, `xlsxwriter` (#1020)
+- \[Automatic\] Constraints upgrades: `h5py`, `imageio`, `ipython`, `numpy`, `packaging`, `pydantic`, `pyinstaller`, `pyqt5`, `scipy`, `sentry-sdk`, `superqt`, `tifffile`, `xlsxwriter` (#1027)
+- \[Automatic\] Constraints upgrades: `imageio`, `magicgui`, `xlsxwriter` (#1030)
+- \[Automatic\] Constraints upgrades: `ipykernel`, `pandas`, `qtpy` (#1032)
+- \[Automatic\] Constraints upgrades: `imageio`, `ipykernel`, `ipython`, `numpy`, `pandas`, `psygnal`, `pygments`, `pyinstaller`, `qtconsole`, `scipy`, `sentry-sdk`, `simpleitk` (#1035)
+- \[Automatic\] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `magicgui`, `pandas`, `pyinstaller`, `qtawesome`, `sentry-sdk`, `tifffile` (#1048)
+- \[Automatic\] Constraints upgrades: `ipykernel`, `numpy`, `pandas`, `partsegcore-compiled-backend`, `pydantic`, `scipy`, `sentry-sdk` (#1058)
+- Improve test of PartSegImage (#1072)
+- Improve test suite for `PartSegCore` (#1077)
+- \[Automatic\] Constraints upgrades: `imageio`, `ipykernel`, `local-migrator`, `napari`, `numpy`, `pandas`, `partsegcore-compiled-backend`, `pyinstaller`, `sentry-sdk`, `tifffile`, `vispy`, `xlsxwriter` (#1063)
+- \[Automatic\] Constraints upgrades: `magicgui`, `packaging`, `psygnal`, `pyinstaller`, `sentry-sdk`, `superqt` (#1086)
+- \[Automatic\] Constraints upgrades: `psygnal`, `pydantic`, `sentry-sdk`, `vispy` (#1090)
+- \[Automatic\] Constraints upgrades: `h5py`, `ipykernel`, `mahotas`, `pandas`, `psygnal`, `pydantic`, `pyinstaller`, `qtawesome`, `scipy`, `sentry-sdk`, `superqt` (#1092)
+- \[Automatic\] Constraints upgrades: `imageio`, `tifffile` (#1100)
+- \[Automatic\] Constraints upgrades: `pydantic`, `sentry-sdk`, `superqt`, `tifffile` (#1102)
+- \[Automatic\] Constraints upgrades: `psygnal`, `pygments`, `qtconsole`, `sentry-sdk`, `superqt`, `tifffile` (#1105)
+- \[Automatic\] Constraints upgrades: `imagecodecs`, `magicgui`, `oiffile`, `openpyxl`, `packaging`, `pydantic`, `pyinstaller`, `requests`, `scipy`, `sentry-sdk`, `superqt`, `sympy`, `tifffile`, `vispy` (#1107)
+
+### ⚙️ Miscellaneous Tasks
+
+- \[pre-commit.ci\] pre-commit autoupdate (#1019)
+- Remove plugin page preview as it is no longer maintained (#1021)
+- \[pre-commit.ci\] pre-commit autoupdate (#1022)
+- \[pre-commit.ci\] pre-commit autoupdate (#1026)
+- \[pre-commit.ci\] pre-commit autoupdate (#1031)
+- \[pre-commit.ci\] pre-commit autoupdate (#1034)
+- Use new semgrep configuration (#1039)
+- Upload raw coverage information (#1044)
+- \[pre-commit.ci\] pre-commit autoupdate (#1036)
+- Run coverage upload in separate steep (#1053)
+- Generate local report in `Tests` workflow and use proper script for fetch report (#1054)
+- Move coverage back to main workflow (#1055)
+- \[pre-commit.ci\] pre-commit autoupdate (#1056)
+- \[pre-commit.ci\] pre-commit autoupdate (#1059)
+- Update `actions/upload-artifact` and  `actions/download-artifact` from 3 to 4 (#1062)
+- \[pre-commit.ci\] pre-commit autoupdate (#1064)
+- Group actions update (#1065)
+- \[pre-commit.ci\] pre-commit autoupdate (#1068)
+- Remove requirement of 2 builds upload to codecov.io (#1073)
+- Re add tests to coverage report (#1074)
+- Switch from setup.cfg to pyproject.toml in workflows (#1076)
+- Fix compiling pyinstaller pre-deps (#1075)
+- Add codespell to pre-commit and fix pointed bugs (#1078)
+- Add new ruff rules and apply them (#1079)
+- \[pre-commit.ci\] pre-commit autoupdate (#1080)
+- \[pre-commit.ci\] pre-commit autoupdate (#1081)
+- Fix upgrade depenecies workflow (#1083)
+- Block using `mpmath==1.4.0a0` and `sentry-sdk` 2.0.0a1/a2 in pre-test (#1085)
+- \[pre-commit.ci\] pre-commit autoupdate (#1089)
+- Fix jupyter failing test by using constraints (#1093)
+- \[pre-commit.ci\] pre-commit autoupdate (#1091)
+- \[pre-commit.ci\] pre-commit autoupdate (#1096)
+- Add python 3.12 testing (#1087)
+- Exclude pyside2 on python 3.11 and 3.12 from testing (#1099)
+- \[pre-commit.ci\] pre-commit autoupdate (#1101)
+- \[pre-commit.ci\] pre-commit autoupdate (#1103)
+- Bump macos runners to macos-13 (both azure and GHA) (#1113)
+- \[pre-commit.ci\] pre-commit autoupdate (#1108)
+- Remove pyqt5 from constraints (#1118)
+
+### 🛡️ Security
+
+- *(deps)* Bump actions/checkout from 3 to 4 (#1029)
+- *(deps)* Bump conda-incubator/setup-miniconda from 2 to 3 (#1038)
+- *(deps)* Bump aganders3/headless-gui from 1 to 2 (#1047)
+- *(deps)* Bump actions/checkout from 3 to 4 (#1045)
+- *(deps)* Bump hynek/build-and-inspect-python-package from 1 to 2 (#1050)
+- *(deps)* Bump actions/setup-python from 4 to 5 (#1046)
+- *(deps)* Bump github/codeql-action from 2 to 3 (#1051)
+- *(deps)* Bump peter-evans/create-pull-request from 5 to 6 (#1067)
+- *(deps)* Bump codecov/codecov-action from 3 to 4 (#1066)
+
+### Build
+
+- Fix not bundling `Font Awesome 6 Free-Solid-900.otf` file to executable (#1114)
+- Update readme and release to point to GitHub releases (#1115)
+
 ## 0.15.2 - 2023-08-28
 
 ### Bug Fixes

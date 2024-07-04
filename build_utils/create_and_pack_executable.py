@@ -23,6 +23,9 @@ def create_archive(working_dir, with_version=True):
         file_name = f"PartSeg-{PartSeg.__version__}-{SYSTEM_NAME_DICT[platform.system()]}"
     else:
         file_name = f"PartSeg-{SYSTEM_NAME_DICT[platform.system()]}"
+    # if it is macos and arm64 the add arm64 to the name
+    if platform.system() == "Darwin" and os.uname().machine == "arm64":
+        file_name += "-arm64"
     if platform.system() != "Darwin":
         return zipfile.ZipFile(os.path.join(working_dir, "dist2", f"{file_name}.zip"), "w", zipfile.ZIP_DEFLATED)
     arch_file = tarfile.open(os.path.join(working_dir, "dist2", f"{file_name}.tgz"), "w:gz")
