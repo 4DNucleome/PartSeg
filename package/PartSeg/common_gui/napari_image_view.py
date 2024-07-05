@@ -1,5 +1,6 @@
 import itertools
 import logging
+import platform
 from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
@@ -43,6 +44,20 @@ except ImportError:
 _napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
 _napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
 _napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
+
+# if run with numpy<2 on macOS arm64 architecture compiled from pypi wheels
+# then it will crash with bus error if numpy is used in different thread
+if (
+    parse_version(np.__version__) < parse_version("2")
+    and platform.system() == "Darwin"
+    and platform.machine() == "arm64"
+):
+    try:
+        USE_THREADS = "cibw-run" not in np.show_config("dicts")["Python Information"]["path"]
+    except (KeyError, TypeError):
+        USE_THREADS = True
+else:
+    USE_THREADS = True
 
 
 def get_highlight_colormap():
@@ -717,12 +732,19 @@ class ImageView(QWidget):
 
         return image
 
-    def _prepare_layers(self, image, parameters, replace):
-        worker = prepare_layers(image, parameters, replace)
-        worker.returned.connect(self._add_image)
-        worker.finished.connect(self._remove_worker)
-        self.worker_list.append(worker)
-        worker.start()
+    if USE_THREADS:
+
+        def _prepare_layers(self, image, parameters, replace):
+            worker = prepare_layers(image, parameters, replace)
+            worker.returned.connect(self._add_image)
+            worker.finished.connect(self._remove_worker)
+            self.worker_list.append(worker)
+            worker.start()
+
+    else:
+
+        def _prepare_layers(self, image, parameters, replace):
+            self._add_image(_prepare_layers(image, parameters, replace))
 
     def images_bounds(self) -> Tuple[List[int], List[int]]:
         ranges = []
