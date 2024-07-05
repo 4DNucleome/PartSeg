@@ -24,21 +24,28 @@ class SurveyMessageBox(QMessageBox):
         self.setWindowTitle("PartSeg survey")
         self.setIcon(QMessageBox.Icon.Information)
         self.setTextFormat(Qt.TextFormat.RichText)
-        self.setText(f'Please fill the survey <a href="{survey_url}">{survey_url}</a> to help us improve PartSeg')
+        self.setText(
+            f'Please fill the survey <a href="{survey_url}">{survey_url}</a> to <b>help us</b> improve PartSeg'
+        )
         self._open_btn = self.addButton("Open survey", QMessageBox.ButtonRole.AcceptRole)
         self._close_btn = self.addButton("Close", QMessageBox.ButtonRole.RejectRole)
         self._ignore_btn = self.addButton("Ignore", QMessageBox.ButtonRole.DestructiveRole)
         self.setEscapeButton(self._ignore_btn)
         self.survey_url = survey_url
 
+        self._open_btn.clicked.connect(self._open_survey)
+        self._ignore_btn.clicked.connect(self._ignore_survey)
+
+    def _open_survey(self):
+        webbrowser.open(self.survey_url)
+
+    def _ignore_survey(self):
+        with IGNORE_FILE_PATH.open("w") as f_p:
+            f_p.write(self.survey_url)
+
     def exec_(self):
         result = super().exec_()
         IGNORE_FILE_PATH.touch()
-        if self.clickedButton() == self._ignore_btn:
-            with IGNORE_FILE_PATH.open("w") as f_p:
-                f_p.write(self.survey_url)
-        elif self.clickedButton() == self._open_btn:
-            webbrowser.open(self.survey_url)
         return result
 
 
@@ -48,7 +55,9 @@ class CheckSurveyThread(QThread):
     .. _PYPI: https://pypi.org/project/PartSeg/
     """
 
-    def __init__(self, survey_file_url="https://raw.githubusercontent.com/4DNucleome/PartSeg/develop/survey_url.txt"):
+    def __init__(
+        self, survey_file_url="https://raw.githubusercontent.com/4DNucleome/PartSeg/form_dialog/survey_url.txt"
+    ):
         super().__init__()
         self.survey_file_url = survey_file_url
         self.survey_url = ""

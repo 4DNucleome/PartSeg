@@ -21,6 +21,13 @@ def test_check_survey_thread(monkeypatch, tmp_path):
     assert urlopen_mock.call_count == 1
     assert thr.survey_url == "some data"
 
+    (tmp_path / "file1.txt").touch()
+    thr2 = CheckSurveyThread("test_url")
+    thr2.run()
+
+    assert urlopen_mock.call_count == 1
+    assert thr2.survey_url == ""
+
 
 @pytest.mark.usefixtures("qtbot")
 def test_thread_ignore_file_exist(monkeypatch, tmp_path):
@@ -46,6 +53,21 @@ def test_call_survey_message_box(monkeypatch):
     assert message_mock.call_count == 1
 
 
-def test_survey_message_box(qtbot, monkeypatch):
+def test_survey_message_box(qtbot, monkeypatch, tmp_path):
+    web_open = Mock()
+    monkeypatch.setattr("PartSeg._launcher.check_survey.webbrowser.open", web_open)
+    monkeypatch.setattr("PartSeg._launcher.check_survey.QMessageBox.exec_", Mock(return_value=0))
     msg = SurveyMessageBox("test_url")
     qtbot.addWidget(msg)
+
+    msg._open_btn.click()
+    web_open.assert_called_once_with("test_url")
+
+    msg.exec_()
+    assert (tmp_path / "file1.txt").exists()
+    assert (tmp_path / "file1.txt").read_text() == ""
+
+    msg._ignore_btn.click()
+
+    assert (tmp_path / "file1.txt").exists()
+    assert (tmp_path / "file1.txt").read_text() == "test_url"
