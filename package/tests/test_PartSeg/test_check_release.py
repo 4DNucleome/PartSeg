@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 import packaging.version
 import pytest
+from qtpy.QtWidgets import QMessageBox
 
 from PartSeg import state_store
 from PartSeg._launcher import check_version
@@ -43,9 +44,9 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
     values = ["", ""]
 
     class MockMessageBox:
-        Information = 1
-        Ok = 2
-        Ignore = 3
+        StandardButton = QMessageBox.StandardButton
+
+        Icon = QMessageBox.Icon
 
         def __init__(self, _type, title, message, _buttons):
             values[0] = title
@@ -53,7 +54,7 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
 
         @staticmethod
         def exec_():
-            return check_version.QMessageBox.Ok
+            return check_version.QMessageBox.StandardButton.Ok
 
     chk_thr = check_version.CheckVersionThread(base_version="0.10.0")
     chk_thr.release = "0.11.0"
