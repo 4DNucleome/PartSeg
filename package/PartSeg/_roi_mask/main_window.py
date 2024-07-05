@@ -916,7 +916,7 @@ class MainWindow(BaseMainWindow):
         icon = QIcon(os.path.join(PartSegData.icons_dir, "icon_stack.png"))
         self.setWindowIcon(icon)
 
-        self._setup_menu()
+        self._setup_menu_bar()
 
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
@@ -947,7 +947,7 @@ class MainWindow(BaseMainWindow):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
 
-    def _setup_menu(self):
+    def _setup_menu_bar(self):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu("File")
         file_menu.addAction("&Open").triggered.connect(self.main_menu.load_image)
