@@ -91,29 +91,13 @@ jobs:
         run: |
           RELEASE_NOTES=$(python build_utils/cut_changelog.py)
           echo "${RELEASE_NOTES}"
-          # https://github.community/t5/GitHub-Actions/set-output-Truncates-Multiline-Strings/m-p/38372/highlight/true#M3322
-          RELEASE_NOTES="${RELEASE_NOTES//'%'/'%25'}"
-          RELEASE_NOTES="${RELEASE_NOTES//$'\n'/'%0A'}"
-          RELEASE_NOTES="${RELEASE_NOTES//$'\r'/'%0D'}"
           echo ------------------
-          echo "${RELEASE_NOTES}"
           echo "contents=${RELEASE_NOTES}" >> "$GITHUB_OUTPUT"
 
       - name: check if prerelease
         id: prerelease
         run: |
-          regex='^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+([ab][0-9]+|rc[0-9]+)$'
-
-          check_version() {
-              if [[ $1 =~ $regex ]]; then
-                  echo "true"
-              else
-                  echo "false"
-              fi
-          }
-          echo ${{ github.ref }}
-          check_version ${{ github.ref }}
-          echo "prerelease=$(check_version ${{ github.ref }})" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_ENV"
         shell: bash
 
       - name: Create Release
@@ -124,7 +108,7 @@ jobs:
           name: ${{ env.tag }}
           body: ${{ steps.release_notes.outputs.contents }}
           draft: false
-          prerelease: ${{ steps.prerelease.outputs.prerelease  == 'true' }}
+          prerelease: ${{ contains(env.tag, 'rc') || contains(env.tag, 'rc') || contains(env.tag, 'rc')}}
           files: |
             dist/*
             pyinstaller/*
