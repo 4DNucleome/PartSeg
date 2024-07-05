@@ -78,12 +78,12 @@ class CheckVersionThread(QThread):
                 )
             else:
                 message = QMessageBox(
-                    QMessageBox.StandardButton.Information,
+                    QMessageBox.Icon.Information,
                     "New release",
                     f"You use outdated version of PartSeg. "
                     f"Your version is {my_version} and current is {remote_version}. "
                     "You can update it from pypi (pip install -U PartSeg)",
-                    QMessageBox.Ok | QMessageBox.StandardButton.Ignore,
+                    QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Ignore,
                 )
 
             if message.exec_() == QMessageBox.StandardButton.Ignore:
