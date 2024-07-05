@@ -100,6 +100,7 @@ jobs:
       - name: check if prerelease
         id: prerelease
         run: |
+          TAG="${GITHUB_REF/refs\/tags\/v/}"  # clean tag
           echo "tag=${TAG}" >> "$GITHUB_ENV"
         shell: bash
 
