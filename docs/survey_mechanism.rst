@@ -2,7 +2,7 @@ PartSeg surveys
 ===============
 
 Since the partseg 0.15.3 release there is a new feature that allows
-to ask users for fill in the PartSeg application.
+to ask users for fill a survey to help in the PartSeg development.
 
 How it works
 ------------
