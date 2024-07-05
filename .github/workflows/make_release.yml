@@ -89,12 +89,11 @@ jobs:
       - name: generate release notes
         id: release_notes
         run: |
-          RELEASE_NOTES=$(python build_utils/cut_changelog.py)
-          echo "${RELEASE_NOTES}"
+          python build_utils/cut_changelog.py
           echo ------------------
           {
             echo 'contents<<EOF'
-            "${RELEASE_NOTES}"
+            python build_utils/cut_changelog.py
             echo EOF
           } >> "$GITHUB_OUTPUT"
 
