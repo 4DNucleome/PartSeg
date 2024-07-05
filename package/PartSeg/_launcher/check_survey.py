@@ -55,9 +55,7 @@ class CheckSurveyThread(QThread):
     .. _PYPI: https://pypi.org/project/PartSeg/
     """
 
-    def __init__(
-        self, survey_file_url="https://raw.githubusercontent.com/4DNucleome/PartSeg/form_dialog/survey_url.txt"
-    ):
+    def __init__(self, survey_file_url="https://raw.githubusercontent.com/4DNucleome/PartSeg/develop/survey_url.txt"):
         super().__init__()
         self.survey_file_url = survey_file_url
         self.survey_url = ""

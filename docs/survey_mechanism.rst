@@ -24,20 +24,24 @@ Whole logic is implemented in ``PartSeg._launcher.check_survey`` module.
    * If user click "Ignore" button, save fetched url to ignore file.
    * If user click "Close" button, touch the ignore file to prevent showing the message again for 16 hours.
 
-.. graphvix::
-
-    digraph G {
-        "Check if ignore file exist and is last modified less than 16 hours ago" -> "Fetch data from https://raw.githubusercontent.com/4DNucleome/PartSeg/develop/survey_url.txt"
-        "Fetch data from https://raw.githubusercontent.com/4DNucleome/PartSeg/develop/survey_url.txt" -> "Check if ignore file exist and its content is equal to fetched url"
-        "Check if ignore file exist and its content is equal to fetched url" -> "Display message to user with information that there is a survey available"
-        "Display message to user with information that there is a survey available" -> "If user click 'Open survey' button, open browser with fetched url"
-        "Display message to user with information that there is a survey available" -> "If user click 'Ignore' button, save fetched url to ignore file"
-        "Display message to user with information that there is a survey available" -> "If user click 'Close' button, touch the ignore file to prevent showing the message again for 16 hours"
-    }
-
 
 .. graphviz::
 
-   digraph foo {
-      "bar" -> "baz";
-   }
+digraph flow {
+    "start" -> "check if already asked"
+
+    "check if already asked" -> "fetch if exist active survey" [label=No];
+    "check if already asked" -> "end" [label=Yes];
+    "fetch if exist active survey" -> "end" [label=No];
+    "fetch if exist active survey" -> "check if user decided to ignore this survey" [label=Yes]
+    "check if user decided to ignore this survey" -> "end" [label=Yes]
+    "check if user decided to ignore this survey" -> "show dialog with question" [label=No]
+    "show dialog with question" -> "end" [label=Close]
+    "show dialog with question" -> "open browser" [label="Open survey"]
+    "show dialog with question" -> "Save to not ask about this survey" [label="Ignore"]
+    "open browser" -> "end"
+    "Save to not ask about this survey" -> "end"
+    start [shape=Mdiamond];
+
+    end [shape=Msquare];
+}
