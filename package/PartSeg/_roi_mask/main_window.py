@@ -891,7 +891,7 @@ class MainWindow(BaseMainWindow):
 
     initial_image_path = PartSegData.segmentation_mask_default_image
 
-    def __init__(  # noqa: PLR0915
+    def __init__(
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
         super().__init__(config_folder, title, settings, io_functions.load_dict, signal_fun)
@@ -916,28 +916,7 @@ class MainWindow(BaseMainWindow):
         icon = QIcon(os.path.join(PartSegData.icons_dir, "icon_stack.png"))
         self.setWindowIcon(icon)
 
-        menu_bar = self.menuBar()
-        file_menu = menu_bar.addMenu("File")
-        file_menu.addAction("&Open").triggered.connect(self.main_menu.load_image)
-        file_menu.addMenu(self.recent_file_menu)
-        file_menu.addAction("&Save segmentation").triggered.connect(self.main_menu.save_segmentation)
-        file_menu.addAction("&Save components").triggered.connect(self.main_menu.save_result)
-        view_menu = menu_bar.addMenu("View")
-        view_menu.addAction("Settings and Measurement").triggered.connect(self.main_menu.show_advanced_window)
-        view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
-        view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
-        view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
-        view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
-        view_menu.addAction("Toggle console").triggered.connect(self._toggle_console)
-        view_menu.addAction("Toggle scale bar").triggered.connect(self._toggle_scale_bar)
-        action = view_menu.addAction("Screenshot")
-        action.triggered.connect(self.screenshot(self.image_view))
-        action.setShortcut(QKeySequence.StandardKey.Print)
-        image_menu = menu_bar.addMenu("Image operations")
-        image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
-        help_menu = menu_bar.addMenu("Help")
-        help_menu.addAction("State directory").triggered.connect(self.show_settings_directory)
-        help_menu.addAction("About").triggered.connect(self.show_about_dialog)
+        self._setup_menu()
 
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
@@ -967,6 +946,30 @@ class MainWindow(BaseMainWindow):
         with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
+
+    def _setup_menu(self):
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu("File")
+        file_menu.addAction("&Open").triggered.connect(self.main_menu.load_image)
+        file_menu.addMenu(self.recent_file_menu)
+        file_menu.addAction("&Save segmentation").triggered.connect(self.main_menu.save_segmentation)
+        file_menu.addAction("&Save components").triggered.connect(self.main_menu.save_result)
+        view_menu = menu_bar.addMenu("View")
+        view_menu.addAction("Settings and Measurement").triggered.connect(self.main_menu.show_advanced_window)
+        view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
+        view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
+        view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
+        view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
+        view_menu.addAction("Toggle console").triggered.connect(self._toggle_console)
+        view_menu.addAction("Toggle scale bar").triggered.connect(self._toggle_scale_bar)
+        action = view_menu.addAction("Screenshot")
+        action.triggered.connect(self.screenshot(self.image_view))
+        action.setShortcut(QKeySequence.StandardKey.Print)
+        image_menu = menu_bar.addMenu("Image operations")
+        image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
+        help_menu = menu_bar.addMenu("Help")
+        help_menu.addAction("State directory").triggered.connect(self.show_settings_directory)
+        help_menu.addAction("About").triggered.connect(self.show_about_dialog)
 
     def _toggle_scale_bar(self):
         self.image_view.toggle_scale_bar()
