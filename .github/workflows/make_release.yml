@@ -92,7 +92,11 @@ jobs:
           RELEASE_NOTES=$(python build_utils/cut_changelog.py)
           echo "${RELEASE_NOTES}"
           echo ------------------
-          printf "contents=<<EOF\n%s\nEOF" "${RELEASE_NOTES}" >> "$GITHUB_OUTPUT"
+          {
+            echo 'contents<<EOF'
+            "${RELEASE_NOTES}"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
       - name: check if prerelease
         id: prerelease
