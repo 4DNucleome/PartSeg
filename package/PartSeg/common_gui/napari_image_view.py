@@ -51,7 +51,7 @@ if (
     parse_version(np.__version__) < parse_version("2")
     and platform.system() == "Darwin"
     and platform.machine() == "arm64"
-):
+):  # pragma: no cover
     try:
         USE_THREADS = "cibw-run" not in np.show_config("dicts")["Python Information"]["path"]
     except (KeyError, TypeError):
@@ -732,7 +732,7 @@ class ImageView(QWidget):
 
         return image
 
-    if USE_THREADS:
+    if USE_THREADS:  # pragma: no cover
 
         def _prepare_layers(self, image, parameters, replace):
             worker = prepare_layers(image, parameters, replace)
