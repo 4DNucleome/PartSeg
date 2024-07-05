@@ -48,9 +48,7 @@ class CheckSurveyThread(QThread):
     .. _PYPI: https://pypi.org/project/PartSeg/
     """
 
-    def __init__(
-        self, survey_file_url="https://raw.githubusercontent.com/4DNucleome/PartSeg/form_dialog/survey_url.txt"
-    ):
+    def __init__(self, survey_file_url="https://raw.githubusercontent.com/4DNucleome/PartSeg/develop/survey_url.txt"):
         super().__init__()
         self.survey_file_url = survey_file_url
         self.survey_url = ""
@@ -58,7 +56,7 @@ class CheckSurveyThread(QThread):
 
     def run(self):
         """This function perform check if there is any active survey."""
-        if IGNORE_FILE_PATH.exists() and (time.time() - os.path.getmtime(IGNORE_FILE_PATH)) < 60:  # * 60 * 16:
+        if IGNORE_FILE_PATH.exists() and (time.time() - os.path.getmtime(IGNORE_FILE_PATH)) < 60 * 60 * 16:
             return
         with suppress(urllib.error.URLError), urllib.request.urlopen(self.survey_file_url) as r:  # nosec  # noqa: S310
             self.survey_url = r.read().decode("utf-8").strip()

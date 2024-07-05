@@ -7,7 +7,7 @@ import sys
 from contextlib import suppress
 from functools import partial
 
-from PartSeg._launcher.check_form import CheckSurveyThread
+from PartSeg._launcher.check_survey import CheckSurveyThread
 
 multiprocessing.freeze_support()
 
