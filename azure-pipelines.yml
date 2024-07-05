@@ -184,6 +184,9 @@ stages:
             macos:
               imageName: 'macos-13'
               test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
+            macos_arm:
+              imageName: 'macos-14'
+              test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
             windows:
               imageName: 'windows-2019'
               test_path: dist\PartSeg\PartSeg _test

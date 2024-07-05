@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-20.04", "windows-2019", "macos-13"] #, "macos-14"]
+        os: ["ubuntu-20.04", "windows-2019", "macos-13", "macos-14"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +46,11 @@ jobs:
       - name: Install PartSeg
         run: python -m pip install --editable ".[pyinstaller]" --constraint requirements/constraints_py3.10.txt
 
+      - name: compile numpy on macos-14
+        if: ${{ matrix.os == 'macos-14' }}
+        run: |
+          python -m pip install --no-binary numpy numpy --force-reinstall --constraint requirements/constraints_py3.10.txt
+
       - name: Build PartSeg bundle
         run: python build_utils/create_and_pack_executable.py
 
@@ -58,8 +63,7 @@ jobs:
       - name: Test PartSeg bundle
         uses: aganders3/headless-gui@v2
         with:
-          run: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
-
+          run: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
 
 
   create_release:
