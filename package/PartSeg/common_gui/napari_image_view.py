@@ -741,7 +741,7 @@ class ImageView(QWidget):
             self.worker_list.append(worker)
             worker.start()
 
-    else:
+    else:  # pragma: no cover
 
         def _prepare_layers(self, image, parameters, replace):
             self._add_image(_prepare_layers(image, parameters, replace))
