@@ -34,3 +34,10 @@ Whole logic is implemented in ``PartSeg._launcher.check_survey`` module.
         "Display message to user with information that there is a survey available" -> "If user click 'Ignore' button, save fetched url to ignore file"
         "Display message to user with information that there is a survey available" -> "If user click 'Close' button, touch the ignore file to prevent showing the message again for 16 hours"
     }
+
+
+.. graphviz::
+
+   digraph foo {
+      "bar" -> "baz";
+   }
