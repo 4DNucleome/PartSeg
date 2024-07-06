@@ -8,6 +8,7 @@ app-model==0.2.7
     # via napari
 appdirs==1.4.4
     # via
+    #   partseg (pyproject.toml)
     #   napari
     #   npe2
     #   pint
@@ -18,13 +19,14 @@ attrs==23.2.0
     #   jsonschema
     #   referencing
 autodoc-pydantic==2.2.0
+    # via partseg (pyproject.toml)
 babel==2.15.0
     # via sphinx
 build==1.2.1
     # via npe2
 cachey==0.2.1
     # via napari
-certifi==2024.6.2
+certifi==2024.7.4
     # via
     #   napari
     #   requests
@@ -40,13 +42,15 @@ cloudpickle==3.0.0
 comm==0.2.2
     # via ipykernel
 czifile==2019.7.2
-dask==2024.6.2
+    # via partseg (pyproject.toml)
+dask==2024.7.0
     # via napari
 debugpy==1.8.2
     # via ipykernel
 decorator==5.1.1
     # via ipython
 defusedxml==0.7.1
+    # via partseg (pyproject.toml)
 docstring-parser==0.16
     # via magicgui
 docutils==0.21.2
@@ -62,11 +66,13 @@ flexcache==0.3
 flexparser==0.3.1
     # via pint
 fonticon-fontawesome6==6.4.0
+    # via partseg (pyproject.toml)
 freetype-py==2.4.0
     # via vispy
 fsspec==2024.6.1
     # via dask
 h5py==3.11.0
+    # via partseg (pyproject.toml)
 heapdict==1.0.1
     # via cachey
 hsluv==5.0.4
@@ -74,8 +80,11 @@ hsluv==5.0.4
 idna==3.7
     # via requests
 imagecodecs==2024.6.1
+    # via partseg (pyproject.toml)
 imageio==2.34.2
     # via
+    #   -r requirements/version_denylist.txt
+    #   partseg (pyproject.toml)
     #   napari
     #   napari-svg
     #   scikit-image
@@ -87,10 +96,12 @@ in-n-out==0.2.1
     # via app-model
 ipykernel==6.29.5
     # via
+    #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
 ipython==8.26.0
     # via
+    #   partseg (pyproject.toml)
     #   ipykernel
     #   napari-console
 jedi==0.19.1
@@ -117,12 +128,17 @@ lazy-loader==0.4
     #   napari
     #   scikit-image
 local-migrator==0.1.10
-    # via nme
+    # via
+    #   partseg (pyproject.toml)
+    #   nme
 locket==1.0.0
     # via partd
 magicgui==0.8.3
-    # via napari
+    # via
+    #   partseg (pyproject.toml)
+    #   napari
 mahotas==1.4.15
+    # via partseg (pyproject.toml)
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.5
@@ -136,6 +152,7 @@ mdurl==0.1.2
 mpmath==1.3.0
     # via sympy
 napari==0.4.19.post1
+    # via partseg (pyproject.toml)
 napari-console==0.0.9
     # via napari
 napari-plugin-engine==0.2.0
@@ -147,10 +164,14 @@ nest-asyncio==1.6.0
 networkx==3.3
     # via scikit-image
 nme==0.1.8
+    # via partseg (pyproject.toml)
 npe2==0.7.6
-    # via napari
+    # via
+    #   -r requirements/version_denylist.txt
+    #   napari
 numpy==1.26.4
     # via
+    #   partseg (pyproject.toml)
     #   czifile
     #   dask
     #   h5py
@@ -169,9 +190,12 @@ numpy==1.26.4
 numpydoc==1.7.0
     # via napari
 oiffile==2024.5.24
+    # via partseg (pyproject.toml)
 openpyxl==3.1.5
+    # via partseg (pyproject.toml)
 packaging==24.1
     # via
+    #   partseg (pyproject.toml)
     #   build
     #   dask
     #   ipykernel
@@ -184,13 +208,17 @@ packaging==24.1
     #   sphinx
     #   vispy
 pandas==2.2.2
-    # via napari
+    # via
+    #   partseg (pyproject.toml)
+    #   napari
 parso==0.8.4
     # via jedi
 partd==1.4.2
     # via dask
 partsegcore-compiled-backend==0.15.7
+    # via partseg (pyproject.toml)
 partsegdata==0.10.0
+    # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
 pillow==10.4.0
@@ -214,6 +242,7 @@ psutil==6.0.0
     #   napari
 psygnal==0.11.1
     # via
+    #   partseg (pyproject.toml)
     #   app-model
     #   magicgui
     #   napari
@@ -224,8 +253,9 @@ pure-eval==0.2.2
     # via stack-data
 pyconify==0.1.6
     # via superqt
-pydantic==2.8.0
+pydantic==2.8.2
     # via
+    #   partseg (pyproject.toml)
     #   app-model
     #   autodoc-pydantic
     #   napari
@@ -234,12 +264,13 @@ pydantic==2.8.0
     #   pydantic-settings
 pydantic-compat==0.1.2
     # via app-model
-pydantic-core==2.20.0
+pydantic-core==2.20.1
     # via pydantic
 pydantic-settings==2.3.4
     # via autodoc-pydantic
 pygments==2.18.0
     # via
+    #   partseg (pyproject.toml)
     #   ipython
     #   napari
     #   qtconsole
@@ -251,12 +282,15 @@ pyopengl==3.1.7
 pyproject-hooks==1.1.0
     # via build
 pyqt6==6.7.0
+    # via partseg (pyproject.toml)
 pyqt6-qt6==6.7.2
     # via pyqt6
 pyqt6-sip==13.6.0
     # via pyqt6
 pyside2==5.13.2
+    # via -r requirements/version_denylist.txt
 pyside6==6.7.2
+    # via -r requirements/version_denylist.txt
 pyside6-addons==6.7.2
     # via pyside6
 pyside6-essentials==6.7.2
@@ -282,10 +316,14 @@ pyzmq==26.0.3
     #   jupyter-client
     #   qtconsole
 qtawesome==1.3.1
+    # via partseg (pyproject.toml)
 qtconsole==5.5.2
-    # via napari-console
+    # via
+    #   partseg (pyproject.toml)
+    #   napari-console
 qtpy==2.4.1
     # via
+    #   partseg (pyproject.toml)
     #   magicgui
     #   napari
     #   napari-console
@@ -298,6 +336,7 @@ referencing==0.35.1
     #   jsonschema-specifications
 requests==2.32.3
     # via
+    #   partseg (pyproject.toml)
     #   pooch
     #   pyconify
     #   sphinx
@@ -313,9 +352,13 @@ scikit-image==0.24.0
     # via napari
 scipy==1.14.0
     # via
+    #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
 sentry-sdk==2.7.1
+    # via
+    #   -r requirements/version_denylist.txt
+    #   partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
 shiboken2==5.13.2
@@ -326,20 +369,25 @@ shiboken6==6.7.2
     #   pyside6-addons
     #   pyside6-essentials
 simpleitk==2.3.1
+    # via partseg (pyproject.toml)
 six==1.16.0
     # via
+    #   partseg (pyproject.toml)
     #   asttokens
     #   python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
 sphinx==7.3.7
     # via
+    #   partseg (pyproject.toml)
     #   autodoc-pydantic
     #   numpydoc
     #   sphinx-autodoc-typehints
     #   sphinx-qt-documentation
 sphinx-autodoc-typehints==2.2.2
+    # via partseg (pyproject.toml)
 sphinx-qt-documentation==0.4.1
+    # via partseg (pyproject.toml)
 sphinxcontrib-applehelp==1.0.8
     # via sphinx
 sphinxcontrib-devhelp==1.0.6
@@ -356,13 +404,16 @@ stack-data==0.6.3
     # via ipython
 superqt==0.6.7
     # via
+    #   partseg (pyproject.toml)
     #   magicgui
     #   napari
 sympy==1.12.1
+    # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
 tifffile==2024.7.2
     # via
+    #   partseg (pyproject.toml)
     #   czifile
     #   napari
     #   oiffile
@@ -381,6 +432,7 @@ tornado==6.4.1
 tqdm==4.66.4
     # via napari
 traceback-with-variables==2.0.4
+    # via partseg (pyproject.toml)
 traitlets==5.14.3
     # via
     #   comm
@@ -413,6 +465,7 @@ urllib3==2.2.2
     #   sentry-sdk
 vispy==0.14.3
     # via
+    #   partseg (pyproject.toml)
     #   napari
     #   napari-svg
 wcwidth==0.2.13
@@ -420,6 +473,8 @@ wcwidth==0.2.13
 wrapt==1.16.0
     # via napari
 xlrd==2.0.1
+    # via partseg (pyproject.toml)
 xlsxwriter==3.2.0
+    # via partseg (pyproject.toml)
 zipp==3.19.2
     # via importlib-metadata
