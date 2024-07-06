@@ -117,7 +117,7 @@ jobs:
           name: ${{ env.tag }}
           body: ${{ steps.release_notes.outputs.contents }}
           draft: false
-          prerelease: ${{ contains(env.tag, 'rc') || contains(env.tag, 'rc') || contains(env.tag, 'rc')}}
+          prerelease: ${{ contains(env.tag, 'rc') || contains(env.tag, 'a') || contains(env.tag, 'b')}}
           files: |
             dist/*
             pyinstaller/*
