@@ -104,11 +104,6 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_ENV"
         shell: bash
 
-      - name: check env
-        run: |
-          echo "${{ env.tag }}"
-        shell: bash
-
       - name: Create Release
         uses: "softprops/action-gh-release@v2"
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -117,7 +112,7 @@ jobs:
           name: ${{ env.tag }}
           body: ${{ steps.release_notes.outputs.contents }}
           draft: false
-          prerelease: ${{ contains(env.tag, 'rc') || contains(env.tag, 'rc') || contains(env.tag, 'rc')}}
+          prerelease: ${{ contains(env.tag, 'rc') || contains(env.tag, 'a') || contains(env.tag, 'b')}}
           files: |
             dist/*
             pyinstaller/*
