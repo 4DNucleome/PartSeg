@@ -80,6 +80,7 @@ jobs:
       os: ${{ matrix.os }}
       qt_backend: ${{ matrix.qt_backend }}
       tox_args: ${{ matrix.tox_args }}
+      pydantic: ${{ matrix.pydantic }}
 
   base-test-main:
     name: Base py${{ matrix.python_version }}
