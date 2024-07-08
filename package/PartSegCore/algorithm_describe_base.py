@@ -8,6 +8,7 @@ from functools import wraps
 from importlib.metadata import version
 
 from local_migrator import REGISTER, class_to_str
+from packaging.version import parse as parse_version
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
 from pydantic.fields import Field, FieldInfo
@@ -404,6 +405,11 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
     class_path: str = ""
     if typing.TYPE_CHECKING:
         __register__: Register
+
+    if parse_version(version("pydantic")) < parse_version("2"):
+
+        class Config:
+            smart_union = True
 
     @validator("name")
     def check_name(cls, v):
