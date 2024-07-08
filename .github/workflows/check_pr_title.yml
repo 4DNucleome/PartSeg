@@ -38,7 +38,8 @@ jobs:
         env:
           $PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if ! cspell --words-only --no-progress <<< "$PR_TITLE"; then
+          set -x
+          if ! cspell --words-only --no-progress stdin <<< "$PR_TITLE"; then
             echo "Spelling errors found in PR title"
             exit 1
           fi
