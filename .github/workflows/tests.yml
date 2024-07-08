@@ -103,6 +103,10 @@ jobs:
           - python_version: "3.9"
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
+          - python_version: "3.10"
+            os: "ubuntu-22.04"
+            qt_backend: "PyQt5"
+            pydantic: "_pydantic_1"
         exclude:
           - python_version: "3.11"
             qt_backend: "PySide2"
@@ -113,6 +117,7 @@ jobs:
       python_version: ${{ matrix.python_version }}
       os: ${{ matrix.os }}
       qt_backend: ${{ matrix.qt_backend }}
+      pydantic: ${{ matrix.pydantic }}
 
   test_coverage:
     needs: download_data
