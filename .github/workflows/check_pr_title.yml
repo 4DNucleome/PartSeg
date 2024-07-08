@@ -7,6 +7,9 @@ on:
       - reopened
       - edited
       - synchronize
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   lint:
