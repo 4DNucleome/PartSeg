@@ -42,7 +42,7 @@ on:
 
 jobs:
   test:
-    name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }}
+    name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }} ${{ inputs.pydantic }}
     runs-on: ${{ inputs.os }}
     steps:
       - uses: actions/checkout@v4
