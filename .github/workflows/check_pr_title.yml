@@ -17,3 +17,24 @@ jobs:
       - uses: aslafy-z/conventional-pr-title-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  spellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install cspell
+        run: npm install -g cspell
+
+      - name: Check PR title spelling
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if ! cspell --words-only --no-progress <<< "$PR_TITLE"; then
+            echo "Spelling errors found in PR title"
+            exit 1
+          fi
