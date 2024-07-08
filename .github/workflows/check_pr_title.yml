@@ -32,8 +32,9 @@ jobs:
         run: npm install -g cspell
 
       - name: Check PR title spelling
+        env:
+          $PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
           if ! cspell --words-only --no-progress <<< "$PR_TITLE"; then
             echo "Spelling errors found in PR title"
             exit 1
