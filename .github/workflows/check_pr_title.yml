@@ -36,6 +36,7 @@ jobs:
           echo "$PR_TITLE"
           if aspell --personal="./.github/project_dict.pws" list <<< "$PR_TITLE" | grep -q .; then
               echo "Misspelled words found."
+              aspell --personal="./.github/project_dict.pws" list <<< "$PR_TITLE"
               exit 1
           else
               echo "No misspelled words found."
