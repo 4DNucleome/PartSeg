@@ -83,6 +83,7 @@ def main():
     parser.add_argument(
         "--spec", default=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "launcher.spec")
     )
+    parser.add_argument("--without-compress", action="store_true")
     parser.add_argument("--working-dir", default=os.path.abspath(os.curdir))
 
     args = parser.parse_args()
@@ -91,8 +92,9 @@ def main():
 
     dir_name = "PartSeg.app" if platform.system() == "Darwin2" else "PartSeg"
 
-    fix_qt_location(args.working_dir, dir_name)
-    archive_build(args.working_dir, dir_name)
+    if not args.without_compress:
+        fix_qt_location(args.working_dir, dir_name)
+        archive_build(args.working_dir, dir_name)
 
 
 if __name__ == "__main__":
