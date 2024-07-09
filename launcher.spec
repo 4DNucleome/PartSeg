@@ -165,7 +165,7 @@ a = Analysis(
         ]
     ]
     + qt_data
-    + [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "plugins/itk_snap_save")]
+    + [(os.path.join(base_path, "napari.yaml"), "PartSeg")]
     + [(os.path.join(base_path, "plugins/napari_widgets/__init__.py"), "plugins/napari")]
     + [(os.path.join(base_path, "plugins/napari_widgets/simple_measurement_widget.py"), "plugins/napari")]
     # + [ ("Readme.md", "/"), ("changelog.md", "/")]
@@ -174,6 +174,8 @@ a = Analysis(
     + collect_data_files("dask")
     + collect_data_files("vispy")
     + collect_data_files("napari")
+    + collect_data_files("napari_svg")
+    + collect_data_files("napari_console")
     + collect_data_files("freetype")
     + collect_data_files("skimage")
     + collect_data_files("fonticon_fa6")
