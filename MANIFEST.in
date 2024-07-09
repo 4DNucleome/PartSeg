@@ -44,3 +44,4 @@ exclude dist/**.swp
 exclude cliff.toml
 exclude runtime.txt
 exclude .sourcery.yaml
+exclude survey_url.txt
