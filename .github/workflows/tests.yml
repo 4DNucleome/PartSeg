@@ -10,8 +10,6 @@ on:
   pull_request:
     branches:
       - '**'
-    paths-ignore:
-      - .github/workflows/*
   workflow_dispatch:
 
 concurrency:
