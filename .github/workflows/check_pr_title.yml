@@ -39,7 +39,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "$PR_TITLE"
-          if aspell --personal="./.github/project_dict.pws" list <<< $PR_TITLE | grep -q .; then
+          if aspell --personal="./.github/project_dict.pws" list <<< "$PR_TITLE" | grep -q .; then
               echo "Misspelled words found."
               exit 1
           else
