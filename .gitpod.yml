@@ -1,4 +1,4 @@
 tasks:
-  - init: >
-      pip install -e .[test,pyqt]
-      pip install -r docs/requirements.txt
+  - before: sudo apt-get update && sudo apt-get install -y herbstluftwm libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils xvfb
+    # command: Xvfb :99 -screen 0 640x480x8 -nolisten tcp & herbstluftwm
+    init: pip install -e .[all,test,docs] && bash ./build_utils/download_data.sh

@@ -44,11 +44,19 @@ class RegisterEnum(Enum):
     flow = 0  #: algorithm for calculation flow from core object to borders. For spiting touching objects, deprecated
     threshold = 1  #: threshold algorithms. From greyscale array to binary array
     noise_filtering = 2  #: filter noise from image
-    analysis_algorithm = 3  #: algorithm for creating segmentation in analysis PartSeg part
-    mask_algorithm = 4  #: algorithm for creating segmentation in mask PartSeg part
+    analysis_algorithm = 3
+    """
+    algorithm for creating segmentation in analysis PartSeg part
+    (deprecated in favour of roi_analysis_segmentation_algorithm)
+    """
+    mask_algorithm = 4
+    """
+    algorithm for creating segmentation in mask PartSeg part
+    (deprecated in favour of roi_mask_segmentation_algorithm)
+    """
     analysis_save = 5  #: save functions for analysis part
     analysis_load = 6  #: load functions for analysis part
-    mask_load = 7  #: load functions for mask part
+    mask_load = 7  #: load functions for mask part)
     image_transform = 8  #: transform image, like interpolation
     mask_save_parameters = 9  #: save metadata for mask part (currently creating json file)
     mask_save_components = 10  #: save each segmentation component in separate file. Save location is directory

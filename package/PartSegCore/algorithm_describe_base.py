@@ -131,22 +131,32 @@ class _GetDescriptionClass:
         return model
 
 
-def _partial_abstractmethod(funcobj):
-    funcobj.__is_partial_abstractmethod__ = True
-    return funcobj
+def _partial_abstractmethod(func_obj):
+    func_obj.__is_partial_abstractmethod__ = True
+    return func_obj
 
 
 class AlgorithmDescribeBaseMeta(ABCMeta):
-    def __new__(cls, name, bases, attrs, **kwargs):
-        cls2 = super().__new__(cls, name, bases, attrs, **kwargs)
+    __argument_class__: typing.Optional[typing.Type[PydanticBaseModel]] = None
+
+    def get_fields(self) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        """
+        This function return list of parameters needed by algorithm. It is used for generate form in User Interface
+
+        :return: list of algorithm parameters and comments
+        """
+        raise NotImplementedError
+
+    def __new__(mcs, name, bases, attrs, **kwargs):
+        cls = super().__new__(mcs, name, bases, attrs, **kwargs)
         if (
-            not inspect.isabstract(cls2)
-            and hasattr(cls2.get_fields, "__is_partial_abstractmethod__")
-            and cls2.__argument_class__ is None
+            not inspect.isabstract(cls)
+            and hasattr(cls.get_fields, "__is_partial_abstractmethod__")
+            and cls.__argument_class__ is None
         ):
             raise RuntimeError("class need to have __argument_class__ set or get_fields functions defined")
-        cls2.__new_style__ = getattr(cls2.get_fields, "__is_partial_abstractmethod__", False)
-        return cls2
+        cls.__new_style__ = getattr(cls.get_fields, "__is_partial_abstractmethod__", False)
+        return cls
 
 
 class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
@@ -254,7 +264,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
         """
         :param class_methods: list of method which should be class method
         :param methods: list of method which should be instance method
-        :param kwargs: elements passed to OrderedDict constructor (may be initial elements). I suggest to not use this.
+        :param kwargs: elements passed to OrderedDict constructor (maybe initial elements). I suggest to not use this.
         """
         super().__init__(**kwargs)
         self.suggested_base_class = suggested_base_class
@@ -469,15 +479,15 @@ class ROIExtractionProfileMeta(ModelMetaclass):
 
         def allow_positional_args(func):
             @wraps(func)
-            def _wraps(self, *args, **kwargs):
+            def _wraps(self, *args, **kwargs_):
                 if args:
                     warnings.warn(
                         "Positional arguments are deprecated, use keyword arguments instead",
                         FutureWarning,
                         stacklevel=2,
                     )
-                    kwargs.update(dict(zip(self.__fields__, args)))
-                return func(self, **kwargs)
+                    kwargs_.update(dict(zip(self.__fields__, args)))
+                return func(self, **kwargs_)
 
             return _wraps
 

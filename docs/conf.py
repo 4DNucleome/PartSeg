@@ -33,6 +33,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "PartSegCore.sphinx.auto_parameters",
     "sphinxcontrib.autodoc_pydantic",
+    "sphinx.ext.autosectionlabel",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
