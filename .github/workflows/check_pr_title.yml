@@ -40,7 +40,7 @@ jobs:
         run: |
           set -x
           echo "$PR_TITLE"
-          if ! cspell --words-only --no-progress stdin <<< "$PR_TITLE"; then
+          if ! cspell --no-progress stdin <<< "$PR_TITLE"; then
             echo "Spelling errors found in PR title"
             exit 1
           fi
