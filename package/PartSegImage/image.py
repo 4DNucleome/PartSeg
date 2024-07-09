@@ -147,6 +147,7 @@ class Image:
         self._channel_names = self._prepare_channel_names(channel_names, self.channels)
 
         self.ranges = self._adjust_ranges(ranges, self._channel_arrays)
+        self._mask_array = self._fit_mask(mask, data, axes_order)
 
         self._mask_array = self._prepare_mask(mask, data, axes_order)
         if self._mask_array is not None:
@@ -159,6 +160,12 @@ class Image:
         if ranges is None:
             ranges = list(zip((np.min(c) for c in channel_arrays), (np.max(c) for c in channel_arrays)))
         return [(min_val, max_val) if (min_val != max_val) else (min_val, min_val + 1) for (min_val, max_val) in ranges]
+
+    def _fit_mask(self, mask, data, axes_order):
+        mask_array = self._prepare_mask(mask, data, axes_order)
+        if mask_array is not None:
+            mask_array = self.fit_mask_to_image(mask_array)
+        return mask_array
 
     @classmethod
     def _prepare_mask(cls, mask, data, axes_order) -> np.ndarray | None:
