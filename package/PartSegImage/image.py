@@ -150,6 +150,9 @@ class Image:
             )
         else:
             self.ranges = ranges
+        self.ranges = [
+            (min_val, max_val) if (min_val != max_val) else (min_val, min_val + 1) for (min_val, max_val) in self.ranges
+        ]
         self._mask_array = self._prepare_mask(mask, data, axes_order)
         if self._mask_array is not None:
             self._mask_array = self.fit_mask_to_image(self._mask_array)
