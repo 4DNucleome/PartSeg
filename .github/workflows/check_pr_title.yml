@@ -8,8 +8,8 @@ on:
       - edited
       - synchronize
   pull_request:
-    branches:
-      - '**'
+    paths:
+      - '.github/workflows/check_pr_title.yml'
 
 jobs:
   lint:
@@ -26,13 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install cspell
-        run: npm install -g cspell
+      - name: Install aspell
+        run: sudo apt-get install aspell
 
       - name: Check PR title spelling
         env:
