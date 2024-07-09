@@ -33,10 +33,10 @@ jobs:
 
       - name: debug print
         run: |
-          echo $ {{ github }}
-          echo $ {{ github.event }}
-          echo $ {{ github.event.pull_request }}
-          echo $ {{ github.event.pull_request.title }}
+          echo ${{ github }}
+          echo ${{ github.event }}
+          echo ${{ github.event.pull_request }}
+          echo ${{ github.event.pull_request.title }}
 
       - name: Install cspell
         run: npm install -g cspell
