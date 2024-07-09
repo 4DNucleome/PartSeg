@@ -149,10 +149,6 @@ class Image:
         self.ranges = self._adjust_ranges(ranges, self._channel_arrays)
         self._mask_array = self._fit_mask(mask, data, axes_order)
 
-        self._mask_array = self._prepare_mask(mask, data, axes_order)
-        if self._mask_array is not None:
-            self._mask_array = self.fit_mask_to_image(self._mask_array)
-
     @staticmethod
     def _adjust_ranges(
         ranges: list[tuple[float, float]] | None, channel_arrays: list[np.ndarray]
