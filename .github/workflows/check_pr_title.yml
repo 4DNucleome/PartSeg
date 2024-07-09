@@ -39,7 +39,10 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "$PR_TITLE"
-          if ! cspell --no-progress stdin <<< "$PR_TITLE"; then
-            echo "Spelling errors found in PR title"
-            exit 1
+          if aspell --personal="./.github/project_dict.pws" list <<< $PR_TITLE | grep -q .; then
+              echo "Misspelled words found."
+              exit 1
+          else
+              echo "No misspelled words found."
+              exit 0
           fi
