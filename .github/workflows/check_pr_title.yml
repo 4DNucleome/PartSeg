@@ -31,13 +31,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: debug print
-        run: |
-          echo ${{ github }}
-          echo ${{ github.event }}
-          echo ${{ github.event.pull_request }}
-          echo ${{ github.event.pull_request.title }}
-
       - name: Install cspell
         run: npm install -g cspell
 
@@ -45,7 +38,6 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          set -x
           echo "$PR_TITLE"
           if ! cspell --no-progress stdin <<< "$PR_TITLE"; then
             echo "Spelling errors found in PR title"
