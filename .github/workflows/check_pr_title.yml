@@ -7,6 +7,9 @@ on:
       - reopened
       - edited
       - synchronize
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   lint:
@@ -33,9 +36,10 @@ jobs:
 
       - name: Check PR title spelling
         env:
-          $PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if ! cspell --words-only --no-progress <<< "$PR_TITLE"; then
+          echo "$PR_TITLE"
+          if ! cspell --no-progress stdin <<< "$PR_TITLE"; then
             echo "Spelling errors found in PR title"
             exit 1
           fi
