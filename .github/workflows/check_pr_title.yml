@@ -43,7 +43,7 @@ jobs:
 
       - name: Check PR title spelling
         env:
-          $PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -x
           echo "$PR_TITLE"
