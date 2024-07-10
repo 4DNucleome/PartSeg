@@ -20,7 +20,7 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.0
+    rev: v0.5.1
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
