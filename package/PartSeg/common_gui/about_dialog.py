@@ -1,4 +1,5 @@
 import os
+from importlib import metadata
 
 from packaging.version import parse as parse_version
 from qtpy import QT_VERSION
@@ -9,16 +10,29 @@ import PartSeg
 from PartSeg.common_gui.universal_gui_part import TextShow
 
 
+def get_links():
+    source_code = "https://github.com/4DNucleome/PartSeg"
+    homepage = "https://partseg.github.io/"
+    for item in metadata.metadata("PartSeg").get_all("Project-URL"):
+        if item.startswith("Homepage"):
+            homepage = item.split(" ", 1)[1]
+        elif item.startswith("Source"):
+            source_code = item.rsplit(" ", 1)[1]
+
+    return homepage, source_code
+
+
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+        homepage, source_code = get_links()
         self.setWindowTitle("About PartSeg")
         text = (
             f"<strong>PartSeg</strong> ({PartSeg.__version__})<br>"
             "PartSeg is gui and library for segmentation algorithms on high resolution microscopy<br><br>Webpage: "
-            "<a href='https://4dnucleome.cent.uw.edu.pl/PartSeg/'>https://4dnucleome.cent.uw.edu.pl/PartSeg/</a>"
+            f"<a href='{homepage}'>{homepage}</a>"
             "<br>Repository and issue tracker: "
-            "<a href='https://github.com/4DNucleome/PartSeg'>https://github.com/4DNucleome/PartSeg</a>"
+            f"<a href='{source_code}'>{source_code}</a>"
         )
         cite_as_text = (
             "Bokota, G., Sroka, J., Basu, S. et al. PartSeg: a tool for quantitative feature"
@@ -44,9 +58,15 @@ class AboutDialog(QDialog):
             self.cite_as.setText(cite_as_text)
         else:
             self.cite_as.setMarkdown(cite_as_text)
+        self.cite_as.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
         ok_but = QPushButton("Ok")
         ok_but.clicked.connect(self.accept)
-        text_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        text_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
+        text_label.setOpenExternalLinks(True)
         layout = QGridLayout(self)
         layout.addWidget(text_label, 0, 0, 1, 3)
         layout.addWidget(self.change_log, 1, 0, 1, 3)
