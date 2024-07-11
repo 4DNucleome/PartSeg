@@ -88,7 +88,7 @@ dynamic = [
 text = "BSD-3-Clause"
 
 [project.urls]
-Homepage = "https://4dnucleome.cent.uw.edu.pl/PartSeg/"
+Homepage = "https://partseg.github.io/"
 Documentation = "https://partseg.readthedocs.io/en/stable/"
 "Source Code" = "https://github.com/4DNucleome/PartSeg"
 "User Support" = "https://github.com/4DNucleome/PartSeg/issues"
