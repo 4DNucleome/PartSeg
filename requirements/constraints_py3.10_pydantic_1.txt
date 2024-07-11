@@ -114,7 +114,7 @@ jedi==0.19.1
     # via ipython
 jinja2==3.1.4
     # via sphinx
-jsonschema==4.22.0
+jsonschema==4.23.0
     # via napari
 jsonschema-specifications==2023.12.1
     # via jsonschema
@@ -163,7 +163,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mpmath==1.3.0
     # via sympy
-napari==0.4.19.post1
+napari==0.5.0
     # via partseg (pyproject.toml)
 napari-console==0.0.9
     # via napari
@@ -375,7 +375,7 @@ rich==13.7.1
     # via
     #   npe2
     #   typer
-rpds-py==0.18.1
+rpds-py==0.19.0
     # via
     #   jsonschema
     #   referencing
@@ -388,11 +388,11 @@ scipy==1.14.0
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.7.1
+sentry-sdk==2.9.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==70.2.0
+setuptools==70.3.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -435,7 +435,7 @@ superqt==0.6.7
     #   partseg (pyproject.toml)
     #   magicgui
     #   napari
-sympy==1.12.1
+sympy==1.13.0
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
