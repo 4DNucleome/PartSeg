@@ -14,13 +14,14 @@ steps:
       path: $(Build.SourcesDirectory)/test_data
   - script: |
       pip install -U pip wheel setuptools virtualenv
-      pip install -r requirements/requirements_dev.txt
+      pip install -r requirements/requirements_dev.txt tox-uv
     displayName: "Install deps"
   - script: tox -e py311-PyQt5-azure
     displayName: "Run Tox"
     env:
       CODECOV_TOKEN: $(codecov_token_secret)
-      PIP_CONSTRAINT: requirements/constraints_py3.9.txt
+      PIP_CONSTRAINT: requirements/constraints_py3.11.txt
+      UV_CONSTRAINT: requirements/constraints_py3.11.txt
 
   - task: CopyFiles@2
     inputs:
