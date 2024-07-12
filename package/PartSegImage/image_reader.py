@@ -1,16 +1,20 @@
+import inspect
 import os.path
 import typing
 from abc import abstractmethod
 from contextlib import suppress
+from importlib.metadata import version
 from io import BytesIO
 from pathlib import Path
 from threading import Lock
 
+import imagecodecs
 import numpy as np
 import tifffile
-from czifile.czifile import CziFile
+from czifile.czifile import DECOMPRESS, CziFile
 from defusedxml import ElementTree
 from oiffile import OifFile
+from packaging.version import parse as parse_version
 
 from PartSegImage.image import Image
 
@@ -19,6 +23,64 @@ INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
 if typing.TYPE_CHECKING:
     from xml.etree.ElementTree import Element  # nosec
+
+
+class ZSTD1Header(typing.NamedTuple):
+    """
+    ZSTD1 header structure
+    based on:
+    https://github.com/ZEISS/libczi/blob/4a60e22200cbf0c8ff2a59f69a81ef1b2b89bf4f/Src/libCZI/decoder_zstd.cpp#L19
+    """
+
+    header_size: int
+    hiLoByteUnpackPreprocessing: bool
+
+
+def parse_zstd1_header(data, size):
+    """
+    Parse ZSTD header
+
+    https://github.com/ZEISS/libczi/blob/4a60e22200cbf0c8ff2a59f69a81ef1b2b89bf4f/Src/libCZI/decoder_zstd.cpp#L84
+    """
+    if size < 1:
+        return ZSTD1Header(0, False)
+
+    if data[0] == 1:
+        return ZSTD1Header(1, False)
+
+    if data[0] == 3 and size < 3:
+        return ZSTD1Header(0, False)
+
+    if data[1] == 1:
+        return ZSTD1Header(3, bool(data[2] & 1))
+
+    return ZSTD1Header(0, False)
+
+
+def _get_dtype():
+    return inspect.currentframe().f_back.f_back.f_locals["de"].dtype
+
+
+def decode_zstd1(data):
+    """
+    Decode ZSTD1 data
+    """
+    header = parse_zstd1_header(data, len(data))
+    dtype = _get_dtype()
+    return np.fromstring(imagecodecs.zstd_decode(data[header.header_size :]), dtype)
+
+
+def decode_zstd0(data):
+    """
+    Decode ZSTD0 data
+    """
+    dtype = _get_dtype()
+    return np.fromstring(imagecodecs.zstd_decode(data), dtype)
+
+
+if parse_version(version("czifile")) == parse_version("2019.7.2"):
+    DECOMPRESS[5] = decode_zstd0
+    DECOMPRESS[6] = decode_zstd1
 
 
 def _empty(_, __):
@@ -270,7 +332,7 @@ class CziImageReader(BaseImageReaderBuffer):
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         image_file = CziFile(image_path)
-        image_data = image_file.asarray()
+        image_data = image_file.asarray(max_workers=1)
         image_data = self.update_array_shape(image_data, image_file.axes)
         metadata = image_file.metadata(False)
         with suppress(KeyError):
