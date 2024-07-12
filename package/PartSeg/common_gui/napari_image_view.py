@@ -482,6 +482,9 @@ class ImageView(QWidget):
         return res
 
     def set_roi_colormap(self, image_info) -> None:
+        if _napari_ge_5:
+            image_info.roi.colormap = self.get_roi_view_parameters(image_info)
+            return
         if _napari_ge_4_13:
             image_info.roi.color = self.get_roi_view_parameters(image_info)
             return
@@ -583,7 +586,10 @@ class ImageView(QWidget):
         else:
             image_info.mask.data = mask_marker
         image_info.mask.metadata["valid"] = True
-        image_info.mask.color = self.mask_color()
+        if _napari_ge_5:
+            image_info.mask.colormap = self.mask_color()
+        else:
+            image_info.mask.color = self.mask_color()
         image_info.mask.opacity = self.mask_opacity()
         image_info.mask.visible = self.mask_chk.isChecked()
         self._toggle_mask_chk_visibility()
@@ -602,7 +608,10 @@ class ImageView(QWidget):
         for image_info in self.image_info.values():
             if image_info.mask is not None:
                 image_info.mask.opacity = opacity
-                image_info.mask.color = colormap
+                if _napari_ge_5:
+                    image_info.mask.colormap = colormap
+                else:
+                    image_info.mask.color = colormap
 
     def set_image(self, image: Optional[Image] = None):
         self.image_info = {}

@@ -32,8 +32,15 @@ NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
 
 if NAPARI_GE_5_0:
     EXPECTED_RANGE = (0, 0, 1)
+
+    def get_color_dict(layer):
+        return layer.colormap.color_dict
+
 else:
     EXPECTED_RANGE = (0, 1, 1)
+
+    def get_color_dict(layer):
+        return layer.color
 
 
 def test_image_info():
@@ -159,9 +166,11 @@ class TestImageView:
         base_settings.set_in_profile("mask_presentation_opacity", 0.5)
         assert image_view.image_info[str(tmp_path / "test2.tiff")].mask.opacity == 0.5
         base_settings.set_in_profile("mask_presentation_color", (255, 0, 0))
-        assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.color[1] == (1, 0, 0, 1))
+        assert np.all(get_color_dict(image_view.image_info[str(tmp_path / "test2.tiff")].mask)[1] == (1, 0, 0, 1))
         base_settings.set_in_profile("mask_presentation_color", (128, 0, 0))
-        assert np.allclose(image_view.image_info[str(tmp_path / "test2.tiff")].mask.color[1], (128 / 255, 0, 0, 1))
+        assert np.allclose(
+            get_color_dict(image_view.image_info[str(tmp_path / "test2.tiff")].mask)[1], (128 / 255, 0, 0, 1)
+        )
 
         assert not image_view.image_info[str(tmp_path / "test2.tiff")].mask.visible
         with qtbot.waitSignal(image_view.mask_chk.stateChanged):
