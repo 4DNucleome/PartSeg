@@ -472,7 +472,7 @@ class BaseSettings(ViewSettings):
         self.history_index = -1
         self.last_executed_algorithm = ""
         self._points = None
-        pint.get_application_registry()("nm")
+        pint.get_application_registry()("nm")  # enforce pint registry initialization
 
     def _image_changed(self):
         super()._image_changed()
