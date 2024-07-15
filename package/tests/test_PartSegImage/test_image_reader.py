@@ -3,14 +3,22 @@ import math
 import os.path
 import shutil
 from glob import glob
+from importlib.metadata import version
 from io import BytesIO
 
 import numpy as np
 import pytest
 import tifffile
+from packaging.version import parse as parse_version
 
 import PartSegData
 from PartSegImage import CziImageReader, GenericImageReader, Image, ObsepImageReader, OifImagReader, TiffImageReader
+
+
+@pytest.fixture(autouse=True)
+def _set_max_workers_czi(monkeypatch):
+    # set max workers to 1 to get exception in case of problems
+    monkeypatch.setattr("PartSegImage.image_reader.CZI_MAX_WORKERS", 1)
 
 
 class TestImageClass:
@@ -28,10 +36,26 @@ class TestImageClass:
 
     def test_czi_file_read(self, data_test_dir):
         image = CziImageReader.read_image(os.path.join(data_test_dir, "test_czi.czi"))
+        assert np.count_nonzero(image.get_channel(0))
         assert image.channels == 4
         assert image.layers == 1
 
         assert image.file_path == os.path.join(data_test_dir, "test_czi.czi")
+
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
+
+    @pytest.mark.skipif(
+        parse_version(version("czifile")) < parse_version("2019.7.2"),
+        reason="There is no patch for czifile before 2019.7.2",
+    )
+    @pytest.mark.parametrize("file_name", ["test_czi_zstd0.czi", "test_czi_zstd1.czi", "test_czi_zstd1_hilo.czi"])
+    def test_czi_file_read_compressed(self, data_test_dir, file_name):
+        image = CziImageReader.read_image(os.path.join(data_test_dir, file_name))
+        assert np.count_nonzero(image.get_channel(0))
+        assert image.channels == 4
+        assert image.layers == 1
+
+        assert image.file_path == os.path.join(data_test_dir, file_name)
 
         assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
 
@@ -40,6 +64,7 @@ class TestImageClass:
             buffer = BytesIO(f_p.read())
 
         image = CziImageReader.read_image(buffer)
+        assert np.count_nonzero(image.get_channel(0))
         assert image.channels == 4
         assert image.layers == 1
         assert image.file_path == ""
