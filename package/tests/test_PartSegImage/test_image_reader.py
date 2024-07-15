@@ -3,11 +3,13 @@ import math
 import os.path
 import shutil
 from glob import glob
+from importlib.metadata import version
 from io import BytesIO
 
 import numpy as np
 import pytest
 import tifffile
+from packaging.version import parse as parse_version
 
 import PartSegData
 from PartSegImage import CziImageReader, GenericImageReader, Image, ObsepImageReader, OifImagReader, TiffImageReader
@@ -42,6 +44,10 @@ class TestImageClass:
 
         assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
 
+    @pytest.mark.skipif(
+        parse_version(version("czifile")) < parse_version("2019.7.2"),
+        reason="There is no patch for czifile before 2019.7.2",
+    )
     def test_czi_file_read_compressed(self, data_test_dir):
         image = CziImageReader.read_image(os.path.join(data_test_dir, "test_czi_compressed.czi"))
         assert np.count_nonzero(image.get_channel(0))
