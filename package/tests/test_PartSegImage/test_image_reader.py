@@ -48,13 +48,14 @@ class TestImageClass:
         parse_version(version("czifile")) < parse_version("2019.7.2"),
         reason="There is no patch for czifile before 2019.7.2",
     )
-    def test_czi_file_read_compressed(self, data_test_dir):
-        image = CziImageReader.read_image(os.path.join(data_test_dir, "test_czi_compressed.czi"))
+    @pytest.mark.parametrize("file_name", ["test_czi_zstd0.czi", "test_czi_zstd1.czi", "test_czi_zstd1_hilo.czi"])
+    def test_czi_file_read_compressed(self, data_test_dir, file_name):
+        image = CziImageReader.read_image(os.path.join(data_test_dir, file_name))
         assert np.count_nonzero(image.get_channel(0))
         assert image.channels == 4
         assert image.layers == 1
 
-        assert image.file_path == os.path.join(data_test_dir, "test_czi_compressed.czi")
+        assert image.file_path == os.path.join(data_test_dir, file_name)
 
         assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
 

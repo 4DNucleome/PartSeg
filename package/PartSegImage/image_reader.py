@@ -219,8 +219,7 @@ class BaseImageReader:
                 axes_li[1] = "Z"
             i = 0
             while i < len(axes_li):
-                name = axes_li[i]
-                if name not in final_mapping_dict and array.shape[i] == 1:
+                if array.shape[i] == 1:
                     array = array.take(0, i)
                     axes_li.pop(i)
                 else:
