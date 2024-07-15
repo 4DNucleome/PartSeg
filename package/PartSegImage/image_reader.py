@@ -39,7 +39,7 @@ class ZSTD1Header(typing.NamedTuple):
     hiLoByteUnpackPreprocessing: bool
 
 
-def parse_zstd1_header(data, size):
+def parse_zstd1_header(data: bytes, size: int) -> ZSTD1Header:  # pragma: no cover
     """
     Parse ZSTD header
 
@@ -64,7 +64,7 @@ def _get_dtype():
     return inspect.currentframe().f_back.f_back.f_locals["de"].dtype
 
 
-def decode_zstd1(data):
+def decode_zstd1(data: bytes) -> np.ndarray:
     """
     Decode ZSTD1 data
     """
@@ -81,7 +81,7 @@ def decode_zstd1(data):
     return array
 
 
-def decode_zstd0(data):
+def decode_zstd0(data: bytes) -> np.ndarray:
     """
     Decode ZSTD0 data
     """
