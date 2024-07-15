@@ -7,6 +7,8 @@ on:
       - reopened
       - edited
       - synchronize
+      - labeled
+      - unlabeled
   pull_request:
     paths:
       - '.github/workflows/check_pr_title.yml'
@@ -23,6 +25,7 @@ jobs:
 
   spellcheck:
     runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip check PR title') }}
     steps:
       - uses: actions/checkout@v4
         with:
