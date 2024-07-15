@@ -35,6 +35,15 @@ class TestImageClass:
 
         assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
 
+    def test_czi_file_read_compressed(self, data_test_dir):
+        image = CziImageReader.read_image(os.path.join(data_test_dir, "test_czi_compressed.czi"))
+        assert image.channels == 4
+        assert image.layers == 1
+
+        assert image.file_path == os.path.join(data_test_dir, "test_czi_compressed.czi")
+
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
+
     def test_czi_file_read_buffer(self, data_test_dir):
         with open(os.path.join(data_test_dir, "test_czi.czi"), "rb") as f_p:
             buffer = BytesIO(f_p.read())
