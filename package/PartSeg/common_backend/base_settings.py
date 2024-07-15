@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, NamedTupl
 
 import napari.utils.theme
 import numpy as np
+import pint
 from napari.qt import get_stylesheet
 from napari.utils import Colormap
 from napari.utils.theme import get_theme
@@ -471,6 +472,7 @@ class BaseSettings(ViewSettings):
         self.history_index = -1
         self.last_executed_algorithm = ""
         self._points = None
+        pint.get_application_registry()("nm")  # enforce pint registry initialization
 
     def _image_changed(self):
         super()._image_changed()
