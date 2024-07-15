@@ -13,6 +13,12 @@ import PartSegData
 from PartSegImage import CziImageReader, GenericImageReader, Image, ObsepImageReader, OifImagReader, TiffImageReader
 
 
+@pytest.fixture(autouse=True)
+def _set_max_workers_czi(monkeypatch):
+    # set max workers to 1 to get exception in case of problems
+    monkeypatch.setattr("PartSegImage.image_reader.CZI_MAX_WORKERS", 1)
+
+
 class TestImageClass:
     def test_tiff_image_read(self):
         image = TiffImageReader.read_image(PartSegData.segmentation_mask_default_image)
@@ -28,6 +34,7 @@ class TestImageClass:
 
     def test_czi_file_read(self, data_test_dir):
         image = CziImageReader.read_image(os.path.join(data_test_dir, "test_czi.czi"))
+        assert np.count_nonzero(image.get_channel(0))
         assert image.channels == 4
         assert image.layers == 1
 
@@ -37,6 +44,7 @@ class TestImageClass:
 
     def test_czi_file_read_compressed(self, data_test_dir):
         image = CziImageReader.read_image(os.path.join(data_test_dir, "test_czi_compressed.czi"))
+        assert np.count_nonzero(image.get_channel(0))
         assert image.channels == 4
         assert image.layers == 1
 
@@ -49,6 +57,7 @@ class TestImageClass:
             buffer = BytesIO(f_p.read())
 
         image = CziImageReader.read_image(buffer)
+        assert np.count_nonzero(image.get_channel(0))
         assert image.channels == 4
         assert image.layers == 1
         assert image.file_path == ""

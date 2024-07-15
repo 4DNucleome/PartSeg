@@ -25,6 +25,9 @@ if typing.TYPE_CHECKING:
     from xml.etree.ElementTree import Element  # nosec
 
 
+CZI_MAX_WORKERS = None
+
+
 class ZSTD1Header(typing.NamedTuple):
     """
     ZSTD1 header structure
@@ -340,7 +343,7 @@ class CziImageReader(BaseImageReaderBuffer):
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         image_file = CziFile(image_path)
-        image_data = image_file.asarray(max_workers=1)
+        image_data = image_file.asarray(max_workers=CZI_MAX_WORKERS)
         image_data = self.update_array_shape(image_data, image_file.axes)
         metadata = image_file.metadata(False)
         with suppress(KeyError):
