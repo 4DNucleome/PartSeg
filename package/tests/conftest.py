@@ -269,6 +269,12 @@ def history_element(image, lower_threshold_profile):
 def pytest_collection_modifyitems(session, config, items):
     image_tests = [x for x in items if "PartSegImage" in str(x.fspath)]
     core_tests = [x for x in items if "PartSegCore" in str(x.fspath)]
+    # put test_analysis_batch after all other core test to
+    # increase probability that more specific test will fail before
+    # batch integration tests
+    core_test_batch = [x for x in core_tests if "test_analysis_batch" in str(x.fspath)]
+    core_tests_non_batch = [x for x in core_tests if x not in core_test_batch]
+    core_tests = core_tests_non_batch + core_test_batch
     other_test = [x for x in items if "PartSegCore" not in str(x.fspath) and "PartSegImage" not in str(x.fspath)]
     items[:] = image_tests + core_tests + other_test
 
