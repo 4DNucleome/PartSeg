@@ -281,3 +281,8 @@ def pytest_runtest_setup(item):
 
         if qtpy.API_NAME == "PySide2":
             pytest.skip("PySide2 problems")
+    if any(item.iter_markers(name="pyside6_skip")):
+        import qtpy
+
+        if qtpy.API_NAME == "PySide6":
+            pytest.skip("PySide6 problems")
