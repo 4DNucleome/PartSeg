@@ -64,7 +64,7 @@ def create_bundle(spec_path, working_dir):
     pyinstaller_run(pyinstaller_args)
 
 
-def archive_build(working_dir, dir_name):
+def archive_build(working_dir, dir_name, simple_zip=True):
     base_zip_path = os.path.join(working_dir, "dist")
 
     with create_archive(working_dir) as arch_file:
@@ -75,7 +75,8 @@ def archive_build(working_dir, dir_name):
                 arch_file.write(
                     os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path)
                 )
-    shutil.copy(get_file_path(working_dir), get_file_path(working_dir, with_version=False))
+    if simple_zip:
+        shutil.copy(get_file_path(working_dir), get_file_path(working_dir, with_version=False))
 
 
 def main():
@@ -85,6 +86,7 @@ def main():
     )
     parser.add_argument("--without-compress", action="store_true")
     parser.add_argument("--working-dir", default=os.path.abspath(os.curdir))
+    parser.add_argument("--no-simple-zip", action="store_false")
 
     args = parser.parse_args()
 
@@ -94,7 +96,7 @@ def main():
 
     if not args.without_compress:
         fix_qt_location(args.working_dir, dir_name)
-        archive_build(args.working_dir, dir_name)
+        archive_build(args.working_dir, dir_name, args.no_simple_zip)
 
 
 if __name__ == "__main__":
