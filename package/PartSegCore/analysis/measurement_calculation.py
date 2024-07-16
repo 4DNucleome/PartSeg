@@ -1535,7 +1535,7 @@ def _rescale_image(data: np.ndarray):
         return data
     min_val = data.min()
     max_val = data.max()
-    return ((data - min_val) / ((max_val - min_val) / 255)).astype(np.uint8)
+    return ((data - min_val) / ((max_val - min_val) / 254)).astype(np.uint8)
 
 
 class HaralickParameters(BaseModel):
