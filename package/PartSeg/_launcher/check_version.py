@@ -50,7 +50,7 @@ class CheckVersionThread(QThread):
                         return
                 os.remove(os.path.join(state_store.save_folder, IGNORE_FILE))
 
-            with urllib.request.urlopen(f"https://pypi.org/pypi/{self.package_name}/json") as r:  # nosec  # noqa: S310
+            with urllib.request.urlopen(f"https://pypi.org/pypi/{self.package_name}/json") as r:  # nosec
                 data = json.load(r)
             self.release = data["info"]["version"]
             self.url = data["info"]["home_page"]
