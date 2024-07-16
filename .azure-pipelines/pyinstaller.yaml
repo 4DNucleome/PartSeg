@@ -16,7 +16,7 @@ steps:
   - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.9.txt
     displayName: install partseg
   - bash: |
-      python  build_utils/create_and_pack_executable.py
+      python  build_utils/create_and_pack_executable.py --no-simple-zip
     displayName: build
 
   - task: PublishBuildArtifacts@1
