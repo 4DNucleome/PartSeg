@@ -1533,7 +1533,7 @@ class HaralickEnum(Enum):
 def _rescale_image(data: np.ndarray):
     if data.dtype == np.uint8:
         return data
-    if isinstance(data.dtype, np.integer) and data.min() >= 0 and data.max() < 255:
+    if np.issubdtype(data.dtype, np.integer) and data.min() >= 0 and data.max() < 255:
         return data.astype(np.uint8)
     min_val = data.min()
     max_val = data.max()
