@@ -273,7 +273,7 @@ def pytest_collection_modifyitems(session, config, items):
     items[:] = image_tests + core_tests + other_test
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item):  # pragma: no cover
     if platform.system() == "Windows" and any(item.iter_markers(name="windows_ci_skip")):
         pytest.skip("glBindFramebuffer with no OpenGL")
     if platform.system() == "Windows" and any(item.iter_markers(name="pyside_skip")):
