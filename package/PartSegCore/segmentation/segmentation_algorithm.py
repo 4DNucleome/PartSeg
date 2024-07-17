@@ -97,11 +97,19 @@ def _migrate_smooth_border(dkt: dict):
     return dkt
 
 
+def _cast_use_convex(dkt: dict):
+    if "use_convex" in dkt:
+        dkt = dkt.copy()
+        dkt["use_convex"] = bool(dkt["use_convex"])
+    return dkt
+
+
 @register_class(
-    version="0.0.2",
+    version="0.0.3",
     migrations=[
         ("0.0.1", _migrate_smooth_border),
         ("0.0.2", rename_key("noise_removal", "noise_filtering", optional=True)),
+        ("0.0.3", _cast_use_convex),
     ],
 )
 class BaseThresholdAlgorithmParameters(BaseModel):
@@ -117,7 +125,7 @@ class BaseThresholdAlgorithmParameters(BaseModel):
         description="During calculation of connected components includes only side by side connected pixels",
     )
     minimum_size: int = Field(8000, ge=20, le=10**6)
-    use_convex: int = Field(False, title="Use convex hull")
+    use_convex: bool = Field(False, title="Use convex hull")
 
 
 class BaseThresholdAlgorithm(StackAlgorithm, ABC):
@@ -367,6 +375,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         return self._threshold_image(image)
 
 
+@register_class(version="0.0.1", migrations=[("0.0.1", _cast_use_convex)])
 class CellFromNucleusFlowParameters(BaseModel):
     nucleus_channel: Channel = Field(0, title="Nucleus Channel")
     nucleus_noise_filtering: NoiseFilterSelection = Field(NoiseFilterSelection.get_default(), title="Filter")
@@ -384,7 +393,7 @@ class CellFromNucleusFlowParameters(BaseModel):
         description="During calculation of connected components includes only side by side connected pixels",
     )
     minimum_size: int = Field(8000, ge=20, le=10**6)
-    use_convex: int = Field(False, title="Use convex hull")
+    use_convex: bool = Field(False, title="Use convex hull")
 
 
 class CellFromNucleusFlow(StackAlgorithm):
