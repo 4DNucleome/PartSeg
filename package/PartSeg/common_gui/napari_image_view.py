@@ -400,7 +400,7 @@ class ImageView(QWidget):
             return
         text = f"{cords}: "
         if bright_array:
-            text += str(bright_array[0]) if len(bright_array) == 1 else str(bright_array)
+            text += str(bright_array[0]) if len(bright_array) == 1 else "[" + ", ".join(map(str, bright_array)) + "]"
         self.components = components
         text += _print_list(components, " component")
         text += _print_list(alt_components, " alt")

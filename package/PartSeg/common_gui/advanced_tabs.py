@@ -25,8 +25,10 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg import plugins, state_store
+from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg.common_backend.base_settings import BaseSettings, ViewSettings
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
+from PartSeg.common_gui.dict_viewer import DictViewer
 from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelEditor
 from PartSeg.common_gui.universal_gui_part import CustomDoubleSpinBox
 from PartSegCore import plugins as core_plugins
@@ -257,3 +259,20 @@ class AdvancedWindow(QTabWidget):
         if self.window() == self:
             self.settings.set_in_profile("advanced_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         super().closeEvent(event)
+
+
+class ImageMetadata(QWidget):
+    def __init__(self, settings: PartSettings, parent=None):
+        super().__init__(parent)
+        self.settings = settings
+        self._dict_viewer = DictViewer(self.settings.image.metadata if self.settings.image else None)
+        self.channel_info = QLabel()
+        layout = QVBoxLayout()
+        layout.addWidget(self._dict_viewer)
+        layout.addWidget(self.channel_info)
+        self.setLayout(layout)
+        self.settings.image_changed.connect(self.update_metadata)
+
+    def update_metadata(self):
+        self._dict_viewer.set_data(self.settings.image.metadata)
+        self.channel_info.setText(f"Channels: {self.settings.image.channel_names}")

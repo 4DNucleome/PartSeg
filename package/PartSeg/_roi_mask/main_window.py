@@ -34,7 +34,7 @@ from PartSeg._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
 from PartSeg._roi_mask.simple_measurements import SimpleMeasurements
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY, ROI_NOT_FIT
-from PartSeg.common_gui.advanced_tabs import AdvancedWindow
+from PartSeg.common_gui.advanced_tabs import AdvancedWindow, ImageMetadata
 from PartSeg.common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
@@ -869,14 +869,16 @@ class Options(QTabWidget):
         self._settings = settings
         self.algorithm_options = AlgorithmOptions(settings, image_view)
         self.image_properties = ImageInformation(settings)
+        self.image_metadata = ImageMetadata(settings)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
         self.algorithm_options.batch_process.multiple_result.connect(
             partial(self.image_properties.multiple_files.setChecked, True)
         )
         self.addTab(self.image_properties, "Image")
+        self.addTab(self.image_metadata, "Image metadata")
         self.addTab(self.algorithm_options, "Segmentation")
         self.setMinimumWidth(370)
-        self.setCurrentIndex(1)
+        self.setCurrentIndex(2)
 
     def get_chosen_components(self):
         return self.algorithm_options.get_chosen_components()

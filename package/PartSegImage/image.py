@@ -110,6 +110,7 @@ class Image:
         axes_order: str | None = None,
         shift: Spacing | None = None,
         name: str = "",
+        metadata: dict | None = None,
     ):
         # TODO add time distance to image spacing
         if axes_order is None:  # pragma: no cover
@@ -119,17 +120,7 @@ class Image:
                 stacklevel=2,
             )
             axes_order = self.axis_order
-        if (isinstance(data, list) and any(x.ndim + 1 != len(axes_order) for x in data)) or (
-            not isinstance(data, list) and data.ndim != len(axes_order)
-        ):
-            if isinstance(data, list):
-                ndim = ", ".join([f"{x.ndim} + 1" for x in data])
-            else:
-                ndim = str(data.ndim)
-            raise ValueError(
-                "Data should have same number of dimensions "
-                f"like length of axes_order (axis :{len(axes_order)}, ndim: {ndim}"
-            )
+        self._check_data_dimensionality(data, axes_order)
         if not isinstance(image_spacing, tuple):
             image_spacing = tuple(image_spacing)
         self._channel_arrays = self._split_data_on_channels(data, axes_order)
@@ -148,6 +139,21 @@ class Image:
 
         self.ranges = self._adjust_ranges(ranges, self._channel_arrays)
         self._mask_array = self._fit_mask(mask, data, axes_order)
+        self.metadata = dict(metadata) if metadata is not None else {}
+
+    @staticmethod
+    def _check_data_dimensionality(data, axes_order):
+        if (isinstance(data, list) and any(x.ndim + 1 != len(axes_order) for x in data)) or (
+            not isinstance(data, list) and data.ndim != len(axes_order)
+        ):
+            if isinstance(data, list):
+                ndim = ", ".join([f"{x.ndim} + 1" for x in data])
+            else:
+                ndim = str(data.ndim)
+            raise ValueError(
+                "Data should have same number of dimensions "
+                f"like length of axes_order (axis :{len(axes_order)}, ndim: {ndim}"
+            )
 
     @staticmethod
     def _adjust_ranges(
@@ -356,6 +362,7 @@ class Image:
             ranges=ranges,
             channel_names=channel_names,
             axes_order=self.axis_order,
+            metadata=self.metadata,
         )
 
     def set_mask(self, mask: np.ndarray | None, axes: str | None = None):

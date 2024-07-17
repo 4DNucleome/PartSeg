@@ -34,7 +34,7 @@ from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer, StringViewer
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
-from PartSeg.common_gui.advanced_tabs import AdvancedWindow
+from PartSeg.common_gui.advanced_tabs import AdvancedWindow, ImageMetadata
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
 from PartSeg.common_gui.error_report import DataImportErrorDialog
@@ -824,9 +824,11 @@ class SegAdvancedWindow(AdvancedWindow):
 
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = Properties(settings)
+        self.image_metadata = ImageMetadata(settings)
         self.measurement = MeasurementWidget(settings)
         self.measurement_settings = MeasurementSettings(settings)
         self.insertTab(0, self.advanced_settings, "Properties")
+        self.insertTab(1, self.image_metadata, "Image metadata")
         self.addTab(self.measurement_settings, "Measurements settings")
         self.addTab(self.measurement, "Measurements")
         self.setCurrentWidget(self.advanced_settings)

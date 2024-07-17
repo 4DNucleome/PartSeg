@@ -125,6 +125,7 @@ class BaseImageReader:
     def __init__(self, callback_function=None):
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
+        self.channel_names = None
         if callback_function is None:
             self.callback_function = _empty
         else:
@@ -313,7 +314,11 @@ class OifImagReader(BaseImageReader):
                 self._read_scale_parameter(image_file)
                 # TODO add mask reading
         return self.image_class(
-            image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
+            image_data,
+            self.spacing,
+            file_path=os.path.abspath(image_path),
+            axes_order=self.return_order(),
+            metadata=image_file.mainfile,
         )
 
     def _read_scale_parameter(self, image_file):
@@ -353,10 +358,20 @@ class CziImageReader(BaseImageReaderBuffer):
                 scale_info.get("Y", self.default_spacing[1]),
                 scale_info.get("X", self.default_spacing[2]),
             )
+            self.channel_names = [
+                x["Name"] for x in metadata["ImageDocument"]["Metadata"]["DisplaySetting"]["Channels"]["Channel"]
+            ]
         # TODO add mask reading
         if isinstance(image_path, BytesIO):
             image_path = ""
-        return self.image_class(image_data, self.spacing, file_path=image_path, axes_order=self.return_order())
+        return self.image_class(
+            image_data,
+            self.spacing,
+            file_path=image_path,
+            axes_order=self.return_order(),
+            metadata=metadata,
+            channel_names=self.channel_names,
+        )
 
     @classmethod
     def update_array_shape(cls, array: np.ndarray, axes: str):
@@ -435,10 +450,10 @@ class TiffImageReader(BaseImageReaderBuffer):
     def __init__(self, callback_function=None):
         super().__init__(callback_function)
         self.colors = None
-        self.channel_names = None
         self.ranges = None
         self.shift = (0, 0, 0)
         self.name = ""
+        self.metadata = {}
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         """
@@ -505,6 +520,7 @@ class TiffImageReader(BaseImageReaderBuffer):
             axes_order=self.return_order(),
             shift=self.shift,
             name=self.name,
+            metadata=self.metadata,
         )
 
     @staticmethod
@@ -571,6 +587,7 @@ class TiffImageReader(BaseImageReaderBuffer):
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
+        self.metadata = image_file.imagej_metadata
 
     def _read_ome_channel_information(self, meta_data):
         if "Channel" not in meta_data["Pixels"]:
@@ -599,6 +616,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                 * name_to_scalar[meta_data["Pixels"]["Plane"][0][f"Position{x}Unit"]]
                 for x in ["Z", "Y", "X"]
             ]
+        self.metadata = meta_data
         self.name = meta_data.get("Name", "")
         self._read_ome_channel_information(meta_data)
 
@@ -609,6 +627,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                 self.colors = [x[:3] for x in image_file.lsm_metadata["ChannelColors"]["Colors"]]
             if "ColorNames" in image_file.lsm_metadata["ChannelColors"]:
                 self.channel_names = image_file.lsm_metadata["ChannelColors"]["ColorNames"]
+        self.metadata = image_file.lsm_metadata
 
 
 name_to_scalar = {
