@@ -313,7 +313,11 @@ class OifImagReader(BaseImageReader):
                 self._read_scale_parameter(image_file)
                 # TODO add mask reading
         return self.image_class(
-            image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
+            image_data,
+            self.spacing,
+            file_path=os.path.abspath(image_path),
+            axes_order=self.return_order(),
+            metadata=image_file.mainfile,
         )
 
     def _read_scale_parameter(self, image_file):
