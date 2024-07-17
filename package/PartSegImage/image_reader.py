@@ -445,6 +445,7 @@ class TiffImageReader(BaseImageReaderBuffer):
         self.ranges = None
         self.shift = (0, 0, 0)
         self.name = ""
+        self.metadata = {}
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         """
@@ -511,6 +512,7 @@ class TiffImageReader(BaseImageReaderBuffer):
             axes_order=self.return_order(),
             shift=self.shift,
             name=self.name,
+            metadata=self.metadata,
         )
 
     @staticmethod
@@ -577,6 +579,7 @@ class TiffImageReader(BaseImageReaderBuffer):
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
+        self.metadata = image_file.imagej_metadata
 
     def _read_ome_channel_information(self, meta_data):
         if "Channel" not in meta_data["Pixels"]:
@@ -605,6 +608,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                 * name_to_scalar[meta_data["Pixels"]["Plane"][0][f"Position{x}Unit"]]
                 for x in ["Z", "Y", "X"]
             ]
+        self.metadata = meta_data
         self.name = meta_data.get("Name", "")
         self._read_ome_channel_information(meta_data)
 
@@ -615,6 +619,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                 self.colors = [x[:3] for x in image_file.lsm_metadata["ChannelColors"]["Colors"]]
             if "ColorNames" in image_file.lsm_metadata["ChannelColors"]:
                 self.channel_names = image_file.lsm_metadata["ChannelColors"]["ColorNames"]
+        self.metadata = image_file.lsm_metadata
 
 
 name_to_scalar = {
