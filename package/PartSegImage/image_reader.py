@@ -125,6 +125,7 @@ class BaseImageReader:
     def __init__(self, callback_function=None):
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
+        self.channel_names = None
         if callback_function is None:
             self.callback_function = _empty
         else:
@@ -357,11 +358,17 @@ class CziImageReader(BaseImageReaderBuffer):
                 scale_info.get("Y", self.default_spacing[1]),
                 scale_info.get("X", self.default_spacing[2]),
             )
+            self.channel_names = [x["Name"] for x in metadata["DisplaySetting"]["Channels"]["Channel"]]
         # TODO add mask reading
         if isinstance(image_path, BytesIO):
             image_path = ""
         return self.image_class(
-            image_data, self.spacing, file_path=image_path, axes_order=self.return_order(), metadata=metadata
+            image_data,
+            self.spacing,
+            file_path=image_path,
+            axes_order=self.return_order(),
+            metadata=metadata,
+            channel_names=self.channel_names,
         )
 
     @classmethod
@@ -441,7 +448,6 @@ class TiffImageReader(BaseImageReaderBuffer):
     def __init__(self, callback_function=None):
         super().__init__(callback_function)
         self.colors = None
-        self.channel_names = None
         self.ranges = None
         self.shift = (0, 0, 0)
         self.name = ""
