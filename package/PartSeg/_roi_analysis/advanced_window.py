@@ -34,10 +34,9 @@ from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer, StringViewer
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
-from PartSeg.common_gui.advanced_tabs import AdvancedWindow
+from PartSeg.common_gui.advanced_tabs import AdvancedWindow, ImageMetadata
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
-from PartSeg.common_gui.dict_viewer import DictViewer
 from PartSeg.common_gui.error_report import DataImportErrorDialog
 from PartSeg.common_gui.lock_checkbox import LockCheckBox
 from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
@@ -812,23 +811,6 @@ class MeasurementSettings(QWidget):
             for original_name, final_name in imp.get_import_list():
                 measurement_dict[final_name] = stat[original_name]
             self.settings.dump()
-
-
-class ImageMetadata(QWidget):
-    def __init__(self, settings: PartSettings, parent=None):
-        super().__init__(parent)
-        self.settings = settings
-        self._dict_viewer = DictViewer()
-        self.channel_info = QLabel()
-        layout = QVBoxLayout()
-        layout.addWidget(self._dict_viewer)
-        layout.addWidget(self.channel_info)
-        self.setLayout(layout)
-        self.settings.image_changed.connect(self.update_metadata)
-
-    def update_metadata(self):
-        self._dict_viewer.data = self.settings.image.metadata
-        self.channel_info.setText(f"Channels: {self.settings.image.channel_names}")
 
 
 class SegAdvancedWindow(AdvancedWindow):

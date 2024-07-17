@@ -27,6 +27,7 @@ class DictViewer(QWidget):
         if data is None:
             data = {}
         self._data = data
+        self.tree.clear()
         self.fill_tree(data, self.tree)
 
     def fill_tree(self, data: dict, parent: QTreeWidget | QTreeWidgetItem):
