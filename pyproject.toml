@@ -205,7 +205,8 @@ markers = [
     "enabledialog: Allow to use dialog in test",
     "no_patch_add_layer: Do not patch napari viewer",
     "windows_ci_skip: Skip test when running on windows CI",
-    "pyside_skip: Skip test when using pyside qt backend",
+    "pyside_skip: Skip test when using pyside2 qt backend",
+    "pyside6_skip: Skip test when using pyside6 qt backend"
 ]
 
 [tool.coverage.paths]

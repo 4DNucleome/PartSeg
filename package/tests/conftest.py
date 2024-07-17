@@ -279,7 +279,7 @@ def pytest_collection_modifyitems(session, config, items):
     items[:] = image_tests + core_tests + other_test
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item):  # pragma: no cover
     if platform.system() == "Windows" and any(item.iter_markers(name="windows_ci_skip")):
         pytest.skip("glBindFramebuffer with no OpenGL")
     if platform.system() == "Windows" and any(item.iter_markers(name="pyside_skip")):
@@ -287,3 +287,8 @@ def pytest_runtest_setup(item):
 
         if qtpy.API_NAME == "PySide2":
             pytest.skip("PySide2 problems")
+    if any(item.iter_markers(name="pyside6_skip")):
+        import qtpy
+
+        if qtpy.API_NAME == "PySide6":
+            pytest.skip("PySide6 problems")

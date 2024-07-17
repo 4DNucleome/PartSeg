@@ -381,7 +381,8 @@ class ChannelPreview(QWidget):
 
     selection_changed = Signal(str, bool)
     """checkbox selection changed (name)"""
-    edit_request = Signal([str], [Colormap])
+    edit_request_name = Signal(str)
+    edit_request_colormap = Signal(Colormap)
     """send after pressing edit signal (name) (ColorMap object)"""
     remove_request = Signal(str)
     """Signal with name of colormap (name)"""
@@ -419,9 +420,9 @@ class ChannelPreview(QWidget):
         layout.addWidget(self.label)
         self.setLayout(layout)
         self.checked.stateChanged.connect(self._selection_changed)
-        self.edit_btn.clicked.connect(partial(self.edit_request.emit, name))
+        self.edit_btn.clicked.connect(partial(self.edit_request_name.emit, name))
         if len(colormap.controls) < 20:
-            self.edit_btn.clicked.connect(partial(self.edit_request[Colormap].emit, colormap))
+            self.edit_btn.clicked.connect(partial(self.edit_request_colormap.emit, colormap))
             self.edit_btn.setToolTip("Create colormap base on this")
         else:
             self.edit_btn.setDisabled(True)
@@ -547,7 +548,7 @@ class ColormapList(QWidget):
                 cache_dict[el.name] = el
             else:
                 el.deleteLater()
-                el.edit_request[Colormap].disconnect()
+                el.edit_request_colormap.disconnect()
                 el.remove_request.disconnect()
                 el.selection_changed.disconnect()
         selected = self.get_selected()
@@ -560,7 +561,7 @@ class ColormapList(QWidget):
                 widget.set_chosen(name in selected)
             else:
                 widget = self._create_colormap_preview(colormap, name, removable)
-                widget.edit_request[Colormap].connect(self.edit_signal)
+                widget.edit_request_colormap.connect(self.edit_signal)
                 widget.remove_request.connect(self._remove_request)
                 widget.selection_changed.connect(self.change_selection)
             layout.addWidget(widget, i // columns, i % columns)
