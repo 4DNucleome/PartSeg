@@ -265,7 +265,7 @@ class ImageMetadata(QWidget):
     def __init__(self, settings: PartSettings, parent=None):
         super().__init__(parent)
         self.settings = settings
-        self._dict_viewer = DictViewer()
+        self._dict_viewer = DictViewer(self.settings.image.metadata if self.settings.image else None)
         self.channel_info = QLabel()
         layout = QVBoxLayout()
         layout.addWidget(self._dict_viewer)
