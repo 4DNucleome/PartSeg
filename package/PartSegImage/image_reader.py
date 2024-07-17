@@ -358,7 +358,9 @@ class CziImageReader(BaseImageReaderBuffer):
                 scale_info.get("Y", self.default_spacing[1]),
                 scale_info.get("X", self.default_spacing[2]),
             )
-            self.channel_names = [x["Name"] for x in metadata["DisplaySetting"]["Channels"]["Channel"]]
+            self.channel_names = [
+                x["Name"] for x in metadata["ImageDocument"]["Metadata"]["DisplaySetting"]["Channels"]["Channel"]
+            ]
         # TODO add mask reading
         if isinstance(image_path, BytesIO):
             image_path = ""

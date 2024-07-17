@@ -819,13 +819,16 @@ class ImageMetadata(QWidget):
         super().__init__(parent)
         self.settings = settings
         self._dict_viewer = DictViewer()
+        self.channel_info = QLabel()
         layout = QVBoxLayout()
         layout.addWidget(self._dict_viewer)
+        layout.addWidget(self.channel_info)
         self.setLayout(layout)
         self.settings.image_changed.connect(self.update_metadata)
 
     def update_metadata(self):
         self._dict_viewer.data = self.settings.image.metadata
+        self.channel_info.setText(f"Channels: {self.settings.image.channel_names}")
 
 
 class SegAdvancedWindow(AdvancedWindow):
