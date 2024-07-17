@@ -37,6 +37,7 @@ from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
+from PartSeg.common_gui.dict_viewer import DictViewer
 from PartSeg.common_gui.error_report import DataImportErrorDialog
 from PartSeg.common_gui.lock_checkbox import LockCheckBox
 from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
@@ -813,6 +814,20 @@ class MeasurementSettings(QWidget):
             self.settings.dump()
 
 
+class ImageMetadata(QWidget):
+    def __init__(self, settings: PartSettings, parent=None):
+        super().__init__(parent)
+        self.settings = settings
+        self._dict_viewer = DictViewer()
+        layout = QVBoxLayout()
+        layout.addWidget(self._dict_viewer)
+        self.setLayout(layout)
+        self.settings.image_changed.connect(self.update_metadata)
+
+    def update_metadata(self):
+        self._dict_viewer.data = self.settings.image.metadata
+
+
 class SegAdvancedWindow(AdvancedWindow):
     """
     :type settings: Settings
@@ -824,9 +839,11 @@ class SegAdvancedWindow(AdvancedWindow):
 
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = Properties(settings)
+        self.image_metadata = ImageMetadata(settings)
         self.measurement = MeasurementWidget(settings)
         self.measurement_settings = MeasurementSettings(settings)
         self.insertTab(0, self.advanced_settings, "Properties")
+        self.insertTab(1, self.image_metadata, "Image metadata")
         self.addTab(self.measurement_settings, "Measurements settings")
         self.addTab(self.measurement, "Measurements")
         self.setCurrentWidget(self.advanced_settings)

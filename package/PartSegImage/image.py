@@ -149,7 +149,7 @@ class Image:
 
         self.ranges = self._adjust_ranges(ranges, self._channel_arrays)
         self._mask_array = self._fit_mask(mask, data, axes_order)
-        self.metadata = metadata if metadata is not None else {}
+        self.metadata = dict(metadata) if metadata is not None else {}
 
     @staticmethod
     def _adjust_ranges(
@@ -358,6 +358,7 @@ class Image:
             ranges=ranges,
             channel_names=channel_names,
             axes_order=self.axis_order,
+            metadata=self.metadata,
         )
 
     def set_mask(self, mask: np.ndarray | None, axes: str | None = None):
