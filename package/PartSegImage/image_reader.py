@@ -356,7 +356,9 @@ class CziImageReader(BaseImageReaderBuffer):
         # TODO add mask reading
         if isinstance(image_path, BytesIO):
             image_path = ""
-        return self.image_class(image_data, self.spacing, file_path=image_path, axes_order=self.return_order())
+        return self.image_class(
+            image_data, self.spacing, file_path=image_path, axes_order=self.return_order(), metadata=metadata
+        )
 
     @classmethod
     def update_array_shape(cls, array: np.ndarray, axes: str):

@@ -110,6 +110,7 @@ class Image:
         axes_order: str | None = None,
         shift: Spacing | None = None,
         name: str = "",
+        metadata: dict | None = None,
     ):
         # TODO add time distance to image spacing
         if axes_order is None:  # pragma: no cover
@@ -148,6 +149,7 @@ class Image:
 
         self.ranges = self._adjust_ranges(ranges, self._channel_arrays)
         self._mask_array = self._fit_mask(mask, data, axes_order)
+        self.metadata = metadata if metadata is not None else {}
 
     @staticmethod
     def _adjust_ranges(
