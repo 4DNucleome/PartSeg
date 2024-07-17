@@ -18,12 +18,7 @@ class DictViewer(QWidget):
         self.tree.setHeaderLabels(["Key", "Value"])
         self.data = data
 
-    @property
-    def data(self) -> dict:
-        return self._data
-
-    @data.setter
-    def data(self, data: dict | None):
+    def set_data(self, data: dict | None):
         if data is None:
             data = {}
         self._data = data

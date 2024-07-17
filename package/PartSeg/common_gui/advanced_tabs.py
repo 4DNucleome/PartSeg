@@ -274,5 +274,5 @@ class ImageMetadata(QWidget):
         self.settings.image_changed.connect(self.update_metadata)
 
     def update_metadata(self):
-        self._dict_viewer.data = self.settings.image.metadata
+        self._dict_viewer.set_data(self.settings.image.metadata)
         self.channel_info.setText(f"Channels: {self.settings.image.channel_names}")
