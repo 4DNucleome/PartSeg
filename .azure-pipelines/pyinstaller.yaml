@@ -5,7 +5,7 @@ parameters:
   type: string
 
 steps:
-  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
+  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.11', architecture: x64}}
   - template: pip_cache.yaml
     parameters:
       key: pyinstaller | requirements/constraints_py3.9.txt | "$(Agent.OS)" | "$(PY)"
@@ -13,7 +13,7 @@ steps:
   - bash: |
       python -m pip install -U pip wheel setuptools
     displayName: install libs
-  - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.9.txt
+  - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.11.txt
     displayName: install partseg
   - bash: |
       python  build_utils/create_and_pack_executable.py --no-simple-zip

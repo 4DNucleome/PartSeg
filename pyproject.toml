@@ -54,7 +54,8 @@ dependencies = [
     "mahotas>=1.4.10",
     "napari>=0.4.14",
     "nme>=0.1.7",
-    "numpy>=1.18.5",
+    "numpy>=1.18.5 ; python_version >= '3.10'",
+    "numpy>=1.18.5, <2 ; python_version < '3.10'",
     "oiffile>=2020.1.18",
     "openpyxl>=2.5.7",
     "packaging>=20.0",
@@ -119,22 +120,26 @@ pyinstaller_base = [
     "pydantic",
 ]
 pyqt = [
-    "PyQt5!=5.15.0,>=5.12.3",
+    "PartSeg[pyqt5]",
 ]
 pyqt5 = [
     "PyQt5!=5.15.0,>=5.12.3",
+    "napari[pyqt5]",
 ]
 pyqt6 = [
     "PyQt6",
+     "napari[pyqt6]",
 ]
 pyside = [
-    "PySide2!=5.15.0,>=5.12.3",
+    "PartSeg[pyside2]",
 ]
 pyside2 = [
     "PySide2!=5.15.0,>=5.12.3",
+    "napari[pyside]",
 ]
 pyside6 = [
     "PySide6",
+    "napari[pyside6_experimental]",
 ]
 test = [
     "coverage",
