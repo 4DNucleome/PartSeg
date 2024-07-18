@@ -42,7 +42,9 @@ class CombineChannels(TransformBase):
         if not channels:
             return image, roi_info
         channel_array = [image.get_channel(i) for i in channels]
-        if arguments["combine_mode"] == CombineMode.Max:
+        if len(channels) == 1:
+            new_channel = channel_array[0]
+        elif arguments["combine_mode"] == CombineMode.Max:
             new_channel = np.max(channel_array, axis=0)
         else:
             new_channel = np.sum(channel_array, axis=0)

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from PartSegCore.image_transforming import InterpolateImage
+from PartSegCore.image_transforming import CombineChannels, CombineMode, InterpolateImage
 from PartSegCore.image_transforming.image_projection import ImageProjection, ImageProjectionParams
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
@@ -18,6 +18,13 @@ def get_cube_image():
     data = np.zeros((1, 10, 10, 10), dtype=np.uint8)
     data[:, 2:-2, 2:-2, 2:-2] = 5
     return Image(data, (10, 5, 5), axes_order="TZYX")
+
+
+def get_cube_image_2ch():
+    data = np.zeros((1, 2, 10, 10, 10), dtype=np.uint8)
+    data[:, 0, 2:-2, 2:-2, 2:-2] = 5
+    data[:, 1, 2:-2, 2:-2, 2:-2] = 10
+    return Image(data, (10, 5, 5), axes_order="TCZYX")
 
 
 def get_flat_image_up():
@@ -105,3 +112,34 @@ class TestImageProjection:
         image_res, _ = ImageProjection.transform(image, ROIInfo(None), ImageProjectionParams(keep_mask=True))
         assert image_res.shape == (1, 1, 10, 10)
         assert image_res.mask.shape == (1, 1, 10, 10)
+
+
+class TestCombineChannels:
+    def test_simple(self):
+        image = get_cube_image_2ch()
+        image_res, _ = CombineChannels.transform(
+            image, None, {"combine_mode": CombineMode.Max, "channel_0": True, "channel_1": False}
+        )
+        assert image_res.channels == 3
+        assert np.all(image_res.get_channel(0) == image_res.get_channel(2))
+
+    def test_no_channels(self):
+        image = get_cube_image_2ch()
+        image_res, _ = CombineChannels.transform(image, None, {"combine_mode": CombineMode.Max})
+        assert image_res is image
+
+    def test_sum(self):
+        image = get_cube_image_2ch()
+        image_res, _ = CombineChannels.transform(
+            image, None, {"combine_mode": CombineMode.Sum, "channel_0": True, "channel_1": True}
+        )
+        assert image_res.channels == 3
+        assert np.max(image_res.get_channel(2)) == 15
+
+    def test_max(self):
+        image = get_cube_image_2ch()
+        image_res, _ = CombineChannels.transform(
+            image, None, {"combine_mode": CombineMode.Max, "channel_0": True, "channel_1": True}
+        )
+        assert image_res.channels == 3
+        assert np.max(image_res.get_channel(2)) == 10
