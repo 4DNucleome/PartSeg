@@ -38,7 +38,7 @@ class CombineChannels(TransformBase):
         arguments: dict,
         callback_function: Optional[Callable[[str, int], None]] = None,
     ) -> Tuple[Image, Optional[ROIInfo]]:
-        channels = [i for i, x in enumerate(x for x in arguments if x.startswith("channel")) if x]
+        channels = [i for i, x in enumerate(x for x in arguments.items() if x[0].startswith("channel")) if x[1]]
         if not channels:
             return image, roi_info
         channel_array = [image.get_channel(i) for i in channels]
@@ -49,7 +49,8 @@ class CombineChannels(TransformBase):
         all_channels = [image.get_channel(i) for i in range(image.channels)]
         all_channels.append(new_channel)
         channel_names = [*image.channel_names, "combined"]
-        return image.substitute(data=all_channels, channel_names=channel_names), roi_info
+        contrast_limits = [*image.get_ranges(), (np.min(new_channel), np.max(new_channel))]
+        return image.substitute(data=all_channels, channel_names=channel_names, ranges=contrast_limits), roi_info
 
     @classmethod
     def calculate_initial(cls, image: Image):

@@ -106,7 +106,11 @@ class PartSettings(BaseSettings):
             return
         if not isinstance(data, ProjectTuple):
             return
-        if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
+        if (
+            self.image.file_path == data.image.file_path
+            and self.image.shape == data.image.shape
+            and self.image.channels == data.image.channels
+        ):
             if data.roi_info.roi is not None:
                 try:
                     self.image.fit_array_to_image(data.roi_info.roi)
