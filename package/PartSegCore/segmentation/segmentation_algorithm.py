@@ -59,7 +59,16 @@ class ThresholdPreview(StackAlgorithm):
     def calculation_run(self, report_fun) -> ROIExtractionResult:
         image = self.get_noise_filtered_channel(self.new_parameters.channel, self.new_parameters.noise_filtering)
         report_fun("threshold", 0)
-        res = (image > self.new_parameters.threshold).astype(np.uint8)
+        threshold = self.new_parameters.threshold
+        if np.issubdtype(image.dtype, np.integer):
+            if threshold < np.iinfo(image.dtype).min:
+                res = np.ones(image.shape, dtype=np.uint8)
+            elif threshold > np.iinfo(image.dtype).max:
+                res = np.zeros(image.shape, dtype=np.uint8)
+            else:
+                res = (image > threshold).astype(np.uint8)
+        else:
+            res = (image > threshold).astype(np.uint8)
         report_fun("mask", 1)
         if self.mask is not None:
             res[self.mask == 0] = 0
