@@ -18,7 +18,7 @@ class TransformBase(AlgorithmDescribeBase, ABC):
         raise NotImplementedError
 
     @classmethod
-    def get_fields_per_dimension(cls, component_list: List[str]) -> List[Union[str, AlgorithmProperty]]:
+    def get_fields_per_dimension(cls, image: Image) -> List[Union[str, AlgorithmProperty]]:
         raise NotImplementedError
 
     @classmethod

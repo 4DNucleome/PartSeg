@@ -22,7 +22,7 @@ class ImageAdjustmentDialog(QDialog):
         for key, val in transform_dict.items():
             self.choose.addItem(key)
             initial_values = val.calculate_initial(image)
-            form_widget = FormWidget(val.get_fields_per_dimension(list(image.get_dimension_letters())), initial_values)
+            form_widget = FormWidget(val.get_fields_per_dimension(image), initial_values)
             self.stacked.addWidget(form_widget)
 
         self.choose.currentIndexChanged.connect(self.stacked.setCurrentIndex)
