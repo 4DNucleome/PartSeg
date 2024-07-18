@@ -42,7 +42,7 @@ def bundle_test_dir():
 
 @pytest.fixture()
 def image(tmp_path):
-    data = np.zeros([20, 20, 20, 2], dtype=np.uint8)
+    data = np.zeros([20, 20, 20, 2], dtype=np.uint16)
     data[10:-1, 1:-1, 1:-1, 0] = 20
     data[1:10, 1:-1, 1:-1, 1] = 20
     data[1:-1, 1:5, 1:-1, 1] = 20
