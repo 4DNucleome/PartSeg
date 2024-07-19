@@ -128,7 +128,7 @@ pyqt5 = [
 ]
 pyqt6 = [
     "PyQt6",
-     "napari[pyqt6]",
+     "napari[pyqt6]>=0.5.0",
 ]
 pyside = [
     "PartSeg[pyside2]",
@@ -139,7 +139,7 @@ pyside2 = [
 ]
 pyside6 = [
     "PySide6",
-    "napari[pyside6_experimental]",
+    "napari[pyside6_experimental]>=0.5.0",
 ]
 test = [
     "coverage",
