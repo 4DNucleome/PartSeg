@@ -7,8 +7,6 @@ import sys
 from contextlib import suppress
 from functools import partial
 
-from PartSeg._launcher.check_survey import CheckSurveyThread
-
 multiprocessing.freeze_support()
 
 
@@ -81,7 +79,17 @@ def create_parser():
     return parser
 
 
-def main():  # pragma: no cover
+def main():  # pragma: no cover  # noqa: PLR0915
+    from importlib.metadata import version
+
+    from packaging.version import parse as parse_version
+
+    napari_version = parse_version(version("napari"))
+    pydantic_version = parse_version(version("pydantic"))
+    if napari_version < parse_version("0.4.19") and pydantic_version >= parse_version("2"):
+        print("napari version is too low, please update to version 0.4.19 or higher or downgrade pydantic to version 1")
+        sys.exit(1)
+
     if len(sys.argv) > 1 and sys.argv[1] == "_test":
         _test_imports()
         return
@@ -100,6 +108,7 @@ def main():  # pragma: no cover
     from qtpy.QtWidgets import QApplication
 
     from PartSeg import state_store
+    from PartSeg._launcher.check_survey import CheckSurveyThread
     from PartSeg._launcher.check_version import CheckVersionThread
     from PartSeg.common_backend import napari_get_settings
     from PartSegData import icons_dir
