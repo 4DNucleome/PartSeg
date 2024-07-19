@@ -41,7 +41,7 @@ cloudpickle==3.0.0
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.5.4
+coverage==7.6.0
     # via partseg (pyproject.toml)
 czifile==2019.7.2
     # via partseg (pyproject.toml)
@@ -143,7 +143,7 @@ magicgui==0.8.3
     # via
     #   partseg (pyproject.toml)
     #   napari
-mahotas==1.4.15
+mahotas==1.4.18
     # via partseg (pyproject.toml)
 markdown-it-py==3.0.0
     # via rich
@@ -175,7 +175,7 @@ npe2==0.7.6
     # via
     #   -r requirements/version_denylist.txt
     #   napari
-numpy==1.26.4
+numpy==2.0.0
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -235,7 +235,7 @@ pillow==10.4.0
     #   imageio
     #   napari
     #   scikit-image
-pint==0.24.1
+pint==0.24.3
     # via napari
 platformdirs==4.2.2
     # via
@@ -292,15 +292,15 @@ pyinstaller-hooks-contrib==2024.7
     # via pyinstaller
 pyopengl==3.1.7
     # via napari
-pyopengl-accelerate==3.1.7
-    # via partseg (pyproject.toml)
 pyproject-hooks==1.1.0
     # via build
-pyqt6==6.7.0
-    # via partseg (pyproject.toml)
+pyqt6==6.7.1
+    # via
+    #   partseg (pyproject.toml)
+    #   napari
 pyqt6-qt6==6.7.2
     # via pyqt6
-pyqt6-sip==13.6.0
+pyqt6-sip==13.8.0
     # via pyqt6
 pyside2==5.13.2
     # via
@@ -383,11 +383,11 @@ scipy==1.14.0
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.9.0
+sentry-sdk==2.10.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==70.3.0
+setuptools==71.0.3
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -409,7 +409,7 @@ six==1.16.0
     #   python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==7.3.7
+sphinx==7.4.6
     # via numpydoc
 sphinxcontrib-applehelp==1.0.8
     # via sphinx
@@ -430,7 +430,7 @@ superqt==0.6.7
     #   partseg (pyproject.toml)
     #   magicgui
     #   napari
-sympy==1.13.0
+sympy==1.13.1
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
