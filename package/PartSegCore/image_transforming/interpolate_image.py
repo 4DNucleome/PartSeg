@@ -14,7 +14,8 @@ class InterpolateImage(TransformBase):
         return ["It can be very slow.", AlgorithmProperty("scale", "Scale", 1.0)]
 
     @classmethod
-    def get_fields_per_dimension(cls, component_list: List[str]) -> List[Union[str, AlgorithmProperty]]:
+    def get_fields_per_dimension(cls, image: Image) -> List[Union[str, AlgorithmProperty]]:
+        component_list = list(image.get_dimension_letters())
         return [
             "it can be very slow",
             *[AlgorithmProperty(f"scale_{i.lower()}", f"Scale {i}", 1.0) for i in reversed(component_list)],

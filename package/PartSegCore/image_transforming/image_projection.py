@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 import numpy as np
 from pydantic import Field
@@ -67,7 +67,7 @@ class ImageProjection(TransformBase):
         )
 
     @classmethod
-    def get_fields_per_dimension(cls, component_list: List[str]):
+    def get_fields_per_dimension(cls, image: Image):
         return cls.__argument_class__
 
     @classmethod

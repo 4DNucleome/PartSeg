@@ -18,7 +18,7 @@ class SwapTimeStack(TransformBase):
         return image.swap_time_and_stack(), None
 
     @classmethod
-    def get_fields_per_dimension(cls, component_list: typing.List[str]):
+    def get_fields_per_dimension(cls, image: Image):
         return cls.get_fields()
 
     @classmethod
