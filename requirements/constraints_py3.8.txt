@@ -6,7 +6,7 @@ altgraph==0.17.4
     # via pyinstaller
 annotated-types==0.7.0
     # via pydantic
-app-model==0.2.7
+app-model==0.2.8
     # via napari
 appdirs==1.4.4
     # via
@@ -281,7 +281,7 @@ psygnal==0.11.1
     #   npe2
 ptyprocess==0.7.0
     # via pexpect
-pure-eval==0.2.2
+pure-eval==0.2.3
     # via stack-data
 pyconify==0.1.6
     # via superqt
@@ -334,7 +334,7 @@ pyside6-essentials==6.3.1
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.2.2
+pytest==8.3.1
     # via
     #   partseg (pyproject.toml)
     #   pytest-qt
@@ -409,7 +409,7 @@ sentry-sdk==2.10.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==71.0.3
+setuptools==71.1.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
