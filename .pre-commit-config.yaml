@@ -20,7 +20,7 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.2
+    rev: v0.5.4
     hooks:
       - id: ruff
 -   repo: https://github.com/asottile/pyupgrade
@@ -44,7 +44,7 @@ repos:
           - mdformat-toc
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.10.1'  # Use the sha / tag you want to point at
+    rev: 'v1.11.0'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
         files: ^package/PartSegImage/.+\.py
