@@ -32,11 +32,11 @@ def test_project_to_layers_analysis(analysis_segmentation):
     assert isinstance(l1, Image)
     assert l1.name == "channel 1"
     assert np.allclose(l1.scale[1:] / 1e9, analysis_segmentation.image.spacing)
-    l2 = Layer.create(*res[1])
+    l2 = Layer.create(*res[2])
     assert isinstance(l2, Labels)
     assert l2.name == "ROI"
     assert np.allclose(l2.scale[1:] / 1e9, analysis_segmentation.image.spacing)
-    l3 = Layer.create(*res[2])
+    l3 = Layer.create(*res[3])
     assert isinstance(l3, Labels)
     assert l3.name == "test"
     assert np.allclose(l3.scale[1:] / 1e9, analysis_segmentation.image.spacing)
