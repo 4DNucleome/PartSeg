@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.15.4b - 2024-07-23
+
+### 🚀 Features
+
+- Add preview of image metadata ([#1154](https://github.com/4DNucleome/PartSeg/pull/1154))
+- Add option to combine channels using sum and max ([#1159](https://github.com/4DNucleome/PartSeg/pull/1159))
+
+### 🐛 Bug Fixes
+
+- Fix selection of custom label colors for napari 0.5.0 ([#1138](https://github.com/4DNucleome/PartSeg/pull/1138))
+- Add pint call to enforce initialization of unit registry ([#1146](https://github.com/4DNucleome/PartSeg/pull/1146))
+- Workaround for lack of zsd support in czifile ([#1142](https://github.com/4DNucleome/PartSeg/pull/1142))
+- Fix preparing data for `mahotas.haralick` to avoid overflow problem ([#1150](https://github.com/4DNucleome/PartSeg/pull/1150))
+- Fix `use_convex` type from `int` to `bool` for segmentation algorithms ([#1152](https://github.com/4DNucleome/PartSeg/pull/1152))
+- Prevent propagation of decreasing contrast limits set by user ([#1166](https://github.com/4DNucleome/PartSeg/pull/1166))
+- Prevent error on searching component if there is no component ([#1167](https://github.com/4DNucleome/PartSeg/pull/1167))
+- Fix checking if channel requested by MeasurementProfile exists ([#1165](https://github.com/4DNucleome/PartSeg/pull/1165))
+- Fix trying to access to just deleted measurement profile from edit window. ([#1168](https://github.com/4DNucleome/PartSeg/pull/1168))
+
+### 📚 Documentation
+
+- Change homepage URL ([#1139](https://github.com/4DNucleome/PartSeg/pull/1139))
+- Add link for download macOS arm bundle ([#1140](https://github.com/4DNucleome/PartSeg/pull/1140))
+- Add changelog for 0.15.4 release
+
+### 🧪 Testing
+
+- \[Automatic\] Constraints upgrades: `napari`, `sentry-sdk`, `sympy` ([#1128](https://github.com/4DNucleome/PartSeg/pull/1128))
+- \[Automatic\] Constraints upgrades: `mahotas`, `numpy`, `sentry-sdk`, `sympy` ([#1145](https://github.com/4DNucleome/PartSeg/pull/1145))
+- \[Automatic\] Constraints upgrades: `numpy`, `tifffile` ([#1163](https://github.com/4DNucleome/PartSeg/pull/1163))
+
+### ⚙️ Miscellaneous Tasks
+
+- Speedup tests by use `tox-uv` ([#1141](https://github.com/4DNucleome/PartSeg/pull/1141))
+- Get additional dict from PR branch for checking PR title ([#1144](https://github.com/4DNucleome/PartSeg/pull/1144))
+- Relax numpy constraint ([#1143](https://github.com/4DNucleome/PartSeg/pull/1143))
+- Allow to skip spellchecking PR title ([#1147](https://github.com/4DNucleome/PartSeg/pull/1147))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1149](https://github.com/4DNucleome/PartSeg/pull/1149))
+- Create only archive with version in name on azures pipeline ([#1151](https://github.com/4DNucleome/PartSeg/pull/1151))
+- Fix tests for napari from repository ([#1148](https://github.com/4DNucleome/PartSeg/pull/1148))
+- Use python 3.11 to determine updated packages in PR description ([#1160](https://github.com/4DNucleome/PartSeg/pull/1160))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1164](https://github.com/4DNucleome/PartSeg/pull/1164))
+
+### Build
+
+- Remove PyOpenGL-accelerate from dependencies because of numpy incompatibility ([#1155](https://github.com/4DNucleome/PartSeg/pull/1155))
+- Update install constraints on numpy and qt packages ([#1157](https://github.com/4DNucleome/PartSeg/pull/1157))
+- Enforce napari 0.5.0 for Qt6 bindings ([#1161](https://github.com/4DNucleome/PartSeg/pull/1161))
+- Require napari>=0.5.0 only for python 3.9+ ([#1162](https://github.com/4DNucleome/PartSeg/pull/1162))
+
 ## 0.15.3 - 2024-07-08
 
 ### 🚀 Features
