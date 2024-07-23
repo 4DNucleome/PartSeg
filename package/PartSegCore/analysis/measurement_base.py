@@ -396,7 +396,11 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_starting_leaf(cls) -> Leaf:
         """This leaf is put on a default list"""
-        if hasattr(cls, "__argument_class__") and cls.__argument_class__ is not None:
+        if (
+            hasattr(cls, "__argument_class__")
+            and cls.__argument_class__ is not None
+            and cls.__argument_class__ is not BaseModel
+        ):
             return Leaf(name=cls._display_name(), parameters=cls.__argument_class__())
         return Leaf(name=cls._display_name())
 
