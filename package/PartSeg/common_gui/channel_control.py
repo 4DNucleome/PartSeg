@@ -632,8 +632,7 @@ class ColorComboBoxGroup(QWidget):
                 if self.settings.get_from_profile(f"{self.viewer_name}.lock_{i}", False)
                 else None
             )
-
-        return resp
+        return [x if x is None or x[0] < x[1] else None for x in resp]
 
     def get_gamma(self) -> typing.List[float]:
         return [
@@ -650,7 +649,10 @@ class ColorComboBoxGroup(QWidget):
             self.settings.get_from_profile(f"{self.viewer_name}.use_filter_{channel}", NoiseFilterType.No)
             != NoiseFilterType.No
         )
-        widget.set_lock(self.settings.get_from_profile(f"{self.viewer_name}.lock_{channel}", False))
+        range_ = self.settings.get_from_profile(f"{self.viewer_name}.range_{channel}", (0, 65000))
+        lock = self.settings.get_from_profile(f"{self.viewer_name}.lock_{channel}", False)
+
+        widget.set_lock(lock and range_[0] < range_[1])
         widget.set_gamma(self.settings.get_from_profile(f"{self.viewer_name}.gamma_value_{channel}", 1) != 1)
         if self.active_channel(channel):
             self.coloring_update.emit()
