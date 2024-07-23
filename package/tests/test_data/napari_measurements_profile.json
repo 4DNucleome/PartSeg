@@ -1,170 +1,372 @@
 {
   "test": {
-    "__MeasurementProfile__": true,
-    "name": "test",
-    "chosen_fields": [
-      {
-        "__Serializable__": true,
-        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
-        "name": "Volume",
-        "calculation_tree": {
-          "__Serializable__": true,
-          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
-          "name": "Volume",
-          "dict": {},
-          "power": 1.0,
-          "area": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
-            "value": 1
+    "__class__": "PartSegCore.analysis.measurement_calculation.MeasurementProfile",
+    "__class_version_dkt__": {
+      "PartSegCore.analysis.measurement_calculation.MeasurementProfile": "0.0.0",
+      "PartSegCore.utils.BaseModel": "0.0.0"
+    },
+    "__values__": {
+      "name": "test",
+      "chosen_fields": [
+        {
+          "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "__class_version_dkt__": {
+            "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+            "PartSegCore.utils.BaseModel": "0.0.0"
           },
-          "per_component": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
-            "value": 1
+          "__values__": {
+            "name": "ROI Volume",
+            "calculation_tree": {
+              "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+              "__class_version_dkt__": {
+                "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "name": "Volume",
+                "parameters": {},
+                "power": 1.0,
+                "area": {
+                  "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "per_component": {
+                  "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "channel": null
+              }
+            }
+          }
+        },
+        {
+          "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "__class_version_dkt__": {
+            "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+            "PartSegCore.utils.BaseModel": "0.0.0"
           },
-          "channel": null
-        }
-      },
-      {
-        "__Serializable__": true,
-        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
-        "name": "Volume PC",
-        "calculation_tree": {
-          "__Serializable__": true,
-          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
-          "name": "Volume",
-          "dict": {},
-          "power": 1.0,
-          "area": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
-            "value": 1
+          "__values__": {
+            "name": "ROI Volume per component ",
+            "calculation_tree": {
+              "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+              "__class_version_dkt__": {
+                "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "name": "Volume",
+                "parameters": {},
+                "power": 1.0,
+                "area": {
+                  "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "per_component": {
+                  "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 2
+                  }
+                },
+                "channel": null
+              }
+            }
+          }
+        },
+        {
+          "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "__class_version_dkt__": {
+            "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+            "PartSegCore.utils.BaseModel": "0.0.0"
           },
-          "per_component": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
-            "value": 2
+          "__values__": {
+            "name": "ROI Volume per component /ROI Volume",
+            "calculation_tree": {
+              "__class__": "PartSegCore.analysis.measurement_base.Node",
+              "__class_version_dkt__": {
+                "PartSegCore.analysis.measurement_base.Node": "0.0.0",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "left": {
+                  "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                    "PartSegCore.utils.BaseModel": "0.0.0"
+                  },
+                  "__values__": {
+                    "name": "Volume",
+                    "parameters": {},
+                    "power": 1.0,
+                    "area": {
+                      "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                      "__class_version_dkt__": {
+                        "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                      },
+                      "__values__": {
+                        "value": 1
+                      }
+                    },
+                    "per_component": {
+                      "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                      "__class_version_dkt__": {
+                        "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                      },
+                      "__values__": {
+                        "value": 2
+                      }
+                    },
+                    "channel": null
+                  }
+                },
+                "op": "/",
+                "right": {
+                  "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                    "PartSegCore.utils.BaseModel": "0.0.0"
+                  },
+                  "__values__": {
+                    "name": "Volume",
+                    "parameters": {},
+                    "power": 1.0,
+                    "area": {
+                      "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                      "__class_version_dkt__": {
+                        "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                      },
+                      "__values__": {
+                        "value": 1
+                      }
+                    },
+                    "per_component": {
+                      "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                      "__class_version_dkt__": {
+                        "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                      },
+                      "__values__": {
+                        "value": 1
+                      }
+                    },
+                    "channel": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "__class_version_dkt__": {
+            "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+            "PartSegCore.utils.BaseModel": "0.0.0"
           },
-          "channel": null
-        }
-      },
-      {
-        "__Serializable__": true,
-        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
-        "name": "Volume %",
-        "calculation_tree": {
-          "__Serializable__": true,
-          "__subtype__": "PartSegCore.analysis.measurement_base.Node",
-          "left": {
-            "__Serializable__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
-            "name": "Volume",
-            "dict": {},
-            "power": 1.0,
-            "area": {
-              "__Enum__": true,
-              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
-              "value": 1
-            },
-            "per_component": {
-              "__Enum__": true,
-              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
-              "value": 2
-            },
-            "channel": null
+          "__values__": {
+            "name": "ROI Mean pixel brightness",
+            "calculation_tree": {
+              "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+              "__class_version_dkt__": {
+                "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "name": "Mean pixel brightness",
+                "parameters": {},
+                "power": 1.0,
+                "area": {
+                  "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "per_component": {
+                  "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "channel": null
+              }
+            }
+          }
+        },
+        {
+          "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "__class_version_dkt__": {
+            "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+            "PartSegCore.utils.BaseModel": "0.0.0"
           },
-          "op": "/",
-          "right": {
-            "__Serializable__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
-            "name": "Volume",
-            "dict": {},
-            "power": 1.0,
-            "area": {
-              "__Enum__": true,
-              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
-              "value": 1
-            },
-            "per_component": {
-              "__Enum__": true,
-              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
-              "value": 1
-            },
-            "channel": null
+          "__values__": {
+            "name": "ROI Voxels",
+            "calculation_tree": {
+              "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+              "__class_version_dkt__": {
+                "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "name": "Voxels",
+                "parameters": {},
+                "power": 1.0,
+                "area": {
+                  "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "per_component": {
+                  "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "channel": null
+              }
+            }
+          }
+        },
+        {
+          "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "__class_version_dkt__": {
+            "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+            "PartSegCore.utils.BaseModel": "0.0.0"
+          },
+          "__values__": {
+            "name": "ROI Voxels per component ",
+            "calculation_tree": {
+              "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+              "__class_version_dkt__": {
+                "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "name": "Voxels",
+                "parameters": {},
+                "power": 1.0,
+                "area": {
+                  "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "per_component": {
+                  "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 2
+                  }
+                },
+                "channel": null
+              }
+            }
+          }
+        },
+        {
+          "__class__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "__class_version_dkt__": {
+            "PartSegCore.analysis.measurement_base.MeasurementEntry": "0.0.0",
+            "PartSegCore.utils.BaseModel": "0.0.0"
+          },
+          "__values__": {
+            "name": "ROI Colocalization[Channel 1=image, Channel 2=image2, Colocalization=Pearson correlation coefficient, Randomize channel=False, Randomize num=10]",
+            "calculation_tree": {
+              "__class__": "PartSegCore.analysis.measurement_base.Leaf",
+              "__class_version_dkt__": {
+                "PartSegCore.analysis.measurement_base.Leaf": "0.0.2",
+                "PartSegCore.utils.BaseModel": "0.0.0"
+              },
+              "__values__": {
+                "name": "Colocalization",
+                "parameters": {
+                  "__class__": "PartSegCore.analysis.measurement_calculation.ColocalizationMeasurementParameters",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_calculation.ColocalizationMeasurementParameters": "0.0.0",
+                    "PartSegCore.utils.BaseModel": "0.0.0"
+                  },
+                  "__values__": {
+                    "channel_fst": {
+                      "__class__": "PartSegImage.channel_class.Channel",
+                      "__class_version_dkt__": {
+                        "PartSegImage.channel_class.Channel": "0.0.0"
+                      },
+                      "__values__": {
+                        "value": "image"
+                      }
+                    },
+                    "channel_scd": {
+                      "__class__": "PartSegImage.channel_class.Channel",
+                      "__class_version_dkt__": {
+                        "PartSegImage.channel_class.Channel": "0.0.0"
+                      },
+                      "__values__": {
+                        "value": "image2"
+                      }
+                    },
+                    "colocalization": "Pearson correlation coefficient",
+                    "randomize": false,
+                    "randomize_repeat": 10
+                  }
+                },
+                "power": 1.0,
+                "area": {
+                  "__class__": "PartSegCore.analysis.measurement_base.AreaType",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.AreaType": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "per_component": {
+                  "__class__": "PartSegCore.analysis.measurement_base.PerComponent",
+                  "__class_version_dkt__": {
+                    "PartSegCore.analysis.measurement_base.PerComponent": "0.0.0"
+                  },
+                  "__values__": {
+                    "value": 1
+                  }
+                },
+                "channel": null
+              }
+            }
           }
         }
-      },
-      {
-        "__Serializable__": true,
-        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
-        "name": "Mean brightness",
-        "calculation_tree": {
-          "__Serializable__": true,
-          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
-          "name": "Mean pixel brightness",
-          "dict": {},
-          "power": 1.0,
-          "area": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
-            "value": 1
-          },
-          "per_component": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
-            "value": 1
-          },
-          "channel": null
-        }
-      },
-      {
-        "__Serializable__": true,
-        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
-        "name": "Voxels",
-        "calculation_tree": {
-          "__Serializable__": true,
-          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
-          "name": "Voxels",
-          "dict": {},
-          "power": 1.0,
-          "area": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
-            "value": 1
-          },
-          "per_component": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
-            "value": 1
-          },
-          "channel": null
-        }
-      },
-      {
-        "__Serializable__": true,
-        "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
-        "name": "Voxels PC",
-        "calculation_tree": {
-          "__Serializable__": true,
-          "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
-          "name": "Voxels",
-          "dict": {},
-          "power": 1.0,
-          "area": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
-            "value": 1
-          },
-          "per_component": {
-            "__Enum__": true,
-            "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
-            "value": 2
-          },
-          "channel": null
-        }
-      }
-    ],
-    "name_prefix": ""
+      ],
+      "name_prefix": ""
+    }
   }
 }

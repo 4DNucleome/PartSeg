@@ -61,8 +61,10 @@ class NapariFormDialog(FormDialog):
 def generate_image(viewer: Viewer, *layer_names):
     axis_order = Image.axis_order.replace("C", "")
     image_list = []
+    if isinstance(layer_names[0], str):
+        layer_names = [Channel(el) for el in layer_names]
     for name in dict.fromkeys(layer_names):
-        image_layer = viewer.layers[name]
+        image_layer = viewer.layers[name.value]
         data_scale = image_layer.scale[-3:] / UNIT_SCALE[Units.nm.value]
         image_list.append(
             Image(

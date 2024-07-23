@@ -12,14 +12,14 @@ from PartSeg.common_gui import napari_image_view
 
 
 @pytest.fixture()
-def base_settings(image, tmp_path, measurement_profiles, qapp):
+def base_settings(image, tmp_path, measurement_profiles):
     settings = BaseSettings(tmp_path)
     settings.image = image
     return settings
 
 
 @pytest.fixture()
-def part_settings(image, tmp_path, measurement_profiles, qapp):
+def part_settings(image, tmp_path, measurement_profiles):
     settings = PartSettings(tmp_path)
     settings.image = image
     for el in measurement_profiles:
@@ -28,7 +28,7 @@ def part_settings(image, tmp_path, measurement_profiles, qapp):
 
 
 @pytest.fixture()
-def stack_settings(tmp_path, image, qapp):
+def stack_settings(tmp_path, image):
     settings = StackSettings(tmp_path)
     settings.image = image
     chose = ChosenComponents()
@@ -38,7 +38,7 @@ def stack_settings(tmp_path, image, qapp):
 
 
 @pytest.fixture()
-def part_settings_with_project(image, analysis_segmentation2, tmp_path, qapp):
+def part_settings_with_project(image, analysis_segmentation2, tmp_path):
     settings = PartSettings(tmp_path)
     settings.image = image
     settings.set_project_info(analysis_segmentation2)
