@@ -533,7 +533,9 @@ class MeasurementSettings(QWidget):
             self.profile_description.setText("")
             return
         item = self.profile_list.currentItem()
-        if item is None:
+        if item is None or item.text() not in self.settings.measurement_profiles:
+            # item.text() is not in self.settings.measurement_profiles just after delete
+            # when list content is not updated
             self.profile_description.setText("")
             return
         profile = self.settings.measurement_profiles[item.text()]
