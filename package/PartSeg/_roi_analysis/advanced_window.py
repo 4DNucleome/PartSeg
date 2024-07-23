@@ -805,7 +805,7 @@ class MeasurementSettings(QWidget):
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             measurement_dict = self.settings.measurement_profiles
-            imp = ImportDialog(stat, measurement_dict, StringViewer, MeasurementProfile)
+            imp = ImportDialog(stat, measurement_dict, StringViewer, MeasurementProfile, parent=self)
             if not imp.exec_():
                 return
             for original_name, final_name in imp.get_import_list():

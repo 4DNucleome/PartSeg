@@ -2,7 +2,7 @@ import contextlib
 import gc
 import json
 from importlib.metadata import version
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -223,8 +223,14 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
 
 @pytest.mark.enablethread()
 @pytest.mark.enabledialog()
-def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
+@pytest.mark.usefixtures("qtbot")
+def test_measurement_create(make_napari_viewer, bundle_test_dir, monkeypatch):
     from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
+
+    monkeypatch.setattr(
+        "PartSeg.plugins.napari_widgets.measurement_widget.show_info",
+        Mock(side_effect=RuntimeError("should not be called")),
+    )
 
     data = np.zeros((10, 10), dtype=np.uint8)
     data[2:5, 2:-2] = 1
@@ -233,6 +239,7 @@ def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
     viewer = make_napari_viewer()
     viewer.add_labels(data, name="label")
     viewer.add_image(data, name="image")
+    viewer.add_image(data, name="image2")
     measurement = Measurement(viewer)
     viewer.window.add_dock_widget(measurement)
     measurement.reset_choices()
@@ -243,7 +250,11 @@ def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
     assert measurement.measurement_widget.measurement_type.currentText() == "test"
     assert measurement.measurement_widget.recalculate_button.isEnabled()
     assert measurement.measurement_widget.check_if_measurement_can_be_calculated("test") == "test"
+    assert measurement.measurement_widget.info_field.rowCount() == 0
+    assert measurement.measurement_widget.info_field.columnCount() == 3
     measurement.measurement_widget.append_measurement_result()
+    assert measurement.measurement_widget.info_field.rowCount() == 8
+    assert measurement.measurement_widget.info_field.columnCount() == 3
 
 
 def test_update_properties():
