@@ -288,8 +288,12 @@ class TestImageBase:
         image = self.image_class(
             np.zeros((1, 10, 20, 30, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC", channel_names=["a", "b", "c"]
         )
+        assert image.has_channel(1)
+        assert not image.has_channel(5)
         channel = image.get_channel(1)
         assert channel.shape == self.mask_shape((1, 10, 20, 30), "TZYX")
+        assert image.has_channel("b")
+        assert not image.has_channel("d")
         channel = image.get_channel("b")
         assert channel.shape == self.mask_shape((1, 10, 20, 30), "TZYX")
         with pytest.raises(IndexError):
