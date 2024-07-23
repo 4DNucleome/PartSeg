@@ -526,8 +526,11 @@ class Image:
         axis_pos = self.get_array_axis_positions()
         if "c" in kwargs:
             kwargs["C"] = kwargs.pop("c")
-        if "C" in kwargs and isinstance(kwargs["C"], str):
-            kwargs["C"] = self.channel_names.index(kwargs["C"])
+        if "C" in kwargs:
+            if isinstance(kwargs["C"], Channel):
+                kwargs["C"] = kwargs["C"].value
+            if isinstance(kwargs["C"], str):
+                kwargs["C"] = self.channel_names.index(kwargs["C"])
 
         channel = kwargs.pop("C", slice(None) if "C" in self.axis_order else 0)
         if isinstance(channel, Channel):
@@ -570,6 +573,14 @@ class Image:
         :rtype: numpy.ndarray
         """
         return self.get_data_by_axis(c=num)
+
+    def has_channel(self, num: int | str | Channel) -> bool:
+        if isinstance(num, Channel):
+            num = num.value
+
+        if isinstance(num, str):
+            return num in self.channel_names
+        return 0 <= num < self.channels
 
     def get_layer(self, time: int, stack: int) -> np.ndarray:
         """

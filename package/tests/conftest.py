@@ -12,7 +12,12 @@ from PartSeg import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
-from PartSegCore.analysis.measurement_calculation import ComponentsNumber, MeasurementProfile, Volume
+from PartSegCore.analysis.measurement_calculation import (
+    ColocalizationMeasurement,
+    ComponentsNumber,
+    MeasurementProfile,
+    Volume,
+)
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
@@ -69,7 +74,7 @@ def image2d(tmp_path):
 
 @pytest.fixture()
 def stack_image():
-    data = np.zeros([20, 40, 40], dtype=np.uint8)
+    data = np.zeros([20, 40, 40, 2], dtype=np.uint8)
     for x, y in itertools.product([0, 20], repeat=2):
         data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = 100
     for x, y in itertools.product([0, 20], repeat=2):
@@ -77,7 +82,7 @@ def stack_image():
     for x, y in itertools.product([0, 20], repeat=2):
         data[5:-5, x + 6 : x + 14, y + 6 : y + 14] = 140
 
-    return MaskProjectTuple("test_path", Image(data, (2, 1, 1), axes_order="ZYX", file_path="test_path"))
+    return MaskProjectTuple("test_path", Image(data, (2, 1, 1), axes_order="ZYXC", file_path="test_path"))
 
 
 @pytest.fixture()
@@ -201,8 +206,18 @@ def measurement_profiles():
             calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
         ),
     ]
-    return MeasurementProfile(name="statistic1", chosen_fields=statistics), MeasurementProfile(
-        name="statistic2", chosen_fields=statistics + statistics2
+    statistics3 = [
+        MeasurementEntry(
+            name="Colocalisation",
+            calculation_tree=ColocalizationMeasurement.get_starting_leaf().replace_(
+                per_component=PerComponent.No, area=AreaType.ROI
+            ),
+        ),
+    ]
+    return (
+        MeasurementProfile(name="statistic1", chosen_fields=statistics),
+        MeasurementProfile(name="statistic2", chosen_fields=statistics + statistics2),
+        MeasurementProfile(name="statistic3", chosen_fields=statistics + statistics2 + statistics3),
     )
 
 

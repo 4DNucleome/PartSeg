@@ -75,13 +75,13 @@ class TestNapariViewer:
         assert len(viewer.layers) == 2
         settings.image = analysis_segmentation2.image
         viewer.create_initial_layers(True, True, True, True)
-        assert len(viewer.layers) == 1
+        assert len(viewer.layers) == 2
         settings.roi = analysis_segmentation2.roi_info.roi
         viewer.create_initial_layers(True, True, True, True)
-        assert len(viewer.layers) == 2
+        assert len(viewer.layers) == 3
         settings.mask = analysis_segmentation2.mask
         viewer.create_initial_layers(True, True, True, True)
-        assert len(viewer.layers) == 3
+        assert len(viewer.layers) == 4
         viewer.close()
 
     def test_points(self, image, tmp_path, qtbot):
