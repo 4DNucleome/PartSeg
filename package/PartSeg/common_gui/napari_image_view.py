@@ -843,7 +843,12 @@ class ImageView(QWidget):
         return super().event(event)
 
     def _search_component(self):
-        max_components = max(max(image_info.roi_info.bound_info) for image_info in self.image_info.values())
+        try:
+            max_components = max(max(image_info.roi_info.bound_info) for image_info in self.image_info.values())
+        except ValueError as e:
+            if "empty" in e.args[0]:
+                return
+            raise e
         if self.viewer.dims.ndisplay == 3:
             self._search_type = SearchType.Highlight
 
