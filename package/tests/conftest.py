@@ -74,7 +74,7 @@ def image2d(tmp_path):
 
 @pytest.fixture()
 def stack_image():
-    data = np.zeros([20, 40, 40], dtype=np.uint8)
+    data = np.zeros([20, 40, 40, 2], dtype=np.uint8)
     for x, y in itertools.product([0, 20], repeat=2):
         data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = 100
     for x, y in itertools.product([0, 20], repeat=2):
@@ -82,7 +82,7 @@ def stack_image():
     for x, y in itertools.product([0, 20], repeat=2):
         data[5:-5, x + 6 : x + 14, y + 6 : y + 14] = 140
 
-    return MaskProjectTuple("test_path", Image(data, (2, 1, 1), axes_order="ZYX", file_path="test_path"))
+    return MaskProjectTuple("test_path", Image(data, (2, 1, 1), axes_order="ZYXC", file_path="test_path"))
 
 
 @pytest.fixture()
@@ -209,7 +209,9 @@ def measurement_profiles():
     statistics3 = [
         MeasurementEntry(
             name="Colocalisation",
-            calculation_tree=ColocalizationMeasurement.get_starting_leaf().replace_(per_component=PerComponent.No),
+            calculation_tree=ColocalizationMeasurement.get_starting_leaf().replace_(
+                per_component=PerComponent.No, area=AreaType.ROI
+            ),
         ),
     ]
     return (
