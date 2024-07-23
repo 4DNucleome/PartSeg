@@ -27,7 +27,7 @@ from PartSegImage import Image as PImage
 def test_project_to_layers_analysis(analysis_segmentation):
     analysis_segmentation.roi_info.alternative["test"] = np.zeros(analysis_segmentation.image.shape, dtype=np.uint8)
     res = project_to_layers(analysis_segmentation)
-    assert len(res) == 3
+    assert len(res) == 4
     l1 = Layer.create(*res[0])
     assert isinstance(l1, Image)
     assert l1.name == "channel 1"
@@ -55,7 +55,7 @@ def test_project_to_layers_roi():
 
 def test_project_to_layers_mask(stack_segmentation1):
     res = project_to_layers(stack_segmentation1)
-    assert len(res) == 2
+    assert len(res) == 3
     assert res[0][2] == "image"
 
 
