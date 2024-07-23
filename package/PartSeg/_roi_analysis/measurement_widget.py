@@ -367,7 +367,7 @@ class MeasurementWidget(MeasurementWidgetBase):
         units = self.units_choose.currentEnum()
 
         for num in compute_class.get_channels_num():
-            if self.settings.image.has_channel(num):
+            if not self.settings.image.has_channel(num):
                 QMessageBox.warning(
                     self,
                     "Measurement error",
