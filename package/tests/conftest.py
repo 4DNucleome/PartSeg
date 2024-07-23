@@ -12,7 +12,12 @@ from PartSeg import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
-from PartSegCore.analysis.measurement_calculation import ComponentsNumber, MeasurementProfile, Volume
+from PartSegCore.analysis.measurement_calculation import (
+    ColocalizationMeasurement,
+    ComponentsNumber,
+    MeasurementProfile,
+    Volume,
+)
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
@@ -201,8 +206,16 @@ def measurement_profiles():
             calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
         ),
     ]
-    return MeasurementProfile(name="statistic1", chosen_fields=statistics), MeasurementProfile(
-        name="statistic2", chosen_fields=statistics + statistics2
+    statistics3 = [
+        MeasurementEntry(
+            name="Colocalisation",
+            calculation_tree=ColocalizationMeasurement.get_starting_leaf().replace_(per_component=PerComponent.No),
+        ),
+    ]
+    return (
+        MeasurementProfile(name="statistic1", chosen_fields=statistics),
+        MeasurementProfile(name="statistic2", chosen_fields=statistics + statistics2),
+        MeasurementProfile(name="statistic3", chosen_fields=statistics + statistics2 + statistics3),
     )
 
 

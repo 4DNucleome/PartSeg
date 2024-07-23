@@ -148,10 +148,10 @@ class TestMeasurementSettings:
             widget.profile_name.setText("test")
         assert widget.save_butt.isEnabled()
 
-        assert len(part_settings.measurement_profiles) == 2
+        assert len(part_settings.measurement_profiles) == 3
         with qtbot.waitSignal(widget.save_butt.clicked):
             widget.save_butt.click()
-        assert len(part_settings.measurement_profiles) == 3
+        assert len(part_settings.measurement_profiles) == 4
 
         with qtbot.waitSignal(widget.profile_name.textChanged):
             widget.profile_name.setText("")

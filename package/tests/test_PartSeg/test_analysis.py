@@ -18,7 +18,7 @@ class TestMeasurementWidget:
         widget = MeasurementWidget(part_settings)
         qtbot.addWidget(widget)
 
-        assert widget.measurement_type.count() == 3
+        assert widget.measurement_type.count() == 4
         part_settings.set_project_info(analysis_segmentation)
 
         with qtbot.waitSignal(widget.measurement_type.currentIndexChanged):
@@ -34,7 +34,7 @@ class TestMeasurementWidget:
         widget = MeasurementWidget(part_settings)
         qtbot.addWidget(widget)
 
-        assert widget.measurement_type.count() == 3
+        assert widget.measurement_type.count() == 4
         part_settings.set_project_info(analysis_segmentation)
         widget.measurement_type.setCurrentIndex(1)
         assert widget.recalculate_button.isEnabled()
@@ -52,7 +52,7 @@ class TestMeasurementWidget:
         widget = MeasurementWidget(part_settings)
         qtbot.addWidget(widget)
 
-        assert widget.measurement_type.count() == 3
+        assert widget.measurement_type.count() == 4
         part_settings.set_project_info(analysis_segmentation2)
         widget.measurement_type.setCurrentIndex(2)
         assert widget.recalculate_button.isEnabled()
