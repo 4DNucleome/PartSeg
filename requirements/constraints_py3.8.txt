@@ -89,7 +89,7 @@ imageio==2.34.2
     #   scikit-image
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.0.0
+importlib-metadata==8.2.0
     # via
     #   build
     #   dask
@@ -334,7 +334,7 @@ pyside6-essentials==6.3.1
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.3.1
+pytest==8.3.2
     # via
     #   partseg (pyproject.toml)
     #   pytest-qt
@@ -392,7 +392,7 @@ rich==13.7.1
     # via
     #   npe2
     #   typer
-rpds-py==0.19.0
+rpds-py==0.19.1
     # via
     #   jsonschema
     #   referencing
@@ -405,11 +405,11 @@ scipy==1.10.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.10.0
+sentry-sdk==2.11.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==71.1.0
+setuptools==72.0.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
