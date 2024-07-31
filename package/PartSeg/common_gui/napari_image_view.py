@@ -60,6 +60,11 @@ else:
     USE_THREADS = True
 
 
+class _NapariImage(NapariImage):
+    def _update_thumbnail(self):
+        """Disable thumbnail update"""
+
+
 def get_highlight_colormap():
     cmap_dict = {0: (0, 0, 0, 0), 1: "white", None: (0, 0, 0, 0)}
     if _napari_ge_5:
@@ -1073,7 +1078,7 @@ def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tupl
         blending = "additive" if i != 0 else "translucent"
         data = image.get_channel(i)
 
-        layer = NapariImage(
+        layer = _NapariImage(
             data,
             colormap=param.colormaps[i],
             visible=param.visibility[i],
