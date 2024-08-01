@@ -61,7 +61,7 @@ else:
 
 
 class _NapariImage(NapariImage):
-    def _update_thumbnail(self):
+    def _update_thumbnail(self, *_, **__):
         """Disable thumbnail update"""
 
 
