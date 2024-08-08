@@ -13,11 +13,11 @@ appdirs==1.4.4
     #   npe2
 asttokens==2.4.1
     # via stack-data
-attrs==23.2.0
+attrs==24.2.0
     # via
     #   jsonschema
     #   referencing
-babel==2.15.0
+babel==2.16.0
     # via sphinx
 backcall==0.2.0
     # via ipython
@@ -40,13 +40,13 @@ cloudpickle==3.0.0
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.6.0
+coverage==7.6.1
     # via partseg (pyproject.toml)
 czifile==2019.7.2
     # via partseg (pyproject.toml)
 dask==2023.5.0
     # via napari
-debugpy==1.8.2
+debugpy==1.8.5
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -147,9 +147,9 @@ lxml==5.2.2
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
-lxml-html-clean==0.1.1
+lxml-html-clean==0.2.0
     # via lxml
-magicgui==0.8.3
+magicgui==0.9.1
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -183,7 +183,7 @@ networkx==3.1
     # via scikit-image
 nme==0.1.8
     # via partseg (pyproject.toml)
-npe2==0.7.6
+npe2==0.7.7
     # via
     #   -r requirements/version_denylist.txt
     #   napari
@@ -350,12 +350,12 @@ pytz==2024.1
     #   pandas
 pywavelets==1.4.1
     # via scikit-image
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via
     #   dask
     #   napari
     #   npe2
-pyzmq==26.0.3
+pyzmq==26.1.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -389,7 +389,7 @@ rich==13.7.1
     # via
     #   npe2
     #   typer
-rpds-py==0.19.1
+rpds-py==0.20.0
     # via
     #   jsonschema
     #   referencing
@@ -402,11 +402,11 @@ scipy==1.10.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.11.0
+sentry-sdk==2.12.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==72.0.0
+setuptools==72.1.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -477,7 +477,7 @@ tornado==6.4.1
     # via
     #   ipykernel
     #   jupyter-client
-tqdm==4.66.4
+tqdm==4.66.5
     # via napari
 traceback-with-variables==2.0.4
     # via partseg (pyproject.toml)
