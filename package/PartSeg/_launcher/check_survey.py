@@ -15,7 +15,7 @@ from PartSeg import state_store
 IGNORE_DAYS = 21
 IGNORE_FILE = "ignore_survey.txt"
 
-IGNORE_FILE_PATH = Path(state_store.save_folder) / ".." / IGNORE_FILE
+IGNORE_FILE_PATH = (Path(state_store.save_folder) / ".." / IGNORE_FILE).resolve()
 
 
 class SurveyMessageBox(QMessageBox):
@@ -45,6 +45,8 @@ class SurveyMessageBox(QMessageBox):
 
     def exec_(self):
         result = super().exec_()
+        if not IGNORE_FILE_PATH.parent.exists():
+            IGNORE_FILE_PATH.parent.mkdir(parents=True)
         IGNORE_FILE_PATH.touch()
         return result
 
