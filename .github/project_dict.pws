@@ -1,4 +1,4 @@
-personal_ws-1.1 en 9
+personal_ws-1.1 en 12
 napari
 autoupdate
 aspell
@@ -10,3 +10,4 @@ macOS
 numpy
 pre
 bool
+changelog
