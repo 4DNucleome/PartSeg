@@ -1,5 +1,6 @@
 import contextlib
 import importlib
+import logging
 import os
 import pkgutil
 import sys
@@ -20,7 +21,10 @@ def register_napari_plugins():  # pragma: no cover
         )
         base_path = Path(__file__).parent.parent.parent / "plugins"
         for el in base_path.glob("*/napari.yaml"):
-            npe2.PluginManager.instance().register(str(el))
+            try:
+                npe2.PluginManager.instance().register(str(el))
+            except Exception:  # noqa: PERF203
+                logging.exception("Failed to register %s", el)
 
 
 def get_plugins():
