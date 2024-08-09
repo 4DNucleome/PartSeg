@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.15.4b - 2024-07-23
+## 0.15.4b - 2024-08-09
 
 ### 🚀 Features
 
@@ -20,6 +20,8 @@ All notable changes to this project will be documented in this file.
 - Prevent error on searching component if there is no component ([#1167](https://github.com/4DNucleome/PartSeg/pull/1167))
 - Fix checking if channel requested by MeasurementProfile exists ([#1165](https://github.com/4DNucleome/PartSeg/pull/1165))
 - Fix trying to access to just deleted measurement profile from edit window. ([#1168](https://github.com/4DNucleome/PartSeg/pull/1168))
+- Fix bug in code for checking for survey file ([#1174](https://github.com/4DNucleome/PartSeg/pull/1174))
+- Fix plugin discovery in bundle to register them in napari viewer ([#1175](https://github.com/4DNucleome/PartSeg/pull/1175))
 
 ### 📚 Documentation
 
@@ -32,6 +34,8 @@ All notable changes to this project will be documented in this file.
 - \[Automatic\] Constraints upgrades: `napari`, `sentry-sdk`, `sympy` ([#1128](https://github.com/4DNucleome/PartSeg/pull/1128))
 - \[Automatic\] Constraints upgrades: `mahotas`, `numpy`, `sentry-sdk`, `sympy` ([#1145](https://github.com/4DNucleome/PartSeg/pull/1145))
 - \[Automatic\] Constraints upgrades: `numpy`, `tifffile` ([#1163](https://github.com/4DNucleome/PartSeg/pull/1163))
+- \[Automatic\] Constraints upgrades: `napari`, `sentry-sdk`, `tifffile` ([#1169](https://github.com/4DNucleome/PartSeg/pull/1169))
+- \[Automatic\] Constraints upgrades: `magicgui`, `sentry-sdk` ([#1172](https://github.com/4DNucleome/PartSeg/pull/1172))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -44,6 +48,9 @@ All notable changes to this project will be documented in this file.
 - Fix tests for napari from repository ([#1148](https://github.com/4DNucleome/PartSeg/pull/1148))
 - Use python 3.11 to determine updated packages in PR description ([#1160](https://github.com/4DNucleome/PartSeg/pull/1160))
 - \[pre-commit.ci\] pre-commit autoupdate ([#1164](https://github.com/4DNucleome/PartSeg/pull/1164))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1170](https://github.com/4DNucleome/PartSeg/pull/1170))
+- Disable thumbnail generation in napari layer as it is fragile and not used ([#1171](https://github.com/4DNucleome/PartSeg/pull/1171))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1173](https://github.com/4DNucleome/PartSeg/pull/1173))
 
 ### Build
 
