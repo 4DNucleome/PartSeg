@@ -4,6 +4,7 @@ import os
 import pkgutil
 import sys
 import typing
+from pathlib import Path
 
 import PartSegCore.plugins
 
@@ -17,6 +18,9 @@ def register_napari_plugins():  # pragma: no cover
         npe2.PluginManager.instance().register(
             os.path.join(os.path.dirname(os.path.dirname(PartSeg.__file__)), "napari.yaml")
         )
+        base_path = Path(__file__).parent.parent.parent / "plugins"
+        for el in base_path.glob("*/napari.yaml"):
+            npe2.PluginManager.instance().register(str(el))
 
 
 def get_plugins():
