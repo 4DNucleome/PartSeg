@@ -145,7 +145,7 @@ local-migrator==0.1.10
     #   nme
 locket==1.0.0
     # via partd
-lxml==5.2.2
+lxml==5.3.0
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
@@ -243,6 +243,8 @@ partsegcore-compiled-backend==0.15.1
     # via partseg (pyproject.toml)
 partsegdata==0.10.0
     # via partseg (pyproject.toml)
+pathlib2==2.3.7.post1
+    # via pickleshare
 pexpect==4.9.0
     # via ipython
 pickleshare==0.7.5
@@ -305,9 +307,9 @@ pygments==2.18.0
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==6.9.0
+pyinstaller==6.10.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2024.7
+pyinstaller-hooks-contrib==2024.8
     # via pyinstaller
 pyopengl==3.1.7
     # via napari
@@ -428,6 +430,7 @@ six==1.16.0
     # via
     #   partseg (pyproject.toml)
     #   asttokens
+    #   pathlib2
     #   python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
@@ -452,7 +455,7 @@ superqt==0.6.7
     #   partseg (pyproject.toml)
     #   magicgui
     #   napari
-sympy==1.13.1
+sympy==1.13.2
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
@@ -526,7 +529,7 @@ xlrd==2.0.1
     # via partseg (pyproject.toml)
 xlsxwriter==3.2.0
     # via partseg (pyproject.toml)
-zipp==3.19.2
+zipp==3.20.0
     # via
     #   importlib-metadata
     #   importlib-resources

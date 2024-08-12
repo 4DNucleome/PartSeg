@@ -133,7 +133,7 @@ local-migrator==0.1.10
     #   nme
 locket==1.0.0
     # via partd
-lxml==5.2.2
+lxml==5.3.0
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
@@ -193,7 +193,7 @@ numpy==2.0.1
     #   scipy
     #   tifffile
     #   vispy
-numpydoc==1.7.0
+numpydoc==1.8.0
     # via napari
 oiffile==2024.5.24
     # via partseg (pyproject.toml)
@@ -285,9 +285,9 @@ pygments==2.18.0
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==6.9.0
+pyinstaller==6.10.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2024.7
+pyinstaller-hooks-contrib==2024.8
     # via pyinstaller
 pyopengl==3.1.7
     # via napari
@@ -430,11 +430,11 @@ superqt==0.6.7
     #   partseg (pyproject.toml)
     #   magicgui
     #   napari
-sympy==1.13.1
+sympy==1.13.2
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
-tifffile==2024.7.24
+tifffile==2024.8.10
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -498,5 +498,5 @@ xlrd==2.0.1
     # via partseg (pyproject.toml)
 xlsxwriter==3.2.0
     # via partseg (pyproject.toml)
-zipp==3.19.2
+zipp==3.20.0
     # via importlib-metadata
