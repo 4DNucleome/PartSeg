@@ -127,7 +127,7 @@ def load_project_from_tar(tar_file, file_path):
             algorithm_parameters=algorithm_dict,
         )
     logging.warning(
-        "This project {proj_ver} is from new version of PartSeg: {version} ",
+        "This project %(proj_ver) is from new version of PartSeg: %(version)",
         extra={"version": version, "proj_ver": project_version_info},
     )
     return ProjectTuple(
