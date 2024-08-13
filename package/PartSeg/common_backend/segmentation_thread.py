@@ -48,7 +48,9 @@ class SegmentationThread(QThread):
         """the calculation are done here"""
         if self.algorithm.image is None:
             # assertion for running algorithm without image
-            logging.error("No image in class {cls_name}", extra={"cls_name": self.algorithm.__class__})
+            logging.error(
+                "No image in class %(cls_name)", extra={"cls_name": self.algorithm.__class__}, stack_info=True
+            )
             return
         try:
             segment_data = self.algorithm.calculation_run_wrap(self.send_info)
