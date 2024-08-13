@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.15.4b - 2024-08-09
+## 0.15.4 - 2024-08-13
 
 ### 🚀 Features
 
@@ -22,12 +22,14 @@ All notable changes to this project will be documented in this file.
 - Fix trying to access to just deleted measurement profile from edit window. ([#1168](https://github.com/4DNucleome/PartSeg/pull/1168))
 - Fix bug in code for checking for survey file ([#1174](https://github.com/4DNucleome/PartSeg/pull/1174))
 - Fix plugin discovery in bundle to register them in napari viewer ([#1175](https://github.com/4DNucleome/PartSeg/pull/1175))
+- Fix call of logging
 
 ### 📚 Documentation
 
 - Change homepage URL ([#1139](https://github.com/4DNucleome/PartSeg/pull/1139))
 - Add link for download macOS arm bundle ([#1140](https://github.com/4DNucleome/PartSeg/pull/1140))
 - Add changelog for 0.15.4 release
+- Update changelog ([#1176](https://github.com/4DNucleome/PartSeg/pull/1176))
 
 ### 🧪 Testing
 
@@ -36,6 +38,7 @@ All notable changes to this project will be documented in this file.
 - \[Automatic\] Constraints upgrades: `numpy`, `tifffile` ([#1163](https://github.com/4DNucleome/PartSeg/pull/1163))
 - \[Automatic\] Constraints upgrades: `napari`, `sentry-sdk`, `tifffile` ([#1169](https://github.com/4DNucleome/PartSeg/pull/1169))
 - \[Automatic\] Constraints upgrades: `magicgui`, `sentry-sdk` ([#1172](https://github.com/4DNucleome/PartSeg/pull/1172))
+- \[Automatic\] Constraints upgrades: `sympy`, `tifffile` ([#1177](https://github.com/4DNucleome/PartSeg/pull/1177))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -51,6 +54,7 @@ All notable changes to this project will be documented in this file.
 - \[pre-commit.ci\] pre-commit autoupdate ([#1170](https://github.com/4DNucleome/PartSeg/pull/1170))
 - Disable thumbnail generation in napari layer as it is fragile and not used ([#1171](https://github.com/4DNucleome/PartSeg/pull/1171))
 - \[pre-commit.ci\] pre-commit autoupdate ([#1173](https://github.com/4DNucleome/PartSeg/pull/1173))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1178](https://github.com/4DNucleome/PartSeg/pull/1178))
 
 ### Build
 
