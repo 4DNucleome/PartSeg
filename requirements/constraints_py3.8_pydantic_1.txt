@@ -78,7 +78,7 @@ idna==3.7
     # via requests
 imagecodecs==2023.3.16
     # via partseg (pyproject.toml)
-imageio==2.34.2
+imageio==2.35.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)

@@ -83,7 +83,7 @@ idna==3.7
     # via requests
 imagecodecs==2024.6.1
     # via partseg (pyproject.toml)
-imageio==2.34.2
+imageio==2.35.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
@@ -163,7 +163,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mpmath==1.3.0
     # via sympy
-napari==0.5.1
+napari==0.5.2
     # via partseg (pyproject.toml)
 napari-console==0.0.9
     # via napari
@@ -181,7 +181,7 @@ npe2==0.7.7
     # via
     #   -r requirements/version_denylist.txt
     #   napari
-numpy==2.0.1
+numpy==1.26.4
     # via
     #   partseg (pyproject.toml)
     #   czifile
