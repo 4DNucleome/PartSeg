@@ -53,17 +53,30 @@ def test_sentry_variables_clip(monkeypatch):
     try:
         raise ValueError("eeee")
     except ValueError as ee:
+        event, _hint = sentry_sdk.utils.event_from_exception(ee)
+        clipped = serialize(event)
+        assert (
+            len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"])
+            == sentry_sdk.serializer.MAX_DATABAG_BREADTH
+        )
+
+
+def test_sentry_variables_clip_change_breadth(monkeypatch):
+    monkeypatch.setattr(sentry_sdk.serializer, "MAX_DATABAG_BREADTH", 100)
+    letters = "abcdefghijklmnoprst"
+    for letter in letters:
+        locals()[letter] = 1
+    try:
+        raise ValueError("eeee")
+    except ValueError as ee:
         event, hint = sentry_sdk.utils.event_from_exception(ee)
         vars_dict = event["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]
         for letter in letters:
             assert letter in vars_dict
-        clipped = serialize(event)
-        assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == 10
-        monkeypatch.setattr(sentry_sdk.serializer, "MAX_DATABAG_BREADTH", 100)
+
         clipped = serialize(event)
         assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == len(vars_dict)
         assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) > 10
-
         client = Client("https://aaa@test.pl/77")
         Hub.current.bind_client(client)
         sentry_sdk.capture_event(event, hint=hint)

@@ -357,7 +357,7 @@ scipy==1.14.0
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.12.0
+sentry-sdk==2.13.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
