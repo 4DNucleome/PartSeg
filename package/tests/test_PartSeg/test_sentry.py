@@ -53,7 +53,7 @@ def test_sentry_variables_clip(monkeypatch):
     try:
         raise ValueError("eeee")
     except ValueError as ee:
-        event, hint = sentry_sdk.utils.event_from_exception(ee)
+        event, _hint = sentry_sdk.utils.event_from_exception(ee)
         clipped = serialize(event)
         assert (
             len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"])
