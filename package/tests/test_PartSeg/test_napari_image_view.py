@@ -62,7 +62,7 @@ def test_print_dict():
     assert lines[2].startswith("  e")
 
 
-@pytest.fixture()
+@pytest.fixture
 def image_view(base_settings, image2, qtbot, request):
     ch_prop = ChannelProperty(base_settings, "test")
     view = ImageView(base_settings, channel_property=ch_prop, name=request.function.__name__)
@@ -181,7 +181,7 @@ class TestImageView:
         image_view.update_spacing_info()
         assert np.all(image_view.image_info[str(tmp_path / "test2.tiff")].mask.scale == (1, 10**5, 10**5, 10**5))
 
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     def test_mask_control_visibility(self, base_settings, image_view, qtbot):
         image_view.show()
         assert not image_view.mask_chk.isVisible()
@@ -203,7 +203,7 @@ class TestImageView:
         image_view.toggle_points_visibility()
         assert not image_view.points_layer.visible
 
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     def test_points_button_visibility(self, base_settings, image_view):
         image_view.show()
         assert not image_view.points_view_button.isVisible()
@@ -255,7 +255,7 @@ class TestImageView:
         image_view.component_mark(10, False)
         assert not image_view.image_info[str(tmp_path / "test2.tiff")].highlight.visible
 
-    @pytest.mark.enablethread()
+    @pytest.mark.enablethread
     def test_marking_component_flash(self, base_settings, image_view, tmp_path, qtbot):
         roi = np.zeros(base_settings.image.get_channel(0).shape, dtype=np.uint8)
         roi[..., 2:-2, 2:-2, 2:-2] = 1
@@ -321,15 +321,15 @@ class TestImageView:
         assert filtered.shape == ch.shape
         assert (filter_type == NoiseFilterType.No) != (filtered is not ch)
 
-    @pytest.mark.no_patch_add_layer()
-    @pytest.mark.enablethread()
+    @pytest.mark.no_patch_add_layer
+    @pytest.mark.enablethread
     def test_add_layer_util_check_init(self, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0
 
         qtbot.waitUntil(has_layers)
 
-    @pytest.mark.no_patch_add_layer()
+    @pytest.mark.no_patch_add_layer
     def test_add_layer_util(self, image_view, qtbot):
         def has_layers():
             return len(image_view.viewer.layers) > 0

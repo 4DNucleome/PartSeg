@@ -221,8 +221,8 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
     assert measurement.calculate_btn.enabled
 
 
-@pytest.mark.enablethread()
-@pytest.mark.enabledialog()
+@pytest.mark.enablethread
+@pytest.mark.enabledialog
 @pytest.mark.usefixtures("qtbot")
 def test_measurement_create(make_napari_viewer, bundle_test_dir, monkeypatch):
     from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
@@ -291,7 +291,7 @@ def test_mask_create(make_napari_viewer, qtbot):
     assert "Mask" in viewer.layers
 
 
-@pytest.fixture()
+@pytest.fixture
 def _shutdown_timers(monkeypatch):
     register = []
     old_start = QTimer.start
@@ -312,7 +312,7 @@ def _shutdown_timers(monkeypatch):
             assert not timer.isActive()
 
 
-@pytest.mark.enablethread()
+@pytest.mark.enablethread
 @pytest.mark.usefixtures("_shutdown_timers")
 def test_search_labels(make_napari_viewer, qtbot):
     viewer = make_napari_viewer()
@@ -339,7 +339,7 @@ def test_search_labels(make_napari_viewer, qtbot):
     search.component_selector.value = 2
 
 
-@pytest.fixture()
+@pytest.fixture
 def viewer_with_data(make_napari_viewer):
     viewer = make_napari_viewer()
     data = np.zeros((10, 10), dtype=np.uint8)
@@ -410,7 +410,7 @@ def ndim_param(request):
     return request.param
 
 
-@pytest.fixture()
+@pytest.fixture
 def napari_image(ndim_param):
     shape = (1,) * max(ndim_param - 3, 0) + (10,) * min(ndim_param, 3)
     slice_ = (slice(None),) * max(ndim_param - 3, 0) + (slice(2, 8),) * min(ndim_param, 3)
@@ -420,7 +420,7 @@ def napari_image(ndim_param):
     return NapariImage(data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def napari_labels(ndim_param):
     shape = (1,) * max(ndim_param - 3, 0) + (10,) * min(ndim_param, 3)
     slice_ = (slice(None),) * max(ndim_param - 3, 0) + (slice(2, 8),) * min(ndim_param, 3)
@@ -533,7 +533,7 @@ def test_split_core_objects_model(napari_labels):
     assert model.run_calculation()["layer_type"] == "labels"
 
 
-@pytest.fixture()
+@pytest.fixture
 def napari_labels2():
     data = np.zeros((10, 10, 10), dtype=np.uint8)
     data[5, 2:-2, 2:5] = 1
@@ -551,7 +551,7 @@ class MockDebouncer(QObject):
         self.triggered.emit()
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_labels(make_napari_viewer, qtbot, napari_labels2, monkeypatch):
     monkeypatch.setattr("PartSeg.plugins.napari_widgets.copy_labels.QSignalDebouncer", MockDebouncer)
     viewer = make_napari_viewer()

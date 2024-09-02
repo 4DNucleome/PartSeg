@@ -24,7 +24,7 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack_settings(qtbot, tmp_path):
     settings = StackSettings(tmp_path)
     chose = ChosenComponents()

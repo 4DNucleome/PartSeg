@@ -59,7 +59,7 @@ def test_project_to_layers_mask(stack_segmentation1):
     assert res[0][2] == "image"
 
 
-@pytest.fixture()
+@pytest.fixture
 def load_data(data_test_dir):
     def _load_data(file_name, reader_hook):
         file_path = os.path.join(data_test_dir, file_name)

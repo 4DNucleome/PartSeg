@@ -130,7 +130,7 @@ def analysis_project_reversed() -> ProjectTuple:
     return ProjectTuple("test_data.tiff", image, roi_info=roi_info, mask=mask)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask_prop():
     return MaskProperty.simple_mask()
 

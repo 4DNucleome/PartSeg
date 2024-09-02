@@ -45,7 +45,7 @@ def bundle_test_dir():
     return Path(os.path.join(os.path.dirname(__file__), "test_data"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def image(tmp_path):
     data = np.zeros([20, 20, 20, 2], dtype=np.uint16)
     data[10:-1, 1:-1, 1:-1, 0] = 20
@@ -56,7 +56,7 @@ def image(tmp_path):
     return Image(data, (10**-3, 10**-3, 10**-3), axes_order="ZYXC", file_path=str(tmp_path / "test.tiff"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def image2(image, tmp_path):
     data = np.zeros([20, 20, 20, 1], dtype=np.uint8)
     data[10:-1, 1:-1, 1:-1, 0] = 20
@@ -65,14 +65,14 @@ def image2(image, tmp_path):
     return img
 
 
-@pytest.fixture()
+@pytest.fixture
 def image2d(tmp_path):
     data = np.zeros([20, 20], dtype=np.uint8)
     data[10:-1, 1:-1] = 20
     return Image(data, (10**-3, 10**-3), axes_order="YX", file_path=str(tmp_path / "test.tiff"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack_image():
     data = np.zeros([20, 40, 40, 2], dtype=np.uint8)
     for x, y in itertools.product([0, 20], repeat=2):
@@ -85,7 +85,7 @@ def stack_image():
     return MaskProjectTuple("test_path", Image(data, (2, 1, 1), axes_order="ZYXC", file_path="test_path"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def algorithm_parameters():
     algorithm_parameters = {
         "algorithm_name": "Lower threshold",
@@ -100,7 +100,7 @@ def algorithm_parameters():
     return deepcopy(algorithm_parameters)
 
 
-@pytest.fixture()
+@pytest.fixture
 def roi_extraction_profile():
     return ROIExtractionProfile(
         name="test",
@@ -109,7 +109,7 @@ def roi_extraction_profile():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask_segmentation_parameters():
     return ROIExtractionProfile(
         name="",
@@ -128,7 +128,7 @@ def mask_segmentation_parameters():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack_segmentation1(stack_image: MaskProjectTuple, mask_segmentation_parameters):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
@@ -140,7 +140,7 @@ def stack_segmentation1(stack_image: MaskProjectTuple, mask_segmentation_paramet
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def analysis_segmentation(stack_image: MaskProjectTuple):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
@@ -149,13 +149,13 @@ def analysis_segmentation(stack_image: MaskProjectTuple):
     return ProjectTuple(file_path=stack_image.file_path, image=stack_image.image, roi_info=data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def analysis_segmentation2(analysis_segmentation: ProjectTuple):
     mask = (analysis_segmentation.roi_info.roi > 0).astype(np.uint8)
     return dataclasses.replace(analysis_segmentation, mask=mask)
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_parameters):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
@@ -168,12 +168,12 @@ def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_paramet
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask_property():
     return MaskProperty.simple_mask()
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask_property_non_default():
     return MaskProperty(
         dilate=RadiusType.R2D,
@@ -186,7 +186,7 @@ def mask_property_non_default():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def measurement_profiles():
     statistics = [
         MeasurementEntry(
@@ -221,14 +221,14 @@ def measurement_profiles():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def border_rim_profile():
     return ROIExtractionProfile(
         name="border_profile", algorithm=BorderRim.get_name(), values=BorderRim.get_default_values()
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def lower_threshold_profile():
     return ROIExtractionProfile(
         name="lower_profile",
@@ -237,7 +237,7 @@ def lower_threshold_profile():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask_threshold_profile():
     return ROIExtractionProfile(
         name="mask_profile",
@@ -246,7 +246,7 @@ def mask_threshold_profile():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_pipeline(border_rim_profile, lower_threshold_profile, mask_property):
     return SegmentationPipeline(
         name="sample_pipeline",
@@ -255,7 +255,7 @@ def sample_pipeline(border_rim_profile, lower_threshold_profile, mask_property):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_pipeline2(border_rim_profile, lower_threshold_profile, mask_property):
     return SegmentationPipeline(
         name="sample_pipeline2",
@@ -264,7 +264,7 @@ def sample_pipeline2(border_rim_profile, lower_threshold_profile, mask_property)
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def history_element(image, lower_threshold_profile):
     roi = np.zeros(image.shape, dtype=np.uint8)
     roi[0, 2:10] = 1

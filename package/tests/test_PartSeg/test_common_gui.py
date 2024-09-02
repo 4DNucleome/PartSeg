@@ -148,7 +148,7 @@ class Enum2(Enum):
         return f"{self.name} eee"
 
 
-@pytest.fixture()
+@pytest.fixture
 def _example_tiff_files(tmp_path):
     for i in range(5):
         ImageWriter.save(
@@ -157,7 +157,7 @@ def _example_tiff_files(tmp_path):
         )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mf_widget(qtbot, part_settings):
     res = MultipleFileWidget(
         part_settings,
@@ -170,7 +170,7 @@ def mf_widget(qtbot, part_settings):
     return res
 
 
-@pytest.fixture()
+@pytest.fixture
 def _example_mask_project_files(tmp_path):
     data = np.zeros((10, 10), dtype=np.uint8)
     data[:5] = 1
@@ -200,7 +200,7 @@ class TestEnumComboBox:
             widget.set_value(Enum2.test2)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_accept_files(monkeypatch):
     def accept(*_):
         return True
@@ -208,7 +208,7 @@ def _mock_accept_files(monkeypatch):
     monkeypatch.setattr(select_multiple_files.AcceptFiles, "exec_", accept)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_warning(monkeypatch):
     warning_show = [0]
 
@@ -561,8 +561,8 @@ class TestMultipleFileWidget:
     def check_load_files(parameter, custom_name):
         return not custom_name and os.path.basename(parameter.file_path) == "img_4.tif"
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     @pytest.mark.usefixtures("_example_tiff_files")
     def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [
@@ -588,8 +588,8 @@ class TestMultipleFileWidget:
         assert part_settings.get_last_files_multiple() == file_list
         assert mf_widget.file_view.topLevelItemCount() == 5
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     @pytest.mark.usefixtures("_example_tiff_files")
     def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [[[str(tmp_path / f"img_{i}.tif")], LoadStackImage.get_name()] for i in range(5)]
@@ -613,8 +613,8 @@ class TestMultipleFileWidget:
         part_settings.load()
         assert part_settings.get_last_files_multiple() == file_list
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     @pytest.mark.usefixtures("_example_mask_project_files")
     def test_load_mask_project(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         load_property = LoadProperty(
@@ -645,8 +645,8 @@ class TestBaseMainWindow:
         window = BaseMainWindow(config_folder=tmp_path)
         qtbot.add_widget(window)
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     def test_recent(self, tmp_path, qtbot, monkeypatch):
         load_mock = MagicMock()
         load_mock.load = MagicMock(return_value=1)

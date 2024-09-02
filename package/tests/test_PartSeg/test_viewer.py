@@ -19,7 +19,7 @@ pytestmark = pytest.mark.filterwarnings("ignore:Public access to Window.qt_viewe
 
 
 class TestResultImageView:
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     @pyside_skip
     def test_simple(self, qtbot, part_settings, image):
         prop = ChannelProperty(part_settings, "test")
@@ -38,7 +38,7 @@ class TestResultImageView:
         assert not viewer.available_alternatives()
         viewer.hide()
 
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     @pyside_skip
     def test_set_roi(self, qtbot, part_settings, image):
         prop = ChannelProperty(part_settings, "test")
@@ -63,7 +63,7 @@ class TestResultImageView:
 
 
 @pyside_skip
-@pytest.mark.windows_ci_skip()
+@pytest.mark.windows_ci_skip
 class TestNapariViewer:
     def test_base(self, image, analysis_segmentation2, tmp_path):
         settings = BaseSettings(tmp_path)
