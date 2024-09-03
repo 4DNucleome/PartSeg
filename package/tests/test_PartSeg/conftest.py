@@ -51,6 +51,7 @@ def _disable_threads_viewer_patch_prepare_leyers(monkeypatch):
         self._add_image(napari_image_view._prepare_layers(image, parameters, replace))
 
     monkeypatch.setattr(napari_image_view.ImageView, "_prepare_layers", _prepare_layers)
+    monkeypatch.setattr("napari._qt.threads.status_checker.StatusChecker.start", lambda x: None, raising=False)
 
 
 @pytest.fixture(autouse=True)
