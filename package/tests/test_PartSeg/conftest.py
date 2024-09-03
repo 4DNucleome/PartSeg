@@ -62,7 +62,7 @@ def _disable_threads_viewer_patch_add_layer(monkeypatch, request):
         if layer not in self.viewer.layers:
             self.viewer.add_layer(layer)
 
-    monkeypatch.setattr(napari_image_view.ImageView, "_add_layer_util", _add_layer_util)
+        monkeypatch.setattr(napari_image_view.ImageView, "_add_layer_util", _add_layer_util)
 
 
 @pytest.fixture(autouse=True)
@@ -173,3 +173,9 @@ def _mock_throttler(monkeypatch):
 
         if hasattr(qt_main_window, "QSignalThrottler"):
             monkeypatch.setattr(qt_main_window, "QSignalThrottler", DummyThrottler)
+    with contextlib.suppress(ImportError):
+        monkeypatch.setattr(
+            "napari._qt.threads.status_checker.StatusChecker.start",
+            lambda x: None,
+            raising=False,
+        )
