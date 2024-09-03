@@ -109,5 +109,6 @@ jobs:
         if: ${{ inputs.coverage }}
         with:
           name: cov-reports-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}
+          include-hidden-files: 'true'
           path: |
             ./.coverage.*
