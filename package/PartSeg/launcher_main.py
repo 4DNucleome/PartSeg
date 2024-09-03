@@ -51,13 +51,13 @@ def _test_imports():  # pragma: no cover
     label = LabelChoose(w1.settings)
     label.refresh()
     v.close()
-    del label
-    del w1
-    del w2
-    del w3
-    del v
-    del app
-    del console
+    del label  # skipcq: PTC-W0043
+    del w1  # skipcq: PTC-W0043
+    del w2  # skipcq: PTC-W0043
+    del w3  # skipcq: PTC-W0043
+    del v  # skipcq: PTC-W0043
+    del app  # skipcq: PTC-W0043
+    del console  # skipcq: PTC-W0043
     print("end_test_import")
 
 
@@ -145,8 +145,8 @@ def main():  # pragma: no cover  # noqa: PLR0915
     check_survey.start()
     wind.show()
     rc = my_app.exec_()
-    del wind  # skipcq: PTC-W0043`
-    del my_app  # skipcq: PTC-W0043`
+    del wind  # skipcq: PTC-W0043
+    del my_app  # skipcq: PTC-W0043
     sys.exit(rc)
 
 
