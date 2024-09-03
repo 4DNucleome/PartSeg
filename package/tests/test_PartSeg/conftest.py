@@ -63,7 +63,7 @@ def _disable_threads_viewer_patch_add_layer(monkeypatch, request):
         if layer not in self.viewer.layers:
             self.viewer.add_layer(layer)
 
-    with contextlib.suppress(ModuleNotFoundError):
+    with contextlib.suppress(ImportError):
         monkeypatch.setattr(
             napari_image_view.ImageView,
             "_add_layer_util",
