@@ -599,7 +599,12 @@ class SubAlgorithmWidget(QWidget):
 
     def paintEvent(self, event: QPaintEvent):
         name = self.choose.currentText()
-        if self.widgets_dict[name].has_elements() and event.rect().top() == 0 and event.rect().left() == 0:
+        if (
+            name in self.widgets_dict
+            and self.widgets_dict[name].has_elements()
+            and event.rect().top() == 0
+            and event.rect().left() == 0
+        ):
             painter = QPainter(self)
             painter.drawRect(self.rect() - QMargins(1, -1, 1, 1))
 
