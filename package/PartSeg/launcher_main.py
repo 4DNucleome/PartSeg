@@ -46,13 +46,16 @@ def _test_imports():  # pragma: no cover
     w1 = AnalysisMain("test")
     w2 = MaskMain("test")
     w3 = MainWindow("test")
-    console = QtConsole(napari.Viewer())
+    v = napari.Viewer()
+    console = QtConsole(v)
     label = LabelChoose(w1.settings)
     label.refresh()
+    v.close()
     del label
     del w1
     del w2
     del w3
+    del v
     del app
     del console
     print("end_test_import")
