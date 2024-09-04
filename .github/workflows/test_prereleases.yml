@@ -79,13 +79,14 @@ jobs:
         uses: aganders3/headless-gui@v2
         timeout-minutes: 60
         with:
-          run: python -m tox run -v --pre -- -v
+          run: python -m tox run -v -- -v
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: latest
           BACKEND: PyQt5
           PIP_CONSTRAINT: requirements/pre_test_problematic_version.txt
+          PIP_PRE: 1
 
       # If something goes wrong, we can open an issue in the repo
       - name: Report Failures
