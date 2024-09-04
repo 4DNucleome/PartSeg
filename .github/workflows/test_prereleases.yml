@@ -79,7 +79,7 @@ jobs:
         uses: aganders3/headless-gui@v2
         timeout-minutes: 60
         with:
-          run: python -m tox -v --pre
+          run: python -m tox run -v --pre -- -v
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
