@@ -84,7 +84,7 @@ class AlgorithmProperty:
         else:
             self.value_type = type(default_value)
         self.default_value = default_value
-        self.range = options_range
+        self.range = tuple(self.value_type(x) for x in options_range) if options_range is not None else None
         self.possible_values = possible_values
         self.help_text = help_text
         self.per_dimension = per_dimension
