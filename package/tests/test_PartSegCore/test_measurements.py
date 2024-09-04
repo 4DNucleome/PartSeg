@@ -839,7 +839,7 @@ class TestSphericity:
         )
 
 
-@pytest.fixture()
+@pytest.fixture
 def two_comp_img():
     data = np.zeros((30, 30, 60), dtype=np.uint16)
     data[5:-5, 5:-5, 5:29] = 60
@@ -2144,7 +2144,7 @@ class TestHaralick:
         Haralick.calculate_property(mask, data, distance=distance, feature=feature)
 
 
-@pytest.fixture()
+@pytest.fixture
 def roi_to_roi_extract():
     parameters = LowerThresholdAlgorithm.get_default_values()
     parameters.threshold.values.threshold = 1

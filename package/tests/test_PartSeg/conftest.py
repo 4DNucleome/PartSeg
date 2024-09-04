@@ -11,14 +11,14 @@ from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui import napari_image_view
 
 
-@pytest.fixture()
+@pytest.fixture
 def base_settings(image, tmp_path, measurement_profiles):
     settings = BaseSettings(tmp_path)
     settings.image = image
     return settings
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_settings(image, tmp_path, measurement_profiles):
     settings = PartSettings(tmp_path)
     settings.image = image
@@ -27,7 +27,7 @@ def part_settings(image, tmp_path, measurement_profiles):
     return settings
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack_settings(tmp_path, image):
     settings = StackSettings(tmp_path)
     settings.image = image
@@ -37,7 +37,7 @@ def stack_settings(tmp_path, image):
     chose.deleteLater()
 
 
-@pytest.fixture()
+@pytest.fixture
 def part_settings_with_project(image, analysis_segmentation2, tmp_path):
     settings = PartSettings(tmp_path)
     settings.image = image

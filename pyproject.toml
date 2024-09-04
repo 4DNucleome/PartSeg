@@ -343,6 +343,7 @@ max-complexity = 15
 "examples/**.py" = ["T20"]
 "package/PartSeg/common_gui/show_directory_dialog.py" = ["S603", "S606", "S607"]
 "package/PartSeg/launcher_main.py" = ["T20"]
+"*.ipynb" = ["T20", "ERA001", "E501"]
 
 [tool.check-manifest]
 ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]

@@ -19,7 +19,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
         self.parent.report_func()
         return res
 
-    def _dummy_report_func(self):  # noqa: ARG001
+    def _dummy_report_func(self):
         """dummy function for report_func"""
 
     TiffFile.report_func = _dummy_report_func

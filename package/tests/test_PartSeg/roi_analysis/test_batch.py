@@ -5,7 +5,7 @@ from PartSegCore.analysis.batch_processing.batch_backend import CalculationManag
 from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree, MaskSuffix, RootType
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_prepare(tmp_path, part_settings, qtbot):
     def _constructor(file_list, calculation_plan=None):
         if calculation_plan is None:

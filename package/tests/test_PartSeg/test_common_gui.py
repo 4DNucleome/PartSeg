@@ -148,7 +148,7 @@ class Enum2(Enum):
         return f"{self.name} eee"
 
 
-@pytest.fixture()
+@pytest.fixture
 def _example_tiff_files(tmp_path):
     for i in range(5):
         ImageWriter.save(
@@ -157,7 +157,7 @@ def _example_tiff_files(tmp_path):
         )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mf_widget(qtbot, part_settings):
     res = MultipleFileWidget(
         part_settings,
@@ -170,7 +170,7 @@ def mf_widget(qtbot, part_settings):
     return res
 
 
-@pytest.fixture()
+@pytest.fixture
 def _example_mask_project_files(tmp_path):
     data = np.zeros((10, 10), dtype=np.uint8)
     data[:5] = 1
@@ -200,7 +200,7 @@ class TestEnumComboBox:
             widget.set_value(Enum2.test2)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_accept_files(monkeypatch):
     def accept(*_):
         return True
@@ -208,7 +208,7 @@ def _mock_accept_files(monkeypatch):
     monkeypatch.setattr(select_multiple_files.AcceptFiles, "exec_", accept)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_warning(monkeypatch):
     warning_show = [0]
 
@@ -414,12 +414,16 @@ def test_create_save_dialog(qtbot):
     assert hasattr(dialog, "stack_widget")
 
 
-def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
+@pytest.fixture
+def _mock_selected_files(monkeypatch, tmp_path):
     def selected_files(self):
         return [str(tmp_path / "test.tif")]
 
     monkeypatch.setattr(QFileDialog, "selectedFiles", selected_files)
 
+
+@pytest.mark.usefixtures("_mock_selected_files")
+def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert part_settings.get_path_history() == [str(Path.home())]
 
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test")
@@ -436,6 +440,10 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert Path(dialog.directory().path()) == tmp_path
     assert Path(part_settings.get("io.test3")) == tmp_path
 
+
+def test_p_save_dialog_reject_no_history_update(part_settings, tmp_path, qtbot, monkeypatch):
+    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
+    qtbot.addWidget(dialog)
     monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
     part_settings.set("io.filter_save", SaveAsTiff.get_name())
     assert part_settings.get_path_history() == [str(Path.home())]
@@ -443,6 +451,10 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.accept()
     assert part_settings.get_path_history() == [str(Path.home())]
 
+
+@pytest.mark.usefixtures("_mock_selected_files")
+def test_p_save_dialog2(part_settings, tmp_path, qtbot, monkeypatch):
+    part_settings.set("io.filter_save", SaveAsTiff.get_name())
     monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
     qtbot.addWidget(dialog)
@@ -561,8 +573,8 @@ class TestMultipleFileWidget:
     def check_load_files(parameter, custom_name):
         return not custom_name and os.path.basename(parameter.file_path) == "img_4.tif"
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     @pytest.mark.usefixtures("_example_tiff_files")
     def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [
@@ -588,8 +600,8 @@ class TestMultipleFileWidget:
         assert part_settings.get_last_files_multiple() == file_list
         assert mf_widget.file_view.topLevelItemCount() == 5
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     @pytest.mark.usefixtures("_example_tiff_files")
     def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [[[str(tmp_path / f"img_{i}.tif")], LoadStackImage.get_name()] for i in range(5)]
@@ -613,8 +625,8 @@ class TestMultipleFileWidget:
         part_settings.load()
         assert part_settings.get_last_files_multiple() == file_list
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     @pytest.mark.usefixtures("_example_mask_project_files")
     def test_load_mask_project(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         load_property = LoadProperty(
@@ -645,8 +657,8 @@ class TestBaseMainWindow:
         window = BaseMainWindow(config_folder=tmp_path)
         qtbot.add_widget(window)
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     def test_recent(self, tmp_path, qtbot, monkeypatch):
         load_mock = MagicMock()
         load_mock.load = MagicMock(return_value=1)

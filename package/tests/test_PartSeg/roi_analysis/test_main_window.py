@@ -12,7 +12,7 @@ from PartSegCore.segmentation import ROIExtractionResult
 
 class TestAnalysisMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="debug test fail")
-    @pytest.mark.pyside_skip()
+    @pytest.mark.pyside_skip
     def test_opening(self, qtbot, tmpdir):
         main_window = MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
@@ -22,7 +22,7 @@ class TestAnalysisMainWindow:
         main_window.advanced_window.close()
         qtbot.wait(50)
 
-    @pytest.mark.pyside_skip()
+    @pytest.mark.pyside_skip
     def test_change_theme(self, qtbot, tmpdir):
         main_window = MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
@@ -30,7 +30,7 @@ class TestAnalysisMainWindow:
         main_window.settings.theme_name = "dark"
         assert main_window.raw_image.viewer.theme == "dark"
 
-    @pytest.mark.pyside_skip()
+    @pytest.mark.pyside_skip
     def test_scale_bar(self, qtbot, tmpdir):
         main_window = MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
@@ -51,7 +51,7 @@ class TestAnalysisMainWindow:
         assert set(res.roi_info.bound_info) == {1}
 
 
-@pytest.fixture()
+@pytest.fixture
 def analysis_options(qtbot, part_settings):
     ch_property = ChannelProperty(part_settings, "test")
     qtbot.addWidget(ch_property)

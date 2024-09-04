@@ -13,7 +13,7 @@ from PartSeg._launcher import check_version
 from PartSeg._launcher.check_version import IGNORE_FILE
 
 
-@pytest.mark.enablethread()
+@pytest.mark.enablethread
 @pytest.mark.parametrize("thread", [False, True])
 @pytest.mark.parametrize("package_name", ["PartSeg", "sample_name"])
 def test_fetching(thread, package_name, monkeypatch, qtbot):

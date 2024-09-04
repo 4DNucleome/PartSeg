@@ -18,7 +18,7 @@ from PartSeg._roi_analysis.export_batch import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def _dummy_tiffs(tmp_path):
     for i in range(1, 11):
         (tmp_path / f"stack1_component{i}.tif").touch()
@@ -74,7 +74,7 @@ def test_fail_export_empty_excel(tmp_path):
         list(export_to_archive(tmp_path / "empty.xlsx", tmp_path, tmp_path / "arch.tar.gz"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def zenodo_kwargs():
     return {
         "zenodo_token": "sample_token",

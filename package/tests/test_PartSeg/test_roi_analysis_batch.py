@@ -163,7 +163,7 @@ class TestFileMaskWidget:
         assert widget.first_text.text() == "file_path"
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan(measurement_profiles):
     roi_extraction = AnalysisAlgorithmSelection.get_default()
     return prepare_plan_widget.CalculationPlan(

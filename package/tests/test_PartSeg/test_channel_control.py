@@ -35,19 +35,19 @@ else:
         return np.frombuffer(image.bits(), dtype=np.uint8, count=size * image.depth() // 8)
 
 
-@pytest.fixture()
+@pytest.fixture
 def base_settings(tmp_path, qapp):
     return BaseSettings(tmp_path)
 
 
-@pytest.fixture()
+@pytest.fixture
 def ch_property(base_settings, qtbot):
     ch_prop = ChannelProperty(base_settings, start_name="test")
     qtbot.add_widget(ch_prop)
     return ch_prop
 
 
-@pytest.fixture()
+@pytest.fixture
 def image_view(base_settings, ch_property, qtbot):
     image_view = ImageView(base_settings, ch_property, "test")
     qtbot.add_widget(image_view)
@@ -284,7 +284,7 @@ class TestColorComboBoxGroup:
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.filter_radius.setValue(0.5)
 
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     @pytest.mark.parametrize("filter_value", NoiseFilterType.__members__.values())
     def test_image_view_integration_filter(self, qtbot, tmp_path, filter_value, ch_property, image_view):
         image_view.channel_control.set_active(1)
@@ -306,7 +306,7 @@ class TestColorComboBoxGroup:
             filter_value == NoiseFilterType.No and np.any(image4 == 255)
         )
 
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     def test_image_view_integration(self, qtbot, tmp_path, ch_property, image_view):
         image_view.viewer_widget.screenshot(flash=False)
         image1 = image_view.viewer_widget._render()
@@ -377,7 +377,7 @@ class TestColorComboBoxGroup:
         assert np.any(image3 != image5)
         assert np.any(image4 != image5)
 
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     def test_image_view_integration_gauss(self, qtbot, tmp_path, ch_property, image_view):
         def check_parameters(name, index):
             return name == "test" and index == 1

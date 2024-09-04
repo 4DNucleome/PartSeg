@@ -99,7 +99,7 @@ class DummySpacingCheck(DummyExtraction):
         return ROIExtractionResult(np.ones(self.image.shape, dtype=np.uint8), self.get_segmentation_profile())
 
 
-@pytest.fixture()
+@pytest.fixture
 def _register_dummy_extraction():
     assert "Dummy" not in AnalysisAlgorithmSelection.__register__
     AnalysisAlgorithmSelection.register(DummyExtraction)
@@ -108,7 +108,7 @@ def _register_dummy_extraction():
     assert "Dummy" not in AnalysisAlgorithmSelection.__register__
 
 
-@pytest.fixture()
+@pytest.fixture
 def _register_dummy_spacing():
     assert "Dummy" not in AnalysisAlgorithmSelection.__register__
     AnalysisAlgorithmSelection.register(DummySpacingCheck)
@@ -117,7 +117,7 @@ def _register_dummy_spacing():
     assert "Dummy" not in AnalysisAlgorithmSelection.__register__
 
 
-@pytest.fixture()
+@pytest.fixture
 def _prepare_spacing_data(tmp_path):
     data = np.zeros((4, 1, 10, 10), dtype=np.uint8)
     data[:, :, 2:-2, 2:-2] = 1
@@ -127,7 +127,7 @@ def _prepare_spacing_data(tmp_path):
     ImageWriter.save(image, image.file_path)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _prepare_mask_project_data(tmp_path):
     data = np.zeros((4, 10, 10), dtype=np.uint8)
     data[:, 2:4, 2:4] = 1
@@ -150,7 +150,7 @@ def _prepare_mask_project_data(tmp_path):
     SaveROI.save(tmp_path / "test.seg", proj, SaveROIOptions())
 
 
-@pytest.fixture()
+@pytest.fixture
 def ltww_segmentation():
     parameters = LowerThresholdFlowAlgorithm.__argument_class__(
         channel=1,
@@ -170,7 +170,7 @@ def ltww_segmentation():
     return ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
 
 
-@pytest.fixture()
+@pytest.fixture
 def measurement_list():
     chosen_fields = [
         MeasurementEntry(
@@ -194,7 +194,7 @@ def measurement_list():
     return MeasurementCalculate(channel=0, units=Units.µm, measurement_profile=statistic, name_prefix="")
 
 
-@pytest.fixture()
+@pytest.fixture
 def simple_measurement_list():
     chosen_fields = [
         MeasurementEntry(
@@ -206,7 +206,7 @@ def simple_measurement_list():
     return MeasurementCalculate(channel=-1, units=Units.µm, measurement_profile=statistic, name_prefix="")
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan_dummy(simple_measurement_list):
     tree = CalculationTree(
         RootType.Mask_project,
@@ -220,13 +220,13 @@ def calculation_plan_dummy(simple_measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan_dummy_spacing(calculation_plan_dummy):
     calculation_plan_dummy.execution_tree.operation = RootType.Image
     return calculation_plan_dummy
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan(ltww_segmentation, measurement_list):
     mask_suffix = MaskSuffix(name="", suffix="_mask")
     tree = CalculationTree(
@@ -238,7 +238,7 @@ def calculation_plan(ltww_segmentation, measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan_long(ltww_segmentation, measurement_list):
     mask_suffix = MaskSuffix(name="", suffix="_mask")
     children = []
@@ -257,7 +257,7 @@ def calculation_plan_long(ltww_segmentation, measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan2(ltww_segmentation, measurement_list):
     ltww_segmentation.values.channel = 0
 
@@ -267,7 +267,7 @@ def calculation_plan2(ltww_segmentation, measurement_list):
     return CalculationPlan(tree=tree, name="test2")
 
 
-@pytest.fixture()
+@pytest.fixture
 def simple_plan(simple_measurement_list):
     def _create_simple_plan(root_type: RootType, save: Save):
         parameters = {
@@ -287,7 +287,7 @@ def simple_plan(simple_measurement_list):
     return _create_simple_plan
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan3(ltww_segmentation):
     mask_suffix = MaskSuffix(name="", suffix="_mask")
     chosen_fields = [

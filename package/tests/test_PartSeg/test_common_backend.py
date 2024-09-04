@@ -464,13 +464,13 @@ class TestLoadBackup:
             assert not (tmp_path / "0.13.13").exists()
 
 
-@pytest.fixture()
+@pytest.fixture
 def image(tmp_path):
     data = np.random.default_rng().uniform(size=(10, 10, 2))
     return Image(data=data, image_spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def roi():
     data = np.zeros((10, 10), dtype=np.uint8)
     data[2:-2, 2:5] = 1
