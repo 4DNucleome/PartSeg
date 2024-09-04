@@ -413,8 +413,8 @@ class MaximumDistanceWatershedParams(BaseModel):
     minimum_border_distance: int = Field(
         10,
         title="Border Radius",
-        ge=0.0,
-        le=100.0,
+        ge=0,
+        le=100,
         description="Minimum distance of local maxima from the border. To avoid artifacts",
     )
 
