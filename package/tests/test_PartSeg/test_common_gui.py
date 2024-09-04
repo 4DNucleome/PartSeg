@@ -414,12 +414,16 @@ def test_create_save_dialog(qtbot):
     assert hasattr(dialog, "stack_widget")
 
 
-def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
+@pytest.fixture
+def _mock_selected_files(monkeypatch, tmp_path):
     def selected_files(self):
         return [str(tmp_path / "test.tif")]
 
     monkeypatch.setattr(QFileDialog, "selectedFiles", selected_files)
 
+
+@pytest.mark.usefixtures("_mock_selected_files")
+def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert part_settings.get_path_history() == [str(Path.home())]
 
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test")
@@ -436,6 +440,10 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert Path(dialog.directory().path()) == tmp_path
     assert Path(part_settings.get("io.test3")) == tmp_path
 
+
+def test_p_save_dialog_reject_no_history_update(part_settings, tmp_path, qtbot, monkeypatch):
+    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
+    qtbot.addWidget(dialog)
     monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
     part_settings.set("io.filter_save", SaveAsTiff.get_name())
     assert part_settings.get_path_history() == [str(Path.home())]
@@ -443,6 +451,10 @@ def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.accept()
     assert part_settings.get_path_history() == [str(Path.home())]
 
+
+@pytest.mark.usefixtures("_mock_selected_files")
+def test_p_save_dialog2(part_settings, tmp_path, qtbot, monkeypatch):
+    part_settings.set("io.filter_save", SaveAsTiff.get_name())
     monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
     dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
     qtbot.addWidget(dialog)
