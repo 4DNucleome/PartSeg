@@ -20,7 +20,7 @@ attrs==24.2.0
     #   referencing
 babel==2.16.0
     # via sphinx
-build==1.2.1
+build==1.2.2
     # via npe2
 cachey==0.2.1
     # via napari
@@ -71,7 +71,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2024.6.1
+fsspec==2024.9.0
     # via dask
 h5py==3.11.0
     # via partseg (pyproject.toml)
@@ -127,7 +127,7 @@ jupyter-core==5.7.2
     #   ipykernel
     #   jupyter-client
     #   qtconsole
-kiwisolver==1.4.5
+kiwisolver==1.4.7
     # via vispy
 lazy-loader==0.4
     # via
@@ -181,7 +181,7 @@ npe2==0.7.7
     # via
     #   -r requirements/version_denylist.txt
     #   napari
-numpy==2.1.0
+numpy==2.1.1
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -243,7 +243,7 @@ pillow==10.4.0
     #   scikit-image
 pint==0.24.3
     # via napari
-platformdirs==4.2.2
+platformdirs==4.3.2
     # via
     #   jupyter-core
     #   pooch
@@ -393,7 +393,7 @@ sentry-sdk==2.13.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==74.0.0
+setuptools==74.1.2
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
