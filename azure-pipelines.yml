@@ -77,7 +77,7 @@ stages:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.11', architecture: x64}}
           - template: .azure-pipelines/pip_cache.yaml
             parameters:
-              key: doc | requirements/constraints_py3.9.txt | "$(PY)"
+              key: doc | requirements/constraints_py3.11_docs.txt | "$(PY)"
               path: $(pip_cache_dir)
           - bash: |
               python -m pip install tox
