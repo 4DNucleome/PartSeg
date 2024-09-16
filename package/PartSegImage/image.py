@@ -110,7 +110,7 @@ class Image:
         axes_order: str | None = None,
         shift: Spacing | None = None,
         name: str = "",
-        metadata: dict | None = None,
+        metadata_dict: dict | None = None,
     ):
         # TODO add time distance to image spacing
         if axes_order is None:  # pragma: no cover
@@ -139,7 +139,7 @@ class Image:
 
         self.ranges = self._adjust_ranges(ranges, self._channel_arrays)
         self._mask_array = self._fit_mask(mask, data, axes_order)
-        self.metadata = dict(metadata) if metadata is not None else {}
+        self.metadata = dict(metadata_dict) if metadata_dict is not None else {}
 
     @staticmethod
     def _check_data_dimensionality(data, axes_order):
@@ -362,7 +362,7 @@ class Image:
             ranges=ranges,
             channel_names=channel_names,
             axes_order=self.axis_order,
-            metadata=self.metadata,
+            metadata_dict=self.metadata,
         )
 
     def set_mask(self, mask: np.ndarray | None, axes: str | None = None):

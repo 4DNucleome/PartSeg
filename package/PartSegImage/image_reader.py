@@ -318,7 +318,7 @@ class OifImagReader(BaseImageReader):
             self.spacing,
             file_path=os.path.abspath(image_path),
             axes_order=self.return_order(),
-            metadata=image_file.mainfile,
+            metadata_dict=image_file.mainfile,
         )
 
     def _read_scale_parameter(self, image_file):
@@ -369,7 +369,7 @@ class CziImageReader(BaseImageReaderBuffer):
             self.spacing,
             file_path=image_path,
             axes_order=self.return_order(),
-            metadata=metadata,
+            metadata_dict=metadata,
             channel_names=self.channel_names,
         )
 
@@ -520,7 +520,7 @@ class TiffImageReader(BaseImageReaderBuffer):
             axes_order=self.return_order(),
             shift=self.shift,
             name=self.name,
-            metadata=self.metadata,
+            metadata_dict=self.metadata,
         )
 
     @staticmethod
