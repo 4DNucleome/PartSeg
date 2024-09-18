@@ -106,6 +106,7 @@ class SearchLabel(Container):
         u_bound = upper_bound[-2:][::-1]
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "Public access to Window.qt_viewer")
+            warnings.filterwarnings("ignore", "Access to QtViewer.view is deprecated")
             rect = Rect(self.napari_viewer.window.qt_viewer.view.camera.get_state()["rect"])
         if rect.contains(*l_bound) and rect.contains(*u_bound):
             return

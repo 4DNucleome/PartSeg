@@ -843,7 +843,7 @@ class FileData:
 
             if errors:
                 errors_data = pd.DataFrame(errors, columns=["File path", "error description"])
-                errors_data.to_excel(writer, "Errors")
+                errors_data.to_excel(writer, sheet_name="Errors")
 
     @staticmethod
     def write_calculation_plan(writer: pd.ExcelWriter, calculation_plan: CalculationPlan):

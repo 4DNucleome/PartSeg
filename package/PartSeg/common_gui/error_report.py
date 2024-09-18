@@ -201,7 +201,7 @@ class ErrorDialog(QDialog):
         """
         Function with construct final error message and send it using sentry.
         """
-        with sentry_sdk.push_scope() as scope:
+        with sentry_sdk.new_scope() as scope:
             text = f"{self.desc.text()}\n\nVersion: {__version__}\n"
             if len(self.additional_notes) > 0:
                 scope.set_extra("additional_notes", self.additional_notes)
@@ -217,7 +217,7 @@ class ErrorDialog(QDialog):
 
             event_id = sentry_sdk.capture_event(event, hint=hint)
         if event_id is None:
-            event_id = sentry_sdk.hub.Hub.current.last_event_id()
+            event_id = sentry_sdk.scope.Scope.last_event_id()
 
         if len(self.additional_info.toPlainText()) > 0:
             contact_text = self.contact_info.text()
