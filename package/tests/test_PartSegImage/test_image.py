@@ -592,7 +592,7 @@ def test_str_and_repr_mask_presence():
     image = Image(np.zeros((10, 10), np.uint8), (1, 1), "test", axes_order="XY")
     assert "mask: False" in str(image)
     assert "mask=False" in repr(image)
-    assert "coloring: None" in str(image)
+    assert "coloring: ['red']" in str(image)
 
     image.set_mask(np.zeros((10, 10), np.uint8))
 
