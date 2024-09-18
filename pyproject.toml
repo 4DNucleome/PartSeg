@@ -191,6 +191,8 @@ testpaths = [
 junit_family = "legacy"
 timeout = 900
 filterwarnings = [
+    "error:::PartSeg", # turn warnings from napari into errors
+    "error:::test_.*", # turn warnings in our own tests into errors
     "ignore:invalid value encountered",
     "ignore:The 'junit_family' encountered",
     "ignore:numpy.ufunc size changed, may indicate",
@@ -204,6 +206,7 @@ filterwarnings = [
     "ignore:Please use `zoom` from the `scipy.ndimage` namespace",
     "ignore:Converting `np.character` to a dtype",
     "ignore:Public access to Window.qt_viewer",
+    "ignore:Pydantic V1 style `@validator`",
 ]
 markers = [
     "enablethread: Allow to use thread in test",
