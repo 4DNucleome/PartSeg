@@ -66,7 +66,7 @@ dependencies = [
     "qtconsole>=4.7.7",
     "requests>=2.25.0",
     "scipy>=1.4.1",
-    "sentry-sdk>=2.0.0",
+    "sentry-sdk>=2.4.0",
     "six>=1.11.0",
     "superqt>=0.3.0",
     "sympy>=1.1.1",
@@ -219,6 +219,7 @@ filterwarnings = [
     "ignore:The `__fields__` attribute is deprecated",
 #    "ignore::pydantic.warnings.PydanticDeprecatedSince20",
     "ignore:Jupyter is migrating its paths to use standard platformdirs",
+    "ignore:ipykernel\\.:DeprecationWarning", # connected with min requirements, check after bump
     "ignore:Please import `zoom`::czifile:193",
 ]
 markers = [
