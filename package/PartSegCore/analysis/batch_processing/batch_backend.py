@@ -602,7 +602,7 @@ class SheetData:
         """
         sorted_row = [x[1] for x in sorted(self.row_list)]
         df = pd.DataFrame(sorted_row, columns=self.columns)
-        if self.data_frame.size == 0:
+        if self.data_frame.empty:
             self.data_frame = df.reset_index(drop=True)
         else:
             df2 = pd.concat((self.data_frame, df), axis=0)
