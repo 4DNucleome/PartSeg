@@ -124,6 +124,7 @@ class SearchLabel(Container):
         rect.pos = pos
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "Public access to Window.qt_viewer")
+            warnings.filterwarnings("ignore", "Access to QtViewer.view is deprecated")
             self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
 
     @staticmethod
@@ -147,6 +148,7 @@ class SearchLabel(Container):
             rect = Rect(pos=(lower_bound - frame)[-2:][::-1], size=(diff + 2 * frame)[-2:][::-1])
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", "Public access to Window.qt_viewer")
+                warnings.filterwarnings("ignore", "Access to QtViewer.view is deprecated")
                 self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
         self._update_point(lower_bound, upper_bound)
 
