@@ -208,6 +208,8 @@ filterwarnings = [
     "ignore:Public access to Window.qt_viewer",
     "ignore:Pydantic V1 style `@validator`",
     "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+    "ignore:Jupyter is migrating its paths to use standard platformdirs",
+    "ignore:Please import `zoom`::czifile:193",
 ]
 markers = [
     "enablethread: Allow to use thread in test",

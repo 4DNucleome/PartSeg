@@ -112,7 +112,7 @@ else:
 ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
 NEXT_ORDER = {"xy": "zy", "zy": "zx", "zx": "xy"}
 
-ColorInfo = Dict[int, Union[str, List[float]]]
+ColorInfo = Dict[Optional[int], Union[str, List[float]]]
 
 
 @dataclass
@@ -480,10 +480,11 @@ class ImageView(QWidget):
             or image_info.roi_count == 0
             or colors.size == 0
         ):
-            return {x: [0, 0, 0, 0] for x in range(image_info.roi_count + 1)}
+            return {0: [0, 0, 0, 0], None: [0, 0, 0, 0]}
 
         res = {x: colors[(x - 1) % colors.shape[0]] for x in range(1, image_info.roi_count + 1)}
         res[0] = [0, 0, 0, 0]
+        res[None] = [0, 0, 0, 0]
         return res
 
     def set_roi_colormap(self, image_info) -> None:

@@ -306,7 +306,10 @@ class OifImagReader(BaseImageReader):
     def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         with OifFile(image_path) as image_file:
             tiffs = tifffile.natural_sorted(image_file.glob("*.tif"))
-            with tifffile.TiffFile(image_file.open_file(tiffs[0]), name=tiffs[0]) as tif_file:
+
+            with image_file.open_file(tiffs[0]) as tiff_buffer, tifffile.TiffFile(
+                tiff_buffer, name=tiffs[0]
+            ) as tif_file:
                 axes = image_file.series[0].axes + tif_file.series[0].axes
             image_data = image_file.asarray()
             image_data = self.update_array_shape(image_data, axes)
@@ -366,6 +369,7 @@ class CziImageReader(BaseImageReaderBuffer):
         # TODO add mask reading
         if isinstance(image_path, BytesIO):
             image_path = ""
+        image_file.close()
         return self.image_class(
             image_data,
             self.spacing,
