@@ -221,6 +221,7 @@ filterwarnings = [
     "ignore:Jupyter is migrating its paths to use standard platformdirs",
     "ignore:ipykernel\\.:DeprecationWarning", # connected with min requirements, check after bump
     "ignore:Please import `zoom`::czifile:193",
+    "ignore:__array__ implementation doesn't accept a copy keyword" # hp5y==3.11 warning, need update
 ]
 markers = [
     "enablethread: Allow to use thread in test",
