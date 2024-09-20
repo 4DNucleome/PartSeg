@@ -595,8 +595,10 @@ class ImageView(QWidget):
         else:
             image_info.mask.data = mask_marker
         image_info.mask.metadata["valid"] = True
-        if _napari_ge_5:
-            image_info.mask.colormap = self.mask_color()
+        if _napari_ge_4_19:
+            from napari.utils.colormaps import DirectLabelColormap
+
+            image_info.mask.colormap = DirectLabelColormap(color_dict=self.mask_color())
         else:
             image_info.mask.color = self.mask_color()
         image_info.mask.opacity = self.mask_opacity()

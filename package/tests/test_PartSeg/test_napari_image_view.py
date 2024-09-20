@@ -28,16 +28,20 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
+NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
 
 
 if NAPARI_GE_5_0:
     EXPECTED_RANGE = (0, 0, 1)
+else:
+    EXPECTED_RANGE = (0, 1, 1)
+
+if NAPARI_GE_4_19:
 
     def get_color_dict(layer):
         return layer.colormap.color_dict
 
 else:
-    EXPECTED_RANGE = (0, 1, 1)
 
     def get_color_dict(layer):
         return layer.color
