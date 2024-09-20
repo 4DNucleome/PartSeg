@@ -616,13 +616,15 @@ class TestLayerMetadata:
             metadata={"foo": "bar"},
         )
         widget = LayerMetadata(viewer)
-        qtbot.addWidget(widget)
+        viewer.window.add_dock_widget(widget)
+        widget.reset_choices()
+        assert widget.layer_selector.value is not None
         assert widget._dict_viewer._data == {"foo": "bar"}
 
     def test_add_layer_post_init(self, make_napari_viewer, qtbot):
         viewer = make_napari_viewer()
         widget = LayerMetadata(viewer)
-        qtbot.addWidget(widget)
+        viewer.window.add_dock_widget(widget)
         assert widget._dict_viewer._data == {}
         viewer.add_image(
             np.ones((10, 10)),
@@ -630,6 +632,7 @@ class TestLayerMetadata:
             metadata={"foo": "bar"},
         )
         widget.reset_choices()
+        assert widget.layer_selector.value is not None
         assert widget._dict_viewer._data == {"foo": "bar"}
 
 
