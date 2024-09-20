@@ -908,9 +908,9 @@ class Image:
                     color_array = _hex_to_rgb(color)
                 else:
                     color_array = _name_to_rgb(color)
-                res.append(np.array([np.linspace(0, x, num=256) for x in color_array]))
+                res.append(np.array([np.linspace(0, x, num=256) for x in color_array]).astype(np.uint8))
             elif color.ndim == 1:
-                res.append(np.array([np.linspace(0, x, num=256) for x in color]))
+                res.append(np.array([np.linspace(0, x, num=256) for x in color]).astype(np.uint8))
             else:
                 if color.shape[1] != 256:
                     res.append(

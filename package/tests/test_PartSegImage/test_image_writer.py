@@ -97,6 +97,28 @@ def test_imagej_write_all_metadata(tmp_path, data_test_dir):
     npt.assert_array_equal(image2.default_coloring, image.default_coloring)
 
 
+def test_imagej_save_color(tmp_path):
+    data = np.zeros((3, 20, 20), dtype=np.uint8)
+    data[:, 2:-2, 2:-2] = 20
+    img = Image(
+        data,
+        spacing=(0.4, 0.1, 0.1),
+        axes_order="CYX",
+        channel_info=[
+            ChannelInfo(name="ch1", color_map="blue", contrast_limits=(0, 20)),
+            ChannelInfo(name="ch2", color_map="#FFAA00", contrast_limits=(0, 30)),
+            ChannelInfo(name="ch3", color_map="#FB1", contrast_limits=(0, 25)),
+        ],
+    )
+    IMAGEJImageWriter.save(img, tmp_path / "image.tif")
+    image2 = TiffImageReader.read_image(tmp_path / "image.tif")
+    assert image2.channel_names == ["ch1", "ch2", "ch3"]
+    assert image2.ranges == [(0, 20), (0, 30), (0, 25)]
+    assert tuple(image2.default_coloring[0][:, -1]) == (0, 0, 255)
+    assert tuple(image2.default_coloring[1][:, -1]) == (255, 170, 0)
+    assert tuple(image2.default_coloring[2][:, -1]) == (255, 187, 17)
+
+
 def test_save_mask_imagej(tmp_path):
     data = np.zeros((10, 40, 40), dtype=np.uint8)
     data[1:-1, 1:-1, 1:-1] = 1
