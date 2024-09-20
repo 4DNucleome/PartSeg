@@ -636,3 +636,32 @@ def test_str_and_repr_mask_presence():
 
     assert "mask: True" in str(image)
     assert "mask=True" in repr(image)
+
+
+def test_image_to_spacingspacing_rename():
+    with pytest.warns(match="Argument image_spacing is deprecated since 0.15.4. Use spacing instead"):
+        img = Image(np.zeros((10, 10), np.uint8), image_spacing=(2, 3), file_path="test", axes_order="XY")
+    assert img.spacing == (2, 3)
+
+
+def test_image_positional_to_named():
+    with pytest.warns(match="Since PartSeg 0.15.4 all arguments, except first one, should be named"):
+        img = Image(np.zeros((10, 10), np.uint8), (2, 3), "test", axes_order="XY")
+    assert img.spacing == (2, 3)
+    assert img.file_path == "test"
+
+
+def test_merge_channel_props():
+    with pytest.warns(match="Using channel_names, default_coloring and ranges is deprecated since PartSeg 0.15.4"):
+        img = Image(
+            data=np.zeros((2, 4, 10, 10), dtype=np.uint8),
+            axes_order="CZXY",
+            spacing=(1, 1, 1),
+            channel_names=["channel 2", "strange"],
+            default_coloring=["red", (128, 255, 0)],
+            ranges=[(0, 255), (0, 128)],
+        )
+
+    assert img.channel_names == ["channel 2", "strange"]
+    assert img.default_coloring == ["red", (128, 255, 0)]
+    assert img.ranges == [(0, 255), (0, 128)]
