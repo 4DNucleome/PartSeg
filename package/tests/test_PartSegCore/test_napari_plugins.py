@@ -45,7 +45,7 @@ def test_project_to_layers_analysis(analysis_segmentation):
 
 def test_project_to_layers_roi():
     data = np.zeros((1, 1, 10, 10, 10), dtype=np.uint8)
-    img = PImage(data, image_spacing=(1, 1, 1), name="ROI", axes_order="CTZYX")
+    img = PImage(data, spacing=(1, 1, 1), name="ROI", axes_order="CTZYX")
     proj = ProjectTuple(file_path="", image=img)
     res = project_to_layers(proj)
     assert len(res) == 1

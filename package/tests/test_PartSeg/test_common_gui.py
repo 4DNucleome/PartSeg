@@ -152,7 +152,7 @@ class Enum2(Enum):
 def _example_tiff_files(tmp_path):
     for i in range(5):
         ImageWriter.save(
-            Image(np.random.default_rng().uniform(size=(10, 10)), image_spacing=(1, 1), axes_order="XY"),
+            Image(np.random.default_rng().uniform(size=(10, 10)), spacing=(1, 1), axes_order="XY"),
             tmp_path / f"img_{i}.tif",
         )
 
@@ -175,7 +175,7 @@ def _example_mask_project_files(tmp_path):
     data = np.zeros((10, 10), dtype=np.uint8)
     data[:5] = 1
     data[5:] = 2
-    image = Image(data, image_spacing=(1, 1), axes_order="XY", file_path=str(tmp_path / "mask.tif"))
+    image = Image(data, spacing=(1, 1), axes_order="XY", file_path=str(tmp_path / "mask.tif"))
     ImageWriter.save(image, image.file_path)
     project = MaskProjectTuple(file_path=image.file_path, image=image, roi_info=ROIInfo(image.fit_array_to_image(data)))
     SaveROI.save(tmp_path / "proj.seg", project, SaveROIOptions())

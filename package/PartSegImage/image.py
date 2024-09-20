@@ -5,6 +5,7 @@ import typing
 import warnings
 from collections.abc import Iterable
 from contextlib import suppress
+from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 from itertools import cycle, zip_longest
@@ -82,10 +83,28 @@ def reduce_array(
     return translate[array]
 
 
+def rename_argument(from_name: str, to_name: str, since_version: str):
+    def decorator(fun):
+        @wraps(fun)
+        def _fun(*args, **kwargs):
+            if from_name in kwargs:
+                warnings.warn(
+                    f"Argument {from_name} is deprecated since {since_version}. Use {to_name} instead",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                kwargs[to_name] = kwargs.pop(from_name)
+            return fun(*args, **kwargs)
+
+        return _fun
+
+    return decorator
+
+
 def positional_to_named(fun):
     @wraps(fun)
     def _fun(*args, **kwargs):
-        if len(args) > 1:
+        if len(args) > 2:
             warnings.warn(
                 "Since PartSeg 0.15.4 all arguments, except first one, should be named",
                 DeprecationWarning,
@@ -94,7 +113,7 @@ def positional_to_named(fun):
 
         for name, arg in zip(
             (
-                "image_spacing",
+                "spacing",
                 "file_path",
                 "mask",
                 "default_coloring",
@@ -152,7 +171,7 @@ class Image:
     Base class for Images used in PartSeg
 
     :param data: 5-dim array with order: time, z, y, x, channel
-    :param image_spacing: spacing for z, y, x
+    :param spacing: spacing for z, y, x
     :param file_path: path to image on disc
     :param mask: mask array in shape z,y,x
     :param channel_info: list of metadata stored per channel
@@ -179,15 +198,16 @@ class Image:
         return super().__new__(cls)
 
     @positional_to_named
+    @rename_argument("image_spacing", "spacing", "0.15.4")
     @merge_into_channel_info
     def __init__(
         self,
         data: _IMAGE_DATA,
         *,
-        image_spacing: Spacing,
+        spacing: Spacing,
         file_path=None,
         mask: None | np.ndarray = None,
-        channel_info: list[ChannelInfo] | None = None,
+        channel_info: list[ChannelInfo | ChannelInfoFull] | None = None,
         axes_order: str | None = None,
         shift: Spacing | None = None,
         name: str = "",
@@ -202,10 +222,10 @@ class Image:
             )
             axes_order = self.axis_order
         self._check_data_dimensionality(data, axes_order)
-        if not isinstance(image_spacing, tuple):
-            image_spacing = tuple(image_spacing)
+        if not isinstance(spacing, tuple):
+            spacing = tuple(spacing)
         self._channel_arrays = self._split_data_on_channels(data, axes_order)
-        self._image_spacing = (1.0,) * (3 - len(image_spacing)) + image_spacing
+        self._image_spacing = (1.0,) * (3 - len(spacing)) + spacing
         self._image_spacing = tuple(el if el > 0 else 10**-6 for el in self._image_spacing)
 
         self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
@@ -219,7 +239,7 @@ class Image:
 
     @staticmethod
     def _adjust_channel_info(
-        channel_info: list[ChannelInfo] | None, channel_array: list[np.ndarray]
+        channel_info: list[ChannelInfo | ChannelInfoFull] | None, channel_array: list[np.ndarray]
     ) -> list[ChannelInfoFull]:
         default_colors = cycle(["red", "blue", "green", "yellow", "magenta", "cyan"])
         if channel_info is None:
@@ -349,6 +369,10 @@ class Image:
         return base_channel_names
 
     @property
+    def channel_info(self) -> list[ChannelInfoFull]:
+        return [copy(x) for x in self._channel_info]
+
+    @property
     def ranges(self) -> list[tuple[float, float]]:
         return [x.contrast_limits for x in self._channel_info]
 
@@ -470,15 +494,19 @@ class Image:
         default_coloring = self.default_coloring if default_coloring is None else default_coloring
         ranges = self.ranges if ranges is None else ranges
         channel_names = self.channel_names if channel_names is None else channel_names
+
+        channel_info = [
+            ChannelInfoFull(name=name, color_map=color, contrast_limits=contrast_limits)
+            for name, color, contrast_limits in zip_longest(channel_names, default_coloring, ranges)
+        ]
+
         return self.__class__(
             data=data,
-            image_spacing=image_spacing,
+            spacing=image_spacing,
             file_path=file_path,
             mask=mask,
-            default_coloring=default_coloring,
-            ranges=ranges,
-            channel_names=channel_names,
             axes_order=self.axis_order,
+            channel_info=channel_info,
             metadata_dict=self.metadata,
         )
 
@@ -856,12 +884,10 @@ class Image:
 
         return self.__class__(
             data=self._image_data_normalize(new_image),
-            image_spacing=self._image_spacing,
+            spacing=self._image_spacing,
             file_path=None,
             mask=new_mask,
-            default_coloring=self.default_coloring,
-            ranges=self.ranges,
-            channel_names=self.channel_names,
+            channel_info=self._channel_info,
             axes_order=self.axis_order,
         )
 

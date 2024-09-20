@@ -193,7 +193,7 @@ class TestBaseMainMenu:
         set_project_info_mock.assert_not_called()
 
     def test_time_and_stack_image(self, qtbot, part_settings, monkeypatch):
-        image = Image(np.zeros((10, 10, 10, 10)), image_spacing=(1, 1, 1), axes_order="TZXY")
+        image = Image(np.zeros((10, 10, 10, 10)), spacing=(1, 1, 1), axes_order="TZXY")
         main_menu = BaseMainMenu(part_settings, None)
         qtbot.addWidget(main_menu)
         warnings_mock = MagicMock()

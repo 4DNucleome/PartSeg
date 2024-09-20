@@ -48,7 +48,7 @@ else:
 
 
 def test_image_info():
-    image_info = ImageInfo(Image(np.zeros((10, 10)), image_spacing=(1, 1), axes_order="XY"), [])
+    image_info = ImageInfo(Image(np.zeros((10, 10)), spacing=(1, 1), axes_order="XY"), [])
     assert not image_info.coords_in([1, 1])
     assert np.all(image_info.translated_coords([1, 1]) == [1, 1])
 

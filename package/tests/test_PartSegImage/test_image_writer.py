@@ -4,6 +4,7 @@ import pytest
 import tifffile
 from lxml import etree  # nosec
 
+from PartSegImage import ChannelInfo
 from PartSegImage.image import Image
 from PartSegImage.image_reader import TiffImageReader
 from PartSegImage.image_writer import IMAGEJImageWriter, ImageWriter
@@ -15,7 +16,7 @@ def ome_xml(bundle_test_dir):
 
 
 def test_scaling(tmp_path):
-    image = Image(np.zeros((10, 50, 50), dtype=np.uint8), (30, 0.1, 0.1), axes_order="ZYX")
+    image = Image(np.zeros((10, 50, 50), dtype=np.uint8), spacing=(30, 0.1, 0.1), axes_order="ZYX")
     ImageWriter.save(image, tmp_path / "image.tif")
     read_image = TiffImageReader.read_image(tmp_path / "image.tif")
     assert np.all(np.isclose(image.spacing, read_image.spacing))
@@ -28,7 +29,7 @@ def test_save_mask(tmp_path):
 
     mask = np.array(data > 0).astype(np.uint8)
 
-    image = Image(data, (0.4, 0.1, 0.1), mask=mask, axes_order="ZYX")
+    image = Image(data, spacing=(0.4, 0.1, 0.1), mask=mask, axes_order="ZYX")
     ImageWriter.save_mask(image, tmp_path / "mask.tif")
 
     read_mask = TiffImageReader.read_image(tmp_path / "mask.tif")
@@ -43,9 +44,9 @@ def test_ome_save(tmp_path, bundle_test_dir, ome_xml, z_size):
     data = np.zeros((z_size, 20, 20, 2), dtype=np.uint8)
     image = Image(
         data,
-        image_spacing=(27 * 10**-6, 6 * 10**-6, 6 * 10**-6),
+        spacing=(27 * 10**-6, 6 * 10**-6, 6 * 10**-6),
         axes_order="ZYXC",
-        channel_names=["a", "b"],
+        channel_info=[ChannelInfo("a"), ChannelInfo("b")],
         shift=(10, 9, 8),
         name="Test",
     )
@@ -73,14 +74,14 @@ def test_ome_save(tmp_path, bundle_test_dir, ome_xml, z_size):
 
 
 def test_scaling_imagej(tmp_path):
-    image = Image(np.zeros((10, 50, 50), dtype=np.uint8), (30, 0.1, 0.1), axes_order="ZYX")
+    image = Image(np.zeros((10, 50, 50), dtype=np.uint8), spacing=(30, 0.1, 0.1), axes_order="ZYX")
     IMAGEJImageWriter.save(image, tmp_path / "image.tif")
     read_image = TiffImageReader.read_image(tmp_path / "image.tif")
     assert np.all(np.isclose(image.spacing, read_image.spacing))
 
 
 def test_scaling_imagej_fail(tmp_path):
-    image = Image(np.zeros((10, 50, 50), dtype=np.float64), (30, 0.1, 0.1), axes_order="ZYX")
+    image = Image(np.zeros((10, 50, 50), dtype=np.float64), spacing=(30, 0.1, 0.1), axes_order="ZYX")
     with pytest.raises(ValueError, match="Data type float64"):
         IMAGEJImageWriter.save(image, tmp_path / "image.tif")
 
@@ -103,7 +104,7 @@ def test_save_mask_imagej(tmp_path):
 
     mask = np.array(data > 0).astype(np.uint8)
 
-    image = Image(data, (0.4, 0.1, 0.1), mask=mask, axes_order="ZYX")
+    image = Image(data, spacing=(0.4, 0.1, 0.1), mask=mask, axes_order="ZYX")
     IMAGEJImageWriter.save_mask(image, tmp_path / "mask.tif")
 
     read_mask = TiffImageReader.read_image(tmp_path / "mask.tif")

@@ -132,7 +132,7 @@ def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile, paramet
         spacing = project.image.spacing
     else:
         spacing = parameters.spacing
-    segmentation_image = Image(project.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", ""))
+    segmentation_image = Image(project.roi_info.roi, spacing=spacing, axes_order=Image.axis_order.replace("C", ""))
     try:
         ImageWriter.save(segmentation_image, segmentation_buff, compression=None)
     except ValueError:
