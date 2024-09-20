@@ -24,7 +24,7 @@ def my_excepthook(type_, value, trace_back):
     # log the exception here
     if state_store.show_error_dialog and not isinstance(value, KeyboardInterrupt):
         if state_store.auto_report or state_store.always_report:
-            with sentry_sdk.push_scope() as scope:
+            with sentry_sdk.new_scope() as scope:
                 scope.set_tag("auto_report", "true")
                 scope.set_tag("main_thread", QCoreApplication.instance().thread() == QThread.currentThread())
                 sentry_sdk.capture_exception(value)

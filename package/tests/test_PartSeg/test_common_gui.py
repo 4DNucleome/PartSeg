@@ -1767,7 +1767,7 @@ class TestErrorDialog:
         assert "body=This" in mock_web.call_args.args[0]
 
     @patch("requests.post")
-    @patch("sentry_sdk.push_scope")
+    @patch("sentry_sdk.new_scope")
     def test_send_report(self, sentry_mock, request_mock, qtbot):
         dialog = ErrorDialog(ValueError("aaa"), "Test text")
         qtbot.addWidget(dialog)
@@ -1777,7 +1777,7 @@ class TestErrorDialog:
         request_mock.assert_not_called()
 
     @patch("requests.post")
-    @patch("sentry_sdk.push_scope")
+    @patch("sentry_sdk.new_scope")
     @pytest.mark.parametrize(
         ("email", "expected", "return_code", "post_call_count"),
         [
