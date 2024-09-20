@@ -84,7 +84,7 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: latest
-          BACKEND: PyQt5
+          BACKEND: PyQt6
           PIP_CONSTRAINT: requirements/pre_test_problematic_version.txt
           PIP_PRE: 1
 
