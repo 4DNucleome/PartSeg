@@ -12,7 +12,7 @@ from PartSeg.plugins.napari_widgets.colormap_control import ImageColormap
 from PartSeg.plugins.napari_widgets.copy_labels import CopyLabelsWidget
 from PartSeg.plugins.napari_widgets.lables_control import LabelSelector
 from PartSeg.plugins.napari_widgets.mask_create_widget import MaskCreate
-from PartSeg.plugins.napari_widgets.metadata_wiewer import LayerMetadata
+from PartSeg.plugins.napari_widgets.metadata_viewer import LayerMetadata
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ROIAnalysisExtraction, ROIMaskExtraction
 from PartSeg.plugins.napari_widgets.search_label_widget import SearchLabel
 
