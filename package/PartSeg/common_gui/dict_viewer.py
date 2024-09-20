@@ -16,7 +16,7 @@ class DictViewer(QWidget):
         self.layout.addWidget(self.tree)
         self.setLayout(self.layout)
         self.tree.setHeaderLabels(["Key", "Value"])
-        self.data = data
+        self.set_data(data)
 
     def set_data(self, data: dict | None):
         if data is None:

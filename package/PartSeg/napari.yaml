@@ -74,6 +74,9 @@ contributions:
   - id: PartSeg.CopyLabels
     title: Create Copy Labels
     python_name: PartSeg.plugins.napari_widgets:CopyLabelsWidget
+  - id: PartSeg.Metadata
+    title: View Layer Metadata
+    python_name: PartSeg.plugins.napari_widgets:LayerMetadata
   readers:
   - command: PartSeg.load_roi_project
     filename_patterns:
@@ -157,3 +160,5 @@ contributions:
     display_name: Threshold
   - command: PartSeg.Watershed
     display_name: Watershed
+  - command: PartSeg.Metadata
+    display_name: Layer Metadata

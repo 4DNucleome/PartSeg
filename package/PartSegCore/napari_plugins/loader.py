@@ -26,6 +26,7 @@ def _image_to_layers(project_info, scale, translate):
                     "name": project_info.image.channel_names[i],
                     "blending": "additive",
                     "translate": translate,
+                    "metadata": project_info.image.metadata,
                 },
                 "image",
             )
