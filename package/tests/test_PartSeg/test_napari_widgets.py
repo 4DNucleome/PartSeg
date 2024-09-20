@@ -22,6 +22,7 @@ from PartSeg.common_gui.napari_image_view import SearchType
 from PartSeg.plugins.napari_widgets import (
     CopyLabelsWidget,
     ImageColormap,
+    LayerMetadata,
     MaskCreate,
     ROIAnalysisExtraction,
     ROIMaskExtraction,
@@ -58,8 +59,9 @@ from PartSegCore.segmentation.threshold import DoubleThresholdSelection, Thresho
 from PartSegCore.segmentation.watershed import WatershedSelection
 
 NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
+NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
 
-if NAPARI_GE_5_0:
+if NAPARI_GE_4_19:
 
     def check_auto_mode(layer):
         from napari.utils.colormaps import CyclicLabelColormap
@@ -387,7 +389,8 @@ def test_napari_label_show(viewer_with_data, qtbot):
     viewer_with_data.layers.selection.remove(viewer_with_data.layers["image"])
     assert widget.apply_label_btn.isEnabled()
     check_auto_mode(viewer_with_data.layers["label"])
-    widget.apply_label_btn.click()
+    with qtbot.waitSignal(widget.apply_label_btn.clicked):
+        widget.apply_label_btn.click()
     check_direct_mode(viewer_with_data.layers["label"])
 
 
@@ -596,6 +599,41 @@ class TestCopyLabels:
         assert copy_labels.checkbox_layout.itemAt(0).widget().isChecked()
         copy_labels._uncheck_all()
         assert not copy_labels.checkbox_layout.itemAt(0).widget().isChecked()
+
+
+class TestLayerMetadata:
+    def test_init(self, make_napari_viewer, qtbot):
+        viewer = make_napari_viewer()
+        widget = LayerMetadata(viewer)
+        qtbot.addWidget(widget)
+        assert widget._dict_viewer._data == {}
+
+    def test_init_with_layer(self, make_napari_viewer, qtbot):
+        viewer = make_napari_viewer()
+        viewer.add_image(
+            np.ones((10, 10)),
+            contrast_limits=[0, 1],
+            metadata={"foo": "bar"},
+        )
+        widget = LayerMetadata(viewer)
+        viewer.window.add_dock_widget(widget)
+        widget.reset_choices()
+        assert widget.layer_selector.value is not None
+        assert widget._dict_viewer._data == {"foo": "bar"}
+
+    def test_add_layer_post_init(self, make_napari_viewer, qtbot):
+        viewer = make_napari_viewer()
+        widget = LayerMetadata(viewer)
+        viewer.window.add_dock_widget(widget)
+        assert widget._dict_viewer._data == {}
+        viewer.add_image(
+            np.ones((10, 10)),
+            contrast_limits=[0, 1],
+            metadata={"foo": "bar"},
+        )
+        widget.reset_choices()
+        assert widget.layer_selector.value is not None
+        assert widget._dict_viewer._data == {"foo": "bar"}
 
 
 def test_enum():

@@ -43,6 +43,7 @@ except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
 _napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
 _napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
+_napari_ge_4_19 = parse_version(napari.__version__) >= parse_version("0.4.19")
 _napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 
 # if run with numpy<2 on macOS arm64 architecture compiled from pypi wheels
@@ -112,7 +113,7 @@ else:
 ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
 NEXT_ORDER = {"xy": "zy", "zy": "zx", "zx": "xy"}
 
-ColorInfo = Dict[int, Union[str, List[float]]]
+ColorInfo = Dict[Optional[int], Union[str, List[float]]]
 
 
 @dataclass
@@ -480,15 +481,18 @@ class ImageView(QWidget):
             or image_info.roi_count == 0
             or colors.size == 0
         ):
-            return {x: [0, 0, 0, 0] for x in range(image_info.roi_count + 1)}
+            return {0: [0, 0, 0, 0], None: [0, 0, 0, 0]}
 
         res = {x: colors[(x - 1) % colors.shape[0]] for x in range(1, image_info.roi_count + 1)}
         res[0] = [0, 0, 0, 0]
+        res[None] = [0, 0, 0, 0]
         return res
 
     def set_roi_colormap(self, image_info) -> None:
-        if _napari_ge_5:
-            image_info.roi.colormap = self.get_roi_view_parameters(image_info)
+        if _napari_ge_4_19:
+            from napari.utils.colormaps import DirectLabelColormap
+
+            image_info.roi.colormap = DirectLabelColormap(color_dict=self.get_roi_view_parameters(image_info))
             return
         if _napari_ge_4_13:
             image_info.roi.color = self.get_roi_view_parameters(image_info)
@@ -591,8 +595,10 @@ class ImageView(QWidget):
         else:
             image_info.mask.data = mask_marker
         image_info.mask.metadata["valid"] = True
-        if _napari_ge_5:
-            image_info.mask.colormap = self.mask_color()
+        if _napari_ge_4_19:
+            from napari.utils.colormaps import DirectLabelColormap
+
+            image_info.mask.colormap = DirectLabelColormap(color_dict=self.mask_color())
         else:
             image_info.mask.color = self.mask_color()
         image_info.mask.opacity = self.mask_opacity()
@@ -613,8 +619,10 @@ class ImageView(QWidget):
         for image_info in self.image_info.values():
             if image_info.mask is not None:
                 image_info.mask.opacity = opacity
-                if _napari_ge_5:
-                    image_info.mask.colormap = colormap
+                if _napari_ge_4_19:
+                    from napari.utils.colormaps import DirectLabelColormap
+
+                    image_info.mask.colormap = DirectLabelColormap(color_dict=colormap)
                 else:
                     image_info.mask.color = colormap
 

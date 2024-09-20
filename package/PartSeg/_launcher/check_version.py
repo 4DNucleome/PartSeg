@@ -24,9 +24,7 @@ class CheckVersionThread(QThread):
     .. _PYPI: https://pypi.org/project/PartSeg/
     """
 
-    def __init__(
-        self, package_name="PartSeg", default_url="https://4dnucleome.cent.uw.edu.pl/PartSeg/", base_version=__version__
-    ):
+    def __init__(self, package_name="PartSeg", default_url="https://partseg.github.io/", base_version=__version__):
         super().__init__()
         self.release = base_version
         self.base_release = base_version
@@ -57,7 +55,7 @@ class CheckVersionThread(QThread):
         except (KeyError, urllib.error.URLError):  # pragma: no cover
             pass
         except Exception as e:  # pylint: disable=broad-except
-            with sentry_sdk.push_scope() as scope:
+            with sentry_sdk.new_scope() as scope:
                 scope.set_tag("auto_report", "true")
                 scope.set_tag("check_version", "true")
                 sentry_sdk.capture_exception(e)

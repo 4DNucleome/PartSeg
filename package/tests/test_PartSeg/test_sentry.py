@@ -8,7 +8,6 @@ import sentry_sdk.serializer
 import sentry_sdk.utils
 from packaging.version import parse as parse_version
 from sentry_sdk.client import Client
-from sentry_sdk.hub import Hub
 from sentry_sdk.serializer import serialize
 
 from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
@@ -78,8 +77,9 @@ def test_sentry_variables_clip_change_breadth(monkeypatch):
         assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) == len(vars_dict)
         assert len(clipped["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]) > 10
         client = Client("https://aaa@test.pl/77")
-        Hub.current.bind_client(client)
-        sentry_sdk.capture_event(event, hint=hint)
+        with sentry_sdk.new_scope() as scope:
+            scope.set_client(client)
+            sentry_sdk.capture_event(event, hint=hint)
 
 
 def test_sentry_report(monkeypatch):
@@ -100,12 +100,10 @@ def test_sentry_report(monkeypatch):
         event, hint = sentry_sdk.utils.event_from_exception(e)
         event["message"] = message
         client = Client("https://aaa@test.pl/77")
-        Hub.current.bind_client(client)
-        monkeypatch.setattr(client.transport, "capture_event", check_event)
-        # handle sentry-sdk 2
-        monkeypatch.setattr(client.transport, "capture_envelope", check_envelope, raising=False)
+        monkeypatch.setattr(client.transport, "capture_envelope", check_envelope)
 
-        with sentry_sdk.push_scope() as scope:
+        with sentry_sdk.new_scope() as scope:
+            scope.set_client(client)
             scope.set_extra("lorem", message)
             sentry_sdk.capture_event(event, hint=hint)
         assert happen[0] is True
@@ -129,15 +127,10 @@ def test_sentry_report_no_clip(monkeypatch):
     except ValueError as e:
         event, hint = sentry_sdk.utils.event_from_exception(e)
         event["message"] = message
-        if SENTRY_GE_1_29:
-            client = Client("https://aaa@test.pl/77", max_value_length=10**4)
-        else:
-            client = Client("https://aaa@test.pl/77")
-        Hub.current.bind_client(client)
-        monkeypatch.setattr(client.transport, "capture_event", check_event)
-        # handle sentry-sdk 2
-        monkeypatch.setattr(client.transport, "capture_envelope", check_envelope, raising=False)
-        with sentry_sdk.push_scope() as scope:
+        client = Client("https://aaa@test.pl/77", max_value_length=10**4)
+        monkeypatch.setattr(client.transport, "capture_envelope", check_envelope)
+        with sentry_sdk.new_scope() as scope:
+            scope.set_client(client)
             scope.set_extra("lorem", message)
             event_id = sentry_sdk.capture_event(event, hint=hint)
         assert event_id is not None
@@ -171,9 +164,11 @@ def test_exception_pass(monkeypatch):
     assert isinstance(ex, ValueError)
     assert isinstance(event, dict)
     client = Client("https://aaa@test.pl/77")
-    Hub.current.bind_client(client)
     monkeypatch.setattr(client.transport, "capture_event", check_event)
-    event_id = sentry_sdk.capture_event(event)
+    with sentry_sdk.new_scope() as scope:
+        scope.set_client(client)
+        event_id = sentry_sdk.capture_event(event)
+
     assert event_id is not None
 
 

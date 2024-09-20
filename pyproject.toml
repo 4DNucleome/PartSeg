@@ -61,12 +61,12 @@ dependencies = [
     "packaging>=20.0",
     "pandas>=1.1.0",
     "psygnal>=0.3.1",
-    "pydantic>=1.9.1",
+    "pydantic>=1.9.1,<3",
     "pygments>=2.12.0",
     "qtconsole>=4.7.7",
-    "requests>=2.18.0",
+    "requests>=2.25.0",
     "scipy>=1.4.1",
-    "sentry-sdk>=0.14.3",
+    "sentry-sdk>=2.4.0",
     "six>=1.11.0",
     "superqt>=0.3.0",
     "sympy>=1.1.1",
@@ -191,6 +191,8 @@ testpaths = [
 junit_family = "legacy"
 timeout = 900
 filterwarnings = [
+    "error:::PartSeg", # turn warnings from napari into errors
+    "error:::test_.*", # turn warnings in our own tests into errors
     "ignore:invalid value encountered",
     "ignore:The 'junit_family' encountered",
     "ignore:numpy.ufunc size changed, may indicate",
@@ -204,6 +206,22 @@ filterwarnings = [
     "ignore:Please use `zoom` from the `scipy.ndimage` namespace",
     "ignore:Converting `np.character` to a dtype",
     "ignore:Public access to Window.qt_viewer",
+    "ignore:Pydantic V1 style `@validator`",
+    "ignore:Support for class-based `config` is deprecated",
+    "ignore:`__get_validators__` is deprecated",
+    "ignore:Using extra keyword arguments on `Field` is deprecated",
+    "ignore:The `update_forward_refs` method is deprecated;",
+    "ignore:The `copy` method is deprecated; use",
+    "ignore:The private method `_iter` will be removed and should no longer be used",
+    "ignore:The `validate` method is deprecated; use `model_validate` instead.",
+    "ignore:The `schema_json` method is deprecated; use `model_json_schema` and json.dumps instead.",
+    "ignore:The `dict` method is deprecated; use `model_dump`",
+    "ignore:The `__fields__` attribute is deprecated",
+#    "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+    "ignore:Jupyter is migrating its paths to use standard platformdirs",
+    "ignore:ipykernel\\.:DeprecationWarning", # connected with min requirements, check after bump
+    "ignore:Please import `zoom`::czifile:193",
+    "ignore:__array__ implementation doesn't accept a copy keyword" # hp5y==3.11 warning, need update
 ]
 markers = [
     "enablethread: Allow to use thread in test",

@@ -11,6 +11,7 @@ from PartSeg.common_gui.label_create import LabelChoose, LabelEditor, LabelShow
 from PartSeg.plugins.napari_widgets._settings import get_settings
 
 NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
+NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
 
 
 class NapariLabelShow(LabelShow):
@@ -41,8 +42,10 @@ class NapariLabelShow(LabelShow):
             max_val = layer.data.max()
             labels = {i + 1: [x / 255 for x in self.label[i % len(self.label)]] for i in range(max_val + 5)}
             labels[None] = [0, 0, 0, 0]
-            if NAPARI_GE_5_0:
-                layer.colormap = labels
+            if NAPARI_GE_4_19:
+                from napari.utils.colormaps import DirectLabelColormap
+
+                layer.colormap = DirectLabelColormap(color_dict=labels)
             else:
                 layer.color = labels
 

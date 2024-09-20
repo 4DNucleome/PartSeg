@@ -602,8 +602,11 @@ class SheetData:
         """
         sorted_row = [x[1] for x in sorted(self.row_list)]
         df = pd.DataFrame(sorted_row, columns=self.columns)
-        df2 = pd.concat((self.data_frame, df), axis=0)
-        self.data_frame = df2.reset_index(drop=True)
+        if self.data_frame.empty:
+            self.data_frame = df.reset_index(drop=True)
+        else:
+            df2 = pd.concat((self.data_frame, df), axis=0)
+            self.data_frame = df2.reset_index(drop=True)
         self.row_list = []
         return self.name, self.data_frame
 
@@ -840,7 +843,7 @@ class FileData:
 
             if errors:
                 errors_data = pd.DataFrame(errors, columns=["File path", "error description"])
-                errors_data.to_excel(writer, "Errors")
+                errors_data.to_excel(writer, sheet_name="Errors")
 
     @staticmethod
     def write_calculation_plan(writer: pd.ExcelWriter, calculation_plan: CalculationPlan):
