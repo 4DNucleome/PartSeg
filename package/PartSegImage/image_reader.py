@@ -71,13 +71,13 @@ def decode_zstd1(data: bytes) -> np.ndarray:
     header = parse_zstd1_header(data, len(data))
     dtype = _get_dtype()
     if header.hiLoByteUnpackPreprocessing:
-        array_ = np.fromstring(imagecodecs.zstd_decode(data[header.header_size :]), np.uint8)
+        array_ = np.frombuffer(imagecodecs.zstd_decode(data[header.header_size :]), np.uint8).copy()
         half_size = array_.size // 2
         array = np.empty(half_size, np.uint16)
         array[:] = array_[:half_size] + (array_[half_size:].astype(np.uint16) << 8)
         array = array.view(dtype)
     else:
-        array = np.fromstring(imagecodecs.zstd_decode(data[header.header_size :]), dtype)
+        array = np.frombuffer(imagecodecs.zstd_decode(data[header.header_size :]), dtype).copy()
     return array
 
 
@@ -86,7 +86,7 @@ def decode_zstd0(data: bytes) -> np.ndarray:
     Decode ZSTD0 data
     """
     dtype = _get_dtype()
-    return np.fromstring(imagecodecs.zstd_decode(data), dtype)
+    return np.frombuffer(imagecodecs.zstd_decode(data), dtype).copy()
 
 
 if parse_version(version("czifile")) == parse_version("2019.7.2"):
@@ -306,7 +306,10 @@ class OifImagReader(BaseImageReader):
     def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         with OifFile(image_path) as image_file:
             tiffs = tifffile.natural_sorted(image_file.glob("*.tif"))
-            with tifffile.TiffFile(image_file.open_file(tiffs[0]), name=tiffs[0]) as tif_file:
+
+            with image_file.open_file(tiffs[0]) as tiff_buffer, tifffile.TiffFile(
+                tiff_buffer, name=tiffs[0]
+            ) as tif_file:
                 axes = image_file.series[0].axes + tif_file.series[0].axes
             image_data = image_file.asarray()
             image_data = self.update_array_shape(image_data, axes)
@@ -366,6 +369,7 @@ class CziImageReader(BaseImageReaderBuffer):
         # TODO add mask reading
         if isinstance(image_path, BytesIO):
             image_path = ""
+        image_file.close()
         return self.image_class(
             image_data,
             self.spacing,

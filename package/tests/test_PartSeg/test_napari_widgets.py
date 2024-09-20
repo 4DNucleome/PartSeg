@@ -59,8 +59,9 @@ from PartSegCore.segmentation.threshold import DoubleThresholdSelection, Thresho
 from PartSegCore.segmentation.watershed import WatershedSelection
 
 NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
+NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
 
-if NAPARI_GE_5_0:
+if NAPARI_GE_4_19:
 
     def check_auto_mode(layer):
         from napari.utils.colormaps import CyclicLabelColormap
@@ -388,7 +389,8 @@ def test_napari_label_show(viewer_with_data, qtbot):
     viewer_with_data.layers.selection.remove(viewer_with_data.layers["image"])
     assert widget.apply_label_btn.isEnabled()
     check_auto_mode(viewer_with_data.layers["label"])
-    widget.apply_label_btn.click()
+    with qtbot.waitSignal(widget.apply_label_btn.clicked):
+        widget.apply_label_btn.click()
     check_direct_mode(viewer_with_data.layers["label"])
 
 
