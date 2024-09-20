@@ -12,7 +12,7 @@ from itertools import cycle, zip_longest
 
 import numpy as np
 
-from PartSegImage import Channel
+from PartSegImage.channel_class import Channel
 
 Spacing = typing.Tuple[typing.Union[float, int], ...]
 _IMAGE_DATA = typing.Union[typing.List[np.ndarray], np.ndarray]
