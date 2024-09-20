@@ -669,7 +669,18 @@ def test_merge_channel_props():
 
 @pytest.mark.parametrize(
     ("channel_name", "default_coloring", "ranges"),
-    [("channel", None, None), (None, ("blue",), None), (None, None, (0, 128)), (["channel"], [], [])],
+    [
+        ("channel", None, None),
+        (
+            None,
+            [
+                "blue",
+            ],
+            None,
+        ),
+        (None, None, [(0, 128)]),
+        (["channel"], [], []),
+    ],
 )
 def test_merge_channel_props_with_none(channel_name, default_coloring, ranges):
     with pytest.warns(match="Using channel_names, default_coloring and ranges is deprecated since PartSeg 0.15.4"):
@@ -682,5 +693,5 @@ def test_merge_channel_props_with_none(channel_name, default_coloring, ranges):
             ranges=ranges,
         )
     assert img.default_coloring == (default_coloring or ["red"])
-    assert img.ranges == (ranges or [(0, 255)])
+    assert img.ranges == (ranges or [(0, 0)])
     assert img.channel_names == (["channel"] if channel_name else ["channel 1"])
