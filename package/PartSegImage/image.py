@@ -994,6 +994,7 @@ def _name_to_rgb(name: str) -> tuple[int, int, int]:
         raise ValueError(f"Unknown color name: {name}")
     return _hex_to_rgb(_NAMED_COLORS[name])
 
+
 _NAMED_COLORS = {
     "red": "#FF0000",
     "green": "#00FF00",
