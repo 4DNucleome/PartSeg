@@ -4,7 +4,6 @@ import re
 import sys
 import typing
 import warnings
-from collections.abc import Iterable
 from contextlib import suppress
 from copy import copy
 from dataclasses import dataclass
@@ -301,14 +300,6 @@ class Image:
                 f"like length of axes_order (axis :{len(axes_order)}, ndim: {ndim}"
             )
 
-    @staticmethod
-    def _adjust_ranges(
-        ranges: list[tuple[float, float]] | None, channel_arrays: list[np.ndarray]
-    ) -> list[tuple[float, float]]:
-        if ranges is None:
-            ranges = list(zip((np.min(c) for c in channel_arrays), (np.max(c) for c in channel_arrays)))
-        return [(min_val, max_val) if (min_val != max_val) else (min_val, min_val + 1) for (min_val, max_val) in ranges]
-
     def _fit_mask(self, mask, data, axes_order):
         mask_array = self._prepare_mask(mask, data, axes_order)
         if mask_array is not None:
@@ -329,18 +320,6 @@ class Image:
 
         mask = cls._fit_array_to_image(data_shape, mask)
         return cls.reorder_axes(mask, axes_order.replace("C", ""))
-
-    @staticmethod
-    def _prepare_channel_names(channel_names, channels_num) -> list[str]:
-        default_channel_names = [f"channel {i + 1}" for i in range(channels_num)]
-        if isinstance(channel_names, str):
-            channel_names = [channel_names]
-        if isinstance(channel_names, Iterable):
-            channel_names_list = [str(x) for x in channel_names]
-            channel_names_list = channel_names_list[:channels_num] + default_channel_names[len(channel_names_list) :]
-        else:
-            channel_names_list = default_channel_names
-        return channel_names_list[:channels_num]
 
     @classmethod
     def _split_data_on_channels(cls, data: np.ndarray | list[np.ndarray], axes_order: str) -> list[np.ndarray]:
@@ -934,9 +913,6 @@ class Image:
         return res
 
     def get_colors(self):
-        # TODO review
-        if self.default_coloring is None:
-            return None
         res = []
         for color in self.default_coloring:
             if isinstance(color, str):

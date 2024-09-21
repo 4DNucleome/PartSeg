@@ -111,6 +111,8 @@ def test_imagej_save_color(tmp_path):
             ChannelInfo(name="ch4", color_map=(0, 180, 0), contrast_limits=(0, 22)),
         ],
     )
+    assert img.get_colors()[:3] == ["blue", "#FFAA00", "#FB1"]
+    assert tuple(img.get_colors()[3]) == (0, 180, 0)
     IMAGEJImageWriter.save(img, tmp_path / "image.tif")
     image2 = TiffImageReader.read_image(tmp_path / "image.tif")
     assert image2.channel_names == ["ch1", "ch2", "ch3", "ch4"]
