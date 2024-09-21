@@ -268,7 +268,9 @@ class Image:
             res.append(
                 ChannelInfoFull(
                     name=ch_inf.name or f"channel {i+1}",
-                    color_map=ch_inf.color_map if ch_inf.color_map is not None else next(default_colors),
+                    color_map=(
+                        ch_inf.color_map if ch_inf.color_map is not None else next(default_colors)  # skipcq: PTC-W0063
+                    ),
                     contrast_limits=(
                         ch_inf.contrast_limits
                         if ch_inf.contrast_limits is not None
@@ -280,7 +282,9 @@ class Image:
         for i, arr in enumerate(channel_array[len(res) :], start=len(channel_info)):
             res.append(
                 ChannelInfoFull(
-                    name=f"channel {i+1}", color_map=next(default_colors), contrast_limits=(np.min(arr), np.max(arr))
+                    name=f"channel {i+1}",
+                    color_map=next(default_colors),  # skipcq: PTC-W0063
+                    contrast_limits=(np.min(arr), np.max(arr)),
                 )
             )
 
