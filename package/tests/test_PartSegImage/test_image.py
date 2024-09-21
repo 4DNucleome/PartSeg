@@ -6,7 +6,7 @@ import pytest
 from skimage.morphology import diamond
 
 from PartSegImage import Channel, ChannelInfo, Image, ImageWriter, TiffImageReader
-from PartSegImage.image import FRAME_THICKNESS
+from PartSegImage.image import FRAME_THICKNESS, _hex_to_rgb
 
 
 class TestImageBase:
@@ -663,7 +663,8 @@ def test_merge_channel_props():
         )
 
     assert img.channel_names == ["channel 2", "strange"]
-    assert img.default_coloring == ["red", (128, 255, 0)]
+    assert img.default_coloring[0] == "red"
+    assert tuple(img.default_coloring[1]) == (128, 255, 0)
     assert img.ranges == [(0, 255), (0, 128)]
 
 
@@ -695,3 +696,12 @@ def test_merge_channel_props_with_none(channel_name, default_coloring, ranges):
     assert img.default_coloring == (default_coloring or ["red"])
     assert img.ranges == (ranges or [(0, 0)])
     assert img.channel_names == (["channel"] if channel_name else ["channel 1"])
+
+
+def test_hex_to_rgb():
+    assert _hex_to_rgb("#ff0000") == (255, 0, 0)
+    assert _hex_to_rgb("#00FF00") == (0, 255, 0)
+    assert _hex_to_rgb("#b00") == (187, 0, 0)
+    assert _hex_to_rgb("#B00") == (187, 0, 0)
+    with pytest.raises(ValueError, match="Invalid hex code format"):
+        _hex_to_rgb("#b000")

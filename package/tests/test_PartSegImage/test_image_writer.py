@@ -46,7 +46,7 @@ def test_ome_save(tmp_path, bundle_test_dir, ome_xml, z_size):
         data,
         spacing=(27 * 10**-6, 6 * 10**-6, 6 * 10**-6),
         axes_order="ZYXC",
-        channel_info=[ChannelInfo("a"), ChannelInfo("b")],
+        channel_info=[ChannelInfo(name="a"), ChannelInfo(name="b")],
         shift=(10, 9, 8),
         name="Test",
     )
@@ -98,7 +98,7 @@ def test_imagej_write_all_metadata(tmp_path, data_test_dir):
 
 
 def test_imagej_save_color(tmp_path):
-    data = np.zeros((3, 20, 20), dtype=np.uint8)
+    data = np.zeros((4, 20, 20), dtype=np.uint8)
     data[:, 2:-2, 2:-2] = 20
     img = Image(
         data,
@@ -108,15 +108,17 @@ def test_imagej_save_color(tmp_path):
             ChannelInfo(name="ch1", color_map="blue", contrast_limits=(0, 20)),
             ChannelInfo(name="ch2", color_map="#FFAA00", contrast_limits=(0, 30)),
             ChannelInfo(name="ch3", color_map="#FB1", contrast_limits=(0, 25)),
+            ChannelInfo(name="ch4", color_map=(0, 180, 0), contrast_limits=(0, 22)),
         ],
     )
     IMAGEJImageWriter.save(img, tmp_path / "image.tif")
     image2 = TiffImageReader.read_image(tmp_path / "image.tif")
-    assert image2.channel_names == ["ch1", "ch2", "ch3"]
-    assert image2.ranges == [(0, 20), (0, 30), (0, 25)]
+    assert image2.channel_names == ["ch1", "ch2", "ch3", "ch4"]
+    assert image2.ranges == [(0, 20), (0, 30), (0, 25), (0, 22)]
     assert tuple(image2.default_coloring[0][:, -1]) == (0, 0, 255)
     assert tuple(image2.default_coloring[1][:, -1]) == (255, 170, 0)
     assert tuple(image2.default_coloring[2][:, -1]) == (255, 187, 17)
+    assert tuple(image2.default_coloring[3][:, -1]) == (0, 180, 0)
 
 
 def test_save_mask_imagej(tmp_path):

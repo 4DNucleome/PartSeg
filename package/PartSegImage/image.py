@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import sys
 import typing
 import warnings
 from collections.abc import Iterable
@@ -22,19 +23,30 @@ FRAME_THICKNESS = 2
 
 DEFAULT_SCALE_FACTOR = 10**9
 
+ch_par: dict[str, bool]
 
-@dataclass
+if sys.version_info[:2] > (3, 9):
+    ch_par = {"kw_only": True, "slots": True}
+else:
+    ch_par = {}
+
+
+@dataclass(**ch_par)
 class ChannelInfo:
     name: str
-    color_map: str | np.ndarray | None = None
+    color_map: str | np.ndarray | tuple | list | None = None
     contrast_limits: tuple[float, float] | None = None
 
 
-@dataclass
+@dataclass(**ch_par)
 class ChannelInfoFull:
     name: str
     color_map: str | np.ndarray
     contrast_limits: tuple[float, float]
+
+    def __post_init__(self):
+        if not isinstance(self.color_map, (str, np.ndarray)):
+            self.color_map = np.array(self.color_map)
 
 
 def minimal_dtype(val: int):
@@ -245,7 +257,8 @@ class Image:
         if channel_info is None:
             ranges = [(np.min(x), np.max(x)) for x in channel_array]
             return [
-                ChannelInfoFull(f"channel {i}", x[0], x[1]) for i, x in enumerate(zip(default_colors, ranges), start=1)
+                ChannelInfoFull(name=f"channel {i}", color_map=x[0], contrast_limits=x[1])
+                for i, x in enumerate(zip(default_colors, ranges), start=1)
             ]
 
         channel_info = channel_info[: len(channel_array)]
@@ -266,7 +279,11 @@ class Image:
             )
 
         for i, arr in enumerate(channel_array[len(res) :], start=len(channel_info)):
-            res.append(ChannelInfoFull(f"channel {i+1}", next(default_colors), (np.min(arr), np.max(arr))))
+            res.append(
+                ChannelInfoFull(
+                    name=f"channel {i+1}", color_map=next(default_colors), contrast_limits=(np.min(arr), np.max(arr))
+                )
+            )
 
         return res
 
@@ -892,14 +909,6 @@ class Image:
         )
 
     def get_imagej_colors(self):
-        # TODO review
-        if self.default_coloring is None:
-            return None
-        try:
-            if len(self.default_coloring) != self.channels:
-                return None
-        except TypeError:
-            return None
         res = []
         for color in self.default_coloring:
 
