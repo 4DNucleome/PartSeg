@@ -976,7 +976,7 @@ def _hex_to_rgb(hex_code: str) -> tuple[int, int, int]:
     elif len(hex_code) != 6:
         raise ValueError(f"Invalid hex code format: {hex_code}")
 
-    return (int(hex_code[0:2], 16), int(hex_code[2:4], 16), int(hex_code[4:6], 16))
+    return int(hex_code[:2], 16), int(hex_code[2:4], 16), int(hex_code[4:6], 16)
 
 
 def _name_to_rgb(name: str) -> tuple[int, int, int]:
@@ -986,8 +986,9 @@ def _name_to_rgb(name: str) -> tuple[int, int, int]:
     :param str name: The color name
     :return: A tuple containing the RGB values (R, G, B)
     """
+    if name not in _NAMED_COLORS:
+        raise ValueError(f"Unknown color name: {name}")
     return _hex_to_rgb(_NAMED_COLORS[name])
-
 
 _NAMED_COLORS = {
     "red": "#FF0000",
