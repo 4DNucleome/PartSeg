@@ -133,10 +133,20 @@ class BaseImageReader:
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
         self.channel_names = None
+        self.colors = None
+        self.ranges = None
         if callback_function is None:
             self.callback_function = _empty
         else:
             self.callback_function = callback_function
+
+    def _get_channel_info(self):
+        return [
+            ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
+            for name, color, contrast_limits in zip_longest(
+                li_if_no(self.channel_names), li_if_no(self.colors), li_if_no(self.ranges)
+            )
+        ]
 
     def set_default_spacing(self, spacing):
         spacing = tuple(spacing)
@@ -368,11 +378,13 @@ class CziImageReader(BaseImageReaderBuffer):
                 scale_info.get("Y", self.default_spacing[1]),
                 scale_info.get("X", self.default_spacing[2]),
             )
+        with suppress(KeyError):
             channel_meta = metadata["ImageDocument"]["Metadata"]["DisplaySetting"]["Channels"]["Channel"]
             if isinstance(channel_meta, dict):
                 # single channel saved in czifile
                 channel_meta = [channel_meta]
             self.channel_names = [x["Name"] for x in channel_meta]
+            self.colors = [x["Color"] for x in channel_meta]
         # TODO add mask reading
         if isinstance(image_path, BytesIO):
             image_path = ""
@@ -383,7 +395,7 @@ class CziImageReader(BaseImageReaderBuffer):
             file_path=image_path,
             axes_order=self.return_order(),
             metadata_dict=metadata,
-            channel_info=[ChannelInfo(name=name) for name in self.channel_names or []],
+            channel_info=self._get_channel_info(),
         )
 
     @classmethod
@@ -462,7 +474,6 @@ class TiffImageReader(BaseImageReaderBuffer):
 
     def __init__(self, callback_function=None):
         super().__init__(callback_function)
-        self.colors = None
         self.ranges = None
         self.shift = (0, 0, 0)
         self.name = ""
@@ -522,17 +533,11 @@ class TiffImageReader(BaseImageReaderBuffer):
 
         if not isinstance(image_path, (str, Path)):
             image_path = ""
-        channel_info = [
-            ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
-            for name, color, contrast_limits in zip_longest(
-                li_if_no(self.channel_names), li_if_no(self.colors), li_if_no(self.ranges)
-            )
-        ]
         return self.image_class(
             image_data,
             spacing=self.spacing,
             mask=mask_data,
-            channel_info=channel_info,
+            channel_info=self._get_channel_info(),
             file_path=os.path.abspath(image_path),
             axes_order=self.return_order(),
             shift=self.shift,

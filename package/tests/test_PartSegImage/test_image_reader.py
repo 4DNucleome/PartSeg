@@ -39,6 +39,7 @@ class TestImageClass:
         assert np.count_nonzero(image.get_channel(0))
         assert image.channels == 4
         assert image.layers == 1
+        assert image.get_colors() == ["#FFFFFF", "#FF0000", "#00FF00", "#0000FF"]
 
         assert image.file_path == os.path.join(data_test_dir, "test_czi.czi")
 
