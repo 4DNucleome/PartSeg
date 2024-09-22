@@ -12,7 +12,7 @@ from PartSeg.common_gui.algorithms_description import FormWidget, QtAlgorithmPro
 from PartSeg.common_gui.custom_save_dialog import FormDialog
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
-from PartSegImage import Channel, Image
+from PartSegImage import Channel, ChannelInfo, Image
 
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
@@ -69,9 +69,9 @@ def generate_image(viewer: Viewer, *layer_names):
         image_list.append(
             Image(
                 image_layer.data,
-                data_scale,
+                spacing=data_scale,
                 axes_order=axis_order[-image_layer.data.ndim :],
-                channel_names=[image_layer.name],
+                channel_info=[ChannelInfo(name=name.value)],
             )
         )
     res_image = image_list[0]

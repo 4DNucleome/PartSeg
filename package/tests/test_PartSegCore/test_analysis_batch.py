@@ -123,7 +123,7 @@ def _prepare_spacing_data(tmp_path):
     data[:, :, 2:-2, 2:-2] = 1
     tifffile.imwrite(tmp_path / "test1.tiff", data)
 
-    image = Image(data, (1, 1, 1), axes_order="ZCYX", file_path=tmp_path / "test2.tiff")
+    image = Image(data, spacing=(1, 1, 1), axes_order="ZCYX", file_path=tmp_path / "test2.tiff")
     ImageWriter.save(image, image.file_path)
 
 
@@ -134,7 +134,7 @@ def _prepare_mask_project_data(tmp_path):
     data[:, 6:8, 2:4] = 2
     data[:, 6:8, 6:8] = 3
 
-    image = Image(data, (1, 1, 1), axes_order="ZYX", file_path=tmp_path / "test.tiff")
+    image = Image(data, spacing=(1, 1, 1), axes_order="ZYX", file_path=tmp_path / "test.tiff")
     ImageWriter.save(image, image.file_path)
 
     roi = np.zeros(data.shape, dtype=np.uint8)

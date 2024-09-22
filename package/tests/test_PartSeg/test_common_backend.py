@@ -257,7 +257,7 @@ class TestSegmentationThread:
     def test_run(self, qtbot):
         algorithm = ROIExtractionAlgorithmForTest()
         thr = segmentation_thread.SegmentationThread(algorithm)
-        image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
+        image = Image(np.zeros((10, 10), dtype=np.uint8), spacing=(1, 1), axes_order="XY")
         algorithm.set_image(image)
         with qtbot.waitSignals([thr.execution_done, thr.progress_signal]):
             thr.run()
@@ -265,7 +265,7 @@ class TestSegmentationThread:
     def test_run_return_none(self, qtbot):
         algorithm = ROIExtractionAlgorithmForTest(return_none=True)
         thr = segmentation_thread.SegmentationThread(algorithm)
-        image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
+        image = Image(np.zeros((10, 10), dtype=np.uint8), spacing=(1, 1), axes_order="XY")
         algorithm.set_image(image)
         with qtbot.assertNotEmitted(thr.execution_done):
             thr.run()
@@ -273,7 +273,7 @@ class TestSegmentationThread:
     def test_run_exception(self, qtbot):
         algorithm = ROIExtractionAlgorithmForTest(raise_=True)
         thr = segmentation_thread.SegmentationThread(algorithm)
-        image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
+        image = Image(np.zeros((10, 10), dtype=np.uint8), spacing=(1, 1), axes_order="XY")
         algorithm.set_image(image)
         with qtbot.assertNotEmitted(thr.execution_done), qtbot.waitSignal(thr.exception_occurred):
             thr.run()
@@ -467,7 +467,7 @@ class TestLoadBackup:
 @pytest.fixture
 def image(tmp_path):
     data = np.random.default_rng().uniform(size=(10, 10, 2))
-    return Image(data=data, image_spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
+    return Image(data=data, spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
 
 
 @pytest.fixture
@@ -710,21 +710,23 @@ class TestBaseSettings:
         assert res[0] == {"cc": 11, "dd": 12}
 
     def test_base_settings_verify_image(self):
-        assert base_settings.BaseSettings.verify_image(Image(np.zeros((10, 10)), (10, 10), axes_order="YX"))
-        assert base_settings.BaseSettings.verify_image(Image(np.zeros((10, 10, 10)), (10, 10, 10), axes_order="ZYX"))
+        assert base_settings.BaseSettings.verify_image(Image(np.zeros((10, 10)), spacing=(10, 10), axes_order="YX"))
+        assert base_settings.BaseSettings.verify_image(
+            Image(np.zeros((10, 10, 10)), spacing=(10, 10, 10), axes_order="ZYX")
+        )
         with pytest.raises(base_settings.SwapTimeStackException):
             base_settings.BaseSettings.verify_image(
-                Image(np.zeros((10, 10, 10)), (10, 10, 10), axes_order="TYX"), silent=False
+                Image(np.zeros((10, 10, 10)), spacing=(10, 10, 10), axes_order="TYX"), silent=False
             )
 
         new_image = base_settings.BaseSettings.verify_image(
-            Image(np.zeros((10, 10, 10)), (10, 10, 10), axes_order="TYX"), silent=True
+            Image(np.zeros((10, 10, 10)), spacing=(10, 10, 10), axes_order="TYX"), silent=True
         )
         assert new_image.is_stack
         assert not new_image.is_time
         with pytest.raises(base_settings.TimeAndStackException):
             base_settings.BaseSettings.verify_image(
-                Image(np.zeros((2, 10, 10, 10)), (10, 10, 10), axes_order="TZYX"), silent=True
+                Image(np.zeros((2, 10, 10, 10)), spacing=(10, 10, 10), axes_order="TZYX"), silent=True
             )
 
     def test_base_settings_path_history(self, tmp_path, qtbot, monkeypatch):

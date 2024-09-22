@@ -11,32 +11,32 @@ from PartSegImage import Image
 def get_flat_image():
     data = np.zeros((1, 1, 10, 10), dtype=np.uint8)
     data[:, :, 2:-2, 2:-2] = 5
-    return Image(data, (5, 5), axes_order="TZYX")
+    return Image(data, spacing=(5, 5), axes_order="TZYX")
 
 
 def get_cube_image():
     data = np.zeros((1, 10, 10, 10), dtype=np.uint8)
     data[:, 2:-2, 2:-2, 2:-2] = 5
-    return Image(data, (10, 5, 5), axes_order="TZYX")
+    return Image(data, spacing=(10, 5, 5), axes_order="TZYX")
 
 
 def get_cube_image_2ch():
     data = np.zeros((1, 2, 10, 10, 10), dtype=np.uint8)
     data[:, 0, 2:-2, 2:-2, 2:-2] = 5
     data[:, 1, 2:-2, 2:-2, 2:-2] = 10
-    return Image(data, (10, 5, 5), axes_order="TCZYX")
+    return Image(data, spacing=(10, 5, 5), axes_order="TCZYX")
 
 
 def get_flat_image_up():
     data = np.ones((1, 1, 10, 10), dtype=np.uint8) * 30
     data[:, :, 2:-2, 2:-2] = 10
-    return Image(data, (5, 5), axes_order="TZYX")
+    return Image(data, spacing=(5, 5), axes_order="TZYX")
 
 
 def get_cube_image_up():
     data = np.ones((1, 10, 10, 10), dtype=np.uint8) * 30
     data[:, 2:-2, 2:-2, 2:-2] = 10
-    return Image(data, (10, 5, 5), axes_order="TZYX")
+    return Image(data, spacing=(10, 5, 5), axes_order="TZYX")
 
 
 class TestInterpolateImage:

@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 import numpy as np
 from napari.types import FullLayerData
 
-from PartSegImage import Image, ImageWriter
+from PartSegImage import ChannelInfo, Image, ImageWriter
 from PartSegImage.image import DEFAULT_SCALE_FACTOR
 
 
@@ -15,9 +15,9 @@ def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
     scale_shift = min(data.ndim, 3)
     image = Image(
         data,
-        np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
+        spacing=np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         axes_order="TZYX"[-data.ndim :],
-        channel_names=[meta["name"]],
+        channel_info=[ChannelInfo(name=meta["name"])],
         shift=np.divide(meta["translate"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         name="ROI",
     )
@@ -50,9 +50,9 @@ def napari_write_images(path: str, layer_data: List[FullLayerData]) -> List[str]
         scale_shift -= 1
     image = Image(
         data,
-        np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
+        spacing=np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         axes_order=axes,
-        channel_names=channel_names,
+        channel_info=[ChannelInfo(name=x) for x in channel_names],
         shift=np.divide(meta["translate"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         name="Image",
     )

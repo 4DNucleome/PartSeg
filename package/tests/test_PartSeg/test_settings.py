@@ -268,7 +268,7 @@ class TestBaseSettings:
     def test_set_roi(self, tmp_path, qtbot):
         settings = BaseSettings(tmp_path)
         roi = np.zeros((10, 10), dtype=np.uint8)
-        settings.image = Image(roi, (1, 1), axes_order="XY")
+        settings.image = Image(roi, spacing=(1, 1), axes_order="XY")
         roi[1:5, 1:5] = 1
         roi[5:-1, 5:-1] = 3
         with qtbot.waitSignal(settings.roi_changed):
@@ -289,32 +289,36 @@ class TestBaseSettings:
         settings = BaseSettings(tmp_path)
         assert not settings.has_channels
         assert settings.channels == 0
-        settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC")
+        settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), spacing=(1, 1), axes_order="XYC")
         assert settings.has_channels
         assert settings.channels == 2
-        settings.image = Image(np.zeros((10, 10, 1), dtype=np.uint8), (1, 1), axes_order="XYC")
+        settings.image = Image(np.zeros((10, 10, 1), dtype=np.uint8), spacing=(1, 1), axes_order="XYC")
         assert not settings.has_channels
         assert settings.channels == 1
 
     def test_shape(self, tmp_path):
         settings = BaseSettings(tmp_path)
         assert settings.image_shape == ()
-        settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC")
+        settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), spacing=(1, 1), axes_order="XYC")
         assert settings.image_shape == (1, 1, 10, 10)
 
     def test_verify_image(self):
-        assert BaseSettings.verify_image(Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC"))
+        assert BaseSettings.verify_image(Image(np.zeros((10, 10, 2), dtype=np.uint8), spacing=(1, 1), axes_order="XYC"))
         with pytest.raises(SwapTimeStackException):
             BaseSettings.verify_image(
-                Image(np.zeros((2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TXY"), silent=False
+                Image(np.zeros((2, 10, 10), dtype=np.uint8), spacing=(1, 1, 1), axes_order="TXY"), silent=False
             )
-        im = BaseSettings.verify_image(Image(np.zeros((2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TXY"))
+        im = BaseSettings.verify_image(
+            Image(np.zeros((2, 10, 10), dtype=np.uint8), spacing=(1, 1, 1), axes_order="TXY")
+        )
         assert not im.is_time
         assert im.times == 1
         assert im.is_stack
         assert im.layers == 2
         with pytest.raises(TimeAndStackException):
-            BaseSettings.verify_image(Image(np.zeros((2, 2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TZXY"))
+            BaseSettings.verify_image(
+                Image(np.zeros((2, 2, 10, 10), dtype=np.uint8), spacing=(1, 1, 1), axes_order="TZXY")
+            )
 
     def test_algorithm_redirect(self, tmp_path):
         settings = BaseSettings(tmp_path)

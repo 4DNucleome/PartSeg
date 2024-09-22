@@ -58,8 +58,8 @@ class ImageProjection(TransformBase):
         return (
             image.__class__(
                 data=new_channels,
-                image_spacing=tuple(spacing),
-                channel_names=image.channel_names,
+                spacing=tuple(spacing),
+                channel_info=image.channel_info,
                 mask=new_mask,
                 axes_order=image.axis_order,
             ),

@@ -77,8 +77,8 @@ def analysis_project() -> ProjectTuple:
     data[0, 0, 10:40, 40:50, 10:90] = 40
     image = Image(
         data,
-        (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
-        "",
+        spacing=(10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
+        file_path="",
         axes_order="CTZYX",
     )
     mask = data[0, 0] > 0
@@ -122,8 +122,8 @@ def analysis_project_reversed() -> ProjectTuple:
     data = 100 - data
     image = Image(
         data,
-        (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
-        "",
+        spacing=(10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]),
+        file_path="",
         axes_order="CTZYX",
     )
     roi_info = ROIInfo(roi.squeeze()).fit_to_image(image)
@@ -502,7 +502,7 @@ class TestSegmentationMask:
         elem = HistoryElement.create(roi_info, mask, {}, mask_prop)
         proj = MaskProjectTuple(
             file_path="test_data.tiff",
-            image=Image(np.zeros((10, 10), dtype=np.uint8), (1, 1), "", axes_order="YX"),
+            image=Image(np.zeros((10, 10), dtype=np.uint8), spacing=(1, 1), file_path="", axes_order="YX"),
             mask=mask,
             roi_info=roi_info,
             history=[elem],

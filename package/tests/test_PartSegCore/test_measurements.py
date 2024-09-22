@@ -65,7 +65,7 @@ def get_cube_array():
 
 
 def get_cube_image():
-    return Image(get_cube_array(), (100, 50, 50), "", axes_order="TZYX")
+    return Image(get_cube_array(), spacing=(100, 50, 50), file_path="", axes_order="TZYX")
 
 
 @pytest.fixture(name="cube_image")
@@ -74,7 +74,7 @@ def cube_image_fixture():
 
 
 def get_square_image():
-    return Image(get_cube_array()[:, 25:26], (100, 50, 50), "", axes_order="TZYX")
+    return Image(get_cube_array()[:, 25:26], spacing=(100, 50, 50), file_path="", axes_order="TZYX")
 
 
 @pytest.fixture(name="square_image")
@@ -90,7 +90,7 @@ def get_two_components_array():
 
 
 def get_two_components_image():
-    return Image(get_two_components_array(), (100, 50, 50), "", axes_order="TZYX")
+    return Image(get_two_components_array(), spacing=(100, 50, 50), file_path="", axes_order="TZYX")
 
 
 def get_two_component_mask():
@@ -844,7 +844,7 @@ def two_comp_img():
     data = np.zeros((30, 30, 60), dtype=np.uint16)
     data[5:-5, 5:-5, 5:29] = 60
     data[5:-5, 5:-5, 31:-5] = 50
-    return Image(data, (100, 100, 50), "", axes_order="ZYX")
+    return Image(data, spacing=(100, 100, 50), file_path="", axes_order="ZYX")
 
 
 class TestDistanceMaskSegmentation:
@@ -1255,7 +1255,7 @@ class TestSplitOnPartVolume:
         data = np.zeros((60, 100, 100), dtype=np.uint16)
         data[10:50, 20:80, 20:80] = 50
         data[15:45, 30:70, 30:70] = 70
-        image = Image(data, (2, 1, 1), "", axes_order="ZYX")
+        image = Image(data, spacing=(2, 1, 1), file_path="", axes_order="ZYX")
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
@@ -1467,7 +1467,7 @@ class TestSplitOnPartPixelBrightnessSum:
         data = np.zeros((1, 60, 100, 100), dtype=np.uint16)
         data[0, 10:50, 20:80, 20:80] = 50
         data[0, 15:45, 30:70, 30:70] = 70
-        image = Image(data, (100, 50, 50), "", axes_order="TZYX")
+        image = Image(data, spacing=(100, 50, 50), file_path="", axes_order="TZYX")
         image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
@@ -2161,7 +2161,7 @@ class TestDistanceROIROI:
         data[0, 2:-2, 2:-2, 2:-12] = 5
         data[1, 2:-2, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2, 2:-2] = 5
-        image = Image(data, image_spacing=(1, 1, 1), axes_order="CZYX")
+        image = Image(data, spacing=(1, 1, 1), axes_order="CZYX")
         roi = (data[0] > 1).astype(np.uint8)
         res = DistanceROIROI.calculate_property(
             channel=data[2],
@@ -2176,7 +2176,7 @@ class TestDistanceROIROI:
         )
         assert res > 0
         data[1, 3:-3, 3:-3, 3:-13] = 5
-        image = Image(data, image_spacing=(1, 1, 1), axes_order="CZYX")
+        image = Image(data, spacing=(1, 1, 1), axes_order="CZYX")
         roi = (data[0] > 1).astype(np.uint8)
         res = DistanceROIROI.calculate_property(
             channel=data[2],
@@ -2196,7 +2196,7 @@ class TestDistanceROIROI:
         data[0, 2:-2, 2:-12] = 5
         data[1, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2] = 5
-        image = Image(data, image_spacing=(1, 1, 1), axes_order="CYX")
+        image = Image(data, spacing=(1, 1, 1), axes_order="CYX")
         roi = (data[:1] > 1).astype(np.uint8)
         res = DistanceROIROI.calculate_property(
             channel=data[2:3],
@@ -2218,7 +2218,7 @@ class TestROINeighbourhoodROI:
         data[0, 2:-2, 2:-2, 2:-12] = 5
         data[1, 2:-2, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2, 2:-2] = 5
-        image = Image(data, image_spacing=(100 * (10**-9),) * 3, axes_order="CZYX")
+        image = Image(data, spacing=(100 * (10**-9),) * 3, axes_order="CZYX")
         roi = (data[0] > 1).astype(np.uint8)
         kwargs = {
             "image": image,
@@ -2233,7 +2233,7 @@ class TestROINeighbourhoodROI:
         kwargs["distance"] = 1000
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
         data[1, 3:-3, 3:-3, 3:10] = 5
-        image = Image(data, image_spacing=(100 * (10**-9),) * 3, axes_order="CZYX")
+        image = Image(data, spacing=(100 * (10**-9),) * 3, axes_order="CZYX")
         kwargs["image"] = image
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
         kwargs["distance"] = 100
@@ -2244,7 +2244,7 @@ class TestROINeighbourhoodROI:
         data[0, 2:-2, 2:-12] = 5
         data[1, 2:-2, 12:-2] = 5
         data[2, 2:-2, 2:-2] = 5
-        image = Image(data, image_spacing=(100 * (10**-9),) * 2, axes_order="CYX")
+        image = Image(data, spacing=(100 * (10**-9),) * 2, axes_order="CYX")
         roi = (data[:1] > 1).astype(np.uint8)
         kwargs = {
             "image": image,
@@ -2259,7 +2259,7 @@ class TestROINeighbourhoodROI:
         kwargs["distance"] = 1000
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
         data[1, 3:-3, 3:10] = 5
-        image = Image(data, image_spacing=(100 * (10**-9),) * 2, axes_order="CYX")
+        image = Image(data, spacing=(100 * (10**-9),) * 2, axes_order="CYX")
         kwargs["image"] = image
         assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
         kwargs["distance"] = 100
@@ -2275,7 +2275,7 @@ def test_all_methods(method, dtype):
     roi = (data > 2).astype(np.uint8)
     mask = (data > 0).astype(np.uint8)
     roi_info = ROIInfo(roi)
-    image = Image(data, image_spacing=(1, 1, 1), axes_order="ZYX")
+    image = Image(data, spacing=(1, 1, 1), axes_order="ZYX")
 
     res = method.calculate_property(
         image=image,
@@ -2313,7 +2313,7 @@ def test_per_component(method, area):
     data[1:-1, 6, 6] = 5
     roi = (data[..., 0] > 2).astype(np.uint8)
     mask = (data[..., 0] > 0).astype(np.uint8)
-    image = Image(data, image_spacing=(10**-8,) * 3, axes_order="ZYXC")
+    image = Image(data, spacing=(10**-8,) * 3, axes_order="ZYXC")
     image.set_mask(mask, axes="ZYX")
 
     statistics = [
@@ -2394,7 +2394,7 @@ def test_per_mask_component():
     mask = np.zeros(data.shape, dtype=np.uint8)
     mask[2:-2, 2:-2, 2:-12] = 1
     mask[2:-2, 2:-2, 12:-2] = 2
-    image = Image(data, image_spacing=(10**-8,) * 3, axes_order="ZYX", mask=mask)
+    image = Image(data, spacing=(10**-8,) * 3, axes_order="ZYX", mask=mask)
     profile = MeasurementProfile(
         name="test",
         chosen_fields=[

@@ -5,6 +5,7 @@ from abc import abstractmethod
 from contextlib import suppress
 from importlib.metadata import version
 from io import BytesIO
+from itertools import zip_longest
 from pathlib import Path
 from threading import Lock
 
@@ -16,7 +17,7 @@ from defusedxml import ElementTree
 from oiffile import OifFile
 from packaging.version import parse as parse_version
 
-from PartSegImage.image import Image
+from PartSegImage.image import ChannelInfo, Image
 
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
@@ -26,6 +27,12 @@ if typing.TYPE_CHECKING:
 
 
 CZI_MAX_WORKERS = None
+
+
+def li_if_no(value):
+    if value is None:
+        return []
+    return value
 
 
 class ZSTD1Header(typing.NamedTuple):
@@ -318,10 +325,10 @@ class OifImagReader(BaseImageReader):
                 # TODO add mask reading
         return self.image_class(
             image_data,
-            self.spacing,
+            spacing=self.spacing,
             file_path=os.path.abspath(image_path),
             axes_order=self.return_order(),
-            metadata=image_file.mainfile,
+            metadata_dict=image_file.mainfile,
         )
 
     def _read_scale_parameter(self, image_file):
@@ -372,11 +379,11 @@ class CziImageReader(BaseImageReaderBuffer):
         image_file.close()
         return self.image_class(
             image_data,
-            self.spacing,
+            spacing=self.spacing,
             file_path=image_path,
             axes_order=self.return_order(),
-            metadata=metadata,
-            channel_names=self.channel_names,
+            metadata_dict=metadata,
+            channel_info=[ChannelInfo(name=name) for name in self.channel_names or []],
         )
 
     @classmethod
@@ -515,18 +522,22 @@ class TiffImageReader(BaseImageReaderBuffer):
 
         if not isinstance(image_path, (str, Path)):
             image_path = ""
+        channel_info = [
+            ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
+            for name, color, contrast_limits in zip_longest(
+                li_if_no(self.channel_names), li_if_no(self.colors), li_if_no(self.ranges)
+            )
+        ]
         return self.image_class(
             image_data,
-            self.spacing,
+            spacing=self.spacing,
             mask=mask_data,
-            default_coloring=self.colors,
-            channel_names=self.channel_names,
-            ranges=self.ranges,
+            channel_info=channel_info,
             file_path=os.path.abspath(image_path),
             axes_order=self.return_order(),
             shift=self.shift,
             name=self.name,
-            metadata=self.metadata,
+            metadata_dict=self.metadata,
         )
 
     @staticmethod
