@@ -722,7 +722,7 @@ def test_name_to_rgb():
         _name_to_rgb("")
 
 
-@pytest.mark.skipif(pytest.importorskip("vispy", reason="vispy not installed"))
+@pytest.mark.skipif(pytest.importorskip("vispy"), reason="vispy not installed")
 def test_name_to_rgb_vispy():
     # This test check mapping not defined in fallback dictionary
     assert _name_to_rgb("lime") == (0, 255, 0)
