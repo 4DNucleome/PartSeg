@@ -916,8 +916,8 @@ class Image:
                 res.append(color)
         return res
 
-    def get_colors(self):
-        res = []
+    def get_colors(self) -> list[str | list[int]]:
+        res: list[str | list[int]] = []
         for color in self.default_coloring:
             if isinstance(color, str):
                 res.append(color)
