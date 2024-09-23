@@ -988,19 +988,25 @@ def _name_to_rgb(name: str) -> tuple[int, int, int]:
     :param str name: The color name
     :return: A tuple containing the RGB values (R, G, B)
     """
+    name = name.lower()
     if name not in _NAMED_COLORS:
         raise ValueError(f"Unknown color name: {name}")
     return _hex_to_rgb(_NAMED_COLORS[name])
 
 
-_NAMED_COLORS = {
-    "red": "#FF0000",
-    "green": "#00FF00",
-    "blue": "#0000FF",
-    "yellow": "#FFFF00",
-    "cyan": "#00FFFF",
-    "magenta": "#FF00FF",
-    "white": "#FFFFFF",
-    "black": "#000000",
-    "orange": "#FFA500",
-}
+try:
+    from vispy.color import get_color_dict
+except ImportError:  # pragma: no cover
+    _NAMED_COLORS = {
+        "red": "#FF0000",
+        "green": "#008000",
+        "blue": "#0000FF",
+        "yellow": "#FFFF00",
+        "cyan": "#00FFFF",
+        "magenta": "#FF00FF",
+        "white": "#FFFFFF",
+        "black": "#000000",
+        "orange": "#FFA500",
+    }
+else:
+    _NAMED_COLORS = get_color_dict()
