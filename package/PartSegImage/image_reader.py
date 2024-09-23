@@ -29,7 +29,7 @@ if typing.TYPE_CHECKING:
 CZI_MAX_WORKERS = None
 
 
-def li_if_no(value):
+def empty_list_if_none(value: typing.Optional[typing.Any]) -> typing.List[typing.Any]:
     if value is None:
         return []
     return value
@@ -129,22 +129,22 @@ class BaseImageReader:
         """
         return cls.image_class.axis_order
 
-    def __init__(self, callback_function=None):
+    def __init__(self, callback_function: typing.Optional[typing.Callable[[str, int], typing.Any]] = None) -> None:
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
-        self.channel_names = None
-        self.colors = None
-        self.ranges = None
+        self.channel_names: typing.Optional[typing.List[str]] = None
+        self.colors: typing.Optional[typing.List[typing.Optional[typing.Any]]] = None
+        self.ranges: typing.Optional[typing.List[typing.Tuple[float, float]]] = None
         if callback_function is None:
             self.callback_function = _empty
         else:
             self.callback_function = callback_function
 
-    def _get_channel_info(self):
+    def _get_channel_info(self) -> typing.List[ChannelInfo]:
         return [
             ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
             for name, color, contrast_limits in zip_longest(
-                li_if_no(self.channel_names), li_if_no(self.colors), li_if_no(self.ranges)
+                empty_list_if_none(self.channel_names), empty_list_if_none(self.colors), empty_list_if_none(self.ranges)
             )
         ]
 
@@ -383,8 +383,8 @@ class CziImageReader(BaseImageReaderBuffer):
             if isinstance(channel_meta, dict):
                 # single channel saved in czifile
                 channel_meta = [channel_meta]
-            self.channel_names = [x["Name"] for x in channel_meta]
-            self.colors = [x["Color"] for x in channel_meta]
+            self.channel_names = [x.get("Name", f"Channel_{i}") for i, x in enumerate(channel_meta, start=1)]
+            self.colors = [x.get("Color") for x in channel_meta]
         # TODO add mask reading
         if isinstance(image_path, BytesIO):
             image_path = ""

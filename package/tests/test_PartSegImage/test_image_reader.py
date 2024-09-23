@@ -35,6 +35,7 @@ class TestImageClass:
         assert np.all(np.isclose(image.spacing, (7.752248561753867e-08,) * 2))
 
     def test_czi_file_read(self, data_test_dir):
+        """Check if czi file is read correctly."""
         image = CziImageReader.read_image(os.path.join(data_test_dir, "test_czi.czi"))
         assert np.count_nonzero(image.get_channel(0))
         assert image.channels == 4
