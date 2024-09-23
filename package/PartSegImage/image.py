@@ -250,9 +250,11 @@ class Image:
 
     @staticmethod
     def _adjust_channel_info(
-        channel_info: list[ChannelInfo | ChannelInfoFull] | None, channel_array: list[np.ndarray]
+        channel_info: list[ChannelInfo | ChannelInfoFull] | None,
+        channel_array: list[np.ndarray],
+        default_colors=("red", "blue", "green", "yellow", "magenta", "cyan"),
     ) -> list[ChannelInfoFull]:
-        default_colors = cycle(["red", "blue", "green", "yellow", "magenta", "cyan"])
+        default_colors = cycle(default_colors)
         if channel_info is None:
             ranges = [(np.min(x), np.max(x)) for x in channel_array]
             return [
@@ -262,32 +264,28 @@ class Image:
 
         channel_info = channel_info[: len(channel_array)]
 
-        res = []
-
-        for i, ch_inf in enumerate(channel_info):
-            res.append(
-                ChannelInfoFull(
-                    name=ch_inf.name or f"channel {i+1}",
-                    color_map=(
-                        ch_inf.color_map if ch_inf.color_map is not None else next(default_colors)  # skipcq: PTC-W0063
-                    ),
-                    contrast_limits=(
-                        ch_inf.contrast_limits
-                        if ch_inf.contrast_limits is not None
-                        else (np.min(channel_array[i]), np.max(channel_array[i]))
-                    ),
-                )
+        res = [
+            ChannelInfoFull(
+                name=ch_inf.name or f"channel {i+1}",
+                color_map=(
+                    ch_inf.color_map if ch_inf.color_map is not None else next(default_colors)  # skipcq: PTC-W0063
+                ),
+                contrast_limits=(
+                    ch_inf.contrast_limits
+                    if ch_inf.contrast_limits is not None
+                    else (np.min(channel_array[i]), np.max(channel_array[i]))
+                ),
             )
-
-        for i, arr in enumerate(channel_array[len(res) :], start=len(channel_info)):
-            res.append(
-                ChannelInfoFull(
-                    name=f"channel {i+1}",
-                    color_map=next(default_colors),  # skipcq: PTC-W0063
-                    contrast_limits=(np.min(arr), np.max(arr)),
-                )
+            for i, ch_inf in enumerate(channel_info)
+        ]
+        res.extend(
+            ChannelInfoFull(
+                name=f"channel {i+1}",
+                color_map=next(default_colors),  # skipcq: PTC-W0063
+                contrast_limits=(np.min(arr), np.max(arr)),
             )
-
+            for i, arr in enumerate(channel_array[len(res) :], start=len(channel_info))
+        )
         return res
 
     @staticmethod
@@ -990,19 +988,25 @@ def _name_to_rgb(name: str) -> tuple[int, int, int]:
     :param str name: The color name
     :return: A tuple containing the RGB values (R, G, B)
     """
+    name = name.lower()
     if name not in _NAMED_COLORS:
         raise ValueError(f"Unknown color name: {name}")
     return _hex_to_rgb(_NAMED_COLORS[name])
 
 
-_NAMED_COLORS = {
-    "red": "#FF0000",
-    "green": "#00FF00",
-    "blue": "#0000FF",
-    "yellow": "#FFFF00",
-    "cyan": "#00FFFF",
-    "magenta": "#FF00FF",
-    "white": "#FFFFFF",
-    "black": "#000000",
-    "orange": "#FFA500",
-}
+try:
+    from vispy.color import get_color_dict
+except ImportError:  # pragma: no cover
+    _NAMED_COLORS = {
+        "red": "#FF0000",
+        "green": "#008000",
+        "blue": "#0000FF",
+        "yellow": "#FFFF00",
+        "cyan": "#00FFFF",
+        "magenta": "#FF00FF",
+        "white": "#FFFFFF",
+        "black": "#000000",
+        "orange": "#FFA500",
+    }
+else:
+    _NAMED_COLORS = get_color_dict()

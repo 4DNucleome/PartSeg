@@ -6,7 +6,7 @@ import pytest
 from skimage.morphology import diamond
 
 from PartSegImage import Channel, ChannelInfo, Image, ImageWriter, TiffImageReader
-from PartSegImage.image import FRAME_THICKNESS, _hex_to_rgb
+from PartSegImage.image import FRAME_THICKNESS, _hex_to_rgb, _name_to_rgb
 
 
 class TestImageBase:
@@ -705,3 +705,24 @@ def test_hex_to_rgb():
     assert _hex_to_rgb("#B00") == (187, 0, 0)
     with pytest.raises(ValueError, match="Invalid hex code format"):
         _hex_to_rgb("#b000")
+
+
+def test_name_to_rgb():
+    assert _name_to_rgb("red") == (255, 0, 0)
+    assert _name_to_rgb("Red") == (255, 0, 0)
+    assert _name_to_rgb("RED") == (255, 0, 0)
+    assert _name_to_rgb("blue") == (0, 0, 255)
+    assert _name_to_rgb("green") == (0, 128, 0)
+    assert _name_to_rgb("white") == (255, 255, 255)
+    assert _name_to_rgb("black") == (0, 0, 0)
+    assert _name_to_rgb("yellow") == (255, 255, 0)
+    with pytest.raises(ValueError, match="Unknown color name"):
+        _name_to_rgb("strange")
+    with pytest.raises(ValueError, match="Unknown color name"):
+        _name_to_rgb("")
+
+
+def test_name_to_rgb_vispy():
+    # This test check mapping not defined in fallback dictionary
+    pytest.importorskip("vispy", reason="vispy not installed")
+    assert _name_to_rgb("lime") == (0, 255, 0)
