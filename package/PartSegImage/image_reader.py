@@ -29,12 +29,6 @@ if typing.TYPE_CHECKING:
 CZI_MAX_WORKERS = None
 
 
-def empty_list_if_none(value: typing.Optional[typing.Any]) -> typing.List[typing.Any]:
-    if value is None:
-        return []
-    return value
-
-
 class ZSTD1Header(typing.NamedTuple):
     """
     ZSTD1 header structure
@@ -132,9 +126,9 @@ class BaseImageReader:
     def __init__(self, callback_function: typing.Optional[typing.Callable[[str, int], typing.Any]] = None) -> None:
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
-        self.channel_names: typing.Optional[typing.List[str]] = None
-        self.colors: typing.Optional[typing.List[typing.Optional[typing.Any]]] = None
-        self.ranges: typing.Optional[typing.List[typing.Tuple[float, float]]] = None
+        self.channel_names: typing.List[str] = []
+        self.colors: typing.List[typing.Optional[typing.Any]] = []
+        self.ranges: typing.List[typing.Tuple[float, float]] = []
         if callback_function is None:
             self.callback_function = _empty
         else:
@@ -143,9 +137,7 @@ class BaseImageReader:
     def _get_channel_info(self) -> typing.List[ChannelInfo]:
         return [
             ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
-            for name, color, contrast_limits in zip_longest(
-                empty_list_if_none(self.channel_names), empty_list_if_none(self.colors), empty_list_if_none(self.ranges)
-            )
+            for name, color, contrast_limits in zip_longest(self.channel_names, self.colors, self.ranges)
         ]
 
     def set_default_spacing(self, spacing):
@@ -474,7 +466,6 @@ class TiffImageReader(BaseImageReaderBuffer):
 
     def __init__(self, callback_function=None):
         super().__init__(callback_function)
-        self.ranges = None
         self.shift = (0, 0, 0)
         self.name = ""
         self.metadata = {}
@@ -483,7 +474,7 @@ class TiffImageReader(BaseImageReaderBuffer):
         """
         Read tiff image from tiff_file
         """
-        self.spacing, self.colors, self.channel_names, self.ranges = self.default_spacing, None, None, None
+        self.spacing, self.colors, self.channel_names, self.ranges = self.default_spacing, [], [], []
         with tifffile.TiffFile(image_path) as image_file:
             total_pages_num = len(image_file.series[0])
 
@@ -604,8 +595,8 @@ class TiffImageReader(BaseImageReaderBuffer):
             z_spacing = self.default_spacing[0]
         x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
         self.spacing = z_spacing, y_spacing, x_spacing
-        self.colors = image_file.imagej_metadata.get("LUTs")
-        self.channel_names = image_file.imagej_metadata.get("Labels")
+        self.colors = image_file.imagej_metadata.get("LUTs", [])
+        self.channel_names = image_file.imagej_metadata.get("Labels", [])
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
