@@ -79,9 +79,9 @@ heapdict==1.0.1
     # via cachey
 hsluv==5.0.4
     # via vispy
-idna==3.8
+idna==3.10
     # via requests
-imagecodecs==2024.6.1
+imagecodecs==2024.9.22
     # via partseg (pyproject.toml)
 imageio==2.35.1
     # via
@@ -92,7 +92,7 @@ imageio==2.35.1
     #   scikit-image
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.4.0
+importlib-metadata==8.5.0
     # via
     #   build
     #   dask
@@ -122,7 +122,7 @@ jsonschema==4.23.0
     # via napari
 jsonschema-specifications==2023.12.1
     # via jsonschema
-jupyter-client==8.6.2
+jupyter-client==8.6.3
     # via
     #   ipykernel
     #   qtconsole
@@ -226,7 +226,7 @@ packaging==24.1
     #   scikit-image
     #   sphinx
     #   vispy
-pandas==2.2.2
+pandas==2.2.3
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -247,7 +247,7 @@ pillow==10.4.0
     #   scikit-image
 pint==0.24.3
     # via napari
-platformdirs==4.3.2
+platformdirs==4.3.6
     # via
     #   jupyter-core
     #   pooch
@@ -327,7 +327,7 @@ pyside6-essentials==6.3.1
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.3.2
+pytest==8.3.3
     # via
     #   partseg (pyproject.toml)
     #   pytest-qt
@@ -340,7 +340,7 @@ python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
     #   pandas
-pytz==2024.1
+pytz==2024.2
     # via pandas
 pyyaml==6.0.2
     # via
@@ -376,7 +376,7 @@ requests==2.32.3
     #   pooch
     #   pyconify
     #   sphinx
-rich==13.8.0
+rich==13.8.1
     # via
     #   npe2
     #   typer
@@ -393,11 +393,11 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.13.0
+sentry-sdk==2.14.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==74.1.2
+setuptools==75.1.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -440,7 +440,7 @@ superqt==0.6.7
     #   partseg (pyproject.toml)
     #   magicgui
     #   napari
-sympy==1.13.2
+sympy==1.13.3
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
@@ -498,7 +498,7 @@ typing-extensions==4.12.2
     #   typer
 tzdata==2024.1
     # via pandas
-urllib3==2.2.2
+urllib3==2.2.3
     # via
     #   requests
     #   sentry-sdk
@@ -515,5 +515,5 @@ xlrd==2.0.1
     # via partseg (pyproject.toml)
 xlsxwriter==3.2.0
     # via partseg (pyproject.toml)
-zipp==3.20.1
+zipp==3.20.2
     # via importlib-metadata
