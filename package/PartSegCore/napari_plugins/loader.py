@@ -27,7 +27,6 @@ def _image_to_layers(project_info, scale, translate):
                     "blending": "additive",
                     "translate": translate,
                     "metadata": project_info.image.metadata,
-                    "colormap": project_info.image.get_colors()[i],
                 },
                 "image",
             )
