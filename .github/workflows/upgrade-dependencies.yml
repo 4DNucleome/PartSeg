@@ -67,3 +67,5 @@ jobs:
 
             ${{ steps.packages.outputs.all_packages }}
           token: ${{ secrets.GHA_TOKEN }}
+          labels: |
+            skip check PR title
