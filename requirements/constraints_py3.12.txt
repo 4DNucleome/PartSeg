@@ -45,7 +45,7 @@ coverage==7.6.1
     # via partseg (pyproject.toml)
 czifile==2019.7.2
     # via partseg (pyproject.toml)
-dask==2024.8.2
+dask==2024.9.0
     # via napari
 debugpy==1.8.5
     # via ipykernel
@@ -77,9 +77,9 @@ heapdict==1.0.1
     # via cachey
 hsluv==5.0.4
     # via vispy
-idna==3.8
+idna==3.10
     # via requests
-imagecodecs==2024.6.1
+imagecodecs==2024.9.22
     # via partseg (pyproject.toml)
 imageio==2.35.1
     # via
@@ -112,7 +112,7 @@ jsonschema==4.23.0
     # via napari
 jsonschema-specifications==2023.12.1
     # via jsonschema
-jupyter-client==8.6.2
+jupyter-client==8.6.3
     # via
     #   ipykernel
     #   qtconsole
@@ -216,7 +216,7 @@ packaging==24.1
     #   scikit-image
     #   sphinx
     #   vispy
-pandas==2.2.2
+pandas==2.2.3
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -237,7 +237,7 @@ pillow==10.4.0
     #   scikit-image
 pint==0.24.3
     # via napari
-platformdirs==4.3.2
+platformdirs==4.3.6
     # via
     #   jupyter-core
     #   pooch
@@ -266,7 +266,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.1.6
     # via superqt
-pydantic==2.9.0
+pydantic==2.9.2
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -275,7 +275,7 @@ pydantic==2.9.0
     #   pydantic-compat
 pydantic-compat==0.1.2
     # via app-model
-pydantic-core==2.23.2
+pydantic-core==2.23.4
     # via pydantic
 pygments==2.18.0
     # via
@@ -316,7 +316,7 @@ pyside6-essentials==6.7.2
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.3.2
+pytest==8.3.3
     # via
     #   partseg (pyproject.toml)
     #   pytest-qt
@@ -329,7 +329,7 @@ python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
     #   pandas
-pytz==2024.1
+pytz==2024.2
     # via pandas
 pyyaml==6.0.2
     # via
@@ -365,7 +365,7 @@ requests==2.32.3
     #   pooch
     #   pyconify
     #   sphinx
-rich==13.8.0
+rich==13.8.1
     # via
     #   npe2
     #   typer
@@ -382,11 +382,11 @@ scipy==1.14.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.13.0
+sentry-sdk==2.14.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==74.1.2
+setuptools==75.1.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -429,11 +429,11 @@ superqt==0.6.7
     #   partseg (pyproject.toml)
     #   magicgui
     #   napari
-sympy==1.13.2
+sympy==1.13.3
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
-tifffile==2024.8.30
+tifffile==2024.9.20
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -479,10 +479,8 @@ typing-extensions==4.12.2
     #   superqt
     #   typer
 tzdata==2024.1
-    # via
-    #   pandas
-    #   pydantic
-urllib3==2.2.2
+    # via pandas
+urllib3==2.2.3
     # via
     #   requests
     #   sentry-sdk
