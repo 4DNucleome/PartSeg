@@ -16,10 +16,15 @@ def adjust_color(color: typing.List[int]) -> typing.List[int]: ...
 
 
 def adjust_color(color: typing.Union[str, typing.List[int]]) -> typing.Union[str, typing.List[int]]:
+    # as napari ignore alpha channel in color, and adding it to
+    # color cause that napari fails to detect that such colormap is already present
+    # in this function I remove alpha channel if it is present
     if isinstance(color, str) and color.startswith("#"):
         if len(color) == 9:
+            # case when color is in format #RRGGBBAA
             return color[:7]
         if len(color) == 5:
+            # case when color is in format #RGBA
             return color[:4]
     return color
 
