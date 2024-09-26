@@ -25,7 +25,7 @@ from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
-from PartSegImage import Image
+from PartSegImage import ChannelInfo, Image
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +69,7 @@ def image2(image, tmp_path):
 def image2d(tmp_path):
     data = np.zeros([20, 20], dtype=np.uint8)
     data[10:-1, 1:-1] = 20
-    return Image(data, (10**-3, 10**-3), axes_order="YX", file_path=str(tmp_path / "test.tiff"))
+    return Image(data, spacing=(10**-3, 10**-3), axes_order="YX", file_path=str(tmp_path / "test.tiff"))
 
 
 @pytest.fixture
@@ -82,7 +82,19 @@ def stack_image():
     for x, y in itertools.product([0, 20], repeat=2):
         data[5:-5, x + 6 : x + 14, y + 6 : y + 14] = 140
 
-    return MaskProjectTuple("test_path", Image(data, (2, 1, 1), axes_order="ZYXC", file_path="test_path"))
+    return MaskProjectTuple(
+        "test_path",
+        Image(
+            data,
+            spacing=(2, 1, 1),
+            axes_order="ZYXC",
+            file_path="test_path",
+            channel_info=[
+                ChannelInfo(name="channel 1", color_map="#00FF00FF"),
+                ChannelInfo(name="channel 2", color_map="#00FF"),
+            ],
+        ),
+    )
 
 
 @pytest.fixture

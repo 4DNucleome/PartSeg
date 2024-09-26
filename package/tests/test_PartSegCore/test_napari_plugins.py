@@ -31,16 +31,21 @@ def test_project_to_layers_analysis(analysis_segmentation):
     l1 = Layer.create(*res[0])
     assert isinstance(l1, Image)
     assert l1.name == "channel 1"
+    assert l1.colormap.name == "green"
     assert np.allclose(l1.scale[1:] / 1e9, analysis_segmentation.image.spacing)
-    l2 = Layer.create(*res[2])
-    assert isinstance(l2, Labels)
-    assert l2.name == "ROI"
-    assert np.allclose(l2.scale[1:] / 1e9, analysis_segmentation.image.spacing)
-    l3 = Layer.create(*res[3])
+    l2 = Layer.create(*res[1])
+    assert isinstance(l2, Image)
+    assert l2.name == "channel 2"
+    assert l2.colormap.name == "blue"
+    l3 = Layer.create(*res[2])
     assert isinstance(l3, Labels)
-    assert l3.name == "test"
+    assert l3.name == "ROI"
     assert np.allclose(l3.scale[1:] / 1e9, analysis_segmentation.image.spacing)
-    assert not l3.visible
+    l4 = Layer.create(*res[3])
+    assert isinstance(l4, Labels)
+    assert l4.name == "test"
+    assert np.allclose(l4.scale[1:] / 1e9, analysis_segmentation.image.spacing)
+    assert not l4.visible
 
 
 def test_project_to_layers_roi():
