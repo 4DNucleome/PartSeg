@@ -973,9 +973,9 @@ def _hex_to_rgb(hex_code: str) -> tuple[int, int, int]:
     """
     hex_code = hex_code.lstrip("#")
 
-    if len(hex_code) == 3:
+    if len(hex_code) in {3, 4}:
         hex_code = "".join([c * 2 for c in hex_code])
-    elif len(hex_code) != 6:
+    elif len(hex_code) not in {6, 8}:
         raise ValueError(f"Invalid hex code format: {hex_code}")
 
     return int(hex_code[:2], 16), int(hex_code[2:4], 16), int(hex_code[4:6], 16)

@@ -700,11 +700,13 @@ def test_merge_channel_props_with_none(channel_name, default_coloring, ranges):
 
 def test_hex_to_rgb():
     assert _hex_to_rgb("#ff0000") == (255, 0, 0)
+    assert _hex_to_rgb("#ff0000ff") == (255, 0, 0)
     assert _hex_to_rgb("#00FF00") == (0, 255, 0)
     assert _hex_to_rgb("#b00") == (187, 0, 0)
+    assert _hex_to_rgb("#b00f") == (187, 0, 0)
     assert _hex_to_rgb("#B00") == (187, 0, 0)
     with pytest.raises(ValueError, match="Invalid hex code format"):
-        _hex_to_rgb("#b000")
+        _hex_to_rgb("#b0000")
 
 
 def test_name_to_rgb():

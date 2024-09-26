@@ -7,6 +7,15 @@ from PartSegCore.io_utils import LoadBase, WrongFileTypeException
 from PartSegCore.mask.io_functions import MaskProjectTuple
 
 
+def adjust_color(color):
+    if color.startswith("#"):
+        if len(color) == 9:
+            return color[:7]
+        if len(color) == 5:
+            return color[:4]
+    return color
+
+
 def _image_to_layers(project_info, scale, translate):
     res_layers = []
     if project_info.image.name == "ROI" and project_info.image.channels == 1:
@@ -27,6 +36,7 @@ def _image_to_layers(project_info, scale, translate):
                     "blending": "additive",
                     "translate": translate,
                     "metadata": project_info.image.metadata,
+                    "colormap": adjust_color(project_info.image.get_colors()[i]),
                 },
                 "image",
             )
