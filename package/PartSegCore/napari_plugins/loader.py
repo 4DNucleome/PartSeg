@@ -7,8 +7,16 @@ from PartSegCore.io_utils import LoadBase, WrongFileTypeException
 from PartSegCore.mask.io_functions import MaskProjectTuple
 
 
-def adjust_color(color):
-    if color.startswith("#"):
+@typing.overload
+def adjust_color(color: str) -> str: ...
+
+
+@typing.overload
+def adjust_color(color: typing.List[int]) -> typing.List[int]: ...
+
+
+def adjust_color(color: typing.Union[str, typing.List[int]]) -> typing.Union[str, typing.List[int]]:
+    if isinstance(color, str) and color.startswith("#"):
         if len(color) == 9:
             return color[:7]
         if len(color) == 5:
