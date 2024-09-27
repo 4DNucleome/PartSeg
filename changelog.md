@@ -2,12 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.15.4 - 2024-08-13
+## 0.15.4 - 2024-09-27
 
 ### 🚀 Features
 
 - Add preview of image metadata ([#1154](https://github.com/4DNucleome/PartSeg/pull/1154))
 - Add option to combine channels using sum and max ([#1159](https://github.com/4DNucleome/PartSeg/pull/1159))
+- Add metadata viewer as napari widget ([#1195](https://github.com/4DNucleome/PartSeg/pull/1195))
+- Read channel colors from `*.czi` metadata ([#1198](https://github.com/4DNucleome/PartSeg/pull/1198))
+- Use image color when add layer to napari ([#1200](https://github.com/4DNucleome/PartSeg/pull/1200))
 
 ### 🐛 Bug Fixes
 
@@ -22,7 +25,13 @@ All notable changes to this project will be documented in this file.
 - Fix trying to access to just deleted measurement profile from edit window. ([#1168](https://github.com/4DNucleome/PartSeg/pull/1168))
 - Fix bug in code for checking for survey file ([#1174](https://github.com/4DNucleome/PartSeg/pull/1174))
 - Fix plugin discovery in bundle to register them in napari viewer ([#1175](https://github.com/4DNucleome/PartSeg/pull/1175))
-- Fix call of logging
+- Fix problem with setting range of auto-generated widget ([#1187](https://github.com/4DNucleome/PartSeg/pull/1187))
+- Fix reading channel names from single channel czi files ([#1194](https://github.com/4DNucleome/PartSeg/pull/1194))
+
+### 🚜 Refactor
+
+- Make warnings error in tests ([#1192](https://github.com/4DNucleome/PartSeg/pull/1192))
+- Merge all channel-specific attributes of the Image class ([#1191](https://github.com/4DNucleome/PartSeg/pull/1191))
 
 ### 📚 Documentation
 
@@ -39,6 +48,11 @@ All notable changes to this project will be documented in this file.
 - \[Automatic\] Constraints upgrades: `napari`, `sentry-sdk`, `tifffile` ([#1169](https://github.com/4DNucleome/PartSeg/pull/1169))
 - \[Automatic\] Constraints upgrades: `magicgui`, `sentry-sdk` ([#1172](https://github.com/4DNucleome/PartSeg/pull/1172))
 - \[Automatic\] Constraints upgrades: `sympy`, `tifffile` ([#1177](https://github.com/4DNucleome/PartSeg/pull/1177))
+- \[Automatic\] Constraints upgrades: `imageio`, `napari`, `numpy` ([#1180](https://github.com/4DNucleome/PartSeg/pull/1180))
+- Constraints upgrades: `sentry-sdk` and fix tests ([#1182](https://github.com/4DNucleome/PartSeg/pull/1182))
+- `napari==0.5.3` related fixes, Constraints upgrades: `imageio`, `ipython`, `numpy`, `qtconsole`, `scipy`, `simpleitk`, `tifffile` ([#1183](https://github.com/4DNucleome/PartSeg/pull/1183))
+- \[Automatic\] Constraints upgrades: `numpy`, `pydantic` ([#1188](https://github.com/4DNucleome/PartSeg/pull/1188))
+- \[Automatic\] Constraints upgrades: `imagecodecs`, `pandas`, `pydantic`, `sentry-sdk`, `sympy`, `tifffile` ([#1190](https://github.com/4DNucleome/PartSeg/pull/1190))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -55,6 +69,13 @@ All notable changes to this project will be documented in this file.
 - Disable thumbnail generation in napari layer as it is fragile and not used ([#1171](https://github.com/4DNucleome/PartSeg/pull/1171))
 - \[pre-commit.ci\] pre-commit autoupdate ([#1173](https://github.com/4DNucleome/PartSeg/pull/1173))
 - \[pre-commit.ci\] pre-commit autoupdate ([#1178](https://github.com/4DNucleome/PartSeg/pull/1178))
+- Fix call of logger to properly pass arguments to messages ([#1179](https://github.com/4DNucleome/PartSeg/pull/1179))
+- Fix coverage files upload by enable hidden files upload ([#1186](https://github.com/4DNucleome/PartSeg/pull/1186))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1184](https://github.com/4DNucleome/PartSeg/pull/1184))
+- Use PyQt6 in pre-tests ([#1196](https://github.com/4DNucleome/PartSeg/pull/1196))
+- Add missed code from  #1191 ([#1197](https://github.com/4DNucleome/PartSeg/pull/1197))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1189](https://github.com/4DNucleome/PartSeg/pull/1189))
+- Auto add "skip check PR title"  label in update dependencies PR ([#1199](https://github.com/4DNucleome/PartSeg/pull/1199))
 
 ### Build
 
