@@ -1,10 +1,13 @@
 import typing
+from importlib.metadata import version
 
 import numpy as np
+from packaging.version import parse as parse_version
 
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.io_utils import LoadBase, WrongFileTypeException
 from PartSegCore.mask.io_functions import MaskProjectTuple
+from PartSegImage import Image
 
 
 @typing.overload
@@ -29,6 +32,20 @@ def adjust_color(color: typing.Union[str, typing.List[int]]) -> typing.Union[str
     return color
 
 
+if parse_version(version("napari")) >= parse_version("0.4.19a1"):
+
+    def add_color(image: Image, idx: int) -> dict:
+        return {
+            "colormap": adjust_color(image.get_colors()[idx]),
+        }
+
+else:
+
+    def add_color(image: Image, idx: int) -> dict:  # noqa: ARG001
+        # Do nothing, as napari is not able to pass hex color to image
+        return {}
+
+
 def _image_to_layers(project_info, scale, translate):
     res_layers = []
     if project_info.image.name == "ROI" and project_info.image.channels == 1:
@@ -49,7 +66,7 @@ def _image_to_layers(project_info, scale, translate):
                     "blending": "additive",
                     "translate": translate,
                     "metadata": project_info.image.metadata,
-                    "colormap": adjust_color(project_info.image.get_colors()[i]),
+                    **add_color(project_info.image, i),
                 },
                 "image",
             )
