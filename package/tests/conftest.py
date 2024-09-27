@@ -74,7 +74,7 @@ def image2d(tmp_path):
 
 @pytest.fixture
 def stack_image():
-    data = np.zeros([20, 40, 40, 2], dtype=np.uint8)
+    data = np.zeros([20, 40, 40, 3], dtype=np.uint8)
     for x, y in itertools.product([0, 20], repeat=2):
         data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = 100
     for x, y in itertools.product([0, 20], repeat=2):
@@ -92,6 +92,7 @@ def stack_image():
             channel_info=[
                 ChannelInfo(name="channel 1", color_map="#00FF00FF"),
                 ChannelInfo(name="channel 2", color_map="#00FF"),
+                ChannelInfo(name="channel 3", color_map="#FF0000"),
             ],
         ),
     )

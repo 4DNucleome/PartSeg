@@ -15,10 +15,10 @@ def adjust_color(color: str) -> str: ...
 
 
 @typing.overload
-def adjust_color(color: typing.List[int]) -> typing.List[int]: ...
+def adjust_color(color: typing.List[int]) -> typing.List[float]: ...
 
 
-def adjust_color(color: typing.Union[str, typing.List[int]]) -> typing.Union[str, typing.List[int]]:
+def adjust_color(color: typing.Union[str, typing.List[int]]) -> typing.Union[str, typing.List[float]]:
     # as napari ignore alpha channel in color, and adding it to
     # color cause that napari fails to detect that such colormap is already present
     # in this function I remove alpha channel if it is present
@@ -29,6 +29,10 @@ def adjust_color(color: typing.Union[str, typing.List[int]]) -> typing.Union[str
         if len(color) == 5:
             # case when color is in format #RGBA
             return color[:4]
+    elif isinstance(color, list):
+        return [color[i] / 255 for i in range(3)]
+    # If not fit to an earlier case, return as is.
+    # Maybe napari will handle it
     return color
 
 
