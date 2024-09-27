@@ -1,10 +1,54 @@
 import typing
+from importlib.metadata import version
 
 import numpy as np
+from packaging.version import parse as parse_version
 
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.io_utils import LoadBase, WrongFileTypeException
 from PartSegCore.mask.io_functions import MaskProjectTuple
+from PartSegImage import Image
+
+
+@typing.overload
+def adjust_color(color: str) -> str: ...
+
+
+@typing.overload
+def adjust_color(color: typing.List[int]) -> typing.List[float]: ...
+
+
+def adjust_color(color: typing.Union[str, typing.List[int]]) -> typing.Union[str, typing.List[float]]:
+    # as napari ignore alpha channel in color, and adding it to
+    # color cause that napari fails to detect that such colormap is already present
+    # in this function I remove alpha channel if it is present
+    if isinstance(color, str) and color.startswith("#"):
+        if len(color) == 9:
+            # case when color is in format #RRGGBBAA
+            return color[:7]
+        if len(color) == 5:
+            # case when color is in format #RGBA
+            return color[:4]
+    elif isinstance(color, list):
+        return [color[i] / 255 for i in range(3)]
+    # If not fit to an earlier case, return as is.
+    # Maybe napari will handle it
+    return color
+
+
+if parse_version(version("napari")) >= parse_version("0.4.19a1"):
+
+    def add_color(image: Image, idx: int) -> dict:
+        return {
+            "colormap": adjust_color(image.get_colors()[idx]),
+        }
+
+else:
+
+    def add_color(image: Image, idx: int) -> dict:  # noqa: ARG001
+        # Do nothing, as napari is not able to pass hex color to image
+        # the image and idx are present to keep the same signature
+        return {}
 
 
 def _image_to_layers(project_info, scale, translate):
@@ -27,6 +71,7 @@ def _image_to_layers(project_info, scale, translate):
                     "blending": "additive",
                     "translate": translate,
                     "metadata": project_info.image.metadata,
+                    **add_color(project_info.image, i),
                 },
                 "image",
             )
