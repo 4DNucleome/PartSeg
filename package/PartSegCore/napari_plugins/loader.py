@@ -47,6 +47,7 @@ else:
 
     def add_color(image: Image, idx: int) -> dict:  # noqa: ARG001
         # Do nothing, as napari is not able to pass hex color to image
+        # the image and idx are present to keep the same signature
         return {}
 
 
