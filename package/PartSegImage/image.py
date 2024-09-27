@@ -393,6 +393,7 @@ class Image:
                 self._channel_arrays + [self.reorder_axes(x, image.array_axis_order) for x in image._channel_arrays]
             )
             channel_names = self._merge_channel_names(self.channel_names, image.channel_names)
+            color_map = self.default_coloring + image.default_coloring
         else:
             index = self.array_axis_order.index(axis)
             data = self._image_data_normalize(
@@ -402,8 +403,11 @@ class Image:
                 ]
             )
             channel_names = self.channel_names
+            color_map = self.default_coloring
 
-        return self.substitute(data=data, ranges=self.ranges + image.ranges, channel_names=channel_names)
+        return self.substitute(
+            data=data, ranges=self.ranges + image.ranges, channel_names=channel_names, default_coloring=color_map
+        )
 
     @property
     def channel_names(self) -> list[str]:
@@ -494,7 +498,7 @@ class Image:
         channel_names = self.channel_names if channel_names is None else channel_names
 
         channel_info = [
-            ChannelInfoFull(name=name, color_map=color, contrast_limits=contrast_limits)
+            ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
             for name, color, contrast_limits in zip_longest(channel_names, default_coloring, ranges)
         ]
 

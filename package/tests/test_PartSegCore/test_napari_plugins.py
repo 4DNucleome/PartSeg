@@ -1,10 +1,12 @@
 # pylint: disable=no-self-use
 
 import os
+from importlib.metadata import version
 
 import numpy as np
 import pytest
 from napari.layers import Image, Labels, Layer
+from packaging.version import parse as parse_version
 
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.mask.io_functions import LoadROIFromTIFF
@@ -31,12 +33,10 @@ def test_project_to_layers_analysis(analysis_segmentation):
     l1 = Layer.create(*res[0])
     assert isinstance(l1, Image)
     assert l1.name == "channel 1"
-    assert l1.colormap.name == "green"
     assert np.allclose(l1.scale[1:] / 1e9, analysis_segmentation.image.spacing)
     l2 = Layer.create(*res[1])
     assert isinstance(l2, Image)
     assert l2.name == "channel 2"
-    assert l2.colormap.name == "blue"
     l3 = Layer.create(*res[2])
     assert isinstance(l3, Labels)
     assert l3.name == "ROI"
@@ -46,6 +46,21 @@ def test_project_to_layers_analysis(analysis_segmentation):
     assert l4.name == "test"
     assert np.allclose(l4.scale[1:] / 1e9, analysis_segmentation.image.spacing)
     assert not l4.visible
+
+
+@pytest.mark.skipif(
+    parse_version(version("napari")) < parse_version("0.4.19a16"), reason="not supported by old napari versions"
+)
+def test_passing_colormap(analysis_segmentation):
+    res = project_to_layers(analysis_segmentation)
+    l1 = Layer.create(*res[0])
+    assert isinstance(l1, Image)
+    assert l1.name == "channel 1"
+    assert l1.colormap.name == "green"
+    l2 = Layer.create(*res[1])
+    assert isinstance(l2, Image)
+    assert l2.name == "channel 2"
+    assert l2.colormap.name == "blue"
 
 
 def test_project_to_layers_roi():
