@@ -190,7 +190,6 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-          miniforge-variant: mambaforge
           use-mamba: true
           channels: conda-forge
           channel-priority: strict
