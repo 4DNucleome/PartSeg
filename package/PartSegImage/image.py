@@ -122,22 +122,25 @@ def positional_to_named(fun):
                 stacklevel=2,
             )
 
-        for name, arg in zip(
-            (
-                "spacing",
-                "file_path",
-                "mask",
-                "default_coloring",
-                "ranges",
-                "axes_order",
-                "shift",
-                "name",
-                "metadata_dict",
-            ),
-            args[2:],
-            # start from 2 because first two arguments are self and data
-        ):
-            kwargs[name] = arg
+        new_kwargs = dict(
+            zip(
+                (
+                    "spacing",
+                    "file_path",
+                    "mask",
+                    "default_coloring",
+                    "ranges",
+                    "axes_order",
+                    "shift",
+                    "name",
+                    "metadata_dict",
+                ),
+                args[2:],
+                # start from 2 because first two arguments are self and data
+            )
+        )
+
+        kwargs.update(new_kwargs)
 
         return fun(*args[:2], **kwargs)
 
