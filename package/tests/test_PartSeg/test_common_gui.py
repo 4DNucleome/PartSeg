@@ -874,7 +874,7 @@ class TestFormWidget:
                 return "1"
 
             @classmethod
-            def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
                 return [AlgorithmProperty("field", "Field", 1)]
 
         class SampleClass2(AlgorithmDescribeBase):
@@ -883,7 +883,7 @@ class TestFormWidget:
                 return "2"
 
             @classmethod
-            def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
                 return [AlgorithmProperty("field_", "Field", 2)]
 
         SampleSelection.register(SampleClass1)
@@ -1965,8 +1965,8 @@ def test_labels_meth(cls_):
 
 def test_save_colormap_in_settings(part_settings):
     class DummyColormap(typing.NamedTuple):
-        colors: typing.List[typing.List[float]]
-        controls: typing.List[float]
+        colors: list[list[float]]
+        controls: list[float]
 
     assert "custom_aaa" not in part_settings.colormap_dict
     cmap = Colormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0, 1])

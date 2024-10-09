@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.9", "3.10", "3.11", "3.12"]
         os: ["ubuntu-20.04"]
         qt_backend: ["PyQt5"]
         tox_args: [ "" ]
@@ -90,7 +90,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.9", "3.10", "3.11", "3.12"]
         os: ["ubuntu-20.04", "macos-13", "windows-2019"]
         qt_backend: ["PySide2", "PyQt5"]
         include:
@@ -134,8 +134,8 @@ jobs:
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       test_data: True
-      python_version: "3.8"
-      tox_args: "-e py38-PyQt5-minimal"
+      python_version: "3.9"
+      tox_args: "-e py39-PyQt5-minimal"
       coverage: true
 
   coverage_prepare:

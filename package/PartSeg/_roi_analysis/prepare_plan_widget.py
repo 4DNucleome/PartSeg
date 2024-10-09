@@ -294,9 +294,7 @@ class ProtectedGroupBox(QGroupBox):
             self.protect = previous
 
     @classmethod
-    def refresh_profiles(
-        cls, list_widget: typing.Union[QListWidget, SearchableListWidget], new_values: typing.List[str]
-    ):
+    def refresh_profiles(cls, list_widget: typing.Union[QListWidget, SearchableListWidget], new_values: list[str]):
         index = cls.get_index(list_widget.currentItem(), new_values)
         list_widget.clear()
         list_widget.addItems(new_values)
@@ -304,7 +302,7 @@ class ProtectedGroupBox(QGroupBox):
             list_widget.setCurrentRow(index)
 
     @staticmethod
-    def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
+    def get_index(item: QListWidgetItem, new_values: list[str]) -> int:
         if item is None:
             return -1
         text = item.text()
@@ -319,7 +317,7 @@ class OtherOperations(ProtectedGroupBox):
 
     def __init__(self, parent=None):
         super().__init__("Other operations:", parent)
-        self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
+        self.save_translate_dict: dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
         self.save_constructor = None
 
         self.change_root = QEnumComboBox(self, enum_class=RootType)
@@ -642,7 +640,7 @@ class SelectMaskOp(ProtectedGroupBox):
 
         self.add_mask_btn.setDisabled(True)
 
-    def update_mask_set(self, mask_set: typing.Set[str]):
+    def update_mask_set(self, mask_set: set[str]):
         self.mask_set = mask_set
 
     def set_replace(self, replace: bool):
@@ -692,7 +690,7 @@ class CreatePlan(QWidget):
     def __init__(self, settings: PartSettings):
         super().__init__()
         self.settings = settings
-        self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
+        self.save_translate_dict: dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
         self._mask_set = set()
         self.plan = PlanPreview(self)
         self.save_plan_btn = QPushButton("Save")

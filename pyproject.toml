@@ -19,7 +19,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -33,7 +32,7 @@ keywords = [
     "bioimaging",
     "GUI",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "IPython>=7.7.0",
     "PartSegCore-compiled-backend>=0.13.11,<0.16.0",
@@ -128,7 +127,7 @@ pyqt5 = [
 ]
 pyqt6 = [
     "PyQt6",
-     "napari[pyqt6]>=0.5.0; python_version >= '3.9'",
+    "napari[pyqt6]>=0.5.0",
 ]
 pyside = [
     "PartSeg[pyside2]",
@@ -139,7 +138,7 @@ pyside2 = [
 ]
 pyside6 = [
     "PySide6",
-    "napari[pyside6_experimental]>=0.5.0; python_version >= '3.9'",
+    "napari[pyside6_experimental]>=0.5.0",
 ]
 test = [
     "coverage",
@@ -268,7 +267,7 @@ exclude_also = [
 
 [tool.black]
 line-length = 120
-target-version = ['py38']
+target-version = ['py39']
 include = '\.pyi?$'
 exclude = '''
 
@@ -294,7 +293,7 @@ exclude = '''
 [tool.ruff]
 line-length = 120
 exclude = ["examples/call_simple_threshold.py"]
-target-version = "py38"
+target-version = "py39"
 fix = true
 
 [tool.ruff.lint]

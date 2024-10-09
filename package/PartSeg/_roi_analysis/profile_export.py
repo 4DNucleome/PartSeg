@@ -153,10 +153,10 @@ class ExportDialog(QDialog):
 class ImportDialog(QDialog):
     def __init__(
         self,
-        import_dict: typing.Dict[str, typing.Any],
-        local_dict: typing.Dict[str, typing.Any],
-        viewer: typing.Type[ObjectPreviewProtocol],
-        expected_type: typing.Optional[typing.Type] = None,
+        import_dict: dict[str, typing.Any],
+        local_dict: dict[str, typing.Any],
+        viewer: type[ObjectPreviewProtocol],
+        expected_type: typing.Optional[type] = None,
         parent: typing.Optional[QWidget] = None,
     ):
         """

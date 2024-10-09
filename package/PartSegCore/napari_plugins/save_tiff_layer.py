@@ -1,5 +1,5 @@
 import os
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 from napari.types import FullLayerData
@@ -25,7 +25,7 @@ def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
     return path
 
 
-def napari_write_images(path: str, layer_data: List[FullLayerData]) -> List[str]:
+def napari_write_images(path: str, layer_data: list[FullLayerData]) -> list[str]:
     ext = os.path.splitext(path)[1]
     base_shape = layer_data[0][0].shape
     if not all(isinstance(x[0], np.ndarray) and x[0].shape == base_shape for x in layer_data) or ext.lower() not in {

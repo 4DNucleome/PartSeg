@@ -18,7 +18,7 @@ from PartSegImage import Channel
 
 class SaveModeling(SaveBase):
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return [
             AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty("clip", "Clip area", False),

@@ -50,7 +50,7 @@ class NapariFormWidgetWithMask(NapariFormWidget):
 
 class NapariFormDialog(FormDialog):
     @staticmethod
-    def widget_class() -> typing.Type[FormWidget]:
+    def widget_class() -> type[FormWidget]:
         return NapariFormWidget
 
     def __init__(self, *args, **kwargs):

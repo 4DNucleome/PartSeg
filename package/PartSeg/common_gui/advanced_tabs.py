@@ -6,7 +6,6 @@ At this moment controlling colormaps tabs and developer PartSegCore
 import importlib
 import logging
 from contextlib import suppress
-from typing import List
 
 from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QCloseEvent
@@ -201,7 +200,7 @@ class ColorControl(QTabWidget):
     Class for storage all settings for labels and colormaps.
     """
 
-    def __init__(self, settings: BaseSettings, image_view_names: List[str]):
+    def __init__(self, settings: BaseSettings, image_view_names: list[str]):
         super().__init__()
         self.appearance = Appearance(settings)
         self.colormap_editor = PColormapCreator(settings)
@@ -237,7 +236,7 @@ class AdvancedWindow(QTabWidget):
     :param image_view_names: passed as second argument to :py:class:`~.PColormapList`
     """
 
-    def __init__(self, settings: BaseSettings, image_view_names: List[str], reload_list=None, parent=None):
+    def __init__(self, settings: BaseSettings, image_view_names: list[str], reload_list=None, parent=None):
         super().__init__(parent)
         self.color_control = ColorControl(settings, image_view_names)
         self.settings = settings

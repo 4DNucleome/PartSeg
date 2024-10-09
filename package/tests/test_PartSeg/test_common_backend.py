@@ -364,7 +364,7 @@ class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
         return "test"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return [AlgorithmProperty("a", "A", 0)]
 
 

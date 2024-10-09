@@ -1,7 +1,8 @@
 import sys
 from abc import ABC
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, ClassVar, Dict, ForwardRef, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, ClassVar, ForwardRef, Optional, Union
 
 import numpy as np
 from local_migrator import REGISTER, class_to_str, register_class, rename_key
@@ -56,7 +57,7 @@ class AreaType(Enum):
         return self.name.replace("_", " ")
 
 
-def has_mask_components(component_and_mask_info: Iterable[Tuple[PerComponent, AreaType]]) -> bool:
+def has_mask_components(component_and_mask_info: Iterable[tuple[PerComponent, AreaType]]) -> bool:
     """Check if any measurement will return value per mask component"""
     return any(
         (cmp == PerComponent.Yes and area != AreaType.ROI) or cmp == PerComponent.Per_Mask_component
@@ -64,7 +65,7 @@ def has_mask_components(component_and_mask_info: Iterable[Tuple[PerComponent, Ar
     )
 
 
-def has_roi_components(component_and_mask_info: Iterable[Tuple[PerComponent, AreaType]]) -> bool:
+def has_roi_components(component_and_mask_info: Iterable[tuple[PerComponent, AreaType]]) -> bool:
     """Check if any measurement will return value per ROI component"""
     return any((cmp == PerComponent.Yes and area == AreaType.ROI) for cmp, area in component_and_mask_info)
 
@@ -124,7 +125,7 @@ class Leaf(BaseModel):
             raise ValueError("Per_Mask_component can be used only with ROI area")
         return v
 
-    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
+    def get_channel_num(self, measurement_dict: dict[str, "MeasurementMethodBase"]) -> set[Channel]:
         """
         Get set with number of channels needed for calculate this measurement
 
@@ -153,7 +154,7 @@ class Leaf(BaseModel):
             raise AlgorithmDescribeNotFound(self.name) from e
         return resp
 
-    def _parameters_string(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
+    def _parameters_string(self, measurement_dict: dict[str, "MeasurementMethodBase"]) -> str:
         parameters = dict(self.parameters)
         if not parameters and self.channel is None:
             return ""
@@ -168,7 +169,7 @@ class Leaf(BaseModel):
             arr.extend(f"{k.replace('_', ' ')}={v}" for k, v in parameters.items())
         return "[" + ", ".join(arr) + "]"
 
-    def _plugin_info(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
+    def _plugin_info(self, measurement_dict: dict[str, "MeasurementMethodBase"]) -> str:
         if self.name not in measurement_dict:
             return ""
         measurement_method = measurement_dict[self.name]
@@ -181,7 +182,7 @@ class Leaf(BaseModel):
             return f"[{measurement_method.__module__.split('.', 1)[0]}] "
         return ""
 
-    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
+    def pretty_print(self, measurement_dict: dict[str, "MeasurementMethodBase"]) -> str:
         """
         Pretty print for presentation in user interface.
 
@@ -268,7 +269,7 @@ class Node(BaseModel):
     )
     right: Union[Node, Leaf]
 
-    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
+    def get_channel_num(self, measurement_dict: dict[str, "MeasurementMethodBase"]) -> set[Channel]:
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
     def __str__(self):  # pragma: no cover
@@ -278,7 +279,7 @@ class Node(BaseModel):
 
         return left_text + self.op + right_text
 
-    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:  # pragma: no cover
+    def pretty_print(self, measurement_dict: dict[str, "MeasurementMethodBase"]) -> str:  # pragma: no cover
         left_text = (
             f"({self.left.pretty_print(measurement_dict)})"
             if isinstance(self.left, Node)
@@ -324,7 +325,7 @@ class MeasurementEntry(BaseModel):
     def get_unit(self, unit: Units, ndim) -> str:
         return str(self.calculation_tree.get_unit(ndim)).format(str(unit))
 
-    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
+    def get_channel_num(self, measurement_dict: dict[str, "MeasurementMethodBase"]) -> set[Channel]:
         return self.calculation_tree.get_channel_num(measurement_dict)
 
 
@@ -339,7 +340,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
     text_info = "", ""
 
-    need_class_method: ClassVar[List[str]] = [
+    need_class_method: ClassVar[list[str]] = [
         "get_description",
         "is_component",
         "calculate_property",
@@ -371,8 +372,8 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
         mask: np.ndarray,
         voxel_size: Spacing,
         result_scalar: float,
-        roi_alternative: Dict[str, np.ndarray],
-        roi_annotation: Dict[int, Any],
+        roi_alternative: dict[str, np.ndarray],
+        roi_annotation: dict[int, Any],
         **kwargs,
     ):
         """

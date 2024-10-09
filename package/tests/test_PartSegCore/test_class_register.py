@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from local_migrator import REGISTER, class_to_str, register_class, rename_key, update_argument
@@ -9,7 +9,7 @@ class SampleClass1:
     pass
 
 
-def rename_a_to_c(dkt: Dict[str, Any]) -> Dict[str, Any]:
+def rename_a_to_c(dkt: dict[str, Any]) -> dict[str, Any]:
     dkt = dict(dkt)
     dkt["c"] = dkt["a"]
     del dkt["a"]

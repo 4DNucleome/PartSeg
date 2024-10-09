@@ -5,7 +5,7 @@ from napari.utils import Colormap
 from napari.utils.colormaps import make_colorbar
 from qtpy.QtGui import QImage
 
-ColorMapDict = typing.MutableMapping[str, typing.Tuple[Colormap, bool]]
+ColorMapDict = typing.MutableMapping[str, tuple[Colormap, bool]]
 
 
 class NumpyQImage(QImage):

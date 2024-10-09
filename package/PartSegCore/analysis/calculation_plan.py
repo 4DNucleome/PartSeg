@@ -298,7 +298,7 @@ class CalculationTree:
     def __init__(
         self,
         operation: typing.Union[PydanticBaseModel, ROIExtractionProfile, MeasurementCalculate, RootType],
-        children: typing.List["CalculationTree"],
+        children: list["CalculationTree"],
     ):
         if operation == "root":
             operation = RootType.Image
@@ -427,7 +427,7 @@ class Calculation(BaseCalculation):
             voxel_size,
             overwrite_voxel_size,
         )
-        self.file_list: typing.List[str] = file_list
+        self.file_list: list[str] = file_list
 
     def get_base_calculation(self) -> BaseCalculation:
         """Extract py:class:`BaseCalculation` from instance."""
@@ -502,7 +502,7 @@ class CalculationPlan:
     :type execution_tree: CalculationTree
     """
 
-    correct_name: typing.ClassVar[typing.Dict[str, typing.Union[BaseModel, Enum]]] = {
+    correct_name: typing.ClassVar[dict[str, typing.Union[BaseModel, Enum]]] = {
         MaskCreate.__name__: MaskCreate,
         MaskUse.__name__: MaskUse,
         Save.__name__: Save,
@@ -549,7 +549,7 @@ class CalculationPlan:
     def __repr__(self):
         return f"CalculationPlan(name={self.name!r}, execution_tree={self.execution_tree!r})"
 
-    def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
+    def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> list[MeasurementCalculate]:
         """
         Get all measurement Calculation below given node
 
@@ -588,7 +588,7 @@ class CalculationPlan:
     def __deepcopy__(self, memo):
         return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
-    def get_node(self, search_pos: typing.Optional[typing.List[int]] = None, parent=False) -> CalculationTree:
+    def get_node(self, search_pos: typing.Optional[list[int]] = None, parent=False) -> CalculationTree:
         """
         :param search_pos:
         :return: CalculationTree
