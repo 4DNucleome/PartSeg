@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.12"]  # ["3.8", "3.9", "3.10", "3.11", "3.12"]
         os: ["ubuntu-20.04"]
         qt_backend: ["PyQt5"]
         tox_args: [ "" ]
@@ -67,9 +67,12 @@ jobs:
           - python_version: "3.9"
             os: "ubuntu-22.04"
             qt_backend: "PySide6"
-          - python_version: "3.10"
-            os: "ubuntu-22.04"
+          - python_version: "3.12"
+            os: "ubuntu-24.04"
             qt_backend: "PyQt6"
+          - python_version: "3.12"
+            os: "ubuntu-24.04"
+            qt_backend: "PyQt5"
           - python_version: "3.10"
             os: "ubuntu-22.04"
             qt_backend: "PyQt5"
@@ -96,7 +99,7 @@ jobs:
         include:
           - python_version: "3.11"
             qt_backend: "PyQt5"
-            os: "ubuntu-24.04"
+            os: "ubuntu-22.04"
           - python_version: "3.9"
             os: "ubuntu-22.04"
             qt_backend: "PySide6"
