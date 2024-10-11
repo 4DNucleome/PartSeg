@@ -96,7 +96,7 @@ jobs:
         include:
           - python_version: "3.11"
             qt_backend: "PyQt5"
-            os: "ubuntu-22.04"
+            os: "ubuntu-24.04"
           - python_version: "3.9"
             os: "ubuntu-22.04"
             qt_backend: "PySide6"
