@@ -55,19 +55,19 @@ jobs:
         qt_backend: ["PyQt5"]
         tox_args: [ "" ]
         include:
-          - python_version: "3.9"
+          - python_version: "3.11"
             os: "macos-13"
             qt_backend: "PyQt5"
-          - python_version: "3.9"
+          - python_version: "3.11"
             os: "windows-2019"
             qt_backend: "PyQt5"
-          - python_version: "3.9"
+          - python_version: "3.11"
             os: "ubuntu-20.04"
             qt_backend: "PySide2"
-          - python_version: "3.9"
+          - python_version: "3.11"
             os: "ubuntu-22.04"
             qt_backend: "PySide6"
-          - python_version: "3.10"
+          - python_version: "3.12"
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
           - python_version: "3.10"
@@ -94,16 +94,16 @@ jobs:
         os: ["ubuntu-20.04", "macos-13", "windows-2019"]
         qt_backend: ["PySide2", "PyQt5"]
         include:
-          - python_version: "3.11"
+          - python_version: "3.12"
             qt_backend: "PyQt5"
             os: "ubuntu-22.04"
-          - python_version: "3.9"
+          - python_version: "3.11"
             os: "ubuntu-22.04"
             qt_backend: "PySide6"
-          - python_version: "3.9"
+          - python_version: "3.11"
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
-          - python_version: "3.10"
+          - python_version: "3.11"
             os: "ubuntu-22.04"
             qt_backend: "PyQt5"
             pydantic: "_pydantic_1"
@@ -124,8 +124,8 @@ jobs:
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       test_data: True
-      python_version: "3.10"
-      tox_args: "-e py310-PyQt5-coverage"
+      python_version: "3.12"
+      tox_args: "-e py312-PyQt5-coverage"
       coverage: true
 
   test_minimal:
@@ -193,7 +193,7 @@ jobs:
           use-mamba: true
           channels: conda-forge
           channel-priority: strict
-          python-version: "3.11"
+          python-version: "3.12"
 
       - uses: tlambert03/setup-qt-libs@v1
 

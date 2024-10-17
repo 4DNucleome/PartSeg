@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        napari: ["napari417", "napari418"]
+        napari: ["napari419", "napari54"]
         qt_backend: ["PyQt5"]
         include:
           - napari: "napari417"
