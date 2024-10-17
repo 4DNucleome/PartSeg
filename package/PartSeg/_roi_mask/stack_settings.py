@@ -22,7 +22,7 @@ from PartSegImage.image import minimal_dtype, reduce_array
 class StackSettings(BaseSettings):
     load_metadata = staticmethod(load_metadata)
     components_change_list = Signal([int, list])
-    save_locations_keys: typing.ClassVar[typing.List[str]] = [
+    save_locations_keys: typing.ClassVar[list[str]] = [
         "save_batch",
         "save_components_directory",
         "save_segmentation_directory",
@@ -36,7 +36,7 @@ class StackSettings(BaseSettings):
         super().__init__(json_path, profile_name)
         self.chosen_components_widget = None
         self.keep_chosen_components = False
-        self.components_parameters_dict: typing.Dict[int, ROIExtractionProfile] = {}
+        self.components_parameters_dict: dict[int, ROIExtractionProfile] = {}
 
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (
@@ -86,7 +86,7 @@ class StackSettings(BaseSettings):
 
         return res
 
-    def chosen_components(self) -> typing.List[int]:
+    def chosen_components(self) -> list[int]:
         """
         Needs instance of :py:class:`PartSeg.segmentation_mask.main_window.ChosenComponents` on variable
         Py:attr:`chosen_components_widget` (or something implementing its interface)
@@ -202,17 +202,17 @@ class StackSettings(BaseSettings):
         cls,
         state: MaskProjectTuple,
         new_roi_info: ROIInfo,
-        new_roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]],
-        list_of_components: typing.List[int],
+        new_roi_extraction_parameters: dict[int, typing.Optional[ROIExtractionProfile]],
+        list_of_components: list[int],
         save_chosen: bool = True,
     ) -> MaskProjectTuple:
         """
 
         :param MaskProjectTuple state: state to be transformed
         :param ROIInfo new_roi_info: roi description
-        :param typing.Dict[int, typing.Optional[ROIExtractionProfile]] new_roi_extraction_parameters:
+        :param dict[int, typing.Optional[ROIExtractionProfile]] new_roi_extraction_parameters:
             Parameters used to extract roi
-        :param typing.List[int] list_of_components: list of components from new_roi which should be selected
+        :param list[int] list_of_components: list of components from new_roi which should be selected
         :param bool save_chosen: if save currently selected components
         :return: new state
         """
@@ -280,7 +280,7 @@ class StackSettings(BaseSettings):
             roi_extraction_parameters=components_parameters_dict,
         )
 
-    def compare_history(self, history: typing.List[HistoryElement]):
+    def compare_history(self, history: list[HistoryElement]):
         # TODO check dict comparison
         if len(history) != self.history_size():
             return False
@@ -317,7 +317,7 @@ class StackSettings(BaseSettings):
 
 
 def get_mask(
-    segmentation: typing.Optional[np.ndarray], mask: typing.Optional[np.ndarray], selected: typing.List[int]
+    segmentation: typing.Optional[np.ndarray], mask: typing.Optional[np.ndarray], selected: list[int]
 ) -> np.ndarray:
     """
     Calculate mask base on segmentation, current mask and list of chosen components.

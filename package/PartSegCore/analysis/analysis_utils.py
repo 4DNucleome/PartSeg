@@ -1,4 +1,3 @@
-import typing
 from textwrap import indent
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -27,7 +26,7 @@ class SegmentationPipelineElement(BaseModel):
 class SegmentationPipeline(BaseModel):
     name: str
     segmentation: ROIExtractionProfile
-    mask_history: typing.List[SegmentationPipelineElement]
+    mask_history: list[SegmentationPipelineElement]
 
     def pretty_print(self, algorithm_dict):
         return (

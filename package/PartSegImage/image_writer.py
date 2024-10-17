@@ -124,7 +124,7 @@ class IMAGEJImageWriter(BaseImageWriter):
         """
         data = image.get_image_for_save()
         spacing = image.get_um_spacing()
-        metadata: typing.Dict[str, typing.Any] = {"mode": "color", "unit": "\\u00B5m"}
+        metadata: dict[str, typing.Any] = {"mode": "color", "unit": "\\u00B5m"}
         if len(spacing) == 3:
             metadata["spacing"] = spacing[0]
         if image.channel_names is not None:
@@ -150,7 +150,7 @@ class IMAGEJImageWriter(BaseImageWriter):
             return
         mask_max = np.max(mask)
         mask = mask.astype(minimal_dtype(mask_max))
-        metadata: typing.Dict[str, typing.Union[str, float]] = {"mode": "color", "unit": "\\u00B5m"}
+        metadata: dict[str, typing.Union[str, float]] = {"mode": "color", "unit": "\\u00B5m"}
         spacing = image.get_um_spacing()
         if len(spacing) == 3:
             metadata["spacing"] = spacing[0]

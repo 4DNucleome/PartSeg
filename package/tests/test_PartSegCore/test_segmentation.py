@@ -3,7 +3,7 @@
 import operator
 from abc import ABC
 from copy import deepcopy
-from typing import List, Type, Union
+from typing import Union
 
 import numpy as np
 import pytest
@@ -85,7 +85,7 @@ def empty(_s: str, _i: int):
 def test_base_parameters(algorithm_name):
     algorithm_class = AnalysisAlgorithmSelection[algorithm_name]
     assert algorithm_class.get_name() == algorithm_name
-    algorithm_class: Type[ROIExtractionAlgorithm]
+    algorithm_class: type[ROIExtractionAlgorithm]
     obj = algorithm_class()
     values = algorithm_class.get_default_values()
     obj.set_parameters(values)
@@ -119,7 +119,7 @@ class BaseThreshold:
     def get_side_object():
         raise NotImplementedError
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         raise NotImplementedError
 
 
@@ -172,7 +172,7 @@ class TestLowerThreshold(BaseOneThreshold):
     def get_side_object():
         return get_two_parts_side()
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         return sa.LowerThresholdAlgorithm
 
 
@@ -194,7 +194,7 @@ class TestUpperThreshold(BaseOneThreshold):
     def get_side_object():
         return get_two_parts_side_reversed()
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         return sa.UpperThresholdAlgorithm
 
 
@@ -345,7 +345,7 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
     get_side_object = staticmethod(get_two_parts_side)
     get_multiple_part = staticmethod(get_multiple_part)
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         return sa.LowerThresholdFlowAlgorithm
 
 
@@ -369,7 +369,7 @@ class TestUpperThresholdFlow(BaseFlowThreshold):
     get_side_object = staticmethod(get_two_parts_side_reversed)
     get_multiple_part = staticmethod(get_multiple_part_reversed)
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         return sa.UpperThresholdFlowAlgorithm
 
 
@@ -514,7 +514,7 @@ class TestMaskCreate:
             clip_to_mask=False,
         )
         res_array1 = np.zeros((1, 30, 30, 30), dtype=np.uint8)
-        slices: List[Union[int, slice]] = [slice(None)] * 4
+        slices: list[Union[int, slice]] = [slice(None)] * 4
         for i in range(1, 4):
             slices[i] = slice(10 - radius, 20 + radius)
         if radius_type == RadiusType.R2D:

@@ -126,15 +126,15 @@ class BaseImageReader:
     def __init__(self, callback_function: typing.Optional[typing.Callable[[str, int], typing.Any]] = None) -> None:
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
-        self.channel_names: typing.List[str] = []
-        self.colors: typing.List[typing.Optional[typing.Any]] = []
-        self.ranges: typing.List[typing.Tuple[float, float]] = []
+        self.channel_names: list[str] = []
+        self.colors: list[typing.Optional[typing.Any]] = []
+        self.ranges: list[tuple[float, float]] = []
         if callback_function is None:
             self.callback_function = _empty
         else:
             self.callback_function = callback_function
 
-    def _get_channel_info(self) -> typing.List[ChannelInfo]:
+    def _get_channel_info(self) -> list[ChannelInfo]:
         return [
             ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
             for name, color, contrast_limits in zip_longest(self.channel_names, self.colors, self.ranges)
@@ -169,7 +169,7 @@ class BaseImageReader:
         image_path: typing.Union[str, Path],
         mask_path=None,
         callback_function: typing.Optional[typing.Callable] = None,
-        default_spacing: typing.Optional[typing.Tuple[float, float, float]] = None,
+        default_spacing: typing.Optional[tuple[float, float, float]] = None,
     ) -> Image:
         """
         read image file with optional mask file
@@ -188,7 +188,7 @@ class BaseImageReader:
         return instance.read(image_path, mask_path)
 
     @staticmethod
-    def _reduce_obsolete_dummy_axes(array, axes) -> typing.Tuple[np.ndarray, str]:
+    def _reduce_obsolete_dummy_axes(array, axes) -> tuple[np.ndarray, str]:
         """
         If there are duplicates in axes string then remove dimensions of size one
 
@@ -269,7 +269,7 @@ class BaseImageReaderBuffer(BaseImageReader):
         image_path: typing.Union[str, Path, BytesIO],
         mask_path=None,
         callback_function: typing.Optional[typing.Callable] = None,
-        default_spacing: typing.Optional[typing.Tuple[float, float, float]] = None,
+        default_spacing: typing.Optional[tuple[float, float, float]] = None,
     ) -> Image:
         """
         read image file with optional mask file
@@ -316,9 +316,10 @@ class OifImagReader(BaseImageReader):
         with OifFile(image_path) as image_file:
             tiffs = tifffile.natural_sorted(image_file.glob("*.tif"))
 
-            with image_file.open_file(tiffs[0]) as tiff_buffer, tifffile.TiffFile(
-                tiff_buffer, name=tiffs[0]
-            ) as tif_file:
+            with (
+                image_file.open_file(tiffs[0]) as tiff_buffer,
+                tifffile.TiffFile(tiff_buffer, name=tiffs[0]) as tif_file,
+            ):
                 axes = image_file.series[0].axes + tif_file.series[0].axes
             image_data = image_file.asarray()
             image_data = self.update_array_shape(image_data, axes)
@@ -411,10 +412,10 @@ class ObsepImageReader(BaseImageReader):
     def _search_for_files(
         self,
         directory: Path,
-        channels: typing.List["Element"],
+        channels: list["Element"],
         suffix: str = "",
         required: bool = False,
-    ) -> typing.List[Image]:
+    ) -> list[Image]:
         possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
         channel_list = []
         for channel in channels:
@@ -506,7 +507,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                     mask_data = mask_file.asarray()
                     mask_data = self.update_array_shape(mask_data, mask_file.series[0].axes)
                     if "C" in self.return_order():
-                        pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(mask_data.ndim)]
+                        pos: list[typing.Union[slice, int]] = [slice(None) for _ in range(mask_data.ndim)]
                         pos[self.return_order().index("C")] = 0
                         mask_data = mask_data[tuple(pos)]
 

@@ -308,7 +308,7 @@ class ExportProjectDialog(QDialog):
 
 def _extract_information_from_excel_to_export(
     excel_path: typing.Union[str, Path], base_folder: typing.Union[str, Path]
-) -> typing.List[typing.Tuple[str, bool]]:
+) -> list[tuple[str, bool]]:
     """Extract information from Excel file to export"""
     file_list = []
     file_set = set()

@@ -64,10 +64,10 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
     def reset_choices(self, event=None):
         self.form_widget.reset_choices(event)
 
-    def get_layer_list(self) -> typing.List[str]:
+    def get_layer_list(self) -> list[str]:
         return [x.name for x in self.get_layers().values() if x.name != "mask"]
 
-    def get_layers(self) -> typing.Dict[str, Layer]:
+    def get_layers(self) -> dict[str, Layer]:
         values = self.form_widget.get_layers()
         return {k: v for k, v in values.items() if isinstance(v, Layer)}
 
@@ -83,7 +83,7 @@ class NapariAlgorithmChoose(AlgorithmChooseBase):
 
 class ROIExtractionAlgorithms(QWidget):
     @staticmethod
-    def get_method_dict() -> typing.Type[AlgorithmSelection]:  # pragma: no cover
+    def get_method_dict() -> type[AlgorithmSelection]:  # pragma: no cover
         raise NotImplementedError
 
     @staticmethod
@@ -154,7 +154,7 @@ class ROIExtractionAlgorithms(QWidget):
         self.profile_combo_box.setCurrentIndex(0)
 
     @property
-    def profile_dict(self) -> typing.Dict[str, ROIExtractionProfile]:
+    def profile_dict(self) -> dict[str, ROIExtractionProfile]:
         return self.settings.get_from_profile(f"{self.prefix()}.profiles", {})
 
     def save_action(self):
@@ -202,7 +202,7 @@ class ROIExtractionAlgorithms(QWidget):
     def update_image(self):
         widget = typing.cast(NapariInteractiveAlgorithmSettingsWidget, self.algorithm_chose.current_widget())
         self.settings.last_executed_algorithm = widget.name
-        layer_names: typing.List[str] = widget.get_layer_list()
+        layer_names: list[str] = widget.get_layer_list()
         if layer_names == self.channel_names:
             return
         image = generate_image(self.viewer, *layer_names)
@@ -297,8 +297,8 @@ class ROIMaskExtraction(ROIExtractionAlgorithms):
 class ProfilePreviewDialog(QDialog):
     def __init__(
         self,
-        profile_dict: typing.Dict[str, ROIExtractionProfile],
-        algorithm_selection: typing.Type[AlgorithmSelection],
+        profile_dict: dict[str, ROIExtractionProfile],
+        algorithm_selection: type[AlgorithmSelection],
         settings: BaseSettings,
         parent=None,
     ):

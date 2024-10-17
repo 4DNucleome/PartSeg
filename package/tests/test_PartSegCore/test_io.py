@@ -10,7 +10,6 @@ from enum import Enum
 from glob import glob
 from io import BytesIO
 from pathlib import Path
-from typing import Type
 
 import h5py
 import numpy as np
@@ -205,7 +204,7 @@ class TestSaveHistory:
     def test_save_roi_info_mask_project(self, stack_segmentation2, tmp_path):
         self.perform_roi_info_test(stack_segmentation2, tmp_path, SaveROI, LoadROI)
 
-    def perform_roi_info_test(self, project, save_path, save_method: Type[SaveBase], load_method: Type[LoadBase]):
+    def perform_roi_info_test(self, project, save_path, save_method: type[SaveBase], load_method: type[LoadBase]):
         assert save_method.get_short_name().lower() == save_method.get_short_name()
         assert save_method.get_short_name().isalpha()
         assert load_method.get_short_name().lower() == load_method.get_short_name()
@@ -231,7 +230,7 @@ class TestSaveHistory:
         self.perform_roi_info_history_test(stack_segmentation2, tmp_path, mask_property, SaveROI, LoadROI)
 
     def perform_roi_info_history_test(
-        self, project, save_path, mask_property, save_method: Type[SaveBase], load_method: Type[LoadBase]
+        self, project, save_path, mask_property, save_method: type[SaveBase], load_method: type[LoadBase]
     ):
         alt1 = np.copy(project.roi_info.roi)
         alt1[alt1 > 0] += 3

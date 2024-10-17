@@ -35,7 +35,7 @@ def save_project(
     image: Image,
     roi_info: ROIInfo,
     mask: typing.Optional[np.ndarray],
-    history: typing.List[HistoryElement],
+    history: list[HistoryElement],
     algorithm_parameters: dict,
 ):
     # TODO add support for binary objects
@@ -398,7 +398,7 @@ class SaveProfilesToJSON(SaveBase):
         return "Segment profile (*.json)"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return []
 
 

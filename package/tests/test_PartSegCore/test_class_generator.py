@@ -142,7 +142,7 @@ def test_typing():
         field1: typing.Union[str, float]
         field2: typing.Any
         field3: typing.Optional[int]
-        field4: typing.List[str]
+        field4: list[str]
 
     val = Test("a", [1, 2, 3], 5, ["a", "b"])
     assert val.field1 == "a"
@@ -159,7 +159,7 @@ def test_typing():
         field1: typing.Union[str, float]
         field2: typing.Any
         field3: typing.Optional[int]
-        field4: typing.List[str]
+        field4: list[str]
         field5: typing.Optional[MyClass]
 
     Test2("aa", 1, None, ["b", "c"], MyClass())
@@ -180,10 +180,10 @@ def test_generic_types():
         list2: typing.Union[str, int]
 
     class Test2(BaseSerializableClass):
-        list1: typing.List[int]
-        list2: typing.List
-        dict1: typing.Dict[str, int]
-        dict2: typing.Dict
+        list1: list[int]
+        list2: list
+        dict1: dict[str, int]
+        dict2: dict
 
     empty(Test1, Test2)
     base_serialize_register.clear()

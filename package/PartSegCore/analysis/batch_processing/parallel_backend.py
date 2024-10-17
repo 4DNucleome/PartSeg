@@ -25,7 +25,7 @@ from contextlib import suppress
 from enum import Enum
 from queue import Empty, Queue
 from threading import RLock, Timer
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable
 
 __author__ = "Grzegorz Bokota"
 
@@ -68,7 +68,7 @@ class BatchManager:
         self.process_list = []
         self.locker = RLock()
 
-    def get_result(self) -> List[Tuple[uuid.UUID, Any]]:
+    def get_result(self) -> list[tuple[uuid.UUID, Any]]:
         """
         Clean result queue and return it as list
 
@@ -84,7 +84,7 @@ class BatchManager:
             Timer(0.1, self._change_process_num, args=[-self.number_off_available_process]).start()
         return res
 
-    def add_work(self, individual_parameters_list: List, global_parameters, fun: Callable[[Any, Any], Any]) -> str:
+    def add_work(self, individual_parameters_list: list, global_parameters, fun: Callable[[Any, Any], Any]) -> str:
         """
         This function add next works to internal structures.
         Number of works is length of ``individual_parameters_list``
@@ -207,7 +207,7 @@ class BatchWorker:
         task_queue: Queue,
         order_queue: Queue,
         result_queue: Queue,
-        calculation_dict: Dict[uuid.UUID, Tuple[Any, Callable[[Any, Any], Any]]],
+        calculation_dict: dict[uuid.UUID, tuple[Any, Callable[[Any, Any], Any]]],
     ):
         self.task_queue = task_queue
         self.order_queue = order_queue
@@ -215,7 +215,7 @@ class BatchWorker:
         self.calculation_dict = calculation_dict
         self.canceled_tasks = set()
 
-    def calculate_task(self, val: Tuple[Any, uuid.UUID]):
+    def calculate_task(self, val: tuple[Any, uuid.UUID]):
         """
         Calculate single task.
         ``val`` is tuple with two elements (task_data, uuid).
@@ -259,7 +259,7 @@ class BatchWorker:
         logging.info("Process %s ended", os.getpid())
 
 
-def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: Dict[uuid.UUID, Any]):
+def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: dict[uuid.UUID, Any]):
     """
     Function for spawning worker. Designed as argument for :py:meth:`multiprocessing.Process`.
 

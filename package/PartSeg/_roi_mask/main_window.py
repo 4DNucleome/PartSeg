@@ -1,7 +1,6 @@
 import os
 from contextlib import suppress
 from functools import partial
-from typing import Type
 
 import numpy as np
 from qtpy.QtCore import QByteArray, Qt, Signal, Slot
@@ -888,7 +887,7 @@ class MainWindow(BaseMainWindow):
     settings: StackSettings
 
     @classmethod
-    def get_setting_class(cls) -> Type[StackSettings]:
+    def get_setting_class(cls) -> type[StackSettings]:
         return StackSettings
 
     initial_image_path = PartSegData.segmentation_mask_default_image

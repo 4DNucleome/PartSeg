@@ -268,7 +268,7 @@ class ProfileDict:
 
     def __init__(self, klass=None, **kwargs):
         self._my_dict = EventedDict(klass, **kwargs)
-        self._callback_dict: typing.Dict[str, typing.List[CallbackBase]] = defaultdict(list)
+        self._callback_dict: dict[str, list[CallbackBase]] = defaultdict(list)
 
         self._my_dict.setted.connect(self._call_callback)
         self._my_dict.deleted.connect(self._call_callback)
@@ -405,7 +405,7 @@ class ProfileDict:
         warnings.warn("Deprecated, use pop errors instead", FutureWarning, stacklevel=2)
         self.pop_errors()
 
-    def pop_errors(self) -> typing.List[typing.Tuple[str, dict]]:
+    def pop_errors(self) -> list[tuple[str, dict]]:
         """Remove problematic entries from dict"""
         error_list = []
         for group, up_dkt in list(self.my_dict.items()):

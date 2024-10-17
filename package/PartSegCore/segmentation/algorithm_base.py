@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
+from collections.abc import MutableMapping
 from copy import deepcopy
 from dataclasses import dataclass, field
 from textwrap import indent
-from typing import Any, Callable, Dict, MutableMapping, Optional
+from typing import Any, Callable, Optional
 
 import numpy as np
 from local_migrator import REGISTER, class_to_str
@@ -67,10 +68,10 @@ class ROIExtractionResult:
     # TODO add alternative representation using dict mapping.
     roi: np.ndarray
     parameters: ROIExtractionProfile
-    additional_layers: Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
+    additional_layers: dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     info_text: str = ""
-    roi_annotation: Dict = field(default_factory=dict)
-    alternative_representation: Dict[str, np.ndarray] = field(default_factory=dict)
+    roi_annotation: dict = field(default_factory=dict)
+    alternative_representation: dict[str, np.ndarray] = field(default_factory=dict)
     file_path: Optional[str] = None
     roi_info: Optional[ROIInfo] = None
     points: Optional[np.ndarray] = None
@@ -136,7 +137,7 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.channel = None
         self.segmentation = None
         self._mask: Optional[np.ndarray] = None
-        self.new_parameters: Dict[str, Any] = {}
+        self.new_parameters: dict[str, Any] = {}
 
     def __repr__(self):  # pragma: no cover
         if self.mask is None:

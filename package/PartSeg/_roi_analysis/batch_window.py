@@ -74,7 +74,7 @@ class SaveExcel(SaveBase):
         return "Excel (*.xlsx)"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return []
 
 
@@ -376,7 +376,7 @@ class CalculationPrepare(QDialog):
 
     def __init__(
         self,
-        file_list: typing.List[os.PathLike],
+        file_list: list[os.PathLike],
         calculation_plan: CalculationPlan,
         measurement_file_path: os.PathLike,
         settings: PartSettings,
