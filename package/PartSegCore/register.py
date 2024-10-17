@@ -30,8 +30,6 @@ from PartSegCore.segmentation import (
     watershed,
 )
 
-# from .mask.io_functions import
-
 qss_list = []
 
 

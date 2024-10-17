@@ -50,7 +50,7 @@ class NapariLabelShow(LabelShow):
                 layer.color = labels
 
 
-class NaparliLabelChoose(LabelChoose):
+class NapariLabelChoose(LabelChoose):
     def __init__(self, viewer: Viewer, settings, parent=None):
         super().__init__(settings, parent)
         self.viewer = viewer
@@ -74,7 +74,7 @@ class LabelSelector(QTabWidget):
         settings = get_settings()
         self.settings = settings
         self.label_editor = NapariLabelEditor(settings)
-        self.label_view = NaparliLabelChoose(viewer, settings)
+        self.label_view = NapariLabelChoose(viewer, settings)
         self.addTab(self.label_view, "Select labels")
         self.addTab(self.label_editor, "Create labels")
 

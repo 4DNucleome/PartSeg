@@ -39,7 +39,7 @@ jobs:
         napari: ["napari419", "napari54"]
         qt_backend: ["PyQt5"]
         include:
-          - napari: "napari417"
+          - napari: "napari54"
             qt_backend: "PySide2"
     if: github.event_name == 'push'
     uses: ./.github/workflows/base_test_workflow.yml
