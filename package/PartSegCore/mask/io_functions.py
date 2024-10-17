@@ -69,10 +69,10 @@ class MaskProjectTuple(ProjectInfoBase):
     :ivar typing.Optional[np.ndarray] ~.mask: Mask limiting segmentation area.
     :ivar ROIInfo ~.roi_info: ROI information.
     :ivar SegmentationInfo ~.roi_info: ROI description
-    :ivar typing.List[int] ~.selected_components: list of selected components
-    :ivar typing.Dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
+    :ivar list[int] ~.selected_components: list of selected components
+    :ivar dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
         For each component description set of parameters used for segmentation
-    :ivar typing.List[HistoryElement] history: list of operations needed to create :py:attr:`mask`
+    :ivar list[HistoryElement] history: list of operations needed to create :py:attr:`mask`
     :ivar str ~.errors: information about problems meet during calculation
     :ivar typing.Optional[typing.List[float]] ~.spacing: information about spacing when image is missed.
         For napari read plugin

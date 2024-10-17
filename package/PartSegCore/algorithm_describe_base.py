@@ -4,6 +4,7 @@ import textwrap
 import typing
 import warnings
 from abc import ABC, ABCMeta, abstractmethod
+from collections.abc import MutableMapping
 from functools import wraps
 from importlib.metadata import version
 from typing import Annotated
@@ -535,13 +536,13 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
         )
 
     @classmethod
-    def _pretty_print(cls, values: typing.MutableMapping, translate_dict: dict[str, AlgorithmProperty], indent=0):
-        if not isinstance(values, typing.MutableMapping):
+    def _pretty_print(cls, values: MutableMapping, translate_dict: dict[str, AlgorithmProperty], indent=0):
+        if not isinstance(values, MutableMapping):
             return textwrap.indent(str(values), " " * indent)
         res = ""
         for k, v in values.items():
             if k not in translate_dict:
-                if isinstance(v, typing.MutableMapping):
+                if isinstance(v, MutableMapping):
                     res += " " * indent + f"{k}: {cls._pretty_print(v, {}, indent + 2)}\n"
                 else:
                     res += " " * indent + f"{k}: {v}\n"
@@ -561,7 +562,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
                 if values_:
                     res += "\n"
                     res += cls._pretty_print(values_, desc.possible_values[name].get_fields_dict(), indent + 2)
-            elif isinstance(v, typing.MutableMapping):
+            elif isinstance(v, MutableMapping):
                 res += cls._pretty_print(v, {}, indent + 2)
             else:
                 res += str(v)

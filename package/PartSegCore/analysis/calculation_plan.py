@@ -404,7 +404,7 @@ class Calculation(BaseCalculation):
     :ivar CalculationPlan ~.calculation_plan: plan of calculation
     :ivar str uuid: ~.uuid of whole calculation
     :ivar ~.voxel_size: default voxel size (for files which do not contains this information in metadata
-    :ivar typing.List[str] ~.file_list: list of files to be proceed
+    :ivar list[str] ~.file_list: list of files to be proceed
     """
 
     def __init__(

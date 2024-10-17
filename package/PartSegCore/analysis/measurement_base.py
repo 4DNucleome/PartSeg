@@ -129,7 +129,7 @@ class Leaf(BaseModel):
         """
         Get set with number of channels needed for calculate this measurement
 
-        :param measurement_dict: dict with all measurementh method.
+        :param measurement_dict: dict with all measurement methods.
         :return: set of channels num
         """
         resp = set()
@@ -380,9 +380,6 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
         Main function for calculating measurement
 
         :param channel: main channel selected for measurement
-        :param channel_{i}: for channel requested using :py:meth:`get_fields`
-            ``AlgorithmProperty("channel", "Channel", 0, value_type=Channel)``
-        :param area_array: array representing current area returned by :py:meth:`area_type`
         :param roi: array representing roi
         :param mask: array representing mask (upper level roi)
         :param voxel_size: size of single voxel in meters

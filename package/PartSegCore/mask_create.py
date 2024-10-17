@@ -115,7 +115,7 @@ def calculate_mask(
     :param typing.Optional[np.ndarray] old_mask: if in mask_description there is set to crop and old_mask is not None
         then final mask is clipped to this area
     :param typing.Iterable[typing.Union[float,int]] spacing: spacing of image. Needed for calculating radius of dilate
-    :param typing.Optional[typing.List[int]] components: If present inform which components
+    :param typing.Optional[list[int]] components: If present inform which components
         should be used when calculation mask, otherwise use all.
     :param typing.Optional[int] time_axis: which axis of array should be treated as time. IF none then none.
     :return: new mask

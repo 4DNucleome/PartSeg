@@ -210,9 +210,9 @@ class StackSettings(BaseSettings):
 
         :param MaskProjectTuple state: state to be transformed
         :param ROIInfo new_roi_info: roi description
-        :param typing.Dict[int, typing.Optional[ROIExtractionProfile]] new_roi_extraction_parameters:
+        :param dict[int, typing.Optional[ROIExtractionProfile]] new_roi_extraction_parameters:
             Parameters used to extract roi
-        :param typing.List[int] list_of_components: list of components from new_roi which should be selected
+        :param list[int] list_of_components: list of components from new_roi which should be selected
         :param bool save_chosen: if save currently selected components
         :return: new state
         """
