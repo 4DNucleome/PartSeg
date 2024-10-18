@@ -51,28 +51,28 @@ jobs:
       fail-fast: false
       matrix:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
-        os: ["ubuntu-20.04"]
+        os: ["ubuntu-24.04"]
         qt_backend: ["PyQt5"]
         tox_args: [ "" ]
         include:
           - python_version: "3.11"
             os: "macos-13"
             qt_backend: "PyQt5"
+          - python_version: "3.12"
+            os: "macos-14"
+            qt_backend: "PyQt6"
           - python_version: "3.11"
-            os: "windows-2019"
+            os: "windows-latest"
             qt_backend: "PyQt5"
           - python_version: "3.10"
             os: "ubuntu-20.04"
             qt_backend: "PySide2"
           - python_version: "3.10"
-            os: "ubuntu-22.04"
+            os: "ubuntu-24.04"
             qt_backend: "PySide6"
           - python_version: "3.12"
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
-          - python_version: "3.12"
-            os: "ubuntu-24.04"
-            qt_backend: "PyQt5"
           - python_version: "3.10"
             os: "ubuntu-22.04"
             qt_backend: "PyQt5"
@@ -87,14 +87,14 @@ jobs:
 
   base-test-main:
     name: Base py${{ matrix.python_version }}
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || contains(github.event.pull_request.files, '.github/workflows/test.yml')
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
     strategy:
       fail-fast: false
       matrix:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
-        os: ["ubuntu-20.04", "macos-13", "windows-2019"]
+        os: ["ubuntu-24.04", "macos-14", "windows-2022"]
         qt_backend: ["PySide2", "PyQt5"]
         include:
           - python_version: "3.12"
@@ -115,6 +115,10 @@ jobs:
             qt_backend: "PySide2"
           - python_version: "3.12"
             qt_backend: "PySide2"
+          - os: "macos-14"
+            qt_backend: "PySide2"
+          - os: macos-14
+            python_version: "3.9"
     with:
       test_data: True
       python_version: ${{ matrix.python_version }}
@@ -185,7 +189,7 @@ jobs:
 
   test_conda:
     name: Test PartSeg conda
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: download_data
     steps:
       - uses: actions/checkout@v4
@@ -196,7 +200,7 @@ jobs:
           use-mamba: true
           channels: conda-forge
           channel-priority: strict
-          python-version: "3.11"
+          python-version: "3.12"
 
       - uses: tlambert03/setup-qt-libs@v1
 
