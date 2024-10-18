@@ -10,6 +10,6 @@ channels:
   - conda-forge
 dependencies:
 $dependencies
-  - pyqt6
+  - pyqt
   - python=3.12
 EOF
