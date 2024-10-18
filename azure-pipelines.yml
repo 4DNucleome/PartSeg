@@ -23,7 +23,7 @@ stages:
           displayName: "download data"
         - task: UsePythonVersion@0
           inputs:
-            versionSpec: '3.2'
+            versionSpec: '3.12'
           displayName: 'Use Python $(python.version)'
         - script: python build_utils/cut_changelog.py changelog_cut.md
           displayName: "Cut changelog"
