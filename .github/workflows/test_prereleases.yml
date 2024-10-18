@@ -21,7 +21,7 @@ on:
 jobs:
   download_data:
     name: Download test data
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - shell: bash
@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-2022, macos-14, ubuntu-22.04]
+        platform: [windows-2022, macos-14, ubuntu-24.04]
         python: [3.12]
     steps:
       - uses: actions/checkout@v4
@@ -108,9 +108,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
-      name: Install Python 3.11
+      name: Install Python 3.12
       with:
-        python-version: 3.11
+        python-version: 3.12
     - uses: tlambert03/setup-qt-libs@v1
     - name: Install dependencies
       run: |
@@ -146,7 +146,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PLATFORM: "linux"
-        PYTHON: "3.11"
+        PYTHON: "3.12"
         RUN_ID: ${{ github.run_id }}
         TITLE: '[test-bot] pyinstaller bundle --pre is failing'
       with:

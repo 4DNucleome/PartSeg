@@ -10,6 +10,6 @@ channels:
   - conda-forge
 dependencies:
 $dependencies
-  - pyside2
-  - python=3.11
+  - pyqt
+  - python=3.12
 EOF

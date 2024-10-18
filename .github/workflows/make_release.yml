@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       - uses: tlambert03/setup-qt-libs@v1
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
@@ -44,12 +44,12 @@ jobs:
           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
         shell: powershell
       - name: Install PartSeg
-        run: python -m pip install --editable ".[pyinstaller]" --constraint requirements/constraints_py3.10.txt
+        run: python -m pip install --editable ".[pyinstaller]" --constraint requirements/constraints_py3.12.txt
 
       - name: compile numpy on macos-14
         if: ${{ matrix.os == 'macos-14' }}
         run: |
-          python -m pip install --no-binary numpy numpy --force-reinstall --constraint requirements/constraints_py3.10.txt
+          python -m pip install --no-binary numpy numpy --force-reinstall --constraint requirements/constraints_py3.12.txt
 
       - name: Build PartSeg bundle
         run: python build_utils/create_and_pack_executable.py

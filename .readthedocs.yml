@@ -19,7 +19,7 @@ formats: all
 build:
   os: ubuntu-22.04
   tools:
-    python: "3.11"
+    python: "3.12"
   apt_packages:
     - graphviz
 
@@ -27,7 +27,7 @@ build:
 # Optionally set the version of Python and requirements required to build your docs
 python:
   install:
-    - requirements: requirements/constraints_py3.11_docs.txt
+    - requirements: requirements/constraints_py3.12_docs.txt
     - method: pip
       path: .
       extra_requirements:
