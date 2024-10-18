@@ -1,5 +1,5 @@
 from math import log
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 from napari.utils import Colormap
@@ -19,7 +19,7 @@ max_step = log(1.2, step)
 
 
 class ColorBar(QLabel):
-    def __init__(self, settings: ViewSettings, image_view: Union[List[ImageView], ImageView]):
+    def __init__(self, settings: ViewSettings, image_view: Union[list[ImageView], ImageView]):
         super().__init__()
         self.image_view = image_view
         self._settings = settings

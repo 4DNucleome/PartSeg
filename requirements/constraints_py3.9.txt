@@ -6,7 +6,7 @@ altgraph==0.17.4
     # via pyinstaller
 annotated-types==0.7.0
     # via pydantic
-app-model==0.2.8
+app-model==0.3.0
     # via napari
 appdirs==1.4.4
     # via
@@ -22,7 +22,7 @@ attrs==24.2.0
     #   referencing
 babel==2.16.0
     # via sphinx
-build==1.2.2
+build==1.2.2.post1
     # via npe2
 cachey==0.2.1
     # via napari
@@ -31,23 +31,23 @@ certifi==2024.8.30
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via requests
 click==8.1.7
     # via
     #   dask
     #   typer
-cloudpickle==3.0.0
+cloudpickle==3.1.0
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.6.1
+coverage==7.6.3
     # via partseg (pyproject.toml)
 czifile==2019.7.2
     # via partseg (pyproject.toml)
 dask==2024.8.0
     # via napari
-debugpy==1.8.5
+debugpy==1.8.7
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -75,7 +75,7 @@ freetype-py==2.5.1
     # via vispy
 fsspec==2024.9.0
     # via dask
-h5py==3.11.0
+h5py==3.12.1
     # via partseg (pyproject.toml)
 heapdict==1.0.1
     # via cachey
@@ -85,7 +85,7 @@ idna==3.10
     # via requests
 imagecodecs==2024.9.22
     # via partseg (pyproject.toml)
-imageio==2.35.1
+imageio==2.36.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
@@ -122,7 +122,7 @@ jinja2==3.1.4
     # via sphinx
 jsonschema==4.23.0
     # via napari
-jsonschema-specifications==2023.12.1
+jsonschema-specifications==2024.10.1
     # via jsonschema
 jupyter-client==8.6.3
     # via
@@ -149,7 +149,7 @@ lxml==5.3.0
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
-lxml-html-clean==0.2.2
+lxml-html-clean==0.3.1
     # via lxml
 magicgui==0.9.1
     # via
@@ -159,7 +159,7 @@ mahotas==1.4.18
     # via partseg (pyproject.toml)
 markdown-it-py==3.0.0
     # via rich
-markupsafe==2.1.5
+markupsafe==3.0.1
     # via jinja2
 matplotlib-inline==0.1.7
     # via
@@ -169,9 +169,9 @@ mdurl==0.1.2
     # via markdown-it-py
 mpmath==1.3.0
     # via sympy
-napari==0.5.3
+napari==0.5.4
     # via partseg (pyproject.toml)
-napari-console==0.0.9
+napari-console==0.1.0
     # via napari
 napari-plugin-engine==0.2.0
     # via napari
@@ -259,7 +259,7 @@ pluggy==1.5.0
     #   pytest-qt
 pooch==1.8.2
     # via scikit-image
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via ipython
 psutil==6.0.0
     # via
@@ -304,13 +304,13 @@ pyinstaller-hooks-contrib==2024.8
     # via pyinstaller
 pyopengl==3.1.7
     # via napari
-pyproject-hooks==1.1.0
+pyproject-hooks==1.2.0
     # via build
 pyqt6==6.7.1
     # via
     #   partseg (pyproject.toml)
     #   napari
-pyqt6-qt6==6.7.2
+pyqt6-qt6==6.7.3
     # via pyqt6
 pyqt6-sip==13.8.0
     # via pyqt6
@@ -379,7 +379,7 @@ requests==2.32.3
     #   pooch
     #   pyconify
     #   sphinx
-rich==13.8.1
+rich==13.9.2
     # via
     #   npe2
     #   typer
@@ -396,7 +396,7 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.14.0
+sentry-sdk==2.16.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
@@ -454,16 +454,16 @@ tifffile==2024.8.30
     #   napari
     #   oiffile
     #   scikit-image
-tomli==2.0.1
+tomli==2.0.2
     # via
     #   build
     #   npe2
     #   numpydoc
     #   pytest
     #   sphinx
-tomli-w==1.0.0
+tomli-w==1.1.0
     # via npe2
-toolz==0.12.1
+toolz==1.0.0
     # via
     #   dask
     #   napari
@@ -498,9 +498,10 @@ typing-extensions==4.12.2
     #   pint
     #   pydantic
     #   pydantic-core
+    #   rich
     #   superqt
     #   typer
-tzdata==2024.1
+tzdata==2024.2
     # via pandas
 urllib3==2.2.3
     # via

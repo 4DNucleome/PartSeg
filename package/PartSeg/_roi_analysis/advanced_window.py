@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import List, Optional, Tuple, Type, Union, cast
+from typing import Optional, Union, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -49,7 +49,7 @@ from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
 
-_DialogType = Union[Type[str], Type[int], Type[float]]
+_DialogType = Union[type[str], type[int], type[float]]
 
 
 def h_line():
@@ -366,7 +366,7 @@ class MeasurementSettings(QWidget):
     def __init__(self, settings: PartSettings, parent=None):  # noqa: PLR0915
         super().__init__(parent)
         self.chosen_element: Optional[MeasurementListWidgetItem] = None
-        self.chosen_element_area: Optional[Tuple[AreaType, float]] = None
+        self.chosen_element_area: Optional[tuple[AreaType, float]] = None
         self.settings = settings
         self.profile_list = QListWidget(self)
         self.profile_description = QTextEdit(self)
@@ -841,7 +841,7 @@ class MultipleInput(QDialog):
         self,
         text: str,
         help_text: str = "",
-        objects_list: Optional[List[Union[Tuple[str, _DialogType], Tuple[str, _DialogType, str]]]] = None,
+        objects_list: Optional[list[Union[tuple[str, _DialogType], tuple[str, _DialogType, str]]]] = None,
         parent: Optional[QWidget] = None,
     ):
         if objects_list is None:  # pragma: no cover

@@ -364,7 +364,7 @@ class BaseSerializableClass(metaclass=BaseMeta):
     def replace_(self, **_kwargs):
         return self
 
-    def as_tuple(self) -> typing.Tuple:
+    def as_tuple(self) -> tuple:
         """declare interface"""
 
     @classmethod

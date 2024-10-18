@@ -5,9 +5,10 @@ import os
 import platform
 import sys
 import zlib
+from collections.abc import Sequence
 from contextlib import suppress
 from importlib.metadata import version as package_version
-from typing import Optional, Sequence
+from typing import Optional
 
 import sentry_sdk
 import sentry_sdk.serializer

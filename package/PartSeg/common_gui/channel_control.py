@@ -30,7 +30,7 @@ from PartSegCore.image_operations import NoiseFilterType
 
 image_dict = {}  # dict to store QImages generated from colormap
 
-ColorMapDict = typing.MutableMapping[str, typing.Tuple[Colormap, bool]]
+ColorMapDict = typing.MutableMapping[str, tuple[Colormap, bool]]
 
 try:
     from qtpy import PYQT6
@@ -108,7 +108,7 @@ class ColorComboBox(QComboBox):
     def __init__(
         self,
         id_num: int,
-        colors: typing.List[str],
+        colors: list[str],
         color_dict: ColorMapDict,
         colormap: str = "",
         base_height=50,
@@ -154,7 +154,7 @@ class ColorComboBox(QComboBox):
         self.currentTextChanged.connect(partial(self.channel_colormap_changed.emit, self.id))
         self._update_image()
 
-    def change_colors(self, colors: typing.List[str]):
+    def change_colors(self, colors: list[str]):
         """change list of colormaps to choose"""
         self.colors = colors
         current_color = self.currentText()
@@ -299,7 +299,7 @@ class ChannelProperty(QWidget):
         self.current_name = start_name
         self.current_channel = 0
         self._settings = settings
-        self.widget_dict: typing.Dict[str, ColorComboBoxGroup] = {}
+        self.widget_dict: dict[str, ColorComboBoxGroup] = {}
 
         self.minimum_value = CustomSpinBox(self)
         self.minimum_value.setRange(-(10**6), 10**6)
@@ -507,7 +507,7 @@ class ColorComboBoxGroup(QWidget):
             el: ColorComboBox = self.layout().itemAt(i).widget()
             el.setCurrentText(self.settings.get_channel_colormap_name(self.viewer_name, i))
 
-    def update_color_list(self, colors: typing.Optional[typing.List[str]] = None):
+    def update_color_list(self, colors: typing.Optional[list[str]] = None):
         """Update list of available colormaps in each selector"""
         if colors is None:
             colors = self.settings.chosen_colormap
@@ -524,7 +524,7 @@ class ColorComboBoxGroup(QWidget):
         return self.layout().count()
 
     @property
-    def selected_colormaps(self) -> typing.List[Colormap]:
+    def selected_colormaps(self) -> list[Colormap]:
         """For each channel give information about selected colormap by name"""
         resp = []
         for i in range(self.layout().count()):
@@ -533,7 +533,7 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     @property
-    def channel_visibility(self) -> typing.List[bool]:
+    def channel_visibility(self) -> list[bool]:
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
@@ -541,7 +541,7 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     @property
-    def current_colors(self) -> typing.List[typing.Optional[str]]:
+    def current_colors(self) -> list[typing.Optional[str]]:
         """List of  current colors. None if channel is not selected."""
         resp = []
         for i in range(self.layout().count()):
@@ -553,7 +553,7 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     @property
-    def current_colormaps(self) -> typing.List[typing.Optional[Colormap]]:
+    def current_colormaps(self) -> list[typing.Optional[Colormap]]:
         """List of current colormaps. None if channel is not selected"""
         resp = []
         for i in range(self.layout().count()):
@@ -615,7 +615,7 @@ class ColorComboBoxGroup(QWidget):
         self.change_channel.emit(self.viewer_name, pos)
         self.repaint()
 
-    def get_filter(self) -> typing.List[typing.Tuple[NoiseFilterType, float]]:
+    def get_filter(self) -> list[tuple[NoiseFilterType, float]]:
         return [
             (
                 self.settings.get_from_profile(f"{self.viewer_name}.use_filter_{i}", NoiseFilterType.No),
@@ -624,8 +624,8 @@ class ColorComboBoxGroup(QWidget):
             for i in range(self.layout().count())
         ]
 
-    def get_limits(self) -> typing.List[typing.Union[typing.Tuple[int, int], None]]:
-        resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = [(0, 0)] * self.layout().count()
+    def get_limits(self) -> list[typing.Union[tuple[int, int], None]]:
+        resp: list[typing.Union[tuple[int, int], None]] = [(0, 0)] * self.layout().count()
         for i in range(self.layout().count()):
             resp[i] = (
                 self.settings.get_from_profile(f"{self.viewer_name}.range_{i}", (0, 65000))
@@ -634,7 +634,7 @@ class ColorComboBoxGroup(QWidget):
             )
         return [x if x is None or x[0] < x[1] else None for x in resp]
 
-    def get_gamma(self) -> typing.List[float]:
+    def get_gamma(self) -> list[float]:
         return [
             self.settings.get_from_profile(f"{self.viewer_name}.gamma_value_{i}", 1)
             for i in range(self.layout().count())

@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 import numpy as np
 
@@ -20,7 +20,7 @@ class CombineChannels(TransformBase):
         return [AlgorithmProperty("combine_mode", "Combine Mode", CombineMode.Sum)]
 
     @classmethod
-    def get_fields_per_dimension(cls, image: Image) -> List[Union[str, AlgorithmProperty]]:
+    def get_fields_per_dimension(cls, image: Image) -> list[Union[str, AlgorithmProperty]]:
         return [
             AlgorithmProperty("combine_mode", "Combine Mode", CombineMode.Sum),
             *[AlgorithmProperty(f"channel_{i}", f"Channel {i}", False) for i in range(image.channels)],
@@ -37,7 +37,7 @@ class CombineChannels(TransformBase):
         roi_info: Optional[ROIInfo],
         arguments: dict,
         callback_function: Optional[Callable[[str, int], None]] = None,
-    ) -> Tuple[Image, Optional[ROIInfo]]:
+    ) -> tuple[Image, Optional[ROIInfo]]:
         channels = [i for i, x in enumerate(x for x in arguments.items() if x[0].startswith("channel")) if x[1]]
         if not channels:
             return image, roi_info

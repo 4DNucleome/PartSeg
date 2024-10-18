@@ -15,10 +15,10 @@ def adjust_color(color: str) -> str: ...
 
 
 @typing.overload
-def adjust_color(color: typing.List[int]) -> typing.List[float]: ...
+def adjust_color(color: list[int]) -> list[float]: ...
 
 
-def adjust_color(color: typing.Union[str, typing.List[int]]) -> typing.Union[str, typing.List[float]]:
+def adjust_color(color: typing.Union[str, list[int]]) -> typing.Union[str, list[float]]:
     # as napari ignore alpha channel in color, and adding it to
     # color cause that napari fails to detect that such colormap is already present
     # in this function I remove alpha channel if it is present
@@ -135,7 +135,7 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
     return res_layers
 
 
-def partseg_loader(loader: typing.Type[LoadBase], path: str):
+def partseg_loader(loader: type[LoadBase], path: str):
     load_locations = [path]
     load_locations.extend(loader.get_next_file(load_locations) for _ in range(1, loader.number_of_files()))
 

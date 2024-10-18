@@ -2,7 +2,6 @@ import os
 from functools import partial
 from glob import glob
 from pathlib import Path
-from typing import List
 
 from qtpy.QtCore import QPoint, Qt, Signal
 from qtpy.QtGui import QDragEnterEvent, QDropEvent
@@ -89,7 +88,7 @@ class AddFiles(QWidget):
     def __init__(self, settings: BaseSettings, parent=None, btn_layout=QHBoxLayout):
         """TODO: to be defined1."""
         super().__init__(parent)
-        self.mask_list: List[MaskMapper] = []
+        self.mask_list: list[MaskMapper] = []
         self.settings = settings
         self.files_to_proceed = set()
         self.paths_input = QLineEdit(self)

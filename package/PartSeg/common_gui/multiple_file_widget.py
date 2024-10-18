@@ -2,7 +2,6 @@ import os
 from collections import Counter, defaultdict
 from functools import partial
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 from qtpy.QtCore import Qt, QTimer, Signal, Slot
 from qtpy.QtGui import QFontMetrics, QMouseEvent, QResizeEvent
@@ -104,7 +103,7 @@ class LoadRecentFiles(QDialog):
             *self.settings.get_from_profile("multiple_files_dialog_size", (self.size().width(), self.size().height()))
         )
 
-    def get_files(self) -> List[Tuple[List[str], str]]:
+    def get_files(self) -> list[tuple[list[str], str]]:
         return [item.data(Qt.ItemDataRole.UserRole) for item in self.file_list.selectedItems()]
 
     def accept(self) -> None:
@@ -115,10 +114,10 @@ class LoadRecentFiles(QDialog):
 class MultipleFileWidget(QWidget):
     _add_state = Signal(object, bool)
 
-    def __init__(self, settings: BaseSettings, load_dict: Dict[str, LoadBase], compare_in_context_menu=False):
+    def __init__(self, settings: BaseSettings, load_dict: dict[str, LoadBase], compare_in_context_menu=False):
         super().__init__()
         self.settings = settings
-        self.state_dict: Dict[str, Dict[str, ProjectInfoBase]] = defaultdict(dict)
+        self.state_dict: dict[str, dict[str, ProjectInfoBase]] = defaultdict(dict)
         self.state_dict_count = Counter()
         self.file_list = []
         self.load_register = load_dict
@@ -371,7 +370,7 @@ class MultipleFileWidget(QWidget):
     def set_compare_in_context_menu(self, compare: bool):
         self.file_view.set_show_compare(compare)
 
-    def add_states(self, states: List[ProjectInfoBase]):
+    def add_states(self, states: list[ProjectInfoBase]):
         """add multiple states to widget"""
         for el in states:
             self.save_state_action(el, False)

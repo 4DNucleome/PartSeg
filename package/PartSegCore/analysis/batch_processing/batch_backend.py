@@ -35,7 +35,7 @@ from enum import Enum
 from os import path
 from queue import Queue
 from traceback import StackSummary
-from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Tuple, Union
+from typing import TYPE_CHECKING, Any, NamedTuple, Union
 
 import numpy as np
 import pandas as pd
@@ -93,9 +93,9 @@ class ResponseData(NamedTuple):
     values: list[MeasurementResult]
 
 
-CalculationResultList = List[ResponseData]
-ErrorInfo = Tuple[Exception, Union[StackSummary, Tuple[Dict, StackSummary]]]
-WrappedResult = Tuple[int, List[Union[ErrorInfo, ResponseData]]]
+CalculationResultList = list[ResponseData]
+ErrorInfo = tuple[Exception, Union[StackSummary, tuple[dict, StackSummary]]]
+WrappedResult = tuple[int, list[Union[ErrorInfo, ResponseData]]]
 
 
 def get_data_loader(

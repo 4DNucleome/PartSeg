@@ -4,15 +4,16 @@ import textwrap
 import typing
 import warnings
 from abc import ABC, ABCMeta, abstractmethod
+from collections.abc import MutableMapping
 from functools import wraps
 from importlib.metadata import version
+from typing import Annotated
 
 from local_migrator import REGISTER, class_to_str
 from packaging.version import parse as parse_version
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import create_model, validator
 from pydantic.fields import Field, FieldInfo
-from typing_extensions import Annotated
 
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
@@ -156,7 +157,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     For each group of algorithm base abstract class will add additional methods
     """
 
-    __argument_class__: typing.Optional[typing.Type[PydanticBaseModel]] = None
+    __argument_class__: typing.Optional[type[PydanticBaseModel]] = None
     __new_style__: bool
 
     @classmethod
@@ -184,7 +185,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     @_partial_abstractmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         """
         This function return list of parameters needed by algorithm. It is used for generate form in User Interface
 
@@ -204,7 +205,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
         return base_model_to_algorithm_property(cls.__argument_class__) if cls.__new_style__ else cls.get_fields()
 
     @classmethod
-    def get_fields_dict(cls) -> typing.Dict[str, AlgorithmProperty]:
+    def get_fields_dict(cls) -> dict[str, AlgorithmProperty]:
         return {v.name: v for v in get_fields_from_algorithm(cls) if isinstance(v, AlgorithmProperty)}
 
     @classmethod
@@ -225,7 +226,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
         }
 
 
-def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> list[typing.Union[AlgorithmProperty, str]]:
     if ald_desc.__new_style__:
         return base_model_to_algorithm_property(ald_desc.__argument_class__)
     return ald_desc.get_fields()
@@ -238,10 +239,10 @@ def is_static(fun):
     return True if len(args) == 0 else args[0] != "self"
 
 
-AlgorithmType = typing.TypeVar("AlgorithmType", bound=typing.Type[AlgorithmDescribeBase])
+AlgorithmType = typing.TypeVar("AlgorithmType", bound=type[AlgorithmDescribeBase])
 
 
-class Register(typing.Dict, typing.Generic[AlgorithmType]):
+class Register(dict, typing.Generic[AlgorithmType]):
     """
     Dict used for register :class:`.AlgorithmDescribeBase` classes.
     All registers from `PartSeg.PartSegCore.register` are this
@@ -292,9 +293,7 @@ class Register(typing.Dict, typing.Generic[AlgorithmType]):
     def __contains__(self, item):
         return super().__contains__(item) or item in self._old_mapping
 
-    def register(
-        self, value: AlgorithmType, replace: bool = False, old_names: typing.Optional[typing.List[str]] = None
-    ):
+    def register(self, value: AlgorithmType, replace: bool = False, old_names: typing.Optional[list[str]] = None):
         """
         Function for registering :class:`.AlgorithmDescribeBase` based algorithms
         :param value: algorithm to register
@@ -401,7 +400,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
     """
 
     name: str
-    values: typing.Union[typing.Dict[str, typing.Any], PydanticBaseModel] = Field(..., union_mode="left_to_right")
+    values: typing.Union[dict[str, typing.Any], PydanticBaseModel] = Field(..., union_mode="left_to_right")
     class_path: str = ""
     if typing.TYPE_CHECKING:
         __register__: Register
@@ -444,7 +443,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
 
     @classmethod
     def register(
-        cls, value: AlgorithmType, replace=False, old_names: typing.Optional[typing.List[str]] = None
+        cls, value: AlgorithmType, replace=False, old_names: typing.Optional[list[str]] = None
     ) -> AlgorithmType:
         """
         Function for registering :class:`.AlgorithmDescribeBase` based algorithms
@@ -537,15 +536,13 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
         )
 
     @classmethod
-    def _pretty_print(
-        cls, values: typing.MutableMapping, translate_dict: typing.Dict[str, AlgorithmProperty], indent=0
-    ):
-        if not isinstance(values, typing.MutableMapping):
+    def _pretty_print(cls, values: MutableMapping, translate_dict: dict[str, AlgorithmProperty], indent=0):
+        if not isinstance(values, MutableMapping):
             return textwrap.indent(str(values), " " * indent)
         res = ""
         for k, v in values.items():
             if k not in translate_dict:
-                if isinstance(v, typing.MutableMapping):
+                if isinstance(v, MutableMapping):
                     res += " " * indent + f"{k}: {cls._pretty_print(v, {}, indent + 2)}\n"
                 else:
                     res += " " * indent + f"{k}: {v}\n"
@@ -565,7 +562,7 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
                 if values_:
                     res += "\n"
                     res += cls._pretty_print(values_, desc.possible_values[name].get_fields_dict(), indent + 2)
-            elif isinstance(v, typing.MutableMapping):
+            elif isinstance(v, MutableMapping):
                 res += cls._pretty_print(v, {}, indent + 2)
             else:
                 res += str(v)
@@ -691,8 +688,8 @@ def _field_to_algorithm_property_pydantic_1(name: str, field: "ModelField"):
 
 
 def base_model_to_algorithm_property_pydantic_1(
-    obj: typing.Type[BaseModel],
-) -> typing.List[typing.Union[str, AlgorithmProperty]]:
+    obj: type[BaseModel],
+) -> list[typing.Union[str, AlgorithmProperty]]:
     """
     Convert pydantic model to list of AlgorithmPropert nad strings.
 
@@ -722,8 +719,8 @@ def base_model_to_algorithm_property_pydantic_1(
 
 
 def base_model_to_algorithm_property_pydantic_2(
-    obj: typing.Type[BaseModel],
-) -> typing.List[typing.Union[str, AlgorithmProperty]]:
+    obj: type[BaseModel],
+) -> list[typing.Union[str, AlgorithmProperty]]:
     """
     Convert pydantic model to list of AlgorithmPropert nad strings.
 

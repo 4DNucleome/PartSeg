@@ -1,11 +1,12 @@
 import itertools
 import logging
 import platform
+from collections.abc import MutableMapping
 from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
-from typing import TYPE_CHECKING, Dict, List, MutableMapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import napari
 import numpy as np
@@ -113,14 +114,14 @@ else:
 ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
 NEXT_ORDER = {"xy": "zy", "zy": "zx", "zx": "xy"}
 
-ColorInfo = Dict[Optional[int], Union[str, List[float]]]
+ColorInfo = dict[Optional[int], Union[str, list[float]]]
 
 
 @dataclass
 class ImageInfo:
     image: Image
-    layers: List[NapariImage]
-    filter_info: List[Tuple[NoiseFilterType, float]] = field(default_factory=list)
+    layers: list[NapariImage]
+    filter_info: list[tuple[NoiseFilterType, float]] = field(default_factory=list)
     mask: Optional[Labels] = None
     mask_array: Optional[np.ndarray] = None
     roi: Optional[Labels] = None
@@ -128,14 +129,14 @@ class ImageInfo:
     roi_count: int = 0
     highlight: Optional[Labels] = None
 
-    def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
+    def coords_in(self, coords: Union[list[int], np.ndarray]) -> bool:
         if not self.layers:
             return False
         fst_layer = self.layers[0]
         moved_coords = self.translated_coords(coords)
         return np.all(moved_coords >= 0) and np.all(moved_coords < fst_layer.data.shape)
 
-    def translated_coords(self, coords: Union[List[int], np.ndarray]) -> np.ndarray:
+    def translated_coords(self, coords: Union[list[int], np.ndarray]) -> np.ndarray:
         if not self.layers:
             return np.array(coords)
         fst_layer = self.layers[0]
@@ -178,7 +179,7 @@ class ImageView(QWidget):
         self.settings = settings
         self.channel_property = channel_property
         self.name = name
-        self.image_info: Dict[str, ImageInfo] = {}
+        self.image_info: dict[str, ImageInfo] = {}
         self.current_image = ""
         self._current_order = "xy"
         self.components = None
@@ -634,7 +635,7 @@ class ImageView(QWidget):
         return image.file_path in self.image_info
 
     @staticmethod
-    def calculate_filter(array: np.ndarray, parameters: Tuple[NoiseFilterType, float]) -> Optional[np.ndarray]:
+    def calculate_filter(array: np.ndarray, parameters: tuple[NoiseFilterType, float]) -> Optional[np.ndarray]:
         if parameters[0] == NoiseFilterType.No or parameters[1] == 0:
             return array
         if parameters[0] == NoiseFilterType.Gauss:
@@ -680,7 +681,7 @@ class ImageView(QWidget):
         else:
             self.viewer.layers.move(self.viewer.layers.index(layer), index)
 
-    def _add_image(self, image_data: Tuple[ImageInfo, bool]):
+    def _add_image(self, image_data: tuple[ImageInfo, bool]):
         image_info, replace = image_data
         image = image_info.image
 
@@ -768,7 +769,7 @@ class ImageView(QWidget):
         def _prepare_layers(self, image, parameters, replace):
             self._add_image(_prepare_layers(image, parameters, replace))
 
-    def images_bounds(self) -> Tuple[List[int], List[int]]:
+    def images_bounds(self) -> tuple[list[int], list[int]]:
         ranges = []
         for image_info in self.image_info.values():
             if not image_info.layers:
@@ -984,7 +985,7 @@ class ImageView(QWidget):
     def _data_to_world(layer: Layer, cords):
         return layer._transforms[1:3].simplified(cords)  # pylint: disable=protected-access
 
-    def _bounding_box(self, num) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+    def _bounding_box(self, num) -> Optional[tuple[np.ndarray, np.ndarray]]:
         lower_bound_list = []
         upper_bound_list = []
         for image_info in self.image_info.values():
@@ -1069,15 +1070,15 @@ class SearchComponentModal(QtPopup):
 
 @dataclass
 class ImageParameters:
-    limits: List[Tuple[float, float]]
-    visibility: List[bool]
-    gamma: List[float]
-    colormaps: List[Colormap]
-    scaling: Tuple[Union[float, int]]
+    limits: list[tuple[float, float]]
+    visibility: list[bool]
+    gamma: list[float]
+    colormaps: list[Colormap]
+    scaling: tuple[Union[float, int]]
     layers: int = 0
 
 
-def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:
+def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> tuple[ImageInfo, bool]:
     image_layers = []
     for i in range(image.channels):
         lim = list(param.limits[i])

@@ -63,7 +63,7 @@ class _IOBase(AlgorithmDescribeBase, ABC):
         return cls.get_name()
 
     @classmethod
-    def get_extensions(cls) -> typing.List[str]:
+    def get_extensions(cls) -> list[str]:
         match = re.match(r".*\((.*)\)", cls.get_name())
         if match is None:
             raise ValueError(f"No extensions found in {cls.get_name()}")
@@ -74,7 +74,7 @@ class _IOBase(AlgorithmDescribeBase, ABC):
 
 
 class SaveBase(_IOBase, ABC):
-    need_functions: typing.ClassVar[typing.List[str]] = [
+    need_functions: typing.ClassVar[list[str]] = [
         "save",
         "get_short_name",
         "get_name_with_suffix",
@@ -123,7 +123,7 @@ class SaveBase(_IOBase, ABC):
 
 
 class LoadBase(_IOBase, ABC):
-    need_functions: typing.ClassVar[typing.List[str]] = [
+    need_functions: typing.ClassVar[list[str]] = [
         "load",
         "get_short_name",
         "get_name_with_suffix",
@@ -141,11 +141,11 @@ class LoadBase(_IOBase, ABC):
     @abstractmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
+    ) -> typing.Union[ProjectInfoBase, list[ProjectInfoBase]]:
         """
         Function for load data
 
@@ -167,7 +167,7 @@ class LoadBase(_IOBase, ABC):
         return 1
 
     @classmethod
-    def get_next_file(cls, file_paths: typing.List[str]):
+    def get_next_file(cls, file_paths: list[str]):
         return file_paths[0]
 
     @classmethod
@@ -194,7 +194,7 @@ def load_metadata_base(data: typing.Union[str, Path, typing.TextIO]):
     return decoded_data
 
 
-def load_metadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[typing.Tuple[str, dict]]]:
+def load_metadata_part(data: typing.Union[str, Path]) -> tuple[typing.Any, list[tuple[str, dict]]]:
     """
     Load serialized data. Get valid entries.
 
@@ -218,7 +218,7 @@ load_matadata_part = load_metadata_part
 # backward compatibility
 
 
-def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapping]:
+def find_problematic_entries(data: typing.Any) -> list[typing.MutableMapping]:
     """
     Find top nodes with ``"__error__"`` key. If node found
     then its children is not checked.
@@ -236,7 +236,7 @@ def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapp
     return res
 
 
-def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMapping]:
+def find_problematic_leafs(data: typing.Any) -> list[typing.MutableMapping]:
     """
     Find bottom nodes with ``"__error__"`` key. If any
     children has ``"__error__"`` then such node is not returned.
@@ -271,7 +271,7 @@ def proxy_callback(
 
 def open_tar_file(
     file_data: typing.Union[str, Path, TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase], mode="r"
-) -> typing.Tuple[TarFile, str]:
+) -> tuple[TarFile, str]:
     """Create tar file from path or buffer. If passed :py:class:`TarFile` then return it."""
     if isinstance(file_data, TarFile):
         tar_file = file_data
@@ -348,7 +348,7 @@ class SaveScreenshot(SaveBase):
         return "Screenshot (*.png *.jpg *.jpeg)"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return []
 
 
@@ -421,7 +421,7 @@ class LoadPoints(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -434,7 +434,7 @@ class LoadPoints(LoadBase):
         return "Points (*.csv)"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return ["text"]
 
     @classmethod
@@ -450,7 +450,7 @@ class LoadPlanJson(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -480,7 +480,7 @@ class LoadPlanExcel(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,

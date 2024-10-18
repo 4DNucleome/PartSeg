@@ -165,7 +165,7 @@ class LoadProject(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -185,7 +185,7 @@ class LoadStackImage(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -224,7 +224,7 @@ class LoadImageMask(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -246,7 +246,7 @@ class LoadImageMask(LoadBase):
         return ProjectTuple(load_locations[0], image, mask=image.mask)
 
     @classmethod
-    def get_next_file(cls, file_paths: typing.List[str]):
+    def get_next_file(cls, file_paths: list[str]):
         base, ext = os.path.splitext(file_paths[0])
         return f"{base}_mask{ext}"
 
@@ -263,7 +263,7 @@ class LoadMask(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -297,7 +297,7 @@ def _mask_data_outside_mask(file_path):
 
 
 def load_mask_project(
-    load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+    load_locations: list[typing.Union[str, BytesIO, Path]],
     range_changed: typing.Callable[[int, int], typing.Any],
     step_changed: typing.Callable[[int], typing.Any],
     metadata: typing.Optional[dict] = None,
@@ -349,11 +349,11 @@ class LoadMaskSegmentation(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> typing.List[ProjectTuple]:
+    ) -> list[ProjectTuple]:
         if range_changed is None:
 
             def range_changed(_x, _y):
@@ -375,11 +375,11 @@ class LoadProfileFromJSON(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> typing.Tuple[dict, list]:
+    ) -> tuple[dict, list]:
         return load_metadata_part(load_locations[0])
 
     @classmethod
@@ -427,11 +427,11 @@ class LoadImageForBatch(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> typing.Union[ProjectTuple, typing.List[ProjectTuple]]:
+    ) -> typing.Union[ProjectTuple, list[ProjectTuple]]:
         ext = os.path.splitext(load_locations[0])[1].lower()
 
         for loader in load_dict.values():

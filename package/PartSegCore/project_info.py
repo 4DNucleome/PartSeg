@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Any, ClassVar, Dict, List, Optional, Protocol, Tuple, Union, runtime_checkable
+from typing import Any, ClassVar, Optional, Protocol, Union, runtime_checkable
 
 import numpy as np
 
@@ -32,8 +32,8 @@ class AdditionalLayerDescription:
 
 
 class HistoryElement(BaseModel):
-    roi_extraction_parameters: Dict[str, Any]
-    annotations: Optional[Dict[int, Any]]
+    roi_extraction_parameters: dict[str, Any]
+    annotations: Optional[dict[int, Any]]
     mask_property: MaskProperty
     arrays: BytesIO
 
@@ -65,7 +65,7 @@ class HistoryElement(BaseModel):
             annotations=roi_info.annotations,
         )
 
-    def get_roi_info_and_mask(self) -> Tuple[ROIInfo, Optional[np.ndarray]]:
+    def get_roi_info_and_mask(self) -> tuple[ROIInfo, Optional[np.ndarray]]:
         self.arrays.seek(0)
         seg = np.load(self.arrays)
         self.arrays.seek(0)
@@ -92,9 +92,9 @@ class ProjectInfoBase(Protocol):
     file_path: str
     image: Image
     roi_info: ROIInfo = ROIInfo(None)
-    additional_layers: ClassVar[Dict[str, AdditionalLayerDescription]] = {}
+    additional_layers: ClassVar[dict[str, AdditionalLayerDescription]] = {}
     mask: Optional[np.ndarray] = None
-    history: ClassVar[List[HistoryElement]] = []
+    history: ClassVar[list[HistoryElement]] = []
     errors: str = ""
     points: Optional[np.ndarray] = None
 
@@ -115,7 +115,7 @@ class ProjectInfoBase(Protocol):
 
 
 def calculate_mask_from_project(
-    mask_description: MaskProperty, project: ProjectInfoBase, components: Optional[List[int]] = None
+    mask_description: MaskProperty, project: ProjectInfoBase, components: Optional[list[int]] = None
 ) -> np.ndarray:
     """
     Function for calculate mask base on MaskProperty.

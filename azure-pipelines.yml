@@ -23,7 +23,7 @@ stages:
           displayName: "download data"
         - task: UsePythonVersion@0
           inputs:
-            versionSpec: '3.9'
+            versionSpec: '3.11'
           displayName: 'Use Python $(python.version)'
         - script: python build_utils/cut_changelog.py changelog_cut.md
           displayName: "Cut changelog"
@@ -41,7 +41,7 @@ stages:
         variables:
           PRE_COMMIT_HOME: $(Pipeline.Workspace)/pre-commit-cache
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.12', architecture: x64}}
           - script: echo "##vso[task.setvariable variable=PY]$(python -VV)"
           - task: Cache@2
             inputs:
