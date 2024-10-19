@@ -38,6 +38,10 @@ on:
         required: false
         type: string
         default: ""
+      artifact_suffix:
+        required: false
+        type: string
+        default: ""
 
 
 jobs:
@@ -99,7 +103,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: timing-report-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}-${{ inputs.coverage }}
+          name: timing-report-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}-${{ inputs.coverage }}${{ inputs.artifact_suffix }}
           path: |
             ./report-*.json
           retention-days: 7
@@ -108,7 +112,7 @@ jobs:
         uses: actions/upload-artifact@v4.4.0
         if: ${{ inputs.coverage }}
         with:
-          name: cov-reports-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}
+          name: cov-reports-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}${{ inputs.artifact_suffix }}
           include-hidden-files: 'true'
           path: |
             ./.coverage.*
