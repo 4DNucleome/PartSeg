@@ -87,7 +87,7 @@ jobs:
 
   base-test-main:
     name: Base py${{ matrix.python_version }}
-    if: github.event_name == 'push' || contains(github.event.pull_request.files, '.github/workflows/test.yml')
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && contains(github.event.pull_request.changed_files, '.github/workflows/test.yml'))
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
     strategy:
