@@ -85,9 +85,24 @@ jobs:
       tox_args: ${{ matrix.tox_args }}
       pydantic: ${{ matrix.pydantic }}
 
+  check_path:
+    # If steep is pull request then fetch patch and check if file '.github/workflows/test.yml'
+    # was changed. If it was changed then set 'check' to true.
+    # If steep is push then set 'check' to true.
+    name: Check if test.yml was changed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check if test.yml was changed
+        id: check
+        run: echo ::set-output name=check::$(if [ -n "$(git diff --name-only HEAD^ HEAD | grep '.github/workflows/test.yml')" ]; then echo "true"; else echo "false"; fi)
+      - name: Set check
+        id: set_check
+        run: echo ::set-output name=check::${{ steps.check.outputs.check }}
+
   base-test-main:
     name: Base py${{ matrix.python_version }}
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && contains(github.event.pull_request.changed_files, '.github/workflows/test.yml'))
+    if: github.event_name == 'push'
     uses: ./.github/workflows/base_test_workflow.yml
     needs: download_data
     strategy:
