@@ -394,23 +394,37 @@ class TestSearchCombBox:
         assert widget.itemText(2) == "test3"
 
 
-def test_create_load_dialog(qtbot):
+def test_create_load_dialog_with_dict(qtbot):
     dialog = CustomLoadDialog(load_dict, history=["/aaa/"])
-    assert dialog.acceptMode() == CustomLoadDialog.AcceptOpen
+    qtbot.addWidget(dialog)
+    assert dialog.acceptMode() == CustomLoadDialog.AcceptMode.AcceptOpen
+
+
+def test_create_load_dialog_with_class(qtbot):
     dialog = CustomLoadDialog(LoadProject, history=["/aaa/"])
-    assert dialog.acceptMode() == CustomLoadDialog.AcceptOpen
+    qtbot.addWidget(dialog)
+    assert dialog.acceptMode() == CustomLoadDialog.AcceptMode.AcceptOpen
     result = dialog.get_result()
     assert result.load_class is LoadProject
     assert result.selected_filter == LoadProject.get_name_with_suffix()
     assert result.load_location == []
 
 
-def test_create_save_dialog(qtbot):
+def test_create_save_dialog_with_dict(qtbot):
     dialog = CustomSaveDialog(save_dict, history=["/aaa/"])
-    assert dialog.acceptMode() == CustomSaveDialog.AcceptSave
+    qtbot.addWidget(dialog)
+    assert dialog.acceptMode() == CustomSaveDialog.AcceptModeAcceptSave
+
+
+def test_create_save_dialog_with_class(qtbot):
     dialog = CustomSaveDialog(SaveProject, history=["/aaa/"])
+    qtbot.addWidget(dialog)
     assert not hasattr(dialog, "stack_widget")
+
+
+def test_create_save_dialog_with_dict_no_system(qtbot):
     dialog = CustomSaveDialog(save_dict, system_widget=False)
+    qtbot.addWidget(dialog)
     assert hasattr(dialog, "stack_widget")
 
 
