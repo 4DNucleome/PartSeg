@@ -394,38 +394,35 @@ class TestSearchCombBox:
         assert widget.itemText(2) == "test3"
 
 
-def test_create_load_dialog_with_dict(qtbot):
-    dialog = CustomLoadDialog(load_dict, history=["/aaa/"])
-    qtbot.addWidget(dialog)
-    assert dialog.acceptMode() == CustomLoadDialog.AcceptMode.AcceptOpen
+class TestCustomDialog:
+    def test_create_load_with_dict(self, qtbot):
+        dialog = CustomLoadDialog(load_dict, history=["/aaa/"])
+        qtbot.addWidget(dialog)
+        assert dialog.acceptMode() == CustomLoadDialog.AcceptMode.AcceptOpen
 
+    def test_create_load_with_class(self, qtbot):
+        dialog = CustomLoadDialog(LoadProject, history=["/aaa/"])
+        qtbot.addWidget(dialog)
+        assert dialog.acceptMode() == CustomLoadDialog.AcceptMode.AcceptOpen
+        result = dialog.get_result()
+        assert result.load_class is LoadProject
+        assert result.selected_filter == LoadProject.get_name_with_suffix()
+        assert result.load_location == []
 
-def test_create_load_dialog_with_class(qtbot):
-    dialog = CustomLoadDialog(LoadProject, history=["/aaa/"])
-    qtbot.addWidget(dialog)
-    assert dialog.acceptMode() == CustomLoadDialog.AcceptMode.AcceptOpen
-    result = dialog.get_result()
-    assert result.load_class is LoadProject
-    assert result.selected_filter == LoadProject.get_name_with_suffix()
-    assert result.load_location == []
+    def test_create_save_with_dict(self, qtbot):
+        dialog = CustomSaveDialog(save_dict, history=["/aaa/"])
+        qtbot.addWidget(dialog)
+        assert dialog.acceptMode() == CustomSaveDialog.AcceptMode.AcceptSave
 
+    def test_create_save_with_class(self, qtbot):
+        dialog = CustomSaveDialog(SaveProject, history=["/aaa/"])
+        qtbot.addWidget(dialog)
+        assert not hasattr(dialog, "stack_widget")
 
-def test_create_save_dialog_with_dict(qtbot):
-    dialog = CustomSaveDialog(save_dict, history=["/aaa/"])
-    qtbot.addWidget(dialog)
-    assert dialog.acceptMode() == CustomSaveDialog.AcceptMode.AcceptSave
-
-
-def test_create_save_dialog_with_class(qtbot):
-    dialog = CustomSaveDialog(SaveProject, history=["/aaa/"])
-    qtbot.addWidget(dialog)
-    assert not hasattr(dialog, "stack_widget")
-
-
-def test_create_save_dialog_with_dict_no_system(qtbot):
-    dialog = CustomSaveDialog(save_dict, system_widget=False)
-    qtbot.addWidget(dialog)
-    assert hasattr(dialog, "stack_widget")
+    def test_create_save_with_dict_no_system(self, qtbot):
+        dialog = CustomSaveDialog(save_dict, system_widget=False)
+        qtbot.addWidget(dialog)
+        assert hasattr(dialog, "stack_widget")
 
 
 @pytest.fixture
@@ -437,47 +434,49 @@ def _mock_selected_files(monkeypatch, tmp_path):
 
 
 @pytest.mark.usefixtures("_mock_selected_files")
-def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
-    assert part_settings.get_path_history() == [str(Path.home())]
+class TestPSaveDialog:
+    def test_creation(self, part_settings, tmp_path, qtbot, monkeypatch):
+        assert part_settings.get_path_history() == [str(Path.home())]
 
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test")
-    qtbot.addWidget(dialog)
-    assert Path(dialog.directory().path()) == Path.home()
-    assert Path(part_settings.get("io.test")) == Path.home()
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test2", default_directory=str(tmp_path))
-    qtbot.addWidget(dialog)
-    assert Path(dialog.directory().path()) == tmp_path
-    assert Path(part_settings.get("io.test2")) == tmp_path
-    part_settings.set("io.test3", str(tmp_path))
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
-    qtbot.addWidget(dialog)
-    assert Path(dialog.directory().path()) == tmp_path
-    assert Path(part_settings.get("io.test3")) == tmp_path
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test")
+        qtbot.addWidget(dialog)
+        assert Path(dialog.directory().path()) == Path.home()
+        assert Path(part_settings.get("io.test")) == Path.home()
 
+    def test_creation_with_default(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test2", default_directory=str(tmp_path))
+        qtbot.addWidget(dialog)
+        assert Path(dialog.directory().path()) == tmp_path
+        assert Path(part_settings.get("io.test2")) == tmp_path
 
-def test_p_save_dialog_reject_no_history_update(part_settings, tmp_path, qtbot, monkeypatch):
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
-    qtbot.addWidget(dialog)
-    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
-    part_settings.set("io.filter_save", SaveAsTiff.get_name())
-    assert part_settings.get_path_history() == [str(Path.home())]
-    dialog.show()
-    dialog.accept()
-    assert part_settings.get_path_history() == [str(Path.home())]
+    def test_creation_read_path_from_settings(self, part_settings, tmp_path, qtbot, monkeypatch):
+        part_settings.set("io.test3", str(tmp_path))
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
+        qtbot.addWidget(dialog)
+        assert Path(dialog.directory().path()) == tmp_path
+        assert Path(part_settings.get("io.test3")) == tmp_path
 
+    def test_reject_no_history_update(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
+        qtbot.addWidget(dialog)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        assert part_settings.get_path_history() == [str(Path.home())]
+        dialog.show()
+        dialog.accept()
+        assert part_settings.get_path_history() == [str(Path.home())]
 
-@pytest.mark.usefixtures("_mock_selected_files")
-def test_p_save_dialog2(part_settings, tmp_path, qtbot, monkeypatch):
-    part_settings.set("io.filter_save", SaveAsTiff.get_name())
-    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
-    qtbot.addWidget(dialog)
-    assert SaveAsTiff.get_name() in dialog.nameFilters()
-    dialog.show()
-    dialog.selectFile(str(tmp_path / "test.tif"))
-    dialog.accept()
-    assert dialog.selectedNameFilter() == SaveAsTiff.get_name()
-    assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
+    def test_selection_tiff_file(self, part_settings, tmp_path, qtbot, monkeypatch):
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
+        qtbot.addWidget(dialog)
+        assert SaveAsTiff.get_name() in dialog.nameFilters()
+        dialog.show()
+        dialog.selectFile(str(tmp_path / "test.tif"))
+        dialog.accept()
+        assert dialog.selectedNameFilter() == SaveAsTiff.get_name()
+        assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
 
 
 def test_form_dialog(qtbot):
@@ -486,6 +485,7 @@ def test_form_dialog(qtbot):
         AlgorithmProperty("bbb", "Bbb", False),
     ]
     form = FormDialog(fields, values={"aaa": 2.0})
+    qtbot.addWidget(form)
     assert form.get_values() == {"aaa": 2.0, "bbb": False}
     form.set_values({"aaa": 5.0, "bbb": True})
     assert form.get_values() == {"aaa": 5.0, "bbb": True}
