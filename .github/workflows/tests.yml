@@ -117,7 +117,7 @@ jobs:
             qt_backend: "PySide2"
           - os: "macos-14"
             qt_backend: "PySide2"
-          - os: macos-14
+          - os: "macos-14"
             python_version: "3.9"
     with:
       test_data: True
