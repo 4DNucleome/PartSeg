@@ -14,6 +14,10 @@ on:
         required: false
         type: string
         default: ""
+      pytest_args:
+        required: false
+        type: string
+        default: ""
       napari:
         required: false
         type: string
@@ -90,7 +94,7 @@ jobs:
           pip list
 
       - name: Test with tox PartSegImage
-        run: python -m tox package/tests/test_PartSegImage ${{ inputs.tox_args }}
+        run: python -m tox ${{ inputs.tox_args }} -- package/tests/test_PartSegImage ${{ inputs.pytest_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
@@ -99,7 +103,7 @@ jobs:
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
 
       - name: Test with tox PartSegCore
-        run: python -m tox package/tests/test_PartSegCore ${{ inputs.tox_args }}
+        run: python -m tox ${{ inputs.tox_args }} --  package/tests/test_PartSegCore ${{ inputs.pytest_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
@@ -111,7 +115,7 @@ jobs:
         uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
-          run: python -m tox package/tests/test_PartSeg ${{ inputs.tox_args }}
+          run: python -m tox ${{ inputs.tox_args }} -- package/tests/test_PartSeg ${{ inputs.pytest_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
