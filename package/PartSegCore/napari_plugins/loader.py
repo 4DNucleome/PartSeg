@@ -51,13 +51,13 @@ else:
         return {}
 
 
-def _image_to_layers(project_info, scale, translate):
+def _image_to_layers(project_info, scale, translate, shear):
     res_layers = []
     if project_info.image.name == "ROI" and project_info.image.channels == 1:
         res_layers.append(
             (
                 project_info.image.get_channel(0),
-                {"scale": scale, "name": project_info.image.channel_names[0], "translate": translate},
+                {"scale": scale, "name": project_info.image.channel_names[0], "translate": translate, "shear": shear},
                 "labels",
             )
         )
@@ -71,6 +71,7 @@ def _image_to_layers(project_info, scale, translate):
                     "blending": "additive",
                     "translate": translate,
                     "metadata": project_info.image.metadata,
+                    "shear": shear,
                     **add_color(project_info.image, i),
                 },
                 "image",
@@ -85,14 +86,15 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
     res_layers = []
     if project_info.image is not None and not isinstance(project_info.image, str):
         scale = project_info.image.normalized_scaling()
+        shear = project_info.image.shear
         translate = project_info.image.shift
         translate = (0,) * (len(project_info.image.axis_order.replace("C", "")) - len(translate)) + translate
-        res_layers.extend(_image_to_layers(project_info, scale, translate))
+        res_layers.extend(_image_to_layers(project_info, scale, translate, shear))
         if project_info.roi_info.roi is not None:
             res_layers.append(
                 (
                     project_info.image.fit_array_to_image(project_info.roi_info.roi),
-                    {"scale": scale, "name": "ROI", "translate": translate},
+                    {"scale": scale, "name": "ROI", "translate": translate, "shear": shear},
                     "labels",
                 )
             )
@@ -105,6 +107,7 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
                         "name": name,
                         "translate": translate,
                         "visible": False,
+                        "shear": shear,
                     },
                     "labels",
                 )
@@ -115,7 +118,7 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
             res_layers.append(
                 (
                     project_info.image.fit_array_to_image(project_info.mask),
-                    {"scale": scale, "name": "Mask", "translate": translate},
+                    {"scale": scale, "name": "Mask", "translate": translate, "shear": shear},
                     "labels",
                 )
             )
