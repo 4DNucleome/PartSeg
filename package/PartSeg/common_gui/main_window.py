@@ -2,7 +2,7 @@ import dataclasses
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional, Type, Union
+from typing import Optional, Union
 
 from napari import __version__
 from packaging.version import parse as parse_version
@@ -130,7 +130,7 @@ class BaseMainWindow(QMainWindow):
     """Signal emitted when window has shown. Used to hide Launcher."""
 
     @classmethod
-    def get_setting_class(cls) -> Type[BaseSettings]:
+    def get_setting_class(cls) -> type[BaseSettings]:
         """Get constructor for :py:attr:`settings`"""
         return BaseSettings
 
@@ -161,7 +161,7 @@ class BaseMainWindow(QMainWindow):
             self.show_signal.connect(signal_fun)
         self.settings = settings
         self._load_dict = load_dict
-        self.viewer_list: List[Viewer] = []
+        self.viewer_list: list[Viewer] = []
         self.files_num = 1
         self.setAcceptDrops(True)
         self.setWindowTitle(title)
@@ -219,7 +219,7 @@ class BaseMainWindow(QMainWindow):
     def toggle_multiple_files(self):
         self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget", False))
 
-    def get_colormaps(self) -> List[Optional[colormap.Colormap]]:
+    def get_colormaps(self) -> list[Optional[colormap.Colormap]]:
         channel_num = self.settings.image.channels
         if not self.channel_info:
             return [None for _ in range(channel_num)]
@@ -264,7 +264,7 @@ class BaseMainWindow(QMainWindow):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 
-    def read_drop(self, paths: List[str]):
+    def read_drop(self, paths: list[str]):
         """Function to process loading files by drag and drop."""
         self._read_drop(paths, self._load_dict)
 

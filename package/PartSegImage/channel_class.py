@@ -1,5 +1,5 @@
 from importlib.metadata import PackageNotFoundError, version
-from typing import TYPE_CHECKING, Dict, Union
+from typing import TYPE_CHECKING, Union
 
 try:
     PYDANTIC_2 = version("pydantic") >= "2.0.0"
@@ -80,6 +80,6 @@ class Channel:
 
     @classmethod
     def __get_pydantic_json_schema__(cls, core_schema: "CoreSchema", handler: "GetJsonSchemaHandler"):
-        json_schema: Dict[str, Union[str, dict]] = {}
+        json_schema: dict[str, Union[str, dict]] = {}
         cls.__modify_schema__(json_schema)
         return json_schema

@@ -4,10 +4,11 @@ This module contains widgets to create and manage labels scheme
 
 import json
 import typing
+from collections.abc import Sequence
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Sequence, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 from fonticon_fa6 import FA6S
@@ -75,7 +76,7 @@ class LabelShow(QWidget):
     edit_labels_with_name = Signal(str, list)
     selected = Signal(str)
 
-    def __init__(self, name: str, label: List[Sequence[float]], removable, parent=None):
+    def __init__(self, name: str, label: list[Sequence[float]], removable, parent=None):
         super().__init__(parent)
         self.label = label
         self.name = name
@@ -180,7 +181,7 @@ class LabelChoose(QWidget):
             self.layout().addWidget(label)
         self.layout().addStretch(1)
 
-    def _label_show(self, name: str, label: List[Sequence[float]], removable) -> LabelShow:
+    def _label_show(self, name: str, label: list[Sequence[float]], removable) -> LabelShow:
         return LabelShow(name, label, removable, self)
 
     def showEvent(self, _):
@@ -288,7 +289,7 @@ class LabelEditor(QWidget):
         color = self.color_picker.currentColor()
         self.color_layout.addWidget(ColorShow([color.red(), color.green(), color.blue()], self))
 
-    def get_colors(self) -> List[List[int]]:
+    def get_colors(self) -> list[list[int]]:
         count = self.color_layout.count()
         return [self.color_layout.itemAt(i).widget().color for i in range(count)]
 
@@ -329,11 +330,11 @@ class LabelsLoad(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: List[Union[str, BytesIO, Path]],
+        load_locations: list[Union[str, BytesIO, Path]],
         range_changed: Optional[Callable[[int, int], Any]] = None,
         step_changed: Optional[Callable[[int], Any]] = None,
         metadata: Optional[dict] = None,
-    ) -> List[List[float]]:
+    ) -> list[list[float]]:
         with open(load_locations[0]) as f_p:
             return json.load(f_p)
 

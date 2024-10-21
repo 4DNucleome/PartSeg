@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 import numpy as np
 
@@ -20,7 +20,7 @@ class BoundInfo(NamedTuple):
         """Size of bounding box"""
         return self.upper - self.lower + 1
 
-    def get_slices(self, margin=0) -> List[slice]:
+    def get_slices(self, margin=0) -> list[slice]:
         return [slice(max(x - margin, 0), y + 1 + margin) for x, y in zip(self.lower, self.upper)]
 
     def del_dim(self, axis: int):
@@ -45,8 +45,8 @@ class ROIInfo:
     def __init__(
         self,
         roi: Optional[np.ndarray],
-        annotations: Optional[Dict[int, Any]] = None,
-        alternative: Optional[Dict[str, np.ndarray]] = None,
+        annotations: Optional[dict[int, Any]] = None,
+        alternative: Optional[dict[str, np.ndarray]] = None,
     ):
         annotations = {} if annotations is None else annotations
         self.annotations = {int(k): v for k, v in annotations.items()}
@@ -77,7 +77,7 @@ class ROIInfo:
         return f"ROIInfo(roi={numpy_repr(self.roi)}, bound_info={self.bound_info}, sizes={self.sizes!r})"
 
     @staticmethod
-    def calc_bounds(roi: np.ndarray) -> Dict[int, BoundInfo]:
+    def calc_bounds(roi: np.ndarray) -> dict[int, BoundInfo]:
         """
         Calculate bounding boxes components
 

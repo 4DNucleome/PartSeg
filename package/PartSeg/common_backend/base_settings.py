@@ -6,10 +6,11 @@ import re
 import sys
 import warnings
 from argparse import Namespace
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, NamedTuple, Optional, Union
 
 import napari.utils.theme
 import numpy as np
@@ -93,7 +94,7 @@ class ImageSettings(QObject):
         raise AttributeError("noise_remove_image_part not supported")
 
     @property
-    def additional_layers(self) -> Dict[str, AdditionalLayerDescription]:
+    def additional_layers(self) -> dict[str, AdditionalLayerDescription]:
         return self._additional_layers
 
     @additional_layers.setter
@@ -262,7 +263,7 @@ class ViewSettings(ImageSettings):
         self.view_settings_dict = ProfileDict()
         self.colormap_dict = ColormapDict(self.get_from_profile("custom_colormap", {}))
         self.label_color_dict = LabelColorDict(self.get_from_profile("custom_label_colors", {}))
-        self.cached_labels: Optional[Tuple[str, np.ndarray]] = None
+        self.cached_labels: Optional[tuple[str, np.ndarray]] = None
 
     @property
     def theme_name(self) -> str:
@@ -453,7 +454,7 @@ class BaseSettings(ViewSettings):
     load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
-    save_locations_keys: ClassVar[List[str]] = []
+    save_locations_keys: ClassVar[list[str]] = []
 
     def __init__(self, json_path: Union[Path, str], profile_name: str = "default"):
         """
@@ -468,7 +469,7 @@ class BaseSettings(ViewSettings):
         self._last_algorithm_dict = ProfileDict()
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""
-        self.history: List[HistoryElement] = []
+        self.history: list[HistoryElement] = []
         self.history_index = -1
         self.last_executed_algorithm = ""
         self._points = None
@@ -529,7 +530,7 @@ class BaseSettings(ViewSettings):
         self._roi_info = roi_info
         self.roi_changed.emit(self._roi_info)
 
-    def _load_files_call(self, files_list: List[str]):
+    def _load_files_call(self, files_list: list[str]):
         self.request_load_files.emit(files_list)
 
     def add_history_element(self, elem: HistoryElement) -> None:
@@ -563,11 +564,11 @@ class BaseSettings(ViewSettings):
             return self.history[self.history_index + 1]
         return None
 
-    def set_history(self, history: List[HistoryElement]):
+    def set_history(self, history: list[HistoryElement]):
         self.history = history
         self.history_index = len(self.history) - 1
 
-    def get_history(self) -> List[HistoryElement]:
+    def get_history(self) -> list[HistoryElement]:
         return self.history[: self.history_index + 1]
 
     @staticmethod
@@ -586,7 +587,7 @@ class BaseSettings(ViewSettings):
         except ValueError as e:
             raise ValueError("mask do not fit to image") from e
 
-    def get_save_list(self) -> List[SaveSettingsDescription]:
+    def get_save_list(self) -> list[SaveSettingsDescription]:
         """List of files in which program save the state."""
         return [
             SaveSettingsDescription("segmentation_settings.json", self._roi_dict),
@@ -594,7 +595,7 @@ class BaseSettings(ViewSettings):
             SaveSettingsDescription("algorithm_settings.json", self._last_algorithm_dict),
         ]
 
-    def get_path_history(self) -> List[str]:
+    def get_path_history(self) -> list[str]:
         """
         return list containing last 10 elements added with :py:meth:`.add_path_history` and
         last opened in each category form :py:attr:`save_location_keys`
@@ -614,7 +615,7 @@ class BaseSettings(ViewSettings):
             data_list = data_list[: keep_len - 1]
         return [value, *data_list]
 
-    def get_last_files(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
+    def get_last_files(self) -> list[tuple[tuple[Union[str, Path], ...], str]]:
         return self.get(FILE_HISTORY, [])
 
     def add_load_files_history(self, file_path: Sequence[Union[str, Path]], load_method: str):  # pragma: no cover
@@ -626,10 +627,10 @@ class BaseSettings(ViewSettings):
         # keep list of files as list because json serialize tuple to list
         self.add_path_history(os.path.dirname(file_path[0]))
 
-    def get_last_files_multiple(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
+    def get_last_files_multiple(self) -> list[tuple[tuple[Union[str, Path], ...], str]]:
         return self.get(MULTIPLE_FILES_OPEN_HISTORY, [])
 
-    def add_last_files_multiple(self, file_paths: List[Union[str, Path]], load_method: str):
+    def add_last_files_multiple(self, file_paths: list[Union[str, Path]], load_method: str):
         self.set(
             MULTIPLE_FILES_OPEN_HISTORY,
             self._add_elem_to_list(
@@ -731,7 +732,7 @@ class BaseSettings(ViewSettings):
             logger.error(errors_list)
         return errors_list
 
-    def _load_settings_file(self, file_path: Union[Path, str]) -> Tuple[ProfileDict, Any]:
+    def _load_settings_file(self, file_path: Union[Path, str]) -> tuple[ProfileDict, Any]:
         error = None
         data: ProfileDict = self.load_metadata(file_path)
         if isinstance(data, dict) and "__error__" in data:

@@ -282,7 +282,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
     @staticmethod
     def get_getter_and_setter_function(  # noqa: PLR0911
         widget: typing.Union[QWidget, Widget],
-    ) -> typing.Tuple[
+    ) -> tuple[
         typing.Callable[
             [typing.Union[QWidget, Widget]],
             typing.Any,
@@ -320,7 +320,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
 class FieldsList(QObject):
     changed = Signal()
 
-    def __init__(self, field_list: typing.List[QtAlgorithmProperty]):
+    def __init__(self, field_list: list[QtAlgorithmProperty]):
         super().__init__()
         self.field_list = field_list
         for el in field_list:
@@ -378,9 +378,7 @@ def _any_arguments(fun):
     return _any
 
 
-FieldAllowedTypes = typing.Union[
-    typing.List[AlgorithmProperty], typing.Type[BaseModel], typing.Type[AlgorithmDescribeBase]
-]
+FieldAllowedTypes = typing.Union[list[AlgorithmProperty], type[BaseModel], type[AlgorithmDescribeBase]]
 
 
 class FormWidget(QWidget):
@@ -397,8 +395,8 @@ class FormWidget(QWidget):
         super().__init__(parent=parent)
         if start_values is None:
             start_values = {}
-        self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = {}
-        self.channels_chose: typing.List[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
+        self.widgets_dict: dict[str, QtAlgorithmProperty] = {}
+        self.channels_chose: list[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
         layout = QFormLayout()
         layout.setContentsMargins(10, 0, 10, 0)
         self._model_class = None
@@ -510,7 +508,7 @@ class SubAlgorithmWidget(QWidget):
             )
         self.starting_values = {}
         self.property = algorithm_property
-        self.widgets_dict: typing.Dict[str, FormWidget] = {}
+        self.widgets_dict: dict[str, FormWidget] = {}
         # TODO protect for recursion
         widget = self._get_form_widget(algorithm_property)
         widget.value_changed.connect(self.values_changed)
@@ -561,7 +559,7 @@ class SubAlgorithmWidget(QWidget):
     def recursive_get_values(self):
         return {name: el.recursive_get_values() for name, el in self.widgets_dict.items()}
 
-    def get_values(self) -> typing.Dict[str, typing.Any]:
+    def get_values(self) -> dict[str, typing.Any]:
         name = self.choose.currentText()
         values = self.widgets_dict[name].get_values()
         return {"name": name, "values": values}
@@ -613,7 +611,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     values_changed = Signal()
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings: BaseSettings, algorithm: typing.Type[ROIExtractionAlgorithm], parent=None):
+    def __init__(self, settings: BaseSettings, algorithm: type[ROIExtractionAlgorithm], parent=None):
         """
         For algorithm which works on one channel
         """
@@ -719,9 +717,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
 
-    def __init__(
-        self, settings, algorithm: typing.Type[ROIExtractionAlgorithm], selector: typing.List[QWidget], parent=None
-    ):
+    def __init__(self, settings, algorithm: type[ROIExtractionAlgorithm], selector: list[QWidget], parent=None):
         super().__init__(settings, algorithm, parent=parent)
         self.selector = selector[:]
         self.algorithm_thread.finished.connect(self.enable_selector)
@@ -755,16 +751,16 @@ class AlgorithmChooseBase(QWidget):
     progress_signal = Signal(str, int)
     algorithm_changed = Signal(str)
 
-    algorithm_dict: typing.Dict[str, InteractiveAlgorithmSettingsWidget]
+    algorithm_dict: dict[str, InteractiveAlgorithmSettingsWidget]
 
-    def __init__(self, settings: BaseSettings, algorithms: typing.Type[AlgorithmSelection], parent=None):
+    def __init__(self, settings: BaseSettings, algorithms: type[AlgorithmSelection], parent=None):
         super().__init__(parent=parent)
         self.settings = settings
         self.algorithms = algorithms
         settings.algorithm_changed.connect(self.updated_algorithm)
         self.stack_layout = QStackedLayout()
         self.algorithm_choose = QComboBox()
-        self.algorithm_dict: typing.Dict[str, BaseAlgorithmSettingsWidget] = {}
+        self.algorithm_dict: dict[str, BaseAlgorithmSettingsWidget] = {}
         self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
         self.add_widgets_to_algorithm()
 
@@ -856,7 +852,7 @@ class AlgorithmChooseBase(QWidget):
 
 
 class AlgorithmChoose(AlgorithmChooseBase):
-    def __init__(self, settings: BaseSettings, algorithms: typing.Type[AlgorithmSelection], parent=None):
+    def __init__(self, settings: BaseSettings, algorithms: type[AlgorithmSelection], parent=None):
         super().__init__(settings, algorithms, parent)
         self.settings.image_changed.connect(self.image_changed)
 

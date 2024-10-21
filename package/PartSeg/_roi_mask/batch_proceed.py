@@ -3,7 +3,7 @@ import re
 from functools import partial
 from pathlib import Path
 from queue import Queue
-from typing import List, NamedTuple, Optional, Tuple, Union, cast
+from typing import NamedTuple, Optional, Union, cast
 
 from pydantic import BaseModel
 from qtpy.QtCore import QThread, Signal
@@ -19,7 +19,7 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
 class BatchTask(NamedTuple):
     data: Union[str, MaskProjectTuple]
     parameters: ROIExtractionProfile
-    save_prefix: Optional[Tuple[Union[str, Path], Union[dict, BaseModel]]]
+    save_prefix: Optional[tuple[Union[str, Path], Union[dict, BaseModel]]]
 
 
 class BatchProceed(QThread):
@@ -40,7 +40,7 @@ class BatchProceed(QThread):
         self.result_dir = ""
         self.save_parameters = {}
 
-    def add_task(self, task: Union[BatchTask, List[BatchTask]]):
+    def add_task(self, task: Union[BatchTask, list[BatchTask]]):
         if isinstance(task, list):
             for el in task:
                 self.queue.put(el)

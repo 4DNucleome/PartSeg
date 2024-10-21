@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from importlib.metadata import version
-from typing import List, Sequence
 
 from napari import Viewer
 from napari.layers import Labels
@@ -15,7 +15,7 @@ NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
 
 
 class NapariLabelShow(LabelShow):
-    def __init__(self, viewer: Viewer, name: str, label: List[Sequence[float]], removable, parent=None):
+    def __init__(self, viewer: Viewer, name: str, label: list[Sequence[float]], removable, parent=None):
         super().__init__(name, label, removable, parent)
         self.viewer = viewer
 
@@ -50,12 +50,12 @@ class NapariLabelShow(LabelShow):
                 layer.color = labels
 
 
-class NaparliLabelChoose(LabelChoose):
+class NapariLabelChoose(LabelChoose):
     def __init__(self, viewer: Viewer, settings, parent=None):
         super().__init__(settings, parent)
         self.viewer = viewer
 
-    def _label_show(self, name: str, label: List[Sequence[float]], removable) -> LabelShow:
+    def _label_show(self, name: str, label: list[Sequence[float]], removable) -> LabelShow:
         return NapariLabelShow(self.viewer, name, label, removable, self)
 
 
@@ -74,7 +74,7 @@ class LabelSelector(QTabWidget):
         settings = get_settings()
         self.settings = settings
         self.label_editor = NapariLabelEditor(settings)
-        self.label_view = NaparliLabelChoose(viewer, settings)
+        self.label_view = NapariLabelChoose(viewer, settings)
         self.addTab(self.label_view, "Select labels")
         self.addTab(self.label_editor, "Create labels")
 

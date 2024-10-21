@@ -11,19 +11,24 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 
 class LoadProperty(typing.NamedTuple):
-    load_location: typing.List[typing.Union[str, Path]]
+    load_location: list[typing.Union[str, Path]]
     selected_filter: str
-    load_class: typing.Type[LoadBase]
+    load_class: type[LoadBase]
 
 
-IORegister = typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase), str, typing.List[type(LoadBase)]]
+IORegister = typing.Union[dict[str, type(LoadBase)], type(LoadBase), str, list[type(LoadBase)]]
 
 
 class IOMethodMock:
     __new_style__ = False
 
+    __fields__: typing.ClassVar[dict[str, typing.Any]] = {}
+
     def __init__(self, name: str):
         self.name = name
+
+    def __call__(self, *args, **kwargs):
+        return self
 
     def get_name(self) -> str:
         return self.name
@@ -83,7 +88,7 @@ class CustomLoadDialog(LoadRegisterFileDialog):
         load_register: IORegister,
         parent=None,
         caption="Load file",
-        history: typing.Optional[typing.List[str]] = None,
+        history: typing.Optional[list[str]] = None,
     ):
         super().__init__(load_register, caption, parent)
         self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
@@ -116,14 +121,14 @@ class CustomLoadDialog(LoadRegisterFileDialog):
             super().accept()
 
     def get_result(self) -> LoadProperty:
-        chosen_class: typing.Type[LoadBase] = self.io_register[self.selectedNameFilter()]
+        chosen_class: type[LoadBase] = self.io_register[self.selectedNameFilter()]
         return LoadProperty(self.files_list, self.selectedNameFilter(), chosen_class)
 
 
 class PLoadDialog(CustomLoadDialog):
     def __init__(
         self,
-        load_register: typing.Union[typing.Dict[str, type(LoadBase)], type(LoadBase)],
+        load_register: typing.Union[dict[str, type(LoadBase)], type(LoadBase)],
         *,
         settings: "BaseSettings",
         path: str,
@@ -162,7 +167,7 @@ class SelectDirectoryDialog(QFileDialog):
     def __init__(
         self,
         settings: "BaseSettings",
-        settings_path: typing.Union[str, typing.List[str]],
+        settings_path: typing.Union[str, list[str]],
         default_directory: typing.Optional[str] = None,
         parent=None,
     ) -> None:

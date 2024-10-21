@@ -1,6 +1,5 @@
 import os
 from contextlib import suppress
-from typing import Type
 
 from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
@@ -534,7 +533,7 @@ class MainWindow(BaseMainWindow):
     settings: PartSettings
 
     @classmethod
-    def get_setting_class(cls) -> Type[PartSettings]:
+    def get_setting_class(cls) -> type[PartSettings]:
         return PartSettings
 
     initial_image_path = PartSegData.segmentation_analysis_default_image

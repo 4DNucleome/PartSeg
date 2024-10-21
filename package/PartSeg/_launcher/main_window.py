@@ -2,7 +2,7 @@ import importlib
 import os
 import warnings
 from functools import partial
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QSize, Qt, QThread, Signal
 from qtpy.QtGui import QIcon
@@ -34,7 +34,7 @@ class Prepare(QThread):
 
         plugins.register()
         main_window_module = importlib.import_module(self.module)
-        main_window: Type[BaseMainWindow] = main_window_module.MainWindow
+        main_window: type[BaseMainWindow] = main_window_module.MainWindow
         settings: BaseSettings = main_window.get_setting_class()(main_window_module.CONFIG_FOLDER)
         self.errors = settings.load()
         reader = TiffImageReader()

@@ -1,5 +1,3 @@
-from typing import Type
-
 import numpy as np
 import pytest
 
@@ -47,7 +45,7 @@ def _fix_threshold_flow(monkeypatch):
 
 @pytest.mark.parametrize("algorithm", restartable_list + algorithm_list)
 @pytest.mark.parametrize("masking", [True, False])
-def test_segmentation_algorithm(image, algorithm: Type[ROIExtractionAlgorithm], masking):
+def test_segmentation_algorithm(image, algorithm: type[ROIExtractionAlgorithm], masking):
     assert algorithm.support_z() is True
     assert algorithm.support_time() is False
     assert isinstance(algorithm.get_steps_num(), int)

@@ -120,7 +120,7 @@ class Spacing(QWidget):
         unit: Units,
         parent=None,
         input_type: QAbstractSpinBox = QDoubleSpinBox,
-        data_range: typing.Tuple[float, float] = (0, 100000),
+        data_range: tuple[float, float] = (0, 100000),
     ):
         """
         :param title: title of the widget
@@ -281,7 +281,7 @@ class InfoLabel(QWidget):
     :param parent: passed to :py:class:`QWidget` constructor
     """
 
-    def __init__(self, text_list: typing.List[str], delay: int = 10000, parent=None):
+    def __init__(self, text_list: list[str], delay: int = 10000, parent=None):
         if len(text_list) == 0:
             raise ValueError("List of text to show should be non empty.")
         super().__init__(parent)

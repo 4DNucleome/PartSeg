@@ -1,7 +1,6 @@
 import locale
 import os
 from enum import Enum
-from typing import List, Tuple
 
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QKeyEvent, QResizeEvent
@@ -56,7 +55,7 @@ class MeasurementsStorage:
         self.header = []
         self.max_rows = 0
         self.content = []
-        self.measurements: List[MeasurementResult] = []
+        self.measurements: list[MeasurementResult] = []
 
     def get_size(self, save_orientation: bool):
         if save_orientation:
@@ -116,13 +115,13 @@ class MeasurementsStorage:
         val = sublist[y]
         return locale.str(val) if isinstance(val, float) else str(val)
 
-    def get_header(self, save_orientation: bool) -> List[str]:
+    def get_header(self, save_orientation: bool) -> list[str]:
         if save_orientation:
             return [str(i) for i in range(self.max_rows)]
 
         return self.header
 
-    def get_rows(self, save_orientation: bool) -> List[str]:
+    def get_rows(self, save_orientation: bool) -> list[str]:
         return self.get_header(not save_orientation)
 
 
@@ -315,7 +314,7 @@ class MeasurementWidgetBase(QWidget):
         self.measurement_type.blockSignals(False)
 
     @staticmethod
-    def _move_widgets(widgets_list: List[Tuple[QWidget, int]], layout1: QBoxLayout, layout2: QBoxLayout):
+    def _move_widgets(widgets_list: list[tuple[QWidget, int]], layout1: QBoxLayout, layout2: QBoxLayout):
         for el in widgets_list:
             layout1.removeWidget(el[0])
             layout2.addWidget(el[0], el[1])

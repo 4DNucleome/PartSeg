@@ -55,7 +55,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
 
     def __init__(self, **kwargs):
         super().__init__()
-        self.parameters: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
+        self.parameters: dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
         self.new_parameters = self.__argument_class__() if self.__new_style__ else {}  # pylint: disable=not-callable
 
     def set_image(self, image):
@@ -196,7 +196,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     def get_additional_layers(
         self, full_segmentation: typing.Optional[np.ndarray] = None
-    ) -> typing.Dict[str, AdditionalLayerDescription]:
+    ) -> dict[str, AdditionalLayerDescription]:
         """
         Create dict with standard additional layers.
 
@@ -333,7 +333,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     def clean(self):
         super().clean()
-        self.parameters: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
+        self.parameters: dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
         self.cleaned_image = None
         self.mask = None
 

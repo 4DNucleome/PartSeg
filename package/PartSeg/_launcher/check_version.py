@@ -40,8 +40,9 @@ class CheckVersionThread(QThread):
             return
         try:
             if os.path.exists(os.path.join(state_store.save_folder, IGNORE_FILE)):
-                with open(os.path.join(state_store.save_folder, IGNORE_FILE), encoding="utf-8") as f_p, suppress(
-                    ValueError
+                with (
+                    open(os.path.join(state_store.save_folder, IGNORE_FILE), encoding="utf-8") as f_p,
+                    suppress(ValueError),
                 ):
                     old_date = date.fromisoformat(f_p.read())
                     if (date.today() - old_date).days < IGNORE_DAYS:

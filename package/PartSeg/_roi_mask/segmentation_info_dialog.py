@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional
+from typing import Callable, Optional
 
 from qtpy.QtCore import QEvent
 from qtpy.QtWidgets import QGridLayout, QLabel, QListWidget, QPlainTextEdit, QPushButton, QWidget
@@ -45,7 +45,7 @@ class SegmentationInfoDialog(QWidget):
         self.setLayout(layout)
         self.setWindowTitle("Parameters preview")
 
-    def set_parameters_dict(self, val: Optional[Dict[int, ROIExtractionProfile]]):
+    def set_parameters_dict(self, val: Optional[dict[int, ROIExtractionProfile]]):
         self.parameters_dict = val
 
     def set_additional_text(self, text):

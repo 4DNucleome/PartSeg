@@ -31,7 +31,7 @@ class PartSettings(BaseSettings):
     json_encoder_class = PartSegEncoder
     load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
-    save_locations_keys: typing.ClassVar[typing.List[str]] = [
+    save_locations_keys: typing.ClassVar[list[str]] = [
         "open_directory",
         "save_directory",
         "export_directory",
@@ -132,7 +132,7 @@ class PartSettings(BaseSettings):
             )
             self.algorithm_changed.emit()
 
-    def get_save_list(self) -> typing.List[SaveSettingsDescription]:
+    def get_save_list(self) -> list[SaveSettingsDescription]:
         return [
             *super().get_save_list(),
             SaveSettingsDescription("segmentation_pipeline_save.json", self._segmentation_pipelines_dict),
@@ -142,27 +142,27 @@ class PartSettings(BaseSettings):
         ]
 
     @property
-    def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
+    def segmentation_pipelines(self) -> dict[str, SegmentationPipeline]:
         warnings.warn("segmentation_pipelines is deprecated, use roi_pipelines", DeprecationWarning, stacklevel=2)
         return self.roi_pipelines
 
     @property
-    def roi_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
+    def roi_pipelines(self) -> dict[str, SegmentationPipeline]:
         return self._segmentation_pipelines_dict.get(self._current_roi_dict, EventedDict())
 
     @property
-    def segmentation_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
+    def segmentation_profiles(self) -> dict[str, ROIExtractionProfile]:
         warnings.warn("segmentation_profiles is deprecated, use roi_profiles", DeprecationWarning, stacklevel=2)
         return self.roi_profiles
 
     @property
-    def roi_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
+    def roi_profiles(self) -> dict[str, ROIExtractionProfile]:
         return self._segmentation_profiles_dict.get(self._current_roi_dict, EventedDict())
 
     @property
-    def batch_plans(self) -> typing.Dict[str, CalculationPlan]:
+    def batch_plans(self) -> dict[str, CalculationPlan]:
         return self._batch_plans_dict.get(self._current_roi_dict, EventedDict())
 
     @property
-    def measurement_profiles(self) -> typing.Dict[str, MeasurementProfile]:
+    def measurement_profiles(self) -> dict[str, MeasurementProfile]:
         return self._measurement_profiles_dict.get(self._current_roi_dict, EventedDict())
