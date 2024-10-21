@@ -41,7 +41,7 @@ jobs:
         include:
           - napari: "napari54"
             qt_backend: "PySide2"
-    # if: github.event_name == 'push'
+    if: github.event_name == 'push'
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: "3.9"
