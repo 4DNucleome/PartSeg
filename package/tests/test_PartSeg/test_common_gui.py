@@ -413,7 +413,7 @@ def test_create_load_dialog_with_class(qtbot):
 def test_create_save_dialog_with_dict(qtbot):
     dialog = CustomSaveDialog(save_dict, history=["/aaa/"])
     qtbot.addWidget(dialog)
-    assert dialog.acceptMode() == CustomSaveDialog.AcceptModeAcceptSave
+    assert dialog.acceptMode() == CustomSaveDialog.AcceptMode.AcceptSave
 
 
 def test_create_save_dialog_with_class(qtbot):
