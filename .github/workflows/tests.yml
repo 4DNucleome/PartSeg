@@ -126,6 +126,7 @@ jobs:
       qt_backend: ${{ matrix.qt_backend }}
       pydantic: ${{ matrix.pydantic }}
       artifact_suffix: "-main"
+      tox_args: "-- -v"
 
   test_coverage:
     needs: download_data
