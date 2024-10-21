@@ -43,7 +43,7 @@ comm==0.2.2
     # via ipykernel
 czifile==2019.7.2
     # via partseg (pyproject.toml)
-dask==2024.9.1
+dask==2024.10.0
     # via napari
 debugpy==1.8.7
     # via ipykernel
@@ -69,7 +69,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2024.9.0
+fsspec==2024.10.0
     # via dask
 h5py==3.12.1
     # via partseg (pyproject.toml)
@@ -140,7 +140,7 @@ mahotas==1.4.18
     # via partseg (pyproject.toml)
 markdown-it-py==3.0.0
     # via rich
-markupsafe==3.0.1
+markupsafe==3.0.2
     # via jinja2
 matplotlib-inline==0.1.7
     # via
@@ -218,7 +218,7 @@ partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==10.4.0
+pillow==11.0.0
     # via
     #   imageio
     #   napari
@@ -233,7 +233,7 @@ pooch==1.8.2
     # via scikit-image
 prompt-toolkit==3.0.48
     # via ipython
-psutil==6.0.0
+psutil==6.1.0
     # via
     #   ipykernel
     #   napari
@@ -263,7 +263,7 @@ pydantic-compat==0.1.2
     # via app-model
 pydantic-core==2.23.4
     # via pydantic
-pydantic-settings==2.5.2
+pydantic-settings==2.6.0
     # via autodoc-pydantic
 pygments==2.18.0
     # via
@@ -343,7 +343,7 @@ scipy==1.14.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.16.0
+sentry-sdk==2.17.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
