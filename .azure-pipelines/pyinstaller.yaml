@@ -22,6 +22,6 @@ steps:
   - task: PublishPipelineArtifact@1
     inputs:
       targetPath: dist2
-      publishLocation: execs
+      publishLocation: pipeline
   - script: ${{ parameters.test_path }}
     displayName: TestBuild
