@@ -12,8 +12,6 @@ appdirs==1.4.4
     #   napari
     #   npe2
     #   pint
-appnope==0.1.4
-    # via ipykernel
 asttokens==2.4.1
     # via stack-data
 attrs==24.2.0
@@ -71,7 +69,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2024.9.0
+fsspec==2024.10.0
     # via dask
 h5py==3.12.1
     # via partseg (pyproject.toml)
@@ -140,7 +138,7 @@ mahotas==1.4.18
     # via partseg (pyproject.toml)
 markdown-it-py==3.0.0
     # via rich
-markupsafe==3.0.1
+markupsafe==3.0.2
     # via jinja2
 matplotlib-inline==0.1.7
     # via
@@ -160,7 +158,7 @@ napari-svg==0.2.0
     # via napari
 nest-asyncio==1.6.0
     # via ipykernel
-networkx==3.4.1
+networkx==3.4.2
     # via scikit-image
 nme==0.1.8
     # via partseg (pyproject.toml)
