@@ -98,6 +98,7 @@ jobs:
         run: python -m tox ${{ inputs.tox_args }} -- package/tests/test_PartSegImage ${{ inputs.pytest_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+          NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
@@ -107,6 +108,7 @@ jobs:
         run: python -m tox ${{ inputs.tox_args }} --  package/tests/test_PartSegCore ${{ inputs.pytest_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+          NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
@@ -119,6 +121,7 @@ jobs:
           run: python -m tox ${{ inputs.tox_args }} -- package/tests/test_PartSeg ${{ inputs.pytest_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+          NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
