@@ -533,11 +533,11 @@ def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
 
 
-def test_str_filter(part_settings, tmp_path, qtbot, monkeypatch):
+def test_str_filter_save(part_settings, tmp_path, qtbot, monkeypatch):
     tiff_text = "Test (*.tiff)"
     monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
     monkeypatch.setattr(QFileDialog, "selectedFiles", lambda x: [str(tmp_path / "test.tif")])
-    dialog = PSaveDialog(tiff_text, settings=part_settings, path="io.save_test")
+    dialog = PSaveDialog(tiff_text, settings=part_settings, path="io.save_test", system_widget=False)
     qtbot.addWidget(dialog)
     assert tiff_text in dialog.nameFilters()
     dialog.show()
@@ -546,6 +546,9 @@ def test_str_filter(part_settings, tmp_path, qtbot, monkeypatch):
     assert dialog.selectedNameFilter() == tiff_text
     assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
 
+
+def test_str_filter_load(part_settings, tmp_path, qtbot, monkeypatch):
+    tiff_text = "Test (*.tiff)"
     with (tmp_path / "test2.tif").open("w") as f:
         f.write("eeeeeee")
 
