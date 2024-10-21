@@ -464,6 +464,7 @@ class TestPSaveDialog:
         assert part_settings.get_path_history() == [str(Path.home())]
         dialog.show()
         dialog.accept()
+        dialog.hide()
         assert part_settings.get_path_history() == [str(Path.home())]
 
     def test_selection_tiff_file(self, part_settings, tmp_path, qtbot, monkeypatch):
@@ -477,6 +478,7 @@ class TestPSaveDialog:
         dialog.show()
         dialog.selectFile(str(tmp_path / "test.tif"))
         dialog.accept()
+        dialog.hide()
         assert dialog.selectedNameFilter() == SaveAsTiff.get_name()
         assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
 
