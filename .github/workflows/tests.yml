@@ -51,21 +51,24 @@ jobs:
       fail-fast: false
       matrix:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
-        os: ["ubuntu-20.04"]
+        os: ["ubuntu-24.04"]
         qt_backend: ["PyQt5"]
         tox_args: [ "" ]
         include:
           - python_version: "3.11"
             os: "macos-13"
             qt_backend: "PyQt5"
+          - python_version: "3.12"
+            os: "macos-14"
+            qt_backend: "PyQt6"
           - python_version: "3.11"
-            os: "windows-2019"
+            os: "windows-latest"
             qt_backend: "PyQt5"
           - python_version: "3.10"
             os: "ubuntu-20.04"
             qt_backend: "PySide2"
           - python_version: "3.10"
-            os: "ubuntu-22.04"
+            os: "ubuntu-24.04"
             qt_backend: "PySide6"
           - python_version: "3.12"
             os: "ubuntu-22.04"
@@ -91,7 +94,7 @@ jobs:
       fail-fast: false
       matrix:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
-        os: ["ubuntu-20.04", "macos-13", "windows-2019"]
+        os: ["ubuntu-24.04", "macos-14", "windows-2022"]
         qt_backend: ["PySide2", "PyQt5"]
         include:
           - python_version: "3.12"
@@ -112,12 +115,18 @@ jobs:
             qt_backend: "PySide2"
           - python_version: "3.12"
             qt_backend: "PySide2"
+          - os: "macos-14"
+            qt_backend: "PySide2"
+          - os: "macos-14"
+            python_version: "3.9"
     with:
       test_data: True
       python_version: ${{ matrix.python_version }}
       os: ${{ matrix.os }}
       qt_backend: ${{ matrix.qt_backend }}
       pydantic: ${{ matrix.pydantic }}
+      artifact_suffix: "-main"
+      pytest_args: "-v"
 
   test_coverage:
     needs: download_data
@@ -182,7 +191,7 @@ jobs:
 
   test_conda:
     name: Test PartSeg conda
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: download_data
     steps:
       - uses: actions/checkout@v4
@@ -193,7 +202,7 @@ jobs:
           use-mamba: true
           channels: conda-forge
           channel-priority: strict
-          python-version: "3.11"
+          python-version: "3.12"
 
       - uses: tlambert03/setup-qt-libs@v1
 
@@ -236,7 +245,7 @@ jobs:
       - name: Test with tox
         uses: aganders3/headless-gui@v2
         with:
-          run: conda run -n test --no-capture-output tox -e py311-PySide2-conda
+          run: conda run -n test --no-capture-output tox -e py312-PySide2-conda
         timeout-minutes: 60
 
   check-package:

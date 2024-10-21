@@ -22,8 +22,13 @@ IORegister = typing.Union[dict[str, type(LoadBase)], type(LoadBase), str, list[t
 class IOMethodMock:
     __new_style__ = False
 
+    __fields__: typing.ClassVar[dict[str, typing.Any]] = {}
+
     def __init__(self, name: str):
         self.name = name
+
+    def __call__(self, *args, **kwargs):
+        return self
 
     def get_name(self) -> str:
         return self.name
