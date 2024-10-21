@@ -469,7 +469,9 @@ class TestPSaveDialog:
     def test_selection_tiff_file(self, part_settings, tmp_path, qtbot, monkeypatch):
         part_settings.set("io.filter_save", SaveAsTiff.get_name())
         monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
-        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
+        dialog = PSaveDialog(
+            save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save", system_widget=False
+        )
         qtbot.addWidget(dialog)
         assert SaveAsTiff.get_name() in dialog.nameFilters()
         dialog.show()
