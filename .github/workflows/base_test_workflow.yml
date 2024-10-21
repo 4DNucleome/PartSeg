@@ -94,7 +94,7 @@ jobs:
           pip list
 
       - name: Test with tox PartSegImage
-        if: ${{ inputs.napari == 'all' }}
+        if: ${{ inputs.napari == 'latest' }}
         run: python -m tox ${{ inputs.tox_args }} -- package/tests/test_PartSegImage ${{ inputs.pytest_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
@@ -103,7 +103,7 @@ jobs:
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
 
       - name: Test with tox PartSegCore
-        if: ${{ inputs.napari == 'all' }}
+        if: ${{ inputs.napari == 'latest' }}
         run: python -m tox ${{ inputs.tox_args }} --  package/tests/test_PartSegCore ${{ inputs.pytest_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
@@ -112,7 +112,7 @@ jobs:
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
 
       - name: Test with tox PartSeg
-        if: ${{ inputs.napari == 'all' }}
+        if: ${{ inputs.napari == 'latest' }}
         uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
@@ -124,7 +124,7 @@ jobs:
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
 
       - name: Test with tox all
-        if: ${{ inputs.napari != 'all' }}
+        if: ${{ inputs.napari != 'latest' }}
         uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
