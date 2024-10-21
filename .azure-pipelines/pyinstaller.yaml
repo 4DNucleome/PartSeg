@@ -19,9 +19,9 @@ steps:
       python  build_utils/create_and_pack_executable.py --no-simple-zip
     displayName: build
 
-  - task: PublishBuildArtifacts@1
+  - task: PublishPipelineArtifact@1
     inputs:
-      pathToPublish: dist2
-      artifactName: execs
+      targetPath: dist2
+      publishLocation: pipeline
   - script: ${{ parameters.test_path }}
     displayName: TestBuild
