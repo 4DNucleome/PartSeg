@@ -457,7 +457,7 @@ class TestPSaveDialog:
         assert Path(part_settings.get("io.test3")) == tmp_path
 
     def test_reject_no_history_update(self, part_settings, tmp_path, qtbot, monkeypatch):
-        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3", system_widget=False)
         qtbot.addWidget(dialog)
         monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
         part_settings.set("io.filter_save", SaveAsTiff.get_name())

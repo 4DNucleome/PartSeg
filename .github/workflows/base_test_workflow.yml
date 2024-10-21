@@ -89,11 +89,29 @@ jobs:
           python -m pip install -r requirements/requirements_dev.txt tox-gh-actions>=2.12.0 tox-min-req tox-uv
           pip list
 
-      - name: Test with tox
+      - name: Test with tox PartSegImage
+        run: python -m tox package/tests/test_PartSegImage ${{ inputs.tox_args }}
+        env:
+          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+          NAPARI: ${{ inputs.napari }}
+          BACKEND: ${{ inputs.qt_backend }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
+
+      - name: Test with tox PartSegCore
+        run: python -m tox package/tests/test_PartSegCore ${{ inputs.tox_args }}
+        env:
+          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+          NAPARI: ${{ inputs.napari }}
+          BACKEND: ${{ inputs.qt_backend }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
+
+      - name: Test with tox PartSeg
         uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
-          run: python -m tox ${{ inputs.tox_args }}
+          run: python -m tox package/tests/test_PartSeg ${{ inputs.tox_args }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
