@@ -49,7 +49,9 @@ class SegmentationThread(QThread):
         if self.algorithm.image is None:
             # assertion for running algorithm without image
             logging.error(
-                "No image in class %(cls_name)", extra={"cls_name": self.algorithm.__class__}, stack_info=True
+                "No image in class %s",
+                self.algorithm.__class__,
+                stack_info=True,
             )
             return
         try:
@@ -61,6 +63,10 @@ class SegmentationThread(QThread):
             return
         if segment_data is None:
             return
+        if self._image is not None:
+            # image changed during calculation
+            return
+
         self.execution_done.emit(segment_data)
 
     def finished_task(self):
