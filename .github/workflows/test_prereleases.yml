@@ -128,9 +128,11 @@ jobs:
     - uses: tlambert03/setup-qt-libs@v1
     - name: Install uv
       run: pip install uv
-    - name: Compile and install PyInstaller requirements
+    - name: Compile PyInstaller requirements
       run: |
         uv pip compile --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller  --prerelease allow
+    - name: Install dependencies
+      run: |
         uv venv --python-version 3.12 requirements.txt
         uv pip install .
     - name: upload requirements
