@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.16.0 - 2024-10-22
+
+This release drop support for python 3.8 and napari below 0.4.19.
+
+### 🐛 Bug Fixes
+
+- Fix error when image changed during segmentation ([#1218](https://github.com/4DNucleome/PartSeg/pull/1218))
+- Fix pre release tests ([#1219](https://github.com/4DNucleome/PartSeg/pull/1219))
+
+### 🧪 Testing
+
+- \[Automatic\] Constraints upgrades: `h5py`, `imageio`, `ipython`, `napari`, `numpy`, `sentry-sdk` ([#1201](https://github.com/4DNucleome/PartSeg/pull/1201))
+- \[Automatic\] Constraints upgrades: `sentry-sdk` ([#1214](https://github.com/4DNucleome/PartSeg/pull/1214))
+
+### ⚙️ Miscellaneous Tasks
+
+- Stop using mambaforge in tests ([#1203](https://github.com/4DNucleome/PartSeg/pull/1203))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1202](https://github.com/4DNucleome/PartSeg/pull/1202))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1204](https://github.com/4DNucleome/PartSeg/pull/1204))
+- Remove defining default version of language in pre-commit configuration ([#1208](https://github.com/4DNucleome/PartSeg/pull/1208))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1209](https://github.com/4DNucleome/PartSeg/pull/1209))
+- Drop python 3.8 ([#1206](https://github.com/4DNucleome/PartSeg/pull/1206))
+- Use `PublishPipelineArtifact` in place of `PublishBuildArtifacts` to reduce CI fragility ([#1213](https://github.com/4DNucleome/PartSeg/pull/1213))
+- Update CI configuration to use more modern OS and python versions ([#1207](https://github.com/4DNucleome/PartSeg/pull/1207))
+- Fix `upgrade-dependencies.yaml`docs constraints ([#1215](https://github.com/4DNucleome/PartSeg/pull/1215))
+- \[pre-commit.ci\] pre-commit autoupdate ([#1216](https://github.com/4DNucleome/PartSeg/pull/1216))
+
 ## 0.15.4 - 2024-09-27
 
 ### 🚀 Features
