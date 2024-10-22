@@ -18,6 +18,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+concurrency:
+  group: pre-test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   download_data:
     name: Download test data
@@ -130,7 +134,7 @@ jobs:
       run: pip install uv
     - name: Compile PyInstaller requirements
       run: |
-        uv pip compile --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller  --prerelease allow
+        uv pip compile --prerelease allow --python-version 3.12 --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller
     - name: Install dependencies
       run: |
         uv venv --python-version 3.12 requirements.txt
