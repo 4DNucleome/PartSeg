@@ -137,7 +137,8 @@ jobs:
         uv pip compile --prerelease allow --python-version 3.12 --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller
     - name: Install dependencies
       run: |
-        uv venv --python-version 3.12 requirements.txt
+        uv venv --python 3.12
+        uv sync requirements.txt
         uv pip install .
     - name: upload requirements
       uses: actions/upload-artifact@v4
