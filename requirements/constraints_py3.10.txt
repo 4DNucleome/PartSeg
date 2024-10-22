@@ -41,11 +41,11 @@ cloudpickle==3.1.0
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.6.3
+coverage==7.6.4
     # via partseg (pyproject.toml)
 czifile==2019.7.2
     # via partseg (pyproject.toml)
-dask==2024.9.1
+dask==2024.10.0
     # via napari
 debugpy==1.8.7
     # via ipykernel
@@ -73,7 +73,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2024.9.0
+fsspec==2024.10.0
     # via dask
 h5py==3.12.1
     # via partseg (pyproject.toml)
@@ -155,7 +155,7 @@ mahotas==1.4.18
     # via partseg (pyproject.toml)
 markdown-it-py==3.0.0
     # via rich
-markupsafe==3.0.1
+markupsafe==3.0.2
     # via jinja2
 matplotlib-inline==0.1.7
     # via
@@ -175,7 +175,7 @@ napari-svg==0.2.0
     # via napari
 nest-asyncio==1.6.0
     # via ipykernel
-networkx==3.4.1
+networkx==3.4.2
     # via scikit-image
 nme==0.1.8
     # via partseg (pyproject.toml)
@@ -238,7 +238,7 @@ partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==10.4.0
+pillow==11.0.0
     # via
     #   imageio
     #   napari
@@ -257,7 +257,7 @@ pooch==1.8.2
     # via scikit-image
 prompt-toolkit==3.0.48
     # via ipython
-psutil==6.0.0
+psutil==6.1.0
     # via
     #   ipykernel
     #   napari
@@ -294,9 +294,9 @@ pygments==2.18.0
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==6.10.0
+pyinstaller==6.11.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2024.8
+pyinstaller-hooks-contrib==2024.9
     # via pyinstaller
 pyopengl==3.1.7
     # via napari
@@ -392,11 +392,11 @@ scipy==1.14.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.16.0
+sentry-sdk==2.17.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==75.1.0
+setuptools==75.2.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
