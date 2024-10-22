@@ -146,7 +146,9 @@ jobs:
         name: requirements
         path: requirements.txt
     - name: Run PyInstaller
-      run: uv run build_utils/create_and_pack_executable.py
+      run: |
+        source .venv/bin/activate
+        python build_utils/create_and_pack_executable.py
     - name: Upload bundle
       uses: actions/upload-artifact@v4
       with:
