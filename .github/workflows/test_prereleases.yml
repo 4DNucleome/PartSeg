@@ -74,12 +74,26 @@ jobs:
           pip install --upgrade pip
           pip install setuptools tox tox-gh-actions>=2.12.0
 
+      - name: Test with tox base
+        # run tests using pip install --pre
+        uses: aganders3/headless-gui@v2
+        timeout-minutes: 60
+        with:
+          run: python -m tox run -v -- -v package/tests/test_PartSegImage package/tests/test_PartSegCore
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+          NAPARI: latest
+          BACKEND: PyQt6
+          PIP_CONSTRAINT: requirements/pre_test_problematic_version.txt
+          PIP_PRE: 1
+
       - name: Test with tox linux
         # run tests using pip install --pre
         uses: aganders3/headless-gui@v2
         timeout-minutes: 60
         with:
-          run: python -m tox run -v -- -v
+          run: python -m tox run -v -- -v package/tests/test_PartSeg
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
