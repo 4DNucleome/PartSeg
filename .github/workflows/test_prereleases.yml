@@ -138,7 +138,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv venv --python 3.12
-        uv sync
+        uv pip install -r requirements.txt
         uv pip install .
     - name: upload requirements
       uses: actions/upload-artifact@v4
