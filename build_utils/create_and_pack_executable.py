@@ -37,7 +37,7 @@ def create_archive(working_dir):
     file_path = get_file_path(working_dir)
     if file_path.endswith(".zip"):
         return zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED)
-    arch_file = tarfile.open(file_path, "w:gz")
+    arch_file = tarfile.open(file_path, "w:gz")  # noqa: SIM115
     arch_file.write = arch_file.add
     return arch_file
 
