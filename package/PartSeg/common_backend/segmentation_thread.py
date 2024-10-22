@@ -63,6 +63,10 @@ class SegmentationThread(QThread):
             return
         if segment_data is None:
             return
+        if self._image is not None:
+            # image changed during calculation
+            return
+
         self.execution_done.emit(segment_data)
 
     def finished_task(self):
