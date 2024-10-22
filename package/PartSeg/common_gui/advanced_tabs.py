@@ -66,23 +66,24 @@ class DevelopTab(QWidget):
 
     def reload_algorithm_action(self):
         """Function for reload plugins and algorithms"""
-        msg = "Reloading %(mod_name)"
+        msg = "Reloading %s"
         for val in register.reload_module_list:
-            logging.info(msg, extra={"mod_name": val.__name__})
+            logging.info(msg, val.__name__)
             importlib.reload(val)
         for el in plugins.get_plugins():
-            logging.info(msg, extra={"mod_name": el.__name__})
+            logging.info(msg, el.__name__)
             importlib.reload(el)
         for el in core_plugins.get_plugins():
-            logging.info(msg, extra={"mod_name": el.__name__})
+            logging.info(msg, el.__name__)
             importlib.reload(el)
         importlib.reload(register)
         importlib.reload(plugins)
         importlib.reload(core_plugins)
         plugins.register()
         core_plugins.register()
-        for el in self.parent().parent().reload_list:
-            el()
+        if hasattr(self.parent().parent(), "reload_list"):
+            for el in self.parent().parent().reload_list:
+                el()
 
 
 class MaskControl(QWidget):
