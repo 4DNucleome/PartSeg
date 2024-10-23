@@ -1,6 +1,7 @@
 import inspect
 import os.path
 import typing
+import warnings
 from abc import abstractmethod
 from contextlib import suppress
 from importlib.metadata import version
@@ -389,7 +390,35 @@ class CziImageReader(BaseImageReaderBuffer):
             axes_order=self.return_order(),
             metadata_dict=metadata,
             channel_info=self._get_channel_info(),
+            shear=self._read_shear(metadata),
         )
+
+    def _read_shear(self, metadata: dict):
+        skew = self._read_skew(metadata)
+        shear = np.diag([1.0] * len(skew))
+        for i, val in enumerate(skew):
+            if val == 0:
+                continue
+            shear[i, i + 1] = np.tan(np.radians(val))
+        return shear
+
+    @staticmethod
+    def _read_skew(metadata: dict):
+        dimensions = metadata["ImageDocument"]["Metadata"]["Information"]["Image"]["Dimensions"]
+        res = [0.0] * 4
+        for i, dim in enumerate("TZYX"):
+            if dim not in dimensions:
+                continue
+            if f"{dim}AxisShear" not in dimensions[dim]:
+                continue
+
+            shear_value = dimensions[dim][f"{dim}AxisShear"]
+            if not shear_value.startswith("Skew"):
+                warnings.warn(f"Unknown shear value {shear_value}", stacklevel=1)
+                continue
+            res[i] = float(shear_value[4:])
+
+        return res
 
     @classmethod
     def update_array_shape(cls, array: np.ndarray, axes: str):
