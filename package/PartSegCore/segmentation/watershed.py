@@ -183,7 +183,7 @@ class PathDistanceWatershed(BaseWatershed):
 
 
 class MSOWatershedParams(BaseModel):
-    step_limits: int = Field(100, ge=1, le=1000, title="Steep limits", description="Limits of Steps")
+    step_limits: int = Field(100, ge=1, le=10000, title="Steep limits", description="Limits of Steps")
     reflective: bool = False
 
 
