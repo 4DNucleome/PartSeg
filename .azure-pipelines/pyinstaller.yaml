@@ -16,6 +16,10 @@ steps:
   - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.12.txt
     displayName: install partseg
   - bash: |
+      python -m pip install git+https://github.com/4DNucleome/PartSegCore-compiled-backend.git@mso_fix
+    displayName: install PartSegCore-compiled-backend from `mso_fix` branch
+    # https://github.com/4DNucleome/PartSegCore-compiled-backend/tree/mso_fix
+  - bash: |
       python  build_utils/create_and_pack_executable.py --no-simple-zip
     displayName: build
 
