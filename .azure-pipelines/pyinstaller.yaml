@@ -17,6 +17,7 @@ steps:
     displayName: install partseg
   - bash: |
       bash build_utils/build_libomp.sh
+    if: startsWith(variables['Agent.OS'], 'Darwin')
     displayName: install libomp
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.15
