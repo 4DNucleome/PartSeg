@@ -16,6 +16,9 @@ steps:
   - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.12.txt
     displayName: install partseg
   - bash: |
+      bash build_utils/build_libomp.sh
+    displayName: install libomp
+  - bash: |
       python -m pip install git+https://github.com/4DNucleome/PartSegCore-compiled-backend.git@mso_fix
     displayName: install PartSegCore-compiled-backend from `mso_fix` branch
     # https://github.com/4DNucleome/PartSegCore-compiled-backend/tree/mso_fix
