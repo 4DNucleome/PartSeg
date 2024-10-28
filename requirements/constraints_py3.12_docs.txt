@@ -57,7 +57,7 @@ docutils==0.21.2
     # via
     #   sphinx
     #   sphinx-qt-documentation
-et-xmlfile==1.1.0
+et-xmlfile==2.0.0
     # via openpyxl
 executing==2.1.0
     # via stack-data
@@ -96,7 +96,7 @@ ipykernel==6.29.5
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==8.28.0
+ipython==8.29.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -326,7 +326,7 @@ requests==2.32.3
     #   pooch
     #   pyconify
     #   sphinx
-rich==13.9.2
+rich==13.9.3
     # via
     #   npe2
     #   typer
@@ -408,7 +408,7 @@ tornado==6.4.1
     #   jupyter-client
 tqdm==4.66.5
     # via napari
-traceback-with-variables==2.0.4
+traceback-with-variables==2.1.0
     # via partseg (pyproject.toml)
 traitlets==5.14.3
     # via

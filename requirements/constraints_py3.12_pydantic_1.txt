@@ -55,7 +55,7 @@ docstring-parser==0.16
     # via magicgui
 docutils==0.21.2
     # via sphinx
-et-xmlfile==1.1.0
+et-xmlfile==2.0.0
     # via openpyxl
 executing==2.1.0
     # via stack-data
@@ -97,7 +97,7 @@ ipykernel==6.29.5
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==8.28.0
+ipython==8.29.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -303,13 +303,13 @@ pyside2==5.15.2.1
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-pyside6==6.8.0.1
+pyside6==6.8.0.2
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-pyside6-addons==6.8.0.1
+pyside6-addons==6.8.0.2
     # via pyside6
-pyside6-essentials==6.8.0.1
+pyside6-essentials==6.8.0.2
     # via
     #   pyside6
     #   pyside6-addons
@@ -362,7 +362,7 @@ requests==2.32.3
     #   pooch
     #   pyconify
     #   sphinx
-rich==13.9.2
+rich==13.9.3
     # via
     #   npe2
     #   typer
@@ -391,7 +391,7 @@ shellingham==1.5.4
     # via typer
 shiboken2==5.15.2.1
     # via pyside2
-shiboken6==6.8.0.1
+shiboken6==6.8.0.2
     # via
     #   pyside6
     #   pyside6-addons
@@ -450,7 +450,7 @@ tornado==6.4.1
     #   jupyter-client
 tqdm==4.66.5
     # via napari
-traceback-with-variables==2.0.4
+traceback-with-variables==2.1.0
     # via partseg (pyproject.toml)
 traitlets==5.14.3
     # via
