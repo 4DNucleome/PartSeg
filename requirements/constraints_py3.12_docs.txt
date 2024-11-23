@@ -4,14 +4,13 @@ alabaster==1.0.0
     # via sphinx
 annotated-types==0.7.0
     # via pydantic
-app-model==0.3.0
+app-model==0.3.1
     # via napari
 appdirs==1.4.4
     # via
     #   partseg (pyproject.toml)
     #   napari
     #   npe2
-    #   pint
 asttokens==2.4.1
     # via stack-data
 attrs==24.2.0
@@ -43,9 +42,9 @@ comm==0.2.2
     # via ipykernel
 czifile==2019.7.2
     # via partseg (pyproject.toml)
-dask==2024.10.0
+dask==2024.11.2
     # via napari
-debugpy==1.8.7
+debugpy==1.8.9
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -63,7 +62,7 @@ executing==2.1.0
     # via stack-data
 flexcache==0.3
     # via pint
-flexparser==0.3.1
+flexparser==0.4
     # via pint
 fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
@@ -101,7 +100,7 @@ ipython==8.29.0
     #   partseg (pyproject.toml)
     #   ipykernel
     #   napari-console
-jedi==0.19.1
+jedi==0.19.2
     # via ipython
 jinja2==3.1.4
     # via sphinx
@@ -150,7 +149,7 @@ mpmath==1.3.0
     # via sympy
 napari==0.5.4
     # via partseg (pyproject.toml)
-napari-console==0.1.0
+napari-console==0.1.1
     # via napari
 napari-plugin-engine==0.2.0
     # via napari
@@ -164,7 +163,7 @@ nme==0.1.8
     # via partseg (pyproject.toml)
 npe2==0.7.7
     # via napari
-numpy==2.1.2
+numpy==2.1.3
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -188,7 +187,7 @@ oiffile==2024.5.24
     # via partseg (pyproject.toml)
 openpyxl==3.1.5
     # via partseg (pyproject.toml)
-packaging==24.1
+packaging==24.2
     # via
     #   partseg (pyproject.toml)
     #   build
@@ -221,11 +220,12 @@ pillow==11.0.0
     #   imageio
     #   napari
     #   scikit-image
-pint==0.24.3
+pint==0.24.4
     # via napari
 platformdirs==4.3.6
     # via
     #   jupyter-core
+    #   pint
     #   pooch
 pooch==1.8.2
     # via scikit-image
@@ -248,7 +248,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.1.6
     # via superqt
-pydantic==2.9.2
+pydantic==2.10.1
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -259,9 +259,9 @@ pydantic==2.9.2
     #   pydantic-settings
 pydantic-compat==0.1.2
     # via app-model
-pydantic-core==2.23.4
+pydantic-core==2.27.1
     # via pydantic
-pydantic-settings==2.6.0
+pydantic-settings==2.6.1
     # via autodoc-pydantic
 pygments==2.18.0
     # via
@@ -303,11 +303,11 @@ pyzmq==26.2.0
     #   jupyter-client
 qtawesome==1.3.1
     # via partseg (pyproject.toml)
-qtconsole==5.6.0
+qtconsole==5.6.1
     # via
     #   partseg (pyproject.toml)
     #   napari-console
-qtpy==2.4.1
+qtpy==2.4.2
     # via
     #   partseg (pyproject.toml)
     #   magicgui
@@ -326,11 +326,11 @@ requests==2.32.3
     #   pooch
     #   pyconify
     #   sphinx
-rich==13.9.3
+rich==13.9.4
     # via
     #   npe2
     #   typer
-rpds-py==0.20.0
+rpds-py==0.21.0
     # via
     #   jsonschema
     #   referencing
@@ -341,7 +341,7 @@ scipy==1.14.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.17.0
+sentry-sdk==2.19.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -402,13 +402,13 @@ toolz==1.0.0
     #   dask
     #   napari
     #   partd
-tornado==6.4.1
+tornado==6.4.2
     # via
     #   ipykernel
     #   jupyter-client
-tqdm==4.66.5
+tqdm==4.67.0
     # via napari
-traceback-with-variables==2.1.0
+traceback-with-variables==2.1.1
     # via partseg (pyproject.toml)
 traitlets==5.14.3
     # via
@@ -419,7 +419,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.12.5
+typer==0.13.1
     # via npe2
 typing-extensions==4.12.2
     # via
@@ -446,7 +446,7 @@ vispy==0.14.3
     #   napari-svg
 wcwidth==0.2.13
     # via prompt-toolkit
-wrapt==1.16.0
+wrapt==1.17.0
     # via napari
 xlrd==2.0.1
     # via partseg (pyproject.toml)
