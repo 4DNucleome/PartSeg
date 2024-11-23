@@ -224,6 +224,7 @@ class Image:
         channel_info: list[ChannelInfo | ChannelInfoFull] | None = None,
         axes_order: str | None = None,
         shift: Spacing | None = None,
+        shear: np.ndarray | None = None,
         name: str = "",
         metadata_dict: dict | None = None,
     ):
@@ -243,6 +244,7 @@ class Image:
         self._image_spacing = tuple(el if el > 0 else 10**-6 for el in self._image_spacing)
 
         self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
+        self._shear = shear
         self.name = name
 
         self.file_path = file_path
@@ -368,6 +370,10 @@ class Image:
                     raise ValueError("fail when try to fix channel name")
             base_channel_names.append(new_name)
         return base_channel_names
+
+    @property
+    def shear(self) -> np.ndarray | None:
+        return self._shear
 
     @property
     def channel_info(self) -> list[ChannelInfoFull]:
