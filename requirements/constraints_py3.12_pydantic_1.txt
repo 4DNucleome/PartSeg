@@ -11,7 +11,7 @@ appdirs==1.4.4
     #   partseg (pyproject.toml)
     #   napari
     #   npe2
-asttokens==2.4.1
+asttokens==3.0.0
     # via stack-data
 attrs==24.2.0
     # via
@@ -38,7 +38,7 @@ cloudpickle==3.1.0
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.6.7
+coverage==7.6.8
     # via partseg (pyproject.toml)
 czifile==2019.7.2
     # via partseg (pyproject.toml)
@@ -78,7 +78,7 @@ idna==3.10
     # via requests
 imagecodecs==2024.9.22
     # via partseg (pyproject.toml)
-imageio==2.36.0
+imageio==2.36.1
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
@@ -96,7 +96,7 @@ ipykernel==6.29.5
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==8.29.0
+ipython==8.30.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -313,7 +313,7 @@ pyside6-essentials==6.8.0.2
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.3.3
+pytest==8.3.4
     # via
     #   partseg (pyproject.toml)
     #   pytest-qt
@@ -401,7 +401,6 @@ simpleitk==2.4.0
 six==1.16.0
     # via
     #   partseg (pyproject.toml)
-    #   asttokens
     #   python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
@@ -448,7 +447,7 @@ tornado==6.4.2
     # via
     #   ipykernel
     #   jupyter-client
-tqdm==4.67.0
+tqdm==4.67.1
     # via napari
 traceback-with-variables==2.1.1
     # via partseg (pyproject.toml)
@@ -461,7 +460,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.13.1
+typer==0.14.0
     # via npe2
 typing-extensions==4.12.2
     # via
