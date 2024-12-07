@@ -592,7 +592,7 @@ class TiffImageReader(BaseImageReaderBuffer):
     @staticmethod
     def _read_imagej_colors(image_file):
         colors = image_file.imagej_metadata.get("LUTs", [])
-        if colors and colors[0].shape[0] == 24:
+        if isinstance(colors, list) and colors and colors[0].shape[0] == 24:
             # drop buggy colors that comes from bug in PArtSeg with
             # writing 64 bit integers in tifffile
             return []

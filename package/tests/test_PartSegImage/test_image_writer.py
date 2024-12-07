@@ -94,7 +94,7 @@ def test_imagej_write_all_metadata(tmp_path, data_test_dir):
 
     image2 = TiffImageReader.read_image(tmp_path / "image.tif")
 
-    npt.assert_array_equal(image2.default_coloring, image.default_coloring)
+    npt.assert_array_equal(image2.default_coloring, image.get_imagej_colors())
 
 
 def test_imagej_save_color(tmp_path):
