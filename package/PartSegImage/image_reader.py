@@ -589,6 +589,15 @@ class TiffImageReader(BaseImageReaderBuffer):
             x_spacing, y_spacing = self.default_spacing[2], self.default_spacing[1]
         return x_spacing, y_spacing
 
+    @staticmethod
+    def _read_imagej_colors(image_file):
+        colors = image_file.imagej_metadata.get("LUTs", [])
+        if colors and colors[0].shape[0] == 24:
+            # drop buggy colors that comes from bug in PArtSeg with
+            # writing 64 bit integers in tifffile
+            return []
+        return colors
+
     def read_imagej_metadata(self, image_file):
         try:
             z_spacing = image_file.imagej_metadata["spacing"] * name_to_scalar[image_file.imagej_metadata["unit"]]
@@ -596,7 +605,7 @@ class TiffImageReader(BaseImageReaderBuffer):
             z_spacing = self.default_spacing[0]
         x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
         self.spacing = z_spacing, y_spacing, x_spacing
-        self.colors = image_file.imagej_metadata.get("LUTs", [])
+        self.colors = self._read_imagej_colors(image_file)
         self.channel_names = image_file.imagej_metadata.get("Labels", [])
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]

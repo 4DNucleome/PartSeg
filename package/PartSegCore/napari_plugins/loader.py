@@ -18,7 +18,7 @@ def adjust_color(color: str) -> str: ...
 def adjust_color(color: list[int]) -> list[float]: ...
 
 
-def adjust_color(color: typing.Union[str, list[int]]) -> typing.Union[str, list[float]]:
+def adjust_color(color: typing.Union[str, list[int]]) -> typing.Union[str, tuple[float]]:
     # as napari ignore alpha channel in color, and adding it to
     # color cause that napari fails to detect that such colormap is already present
     # in this function I remove alpha channel if it is present
@@ -30,7 +30,7 @@ def adjust_color(color: typing.Union[str, list[int]]) -> typing.Union[str, list[
             # case when color is in format #RGBA
             return color[:4]
     elif isinstance(color, list):
-        return [color[i] / 255 for i in range(3)]
+        return (color[i] / 255 for i in range(3))
     # If not fit to an earlier case, return as is.
     # Maybe napari will handle it
     return color
