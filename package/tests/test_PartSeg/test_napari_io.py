@@ -8,20 +8,20 @@ import pytest
 from napari.layers import Image, Labels, Layer
 from packaging.version import parse as parse_version
 
-from PartSegCore.analysis import ProjectTuple
-from PartSegCore.mask.io_functions import LoadROIFromTIFF
-from PartSegCore.napari_plugins.load_image import napari_get_reader as napari_get_reader_image
-from PartSegCore.napari_plugins.load_mask_project import napari_get_reader as napari_get_reader_mask
-from PartSegCore.napari_plugins.load_masked_image import napari_get_reader as napari_get_reader_mask_image
-from PartSegCore.napari_plugins.load_roi_project import napari_get_reader as napari_get_reader_roi
-from PartSegCore.napari_plugins.loader import project_to_layers
-from PartSegCore.napari_plugins.save_mask_roi import napari_write_labels
-from PartSegCore.napari_plugins.save_tiff_layer import (
+from PartSeg.plugins.napari_io.load_image import napari_get_reader as napari_get_reader_image
+from PartSeg.plugins.napari_io.load_mask_project import napari_get_reader as napari_get_reader_mask
+from PartSeg.plugins.napari_io.load_masked_image import napari_get_reader as napari_get_reader_mask_image
+from PartSeg.plugins.napari_io.load_roi_project import napari_get_reader as napari_get_reader_roi
+from PartSeg.plugins.napari_io.loader import project_to_layers
+from PartSeg.plugins.napari_io.save_mask_roi import napari_write_labels
+from PartSeg.plugins.napari_io.save_tiff_layer import (
     napari_write_images,
 )
-from PartSegCore.napari_plugins.save_tiff_layer import (
+from PartSeg.plugins.napari_io.save_tiff_layer import (
     napari_write_labels as napari_write_labels_tiff,
 )
+from PartSegCore.analysis import ProjectTuple
+from PartSegCore.mask.io_functions import LoadROIFromTIFF
 from PartSegImage import GenericImageReader
 from PartSegImage import Image as PImage
 

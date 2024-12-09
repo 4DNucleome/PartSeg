@@ -33,7 +33,7 @@ def _test_imports():  # pragma: no cover
         raise ImportError("napari_widgets not loaded")
 
     if "load_image" not in dir(napari_plugins):
-        raise ImportError("napari_plugins not loaded")
+        raise ImportError("napari_io not loaded")
 
     with suppress(ImportError):
         from napari.qt import get_app
