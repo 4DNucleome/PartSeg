@@ -61,7 +61,7 @@ The list of available measurements could be extensible using the PartSeg plugin 
 ![Simple Measurement](https://i.imgur.com/Rnq6lF5.png)
 
 Set of measurements that could be calculated per component respecting data voxel size.
-In comparison to  *Measurement* list of available measures is limited to ones that do not need
+In comparison to *Measurement* list of available measures is limited to ones that do not need
 *Mask* information and could be calculated per component.
 
 This widget is equivalent to the PartSeg ROI Mask Simple Measurement window.

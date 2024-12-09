@@ -19,15 +19,15 @@ __all__ = (
     "Channel",
     "ChannelInfo",
     "ChannelInfoFull",
-    "Image",
-    "TiffImageReader",
-    "IMAGEJImageWriter",
-    "ImageWriter",
-    "TiffFileException",
     "CziImageReader",
-    "OifImagReader",
-    "ObsepImageReader",
     "GenericImageReader",
+    "IMAGEJImageWriter",
+    "Image",
+    "ImageWriter",
+    "ObsepImageReader",
+    "OifImagReader",
+    "TiffFileException",
+    "TiffImageReader",
 )
 
 if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:  # pragma: no cover
