@@ -335,7 +335,6 @@ select = [
 ]
 ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
     "PLR0913", # should be re-enabled in a future version
-    "ANN101", "ANN102",
 ]
 
 [tool.ruff.lint.isort]
