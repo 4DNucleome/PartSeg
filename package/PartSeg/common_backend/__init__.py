@@ -2,6 +2,7 @@
 This module contains non gui Qt based components
 """
 
+import contextlib
 import os.path
 from typing import TYPE_CHECKING
 
@@ -14,11 +15,10 @@ def napari_get_settings(path=None) -> "NapariSettings":
 
     if path is not None:
         path = os.path.join(path, "settings.yaml")
-
-    try:
-        return _napari_get_settings(path)
-    except Exception:  # pylint: disable=broad-except
-        return _napari_get_settings()
+    if path is not None:
+        with contextlib.suppress(Exception):
+            return _napari_get_settings(path)
+    return _napari_get_settings()
 
 
 __all__ = ("napari_get_settings",)
