@@ -1,4 +1,5 @@
 from PartSeg._launcher.main_window import PartSegGUILauncher
+from PartSeg.plugins.napari_widgets._settings import SettingsEditor
 from PartSeg.plugins.napari_widgets.algorithm_widgets import (
     BorderSmooth,
     ConnectedComponents,
@@ -33,4 +34,5 @@ __all__ = (
     "ROIAnalysisExtraction",
     "ROIMaskExtraction",
     "SearchLabel",
+    "SettingsEditor",
 )

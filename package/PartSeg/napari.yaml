@@ -77,6 +77,9 @@ contributions:
   - id: PartSeg.Metadata
     title: View Layer Metadata
     python_name: PartSeg.plugins.napari_widgets:LayerMetadata
+  - id: PartSeg.Settings
+    title: PartSeg Settings
+    python_name: PartSeg.plugins.napari_widgets:SettingsEditor
   readers:
   - command: PartSeg.load_roi_project
     filename_patterns:
@@ -162,3 +165,5 @@ contributions:
     display_name: Watershed
   - command: PartSeg.Metadata
     display_name: Layer Metadata
+  - command: PartSeg.Settings
+    display_name: Settings Editor
