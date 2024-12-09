@@ -709,9 +709,9 @@ class Image:
         array = self.fit_array_to_image(array)
         slices: list[int | slice] = [slice(None) for _ in range(len(self.array_axis_order))]
         axis_pos = self.get_array_axis_positions()
-        for name in kwargs:
+        for name, value in kwargs.items():
             if (n := name.upper()) in axis_pos:
-                slices[axis_pos[n]] = kwargs[name]
+                slices[axis_pos[n]] = value
         return array[tuple(slices)]
 
     def get_channel(self, num: int | str | Channel) -> np.ndarray:
