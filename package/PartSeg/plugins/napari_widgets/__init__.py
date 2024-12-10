@@ -31,8 +31,8 @@ __all__ = (
     "ROIAnalysisExtraction",
     "ROIMaskExtraction",
     "SearchLabel",
+    "SettingsEditor",
     "SplitCoreObjects",
     "Threshold",
     "Watershed",
-    "SettingsEditor",
 )
