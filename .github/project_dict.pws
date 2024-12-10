@@ -1,4 +1,4 @@
-personal_ws-1.1 en 12
+personal_ws-1.1 en 14
 napari
 autoupdate
 aspell
@@ -12,3 +12,4 @@ pre
 bool
 changelog
 czi
+PartSeg

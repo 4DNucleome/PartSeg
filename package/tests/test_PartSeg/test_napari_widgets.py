@@ -14,7 +14,6 @@ from napari.utils import Colormap
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QObject, QTimer, Signal
 
-from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
@@ -46,6 +45,7 @@ from PartSeg.plugins.napari_widgets.lables_control import LabelSelector, NapariL
 from PartSeg.plugins.napari_widgets.measurement_widget import update_properties
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSeg.plugins.napari_widgets.search_label_widget import HIGHLIGHT_LABEL_NAME
+from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
@@ -85,7 +85,7 @@ else:
 @pytest.fixture(autouse=True)
 def _clean_settings(tmp_path):
     old_settings = _settings._SETTINGS
-    _settings._SETTINGS = PartSettings(tmp_path)
+    _settings._SETTINGS = _settings.PartSegNapariSettings(tmp_path)
     yield
     _settings._SETTINGS = old_settings
 
@@ -639,3 +639,19 @@ class TestLayerMetadata:
 def test_enum():
     assert " " in str(CompareType.lower_threshold)
     assert " " in str(FlowType.dark_center)
+
+
+class TestSettingsWidget:
+    def test_create(self, qtbot):
+        w = _settings.SettingsEditor()
+        qtbot.addWidget(w.native)
+
+    def test_change_units(self, qtbot):
+        s = _settings.get_settings()
+        s.io_units = Units.µm
+        w = _settings.SettingsEditor()
+        qtbot.addWidget(w.native)
+        w.units_select.value = Units.nm
+        assert s.io_units == Units.nm
+        s.io_units = Units.mm
+        assert w.units_select.value == Units.mm

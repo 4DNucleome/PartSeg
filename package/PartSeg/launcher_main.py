@@ -26,14 +26,13 @@ def _test_imports():  # pragma: no cover
     from PartSeg._roi_mask.main_window import MainWindow as MaskMain
     from PartSeg.common_backend.base_argparser import _setup_sentry
     from PartSeg.common_gui.label_create import LabelChoose
-    from PartSeg.plugins import napari_widgets
-    from PartSegCore import napari_plugins
+    from PartSeg.plugins import napari_io, napari_widgets
 
     if "BorderSmooth" not in dir(napari_widgets):
         raise ImportError("napari_widgets not loaded")
 
-    if "load_image" not in dir(napari_plugins):
-        raise ImportError("napari_plugins not loaded")
+    if "load_image" not in dir(napari_io):
+        raise ImportError("napari_io not loaded")
 
     with suppress(ImportError):
         from napari.qt import get_app

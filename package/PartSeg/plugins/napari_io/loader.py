@@ -4,6 +4,8 @@ from importlib.metadata import version
 import numpy as np
 from packaging.version import parse as parse_version
 
+from PartSeg.plugins.napari_widgets._settings import get_settings
+from PartSegCore import UNIT_SCALE
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.io_utils import LoadBase, WrongFileTypeException
 from PartSegCore.mask.io_functions import MaskProjectTuple
@@ -84,7 +86,8 @@ def _image_to_layers(project_info, scale, translate):
 def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]):
     res_layers = []
     if project_info.image is not None and not isinstance(project_info.image, str):
-        scale = project_info.image.normalized_scaling()
+        settings = get_settings()
+        scale = project_info.image.normalized_scaling(UNIT_SCALE[settings.io_units.value])
         translate = project_info.image.shift
         translate = (0,) * (len(project_info.image.axis_order.replace("C", "")) - len(translate)) + translate
         res_layers.extend(_image_to_layers(project_info, scale, translate))
