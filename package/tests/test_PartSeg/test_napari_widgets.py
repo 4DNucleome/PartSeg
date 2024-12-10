@@ -653,3 +653,5 @@ class TestSettingsWidget:
         qtbot.addWidget(w.native)
         w.units_select.value = Units.nm
         assert s.io_units == Units.nm
+        s.io_units = Units.mm
+        assert w.units_select.value == Units.mm

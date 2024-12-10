@@ -48,9 +48,13 @@ class SettingsEditor(Container):
         super().__init__()
         self.settings = get_settings()
         self.units_select = create_widget(self.settings.io_units, annotation=Units, label="Units for io")
-        self.units_select.changed.connect(self.units_changed)
+        self.units_select.changed.connect(self.units_selection_changed)
+        self.settings.connect_("io_units", self.units_changed)
         self.append(self.units_select)
 
-    def units_changed(self, value):
+    def units_selection_changed(self, value):
         self.settings.io_units = value
         self.settings.dump()
+
+    def units_changed(self):
+        self.units_select.value = self.settings.io_units
