@@ -13,21 +13,21 @@ This release drop support for python 3.8 and napari below 0.4.19.
 
 ### 🧪 Testing
 
-- \[Automatic\] Constraints upgrades: `h5py`, `imageio`, `ipython`, `napari`, `numpy`, `sentry-sdk` ([#1201](https://github.com/4DNucleome/PartSeg/pull/1201))
-- \[Automatic\] Constraints upgrades: `sentry-sdk` ([#1214](https://github.com/4DNucleome/PartSeg/pull/1214))
+- [Automatic] Constraints upgrades: `h5py`, `imageio`, `ipython`, `napari`, `numpy`, `sentry-sdk` ([#1201](https://github.com/4DNucleome/PartSeg/pull/1201))
+- [Automatic] Constraints upgrades: `sentry-sdk` ([#1214](https://github.com/4DNucleome/PartSeg/pull/1214))
 
 ### ⚙️ Miscellaneous Tasks
 
 - Stop using mambaforge in tests ([#1203](https://github.com/4DNucleome/PartSeg/pull/1203))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1202](https://github.com/4DNucleome/PartSeg/pull/1202))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1204](https://github.com/4DNucleome/PartSeg/pull/1204))
+- [pre-commit.ci] pre-commit autoupdate ([#1202](https://github.com/4DNucleome/PartSeg/pull/1202))
+- [pre-commit.ci] pre-commit autoupdate ([#1204](https://github.com/4DNucleome/PartSeg/pull/1204))
 - Remove defining default version of language in pre-commit configuration ([#1208](https://github.com/4DNucleome/PartSeg/pull/1208))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1209](https://github.com/4DNucleome/PartSeg/pull/1209))
+- [pre-commit.ci] pre-commit autoupdate ([#1209](https://github.com/4DNucleome/PartSeg/pull/1209))
 - Drop python 3.8 ([#1206](https://github.com/4DNucleome/PartSeg/pull/1206))
 - Use `PublishPipelineArtifact` in place of `PublishBuildArtifacts` to reduce CI fragility ([#1213](https://github.com/4DNucleome/PartSeg/pull/1213))
 - Update CI configuration to use more modern OS and python versions ([#1207](https://github.com/4DNucleome/PartSeg/pull/1207))
 - Fix `upgrade-dependencies.yaml`docs constraints ([#1215](https://github.com/4DNucleome/PartSeg/pull/1215))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1216](https://github.com/4DNucleome/PartSeg/pull/1216))
+- [pre-commit.ci] pre-commit autoupdate ([#1216](https://github.com/4DNucleome/PartSeg/pull/1216))
 
 ## 0.15.4 - 2024-09-27
 
@@ -69,17 +69,17 @@ This release drop support for python 3.8 and napari below 0.4.19.
 
 ### 🧪 Testing
 
-- \[Automatic\] Constraints upgrades: `napari`, `sentry-sdk`, `sympy` ([#1128](https://github.com/4DNucleome/PartSeg/pull/1128))
-- \[Automatic\] Constraints upgrades: `mahotas`, `numpy`, `sentry-sdk`, `sympy` ([#1145](https://github.com/4DNucleome/PartSeg/pull/1145))
-- \[Automatic\] Constraints upgrades: `numpy`, `tifffile` ([#1163](https://github.com/4DNucleome/PartSeg/pull/1163))
-- \[Automatic\] Constraints upgrades: `napari`, `sentry-sdk`, `tifffile` ([#1169](https://github.com/4DNucleome/PartSeg/pull/1169))
-- \[Automatic\] Constraints upgrades: `magicgui`, `sentry-sdk` ([#1172](https://github.com/4DNucleome/PartSeg/pull/1172))
-- \[Automatic\] Constraints upgrades: `sympy`, `tifffile` ([#1177](https://github.com/4DNucleome/PartSeg/pull/1177))
-- \[Automatic\] Constraints upgrades: `imageio`, `napari`, `numpy` ([#1180](https://github.com/4DNucleome/PartSeg/pull/1180))
+- [Automatic] Constraints upgrades: `napari`, `sentry-sdk`, `sympy` ([#1128](https://github.com/4DNucleome/PartSeg/pull/1128))
+- [Automatic] Constraints upgrades: `mahotas`, `numpy`, `sentry-sdk`, `sympy` ([#1145](https://github.com/4DNucleome/PartSeg/pull/1145))
+- [Automatic] Constraints upgrades: `numpy`, `tifffile` ([#1163](https://github.com/4DNucleome/PartSeg/pull/1163))
+- [Automatic] Constraints upgrades: `napari`, `sentry-sdk`, `tifffile` ([#1169](https://github.com/4DNucleome/PartSeg/pull/1169))
+- [Automatic] Constraints upgrades: `magicgui`, `sentry-sdk` ([#1172](https://github.com/4DNucleome/PartSeg/pull/1172))
+- [Automatic] Constraints upgrades: `sympy`, `tifffile` ([#1177](https://github.com/4DNucleome/PartSeg/pull/1177))
+- [Automatic] Constraints upgrades: `imageio`, `napari`, `numpy` ([#1180](https://github.com/4DNucleome/PartSeg/pull/1180))
 - Constraints upgrades: `sentry-sdk` and fix tests ([#1182](https://github.com/4DNucleome/PartSeg/pull/1182))
 - `napari==0.5.3` related fixes, Constraints upgrades: `imageio`, `ipython`, `numpy`, `qtconsole`, `scipy`, `simpleitk`, `tifffile` ([#1183](https://github.com/4DNucleome/PartSeg/pull/1183))
-- \[Automatic\] Constraints upgrades: `numpy`, `pydantic` ([#1188](https://github.com/4DNucleome/PartSeg/pull/1188))
-- \[Automatic\] Constraints upgrades: `imagecodecs`, `pandas`, `pydantic`, `sentry-sdk`, `sympy`, `tifffile` ([#1190](https://github.com/4DNucleome/PartSeg/pull/1190))
+- [Automatic] Constraints upgrades: `numpy`, `pydantic` ([#1188](https://github.com/4DNucleome/PartSeg/pull/1188))
+- [Automatic] Constraints upgrades: `imagecodecs`, `pandas`, `pydantic`, `sentry-sdk`, `sympy`, `tifffile` ([#1190](https://github.com/4DNucleome/PartSeg/pull/1190))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -87,21 +87,21 @@ This release drop support for python 3.8 and napari below 0.4.19.
 - Get additional dict from PR branch for checking PR title ([#1144](https://github.com/4DNucleome/PartSeg/pull/1144))
 - Relax numpy constraint ([#1143](https://github.com/4DNucleome/PartSeg/pull/1143))
 - Allow to skip spellchecking PR title ([#1147](https://github.com/4DNucleome/PartSeg/pull/1147))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1149](https://github.com/4DNucleome/PartSeg/pull/1149))
+- [pre-commit.ci] pre-commit autoupdate ([#1149](https://github.com/4DNucleome/PartSeg/pull/1149))
 - Create only archive with version in name on azures pipeline ([#1151](https://github.com/4DNucleome/PartSeg/pull/1151))
 - Fix tests for napari from repository ([#1148](https://github.com/4DNucleome/PartSeg/pull/1148))
 - Use python 3.11 to determine updated packages in PR description ([#1160](https://github.com/4DNucleome/PartSeg/pull/1160))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1164](https://github.com/4DNucleome/PartSeg/pull/1164))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1170](https://github.com/4DNucleome/PartSeg/pull/1170))
+- [pre-commit.ci] pre-commit autoupdate ([#1164](https://github.com/4DNucleome/PartSeg/pull/1164))
+- [pre-commit.ci] pre-commit autoupdate ([#1170](https://github.com/4DNucleome/PartSeg/pull/1170))
 - Disable thumbnail generation in napari layer as it is fragile and not used ([#1171](https://github.com/4DNucleome/PartSeg/pull/1171))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1173](https://github.com/4DNucleome/PartSeg/pull/1173))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1178](https://github.com/4DNucleome/PartSeg/pull/1178))
+- [pre-commit.ci] pre-commit autoupdate ([#1173](https://github.com/4DNucleome/PartSeg/pull/1173))
+- [pre-commit.ci] pre-commit autoupdate ([#1178](https://github.com/4DNucleome/PartSeg/pull/1178))
 - Fix call of logger to properly pass arguments to messages ([#1179](https://github.com/4DNucleome/PartSeg/pull/1179))
 - Fix coverage files upload by enable hidden files upload ([#1186](https://github.com/4DNucleome/PartSeg/pull/1186))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1184](https://github.com/4DNucleome/PartSeg/pull/1184))
+- [pre-commit.ci] pre-commit autoupdate ([#1184](https://github.com/4DNucleome/PartSeg/pull/1184))
 - Use PyQt6 in pre-tests ([#1196](https://github.com/4DNucleome/PartSeg/pull/1196))
 - Add missed code from #1191 ([#1197](https://github.com/4DNucleome/PartSeg/pull/1197))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1189](https://github.com/4DNucleome/PartSeg/pull/1189))
+- [pre-commit.ci] pre-commit autoupdate ([#1189](https://github.com/4DNucleome/PartSeg/pull/1189))
 - Auto add "skip check PR title" label in update dependencies PR ([#1199](https://github.com/4DNucleome/PartSeg/pull/1199))
 
 ### Build
@@ -137,65 +137,65 @@ This release drop support for python 3.8 and napari below 0.4.19.
 
 ### 🧪 Testing
 
-- \[Automatic\] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `ipython`, `numpy`, `oiffile`, `pandas`, `psygnal`, `pyinstaller`, `qtconsole`, `qtpy`, `sentry-sdk`, `simpleitk`, `superqt`, `tifffile`, `xlsxwriter` ([#1020](https://github.com/4DNucleome/PartSeg/pull/1020))
-- \[Automatic\] Constraints upgrades: `h5py`, `imageio`, `ipython`, `numpy`, `packaging`, `pydantic`, `pyinstaller`, `pyqt5`, `scipy`, `sentry-sdk`, `superqt`, `tifffile`, `xlsxwriter` ([#1027](https://github.com/4DNucleome/PartSeg/pull/1027))
-- \[Automatic\] Constraints upgrades: `imageio`, `magicgui`, `xlsxwriter` ([#1030](https://github.com/4DNucleome/PartSeg/pull/1030))
-- \[Automatic\] Constraints upgrades: `ipykernel`, `pandas`, `qtpy` ([#1032](https://github.com/4DNucleome/PartSeg/pull/1032))
-- \[Automatic\] Constraints upgrades: `imageio`, `ipykernel`, `ipython`, `numpy`, `pandas`, `psygnal`, `pygments`, `pyinstaller`, `qtconsole`, `scipy`, `sentry-sdk`, `simpleitk` ([#1035](https://github.com/4DNucleome/PartSeg/pull/1035))
-- \[Automatic\] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `magicgui`, `pandas`, `pyinstaller`, `qtawesome`, `sentry-sdk`, `tifffile` ([#1048](https://github.com/4DNucleome/PartSeg/pull/1048))
-- \[Automatic\] Constraints upgrades: `ipykernel`, `numpy`, `pandas`, `partsegcore-compiled-backend`, `pydantic`, `scipy`, `sentry-sdk` ([#1058](https://github.com/4DNucleome/PartSeg/pull/1058))
+- [Automatic] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `ipython`, `numpy`, `oiffile`, `pandas`, `psygnal`, `pyinstaller`, `qtconsole`, `qtpy`, `sentry-sdk`, `simpleitk`, `superqt`, `tifffile`, `xlsxwriter` ([#1020](https://github.com/4DNucleome/PartSeg/pull/1020))
+- [Automatic] Constraints upgrades: `h5py`, `imageio`, `ipython`, `numpy`, `packaging`, `pydantic`, `pyinstaller`, `pyqt5`, `scipy`, `sentry-sdk`, `superqt`, `tifffile`, `xlsxwriter` ([#1027](https://github.com/4DNucleome/PartSeg/pull/1027))
+- [Automatic] Constraints upgrades: `imageio`, `magicgui`, `xlsxwriter` ([#1030](https://github.com/4DNucleome/PartSeg/pull/1030))
+- [Automatic] Constraints upgrades: `ipykernel`, `pandas`, `qtpy` ([#1032](https://github.com/4DNucleome/PartSeg/pull/1032))
+- [Automatic] Constraints upgrades: `imageio`, `ipykernel`, `ipython`, `numpy`, `pandas`, `psygnal`, `pygments`, `pyinstaller`, `qtconsole`, `scipy`, `sentry-sdk`, `simpleitk` ([#1035](https://github.com/4DNucleome/PartSeg/pull/1035))
+- [Automatic] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `magicgui`, `pandas`, `pyinstaller`, `qtawesome`, `sentry-sdk`, `tifffile` ([#1048](https://github.com/4DNucleome/PartSeg/pull/1048))
+- [Automatic] Constraints upgrades: `ipykernel`, `numpy`, `pandas`, `partsegcore-compiled-backend`, `pydantic`, `scipy`, `sentry-sdk` ([#1058](https://github.com/4DNucleome/PartSeg/pull/1058))
 - Improve test of PartSegImage ([#1072](https://github.com/4DNucleome/PartSeg/pull/1072))
 - Improve test suite for `PartSegCore` ([#1077](https://github.com/4DNucleome/PartSeg/pull/1077))
-- \[Automatic\] Constraints upgrades: `imageio`, `ipykernel`, `local-migrator`, `napari`, `numpy`, `pandas`, `partsegcore-compiled-backend`, `pyinstaller`, `sentry-sdk`, `tifffile`, `vispy`, `xlsxwriter` ([#1063](https://github.com/4DNucleome/PartSeg/pull/1063))
-- \[Automatic\] Constraints upgrades: `magicgui`, `packaging`, `psygnal`, `pyinstaller`, `sentry-sdk`, `superqt` ([#1086](https://github.com/4DNucleome/PartSeg/pull/1086))
-- \[Automatic\] Constraints upgrades: `psygnal`, `pydantic`, `sentry-sdk`, `vispy` ([#1090](https://github.com/4DNucleome/PartSeg/pull/1090))
-- \[Automatic\] Constraints upgrades: `h5py`, `ipykernel`, `mahotas`, `pandas`, `psygnal`, `pydantic`, `pyinstaller`, `qtawesome`, `scipy`, `sentry-sdk`, `superqt` ([#1092](https://github.com/4DNucleome/PartSeg/pull/1092))
-- \[Automatic\] Constraints upgrades: `imageio`, `tifffile` ([#1100](https://github.com/4DNucleome/PartSeg/pull/1100))
-- \[Automatic\] Constraints upgrades: `pydantic`, `sentry-sdk`, `superqt`, `tifffile` ([#1102](https://github.com/4DNucleome/PartSeg/pull/1102))
-- \[Automatic\] Constraints upgrades: `psygnal`, `pygments`, `qtconsole`, `sentry-sdk`, `superqt`, `tifffile` ([#1105](https://github.com/4DNucleome/PartSeg/pull/1105))
-- \[Automatic\] Constraints upgrades: `imagecodecs`, `magicgui`, `oiffile`, `openpyxl`, `packaging`, `pydantic`, `pyinstaller`, `requests`, `scipy`, `sentry-sdk`, `superqt`, `sympy`, `tifffile`, `vispy` ([#1107](https://github.com/4DNucleome/PartSeg/pull/1107))
-- \[Automatic\] Constraints upgrades: `pydantic` ([#1112](https://github.com/4DNucleome/PartSeg/pull/1112))
+- [Automatic] Constraints upgrades: `imageio`, `ipykernel`, `local-migrator`, `napari`, `numpy`, `pandas`, `partsegcore-compiled-backend`, `pyinstaller`, `sentry-sdk`, `tifffile`, `vispy`, `xlsxwriter` ([#1063](https://github.com/4DNucleome/PartSeg/pull/1063))
+- [Automatic] Constraints upgrades: `magicgui`, `packaging`, `psygnal`, `pyinstaller`, `sentry-sdk`, `superqt` ([#1086](https://github.com/4DNucleome/PartSeg/pull/1086))
+- [Automatic] Constraints upgrades: `psygnal`, `pydantic`, `sentry-sdk`, `vispy` ([#1090](https://github.com/4DNucleome/PartSeg/pull/1090))
+- [Automatic] Constraints upgrades: `h5py`, `ipykernel`, `mahotas`, `pandas`, `psygnal`, `pydantic`, `pyinstaller`, `qtawesome`, `scipy`, `sentry-sdk`, `superqt` ([#1092](https://github.com/4DNucleome/PartSeg/pull/1092))
+- [Automatic] Constraints upgrades: `imageio`, `tifffile` ([#1100](https://github.com/4DNucleome/PartSeg/pull/1100))
+- [Automatic] Constraints upgrades: `pydantic`, `sentry-sdk`, `superqt`, `tifffile` ([#1102](https://github.com/4DNucleome/PartSeg/pull/1102))
+- [Automatic] Constraints upgrades: `psygnal`, `pygments`, `qtconsole`, `sentry-sdk`, `superqt`, `tifffile` ([#1105](https://github.com/4DNucleome/PartSeg/pull/1105))
+- [Automatic] Constraints upgrades: `imagecodecs`, `magicgui`, `oiffile`, `openpyxl`, `packaging`, `pydantic`, `pyinstaller`, `requests`, `scipy`, `sentry-sdk`, `superqt`, `sympy`, `tifffile`, `vispy` ([#1107](https://github.com/4DNucleome/PartSeg/pull/1107))
+- [Automatic] Constraints upgrades: `pydantic` ([#1112](https://github.com/4DNucleome/PartSeg/pull/1112))
 
 ### ⚙️ Miscellaneous Tasks
 
-- \[pre-commit.ci\] pre-commit autoupdate ([#1019](https://github.com/4DNucleome/PartSeg/pull/1019))
+- [pre-commit.ci] pre-commit autoupdate ([#1019](https://github.com/4DNucleome/PartSeg/pull/1019))
 - Remove plugin page preview as it is no longer maintained ([#1021](https://github.com/4DNucleome/PartSeg/pull/1021))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1022](https://github.com/4DNucleome/PartSeg/pull/1022))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1026](https://github.com/4DNucleome/PartSeg/pull/1026))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1031](https://github.com/4DNucleome/PartSeg/pull/1031))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1034](https://github.com/4DNucleome/PartSeg/pull/1034))
+- [pre-commit.ci] pre-commit autoupdate ([#1022](https://github.com/4DNucleome/PartSeg/pull/1022))
+- [pre-commit.ci] pre-commit autoupdate ([#1026](https://github.com/4DNucleome/PartSeg/pull/1026))
+- [pre-commit.ci] pre-commit autoupdate ([#1031](https://github.com/4DNucleome/PartSeg/pull/1031))
+- [pre-commit.ci] pre-commit autoupdate ([#1034](https://github.com/4DNucleome/PartSeg/pull/1034))
 - Use new semgrep configuration ([#1039](https://github.com/4DNucleome/PartSeg/pull/1039))
 - Upload raw coverage information ([#1044](https://github.com/4DNucleome/PartSeg/pull/1044))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1036](https://github.com/4DNucleome/PartSeg/pull/1036))
+- [pre-commit.ci] pre-commit autoupdate ([#1036](https://github.com/4DNucleome/PartSeg/pull/1036))
 - Run coverage upload in separate steep ([#1053](https://github.com/4DNucleome/PartSeg/pull/1053))
 - Generate local report in `Tests` workflow and use proper script for fetch report ([#1054](https://github.com/4DNucleome/PartSeg/pull/1054))
 - Move coverage back to main workflow ([#1055](https://github.com/4DNucleome/PartSeg/pull/1055))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1056](https://github.com/4DNucleome/PartSeg/pull/1056))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1059](https://github.com/4DNucleome/PartSeg/pull/1059))
+- [pre-commit.ci] pre-commit autoupdate ([#1056](https://github.com/4DNucleome/PartSeg/pull/1056))
+- [pre-commit.ci] pre-commit autoupdate ([#1059](https://github.com/4DNucleome/PartSeg/pull/1059))
 - Update `actions/upload-artifact` and `actions/download-artifact` from 3 to 4 ([#1062](https://github.com/4DNucleome/PartSeg/pull/1062))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1064](https://github.com/4DNucleome/PartSeg/pull/1064))
+- [pre-commit.ci] pre-commit autoupdate ([#1064](https://github.com/4DNucleome/PartSeg/pull/1064))
 - Group actions update ([#1065](https://github.com/4DNucleome/PartSeg/pull/1065))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1068](https://github.com/4DNucleome/PartSeg/pull/1068))
+- [pre-commit.ci] pre-commit autoupdate ([#1068](https://github.com/4DNucleome/PartSeg/pull/1068))
 - Remove requirement of 2 builds upload to codecov.io ([#1073](https://github.com/4DNucleome/PartSeg/pull/1073))
 - Re add tests to coverage report ([#1074](https://github.com/4DNucleome/PartSeg/pull/1074))
 - Switch from setup.cfg to pyproject.toml in workflows ([#1076](https://github.com/4DNucleome/PartSeg/pull/1076))
 - Fix compiling pyinstaller pre-deps ([#1075](https://github.com/4DNucleome/PartSeg/pull/1075))
 - Add codespell to pre-commit and fix pointed bugs ([#1078](https://github.com/4DNucleome/PartSeg/pull/1078))
 - Add new ruff rules and apply them ([#1079](https://github.com/4DNucleome/PartSeg/pull/1079))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1080](https://github.com/4DNucleome/PartSeg/pull/1080))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1081](https://github.com/4DNucleome/PartSeg/pull/1081))
+- [pre-commit.ci] pre-commit autoupdate ([#1080](https://github.com/4DNucleome/PartSeg/pull/1080))
+- [pre-commit.ci] pre-commit autoupdate ([#1081](https://github.com/4DNucleome/PartSeg/pull/1081))
 - Fix upgrade depenecies workflow ([#1083](https://github.com/4DNucleome/PartSeg/pull/1083))
 - Block using `mpmath==1.4.0a0` and `sentry-sdk` 2.0.0a1/a2 in pre-test ([#1085](https://github.com/4DNucleome/PartSeg/pull/1085))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1089](https://github.com/4DNucleome/PartSeg/pull/1089))
+- [pre-commit.ci] pre-commit autoupdate ([#1089](https://github.com/4DNucleome/PartSeg/pull/1089))
 - Fix jupyter failing test by using constraints ([#1093](https://github.com/4DNucleome/PartSeg/pull/1093))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1091](https://github.com/4DNucleome/PartSeg/pull/1091))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1096](https://github.com/4DNucleome/PartSeg/pull/1096))
+- [pre-commit.ci] pre-commit autoupdate ([#1091](https://github.com/4DNucleome/PartSeg/pull/1091))
+- [pre-commit.ci] pre-commit autoupdate ([#1096](https://github.com/4DNucleome/PartSeg/pull/1096))
 - Add python 3.12 testing ([#1087](https://github.com/4DNucleome/PartSeg/pull/1087))
 - Exclude pyside2 on python 3.11 and 3.12 from testing ([#1099](https://github.com/4DNucleome/PartSeg/pull/1099))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1101](https://github.com/4DNucleome/PartSeg/pull/1101))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1103](https://github.com/4DNucleome/PartSeg/pull/1103))
+- [pre-commit.ci] pre-commit autoupdate ([#1101](https://github.com/4DNucleome/PartSeg/pull/1101))
+- [pre-commit.ci] pre-commit autoupdate ([#1103](https://github.com/4DNucleome/PartSeg/pull/1103))
 - Bump macos runners to macos-13 (both azure and GHA) ([#1113](https://github.com/4DNucleome/PartSeg/pull/1113))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1108](https://github.com/4DNucleome/PartSeg/pull/1108))
+- [pre-commit.ci] pre-commit autoupdate ([#1108](https://github.com/4DNucleome/PartSeg/pull/1108))
 - Remove pyqt5 from constraints ([#1118](https://github.com/4DNucleome/PartSeg/pull/1118))
 - Add workflow for releases from GHA ([#1117](https://github.com/4DNucleome/PartSeg/pull/1117))
 - Add actionlint to CI to early prevent bug in github workflows ([#1119](https://github.com/4DNucleome/PartSeg/pull/1119))
@@ -235,13 +235,13 @@ This release drop support for python 3.8 and napari below 0.4.19.
 
 ### 🧪 Testing
 
-- \[Automatic\] Constraints upgrades: `imagecodecs`, `ipykernel`, `magicgui`, `psygnal`, `scipy`, `superqt`, `tifffile` ([#1011](https://github.com/4DNucleome/PartSeg/pull/1011))
-- \[Automatic\] Constraints upgrades: `imageio`, `pyinstaller`, `tifffile` ([#1018](https://github.com/4DNucleome/PartSeg/pull/1018))
+- [Automatic] Constraints upgrades: `imagecodecs`, `ipykernel`, `magicgui`, `psygnal`, `scipy`, `superqt`, `tifffile` ([#1011](https://github.com/4DNucleome/PartSeg/pull/1011))
+- [Automatic] Constraints upgrades: `imageio`, `pyinstaller`, `tifffile` ([#1018](https://github.com/4DNucleome/PartSeg/pull/1018))
 
 ### ⚙️ Miscellaneous Tasks
 
 - Use faster version of black ([#1010](https://github.com/4DNucleome/PartSeg/pull/1010))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1013](https://github.com/4DNucleome/PartSeg/pull/1013))
+- [pre-commit.ci] pre-commit autoupdate ([#1013](https://github.com/4DNucleome/PartSeg/pull/1013))
 
 ## 0.15.1 - 2023-08-08
 
@@ -266,23 +266,23 @@ This release drop support for python 3.8 and napari below 0.4.19.
 
 ### 🧪 Testing
 
-- \[Automatic\] Constraints upgrades: `imageio`, `ipython`, `psygnal`, `scipy`, `sentry-sdk` ([#975](https://github.com/4DNucleome/PartSeg/pull/975))
-- \[Automatic\] Constraints upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `napari`, `numpy`, `pandas`, `pydantic`, `pyinstaller`, `scipy`, `sentry-sdk`, `tifffile`, `vispy` ([#986](https://github.com/4DNucleome/PartSeg/pull/986))
-- \[Automatic\] Constraints upgrades: `imagecodecs`, `sentry-sdk`, `tifffile` ([#997](https://github.com/4DNucleome/PartSeg/pull/997))
-- \[Automatic\] Constraints upgrades: `ipykernel`, `pydantic` ([#1002](https://github.com/4DNucleome/PartSeg/pull/1002))
-- \[Automatic\] Constraints upgrades: `numpy`, `pygments`, `sentry-sdk`, `superqt` ([#1007](https://github.com/4DNucleome/PartSeg/pull/1007))
+- [Automatic] Constraints upgrades: `imageio`, `ipython`, `psygnal`, `scipy`, `sentry-sdk` ([#975](https://github.com/4DNucleome/PartSeg/pull/975))
+- [Automatic] Constraints upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `napari`, `numpy`, `pandas`, `pydantic`, `pyinstaller`, `scipy`, `sentry-sdk`, `tifffile`, `vispy` ([#986](https://github.com/4DNucleome/PartSeg/pull/986))
+- [Automatic] Constraints upgrades: `imagecodecs`, `sentry-sdk`, `tifffile` ([#997](https://github.com/4DNucleome/PartSeg/pull/997))
+- [Automatic] Constraints upgrades: `ipykernel`, `pydantic` ([#1002](https://github.com/4DNucleome/PartSeg/pull/1002))
+- [Automatic] Constraints upgrades: `numpy`, `pygments`, `sentry-sdk`, `superqt` ([#1007](https://github.com/4DNucleome/PartSeg/pull/1007))
 
 ### ⚙️ Miscellaneous Tasks
 
-- \[pre-commit.ci\] pre-commit autoupdate ([#973](https://github.com/4DNucleome/PartSeg/pull/973))
-- \[pre-commit.ci\] pre-commit autoupdate ([#982](https://github.com/4DNucleome/PartSeg/pull/982))
-- \[pre-commit.ci\] pre-commit autoupdate ([#987](https://github.com/4DNucleome/PartSeg/pull/987))
-- \[pre-commit.ci\] pre-commit autoupdate ([#988](https://github.com/4DNucleome/PartSeg/pull/988))
-- \[pre-commit.ci\] pre-commit autoupdate ([#991](https://github.com/4DNucleome/PartSeg/pull/991))
-- \[pre-commit.ci\] pre-commit autoupdate ([#998](https://github.com/4DNucleome/PartSeg/pull/998))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1004](https://github.com/4DNucleome/PartSeg/pull/1004))
+- [pre-commit.ci] pre-commit autoupdate ([#973](https://github.com/4DNucleome/PartSeg/pull/973))
+- [pre-commit.ci] pre-commit autoupdate ([#982](https://github.com/4DNucleome/PartSeg/pull/982))
+- [pre-commit.ci] pre-commit autoupdate ([#987](https://github.com/4DNucleome/PartSeg/pull/987))
+- [pre-commit.ci] pre-commit autoupdate ([#988](https://github.com/4DNucleome/PartSeg/pull/988))
+- [pre-commit.ci] pre-commit autoupdate ([#991](https://github.com/4DNucleome/PartSeg/pull/991))
+- [pre-commit.ci] pre-commit autoupdate ([#998](https://github.com/4DNucleome/PartSeg/pull/998))
+- [pre-commit.ci] pre-commit autoupdate ([#1004](https://github.com/4DNucleome/PartSeg/pull/1004))
 - Change markdown linter from pre-commit to mdformat ([#1006](https://github.com/4DNucleome/PartSeg/pull/1006))
-- \[pre-commit.ci\] pre-commit autoupdate ([#1008](https://github.com/4DNucleome/PartSeg/pull/1008))
+- [pre-commit.ci] pre-commit autoupdate ([#1008](https://github.com/4DNucleome/PartSeg/pull/1008))
 
 ## 0.15.0 - 2023-05-30
 
@@ -342,14 +342,14 @@ This release drop support for python 3.8 and napari below 0.4.19.
 
 ### 🧪 Testing
 
-- \[Automatic\] Dependency upgrades: `packaging`, `pyinstaller`, `pyopengl-accelerate`, `tifffile`, `xlsxwriter` ([#932](https://github.com/4DNucleome/PartSeg/pull/932))
-- \[Automatic\] Constraints upgrades: `fonticon-fontawesome6`, `imageio`, `numpy`, `partsegcore-compiled-backend`, `pygments`, `sentry-sdk` ([#937](https://github.com/4DNucleome/PartSeg/pull/937))
-- \[Automatic\] Constraints upgrades: `imageio`, `ipython`, `pandas`, `requests`, `sentry-sdk` ([#948](https://github.com/4DNucleome/PartSeg/pull/948))
-- \[Automatic\] Constraints upgrades: `ipython`, `nme`, `qtconsole`, `requests`, `sentry-sdk` ([#955](https://github.com/4DNucleome/PartSeg/pull/955))
-- \[Automatic\] Constraints upgrades: `ipykernel`, `local-migrator`, `pyinstaller`, `sentry-sdk`, `sympy` ([#957](https://github.com/4DNucleome/PartSeg/pull/957))
-- \[Automatic\] Constraints upgrades: `sentry-sdk`, `xlsxwriter` ([#959](https://github.com/4DNucleome/PartSeg/pull/959))
-- \[Automatic\] Constraints upgrades: `requests` ([#961](https://github.com/4DNucleome/PartSeg/pull/961))
-- \[Automatic\] Constraints upgrades: `imageio`, `pandas`, `pydantic`, `pyopengl-accelerate`, `sentry-sdk`, `xlsxwriter` ([#970](https://github.com/4DNucleome/PartSeg/pull/970))
+- [Automatic] Dependency upgrades: `packaging`, `pyinstaller`, `pyopengl-accelerate`, `tifffile`, `xlsxwriter` ([#932](https://github.com/4DNucleome/PartSeg/pull/932))
+- [Automatic] Constraints upgrades: `fonticon-fontawesome6`, `imageio`, `numpy`, `partsegcore-compiled-backend`, `pygments`, `sentry-sdk` ([#937](https://github.com/4DNucleome/PartSeg/pull/937))
+- [Automatic] Constraints upgrades: `imageio`, `ipython`, `pandas`, `requests`, `sentry-sdk` ([#948](https://github.com/4DNucleome/PartSeg/pull/948))
+- [Automatic] Constraints upgrades: `ipython`, `nme`, `qtconsole`, `requests`, `sentry-sdk` ([#955](https://github.com/4DNucleome/PartSeg/pull/955))
+- [Automatic] Constraints upgrades: `ipykernel`, `local-migrator`, `pyinstaller`, `sentry-sdk`, `sympy` ([#957](https://github.com/4DNucleome/PartSeg/pull/957))
+- [Automatic] Constraints upgrades: `sentry-sdk`, `xlsxwriter` ([#959](https://github.com/4DNucleome/PartSeg/pull/959))
+- [Automatic] Constraints upgrades: `requests` ([#961](https://github.com/4DNucleome/PartSeg/pull/961))
+- [Automatic] Constraints upgrades: `imageio`, `pandas`, `pydantic`, `pyopengl-accelerate`, `sentry-sdk`, `xlsxwriter` ([#970](https://github.com/4DNucleome/PartSeg/pull/970))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -363,10 +363,10 @@ This release drop support for python 3.8 and napari below 0.4.19.
 - Improve regexp for proper generate list of packages in update report ([#894](https://github.com/4DNucleome/PartSeg/pull/894))
 - Add check for PR title ([#933](https://github.com/4DNucleome/PartSeg/pull/933))
 - Update codecov configuration to wait on two reports before post information ([#934](https://github.com/4DNucleome/PartSeg/pull/934))
-- \[pre-commit.ci\] pre-commit autoupdate ([#945](https://github.com/4DNucleome/PartSeg/pull/945))
+- [pre-commit.ci] pre-commit autoupdate ([#945](https://github.com/4DNucleome/PartSeg/pull/945))
 - Migrate from `nme` to `local_migrator` ([#951](https://github.com/4DNucleome/PartSeg/pull/951))
-- \[pre-commit.ci\] pre-commit autoupdate ([#956](https://github.com/4DNucleome/PartSeg/pull/956))
-- \[pre-commit.ci\] pre-commit autoupdate ([#964](https://github.com/4DNucleome/PartSeg/pull/964))
+- [pre-commit.ci] pre-commit autoupdate ([#956](https://github.com/4DNucleome/PartSeg/pull/956))
+- [pre-commit.ci] pre-commit autoupdate ([#964](https://github.com/4DNucleome/PartSeg/pull/964))
 
 ### 🛡️ Security
 
@@ -378,21 +378,21 @@ This release drop support for python 3.8 and napari below 0.4.19.
 
 ### Dep
 
-- \[Automatic\] Dependency upgrades ([#824](https://github.com/4DNucleome/PartSeg/pull/824))
-- \[Automatic\] Dependency upgrades ([#828](https://github.com/4DNucleome/PartSeg/pull/828))
-- \[Automatic\] Dependency upgrades: `ipykernel`, `packaging` ([#838](https://github.com/4DNucleome/PartSeg/pull/838))
-- \[Automatic\] Dependency upgrades: `imageio`, `ipykernel`, `napari`, `numpy`, `sentry` ([#850](https://github.com/4DNucleome/PartSeg/pull/850))
-- \[Automatic\] Dependency upgrades: `imagecodecs`, `ipykernel`, `numpy`, `psygnal` ([#859](https://github.com/4DNucleome/PartSeg/pull/859))
-- \[Automatic\] Dependency upgrades: `pydantic`, `pygments`, `xlsxwriter` ([#874](https://github.com/4DNucleome/PartSeg/pull/874))
-- \[Automatic\] Dependency upgrades: `imageio`, `packaging`, `scipy`, `xlsxwriter` ([#878](https://github.com/4DNucleome/PartSeg/pull/878))
-- \[Automatic\] Dependency upgrades: `ipykernel`, `requests`, `sentry`, `xlsxwriter` ([#884](https://github.com/4DNucleome/PartSeg/pull/884))
-- \[Automatic\] Dependency upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `pandas`, `sentry`, `tifffile` ([#889](https://github.com/4DNucleome/PartSeg/pull/889))
-- \[Automatic\] Dependency upgrades: `ipython`, `pyqt5` ([#893](https://github.com/4DNucleome/PartSeg/pull/893))
-- \[Automatic\] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `numpy`, `openpyxl`, `psygnal`, `pydantic`, `pyinstaller`, `pyqt5`, `scipy`, `sentry-sdk`, `tifffile`, `xlsxwriter` ([#897](https://github.com/4DNucleome/PartSeg/pull/897))
-- \[Automatic\] Dependency upgrades: `imageio`, `psygnal` ([#905](https://github.com/4DNucleome/PartSeg/pull/905))
-- \[Automatic\] Dependency upgrades: `ipython`, `magicgui`, `scipy`, `sentry-sdk`, `tifffile` ([#906](https://github.com/4DNucleome/PartSeg/pull/906))
-- \[Automatic\] Dependency upgrades: `imagecodecs`, `imageio`, `ipykernel`, `openpyxl`, `pydantic`, `pyinstaller`, `qtawesome`, `qtconsole`, `sentry-sdk`, `tifffile`, `xlsxwriter` ([#908](https://github.com/4DNucleome/PartSeg/pull/908))
-- \[Automatic\] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `pandas`, `psygnal`, `pydantic`, `pygments`, `pyinstaller`, `qtpy`, `sentry-sdk`, `tifffile` ([#917](https://github.com/4DNucleome/PartSeg/pull/917))
+- [Automatic] Dependency upgrades ([#824](https://github.com/4DNucleome/PartSeg/pull/824))
+- [Automatic] Dependency upgrades ([#828](https://github.com/4DNucleome/PartSeg/pull/828))
+- [Automatic] Dependency upgrades: `ipykernel`, `packaging` ([#838](https://github.com/4DNucleome/PartSeg/pull/838))
+- [Automatic] Dependency upgrades: `imageio`, `ipykernel`, `napari`, `numpy`, `sentry` ([#850](https://github.com/4DNucleome/PartSeg/pull/850))
+- [Automatic] Dependency upgrades: `imagecodecs`, `ipykernel`, `numpy`, `psygnal` ([#859](https://github.com/4DNucleome/PartSeg/pull/859))
+- [Automatic] Dependency upgrades: `pydantic`, `pygments`, `xlsxwriter` ([#874](https://github.com/4DNucleome/PartSeg/pull/874))
+- [Automatic] Dependency upgrades: `imageio`, `packaging`, `scipy`, `xlsxwriter` ([#878](https://github.com/4DNucleome/PartSeg/pull/878))
+- [Automatic] Dependency upgrades: `ipykernel`, `requests`, `sentry`, `xlsxwriter` ([#884](https://github.com/4DNucleome/PartSeg/pull/884))
+- [Automatic] Dependency upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `pandas`, `sentry`, `tifffile` ([#889](https://github.com/4DNucleome/PartSeg/pull/889))
+- [Automatic] Dependency upgrades: `ipython`, `pyqt5` ([#893](https://github.com/4DNucleome/PartSeg/pull/893))
+- [Automatic] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `numpy`, `openpyxl`, `psygnal`, `pydantic`, `pyinstaller`, `pyqt5`, `scipy`, `sentry-sdk`, `tifffile`, `xlsxwriter` ([#897](https://github.com/4DNucleome/PartSeg/pull/897))
+- [Automatic] Dependency upgrades: `imageio`, `psygnal` ([#905](https://github.com/4DNucleome/PartSeg/pull/905))
+- [Automatic] Dependency upgrades: `ipython`, `magicgui`, `scipy`, `sentry-sdk`, `tifffile` ([#906](https://github.com/4DNucleome/PartSeg/pull/906))
+- [Automatic] Dependency upgrades: `imagecodecs`, `imageio`, `ipykernel`, `openpyxl`, `pydantic`, `pyinstaller`, `qtawesome`, `qtconsole`, `sentry-sdk`, `tifffile`, `xlsxwriter` ([#908](https://github.com/4DNucleome/PartSeg/pull/908))
+- [Automatic] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `pandas`, `psygnal`, `pydantic`, `pygments`, `pyinstaller`, `qtpy`, `sentry-sdk`, `tifffile` ([#917](https://github.com/4DNucleome/PartSeg/pull/917))
 
 ## 0.14.6 - 2022-11-13
 
@@ -584,7 +584,7 @@ This release drop support for python 3.8 and napari below 0.4.19.
 
 ### Bugfix
 
-- Add access by operator \[\] to pydantic.BaseModel base structures for keep backward compatybility ([#579](https://github.com/4DNucleome/PartSeg/pull/579))
+- Add access by operator [] to pydantic.BaseModel base structures for keep backward compatybility ([#579](https://github.com/4DNucleome/PartSeg/pull/579))
 
 ### Build
 

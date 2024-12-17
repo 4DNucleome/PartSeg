@@ -32,7 +32,10 @@ repos:
       args: ["--number"]
       additional_dependencies:
           - mdformat-gfm
-          - mdformat-black
+          - mdformat-frontmatter
+          - mdformat-footnote
+          - mdformat-gfm-alerts
+          - mdformat-ruff
           - mdformat-toc
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
