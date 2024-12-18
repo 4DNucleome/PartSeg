@@ -62,6 +62,7 @@ from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegCore.segmentation.threshold import RangeThresholdSelection
+from PartSegCore.universal_const import LayerNamingFormat, format_layer_name
 from PartSegCore.utils import ProfileDict, check_loaded_dict
 from PartSegImage import Image
 
@@ -909,6 +910,19 @@ class TestLoadROIFromTIFF:
         assert isinstance(res, MaskProjectTuple)
         assert res.image is None
         assert res.roi_info.roi.shape == (1, 1, 100, 100)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (LayerNamingFormat.channel_only, "b"),
+        (LayerNamingFormat.filename_only, "a"),
+        (LayerNamingFormat.filename_channel, "a | b"),
+        (LayerNamingFormat.channel_filename, "b | a"),
+    ],
+)
+def test_format_layer_name(value, expected):
+    assert format_layer_name(value, "a", "b") == expected
 
 
 UPDATE_NAME_JSON = """

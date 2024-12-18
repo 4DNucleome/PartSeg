@@ -7,6 +7,7 @@ from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg.common_backend import napari_get_settings
 from PartSegCore import Units
 from PartSegCore.json_hooks import PartSegEncoder
+from PartSegCore.universal_const import LayerNamingFormat
 
 _SETTINGS = None
 
@@ -28,6 +29,14 @@ class PartSegNapariSettings(PartSettings):
     @io_units.setter
     def io_units(self, value: Units):
         self.set("io_units", value)
+
+    @property
+    def layer_naming_format(self) -> LayerNamingFormat:
+        return self.get("layer_naming_format", LayerNamingFormat.channel_only)
+
+    @layer_naming_format.setter
+    def layer_naming_format(self, value: LayerNamingFormat):
+        self.set("layer_naming_format", value)
 
 
 def get_settings() -> PartSegNapariSettings:
@@ -51,6 +60,12 @@ class SettingsEditor(Container):
         self.units_select.changed.connect(self.units_selection_changed)
         self.settings.connect_("io_units", self.units_changed)
         self.append(self.units_select)
+        self.layer_naming_select = create_widget(
+            self.settings.layer_naming_format, annotation=LayerNamingFormat, label="Format for Layer Name"
+        )
+        self.layer_naming_select.changed.connect(self.layer_naming_format_selection_changed)
+        self.settings.connect_("layer_naming_format", self.layer_naming_format_changed)
+        self.append(self.layer_naming_select)
 
     def units_selection_changed(self, value):
         self.settings.io_units = value
@@ -58,3 +73,10 @@ class SettingsEditor(Container):
 
     def units_changed(self):
         self.units_select.value = self.settings.io_units
+
+    def layer_naming_format_selection_changed(self, value):
+        self.settings.layer_naming_format = value
+        self.settings.dump()
+
+    def layer_naming_format_changed(self):
+        self.layer_naming_select.value = self.settings.layer_naming_format

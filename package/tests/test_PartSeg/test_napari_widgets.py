@@ -57,6 +57,7 @@ from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
 from PartSegCore.segmentation.watershed import WatershedSelection
+from PartSegCore.universal_const import LayerNamingFormat
 
 NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
 NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
@@ -655,3 +656,13 @@ class TestSettingsWidget:
         assert s.io_units == Units.nm
         s.io_units = Units.mm
         assert w.units_select.value == Units.mm
+
+    def test_change_layer_name_format(self, qtbot):
+        s = _settings.get_settings()
+        s.layer_naming_format = LayerNamingFormat.channel_only
+        w = _settings.SettingsEditor()
+        qtbot.addWidget(w.native)
+        w.layer_naming_select.value = LayerNamingFormat.channel_filename
+        assert s.layer_naming_format == LayerNamingFormat.channel_filename
+        s.layer_naming_format = LayerNamingFormat.channel_only
+        assert w.layer_naming_select.value == LayerNamingFormat.channel_only
