@@ -2,19 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.16.0 - 2024-10-22
+## 0.16.0 - 2024-12-21
 
-This release drop support for python 3.8 and napari below 0.4.19.
+### 🚀 Features
+
+- Allow set units that will be used for load/save data using PartSeg as napari plugin ([#1228](https://github.com/4DNucleome/PartSeg/pull/1228))
+- Show filename when importing with PartSeg in napari ([#1226](https://github.com/4DNucleome/PartSeg/pull/1226))
 
 ### 🐛 Bug Fixes
 
 - Fix error when image changed during segmentation ([#1218](https://github.com/4DNucleome/PartSeg/pull/1218))
 - Fix pre release tests ([#1219](https://github.com/4DNucleome/PartSeg/pull/1219))
+- Drop imagej LUTs of size `24*x` ([#1227](https://github.com/4DNucleome/PartSeg/pull/1227))
 
 ### 🧪 Testing
 
 - [Automatic] Constraints upgrades: `h5py`, `imageio`, `ipython`, `napari`, `numpy`, `sentry-sdk` ([#1201](https://github.com/4DNucleome/PartSeg/pull/1201))
 - [Automatic] Constraints upgrades: `sentry-sdk` ([#1214](https://github.com/4DNucleome/PartSeg/pull/1214))
+- [Automatic] Constraints upgrades: `ipython`, `traceback-with-variables` ([#1221](https://github.com/4DNucleome/PartSeg/pull/1221))
+- [Automatic] Constraints upgrades: `numpy`, `packaging`, `pydantic`, `qtconsole`, `qtpy`, `sentry-sdk`, `traceback-with-variables` ([#1223](https://github.com/4DNucleome/PartSeg/pull/1223))
+- [Automatic] Constraints upgrades: `imageio`, `ipython`, `pydantic` ([#1225](https://github.com/4DNucleome/PartSeg/pull/1225))
+- [Automatic] Constraints upgrades: `napari`, `numpy`, `pydantic`, `sentry-sdk`, `six`, `superqt`, `tifffile` ([#1229](https://github.com/4DNucleome/PartSeg/pull/1229))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -28,6 +36,9 @@ This release drop support for python 3.8 and napari below 0.4.19.
 - Update CI configuration to use more modern OS and python versions ([#1207](https://github.com/4DNucleome/PartSeg/pull/1207))
 - Fix `upgrade-dependencies.yaml`docs constraints ([#1215](https://github.com/4DNucleome/PartSeg/pull/1215))
 - [pre-commit.ci] pre-commit autoupdate ([#1216](https://github.com/4DNucleome/PartSeg/pull/1216))
+- Add changelog 0.16.0a1
+- [pre-commit.ci] pre-commit autoupdate ([#1222](https://github.com/4DNucleome/PartSeg/pull/1222))
+- [pre-commit.ci] pre-commit autoupdate ([#1230](https://github.com/4DNucleome/PartSeg/pull/1230))
 
 ## 0.15.4 - 2024-09-27
 
