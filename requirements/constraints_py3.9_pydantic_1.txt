@@ -28,7 +28,7 @@ certifi==2024.12.14
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via requests
 click==8.1.8
     # via
@@ -38,7 +38,7 @@ cloudpickle==3.1.0
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.6.9
+coverage==7.6.10
     # via partseg (pyproject.toml)
 czifile==2019.7.2
     # via partseg (pyproject.toml)
@@ -80,7 +80,7 @@ hsluv==5.0.4
     # via vispy
 idna==3.10
     # via requests
-imagecodecs==2024.9.22
+imagecodecs==2024.12.30
     # via partseg (pyproject.toml)
 imageio==2.36.1
     # via
@@ -297,7 +297,7 @@ pygments==2.18.0
     #   superqt
 pyinstaller==6.11.1
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2024.10
+pyinstaller-hooks-contrib==2024.11
     # via pyinstaller
 pyopengl==3.1.7
     # via napari
