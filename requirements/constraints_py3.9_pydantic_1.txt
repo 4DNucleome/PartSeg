@@ -239,7 +239,7 @@ partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==11.0.0
+pillow==11.1.0
     # via
     #   imageio
     #   napari
@@ -274,7 +274,7 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pyconify==0.1.6
+pyconify==0.2
     # via superqt
 pydantic==1.10.19
     # via
@@ -286,7 +286,7 @@ pydantic==1.10.19
     #   pydantic-compat
 pydantic-compat==0.1.2
     # via app-model
-pygments==2.18.0
+pygments==2.19.0
     # via
     #   partseg (pyproject.toml)
     #   ipython
@@ -397,7 +397,7 @@ sentry-sdk==2.19.2
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==75.6.0
+setuptools==75.7.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -434,7 +434,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.7.0
+superqt==0.7.1
     # via
     #   partseg (pyproject.toml)
     #   magicgui

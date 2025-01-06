@@ -183,7 +183,7 @@ numpy==2.2.1
     #   vispy
 numpydoc==1.8.0
     # via napari
-oiffile==2024.5.24
+oiffile==2025.1.1
     # via partseg (pyproject.toml)
 openpyxl==3.1.5
     # via partseg (pyproject.toml)
@@ -215,7 +215,7 @@ partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==11.0.0
+pillow==11.1.0
     # via
     #   imageio
     #   napari
@@ -246,7 +246,7 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pyconify==0.1.6
+pyconify==0.2
     # via superqt
 pydantic==2.10.4
     # via
@@ -261,9 +261,9 @@ pydantic-compat==0.1.2
     # via app-model
 pydantic-core==2.27.2
     # via pydantic
-pydantic-settings==2.7.0
+pydantic-settings==2.7.1
     # via autodoc-pydantic
-pygments==2.18.0
+pygments==2.19.0
     # via
     #   partseg (pyproject.toml)
     #   ipython
@@ -336,7 +336,7 @@ rpds-py==0.22.3
     #   referencing
 scikit-image==0.25.0
     # via napari
-scipy==1.14.1
+scipy==1.15.0
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -360,7 +360,7 @@ sphinx==8.1.3
     #   numpydoc
     #   sphinx-autodoc-typehints
     #   sphinx-qt-documentation
-sphinx-autodoc-typehints==2.5.0
+sphinx-autodoc-typehints==3.0.0
     # via partseg (pyproject.toml)
 sphinx-qt-documentation==0.4.1
     # via partseg (pyproject.toml)
@@ -378,7 +378,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.7.0
+superqt==0.7.1
     # via
     #   partseg (pyproject.toml)
     #   magicgui
