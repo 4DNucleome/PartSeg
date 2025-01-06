@@ -194,7 +194,7 @@ numpy==2.2.1
     #   vispy
 numpydoc==1.8.0
     # via napari
-oiffile==2024.5.24
+oiffile==2025.1.1
     # via partseg (pyproject.toml)
 openpyxl==3.1.5
     # via partseg (pyproject.toml)
@@ -229,7 +229,7 @@ partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==11.0.0
+pillow==11.1.0
     # via
     #   imageio
     #   napari
@@ -264,7 +264,7 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pyconify==0.1.6
+pyconify==0.2
     # via superqt
 pydantic==2.10.4
     # via
@@ -277,7 +277,7 @@ pydantic-compat==0.1.2
     # via app-model
 pydantic-core==2.27.2
     # via pydantic
-pygments==2.18.0
+pygments==2.19.0
     # via
     #   partseg (pyproject.toml)
     #   ipython
@@ -377,7 +377,7 @@ scikit-image==0.25.0
     # via
     #   partseg (pyproject.toml)
     #   napari
-scipy==1.14.1
+scipy==1.15.0
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -386,7 +386,7 @@ sentry-sdk==2.19.2
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==75.6.0
+setuptools==75.7.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -423,7 +423,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.7.0
+superqt==0.7.1
     # via
     #   partseg (pyproject.toml)
     #   magicgui
