@@ -62,6 +62,7 @@ class ROIInfo:
         self.roi = roi
         self.bound_info = self.calc_bounds(roi)
         self.sizes = np.bincount(roi.flat)
+        self._alternative_component_size = {}
 
     def fit_to_image(self, image: Image) -> "ROIInfo":
         if self.roi is None:
@@ -72,9 +73,10 @@ class ROIInfo:
 
     def get_components_num(self, name):
         if name == "ROI" or name not in self.alternative:
-            max(self.bound_info)
-
-        return self.alternative[name].max()
+            return max(self.bound_info)
+        if name not in self._alternative_component_size:
+            self._alternative_component_size[name] = np.max(self.alternative[name])
+        return self._alternative_component_size[name]
 
     def __str__(self):
         return f"ROIInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
