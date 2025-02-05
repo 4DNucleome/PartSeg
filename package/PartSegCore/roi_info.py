@@ -70,6 +70,12 @@ class ROIInfo:
         alternatives = {k: image.fit_array_to_image(v) for k, v in self.alternative.items()}
         return ROIInfo(roi, self.annotations, alternatives)
 
+    def get_components_num(self, name):
+        if name == "ROI" or name not in self.alternative:
+            max(self.bound_info)
+
+        return self.alternative[name].max()
+
     def __str__(self):
         return f"ROIInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
 
