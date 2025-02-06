@@ -142,7 +142,7 @@ def load_project_from_tar(tar_file, file_path):
 
 
 def load_project(
-    file: typing.Union[str, Path, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]
+    file: typing.Union[str, Path, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
 ) -> ProjectTuple:
     """Load project from archive"""
     tar_file, file_path = open_tar_file(file)
