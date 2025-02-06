@@ -31,7 +31,7 @@ class ImageWriter(BaseImageWriter):
         shift = image.get_um_shift()
         plane_li = [
             {
-                "TheT": t,
+                "TheT": t,  # codespell:ignore thet
                 "TheZ": z,
                 "TheC": c,
                 "PositionZ": shift[0] if len(shift) == 3 else 0,
