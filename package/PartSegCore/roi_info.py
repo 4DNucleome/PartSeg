@@ -62,6 +62,7 @@ class ROIInfo:
         self.roi = roi
         self.bound_info = self.calc_bounds(roi)
         self.sizes = np.bincount(roi.flat)
+        self._alternative_component_size = {}
 
     def fit_to_image(self, image: Image) -> "ROIInfo":
         if self.roi is None:
@@ -69,6 +70,23 @@ class ROIInfo:
         roi = image.fit_array_to_image(self.roi)
         alternatives = {k: image.fit_array_to_image(v) for k, v in self.alternative.items()}
         return ROIInfo(roi, self.annotations, alternatives)
+
+    def get_components_num(self, name):
+        """
+        Get the number of components for a given representation.
+
+        Args:
+            name (str): Name of the representation. Use "ROI" for the main ROI,
+                       or the name of an alternative representation.
+
+        Returns:
+            int: Maximum component number in the specified representation.
+        """
+        if name == "ROI" or name not in self.alternative:
+            return max(self.bound_info)
+        if name not in self._alternative_component_size:
+            self._alternative_component_size[name] = np.max(self.alternative[name])
+        return self._alternative_component_size[name]
 
     def __str__(self):
         return f"ROIInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"

@@ -483,8 +483,10 @@ class ImageView(QWidget):
             or colors.size == 0
         ):
             return {0: [0, 0, 0, 0], None: [0, 0, 0, 0]}
-
-        res = {x: colors[(x - 1) % colors.shape[0]] for x in range(1, image_info.roi_count + 1)}
+        res = {
+            x: colors[(x - 1) % colors.shape[0]]
+            for x in range(1, image_info.roi_info.get_components_num(self.roi_alternative_selection) + 1)
+        }
         res[0] = [0, 0, 0, 0]
         res[None] = [0, 0, 0, 0]
         return res
