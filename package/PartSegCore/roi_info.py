@@ -72,6 +72,16 @@ class ROIInfo:
         return ROIInfo(roi, self.annotations, alternatives)
 
     def get_components_num(self, name):
+        """
+        Get the number of components for a given representation.
+
+        Args:
+            name (str): Name of the representation. Use "ROI" for the main ROI,
+                       or the name of an alternative representation.
+
+        Returns:
+            int: Maximum component number in the specified representation.
+        """
         if name == "ROI" or name not in self.alternative:
             return max(self.bound_info)
         if name not in self._alternative_component_size:
