@@ -17,13 +17,13 @@ attrs==25.1.0
     # via
     #   jsonschema
     #   referencing
-babel==2.16.0
+babel==2.17.0
     # via sphinx
 build==1.2.2.post1
     # via npe2
 cachey==0.2.1
     # via napari
-certifi==2024.12.14
+certifi==2025.1.31
     # via
     #   napari
     #   requests
@@ -66,7 +66,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2024.12.0
+fsspec==2025.2.0
     # via dask
 h5py==3.12.1
     # via partseg (pyproject.toml)
@@ -96,7 +96,7 @@ ipykernel==6.29.5
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==8.31.0
+ipython==8.32.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -285,7 +285,7 @@ pygments==2.19.1
     #   superqt
 pyinstaller==6.11.1
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2025.0
+pyinstaller-hooks-contrib==2025.1
     # via pyinstaller
 pyopengl==3.1.9
     # via napari
@@ -297,19 +297,19 @@ pyqt6==6.8.0
     #   napari
 pyqt6-qt6==6.8.1
     # via pyqt6
-pyqt6-sip==13.9.1
+pyqt6-sip==13.10.0
     # via pyqt6
 pyside2==5.15.2.1
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-pyside6==6.8.1.1
+pyside6==6.8.2
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-pyside6-addons==6.8.1.1
+pyside6-addons==6.8.2
     # via pyside6
-pyside6-essentials==6.8.1.1
+pyside6-essentials==6.8.2
     # via
     #   pyside6
     #   pyside6-addons
@@ -326,14 +326,14 @@ python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
     #   pandas
-pytz==2024.2
+pytz==2025.1
     # via pandas
 pyyaml==6.0.2
     # via
     #   dask
     #   napari
     #   npe2
-pyzmq==26.2.0
+pyzmq==26.2.1
     # via
     #   ipykernel
     #   jupyter-client
@@ -391,7 +391,7 @@ shellingham==1.5.4
     # via typer
 shiboken2==5.15.2.1
     # via pyside2
-shiboken6==6.8.1.1
+shiboken6==6.8.2
     # via
     #   pyside6
     #   pyside6-addons
@@ -491,5 +491,5 @@ wrapt==1.17.2
     # via napari
 xlrd==2.0.1
     # via partseg (pyproject.toml)
-xlsxwriter==3.2.1
+xlsxwriter==3.2.2
     # via partseg (pyproject.toml)
