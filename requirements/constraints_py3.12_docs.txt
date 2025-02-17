@@ -42,7 +42,7 @@ comm==0.2.2
     # via ipykernel
 czifile==2019.7.2
     # via partseg (pyproject.toml)
-dask==2025.1.0
+dask==2025.2.0
     # via napari
 debugpy==1.8.12
     # via ipykernel
@@ -163,7 +163,7 @@ nme==0.1.8
     # via partseg (pyproject.toml)
 npe2==0.7.7
     # via napari
-numpy==2.2.2
+numpy==2.2.3
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -209,7 +209,7 @@ parso==0.8.4
     # via jedi
 partd==1.4.2
     # via dask
-partsegcore-compiled-backend==0.15.9
+partsegcore-compiled-backend==0.15.11
     # via partseg (pyproject.toml)
 partsegdata==0.10.0
     # via partseg (pyproject.toml)
@@ -231,11 +231,11 @@ pooch==1.8.2
     # via scikit-image
 prompt-toolkit==3.0.50
     # via ipython
-psutil==6.1.1
+psutil==7.0.0
     # via
     #   ipykernel
     #   napari
-psygnal==0.11.1
+psygnal==0.12.0
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -246,7 +246,7 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pyconify==0.2
+pyconify==0.2.1
     # via superqt
 pydantic==2.10.6
     # via
@@ -276,11 +276,11 @@ pyopengl==3.1.9
     # via napari
 pyproject-hooks==1.2.0
     # via build
-pyqt6==6.8.0
+pyqt6==6.8.1
     # via
     #   partseg (pyproject.toml)
     #   napari
-pyqt6-qt6==6.8.1
+pyqt6-qt6==6.8.2
     # via pyqt6
 pyqt6-sip==13.10.0
     # via pyqt6
@@ -307,7 +307,7 @@ qtconsole==5.6.1
     # via
     #   partseg (pyproject.toml)
     #   napari-console
-qtpy==2.4.2
+qtpy==2.4.3
     # via
     #   partseg (pyproject.toml)
     #   magicgui
@@ -336,12 +336,12 @@ rpds-py==0.22.3
     #   referencing
 scikit-image==0.25.1
     # via napari
-scipy==1.15.1
+scipy==1.15.2
     # via
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.20.0
+sentry-sdk==2.21.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
