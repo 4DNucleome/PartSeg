@@ -90,7 +90,7 @@ def decode_zstd0(data: bytes) -> np.ndarray:
     return np.frombuffer(imagecodecs.zstd_decode(data), dtype).copy()
 
 
-if parse_version(version("czifile")) == parse_version("2019.7.2"):
+if parse_version(version("czifile")) in {parse_version("2019.7.2"), parse_version("2019.7.2.1")}:
     DECOMPRESS[5] = decode_zstd0
     DECOMPRESS[6] = decode_zstd1
 
