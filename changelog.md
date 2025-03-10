@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.16.1 - 2025-03-10
+
+### 🐛 Bug Fixes
+
+- Fix rendering of alternative representation if there are more components in the alternative representation than in ROI ([#1240](https://github.com/4DNucleome/PartSeg/pull/1240))
+- Enable czifile workaround for 2019.7.2.1 ([#1246](https://github.com/4DNucleome/PartSeg/pull/1246))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `ipython`, `magicgui`, `numpy`, `partsegcore-compiled-backend`, `pydantic` ([#1231](https://github.com/4DNucleome/PartSeg/pull/1231))
+- [Automatic] Constraints upgrades: `imagecodecs` ([#1233](https://github.com/4DNucleome/PartSeg/pull/1233))
+- [Automatic] Constraints upgrades: `oiffile`, `pygments`, `scipy`, `superqt` ([#1234](https://github.com/4DNucleome/PartSeg/pull/1234))
+- [Automatic] Constraints upgrades: `imageio`, `napari`, `numpy`, `partsegcore-compiled-backend`, `pydantic`, `pygments`, `scipy`, `sentry-sdk`, `simpleitk`, `tifffile`, `xlsxwriter` ([#1236](https://github.com/4DNucleome/PartSeg/pull/1236))
+- [Automatic] Constraints upgrades: `ipython`, `xlsxwriter` ([#1239](https://github.com/4DNucleome/PartSeg/pull/1239))
+- [Automatic] Constraints upgrades: `numpy`, `partsegcore-compiled-backend`, `psygnal`, `qtpy`, `scipy`, `sentry-sdk` ([#1241](https://github.com/4DNucleome/PartSeg/pull/1241))
+- [Automatic] Constraints upgrades: `czifile`, `h5py`, `ipython`, `qtawesome`, `sentry-sdk`, `tifffile`, `traceback-with-variables` ([#1247](https://github.com/4DNucleome/PartSeg/pull/1247))
+
+### ⚙️ Miscellaneous Tasks
+
+- [pre-commit.ci] pre-commit autoupdate ([#1232](https://github.com/4DNucleome/PartSeg/pull/1232))
+- [pre-commit.ci] pre-commit autoupdate ([#1235](https://github.com/4DNucleome/PartSeg/pull/1235))
+- [pre-commit.ci] pre-commit autoupdate ([#1237](https://github.com/4DNucleome/PartSeg/pull/1237))
+- Drop python 3.9 tests for napari repository ([#1244](https://github.com/4DNucleome/PartSeg/pull/1244))
+- Block ipykernel 7.0.0a1 ([#1248](https://github.com/4DNucleome/PartSeg/pull/1248))
+- [pre-commit.ci] pre-commit autoupdate ([#1242](https://github.com/4DNucleome/PartSeg/pull/1242))
+- Switch to `get_qapp` from `get_app` to handle napari deprecation ([#1249](https://github.com/4DNucleome/PartSeg/pull/1249))
+
 ## 0.16.0 - 2024-12-21
 
 ### 🚀 Features
