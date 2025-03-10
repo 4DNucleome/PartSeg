@@ -1,4 +1,4 @@
-personal_ws-1.1 en 17
+personal_ws-1.1 en 18
 napari
 autoupdate
 aspell
@@ -16,3 +16,4 @@ PartSeg
 ROI
 czifile
 ipykernel
+qapp
