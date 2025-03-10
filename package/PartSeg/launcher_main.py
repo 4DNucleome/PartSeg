@@ -35,9 +35,12 @@ def _test_imports():  # pragma: no cover
         raise ImportError("napari_io not loaded")
 
     with suppress(ImportError):
-        from napari.qt import get_app
+        try:
+            from napari.qt import get_qapp  # napari>=0.5.4
+        except ImportError:
+            from napari.qt import get_app as get_qapp
 
-        get_app()
+        get_qapp()
 
     _setup_sentry()
     freetype.get_handle()
