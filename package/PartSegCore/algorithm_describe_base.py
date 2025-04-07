@@ -116,7 +116,7 @@ class _GetDescriptionClass:
         if klass is None:
             klass = type(obj)
 
-        name = typing.cast(str, self._name)
+        name = typing.cast("str", self._name)
         fields_dkt = {
             field.name: (
                 Annotated[field.value_type, field.user_name, field.range, field.help_text],
@@ -269,7 +269,7 @@ class Register(dict, typing.Generic[AlgorithmType]):
 
     def values(self) -> typing.Iterable[AlgorithmType]:
         # noinspection PyTypeChecker
-        return typing.cast(typing.Iterable[AlgorithmType], super().values())
+        return typing.cast("typing.Iterable[AlgorithmType]", super().values())
 
     def __eq__(self, other):
         return (
@@ -286,9 +286,9 @@ class Register(dict, typing.Generic[AlgorithmType]):
     def __getitem__(self, item) -> AlgorithmType:
         # FIXME add better strategy to get proper class when there is conflict of names
         try:
-            return typing.cast(AlgorithmType, super().__getitem__(item))
+            return typing.cast("AlgorithmType", super().__getitem__(item))
         except KeyError:
-            return typing.cast(AlgorithmType, super().__getitem__(self._old_mapping[item]))
+            return typing.cast("AlgorithmType", super().__getitem__(self._old_mapping[item]))
 
     def __contains__(self, item):
         return super().__contains__(item) or item in self._old_mapping

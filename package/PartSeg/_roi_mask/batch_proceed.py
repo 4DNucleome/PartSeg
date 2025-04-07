@@ -67,7 +67,7 @@ class BatchProceed(QThread):
             try:
                 name = os.path.basename(file_path)
                 blank = get_mask(project_tuple.roi_info.roi, project_tuple.mask, project_tuple.selected_components)
-                algorithm = cast(StackAlgorithm, MaskAlgorithmSelection[task.parameters.algorithm]())
+                algorithm = cast("StackAlgorithm", MaskAlgorithmSelection[task.parameters.algorithm]())
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
                 algorithm.set_parameters(task.parameters.values)
@@ -81,7 +81,7 @@ class BatchProceed(QThread):
                     project_tuple,
                     segmentation.roi_info,
                     (
-                        {i: segmentation.parameters for i in segmentation.roi_info.bound_info}
+                        dict.fromkeys(segmentation.roi_info.bound_info, segmentation.parameters)
                         if segmentation.roi_info is not None
                         else {}
                     ),

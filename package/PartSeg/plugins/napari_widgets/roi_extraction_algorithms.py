@@ -158,7 +158,7 @@ class ROIExtractionAlgorithms(QWidget):
         return self.settings.get_from_profile(f"{self.prefix()}.profiles", {})
 
     def save_action(self):
-        widget = typing.cast(NapariInteractiveAlgorithmSettingsWidget, self.algorithm_chose.current_widget())
+        widget = typing.cast("NapariInteractiveAlgorithmSettingsWidget", self.algorithm_chose.current_widget())
         profiles = self.profile_dict
         while True:
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
@@ -193,14 +193,14 @@ class ROIExtractionAlgorithms(QWidget):
         self.mask_name = ""
 
     def update_mask(self):
-        widget = typing.cast(NapariInteractiveAlgorithmSettingsWidget, self.algorithm_chose.current_widget())
+        widget = typing.cast("NapariInteractiveAlgorithmSettingsWidget", self.algorithm_chose.current_widget())
         mask = widget.get_layers().get("mask", None)
         if getattr(mask, "name", "") != self.mask_name or (widget.mask() is None and mask is not None):
             widget.set_mask(getattr(mask, "data", None))
             self.mask_name = getattr(mask, "name", "")
 
     def update_image(self):
-        widget = typing.cast(NapariInteractiveAlgorithmSettingsWidget, self.algorithm_chose.current_widget())
+        widget = typing.cast("NapariInteractiveAlgorithmSettingsWidget", self.algorithm_chose.current_widget())
         self.settings.last_executed_algorithm = widget.name
         layer_names: list[str] = widget.get_layer_list()
         if layer_names == self.channel_names:
@@ -213,7 +213,7 @@ class ROIExtractionAlgorithms(QWidget):
         self.mask_name = ""
 
     def _run_calculation(self):
-        widget = typing.cast(NapariInteractiveAlgorithmSettingsWidget, self.algorithm_chose.current_widget())
+        widget = typing.cast("NapariInteractiveAlgorithmSettingsWidget", self.algorithm_chose.current_widget())
         self.settings.last_executed_algorithm = widget.name
         self.update_image()
         self.update_mask()

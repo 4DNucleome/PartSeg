@@ -567,7 +567,7 @@ class MeasurementSettings(QWidget):
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
-            item = cast(MeasurementListWidgetItem, self.profile_options.currentItem())
+            item = cast("MeasurementListWidgetItem", self.profile_options.currentItem())
             leaf = self.get_parameters(
                 deepcopy(item.stat),
                 self.measurement_area_choose.currentEnum(),
@@ -711,7 +711,7 @@ class MeasurementSettings(QWidget):
                 return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
-            element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+            element = cast("MeasurementListWidgetItem", self.profile_options_chosen.item(i))
             selected_values.append(MeasurementEntry(name=element.text(), calculation_tree=element.stat))
         stat_prof = MeasurementProfile(name=self.profile_name.text(), chosen_fields=selected_values)
         self.settings.measurement_profiles[stat_prof.name] = stat_prof
@@ -737,7 +737,7 @@ class MeasurementSettings(QWidget):
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
-                element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+                element = cast("MeasurementListWidgetItem", self.profile_options_chosen.item(i))
                 selected_values.append(
                     MeasurementEntry(name=val_dialog.result[element.text()], calculation_tree=element.stat)
                 )
