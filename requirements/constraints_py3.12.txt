@@ -40,13 +40,13 @@ cloudpickle==3.1.1
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.7.0
+coverage==7.8.0
     # via partseg (pyproject.toml)
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
-dask==2025.2.0
+dask==2025.3.0
     # via napari
-debugpy==1.8.13
+debugpy==1.8.14
     # via ipykernel
 decorator==5.2.1
     # via ipython
@@ -68,7 +68,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2025.3.0
+fsspec==2025.3.2
     # via dask
 h5py==3.13.0
     # via partseg (pyproject.toml)
@@ -78,7 +78,7 @@ hsluv==5.0.4
     # via vispy
 idna==3.10
     # via requests
-imagecodecs==2024.12.30
+imagecodecs==2025.3.30
     # via partseg (pyproject.toml)
 imageio==2.37.0
     # via
@@ -91,14 +91,14 @@ imagesize==1.4.1
     # via sphinx
 in-n-out==0.2.1
     # via app-model
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
 ipykernel==6.29.5
     # via
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==9.0.2
+ipython==9.1.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -134,11 +134,11 @@ local-migrator==0.1.10
     #   nme
 locket==1.0.0
     # via partd
-lxml==5.3.1
+lxml==5.3.2
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
-lxml-html-clean==0.4.1
+lxml-html-clean==0.4.2
     # via lxml
 magicgui==0.10.0
     # via
@@ -231,14 +231,14 @@ partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==11.1.0
+pillow==11.2.1
     # via
     #   imageio
     #   napari
     #   scikit-image
 pint==0.24.4
     # via napari
-platformdirs==4.3.6
+platformdirs==4.3.7
     # via
     #   jupyter-core
     #   pint
@@ -268,7 +268,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.2.1
     # via superqt
-pydantic==2.10.6
+pydantic==2.11.3
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -277,7 +277,7 @@ pydantic==2.10.6
     #   pydantic-compat
 pydantic-compat==0.1.2
     # via app-model
-pydantic-core==2.27.2
+pydantic-core==2.33.1
     # via pydantic
 pygments==2.19.1
     # via
@@ -291,17 +291,17 @@ pygments==2.19.1
     #   superqt
 pyinstaller==6.12.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2025.1
+pyinstaller-hooks-contrib==2025.2
     # via pyinstaller
 pyopengl==3.1.9
     # via napari
 pyproject-hooks==1.2.0
     # via build
-pyqt6==6.8.1
+pyqt6==6.9.0
     # via
     #   partseg (pyproject.toml)
     #   napari
-pyqt6-qt6==6.8.2
+pyqt6-qt6==6.9.0
     # via pyqt6
 pyqt6-sip==13.10.0
     # via pyqt6
@@ -309,13 +309,13 @@ pyside2==5.15.2.1
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-pyside6==6.8.2.1
+pyside6==6.9.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-pyside6-addons==6.8.2.1
+pyside6-addons==6.9.0
     # via pyside6
-pyside6-essentials==6.8.2.1
+pyside6-essentials==6.9.0
     # via
     #   pyside6
     #   pyside6-addons
@@ -332,14 +332,14 @@ python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
     #   pandas
-pytz==2025.1
+pytz==2025.2
     # via pandas
 pyyaml==6.0.2
     # via
     #   dask
     #   napari
     #   npe2
-pyzmq==26.3.0
+pyzmq==26.4.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -368,13 +368,13 @@ requests==2.32.3
     #   pooch
     #   pyconify
     #   sphinx
-rich==13.9.4
+rich==14.0.0
     # via
     #   npe2
     #   typer
 roman-numerals-py==3.1.0
     # via sphinx
-rpds-py==0.23.1
+rpds-py==0.24.0
     # via
     #   jsonschema
     #   referencing
@@ -387,11 +387,11 @@ scipy==1.15.2
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.22.0
+sentry-sdk==2.25.1
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==76.0.0
+setuptools==78.1.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -399,7 +399,7 @@ shellingham==1.5.4
     # via typer
 shiboken2==5.15.2.1
     # via pyside2
-shiboken6==6.8.2.1
+shiboken6==6.9.0
     # via
     #   pyside6
     #   pyside6-addons
@@ -428,7 +428,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.7.1
+superqt==0.7.3
     # via
     #   partseg (pyproject.toml)
     #   magicgui
@@ -437,7 +437,7 @@ sympy==1.13.3
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
-tifffile==2025.3.13
+tifffile==2025.3.30
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -470,7 +470,7 @@ traitlets==5.14.3
     #   qtconsole
 typer==0.15.2
     # via npe2
-typing-extensions==4.12.2
+typing-extensions==4.13.2
     # via
     #   app-model
     #   flexcache
@@ -483,9 +483,12 @@ typing-extensions==4.12.2
     #   referencing
     #   superqt
     #   typer
-tzdata==2025.1
+    #   typing-inspection
+typing-inspection==0.4.0
+    # via pydantic
+tzdata==2025.2
     # via pandas
-urllib3==2.3.0
+urllib3==2.4.0
     # via
     #   requests
     #   sentry-sdk
