@@ -1499,7 +1499,21 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
         return True
 
 
-HARALIC_FEATURES = ["AngularSecondMoment", "Contrast", "Correlation", "Variance", "InverseDifferenceMoment", "SumAverage", "SumVariance", "SumEntropy", "Entropy", "DifferenceVariance", "DifferenceEntropy", "InfoMeas1", "InfoMeas2"]
+HARALIC_FEATURES = [
+    "AngularSecondMoment",
+    "Contrast",
+    "Correlation",
+    "Variance",
+    "InverseDifferenceMoment",
+    "SumAverage",
+    "SumVariance",
+    "SumEntropy",
+    "Entropy",
+    "DifferenceVariance",
+    "DifferenceEntropy",
+    "InfoMeas1",
+    "InfoMeas2",
+]
 
 
 class HaralickEnum(Enum):

@@ -3,7 +3,7 @@ import re
 from functools import partial
 from pathlib import Path
 from queue import Queue
-from typing import NamedTuple, Optional, Union, cast
+from typing import TYPE_CHECKING, NamedTuple, Optional, Union, cast
 
 from pydantic import BaseModel
 from qtpy.QtCore import QThread, Signal
@@ -12,8 +12,10 @@ from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.mask.io_functions import LoadROIImage, LoadStackImage, MaskProjectTuple, SaveROI
-from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
+
+if TYPE_CHECKING:
+    from PartSegCore.segmentation import StackAlgorithm
 
 
 class BatchTask(NamedTuple):
