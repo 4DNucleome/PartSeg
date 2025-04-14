@@ -130,9 +130,12 @@ def main():  # pragma: no cover  # noqa: PLR0915
 
     napari_get_settings(os.path.join(os.path.dirname(state_store.save_folder), "napari"))
     with suppress(ImportError):
-        from napari.qt import get_app
+        from napari import qt
 
-        get_app()
+        if hasattr(qt, "get_qapp"):
+            qt.get_qapp()
+        else:
+            qt.get_app()
 
     wind = select_window(args)
 
