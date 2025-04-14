@@ -394,6 +394,7 @@ def serialize_hook(dkt: dict):
             return dkt
         del dkt["__subtype__"]
         dkt.pop("__Serializable__", None)
+        dkt.pop("__ReadOnly__", None)
         if isinstance(cls, collections.abc.Iterator):
             keys = set(dkt.keys())
             for el in cls:
