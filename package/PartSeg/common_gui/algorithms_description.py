@@ -437,7 +437,7 @@ class FormWidget(QWidget):
             self.widgets_dict[ap.name] = ap
         ap.change_fun.connect(_any_arguments(self.value_changed.emit))
         if isinstance(ap.get_field(), SubAlgorithmWidget):
-            w = typing.cast(SubAlgorithmWidget, ap.get_field())
+            w = typing.cast("SubAlgorithmWidget", ap.get_field())
             layout.addRow(label, w.choose)
             layout.addRow(ap.get_field())
             if ap.name in start_values:
@@ -446,11 +446,11 @@ class FormWidget(QWidget):
             return
         if isinstance(ap.get_field(), FieldsList):
             layout.addRow(label)
-            for el in typing.cast(FieldsList, ap.get_field()).field_list:
+            for el in typing.cast("FieldsList", ap.get_field()).field_list:
                 self._add_to_layout(layout, el, start_values.get(ap.name, {}), settings, add_to_widget_dict=False)
             return
         if isinstance(ap.get_field(), Widget):
-            widget = typing.cast(Widget, ap.get_field()).native
+            widget = typing.cast("Widget", ap.get_field()).native
         else:
             widget = ap.get_field()
         if ap.is_multiline():
@@ -568,7 +568,7 @@ class SubAlgorithmWidget(QWidget):
         for i in range(self.layout().count()):
             el = self.layout().itemAt(i)
             if el.widget() and isinstance(el.widget(), FormWidget):
-                typing.cast(FormWidget, el.widget()).image_changed(image)
+                typing.cast("FormWidget", el.widget()).image_changed(image)
 
     def algorithm_choose(self, name):
         if name not in self.widgets_dict:
@@ -796,7 +796,7 @@ class AlgorithmChooseBase(QWidget):
         if algorithms is not None:
             self.algorithms = algorithms
         for _ in range(self.stack_layout.count()):
-            widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.takeAt(0).widget())
+            widget = typing.cast("InteractiveAlgorithmSettingsWidget", self.stack_layout.takeAt(0).widget())
             widget.algorithm_thread.execution_done.disconnect()
             widget.algorithm_thread.finished.disconnect()
             widget.algorithm_thread.started.disconnect()
@@ -823,7 +823,7 @@ class AlgorithmChooseBase(QWidget):
 
     def change_algorithm(self, name, values: typing.Optional[dict] = None):
         self.settings.set_algorithm("current_algorithm", name)
-        widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
+        widget = typing.cast("InteractiveAlgorithmSettingsWidget", self.stack_layout.currentWidget())
         blocked = self.blockSignals(True)
         if name != widget.name:
             widget = self.algorithm_dict[name]
@@ -841,7 +841,7 @@ class AlgorithmChooseBase(QWidget):
         self.algorithm_changed.emit(name)
 
     def current_widget(self) -> InteractiveAlgorithmSettingsWidget:
-        return typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
+        return typing.cast("InteractiveAlgorithmSettingsWidget", self.stack_layout.currentWidget())
 
     def current_parameters(self) -> ROIExtractionProfile:
         widget = self.current_widget()
@@ -857,7 +857,7 @@ class AlgorithmChoose(AlgorithmChooseBase):
         self.settings.image_changed.connect(self.image_changed)
 
     def image_changed(self):
-        current_widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
+        current_widget = typing.cast("InteractiveAlgorithmSettingsWidget", self.stack_layout.currentWidget())
         prev_block = self.blockSignals(True)
         current_widget.image_changed(self.settings.image)
         if hasattr(self.settings, "mask") and hasattr(current_widget, "change_mask"):

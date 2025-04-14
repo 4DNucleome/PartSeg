@@ -1141,7 +1141,7 @@ class CalculateInfo(QWidget):
             )
             if not ok:
                 return None
-            return self._save_roi_profile(typing.cast(ROIExtractionProfile, data.copy(update={"name": text})))
+            return self._save_roi_profile(typing.cast("ROIExtractionProfile", data.copy(update={"name": text})))
         self.settings.roi_profiles[data.name] = data
         return None
 
@@ -1152,7 +1152,7 @@ class CalculateInfo(QWidget):
             )
             if not ok:
                 return None
-            return self._save_measurement_profile(typing.cast(MeasurementProfile, data.copy(update={"name": text})))
+            return self._save_measurement_profile(typing.cast("MeasurementProfile", data.copy(update={"name": text})))
         self.settings.measurement_profiles[data.name] = data
         return None
 

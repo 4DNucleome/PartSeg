@@ -48,7 +48,7 @@ def all_files_in_archive(path):
 
 
 @pytest.mark.usefixtures("_dummy_tiffs")
-@pytest.mark.parametrize("ext", ".zip .tar.gz .txz .tar.bz2".split())
+@pytest.mark.parametrize("ext", [".zip", ".tar.gz", ".txz", ".tar.bz2"])
 def test_export_to_archive(bundle_test_dir, tmp_path, ext):
     a = list(export_to_archive(bundle_test_dir / "sample_batch_output.xlsx", tmp_path, tmp_path / f"arch{ext}"))
     assert len(a) == 9
