@@ -23,12 +23,12 @@ build==1.2.2.post1
     # via npe2
 cachey==0.2.1
     # via napari
-certifi==2025.1.31
+certifi==2025.4.26
     # via
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via requests
 click==8.1.8
     # via
@@ -91,7 +91,7 @@ imageio==2.37.0
     #   scikit-image
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.6.1
+importlib-metadata==8.7.0
     # via
     #   build
     #   dask
@@ -119,7 +119,7 @@ jinja2==3.1.6
     # via sphinx
 jsonschema==4.23.0
     # via napari
-jsonschema-specifications==2024.10.1
+jsonschema-specifications==2025.4.1
     # via jsonschema
 jupyter-client==8.6.3
     # via
@@ -142,7 +142,7 @@ local-migrator==0.1.10
     #   nme
 locket==1.0.0
     # via partd
-lxml==5.3.2
+lxml==5.4.0
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
@@ -208,7 +208,7 @@ oiffile==2024.5.24
     # via partseg (pyproject.toml)
 openpyxl==3.1.5
     # via partseg (pyproject.toml)
-packaging==24.2
+packaging==25.0
     # via
     #   partseg (pyproject.toml)
     #   build
@@ -257,7 +257,7 @@ pluggy==1.5.0
     #   pytest-qt
 pooch==1.8.2
     # via scikit-image
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via ipython
 psutil==7.0.0
     # via
@@ -276,7 +276,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.2.1
     # via superqt
-pydantic==1.10.21
+pydantic==1.10.22
     # via
     #   -c requirements/pydantic_1.txt
     #   partseg (pyproject.toml)
@@ -295,9 +295,9 @@ pygments==2.19.1
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==6.12.0
+pyinstaller==6.13.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2025.2
+pyinstaller-hooks-contrib==2025.4
     # via pyinstaller
 pyopengl==3.1.9
     # via napari
@@ -393,11 +393,11 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.25.1
+sentry-sdk==2.27.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==78.1.0
+setuptools==80.2.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -410,7 +410,7 @@ shiboken6==6.3.1
     #   pyside6
     #   pyside6-addons
     #   pyside6-essentials
-simpleitk==2.4.1
+simpleitk==2.5.0
     # via partseg (pyproject.toml)
 six==1.17.0
     # via
@@ -439,7 +439,7 @@ superqt==0.7.3
     #   partseg (pyproject.toml)
     #   magicgui
     #   napari
-sympy==1.13.3
+sympy==1.14.0
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
@@ -481,7 +481,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.15.2
+typer==0.15.3
     # via npe2
 typing-extensions==4.13.2
     # via
@@ -514,7 +514,7 @@ wrapt==1.17.2
     # via napari
 xlrd==2.0.1
     # via partseg (pyproject.toml)
-xlsxwriter==3.2.2
+xlsxwriter==3.2.3
     # via partseg (pyproject.toml)
 zipp==3.21.0
     # via importlib-metadata
