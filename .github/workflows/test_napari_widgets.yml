@@ -45,7 +45,7 @@ jobs:
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: "3.9"
-      os: "ubuntu-20.04"
+      os: "ubuntu-24.04"
       napari: ${{ matrix.napari }}
       qt_backend: ${{ matrix.qt_backend }}
       timeout: 10
