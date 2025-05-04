@@ -16,10 +16,10 @@ jobs:
       BRANCH_NAME: auto-dependency-upgrades
     steps:
       - uses: actions/checkout@v4
-        with:
-          # [Optional] Use a separate key to automatically execute checks on the resulting PR
-          # https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
+#        with:
+#          # [Optional] Use a separate key to automatically execute checks on the resulting PR
+#          # https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
+#          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       # START PYTHON DEPENDENCIES
 
