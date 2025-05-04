@@ -49,7 +49,7 @@ def _test_imports():  # pragma: no cover
     w2 = MaskMain("test")
     w3 = MainWindow("test")
     v = napari.Viewer()
-    console = QtConsole(v)
+    console = QtConsole(v, style_sheet="dark")
     label = LabelChoose(w1.settings)
     label.refresh()
     v.close()
