@@ -30,7 +30,7 @@ jobs:
 
   download_data:
     name: Download test data
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - shell: bash
@@ -65,7 +65,7 @@ jobs:
             os: "windows-latest"
             qt_backend: "PyQt5"
           - python_version: "3.10"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
             qt_backend: "PySide2"
           - python_version: "3.10"
             os: "ubuntu-24.04"
