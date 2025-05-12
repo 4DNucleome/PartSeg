@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.16.2 - 2025-05-12
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `numpy`, `partsegcore-compiled-backend`, `tifffile` ([#1253](https://github.com/4DNucleome/PartSeg/pull/1253))
+- [Automatic] Constraints upgrades: `imagecodecs`, `ipython`, `pydantic`, `sentry-sdk`, `superqt`, `tifffile` ([#1255](https://github.com/4DNucleome/PartSeg/pull/1255))
+- [Automatic] Constraints upgrades: `ipython`, `napari`, `numpy`, `packaging`, `pydantic`, `sentry-sdk`, `simpleitk`, `sympy`, `xlsxwriter` ([#1266](https://github.com/4DNucleome/PartSeg/pull/1266))
+- [Automatic] Constraints upgrades: `oiffile`, `psygnal`, `scipy`, `sentry-sdk`, `tifffile` ([#1267](https://github.com/4DNucleome/PartSeg/pull/1267))
+
+### ⚙️ Miscellaneous Tasks
+
+- [pre-commit.ci] pre-commit autoupdate ([#1251](https://github.com/4DNucleome/PartSeg/pull/1251))
+- Prepare for napari 0.6.0 deprecations ([#1256](https://github.com/4DNucleome/PartSeg/pull/1256))
+- [pre-commit.ci] pre-commit autoupdate ([#1254](https://github.com/4DNucleome/PartSeg/pull/1254))
+- [pre-commit.ci] pre-commit autoupdate ([#1259](https://github.com/4DNucleome/PartSeg/pull/1259))
+- Update workflow to use Ubuntu 22.04 instead of 20.04 ([#1261](https://github.com/4DNucleome/PartSeg/pull/1261))
+- [pre-commit.ci] pre-commit autoupdate ([#1260](https://github.com/4DNucleome/PartSeg/pull/1260))
+- Try to fix Upgrade dependencies workflow part 2 ([#1265](https://github.com/4DNucleome/PartSeg/pull/1265))
+- [pre-commit.ci] pre-commit autoupdate ([#1268](https://github.com/4DNucleome/PartSeg/pull/1268))
+
+### 🛡️ Security
+
+- *(deps)* Bump peter-evans/create-pull-request from 6 to 7 ([#1262](https://github.com/4DNucleome/PartSeg/pull/1262))
+- *(deps)* Bump codecov/codecov-action from 4 to 5 ([#1263](https://github.com/4DNucleome/PartSeg/pull/1263))
+
 ## 0.16.1 - 2025-03-10
 
 ### 🐛 Bug Fixes
