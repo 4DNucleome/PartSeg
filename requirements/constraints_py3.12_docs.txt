@@ -32,7 +32,7 @@ certifi==2025.4.26
     #   sentry-sdk
 charset-normalizer==3.4.2
     # via requests
-click==8.1.8
+click==8.2.0
     # via
     #   dask
     #   typer
@@ -185,7 +185,7 @@ numpy==2.2.5
     #   vispy
 numpydoc==1.8.0
     # via napari
-oiffile==2025.1.1
+oiffile==2025.5.10
     # via partseg (pyproject.toml)
 openpyxl==3.1.5
     # via partseg (pyproject.toml)
@@ -224,7 +224,7 @@ pillow==11.2.1
     #   scikit-image
 pint==0.24.4
     # via napari
-platformdirs==4.3.7
+platformdirs==4.3.8
     # via
     #   jupyter-core
     #   pint
@@ -237,7 +237,7 @@ psutil==7.0.0
     # via
     #   ipykernel
     #   napari
-psygnal==0.12.0
+psygnal==0.13.0
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -341,12 +341,12 @@ rpds-py==0.24.0
     #   referencing
 scikit-image==0.25.2
     # via napari
-scipy==1.15.2
+scipy==1.15.3
     # via
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.27.0
+sentry-sdk==2.28.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -356,7 +356,7 @@ six==1.17.0
     # via
     #   partseg (pyproject.toml)
     #   python-dateutil
-snowballstemmer==2.2.0
+snowballstemmer==3.0.1
     # via sphinx
 sphinx==8.2.3
     # via
@@ -392,7 +392,7 @@ sympy==1.14.0
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
-tifffile==2025.3.30
+tifffile==2025.5.10
     # via
     #   partseg (pyproject.toml)
     #   czifile
