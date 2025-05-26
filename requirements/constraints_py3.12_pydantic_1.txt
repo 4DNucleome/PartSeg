@@ -30,7 +30,7 @@ certifi==2025.4.26
     #   sentry-sdk
 charset-normalizer==3.4.2
     # via requests
-click==8.2.0
+click==8.1.8
     # via
     #   dask
     #   typer
@@ -38,11 +38,11 @@ cloudpickle==3.1.1
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.8.0
+coverage==7.8.2
     # via partseg (pyproject.toml)
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
-dask==2025.4.1
+dask==2025.5.1
     # via napari
 debugpy==1.8.14
     # via ipykernel
@@ -66,7 +66,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2025.3.2
+fsspec==2025.5.1
     # via dask
 h5py==3.13.0
     # via partseg (pyproject.toml)
@@ -174,7 +174,7 @@ npe2==0.7.8
     # via
     #   -r requirements/version_denylist.txt
     #   napari
-numpy==2.2.5
+numpy==2.2.6
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -241,7 +241,7 @@ platformdirs==4.3.8
     #   jupyter-core
     #   pint
     #   pooch
-pluggy==1.5.0
+pluggy==1.6.0
     # via
     #   pytest
     #   pytest-qt
@@ -300,7 +300,7 @@ pyqt6==6.9.0
     #   napari
 pyqt6-qt6==6.9.0
     # via pyqt6
-pyqt6-sip==13.10.0
+pyqt6-sip==13.10.2
     # via pyqt6
 pyside2==5.15.2.1
     # via
@@ -371,7 +371,7 @@ rich==14.0.0
     #   typer
 roman-numerals-py==3.1.0
     # via sphinx
-rpds-py==0.24.0
+rpds-py==0.25.1
     # via
     #   jsonschema
     #   referencing
@@ -384,11 +384,11 @@ scipy==1.15.3
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.28.0
+sentry-sdk==2.29.1
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==80.4.0
+setuptools==80.8.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -434,7 +434,7 @@ sympy==1.14.0
     # via partseg (pyproject.toml)
 tabulate==0.9.0
     # via numpydoc
-tifffile==2025.5.10
+tifffile==2025.5.24
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -448,7 +448,7 @@ toolz==1.0.0
     #   dask
     #   napari
     #   partd
-tornado==6.4.2
+tornado==6.5.1
     # via
     #   ipykernel
     #   jupyter-client
@@ -465,7 +465,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.15.3
+typer==0.15.4
     # via npe2
 typing-extensions==4.13.2
     # via
