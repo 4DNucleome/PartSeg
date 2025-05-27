@@ -169,7 +169,7 @@ stages:
           test_path: dist/PartSeg/PartSeg _test
           DISPLAY: ':99.0'
           pip_cache_dir: $(Pipeline.Workspace)/.pip
-        pool: { vmImage: 'Ubuntu-20.04' }
+        pool: { vmImage: 'Ubuntu-22.04' }
         steps:
           - template: .azure-pipelines/linux_libs.yaml
           - template: .azure-pipelines/pyinstaller.yaml
