@@ -25,14 +25,14 @@ build==1.2.2.post1
     # via npe2
 cachey==0.2.1
     # via napari
-certifi==2025.4.26
+certifi==2025.6.15
     # via
     #   napari
     #   requests
     #   sentry-sdk
 charset-normalizer==3.4.2
     # via requests
-click==8.1.8
+click==8.2.1
     # via
     #   dask
     #   typer
@@ -40,7 +40,7 @@ cloudpickle==3.1.1
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.8.2
+coverage==7.9.1
     # via partseg (pyproject.toml)
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
@@ -74,7 +74,7 @@ freetype-py==2.5.1
     # via vispy
 fsspec==2025.5.1
     # via dask
-h5py==3.13.0
+h5py==3.14.0
     # via partseg (pyproject.toml)
 heapdict==1.0.1
     # via cachey
@@ -106,7 +106,7 @@ ipykernel==6.29.5
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==8.36.0
+ipython==8.37.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -115,7 +115,7 @@ jedi==0.19.2
     # via ipython
 jinja2==3.1.6
     # via sphinx
-jsonschema==4.23.0
+jsonschema==4.24.0
     # via napari
 jsonschema-specifications==2025.4.1
     # via jsonschema
@@ -123,7 +123,7 @@ jupyter-client==8.6.3
     # via
     #   ipykernel
     #   qtconsole
-jupyter-core==5.7.2
+jupyter-core==5.8.1
     # via
     #   ipykernel
     #   jupyter-client
@@ -146,7 +146,7 @@ lxml==5.4.0
     #   lxml-html-clean
 lxml-html-clean==0.4.2
     # via lxml
-magicgui==0.10.0
+magicgui==0.10.1
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -223,7 +223,7 @@ packaging==25.0
     #   scikit-image
     #   sphinx
     #   vispy
-pandas==2.2.3
+pandas==2.3.0
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -274,7 +274,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.2.1
     # via superqt
-pydantic==2.11.5
+pydantic==2.11.7
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -290,23 +290,24 @@ pygments==2.19.1
     #   partseg (pyproject.toml)
     #   ipython
     #   napari
+    #   pytest
     #   qtconsole
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==6.13.0
+pyinstaller==6.14.1
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2025.4
+pyinstaller-hooks-contrib==2025.5
     # via pyinstaller
 pyopengl==3.1.9
     # via napari
 pyproject-hooks==1.2.0
     # via build
-pyqt6==6.9.0
+pyqt6==6.9.1
     # via
     #   partseg (pyproject.toml)
     #   napari
-pyqt6-qt6==6.9.0
+pyqt6-qt6==6.9.1
     # via pyqt6
 pyqt6-sip==13.10.2
     # via pyqt6
@@ -326,7 +327,7 @@ pyside6-essentials==6.4.2
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.3.5
+pytest==8.4.0
     # via
     #   partseg (pyproject.toml)
     #   pytest-qt
@@ -346,7 +347,7 @@ pyyaml==6.0.2
     #   dask
     #   napari
     #   npe2
-pyzmq==26.4.0
+pyzmq==27.0.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -369,7 +370,7 @@ referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.3
+requests==2.32.4
     # via
     #   partseg (pyproject.toml)
     #   pooch
@@ -392,11 +393,11 @@ scipy==1.15.3
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.29.1
+sentry-sdk==2.30.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-setuptools==80.8.0
+setuptools==80.9.0
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -433,7 +434,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.7.3
+superqt==0.7.4
     # via
     #   partseg (pyproject.toml)
     #   magicgui
@@ -480,9 +481,9 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.15.4
+typer==0.16.0
     # via npe2
-typing-extensions==4.13.2
+typing-extensions==4.14.0
     # via
     #   app-model
     #   exceptiongroup
@@ -516,9 +517,9 @@ wcwidth==0.2.13
     # via prompt-toolkit
 wrapt==1.17.2
     # via napari
-xlrd==2.0.1
+xlrd==2.0.2
     # via partseg (pyproject.toml)
 xlsxwriter==3.2.3
     # via partseg (pyproject.toml)
-zipp==3.21.0
+zipp==3.23.0
     # via importlib-metadata
