@@ -16,7 +16,7 @@ class Units(Enum):
 
 
 _UNITS_LIST = ["mm", "µm", "nm", "pm"]
-UNIT_SCALE = [10**3, 10**6, 10**9, 10**12]
+UNIT_SCALE = [10.0**3, 10.0**6, 10.0**9, 10.0**12]
 
 
 @register_class()
