@@ -1685,7 +1685,7 @@ class ColocalizationMeasurement(MeasurementMethodBase):
         return 1
 
 
-def pixel_volume(spacing, result_scalar):
+def pixel_volume(spacing: Sequence[float], result_scalar: float) -> float:
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
 

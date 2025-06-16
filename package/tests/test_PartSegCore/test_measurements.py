@@ -2338,7 +2338,7 @@ def test_per_component(method, area):
         result_units=Units.nm,
     )
     assert len(result["Measurement per component"][0]) == 1
-    assert isinstance(result["Measurement"][0], (float, int))
+    assert isinstance(result["Measurement"][0], (float, int, np.floating, np.integer))
     assert isclose(result["Measurement per component"][0][0], result["Measurement"][0])
 
 
