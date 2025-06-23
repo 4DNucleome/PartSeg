@@ -6,7 +6,7 @@ altgraph==0.17.4
     # via pyinstaller
 annotated-types==0.7.0
     # via pydantic
-app-model==0.3.1
+app-model==0.3.2
     # via napari
 appdirs==1.4.4
     # via
@@ -285,7 +285,7 @@ pydantic-compat==0.1.2
     # via app-model
 pydantic-core==2.33.2
     # via pydantic
-pygments==2.19.1
+pygments==2.19.2
     # via
     #   partseg (pyproject.toml)
     #   ipython
@@ -327,7 +327,7 @@ pyside6-essentials==6.4.2
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.4.0
+pytest==8.4.1
     # via
     #   partseg (pyproject.toml)
     #   pytest-qt
@@ -410,7 +410,7 @@ shiboken6==6.4.2
     #   pyside6
     #   pyside6-addons
     #   pyside6-essentials
-simpleitk==2.5.0
+simpleitk==2.5.2
     # via partseg (pyproject.toml)
 six==1.17.0
     # via
@@ -434,7 +434,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.7.4
+superqt==0.7.5
     # via
     #   partseg (pyproject.toml)
     #   magicgui
@@ -504,7 +504,7 @@ typing-inspection==0.4.1
     # via pydantic
 tzdata==2025.2
     # via pandas
-urllib3==2.4.0
+urllib3==2.5.0
     # via
     #   requests
     #   sentry-sdk
@@ -519,7 +519,7 @@ wrapt==1.17.2
     # via napari
 xlrd==2.0.2
     # via partseg (pyproject.toml)
-xlsxwriter==3.2.3
+xlsxwriter==3.2.5
     # via partseg (pyproject.toml)
 zipp==3.23.0
     # via importlib-metadata
