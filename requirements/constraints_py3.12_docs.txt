@@ -4,7 +4,7 @@ alabaster==1.0.0
     # via sphinx
 annotated-types==0.7.0
     # via pydantic
-app-model==0.3.2
+app-model==0.4.0
     # via napari
 appdirs==1.4.4
     # via
@@ -95,7 +95,7 @@ ipykernel==6.29.5
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==9.3.0
+ipython==9.4.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -149,7 +149,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mpmath==1.3.0
     # via sympy
-napari==0.6.1
+napari==0.6.2
     # via partseg (pyproject.toml)
 napari-console==0.1.3
     # via napari
@@ -183,7 +183,7 @@ numpy==2.3.1
     #   scipy
     #   tifffile
     #   vispy
-numpydoc==1.8.0
+numpydoc==1.9.0
     # via napari
 oiffile==2025.5.10
     # via partseg (pyproject.toml)
@@ -211,13 +211,13 @@ parso==0.8.4
     # via jedi
 partd==1.4.2
     # via dask
-partsegcore-compiled-backend==0.15.12
+partsegcore-compiled-backend==0.15.13
     # via partseg (pyproject.toml)
 partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==11.2.1
+pillow==11.3.0
     # via
     #   imageio
     #   napari
@@ -237,7 +237,7 @@ psutil==7.0.0
     # via
     #   ipykernel
     #   napari
-psygnal==0.13.0
+psygnal==0.14.0
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -263,7 +263,7 @@ pydantic-compat==0.1.2
     # via app-model
 pydantic-core==2.33.2
     # via pydantic
-pydantic-settings==2.10.0
+pydantic-settings==2.10.1
     # via autodoc-pydantic
 pygments==2.19.2
     # via
@@ -291,7 +291,7 @@ python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
     #   pandas
-python-dotenv==1.1.0
+python-dotenv==1.1.1
     # via pydantic-settings
 pytz==2025.2
     # via pandas
@@ -335,7 +335,7 @@ rich==14.0.0
     #   typer
 roman-numerals-py==3.1.0
     # via sphinx
-rpds-py==0.25.1
+rpds-py==0.26.0
     # via
     #   jsonschema
     #   referencing
@@ -346,7 +346,7 @@ scipy==1.16.0
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.30.0
+sentry-sdk==2.32.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -390,8 +390,6 @@ superqt==0.7.5
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tabulate==0.9.0
-    # via numpydoc
 tifffile==2025.6.11
     # via
     #   partseg (pyproject.toml)
@@ -425,7 +423,7 @@ traitlets==5.14.3
     #   qtconsole
 typer==0.16.0
     # via npe2
-typing-extensions==4.14.0
+typing-extensions==4.14.1
     # via
     #   app-model
     #   flexcache

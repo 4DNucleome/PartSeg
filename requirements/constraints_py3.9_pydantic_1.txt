@@ -38,7 +38,7 @@ cloudpickle==3.1.1
     # via dask
 comm==0.2.2
     # via ipykernel
-coverage==7.9.1
+coverage==7.9.2
     # via partseg (pyproject.toml)
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
@@ -142,7 +142,7 @@ local-migrator==0.1.10
     #   nme
 locket==1.0.0
     # via partd
-lxml==5.4.0
+lxml==6.0.0
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
@@ -202,7 +202,7 @@ numpy==1.26.4
     #   scipy
     #   tifffile
     #   vispy
-numpydoc==1.8.0
+numpydoc==1.9.0
     # via napari
 oiffile==2024.5.24
     # via partseg (pyproject.toml)
@@ -233,13 +233,13 @@ parso==0.8.4
     # via jedi
 partd==1.4.2
     # via dask
-partsegcore-compiled-backend==0.15.12
+partsegcore-compiled-backend==0.15.13
     # via partseg (pyproject.toml)
 partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==11.2.1
+pillow==11.3.0
     # via
     #   imageio
     #   napari
@@ -263,7 +263,7 @@ psutil==7.0.0
     # via
     #   ipykernel
     #   napari
-psygnal==0.13.0
+psygnal==0.14.0
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -296,7 +296,7 @@ pygments==2.19.2
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==6.14.1
+pyinstaller==6.14.2
     # via partseg (pyproject.toml)
 pyinstaller-hooks-contrib==2025.5
     # via pyinstaller
@@ -334,7 +334,9 @@ pytest==8.4.1
     #   pytest-qt
     #   pytest-timeout
 pytest-qt==4.4.0
-    # via partseg (pyproject.toml)
+    # via
+    #   -r requirements/version_denylist.txt
+    #   partseg (pyproject.toml)
 pytest-timeout==2.4.0
     # via partseg (pyproject.toml)
 python-dateutil==2.9.0.post0
@@ -381,7 +383,7 @@ rich==14.0.0
     # via
     #   npe2
     #   typer
-rpds-py==0.25.1
+rpds-py==0.26.0
     # via
     #   jsonschema
     #   referencing
@@ -394,7 +396,7 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.30.0
+sentry-sdk==2.32.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
@@ -442,8 +444,6 @@ superqt==0.7.5
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tabulate==0.9.0
-    # via numpydoc
 tifffile==2024.8.30
     # via
     #   partseg (pyproject.toml)
@@ -484,7 +484,7 @@ traitlets==5.14.3
     #   qtconsole
 typer==0.16.0
     # via npe2
-typing-extensions==4.14.0
+typing-extensions==4.14.1
     # via
     #   app-model
     #   exceptiongroup
