@@ -100,8 +100,8 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
-          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
-          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
       - name: Test with tox PartSegCore
         if: ${{ inputs.napari == 'latest' }}
@@ -110,8 +110,8 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
-          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
-          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
       - name: Test with tox PartSeg
         if: ${{ inputs.napari == 'latest' }}
@@ -123,8 +123,8 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
-          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
-          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
       - name: Test with tox all
         if: ${{ inputs.napari != 'latest' }}
@@ -136,8 +136,8 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
           BACKEND: ${{ inputs.qt_backend }}
-          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
-          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || '' }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
 
       - uses: actions/upload-artifact@v4
