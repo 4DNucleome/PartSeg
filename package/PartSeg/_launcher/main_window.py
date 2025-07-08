@@ -34,7 +34,7 @@ class Prepare(QThread):
         if not self.module:  # pragma: no cover
             return
 
-        from PartSeg import plugins
+        from PartSeg import plugins  # noqa: PLC0415
 
         plugins.register()
         main_window_module = importlib.import_module(self.module)

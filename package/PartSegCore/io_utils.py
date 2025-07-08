@@ -455,7 +455,7 @@ class LoadPlanJson(LoadBase):
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
-        from PartSegCore.analysis.calculation_plan import CalculationPlan
+        from PartSegCore.analysis.calculation_plan import CalculationPlan  # noqa: PLC0415
 
         res, err = load_metadata_part(load_locations[0])
         res_dkt = {}

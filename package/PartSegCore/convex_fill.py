@@ -79,7 +79,7 @@ def convex_fill(array: np.ndarray):
         upper_bound = np.max(points, axis=1)
         cut_area = tuple(slice(x, y + 1) for x, y in zip(lower_bound, upper_bound))
         if array.ndim == 3:
-            cut_area = (slice(None),) + cut_area[1:]
+            cut_area = (slice(None), *cut_area[1:])
         component = component[cut_area]
         if array.ndim == 2:
             res = _convex_fill(component)
@@ -91,7 +91,7 @@ def convex_fill(array: np.ndarray):
                 res = _convex_fill(component[j])
                 if res is None:
                     continue
-                new_cut = (j,) + cut_area[1:]
+                new_cut = (j, *cut_area[1:])
                 tmp = array[new_cut]
                 tmp[res > 0] = i
                 array[new_cut] = tmp

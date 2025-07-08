@@ -271,7 +271,7 @@ def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, cal
     try:
         register_if_need()
         with suppress(ImportError):
-            from PartSeg.plugins import register_if_need as register
+            from PartSeg.plugins import register_if_need as register  # noqa: PLC0415
 
             register()
         worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)

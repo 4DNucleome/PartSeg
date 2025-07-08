@@ -501,8 +501,8 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
             return v
         if "algorithm" not in values:
             return v
-        from PartSegCore.analysis import AnalysisAlgorithmSelection
-        from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
+        from PartSegCore.analysis import AnalysisAlgorithmSelection  # noqa: PLC0415
+        from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection  # noqa: PLC0415
 
         name = values["algorithm"]
         is_analysis = name in AnalysisAlgorithmSelection
@@ -599,7 +599,7 @@ def _calc_value_range(field_info: FieldInfo):
     if field_info.metadata is None:
         return (0, 1000)
 
-    import annotated_types as at
+    import annotated_types as at  # because of pydantic 1   # noqa: PLC0415
 
     value_range = (0, 1000)
     for el in field_info.metadata:
