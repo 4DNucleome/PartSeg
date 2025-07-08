@@ -9,7 +9,6 @@ from functools import wraps
 from importlib.metadata import version
 from typing import Annotated
 
-import annotated_types as at
 from local_migrator import REGISTER, class_to_str
 from packaging.version import parse as parse_version
 from pydantic import BaseModel as PydanticBaseModel
@@ -599,6 +598,8 @@ def _next_after_with_none(type_, value, inf):
 def _calc_value_range(field_info: FieldInfo):
     if field_info.metadata is None:
         return (0, 1000)
+
+    import annotated_types as at  # because of pydantic 1   # noqa: PLC0415
 
     value_range = (0, 1000)
     for el in field_info.metadata:
