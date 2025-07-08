@@ -75,6 +75,7 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
           NAPARI: ${{ matrix.napari_version }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+          PIP_CONSTRAINT: "requirements/version_denylist.txt"
 
       - name: Report Failures
         if: ${{ failure() }}
