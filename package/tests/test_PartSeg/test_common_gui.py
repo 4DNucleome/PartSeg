@@ -39,7 +39,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 from PartSeg import state_store
-from PartSeg.common_gui import exception_hooks, select_multiple_files
+from PartSeg.common_gui import algorithms_description, exception_hooks, multiple_file_widget, select_multiple_files
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.advanced_tabs import (
     RENDERING_LIST,
@@ -60,6 +60,8 @@ from PartSeg.common_gui.algorithms_description import (
     ProfileSelect,
     QtAlgorithmProperty,
     SubAlgorithmWidget,
+    _pretty_print,
+    recursive_update,
 )
 from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
 from PartSeg.common_gui.colormap_creator import ColormapLoad, ColormapSave, save_colormap_in_settings
@@ -1487,7 +1489,6 @@ def test_collapsable(qtbot):
 
 
 def test_multiple_files_tree_widget(qtbot, monkeypatch):
-    from PartSeg.common_gui import multiple_file_widget
 
     def _monkey_qmenu(func):
         res = QMenu()
@@ -1562,17 +1563,11 @@ def test_exception_hooks_value_error(monkeypatch):
 
 
 def test_exception_hooks_other_exception():
-    raised = False
-    try:
+    with pytest.raises(ValueError, match="Test text"):
         exception_hooks.load_data_exception_hook(ValueError("Test text"))
-    except ValueError:
-        raised = True
-    finally:
-        assert raised
 
 
 def test_update_dict():
-    from PartSeg.common_gui.algorithms_description import recursive_update
 
     assert recursive_update({}, {}) == {}
     assert recursive_update(None, {}) == {}
@@ -1584,7 +1579,6 @@ def test_update_dict():
 
 
 def test_pretty_print():
-    from PartSeg.common_gui.algorithms_description import _pretty_print
 
     assert _pretty_print({"a": 1}) == "\n  a: 1"
     assert _pretty_print({"a": 1}, indent=0) == "\na: 1"
@@ -1627,7 +1621,6 @@ class TestBaseAlgorithmSettingsWidget:
         ],
     )
     def test_exception_occurred(self, monkeypatch, exc, expected, qtbot):
-        from PartSeg.common_gui import algorithms_description
 
         called = False
 
@@ -1641,7 +1634,6 @@ class TestBaseAlgorithmSettingsWidget:
         assert called
 
     def test_exception_occurred_other_exception(self, monkeypatch, qtbot):
-        from PartSeg.common_gui import algorithms_description
 
         called = False
 

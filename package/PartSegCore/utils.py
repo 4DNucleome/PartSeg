@@ -474,7 +474,7 @@ def napari_image_repr(image: "Image") -> str:
 
 
 def safe_repr(val):
-    from napari.layers import Image
+    from napari.layers import Image  # noqa: PLC0415
 
     if isinstance(val, np.ndarray):
         return numpy_repr(val)

@@ -136,7 +136,7 @@ class TestImageBase:
             self.image_class(
                 np.zeros(data_shape),
                 spacing=(5, 5, 5),
-                mask=np.zeros(data_shape[:-2] + (40,)),
+                mask=np.zeros((*data_shape[:-2], 40)),
                 axes_order=self.image_class.axis_order,
             )
         with pytest.raises(ValueError, match="Wrong array shape"):

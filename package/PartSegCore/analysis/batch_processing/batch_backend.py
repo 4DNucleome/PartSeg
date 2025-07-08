@@ -119,8 +119,8 @@ def get_data_loader(
 
 def prepare_error_data(exception: Exception) -> ErrorInfo:
     try:
-        from sentry_sdk.serializer import serialize
-        from sentry_sdk.utils import event_from_exception
+        from sentry_sdk.serializer import serialize  # noqa: PLC0415
+        from sentry_sdk.utils import event_from_exception  # noqa: PLC0415
 
         event = event_from_exception(exception)[0]
         event = serialize(event)

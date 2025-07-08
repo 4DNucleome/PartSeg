@@ -71,7 +71,7 @@ def has_roi_components(component_and_mask_info: Iterable[tuple[PerComponent, Are
 
 
 def _migrate_leaf_dict(dkt):
-    from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
+    from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT  # noqa: PLC0415
 
     new_dkt = dkt.copy()
     new_dkt["parameter_dict"] = new_dkt.pop("dict")
@@ -105,7 +105,7 @@ class Leaf(BaseModel):
     def _validate_parameters(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, dict) or "name" not in values:
             return v
-        from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
+        from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT  # noqa: PLC0415
 
         if values["name"] not in MEASUREMENT_DICT:
             return v
@@ -215,7 +215,7 @@ class Leaf(BaseModel):
 
         :param ndim: data dimensionality
         """
-        from PartSegCore.analysis import MEASUREMENT_DICT
+        from PartSegCore.analysis import MEASUREMENT_DICT  # noqa: PLC0415
 
         method = MEASUREMENT_DICT[self.name]
         if self.power != 1:

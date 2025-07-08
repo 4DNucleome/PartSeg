@@ -452,7 +452,7 @@ class ObsepImageReader(BaseImageReader):
             float(xml_doc.find("net/node/attribute[@name='step width']/double").attrib["val"]) * name_to_scalar["um"]
         )
 
-        image.set_spacing((z_spacing,) + image.spacing[1:])
+        image.set_spacing((z_spacing, *image.spacing[1:]))
         image.file_path = str(image_path)
         return image
 

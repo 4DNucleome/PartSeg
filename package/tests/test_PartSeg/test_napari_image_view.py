@@ -12,6 +12,7 @@ from packaging.version import parse as parse_version
 from qtpy.QtCore import QPoint
 from vispy.geometry import Rect
 
+from PartSeg.common_gui import napari_image_view
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.napari_image_view import (
     ORDER_DICT,
@@ -219,8 +220,6 @@ class TestImageView:
 
     def test_dim_menu(self, image_view, monkeypatch):
         called = []
-
-        from PartSeg.common_gui import napari_image_view
 
         def check_menu(self, point):
             assert len(self.actions()) == len(ORDER_DICT)

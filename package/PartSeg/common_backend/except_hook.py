@@ -56,7 +56,7 @@ def show_error(error=None):
     if error is None:
         return
 
-    from PartSeg.common_gui.error_report import ErrorDialog, QMessageFromException
+    from PartSeg.common_gui.error_report import ErrorDialog, QMessageFromException  # noqa: PLC0415
 
     if isinstance(error, TiffFileException):
         QMessageFromException.critical(
@@ -87,7 +87,7 @@ def show_warning(header=None, text=None, exception=None):
     This function is to ensure creation warning dialog in main thread.
     """
     if exception is not None:
-        from PartSeg.common_gui.error_report import QMessageFromException
+        from PartSeg.common_gui.error_report import QMessageFromException  # noqa: PLC0415
 
         message = QMessageFromException(QMessageBox.Icon.Warning, header, text, exception=exception)
     else:

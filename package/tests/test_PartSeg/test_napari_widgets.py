@@ -42,9 +42,10 @@ from PartSeg.plugins.napari_widgets.algorithm_widgets import (
 )
 from PartSeg.plugins.napari_widgets.colormap_control import NapariColormapControl
 from PartSeg.plugins.napari_widgets.lables_control import LabelSelector, NapariLabelShow
-from PartSeg.plugins.napari_widgets.measurement_widget import update_properties
+from PartSeg.plugins.napari_widgets.measurement_widget import Measurement, update_properties
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSeg.plugins.napari_widgets.search_label_widget import HIGHLIGHT_LABEL_NAME
+from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
 from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
@@ -65,12 +66,12 @@ NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
 if NAPARI_GE_4_19:
 
     def check_auto_mode(layer):
-        from napari.utils.colormaps import CyclicLabelColormap
+        from napari.utils.colormaps import CyclicLabelColormap  # noqa: PLC0415
 
         assert isinstance(layer.colormap, CyclicLabelColormap)
 
     def check_direct_mode(layer):
-        from napari.utils.colormaps import DirectLabelColormap
+        from napari.utils.colormaps import DirectLabelColormap  # noqa: PLC0415
 
         assert isinstance(layer.colormap, DirectLabelColormap)
 
@@ -200,8 +201,6 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp
 
 
 def test_simple_measurement_create(make_napari_viewer, qtbot):
-    from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
-
     data = np.zeros((10, 10), dtype=np.uint8)
 
     viewer = make_napari_viewer()
@@ -228,8 +227,6 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
 @pytest.mark.enabledialog
 @pytest.mark.usefixtures("qtbot")
 def test_measurement_create(make_napari_viewer, bundle_test_dir, monkeypatch):
-    from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
-
     monkeypatch.setattr(
         "PartSeg.plugins.napari_widgets.measurement_widget.show_info",
         Mock(side_effect=RuntimeError("should not be called")),

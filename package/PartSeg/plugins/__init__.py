@@ -11,9 +11,9 @@ import PartSegCore.plugins
 
 
 def register_napari_plugins():  # pragma: no cover
-    import npe2
+    import npe2  # noqa: PLC0415
 
-    import PartSeg
+    import PartSeg  # noqa: PLC0415
 
     with contextlib.suppress(ValueError):
         npe2.PluginManager.instance().register(

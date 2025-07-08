@@ -9,6 +9,7 @@ from functools import wraps
 from importlib.metadata import version
 from typing import Annotated
 
+import annotated_types as at
 from local_migrator import REGISTER, class_to_str
 from packaging.version import parse as parse_version
 from pydantic import BaseModel as PydanticBaseModel
@@ -501,8 +502,8 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
             return v
         if "algorithm" not in values:
             return v
-        from PartSegCore.analysis import AnalysisAlgorithmSelection
-        from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
+        from PartSegCore.analysis import AnalysisAlgorithmSelection  # noqa: PLC0415
+        from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection  # noqa: PLC0415
 
         name = values["algorithm"]
         is_analysis = name in AnalysisAlgorithmSelection
@@ -598,8 +599,6 @@ def _next_after_with_none(type_, value, inf):
 def _calc_value_range(field_info: FieldInfo):
     if field_info.metadata is None:
         return (0, 1000)
-
-    import annotated_types as at
 
     value_range = (0, 1000)
     for el in field_info.metadata:
