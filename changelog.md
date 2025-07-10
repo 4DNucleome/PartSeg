@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Block sentry alpha 3.0.0a1 and 3.0.0a2 ([#1279](https://github.com/4DNucleome/PartSeg/pull/1279))
 - Block `pytest-qt==4.5.0` (for `pyside2` compatibility) ([#1282](https://github.com/4DNucleome/PartSeg/pull/1282))
 - [pre-commit.ci] pre-commit autoupdate ([#1280](https://github.com/4DNucleome/PartSeg/pull/1280))
+- Migrate Windows images from 2019 to 2022 in Azure Pipelines and GitHub Actions ([#1284](https://github.com/4DNucleome/PartSeg/pull/1284))
 
 ## 0.16.2 - 2025-05-12
 
