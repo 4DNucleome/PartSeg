@@ -141,7 +141,7 @@ stages:
           macos:
             imageName: 'macos-13'
           windows:
-            imageName: 'windows-2019'
+            imageName: 'windows-2022'
       pool: {vmImage: $(imageName)}
       steps:
         - template: .azure-pipelines/tests.yaml
@@ -188,7 +188,7 @@ stages:
               imageName: 'macos-14'
               test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
             windows:
-              imageName: 'windows-2019'
+              imageName: 'windows-2022'
               test_path: dist\PartSeg\PartSeg _test
         variables:
           pip_cache_dir: $(Pipeline.Workspace)/.pip
