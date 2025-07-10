@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.16.3 - 2025-07-10
+
+### 🐛 Bug Fixes
+
+- Do not use default parameters in default leaf ([#1283](https://github.com/4DNucleome/PartSeg/pull/1283))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `napari`, `numpy`, `pydantic`, `sentry-sdk`, `tifffile`, `vispy` ([#1273](https://github.com/4DNucleome/PartSeg/pull/1273))
+- [Automatic] Constraints upgrades: `h5py`, `ipython`, `magicgui`, `numpy`, `pandas`, `pydantic`, `requests`, `sentry-sdk`, `superqt`, `tifffile`, `xlrd` ([#1276](https://github.com/4DNucleome/PartSeg/pull/1276))
+- [Automatic] Constraints upgrades: `numpy`, `pygments`, `scipy`, `simpleitk`, `superqt`, `xlsxwriter` ([#1278](https://github.com/4DNucleome/PartSeg/pull/1278))
+- [Automatic] Constraints upgrades: `ipython`, `napari`, `partsegcore-compiled-backend`, `psygnal`, `sentry-sdk` ([#1281](https://github.com/4DNucleome/PartSeg/pull/1281))
+
+### ⚙️ Miscellaneous Tasks
+
+- Block `sentry==3.0.0a1` for pre-tests ([#1272](https://github.com/4DNucleome/PartSeg/pull/1272))
+- Add fallback version for `setuptools_scm` ([#1271](https://github.com/4DNucleome/PartSeg/pull/1271))
+- [pre-commit.ci] pre-commit autoupdate ([#1270](https://github.com/4DNucleome/PartSeg/pull/1270))
+- Use ubuntu 22.04 when building pyinstaller bundle ([#1275](https://github.com/4DNucleome/PartSeg/pull/1275))
+- [pre-commit.ci] pre-commit autoupdate ([#1274](https://github.com/4DNucleome/PartSeg/pull/1274))
+- [pre-commit.ci] pre-commit autoupdate ([#1277](https://github.com/4DNucleome/PartSeg/pull/1277))
+- Block sentry alpha 3.0.0a1 and 3.0.0a2 ([#1279](https://github.com/4DNucleome/PartSeg/pull/1279))
+- Block `pytest-qt==4.5.0` (for `pyside2` compatibility) ([#1282](https://github.com/4DNucleome/PartSeg/pull/1282))
+- [pre-commit.ci] pre-commit autoupdate ([#1280](https://github.com/4DNucleome/PartSeg/pull/1280))
+
 ## 0.16.2 - 2025-05-12
 
 ### 🧪 Testing
