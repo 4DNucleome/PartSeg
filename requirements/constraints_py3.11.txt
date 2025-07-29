@@ -37,21 +37,21 @@ click==8.2.1
     #   typer
 cloudpickle==3.1.1
     # via dask
-comm==0.2.2
+comm==0.2.3
     # via ipykernel
-coverage==7.9.2
+coverage==7.10.1
     # via partseg (pyproject.toml)
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
-dask==2025.5.1
+dask==2025.7.0
     # via napari
-debugpy==1.8.14
+debugpy==1.8.15
     # via ipykernel
 decorator==5.2.1
     # via ipython
 defusedxml==0.7.1
     # via partseg (pyproject.toml)
-docstring-parser==0.16
+docstring-parser==0.17.0
     # via magicgui
 docutils==0.21.2
     # via sphinx
@@ -67,7 +67,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2025.5.1
+fsspec==2025.7.0
     # via dask
 h5py==3.14.0
     # via partseg (pyproject.toml)
@@ -94,7 +94,7 @@ in-n-out==0.2.1
     # via app-model
 iniconfig==2.1.0
     # via pytest
-ipykernel==6.29.5
+ipykernel==6.30.0
     # via
     #   partseg (pyproject.toml)
     #   napari-console
@@ -110,7 +110,7 @@ jedi==0.19.2
     # via ipython
 jinja2==3.1.6
     # via sphinx
-jsonschema==4.24.0
+jsonschema==4.25.0
     # via napari
 jsonschema-specifications==2025.4.1
     # via jsonschema
@@ -177,7 +177,7 @@ npe2==0.7.9
     # via
     #   -r requirements/version_denylist.txt
     #   napari
-numpy==2.3.1
+numpy==2.3.2
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -294,7 +294,7 @@ pygments==2.19.2
     #   superqt
 pyinstaller==6.14.2
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2025.5
+pyinstaller-hooks-contrib==2025.8
     # via pyinstaller
 pyopengl==3.1.9
     # via napari
@@ -374,7 +374,7 @@ requests==2.32.4
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.0.0
+rich==14.1.0
     # via
     #   npe2
     #   typer
@@ -388,12 +388,12 @@ scikit-image==0.25.2
     # via
     #   partseg (pyproject.toml)
     #   napari
-scipy==1.16.0
+scipy==1.16.1
     # via
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.32.0
+sentry-sdk==2.33.2
     # via partseg (pyproject.toml)
 setuptools==80.9.0
     # via
@@ -463,7 +463,6 @@ traceback-with-variables==2.2.0
     # via partseg (pyproject.toml)
 traitlets==5.14.3
     # via
-    #   comm
     #   ipykernel
     #   ipython
     #   jupyter-client
