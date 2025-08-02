@@ -687,7 +687,7 @@ class AlgorithmOptions(QWidget):
             settings=self.settings,
             system_widget=False,
             path="io.save_batch",
-            file_mode=PSaveDialog.Directory,
+            file_mode=PSaveDialog.FileMode.Directory,
         )
         if not dial.exec_():
             return
