@@ -64,6 +64,7 @@ class TestResultImageView:
 
 @pyside_skip
 @pytest.mark.windows_ci_skip
+@pytest.mark.usefixtures("mock_app_model")
 class TestNapariViewer:
     def test_base(self, image, analysis_segmentation2, tmp_path):
         settings = BaseSettings(tmp_path)
