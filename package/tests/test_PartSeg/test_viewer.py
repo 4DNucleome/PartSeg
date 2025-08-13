@@ -1,9 +1,11 @@
 import platform
+from importlib.metadata import version
 
 import numpy as np
 import pytest
 import qtpy
 from napari.layers import Labels, Points
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QCoreApplication
 
 from PartSeg._roi_analysis.image_view import ResultImageView
@@ -16,6 +18,8 @@ from PartSegCore.roi_info import ROIInfo
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
 
 pytestmark = pytest.mark.filterwarnings("ignore:Public access to Window.qt_viewer")
+
+MOCK_APP_FIXTURE_NAME = "mock_app_model" if parse_version(version("napari")) >= parse_version("0.5.4") else "mock_app"
 
 
 class TestResultImageView:
@@ -64,7 +68,7 @@ class TestResultImageView:
 
 @pyside_skip
 @pytest.mark.windows_ci_skip
-@pytest.mark.usefixtures("mock_app_model")
+@pytest.mark.usefixtures(MOCK_APP_FIXTURE_NAME)
 class TestNapariViewer:
     def test_base(self, image, analysis_segmentation2, tmp_path):
         settings = BaseSettings(tmp_path)
