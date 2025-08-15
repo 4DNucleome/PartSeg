@@ -58,12 +58,7 @@ jobs:
           cache-dependency-path: 'pyproject.toml'
 
       - name: Install Windows OpenGL
-        if: runner.os == 'Windows'
-        run: |
-          git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-          powershell gl-ci-helpers/appveyor/install_opengl.ps1
-          if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
-        shell: powershell
+        uses: pyvista/setup-headless-display-action@v3
 
       - uses: tlambert03/setup-qt-libs@v1
 

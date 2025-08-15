@@ -461,13 +461,42 @@ class TestPSaveDialog:
     def test_reject_no_history_update(self, part_settings, tmp_path, qtbot, monkeypatch):
         dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3", system_widget=False)
         qtbot.addWidget(dialog)
-        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Rejected)
         part_settings.set("io.filter_save", SaveAsTiff.get_name())
         assert part_settings.get_path_history() == [str(Path.home())]
         dialog.show()
         dialog.accept()
         dialog.hide()
         assert part_settings.get_path_history() == [str(Path.home())]
+
+    def test_history_update(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3", system_widget=False)
+        qtbot.addWidget(dialog)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Accepted)
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        assert part_settings.get_path_history() == [str(Path.home())]
+        dialog.show()
+        dialog.accept()
+        dialog.hide()
+        assert part_settings.get_path_history() == [str(tmp_path), str(Path.home())]
+
+    def test_history_update_directory(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(
+            save_dict,
+            settings=part_settings,
+            path="io.test3",
+            system_widget=False,
+            file_mode=PSaveDialog.FileMode.Directory,
+        )
+        qtbot.addWidget(dialog)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Accepted)
+        monkeypatch.setattr(QFileDialog, "selectedFiles", lambda x: [tmp_path / "directory"])
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        assert part_settings.get_path_history() == [str(Path.home())]
+        dialog.show()
+        dialog.accept()
+        dialog.hide()
+        assert part_settings.get_path_history() == [str(tmp_path / "directory"), str(Path.home())]
 
     def test_selection_tiff_file(self, part_settings, tmp_path, qtbot, monkeypatch):
         part_settings.set("io.filter_save", SaveAsTiff.get_name())

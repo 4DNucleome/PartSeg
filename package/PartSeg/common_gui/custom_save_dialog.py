@@ -184,7 +184,10 @@ class PSaveDialog(CustomSaveDialog):
         super().accept()
         if self.result() != QDialog.DialogCode.Accepted:
             return
-        directory = os.path.dirname(self.selectedFiles()[0])
+        if self.fileMode() == QFileDialog.FileMode.Directory:
+            directory = self.selectedFiles()[0]
+        else:
+            directory = os.path.dirname(self.selectedFiles()[0])
         self.settings.add_path_history(directory)
         self.settings.set(self.path_in_dict, directory)
         if self.filter_path:
