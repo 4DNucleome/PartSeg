@@ -18,7 +18,7 @@ steps:
       bash install_opengl.sh
     displayName: "Install Windows OpenGL"
     env:
-      MESA3D_VERSION=25.0.7
+      MESA3D_VERSION: "25.0.7"
 
     condition: eq(variables['Agent.OS'], 'Windows_NT')
   - script: |
