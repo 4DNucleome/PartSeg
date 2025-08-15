@@ -62,7 +62,7 @@ from imageio.config.plugins import known_plugins as imageio_known_plugins
 
 hiddenimports = (
     [f"imagecodecs.{y}" for y in (x if x[0] == "_" else f"_{x}" for x in imagecodecs._extensions())]
-    + ["imagecodecs._shared"]
+    + ["imagecodecs._shared", "imagecodecs._shared_cython"]
     + plugins
     + ["pkg_resources.py2_warn", "ipykernel.datapub"]
     + [
@@ -83,6 +83,7 @@ hiddenimports = (
         "nme",
         "defusedxml.cElementTree",
         "vispy.app.backends._pyqt5",
+        "vispy.app.backends._pyqt6",
         "magicgui.backends._qtpy",
         "freetype",
         "psygnal._signal",
