@@ -13,6 +13,12 @@ steps:
       artifact: TestData
       path: $(Build.SourcesDirectory)/test_data
   - script: |
+      wget https://raw.githubusercontent.com/pyvista/setup-headless-display-action/refs/heads/main/windows/install_opengl.sh
+      chmod +x install_opengl.sh
+      ./install_opengl.sh
+    displayName: "Install Windows OpenGL"
+    condition: eq(variables['Agent.OS'], 'Windows_NT')
+  - script: |
       pip install -U pip wheel setuptools virtualenv
       pip install -r requirements/requirements_dev.txt tox-uv
     displayName: "Install deps"
