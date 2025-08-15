@@ -22,16 +22,19 @@ else:
     DEFAULT_ERROR_REPORT = sentry_sdk.utils.MAX_STRING_LENGTH
     CONST_NAME = "MAX_STRING_LENGTH"
 
+NEW_CLIP_LIMIT = DEFAULT_ERROR_REPORT * 10
+TEST_SIZE_DATA = DEFAULT_ERROR_REPORT + 10
+
 
 def test_message_clip(monkeypatch):
-    message = "a" * 5000
+    message = "a" * TEST_SIZE_DATA
     assert len(sentry_sdk.utils.strip_string(message).value) == DEFAULT_ERROR_REPORT
-    monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, 10**4)
-    assert len(sentry_sdk.utils.strip_string(message)) == 5000
+    monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, NEW_CLIP_LIMIT)
+    assert len(sentry_sdk.utils.strip_string(message)) == len(message)
 
 
 def test_sentry_serialize_clip(monkeypatch):
-    message = "a" * 5000
+    message = "a" * TEST_SIZE_DATA
     try:
         raise ValueError("eeee")
     except ValueError as e:
@@ -40,9 +43,9 @@ def test_sentry_serialize_clip(monkeypatch):
 
         clipped = serialize(event)
         assert len(clipped["message"]) == DEFAULT_ERROR_REPORT
-        monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, 10**4)
+        monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, NEW_CLIP_LIMIT)
         clipped = serialize(event)
-        assert len(clipped["message"]) == 5000
+        assert len(clipped["message"]) == TEST_SIZE_DATA
 
 
 def test_sentry_variables_clip(monkeypatch):
@@ -83,7 +86,7 @@ def test_sentry_variables_clip_change_breadth(monkeypatch):
 
 
 def test_sentry_report(monkeypatch):
-    message = "a" * 5000
+    message = "a" * TEST_SIZE_DATA
     happen = [False]
 
     def check_event(event):

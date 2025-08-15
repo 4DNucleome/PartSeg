@@ -136,12 +136,13 @@ def _setup_sentry():  # pragma: no cover
         state_store.report_errors = False
         return
     sentry_sdk.utils.MAX_STRING_LENGTH = 10**4
-    sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH = 10**4
+    if getattr(sentry_sdk.utils, "DEFAULT_MAX_VALUE_LENGTH", 5000) < 10**4:
+        sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH = 10**4
     sentry_sdk.serializer.safe_repr = safe_repr
     sentry_sdk.serializer.MAX_DATABAG_BREADTH = 100
     init_kwargs = {"release": f"PartSeg@{__version__}"}
     if SENTRY_GE_1_29:
-        init_kwargs["max_value_length"] = 10**4
+        init_kwargs["max_value_length"] = sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH
     sentry_sdk.init(
         state_store.sentry_url,
         **init_kwargs,
