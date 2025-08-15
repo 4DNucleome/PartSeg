@@ -74,7 +74,7 @@ jobs:
           version: 1.0
 
       - name: Install Windows OpenGL
-        uses: pyvista/setup-headless-display-action@v3
+        uses: pyvista/setup-headless-display-action@v4.2
 
       - name: Download test data
         if: ${{ inputs.test_data }}
