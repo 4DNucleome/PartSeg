@@ -12,11 +12,12 @@ steps:
     inputs:
       artifact: TestData
       path: $(Build.SourcesDirectory)/test_data
-  - script: |
-      wget https://raw.githubusercontent.com/pyvista/setup-headless-display-action/refs/heads/main/windows/install_opengl.sh
-      chmod +x install_opengl.sh
-      ./install_opengl.sh
+
+  - powershell: |
+      Invoke-WebRequest -Uri "https://raw.githubusercontent.com/pyvista/setup-headless-display-action/refs/heads/main/windows/install_opengl.sh" -OutFile "install_opengl.sh"
+      bash install_opengl.sh
     displayName: "Install Windows OpenGL"
+
     condition: eq(variables['Agent.OS'], 'Windows_NT')
   - script: |
       pip install -U pip wheel setuptools virtualenv
