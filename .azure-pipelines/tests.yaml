@@ -12,6 +12,15 @@ steps:
     inputs:
       artifact: TestData
       path: $(Build.SourcesDirectory)/test_data
+
+  - powershell: |
+      Invoke-WebRequest -Uri "https://raw.githubusercontent.com/pyvista/setup-headless-display-action/refs/heads/main/windows/install_opengl.sh" -OutFile "install_opengl.sh"
+      bash install_opengl.sh
+    displayName: "Install Windows OpenGL"
+    env:
+      MESA3D_VERSION: "25.0.7"
+
+    condition: eq(variables['Agent.OS'], 'Windows_NT')
   - script: |
       pip install -U pip wheel setuptools virtualenv
       pip install -r requirements/requirements_dev.txt tox-uv
