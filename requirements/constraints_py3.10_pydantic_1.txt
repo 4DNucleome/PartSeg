@@ -37,7 +37,7 @@ cloudpickle==3.1.1
     # via dask
 comm==0.2.3
     # via ipykernel
-coverage==7.10.3
+coverage==7.10.4
     # via partseg (pyproject.toml)
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
@@ -149,7 +149,7 @@ magicgui==0.10.1
     #   napari
 mahotas==1.4.18
     # via partseg (pyproject.toml)
-markdown-it-py==3.0.0
+markdown-it-py==4.0.0
     # via rich
 markupsafe==3.0.2
     # via jinja2
@@ -259,7 +259,7 @@ psutil==7.0.0
     # via
     #   ipykernel
     #   napari
-psygnal==0.14.0
+psygnal==0.14.1
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -296,7 +296,7 @@ pyinstaller==6.15.0
     # via partseg (pyproject.toml)
 pyinstaller-hooks-contrib==2025.8
     # via pyinstaller
-pyopengl==3.1.9
+pyopengl==3.1.10
     # via napari
 pyproject-hooks==1.2.0
     # via build
@@ -392,7 +392,7 @@ scipy==1.15.3
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.34.1
+sentry-sdk==2.35.0
     # via partseg (pyproject.toml)
 setuptools==80.9.0
     # via
@@ -431,7 +431,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.7.5
+superqt==0.7.6
     # via
     #   partseg (pyproject.toml)
     #   magicgui
@@ -504,7 +504,7 @@ vispy==0.14.3
     #   napari-svg
 wcwidth==0.2.13
     # via prompt-toolkit
-wrapt==1.17.2
+wrapt==1.17.3
     # via napari
 xlrd==2.0.2
     # via partseg (pyproject.toml)
