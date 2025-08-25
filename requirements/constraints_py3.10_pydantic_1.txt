@@ -37,7 +37,7 @@ cloudpickle==3.1.1
     # via dask
 comm==0.2.3
     # via ipykernel
-coverage==7.10.4
+coverage==7.10.5
     # via partseg (pyproject.toml)
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
@@ -112,7 +112,7 @@ jedi==0.19.2
     # via ipython
 jinja2==3.1.6
     # via sphinx
-jsonschema==4.25.0
+jsonschema==4.25.1
     # via napari
 jsonschema-specifications==2025.4.1
     # via jsonschema
@@ -137,7 +137,7 @@ local-migrator==0.1.10
     #   nme
 locket==1.0.0
     # via partd
-lxml==6.0.0
+lxml==6.0.1
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
@@ -220,11 +220,11 @@ packaging==25.0
     #   scikit-image
     #   sphinx
     #   vispy
-pandas==2.3.1
+pandas==2.3.2
     # via
     #   partseg (pyproject.toml)
     #   napari
-parso==0.8.4
+parso==0.8.5
     # via jedi
 partd==1.4.2
     # via dask
@@ -346,7 +346,7 @@ pyyaml==6.0.2
     #   dask
     #   napari
     #   npe2
-pyzmq==27.0.1
+pyzmq==27.0.2
     # via
     #   ipykernel
     #   jupyter-client
@@ -369,7 +369,7 @@ referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.4
+requests==2.32.5
     # via
     #   partseg (pyproject.toml)
     #   pooch
@@ -475,7 +475,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.16.0
+typer==0.16.1
     # via npe2
 typing-extensions==4.14.1
     # via
