@@ -1,4 +1,4 @@
-personal_ws-1.1 en 19
+personal_ws-1.1 en 21
 napari
 autoupdate
 aspell
@@ -18,3 +18,5 @@ czifile
 ipykernel
 qapp
 deprecations
+github
+deps
