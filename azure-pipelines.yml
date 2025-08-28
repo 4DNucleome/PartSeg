@@ -45,7 +45,7 @@ stages:
               python -m pip install prek
             displayName: InstallDeps
           - bash: prek run --all-files --show-diff-on-failure
-            displayName: pre-commmit
+            displayName: Check Formatting (pre-commit hook)
 
   - stage: manifest_check
     dependsOn: []
