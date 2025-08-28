@@ -27,7 +27,7 @@ jobs:
     name: Download test data
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
@@ -48,7 +48,7 @@ jobs:
         platform: [windows-2022, macos-14, ubuntu-24.04]
         python: [3.12]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v5
@@ -119,7 +119,7 @@ jobs:
     name: "Test pyinstaller build"
     runs-on: "ubuntu-latest"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: actions/setup-python@v5
       name: Install Python
       with:
