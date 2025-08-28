@@ -29,6 +29,7 @@ exclude .zenodo.json
 exclude tox*
 exclude .pre-commit-config.yaml
 exclude .deepsource.toml
+exclude .coderabbit.yaml
 exclude help/**
 exclude docs/**
 exclude images/**
