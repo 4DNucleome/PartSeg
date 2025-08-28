@@ -48,9 +48,9 @@ stages:
               key: pre-commit | .pre-commit-config.yaml | "$(PY)"
               path: $(PRE_COMMIT_HOME)
           - bash: |
-              python -m pip install pre-commit
+              python -m pip install prek
             displayName: InstallDeps
-          - bash: pre-commit run --all --show-diff-on-failure
+          - bash: prek run --all --show-diff-on-failure
             displayName: pre-commmit
 
   - stage: manifest_check
