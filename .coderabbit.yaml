@@ -1,0 +1,5 @@
+reviews:
+  tools:
+    github-checks:
+      enabled: true
+      timeout_ms: 900000  # 15 minutes (maximum allowed)
