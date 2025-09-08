@@ -153,7 +153,7 @@ jobs:
     needs: [test_coverage, test_minimal]
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
           cache-dependency-path: pyproject.toml
