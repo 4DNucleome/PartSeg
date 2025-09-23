@@ -22,6 +22,10 @@ concurrency:
   group: pre-test-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_COLOR: 1
+  COLUMNS: 120
+
 jobs:
   download_data:
     name: Download test data
