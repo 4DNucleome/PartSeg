@@ -31,7 +31,7 @@ certifi==2025.8.3
     #   sentry-sdk
 charset-normalizer==3.4.3
     # via requests
-click==8.2.1
+click==8.3.0
     # via
     #   dask
     #   typer
@@ -41,9 +41,9 @@ comm==0.2.3
     # via ipykernel
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
-dask==2025.7.0
+dask==2025.9.1
     # via napari
-debugpy==1.8.16
+debugpy==1.8.17
     # via ipykernel
 decorator==5.2.1
     # via ipython
@@ -57,7 +57,7 @@ docutils==0.21.2
     #   sphinx-qt-documentation
 et-xmlfile==2.0.0
     # via openpyxl
-executing==2.2.0
+executing==2.2.1
     # via stack-data
 flexcache==0.3
     # via pint
@@ -67,7 +67,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2025.7.0
+fsspec==2025.9.0
     # via dask
 h5py==3.14.0
     # via partseg (pyproject.toml)
@@ -94,20 +94,22 @@ ipykernel==6.30.1
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==9.4.0
+ipython==9.5.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
     #   napari-console
 ipython-pygments-lexers==1.1.1
-    # via ipython
+    # via
+    #   ipython
+    #   qtconsole
 jedi==0.19.2
     # via ipython
 jinja2==3.1.6
     # via sphinx
 jsonschema==4.25.1
     # via napari
-jsonschema-specifications==2025.4.1
+jsonschema-specifications==2025.9.1
     # via jsonschema
 jupyter-client==8.6.3
     # via
@@ -164,7 +166,7 @@ nme==0.1.8
     # via partseg (pyproject.toml)
 npe2==0.7.9
     # via napari
-numpy==2.3.2
+numpy==2.3.3
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -223,7 +225,7 @@ pillow==11.3.0
     #   scikit-image
 pint==0.25
     # via napari
-platformdirs==4.3.8
+platformdirs==4.4.0
     # via
     #   jupyter-core
     #   npe2
@@ -231,9 +233,9 @@ platformdirs==4.3.8
     #   pooch
 pooch==1.8.2
     # via scikit-image
-prompt-toolkit==3.0.51
+prompt-toolkit==3.0.52
     # via ipython
-psutil==7.0.0
+psutil==7.1.0
     # via
     #   ipykernel
     #   napari
@@ -250,7 +252,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.2.1
     # via superqt
-pydantic==2.11.7
+pydantic==2.11.9
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -283,7 +285,7 @@ pyqt6==6.9.1
     # via
     #   partseg (pyproject.toml)
     #   napari
-pyqt6-qt6==6.9.1
+pyqt6-qt6==6.9.2
     # via pyqt6
 pyqt6-sip==13.10.2
     # via pyqt6
@@ -300,13 +302,13 @@ pyyaml==6.0.2
     #   dask
     #   napari
     #   npe2
-pyzmq==27.0.2
+pyzmq==27.1.0
     # via
     #   ipykernel
     #   jupyter-client
 qtawesome==1.4.0
     # via partseg (pyproject.toml)
-qtconsole==5.6.1
+qtconsole==5.7.0
     # via
     #   partseg (pyproject.toml)
     #   napari-console
@@ -335,18 +337,18 @@ rich==14.1.0
     #   typer
 roman-numerals-py==3.1.0
     # via sphinx
-rpds-py==0.27.0
+rpds-py==0.27.1
     # via
     #   jsonschema
     #   referencing
 scikit-image==0.25.2
     # via napari
-scipy==1.16.1
+scipy==1.16.2
     # via
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.35.0
+sentry-sdk==2.38.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -390,7 +392,7 @@ superqt==0.7.6
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tifffile==2025.6.11
+tifffile==2025.9.20
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -420,9 +422,9 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.16.1
+typer==0.19.1
     # via npe2
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   app-model
     #   flexcache
@@ -457,5 +459,5 @@ wrapt==1.17.3
     # via napari
 xlrd==2.0.2
     # via partseg (pyproject.toml)
-xlsxwriter==3.2.5
+xlsxwriter==3.2.9
     # via partseg (pyproject.toml)

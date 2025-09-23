@@ -155,8 +155,12 @@ def executor_fun(que: multiprocessing.Queue):
 
 
 def test_exception_pass(monkeypatch):
-    def check_event(event):
-        assert len(event["exception"]["values"][0]["stacktrace"]["frames"]) == 12
+
+    done = [False]
+
+    def check_event(envelope):
+        assert len(envelope.items[0].payload.json["exception"]["values"][0]["stacktrace"]["frames"]) == 12
+        done[0] = True
 
     message_queue = multiprocessing.get_context("spawn").Queue()
     p = multiprocessing.get_context("spawn").Process(target=executor_fun, args=(message_queue,))
@@ -167,12 +171,13 @@ def test_exception_pass(monkeypatch):
     assert isinstance(ex, ValueError)
     assert isinstance(event, dict)
     client = Client("https://aaa@test.pl/77")
-    monkeypatch.setattr(client.transport, "capture_event", check_event)
+    monkeypatch.setattr(client.transport, "capture_envelope", check_event)
     with sentry_sdk.new_scope() as scope:
         scope.set_client(client)
         event_id = sentry_sdk.capture_event(event)
 
     assert event_id is not None
+    assert done[0]
 
 
 @pytest.mark.parametrize("dtype", [np.uint8, np.int8, np.float32])
