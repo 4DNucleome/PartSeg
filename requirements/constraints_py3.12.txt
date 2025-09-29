@@ -149,7 +149,7 @@ mahotas==1.4.18
     # via partseg (pyproject.toml)
 markdown-it-py==4.0.0
     # via rich
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via jinja2
 matplotlib-inline==0.1.7
     # via
@@ -226,7 +226,7 @@ parso==0.8.5
     # via jedi
 partd==1.4.2
     # via dask
-partsegcore-compiled-backend==0.15.13
+partsegcore-compiled-backend==0.15.14
     # via partseg (pyproject.toml)
 partsegdata==0.10.0
     # via partseg (pyproject.toml)
@@ -257,7 +257,7 @@ psutil==7.1.0
     # via
     #   ipykernel
     #   napari
-psygnal==0.14.1
+psygnal==0.14.2
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -294,7 +294,7 @@ pygments==2.19.2
     #   superqt
 pyinstaller==6.16.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2025.8
+pyinstaller-hooks-contrib==2025.9
     # via pyinstaller
 pyopengl==3.1.10
     # via napari
@@ -339,7 +339,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   dask
     #   napari
@@ -392,7 +392,7 @@ scipy==1.16.2
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.38.0
+sentry-sdk==2.39.0
     # via partseg (pyproject.toml)
 setuptools==80.9.0
     # via
@@ -468,7 +468,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.19.1
+typer==0.19.2
     # via npe2
 typing-extensions==4.15.0
     # via
@@ -497,7 +497,7 @@ vispy==0.15.2
     #   partseg (pyproject.toml)
     #   napari
     #   napari-svg
-wcwidth==0.2.13
+wcwidth==0.2.14
     # via prompt-toolkit
 wrapt==1.17.3
     # via napari
