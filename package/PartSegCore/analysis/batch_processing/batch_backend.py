@@ -209,6 +209,8 @@ class CalculationProcess:
         if isinstance(projects, ProjectTuple):
             projects = [projects]
         for project in projects:
+            sub_calculation = FileCalculation(project.image.file_path, calculation.calculation)
+            self.calculation = sub_calculation
             try:
                 self.image = project.image
                 if calculation.overwrite_voxel_size:
@@ -223,14 +225,16 @@ class CalculationProcess:
                     self.history = project.history
                     self.algorithm_parameters = project.algorithm_parameters
 
-                self.iterate_over(calculation.calculation_plan.execution_tree)
+                self.iterate_over(sub_calculation.calculation_plan.execution_tree)
                 for el in self.measurement:
-                    el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
+                    el.set_filename(path.relpath(project.image.file_path, sub_calculation.base_prefix))
                 self.results.append(
-                    ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
+                    ResponseData(path.relpath(project.image.file_path, sub_calculation.base_prefix), self.measurement)
                 )
             except Exception as e:  # pylint: disable=broad-except
                 self.results.append(prepare_error_data(e))
+            finally:
+                self.calculation = calculation
             self._reset_image_cache()
         return self.results
 
