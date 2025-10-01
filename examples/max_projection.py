@@ -12,6 +12,8 @@ from PartSegImage import Image, ImageWriter, TiffImageReader
 
 def max_projection(file_path: Path, suffix: str = "_max"):
     image = TiffImageReader.read_image(str(file_path))
+    if "Z" not in image.axis_order:
+        raise ValueError(f"Image {file_path} does not have Z axis")
     max_proj = image.get_data().max(axis=image.axis_order.index("Z"))
     image2 = Image(max_proj, image.spacing[1:], axes_order=image.axis_order.replace("Z", ""))
     ImageWriter.save(image2, str(file_path.with_name(file_path.stem + suffix + file_path.suffix)))
