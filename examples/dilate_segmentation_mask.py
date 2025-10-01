@@ -1,5 +1,6 @@
 """Example script to dilate segmentation masks in image files."""
 
+import sys
 from argparse import ArgumentParser
 from glob import glob
 from itertools import chain
@@ -15,9 +16,10 @@ from PartSegCore_compiled_backend.sprawl_utils.find_split import euclidean_spraw
 
 
 def convert_mask(file_path: Path, radius: float, suffix: str):
-    print(f"Converting {file_path} to {suffix} with radius {radius}")
     if radius <= 0:
-        return
+        raise ValueError("Radius must be positive")
+    print(f"Converting {file_path} to {suffix} with radius {radius}")
+
     project = LoadROIImage.load([str(file_path)])
 
     roi_ = project.roi_info.roi.squeeze()
@@ -58,17 +60,20 @@ def convert_mask(file_path: Path, radius: float, suffix: str):
 def main():
     parser = ArgumentParser()
     parser.add_argument("project_files", nargs="+", type=str)
-    parser.add_argument("--dilate", type=int, default=1)
+    parser.add_argument("--dilate", type=float, default=1.0)
     parser.add_argument("--suffix", type=str, default="_dilated")
 
     args = parser.parse_args()
 
     files = list(chain.from_iterable(glob(x) for x in args.project_files))
-    print(f"{files=} {args.project_files=}")
+    if not files:
+        print("No files found")
+        return -1
 
     for file_path in files:
         convert_mask(Path(file_path).absolute(), args.dilate, args.suffix)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
