@@ -56,10 +56,10 @@ jobs:
         tox_args: [ "" ]
         include:
           - python_version: "3.11"
-            os: "macos-13"
+            os: "macos-15-intel"
             qt_backend: "PyQt5"
           - python_version: "3.12"
-            os: "macos-14"
+            os: "macos-15"
             qt_backend: "PyQt6"
           - python_version: "3.11"
             os: "windows-latest"
@@ -94,7 +94,7 @@ jobs:
       fail-fast: false
       matrix:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
-        os: ["ubuntu-24.04", "macos-14", "windows-2022"]
+        os: ["ubuntu-24.04", "macos-15", "windows-2022"]
         qt_backend: ["PySide2", "PyQt5"]
         include:
           - python_version: "3.12"
@@ -115,9 +115,9 @@ jobs:
             qt_backend: "PySide2"
           - python_version: "3.12"
             qt_backend: "PySide2"
-          - os: "macos-14"
+          - os: "macos-15"
             qt_backend: "PySide2"
-          - os: "macos-14"
+          - os: "macos-15"
             python_version: "3.9"
     with:
       test_data: True
