@@ -141,7 +141,7 @@ class MeasurementCalculate(BaseModel):
         return f"MeasurementCalculate \nChannel: {channel}\nUnits: {self.units}\n{desc}\n"
 
 
-def get_save_path(op: Save, calculation: "FileCalculation", image_file_path: str) -> str:
+def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     """
     Calculate save path base on proceeded file path and save operation parameters.
     It assume that save algorithm is registered in :py:data:`PartSegCore.analysis.save_functions.save_dict`
@@ -153,7 +153,7 @@ def get_save_path(op: Save, calculation: "FileCalculation", image_file_path: str
     from PartSegCore.analysis.save_functions import save_dict  # noqa: PLC0415
 
     extension = save_dict[op.algorithm].get_default_extension()
-    rel_path = os.path.relpath(image_file_path, calculation.base_prefix)
+    rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
     rel_path = os.path.splitext(rel_path)[0]
     if op.directory:
         file_name = os.path.basename(rel_path)

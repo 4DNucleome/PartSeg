@@ -352,7 +352,7 @@ class CalculationProcess:
             history=self.history,
             algorithm_parameters=self.algorithm_parameters,
         )
-        save_path = get_save_path(operation, self.calculation, self.image.file_path)
+        save_path = get_save_path(operation, self.calculation)
         save_dir = os.path.dirname(save_path)
         os.makedirs(save_dir, exist_ok=True)
         save_class.save(save_path, project_tuple, operation.values)
