@@ -228,6 +228,7 @@ class BaseMainWindow(QMainWindow):
 
     def napari_viewer_show(self):
         viewer = Viewer(title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info)
+        viewer.scale_bar.unit = "nm"
         viewer.theme = self.settings.theme_name
         viewer.create_initial_layers(image=True, roi=True, additional_layers=False, points=True)
         self.viewer_list.append(viewer)
