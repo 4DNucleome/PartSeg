@@ -39,7 +39,7 @@ from PartSegCore.analysis.calculation_plan import (
 )
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
-from PartSegCore.analysis.save_functions import save_dict
+from PartSegCore.analysis.save_functions import SaveAsTiff, save_dict
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadPlanExcel, SaveBase
 from PartSegCore.json_hooks import PartSegEncoder
@@ -262,7 +262,20 @@ def calculation_plan2(ltww_segmentation, measurement_list):
     ltww_segmentation.values.channel = 0
 
     tree = CalculationTree(
-        RootType.Mask_project, [CalculationTree(ltww_segmentation, [CalculationTree(measurement_list, [])])]
+        RootType.Mask_project,
+        [
+            CalculationTree(ltww_segmentation, [CalculationTree(measurement_list, [])]),
+            CalculationTree(
+                Save(
+                    suffix="_suffix",
+                    directory="sub",
+                    algorithm=SaveAsTiff.get_name(),
+                    short_name=SaveAsTiff.get_short_name(),
+                    values={},
+                ),
+                [],
+            ),
+        ],
     )
     return CalculationPlan(tree=tree, name="test2")
 
@@ -605,14 +618,14 @@ class TestCalculationProcess:
         str(df2.loc[0]["error description"]).startswith("[Errno 2]")
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_mask_project(self, tmpdir, data_test_dir, calculation_plan2):
+    def test_full_pipeline_mask_project(self, tmp_path, data_test_dir, calculation_plan2):
         file_pattern = os.path.join(data_test_dir, "*nucleus.seg")
         file_paths = glob(file_pattern)
         calc = Calculation(
             file_paths,
             base_prefix=data_test_dir,
-            result_prefix=data_test_dir,
-            measurement_file_path=os.path.join(tmpdir, "test2.xlsx"),
+            result_prefix=str(tmp_path),
+            measurement_file_path=os.path.join(tmp_path, "test2.xlsx"),
             sheet_name="Sheet1",
             calculation_plan=calculation_plan2,
             voxel_size=(1, 1, 1),
@@ -623,9 +636,13 @@ class TestCalculationProcess:
         manager.add_calculation(calc)
         wait_for_calculation(manager)
 
-        assert os.path.exists(os.path.join(tmpdir, "test2.xlsx"))
-        df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
+        assert os.path.exists(os.path.join(tmp_path, "test2.xlsx"))
+        df = pd.read_excel(os.path.join(tmp_path, "test2.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (2, 4)
+        assert (tmp_path / "sub").is_dir()
+        assert len(list((tmp_path / "sub").iterdir())) == 2
+        assert (tmp_path / "sub" / "test_nucleus_component1_suffix.tiff").exists()
+        assert (tmp_path / "sub" / "test_nucleus_component3_suffix.tiff").exists()
 
     def test_do_calculation(self, tmpdir, data_test_dir, calculation_plan3):
         file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif")
