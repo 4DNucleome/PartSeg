@@ -43,7 +43,10 @@ if napari_version <= parse_version("0.4.16"):
         return Path(qt_resources.__file__).parent / f"{key}.py"
 else:
     def import_resources():
+        from napari.utils import theme
         from napari import resources
+
+        del theme
 
         return os.path.join(os.path.dirname(resources.__file__), "icons")
 
