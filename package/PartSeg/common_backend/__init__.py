@@ -12,7 +12,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
 def napari_get_settings(path=None) -> "NapariSettings":
     from napari.settings import get_settings as _napari_get_settings  # noqa: PLC0415
+    from napari.utils import theme  # noqa: PLC0415
 
+    del theme
     if path is not None:
         path = os.path.join(path, "settings.yaml")
     if path is not None:

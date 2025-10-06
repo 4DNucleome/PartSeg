@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import sys
 import typing
@@ -921,6 +922,32 @@ class Image:
                 res.append(color)
         return res
 
+    def get_ome_colors(self) -> list[int]:
+        """The ome stores colors as single integer encoding RGB value
+
+        :returns: list of integers representing colors
+        """
+
+        res = []
+        default_colors = ["red", "blue", "green", "yellow", "magenta", "cyan"]
+        for i, color in enumerate(self.default_coloring):
+            if isinstance(color, str):
+                if color.startswith("#"):
+                    color_array = _hex_to_rgb(color)
+                else:
+                    color_array = _name_to_rgb(color)
+                res.append(_rgb_to_signed_int(color_array))
+            elif color.ndim == 1:
+                # treat as RGB
+                res.append(_rgb_to_signed_int(tuple(color)))
+            else:
+                logging.warning(
+                    "Do not support custom colormap in ome colors. Use %s", default_colors[i % len(default_colors)]
+                )
+                color_array = _name_to_rgb(default_colors[i % len(default_colors)])
+                res.append(_rgb_to_signed_int(color_array))
+        return res
+
     def get_colors(self) -> list[str | list[int]]:
         res: list[str | list[int]] = []
         for color in self.default_coloring:
@@ -999,6 +1026,12 @@ def _name_to_rgb(name: str) -> tuple[int, int, int]:
     if name not in _NAMED_COLORS:
         raise ValueError(f"Unknown color name: {name}")
     return _hex_to_rgb(_NAMED_COLORS[name])
+
+
+def _rgb_to_signed_int(rgb: tuple[int, int, int]) -> int:
+    """Convert an RGB tuple to a signed integer representation."""
+    r, g, b = rgb[:3]
+    return np.uint32((r << 24) | (g << 16) | (b << 8) | 255).view(np.int32).item()
 
 
 try:
