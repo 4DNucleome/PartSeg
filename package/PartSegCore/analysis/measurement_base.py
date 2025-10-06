@@ -306,7 +306,7 @@ class Node(BaseModel):
         return self.left.need_mask() or self.right.need_mask()
 
 
-Node.update_forward_refs()
+Node.model_rebuild()
 
 
 @register_class(
