@@ -2,10 +2,12 @@ import sys
 from abc import ABC
 from collections.abc import Iterable
 from enum import Enum
+from importlib.metadata import version
 from typing import Any, ClassVar, ForwardRef, Optional, Union
 
 import numpy as np
 from local_migrator import REGISTER, class_to_str, register_class, rename_key
+from packaging.version import parse as parse_version
 from pydantic import Field, validator
 from sympy import Symbol, symbols
 
@@ -18,6 +20,8 @@ from PartSegCore.universal_const import Units
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 from PartSegImage.image import Spacing
+
+PYDANTIC_2 = parse_version(version("pydantic")) >= parse_version("2.0.0")
 
 
 @register_class(
@@ -306,7 +310,10 @@ class Node(BaseModel):
         return self.left.need_mask() or self.right.need_mask()
 
 
-Node.model_rebuild()
+if PYDANTIC_2:
+    Node.model_rebuild()
+else:
+    Node.update_forward_refs()
 
 
 @register_class(
