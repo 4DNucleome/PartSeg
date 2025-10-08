@@ -19,7 +19,7 @@ repos:
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.13.2
     hooks:
-      - id: ruff
+      - id: ruff-check
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
