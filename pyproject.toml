@@ -16,7 +16,6 @@ authors = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: napari",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -32,6 +31,10 @@ classifiers = [
 keywords = [
     "bioimaging",
     "GUI",
+]
+license = "BSD-3-Clause"
+license-files = [
+    "License.txt",
 ]
 requires-python = ">=3.9"
 dependencies = [
@@ -80,13 +83,6 @@ dynamic = [
     "version",
     "readme",
 ]
-
-#[project.readme]
-#file = "Readme.md"
-#content-type = "text/markdown"
-
-[project.license]
-text = "BSD-3-Clause"
 
 [project.urls]
 Homepage = "https://partseg.github.io/"
@@ -165,9 +161,7 @@ platforms = [
     "Windows",
     "MacOs",
 ]
-license-files = [
-    "License.txt",
-]
+
 
 [tool.setuptools.package-dir]
 "" = "package"
