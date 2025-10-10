@@ -919,7 +919,7 @@ class Image:
                             ]
                         )
                     )
-                res.append(color)
+                res.append(color.astype(np.uint8))
         return res
 
     def get_ome_colors(self) -> list[int]:
