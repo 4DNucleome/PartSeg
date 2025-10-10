@@ -22,7 +22,7 @@ build==1.3.0
     # via npe2
 cachey==0.2.1
     # via napari
-certifi==2025.8.3
+certifi==2025.10.5
     # via
     #   napari
     #   requests
@@ -143,7 +143,7 @@ lxml==6.0.2
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
-lxml-html-clean==0.4.2
+lxml-html-clean==0.4.3
     # via lxml
 magicgui==0.10.1
     # via
@@ -222,7 +222,7 @@ packaging==25.0
     #   scikit-image
     #   sphinx
     #   vispy
-pandas==2.3.2
+pandas==2.3.3
     # via
     #   partseg (pyproject.toml)
     #   napari
