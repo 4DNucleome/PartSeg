@@ -97,7 +97,8 @@ def test_imagej_write_all_metadata(tmp_path, data_test_dir):
     npt.assert_array_equal(image2.default_coloring, image.get_imagej_colors())
 
 
-def test_imagej_save_color(tmp_path):
+@pytest.fixture
+def data_to_save():
     data = np.zeros((4, 20, 20), dtype=np.uint8)
     data[:, 2:-2, 2:-2] = 20
     img = Image(
@@ -113,14 +114,28 @@ def test_imagej_save_color(tmp_path):
     )
     assert img.get_colors()[:3] == ["blue", "#FFAA00", "#FB1"]
     assert tuple(img.get_colors()[3]) == (0, 180, 0)
-    IMAGEJImageWriter.save(img, tmp_path / "image.tif")
+    return img
+
+
+def test_imagej_save_color(tmp_path, data_to_save):
+    IMAGEJImageWriter.save(data_to_save, tmp_path / "image.tif")
     image2 = TiffImageReader.read_image(tmp_path / "image.tif")
     assert image2.channel_names == ["ch1", "ch2", "ch3", "ch4"]
-    assert image2.ranges == [(0, 20), (0, 30), (0, 25), (0, 22)]
+    npt.assert_array_equal(image2.ranges, [(0, 20), (0, 30), (0, 25), (0, 22)])
     assert tuple(image2.default_coloring[0][:, -1]) == (0, 0, 255)
     assert tuple(image2.default_coloring[1][:, -1]) == (255, 170, 0)
     assert tuple(image2.default_coloring[2][:, -1]) == (255, 187, 17)
     assert tuple(image2.default_coloring[3][:, -1]) == (0, 180, 0)
+
+
+def test_ome_save_color(tmp_path, data_to_save):
+    ImageWriter.save(data_to_save, tmp_path / "image.tif")
+    image2 = TiffImageReader.read_image(tmp_path / "image.tif")
+    assert image2.channel_names == ["ch1", "ch2", "ch3", "ch4"]
+    assert tuple(image2.default_coloring[0]) == (0, 0, 255)
+    assert tuple(image2.default_coloring[1]) == (255, 170, 0)
+    assert tuple(image2.default_coloring[2]) == (255, 187, 17)
+    assert tuple(image2.default_coloring[3]) == (0, 180, 0)
 
 
 def test_save_mask_imagej(tmp_path):
