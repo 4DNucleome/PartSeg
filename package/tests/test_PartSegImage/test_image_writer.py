@@ -111,7 +111,9 @@ def data_to_save():
             ChannelInfo(name="ch3", color_map="#FB1", contrast_limits=(0, 25)),
             ChannelInfo(name="ch4", color_map=(0, 180, 0), contrast_limits=(0, 22)),
             ChannelInfo(
-                name="ch5", color_map=np.linspace((0, 0, 0), (128, 255, 0), num=256).T, contrast_limits=(0, 20)
+                name="ch5",
+                color_map=np.linspace((0, 0, 0), (128, 255, 0), num=256, dtype=np.uint8).T,
+                contrast_limits=(0, 20),
             ),
         ],
     )

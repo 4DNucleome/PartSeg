@@ -135,6 +135,13 @@ class BaseImageReader:
             self.callback_function = callback_function
 
     def _get_channel_info(self) -> list[ChannelInfo]:
+        if (
+            len(self.ranges) == 1
+            and isinstance(self.colors, np.ndarray)
+            and self.colors.ndim == 2
+            and self.colors.shape[0] > 1
+        ):
+            return [ChannelInfo(name=self.channel_names[0], color_map=self.colors, contrast_limits=self.ranges[0])]
         return [
             ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
             for name, color, contrast_limits in zip_longest(self.channel_names, self.colors, self.ranges)
@@ -593,7 +600,7 @@ class TiffImageReader(BaseImageReaderBuffer):
     def _read_imagej_colors(image_file):
         colors = image_file.imagej_metadata.get("LUTs", [])
         if isinstance(colors, list) and colors and colors[0].shape[0] == 24:
-            # drop buggy colors that comes from bug in PArtSeg with
+            # drop buggy colors that comes from bug in PartSeg with
             # writing 64 bit integers in tifffile
             return []
         return colors

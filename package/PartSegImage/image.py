@@ -1042,7 +1042,7 @@ def _name_to_rgb(name: str) -> tuple[int, int, int]:
 def _rgb_to_signed_int(rgb: tuple[int, int, int]) -> int:
     """Convert an RGB tuple to a signed integer representation."""
     r, g, b = rgb[:3]
-    return np.uint32((r << 24) | (g << 16) | (b << 8) | 255).view(np.int32).item()
+    return (np.int32(r) << 24) | (np.int32(g) << 16) | (np.int32(b) << 8) | 255
 
 
 try:
