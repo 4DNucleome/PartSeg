@@ -46,7 +46,7 @@ class ChannelInfoFull:
 
     def __post_init__(self):
         if not isinstance(self.color_map, (str, np.ndarray)):
-            self.color_map = np.array(self.color_map)
+            self.color_map = np.array(self.color_map, dtype=np.uint8)
             if self.color_map.ndim in {1, 2}:
                 if self.color_map.shape[0] not in {3, 4}:
                     message = f"1d color map need to have 3 or 4 elements (RGB or RGBA), not {self.color_map.shape}"
