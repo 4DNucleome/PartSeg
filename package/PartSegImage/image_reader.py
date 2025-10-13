@@ -135,13 +135,6 @@ class BaseImageReader:
             self.callback_function = callback_function
 
     def _get_channel_info(self) -> list[ChannelInfo]:
-        if (
-            len(self.ranges) == 1
-            and isinstance(self.colors, np.ndarray)
-            and self.colors.ndim == 2
-            and self.colors.shape[0] > 1
-        ):
-            return [ChannelInfo(name=self.channel_names[0], color_map=self.colors, contrast_limits=self.ranges[0])]
         return [
             ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
             for name, color, contrast_limits in zip_longest(self.channel_names, self.colors, self.ranges)
@@ -597,7 +590,9 @@ class TiffImageReader(BaseImageReaderBuffer):
         return x_spacing, y_spacing
 
     @staticmethod
-    def _read_imagej_colors(image_file):
+    def _read_imagej_colors(
+        image_file,
+    ) -> np.ndarray[tuple[int, int], np.dtype[np.uint8]] | list[np.ndarray[tuple[int, int], np.dtype[np.uint8]]]:
         colors = image_file.imagej_metadata.get("LUTs", [])
         if isinstance(colors, list) and colors and colors[0].shape[0] == 24:
             # drop buggy colors that comes from bug in PartSeg with
@@ -611,8 +606,13 @@ class TiffImageReader(BaseImageReaderBuffer):
         except KeyError:
             z_spacing = self.default_spacing[0]
         x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
+        axes = image_file.series[0].axes
         self.spacing = z_spacing, y_spacing, x_spacing
-        self.colors = self._read_imagej_colors(image_file)
+        colors = self._read_imagej_colors(image_file)
+        if "C" not in axes and isinstance(colors, np.ndarray) and colors.ndim == 2:
+            self.colors = [colors]
+        else:
+            self.colors = colors
         self.channel_names = image_file.imagej_metadata.get("Labels", [])
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]
