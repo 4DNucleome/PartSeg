@@ -47,6 +47,13 @@ class ChannelInfoFull:
     def __post_init__(self):
         if not isinstance(self.color_map, (str, np.ndarray)):
             self.color_map = np.array(self.color_map)
+            if self.color_map.ndim in {1, 2}:
+                if self.color_map.shape[0] not in {3, 4}:
+                    message = f"1d color map need to have 3 or 4 elements (RGB or RGBA), not {self.color_map.shape}"
+                    raise ValueError(message)
+            else:
+                message = f"Colormap as sequence need to be 1d or 2d array, not {self.color_map.shape}"
+                raise ValueError(message)
 
 
 def minimal_dtype(val: int):
