@@ -920,16 +920,16 @@ class Image:
                 res.append(np.array([np.linspace(0, x, num=256) for x in color_array]).astype(np.uint8))
             elif color.ndim == 1:
                 res.append(np.array([np.linspace(0, x, num=256) for x in color]).astype(np.uint8))
-            else:
-                if color.shape[1] != 256:
-                    res.append(
-                        np.array(
-                            [
-                                np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
-                                for x in color
-                            ]
-                        )
+            elif color.shape[1] != 256:
+                res.append(
+                    np.array(
+                        [
+                            np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
+                            for x in color
+                        ]
                     )
+                )
+            else:
                 res.append(color.astype(np.uint8))
         return res
 
