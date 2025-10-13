@@ -12,7 +12,7 @@ appdirs==1.4.4
     #   napari
 asttokens==3.0.0
     # via stack-data
-attrs==25.3.0
+attrs==25.4.0
     # via
     #   jsonschema
     #   referencing
@@ -75,7 +75,7 @@ heapdict==1.0.1
     # via cachey
 hsluv==5.0.4
     # via vispy
-idna==3.10
+idna==3.11
     # via requests
 imagecodecs==2025.8.2
     # via partseg (pyproject.toml)
@@ -225,7 +225,7 @@ pillow==11.3.0
     #   scikit-image
 pint==0.25
     # via napari
-platformdirs==4.4.0
+platformdirs==4.5.0
     # via
     #   jupyter-core
     #   npe2
@@ -252,7 +252,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.2.1
     # via superqt
-pydantic==2.11.10
+pydantic==2.12.0
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -263,7 +263,7 @@ pydantic==2.11.10
     #   pydantic-settings
 pydantic-compat==0.1.2
     # via app-model
-pydantic-core==2.33.2
+pydantic-core==2.41.1
     # via pydantic
 pydantic-settings==2.11.0
     # via autodoc-pydantic
@@ -331,7 +331,7 @@ requests==2.32.5
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.1.0
+rich==14.2.0
     # via
     #   npe2
     #   typer
@@ -348,7 +348,7 @@ scipy==1.16.2
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.39.0
+sentry-sdk==2.41.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -367,7 +367,7 @@ sphinx==8.2.3
     #   numpydoc
     #   sphinx-autodoc-typehints
     #   sphinx-qt-documentation
-sphinx-autodoc-typehints==3.2.0
+sphinx-autodoc-typehints==3.5.1
     # via partseg (pyproject.toml)
 sphinx-qt-documentation==0.4.1
     # via partseg (pyproject.toml)

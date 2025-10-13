@@ -14,7 +14,7 @@ appdirs==1.4.4
     #   napari
 asttokens==3.0.0
     # via stack-data
-attrs==25.3.0
+attrs==25.4.0
     # via
     #   jsonschema
     #   referencing
@@ -79,7 +79,7 @@ heapdict==1.0.1
     # via cachey
 hsluv==5.0.4
     # via vispy
-idna==3.10
+idna==3.11
     # via requests
 imagecodecs==2024.12.30
     # via partseg (pyproject.toml)
@@ -280,7 +280,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.2.1
     # via superqt
-pydantic==2.11.10
+pydantic==2.12.0
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -289,7 +289,7 @@ pydantic==2.11.10
     #   pydantic-compat
 pydantic-compat==0.1.2
     # via app-model
-pydantic-core==2.33.2
+pydantic-core==2.41.1
     # via pydantic
 pygments==2.19.2
     # via
@@ -385,7 +385,7 @@ requests==2.32.5
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.1.0
+rich==14.2.0
     # via
     #   npe2
     #   typer
@@ -402,7 +402,7 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.39.0
+sentry-sdk==2.41.0
     # via partseg (pyproject.toml)
 setuptools==80.9.0
     # via
@@ -455,7 +455,7 @@ tifffile==2024.8.30
     #   napari
     #   oiffile
     #   scikit-image
-tomli==2.2.1
+tomli==2.3.0
     # via
     #   build
     #   npe2
