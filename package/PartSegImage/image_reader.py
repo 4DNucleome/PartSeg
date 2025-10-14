@@ -623,13 +623,8 @@ class TiffImageReader(BaseImageReaderBuffer):
         except KeyError:
             z_spacing = self.default_spacing[0]
         x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
-        axes = image_file.series[0].axes
         self.spacing = z_spacing, y_spacing, x_spacing
-        colors = self._read_imagej_colors(image_file)
-        if "C" not in axes and isinstance(colors, np.ndarray) and colors.ndim == 2:
-            self.colors = [colors]
-        else:
-            self.colors = colors
+        self.colors = self._read_imagej_colors(image_file)
         self.channel_names = image_file.imagej_metadata.get("Labels", [])
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]
