@@ -591,18 +591,33 @@ class TiffImageReader(BaseImageReaderBuffer):
 
     @staticmethod
     def _read_imagej_colors(
-        image_file,
-    ) -> typing.Union[
-        np.ndarray[tuple[int, int], np.dtype[np.uint8]], list[np.ndarray[tuple[int, int], np.dtype[np.uint8]]]
-    ]:
+        image_file: tifffile.TiffFile,
+    ) -> list[np.ndarray[tuple[int, int], np.dtype[np.uint8]]]:
+        """
+        Read colors from ImageJ metadata
+
+        :param image_file: tiff file to read
+        :return: list of colors or empty list if no colors
+        """
         colors = image_file.imagej_metadata.get("LUTs", [])
         if isinstance(colors, list) and colors and colors[0].shape[0] == 24:
             # drop buggy colors that comes from bug in PartSeg with
             # writing 64 bit integers in tifffile
             return []
+        if isinstance(colors, np.ndarray):
+            return [colors]
+
         return colors
 
-    def read_imagej_metadata(self, image_file):
+    def read_imagej_metadata(self, image_file: tifffile.TiffFile) -> None:
+        """
+        Read metadata from the ImageJ tiff file.
+
+        Read spacing, colors, channel names, ranges and other metadata.
+        Save original metadata in :py:attr:`metadata`
+
+        :param image_file: file to read
+        """
         try:
             z_spacing = image_file.imagej_metadata["spacing"] * name_to_scalar[image_file.imagej_metadata["unit"]]
         except KeyError:

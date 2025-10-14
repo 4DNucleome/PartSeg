@@ -99,6 +99,7 @@ def test_imagej_write_all_metadata(tmp_path, data_test_dir):
 
 @pytest.fixture
 def data_to_save():
+    """Create image with 5 channels with different color definitions"""
     data = np.zeros((5, 20, 20), dtype=np.uint8)
     data[:, 2:-2, 2:-2] = 20
     img = Image(

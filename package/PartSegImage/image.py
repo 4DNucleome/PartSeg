@@ -40,11 +40,14 @@ class ChannelInfo:
 
 @dataclass(**ch_par)
 class ChannelInfoFull:
+    """Full channel information used in :py:class:`.Image`"""
+
     name: str
     color_map: str | np.ndarray
     contrast_limits: tuple[float, float]
 
     def __post_init__(self):
+        """Normalize color_map to numpy array if it is not string."""
         if not isinstance(self.color_map, (str, np.ndarray)):
             self.color_map = np.array(self.color_map, dtype=np.uint8)
         if isinstance(self.color_map, np.ndarray):
