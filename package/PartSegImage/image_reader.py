@@ -592,7 +592,9 @@ class TiffImageReader(BaseImageReaderBuffer):
     @staticmethod
     def _read_imagej_colors(
         image_file,
-    ) -> np.ndarray[tuple[int, int], np.dtype[np.uint8]] | list[np.ndarray[tuple[int, int], np.dtype[np.uint8]]]:
+    ) -> typing.Union[
+        np.ndarray[tuple[int, int], np.dtype[np.uint8]], list[np.ndarray[tuple[int, int], np.dtype[np.uint8]]]
+    ]:
         colors = image_file.imagej_metadata.get("LUTs", [])
         if isinstance(colors, list) and colors and colors[0].shape[0] == 24:
             # drop buggy colors that comes from bug in PartSeg with
