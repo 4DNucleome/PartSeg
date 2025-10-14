@@ -911,7 +911,12 @@ class Image:
             axes_order=self.axis_order,
         )
 
-    def get_imagej_colors(self):
+    def get_imagej_colors(self) -> list[np.ndarray[tuple[typing.Literal[3], typing.Literal[256]], np.dtype[np.uint8]]]:
+        """Get colors in format used by imagej
+
+        :return: list of 3x256 arrays with RGB values
+        :rtype: list of numpy.ndarray
+        """
         res = []
         for color in self.default_coloring:
 
