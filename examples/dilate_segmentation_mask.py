@@ -15,7 +15,7 @@ from PartSegCore.segmentation.watershed import calculate_distances_array, get_ne
 from PartSegCore_compiled_backend.sprawl_utils.find_split import euclidean_sprawl
 
 
-def convert_mask(file_path: Path, radius: float, suffix: str):
+def convert_mask(file_path: Path, radius: float, suffix: str, only_selected: bool):
     if radius <= 0:
         raise ValueError("Radius must be positive")
     print(f"Converting {file_path} to {suffix} with radius {radius}")
@@ -23,6 +23,18 @@ def convert_mask(file_path: Path, radius: float, suffix: str):
     project = LoadROIImage.load([str(file_path)])
 
     roi_ = project.roi_info.roi.squeeze()
+    selected_components = project.selected_components
+    if only_selected and selected_components is not None:
+        mask = np.isin(roi_, selected_components)
+        roi_ = roi_ * mask
+
+        unique_values = np.unique(roi_, sorted=True)
+        mapping = np.zeros(unique_values[-1] + 1, dtype=roi_.dtype)
+        for new_val, old_val in enumerate(unique_values):
+            mapping[old_val] = new_val
+        roi_ = mapping[roi_]
+
+        selected_components = list(range(1, len(unique_values)))
 
     bin_roi = to_binary_image(roi_)
     sprawl_area = dilate(bin_roi, [radius, radius], True)
@@ -47,6 +59,7 @@ def convert_mask(file_path: Path, radius: float, suffix: str):
             roi_info=ROIInfo(roi),
             spacing=project.spacing,
             frame_thickness=project.frame_thickness,
+            selected_components=selected_components,
         ),
         SaveROIOptions(
             relative_path=True,
@@ -60,8 +73,9 @@ def convert_mask(file_path: Path, radius: float, suffix: str):
 def main():
     parser = ArgumentParser()
     parser.add_argument("project_files", nargs="+", type=str)
-    parser.add_argument("--dilate", type=float, default=1.0)
+    parser.add_argument("--dilate", type=int, default=1)
     parser.add_argument("--suffix", type=str, default="_dilated")
+    parser.add_argument("--only-selected", action="store_true")
 
     args = parser.parse_args()
 
@@ -71,7 +85,7 @@ def main():
         return -1
 
     for file_path in files:
-        convert_mask(Path(file_path).absolute(), args.dilate, args.suffix)
+        convert_mask(Path(file_path).absolute(), args.dilate, args.suffix, args.only_selected)
     return 0
 
 
