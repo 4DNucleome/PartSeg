@@ -28,7 +28,7 @@ def convert_mask(file_path: Path, radius: float, suffix: str, only_selected: boo
         mask = np.isin(roi_, selected_components)
         roi_ = roi_ * mask
 
-        unique_values = np.unique(roi_, sorted=True)
+        unique_values = np.unique(roi_)
         mapping = np.zeros(unique_values[-1] + 1, dtype=roi_.dtype)
         for new_val, old_val in enumerate(unique_values):
             mapping[old_val] = new_val
