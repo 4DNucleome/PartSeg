@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### 🚀 Features
 
 - Set units for viewer spawned from the view menu ([#1308](https://github.com/4DNucleome/PartSeg/pull/1308))
-- Add saving color maps in SOME tiffs ([#1312](https://github.com/4DNucleome/PartSeg/pull/1312))
+- Add saving color maps in OME tiffs ([#1312](https://github.com/4DNucleome/PartSeg/pull/1312))
 
 ### 🐛 Bug Fixes
 
