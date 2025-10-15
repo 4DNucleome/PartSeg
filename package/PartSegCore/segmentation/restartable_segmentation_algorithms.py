@@ -642,7 +642,7 @@ class OtsuSegment(RestartableAlgorithm):
             self.new_parameters.valley,
         )
         res = SimpleITK.GetArrayFromImage(res)
-        if self.mask:
+        if self.mask is not None:
             res[self.mask == 0] = 0
         self._sizes_array = np.bincount(res.flat)[1:]
         self.threshold_info = []
