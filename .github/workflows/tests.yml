@@ -16,6 +16,10 @@ concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_COLOR: 1
+  COLUMNS: 120
+
 jobs:
   actionlint:
     name: Action lint
