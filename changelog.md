@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.16.4 - 2025-10-15
+
+### 🚀 Features
+
+- Set units for viewer spawned from the view menu ([#1308](https://github.com/4DNucleome/PartSeg/pull/1308))
+- Add saving color maps in SOME tiffs ([#1312](https://github.com/4DNucleome/PartSeg/pull/1312))
+
+### 🐛 Bug Fixes
+
+- Fit ROI shape to image to solve problem of saving data in batch process ([#1288](https://github.com/4DNucleome/PartSeg/pull/1288))
+- If save dialog is used to select directory save it in history not parent ([#1289](https://github.com/4DNucleome/PartSeg/pull/1289))
+- Fix `--pre` test by stopping using the deprecated `sentry_sdk` method ([#1304](https://github.com/4DNucleome/PartSeg/pull/1304))
+- Fix saving in batch if the data is mask segmentation project ([#1309](https://github.com/4DNucleome/PartSeg/pull/1309))
+- Clean elements outside mask for multiple otsu method ([#1319](https://github.com/4DNucleome/PartSeg/pull/1319))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `pandas` ([#1285](https://github.com/4DNucleome/PartSeg/pull/1285))
+- [Automatic] Constraints upgrades: `ipykernel`, `numpy`, `scipy`, `sentry-sdk` ([#1287](https://github.com/4DNucleome/PartSeg/pull/1287))
+- [Automatic] Constraints upgrades: `imagecodecs`, `ipykernel`, `napari`, `sentry-sdk` ([#1290](https://github.com/4DNucleome/PartSeg/pull/1290))
+- [Automatic] Constraints upgrades: `napari`, `psygnal`, `sentry-sdk`, `superqt` ([#1295](https://github.com/4DNucleome/PartSeg/pull/1295))
+- [Automatic] Constraints upgrades: `pandas`, `requests` ([#1297](https://github.com/4DNucleome/PartSeg/pull/1297))
+- [Automatic] Constraints upgrades: `ipython`, `numpy`, `pydantic`, `qtconsole`, `scipy`, `sentry-sdk`, `tifffile`, `xlsxwriter` ([#1301](https://github.com/4DNucleome/PartSeg/pull/1301))
+- [Automatic] Constraints upgrades: `partsegcore-compiled-backend`, `psygnal`, `sentry-sdk` ([#1305](https://github.com/4DNucleome/PartSeg/pull/1305))
+- [Automatic] Constraints upgrades: `ipython`, `napari`, `pandas`, `pydantic`, `tifffile` ([#1311](https://github.com/4DNucleome/PartSeg/pull/1311))
+- [Automatic] Constraints upgrades: `pydantic`, `sentry-sdk` ([#1316](https://github.com/4DNucleome/PartSeg/pull/1316))
+
+### ⚙️ Miscellaneous Tasks
+
+- [pre-commit.ci] pre-commit autoupdate ([#1286](https://github.com/4DNucleome/PartSeg/pull/1286))
+- [pre-commit.ci] pre-commit autoupdate ([#1291](https://github.com/4DNucleome/PartSeg/pull/1291))
+- [pre-commit.ci] pre-commit autoupdate ([#1296](https://github.com/4DNucleome/PartSeg/pull/1296))
+- [pre-commit.ci] pre-commit autoupdate ([#1298](https://github.com/4DNucleome/PartSeg/pull/1298))
+- Add more wait on coderabbit review ([#1300](https://github.com/4DNucleome/PartSeg/pull/1300))
+- Use prek for initial check of code format ([#1299](https://github.com/4DNucleome/PartSeg/pull/1299))
+- [pre-commit.ci] pre-commit autoupdate ([#1302](https://github.com/4DNucleome/PartSeg/pull/1302))
+- Use most recent macOS images on GitHub Actions ([#1310](https://github.com/4DNucleome/PartSeg/pull/1310))
+- [pre-commit.ci] pre-commit autoupdate ([#1306](https://github.com/4DNucleome/PartSeg/pull/1306))
+- [pre-commit.ci] pre-commit autoupdate ([#1313](https://github.com/4DNucleome/PartSeg/pull/1313))
+- Add cooldown of dependabot PR ([#1317](https://github.com/4DNucleome/PartSeg/pull/1317))
+- Update licensing metadata to follow modern standards ([#1314](https://github.com/4DNucleome/PartSeg/pull/1314))
+- Make test log more readable by using 120 columns and colors ([#1320](https://github.com/4DNucleome/PartSeg/pull/1320))
+- [pre-commit.ci] pre-commit autoupdate ([#1318](https://github.com/4DNucleome/PartSeg/pull/1318))
+
+### 🛡️ Security
+
+- *(deps)* Bump actions/download-artifact from 4 to 5 in the github-actions group ([#1292](https://github.com/4DNucleome/PartSeg/pull/1292))
+- *(deps)* Bump pyvista/setup-headless-display-action from 3 to 4 ([#1294](https://github.com/4DNucleome/PartSeg/pull/1294))
+- *(deps)* Bump actions/checkout from 4 to 5 in the github-actions group ([#1293](https://github.com/4DNucleome/PartSeg/pull/1293))
+- *(deps)* Bump actions/setup-python from 5 to 6 in the github-actions group ([#1303](https://github.com/4DNucleome/PartSeg/pull/1303))
+
 ## 0.16.3 - 2025-07-10
 
 ### 🐛 Bug Fixes
