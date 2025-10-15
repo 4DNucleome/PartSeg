@@ -76,6 +76,7 @@ class ImageWriter(BaseImageWriter):
         metadata["Channel"] = {
             "Name": image.channel_names,
             "axes": "TZYXC",
+            "Color": image.get_ome_colors(),
         }
         cls._save(data, save_path, metadata, compression)
 

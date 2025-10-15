@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import sys
 import typing
@@ -39,13 +40,27 @@ class ChannelInfo:
 
 @dataclass(**ch_par)
 class ChannelInfoFull:
+    """Full channel information used in :py:class:`.Image`"""
+
     name: str
     color_map: str | np.ndarray
     contrast_limits: tuple[float, float]
 
     def __post_init__(self):
+        """Normalize color_map to numpy array if it is not string."""
         if not isinstance(self.color_map, (str, np.ndarray)):
-            self.color_map = np.array(self.color_map)
+            self.color_map = np.array(self.color_map, dtype=np.uint8)
+        if isinstance(self.color_map, np.ndarray):
+            if self.color_map.dtype != np.uint8:
+                message = f"Colormap as array need to be uint8, not {self.color_map.dtype}"
+                raise ValueError(message)
+            if self.color_map.ndim in {1, 2}:
+                if self.color_map.shape[0] not in {3, 4}:
+                    message = f"Color map need to have 3 or 4 elements (RGB or RGBA), not {self.color_map.shape}"
+                    raise ValueError(message)
+            else:
+                message = f"Colormap as sequence need to be 1d or 2d array, not {self.color_map.shape}"
+                raise ValueError(message)
 
 
 def minimal_dtype(val: int):
@@ -896,7 +911,12 @@ class Image:
             axes_order=self.axis_order,
         )
 
-    def get_imagej_colors(self):
+    def get_imagej_colors(self) -> list[np.ndarray[tuple[typing.Literal[3], typing.Literal[256]], np.dtype[np.uint8]]]:
+        """Get colors in format used by imagej
+
+        :return: list of 3x256 arrays with RGB values
+        :rtype: list of numpy.ndarray
+        """
         res = []
         for color in self.default_coloring:
 
@@ -908,17 +928,43 @@ class Image:
                 res.append(np.array([np.linspace(0, x, num=256) for x in color_array]).astype(np.uint8))
             elif color.ndim == 1:
                 res.append(np.array([np.linspace(0, x, num=256) for x in color]).astype(np.uint8))
-            else:
-                if color.shape[1] != 256:
-                    res.append(
-                        np.array(
-                            [
-                                np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
-                                for x in color
-                            ]
-                        )
+            elif color.shape[1] != 256:
+                res.append(
+                    np.array(
+                        [
+                            np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
+                            for x in color
+                        ]
                     )
-                res.append(color)
+                )
+            else:
+                res.append(color.astype(np.uint8))
+        return res
+
+    def get_ome_colors(self) -> list[int]:
+        """The ome stores colors as single integer encoding RGB value
+
+        :returns: list of integers representing colors
+        """
+
+        res = []
+        default_colors = ["red", "blue", "green", "yellow", "magenta", "cyan"]
+        for i, color in enumerate(self.default_coloring):
+            if isinstance(color, str):
+                if color.startswith("#"):
+                    color_array = _hex_to_rgb(color)
+                else:
+                    color_array = _name_to_rgb(color)
+                res.append(_rgb_to_signed_int(color_array))
+            elif color.ndim == 1:
+                # treat as RGB
+                res.append(_rgb_to_signed_int(tuple(color)[:3]))
+            else:
+                logging.warning(
+                    "Do not support custom colormap in ome colors. Use %s", default_colors[i % len(default_colors)]
+                )
+                color_array = _name_to_rgb(default_colors[i % len(default_colors)])
+                res.append(_rgb_to_signed_int(color_array))
         return res
 
     def get_colors(self) -> list[str | list[int]]:
@@ -999,6 +1045,12 @@ def _name_to_rgb(name: str) -> tuple[int, int, int]:
     if name not in _NAMED_COLORS:
         raise ValueError(f"Unknown color name: {name}")
     return _hex_to_rgb(_NAMED_COLORS[name])
+
+
+def _rgb_to_signed_int(rgb: tuple[int, int, int]) -> int:
+    """Convert an RGB tuple to a signed integer representation."""
+    r, g, b = (np.int32(x) for x in rgb[:3])
+    return np.int32((r << 24) | (g << 16) | (b << 8) | np.int32(255))
 
 
 try:
