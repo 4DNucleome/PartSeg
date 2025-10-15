@@ -29,7 +29,7 @@ def convert_mask(file_path: Path, radius: float, suffix: str, only_selected: boo
         roi_ = roi_ * mask
 
         unique_values = np.unique(roi_)
-        mapping = np.zeros(unique_values[-1] + 1, dtype=roi_.dtype)
+        mapping = np.zeros(np.max(unique_values) + 1, dtype=roi_.dtype)
         for new_val, old_val in enumerate(unique_values):
             mapping[old_val] = new_val
         roi_ = mapping[roi_]
@@ -38,7 +38,7 @@ def convert_mask(file_path: Path, radius: float, suffix: str, only_selected: boo
 
     bin_roi = to_binary_image(roi_)
     sprawl_area = dilate(bin_roi, [radius, radius], True)
-    components_num = np.max(project.roi_info.roi)
+    components_num = np.max(roi_)
     neigh, dist = calculate_distances_array(project.image.spacing, get_neigh(True))
     roi = project.image.fit_array_to_image(
         euclidean_sprawl(
