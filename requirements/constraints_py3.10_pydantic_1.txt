@@ -12,7 +12,7 @@ appdirs==1.4.4
     #   napari
 asttokens==3.0.0
     # via stack-data
-attrs==25.3.0
+attrs==25.4.0
     # via
     #   jsonschema
     #   referencing
@@ -77,7 +77,7 @@ heapdict==1.0.1
     # via cachey
 hsluv==5.0.4
     # via vispy
-idna==3.10
+idna==3.11
     # via requests
 imagecodecs==2025.3.30
     # via partseg (pyproject.toml)
@@ -243,7 +243,7 @@ pillow==11.3.0
     #   scikit-image
 pint==0.24.4
     # via napari
-platformdirs==4.4.0
+platformdirs==4.5.0
     # via
     #   jupyter-core
     #   npe2
@@ -378,7 +378,7 @@ requests==2.32.5
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.1.0
+rich==14.2.0
     # via
     #   npe2
     #   typer
@@ -395,7 +395,7 @@ scipy==1.15.3
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.39.0
+sentry-sdk==2.41.0
     # via partseg (pyproject.toml)
 setuptools==80.9.0
     # via
@@ -448,7 +448,7 @@ tifffile==2025.5.10
     #   napari
     #   oiffile
     #   scikit-image
-tomli==2.2.1
+tomli==2.3.0
     # via
     #   build
     #   npe2
