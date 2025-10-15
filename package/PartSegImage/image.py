@@ -958,7 +958,7 @@ class Image:
                 res.append(_rgb_to_signed_int(color_array))
             elif color.ndim == 1:
                 # treat as RGB
-                res.append(_rgb_to_signed_int(tuple(color)))
+                res.append(_rgb_to_signed_int(tuple(color)[:3]))
             else:
                 logging.warning(
                     "Do not support custom colormap in ome colors. Use %s", default_colors[i % len(default_colors)]
