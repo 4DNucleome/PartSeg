@@ -29,7 +29,7 @@ certifi==2025.10.5
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.4.3
+charset-normalizer==3.4.4
     # via requests
 click==8.3.0
     # via
@@ -41,7 +41,7 @@ comm==0.2.3
     # via ipykernel
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
-dask==2025.9.1
+dask==2025.10.0
     # via napari
 debugpy==1.8.17
     # via ipykernel
@@ -69,7 +69,7 @@ freetype-py==2.5.1
     # via vispy
 fsspec==2025.9.0
     # via dask
-h5py==3.14.0
+h5py==3.15.1
     # via partseg (pyproject.toml)
 heapdict==1.0.1
     # via cachey
@@ -89,7 +89,7 @@ imagesize==1.4.1
     # via sphinx
 in-n-out==0.2.1
     # via app-model
-ipykernel==6.30.1
+ipykernel==7.0.1
     # via
     #   partseg (pyproject.toml)
     #   napari-console
@@ -115,7 +115,7 @@ jupyter-client==8.6.3
     # via
     #   ipykernel
     #   qtconsole
-jupyter-core==5.8.1
+jupyter-core==5.9.1
     # via
     #   ipykernel
     #   jupyter-client
@@ -166,7 +166,7 @@ nme==0.1.8
     # via partseg (pyproject.toml)
 npe2==0.7.9
     # via napari
-numpy==2.3.3
+numpy==2.3.4
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -218,7 +218,7 @@ partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==11.3.0
+pillow==12.0.0
     # via
     #   imageio
     #   napari
@@ -235,11 +235,11 @@ pooch==1.8.2
     # via scikit-image
 prompt-toolkit==3.0.52
     # via ipython
-psutil==7.1.0
+psutil==7.1.1
     # via
     #   ipykernel
     #   napari
-psygnal==0.14.2
+psygnal==0.15.0
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -252,7 +252,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.2.1
     # via superqt
-pydantic==2.12.0
+pydantic==2.12.3
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -263,7 +263,7 @@ pydantic==2.12.0
     #   pydantic-settings
 pydantic-compat==0.1.2
     # via app-model
-pydantic-core==2.41.1
+pydantic-core==2.41.4
     # via pydantic
 pydantic-settings==2.11.0
     # via autodoc-pydantic
@@ -321,7 +321,7 @@ qtpy==2.4.3
     #   qtawesome
     #   qtconsole
     #   superqt
-referencing==0.36.2
+referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -348,7 +348,7 @@ scipy==1.16.2
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.41.0
+sentry-sdk==2.42.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -367,7 +367,7 @@ sphinx==8.2.3
     #   numpydoc
     #   sphinx-autodoc-typehints
     #   sphinx-qt-documentation
-sphinx-autodoc-typehints==3.5.1
+sphinx-autodoc-typehints==3.5.2
     # via partseg (pyproject.toml)
 sphinx-qt-documentation==0.4.1
     # via partseg (pyproject.toml)
@@ -392,7 +392,7 @@ superqt==0.7.6
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tifffile==2025.10.4
+tifffile==2025.10.16
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -401,7 +401,7 @@ tifffile==2025.10.4
     #   scikit-image
 tomli-w==1.2.0
     # via npe2
-toolz==1.0.0
+toolz==1.1.0
     # via
     #   dask
     #   napari
@@ -455,7 +455,7 @@ vispy==0.15.2
     #   napari-svg
 wcwidth==0.2.14
     # via prompt-toolkit
-wrapt==1.17.3
+wrapt==2.0.0
     # via napari
 xlrd==2.0.2
     # via partseg (pyproject.toml)
