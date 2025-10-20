@@ -234,6 +234,7 @@ class Image:
         data: _IMAGE_DATA,
         *,
         spacing: Spacing,
+        time_increment: float = 1.0,
         file_path=None,
         mask: None | np.ndarray = None,
         channel_info: list[ChannelInfo | ChannelInfoFull] | None = None,
@@ -256,6 +257,7 @@ class Image:
         self._channel_arrays = self._split_data_on_channels(data, axes_order)
         self._image_spacing = (1.0,) * (3 - len(spacing)) + spacing
         self._image_spacing = tuple(el if el > 0 else 10**-6 for el in self._image_spacing)
+        self._time_increment = time_increment
 
         self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
         self.name = name
@@ -773,6 +775,18 @@ class Image:
     def spacing(self) -> Spacing:
         """image spacing"""
         return tuple(self._image_spacing[1:]) if self.is_2d else self._image_spacing
+
+    @property
+    def time_increment(self) -> float:
+        """time spacing in seconds"""
+        return self._time_increment
+
+    @time_increment.setter
+    def time_increment(self, value: float):
+        """set time spacing in seconds"""
+        if value <= 0:
+            raise ValueError("Time spacing need to be positive")
+        self._time_increment = value
 
     def normalized_scaling(self, factor=DEFAULT_SCALE_FACTOR) -> Spacing:
         if self.is_2d:
