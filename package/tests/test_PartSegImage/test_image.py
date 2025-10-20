@@ -465,6 +465,18 @@ class TestImageBase:
         image = self.image_class(data, spacing=(1, 1), axes_order="XY")
         assert np.all(image.get_data() == data)
 
+    def test_set_time_increment(self):
+        if "T" not in self.image_class.axis_order:
+            pytest.skip("No time axis")
+        data = np.zeros((1, 10, 20, 30, 3), np.uint8)
+        image = self.image_class(data, spacing=(1, 1, 1), file_path="", axes_order="TZYXC")
+        assert image.time_increment == 1
+        image.time_increment = 2
+        assert image.time_increment == 2
+        with pytest.raises(ValueError, match="Time increment must be positive"):
+            image.time_increment = -1
+        assert image.time_increment == 2
+
 
 class ChangeChannelPosImage(Image):
     axis_order = "TZCYX"

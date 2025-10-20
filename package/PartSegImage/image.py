@@ -257,7 +257,8 @@ class Image:
         self._channel_arrays = self._split_data_on_channels(data, axes_order)
         self._image_spacing = (1.0,) * (3 - len(spacing)) + spacing
         self._image_spacing = tuple(el if el > 0 else 10**-6 for el in self._image_spacing)
-        self._time_increment = time_increment
+        self._time_increment = 1.0
+        self.time_increment = time_increment
 
         self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
         self.name = name
@@ -788,7 +789,7 @@ class Image:
     def time_increment(self, value: float):
         """set time spacing in seconds"""
         if value <= 0:
-            raise ValueError("Time spacing need to be positive")
+            raise ValueError("Time increment must be positive")
         self._time_increment = value
 
     def normalized_scaling(self, factor=DEFAULT_SCALE_FACTOR) -> Spacing:
