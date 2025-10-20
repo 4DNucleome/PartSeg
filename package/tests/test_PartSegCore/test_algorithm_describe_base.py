@@ -566,7 +566,6 @@ class TestROIExtractionProfile:
         assert prof.dict()["values"]["threshold"]["values"]["threshold"] == 8000
 
     def test_pretty_print(self):
-
         prof1 = ROIExtractionProfile(name="aaa", algorithm="Lower threshold", values={})
         assert prof1.pretty_print(AnalysisAlgorithmSelection).startswith("ROI extraction profile name:")
         prof1 = ROIExtractionProfile(name="", algorithm="Lower threshold", values={})

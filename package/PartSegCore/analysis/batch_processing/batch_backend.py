@@ -867,19 +867,21 @@ class FileData:
         description = calculation_plan.pretty_print().split("\n")
         for i in range(math.ceil(len(description) / MAX_ROWS_IN_EXCEL_CELL)):
             to_write = description[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
-            sheet.write(f"A{i+2}", "\n".join(to_write))
+            sheet.write(f"A{i + 2}", "\n".join(to_write))
             sheet.set_row(i + 1, len(to_write) * 11 + 10)
 
         sheet.set_column(0, 0, max(map(len, description)))
         sheet.set_column(1, 1, 15)
         calculation_plan_str = json.dumps(calculation_plan, cls=PartSegEncoder)
         for i in range(math.ceil(len(calculation_plan_str) / MAX_CHAR_IN_EXCEL_CELL)):
-            sheet.write(f"B{i+2}", calculation_plan_str[i * MAX_CHAR_IN_EXCEL_CELL : (i + 1) * MAX_CHAR_IN_EXCEL_CELL])
+            sheet.write(
+                f"B{i + 2}", calculation_plan_str[i * MAX_CHAR_IN_EXCEL_CELL : (i + 1) * MAX_CHAR_IN_EXCEL_CELL]
+            )
 
         calculation_plan_pretty = json.dumps(calculation_plan, cls=PartSegEncoder, indent=2).split("\n")
         for i in range(math.ceil(len(calculation_plan_pretty) / MAX_ROWS_IN_EXCEL_CELL)):
             to_write = calculation_plan_pretty[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
-            sheet.write(f"C{i+2}", "\n".join(to_write))
+            sheet.write(f"C{i + 2}", "\n".join(to_write))
             sheet.set_row(i + 1, len(to_write) * 11 + 10)
 
         sheet.set_column(2, 2, max(map(len, calculation_plan_pretty)))

@@ -286,7 +286,7 @@ class Image:
 
         res = [
             ChannelInfoFull(
-                name=ch_inf.name or f"channel {i+1}",
+                name=ch_inf.name or f"channel {i + 1}",
                 color_map=(
                     ch_inf.color_map if ch_inf.color_map is not None else next(default_colors)  # skipcq: PTC-W0063
                 ),
@@ -300,7 +300,7 @@ class Image:
         ]
         res.extend(
             ChannelInfoFull(
-                name=f"channel {i+1}",
+                name=f"channel {i + 1}",
                 color_map=next(default_colors),  # skipcq: PTC-W0063
                 contrast_limits=(np.min(arr), np.max(arr)),
             )
@@ -936,7 +936,6 @@ class Image:
         """
         res = []
         for color in self.default_coloring:
-
             if isinstance(color, str):
                 if color.startswith("#"):
                     color_array = _hex_to_rgb(color)

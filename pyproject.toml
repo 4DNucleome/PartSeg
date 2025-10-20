@@ -260,34 +260,24 @@ exclude_also = [
     "if typing.TYPE_CHECKING:",
 ]
 
-[tool.black]
-line-length = 120
-target-version = ['py39']
-include = '\.pyi?$'
-exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-  | foo.py           # also separately exclude a file named foo.py in
-                     # the root of the project
-  | package/PartSeg/version.py
-)
-'''
 
 [tool.ruff]
 line-length = 120
-exclude = ["examples/call_simple_threshold.py"]
+exclude = [
+    "examples/call_simple_threshold.py",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "foo.py",
+    "package/PartSeg/version.py",
+]
 target-version = "py39"
 fix = true
 

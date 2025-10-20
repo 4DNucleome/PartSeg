@@ -70,7 +70,7 @@ def _pretty_print(data, indent=2) -> str:
     if isinstance(data, typing.Mapping):
         res = "\n"
         for k, v in data.items():
-            res += f"{' ' * indent}{k}: {_pretty_print(v, indent+2)}\n"
+            res += f"{' ' * indent}{k}: {_pretty_print(v, indent + 2)}\n"
         return res[:-1]
     return str(data)
 
