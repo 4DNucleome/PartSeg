@@ -658,9 +658,11 @@ class TiffImageReader(BaseImageReaderBuffer):
                 for x in ["Z", "Y", "X"]
             ]
         with suppress(KeyError):
-            self.time_increment = (
+            time_increment = (
                 meta_data["Pixels"]["TimeIncrement"] * name_to_scalar[meta_data["Pixels"]["TimeIncrementUnit"]]
             )
+            if time_increment > 0:
+                self.time_increment = time_increment
         with suppress(KeyError):
             self.shift = [
                 meta_data["Pixels"]["Plane"][0][f"Position{x}"]
