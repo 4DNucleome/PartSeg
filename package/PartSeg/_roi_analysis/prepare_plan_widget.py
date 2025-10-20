@@ -867,7 +867,7 @@ class CreatePlan(QWidget):
         conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
         if len(conflict_mask) > 0:
             logging.info("Mask in use")
-            show_warning("In use", f'Masks {", ".join(conflict_mask)} are used in other places')
+            show_warning("In use", f"Masks {', '.join(conflict_mask)} are used in other places")
 
             return
         self.mask_set -= used_mask

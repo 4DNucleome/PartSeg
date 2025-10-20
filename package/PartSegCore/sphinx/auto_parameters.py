@@ -50,7 +50,7 @@ class RegisterDocumenter(ModuleLevelDocumenter):
         k = 0
         if self.object.methods:
             self.add_line(
-                f'Need methods: {", ".join(f"``{x}``" for x in self.object.methods)}',
+                f"Need methods: {', '.join(f'``{x}``' for x in self.object.methods)}",
                 source,
                 k,
             )
@@ -59,7 +59,7 @@ class RegisterDocumenter(ModuleLevelDocumenter):
             k += 2
         if self.object.class_methods:
             self.add_line(
-                f'Need class methods: {", ".join(f"``{x}``" for x in self.object.class_methods)}',
+                f"Need class methods: {', '.join(f'``{x}``' for x in self.object.class_methods)}",
                 source,
                 k,
             )

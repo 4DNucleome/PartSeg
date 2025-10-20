@@ -1050,7 +1050,7 @@ def _print_dict(dkt: MutableMapping, indent="") -> str:
     res = []
     for k, v in dkt.items():
         if isinstance(v, MutableMapping):
-            res.append(f'{indent}{k}:\n{_print_dict(v, f"{indent}  ")}')
+            res.append(f"{indent}{k}:\n{_print_dict(v, f'{indent}  ')}")
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)
