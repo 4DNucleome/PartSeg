@@ -158,3 +158,13 @@ def test_save_mask_imagej(tmp_path):
 
     read_mask = TiffImageReader.read_image(tmp_path / "mask.tif")
     assert np.all(np.isclose(read_mask.spacing, image.spacing))
+
+
+@pytest.mark.parametrize("save_method", [IMAGEJImageWriter.save, ImageWriter.save], ids=["ImageJ TIFF", "OME TIFF"])
+def test_save_time_meta(tmp_path, save_method):
+    data = np.zeros((5, 10, 20, 20), dtype=np.uint8)
+    image = Image(data, spacing=(0.4, 0.1, 0.1), axes_order="TZYX", time_increment=2.0)
+    save_method(image, tmp_path / "time_image.tif")
+    read_image = TiffImageReader.read_image(tmp_path / "time_image.tif")
+    assert np.all(np.isclose(image.spacing, read_image.spacing))
+    assert read_image.time_increment == 2.0

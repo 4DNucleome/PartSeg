@@ -126,6 +126,7 @@ class BaseImageReader:
     def __init__(self, callback_function: typing.Optional[typing.Callable[[str, int], typing.Any]] = None) -> None:
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
+        self.time_increment = 1.0
         self.channel_names: list[str] = []
         self.colors: list[typing.Optional[typing.Any]] = []
         self.ranges: list[tuple[float, float]] = []
@@ -535,6 +536,7 @@ class TiffImageReader(BaseImageReaderBuffer):
             shift=self.shift,
             name=self.name,
             metadata_dict=self.metadata,
+            time_increment=self.time_increment,
         )
 
     @staticmethod
@@ -629,6 +631,8 @@ class TiffImageReader(BaseImageReaderBuffer):
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
+        if "finterval" in image_file.imagej_metadata:
+            self.time_increment = image_file.imagej_metadata["finterval"]
         self.metadata = image_file.imagej_metadata
 
     def _read_ome_channel_information(self, meta_data):
@@ -652,6 +656,10 @@ class TiffImageReader(BaseImageReaderBuffer):
                 meta_data["Pixels"][f"PhysicalSize{x}"] * name_to_scalar[meta_data["Pixels"][f"PhysicalSize{x}Unit"]]
                 for x in ["Z", "Y", "X"]
             ]
+        with suppress(KeyError):
+            self.time_increment = (
+                meta_data["Pixels"]["TimeIncrement"] * name_to_scalar[meta_data["Pixels"]["TimeIncrementUnit"]]
+            )
         with suppress(KeyError):
             self.shift = [
                 meta_data["Pixels"]["Plane"][0][f"Position{x}"]
@@ -686,4 +694,28 @@ name_to_scalar = {
     "centimeter": 10**-2,
     "cm": 10**-2,
     "cal": 2.54 * 10**-2,
-}  #: dict with known names of scalar to scalar value. Some may be  missed
+    "Ys": 10**24,  # yottasecond
+    "Zs": 10**21,  # zettasecond
+    "Es": 10**18,  # exasecond
+    "Ps": 10**15,  # petasecond
+    "Ts": 10**12,  # terasecond
+    "Gs": 10**9,  # gigasecond
+    "Ms": 10**6,  # megasecond
+    "ks": 10**3,  # kilosecond
+    "hs": 10**2,  # hectosecond
+    "das": 10**1,  # decasecond
+    "s": 1,  # second
+    "ds": 10**-1,  # decisecond
+    "cs": 10**-2,  # centisecond
+    "ms": 10**-3,  # millisecond
+    "µs": 10**-6,  # microsecond
+    "ns": 10**-9,  # nanosecond
+    "ps": 10**-12,  # picosecond
+    "fs": 10**-15,  # femtosecond
+    "as": 10**-18,  # attosecond
+    "zs": 10**-21,  # zeptosecond
+    "ys": 10**-24,  # yoctosecond
+    "min": 60,  # minute
+    "h": 3600,  # hour
+    "d": 86400,  # day
+}  #: dict with known names of scalar to scalar value. Some may be missed
