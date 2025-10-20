@@ -545,7 +545,7 @@ class TestCalculationProcess:
         df = pd.read_excel(os.path.join(tmpdir, "test.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (8, 4)
         for i in range(8):
-            assert os.path.basename(df.name.units[i]) == f"stack1_component{i+1}.tif"
+            assert os.path.basename(df.name.units[i]) == f"stack1_component{i + 1}.tif"
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_long(self, tmpdir, data_test_dir, monkeypatch, calculation_plan_long):

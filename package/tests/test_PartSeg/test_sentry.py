@@ -155,7 +155,6 @@ def executor_fun(que: multiprocessing.Queue):
 
 
 def test_exception_pass(monkeypatch):
-
     done = [False]
 
     def check_event(envelope):

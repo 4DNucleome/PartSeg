@@ -1518,7 +1518,6 @@ def test_collapsable(qtbot):
 
 
 def test_multiple_files_tree_widget(qtbot, monkeypatch):
-
     def _monkey_qmenu(func):
         res = QMenu()
         monkeypatch.setattr(res, "exec_", partial(func, res))
@@ -1597,7 +1596,6 @@ def test_exception_hooks_other_exception():
 
 
 def test_update_dict():
-
     assert recursive_update({}, {}) == {}
     assert recursive_update(None, {}) == {}
     assert recursive_update(None, {"a": 1}) == {"a": 1}
@@ -1608,7 +1606,6 @@ def test_update_dict():
 
 
 def test_pretty_print():
-
     assert _pretty_print({"a": 1}) == "\n  a: 1"
     assert _pretty_print({"a": 1}, indent=0) == "\na: 1"
     assert _pretty_print({"a": {"a": 1}}) == "\n  a: \n    a: 1"
@@ -1650,7 +1647,6 @@ class TestBaseAlgorithmSettingsWidget:
         ],
     )
     def test_exception_occurred(self, monkeypatch, exc, expected, qtbot):
-
         called = False
 
         def _exec(self):
@@ -1663,7 +1659,6 @@ class TestBaseAlgorithmSettingsWidget:
         assert called
 
     def test_exception_occurred_other_exception(self, monkeypatch, qtbot):
-
         called = False
 
         def _exec(self):

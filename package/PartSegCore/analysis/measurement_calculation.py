@@ -1447,9 +1447,7 @@ class SplitOnPartVolume(MeasurementMethodBase):
     __argument_class__ = SplitOnPartParameters
 
     @staticmethod
-    def calculate_property(
-        part_selection, area_array, voxel_size, result_scalar, **kwargs
-    ):  # pylint: disable=arguments-differ
+    def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=arguments-differ
         masked = MaskDistanceSplit.split(voxel_size=voxel_size, **kwargs)
         mask = masked == part_selection
         return np.count_nonzero(mask * area_array) * pixel_volume(voxel_size, result_scalar)

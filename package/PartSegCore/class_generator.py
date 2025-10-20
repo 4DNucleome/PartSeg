@@ -308,8 +308,7 @@ class BaseMeta(type):
                 defaults_dict[field_name] = default_value
             elif defaults:
                 raise TypeError(
-                    "Non-default namedtuple field {field_name} cannot "
-                    "follow default field(s) {default_names}".format(
+                    "Non-default namedtuple field {field_name} cannot follow default field(s) {default_names}".format(
                         field_name=field_name, default_names=", ".join(defaults_dict.keys())
                     )
                 )

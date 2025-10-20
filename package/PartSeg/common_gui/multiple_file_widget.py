@@ -264,7 +264,7 @@ class MultipleFileWidget(QWidget):
             return
         normed_file_path = os.path.normpath(state.file_path)
         sub_dict = self.state_dict[normed_file_path]
-        name = f"state {self.state_dict_count[normed_file_path]+1}"
+        name = f"state {self.state_dict_count[normed_file_path] + 1}"
         if custom_name:
             name, ok = QInputDialog.getText(self, "Save name", "Save name:", text=name)
             if not ok:
