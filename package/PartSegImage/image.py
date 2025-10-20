@@ -502,6 +502,7 @@ class Image:
         self,
         data=None,
         image_spacing=None,
+        time_increment: float | None = None,
         file_path=None,
         mask=_DEF,
         default_coloring=None,
@@ -511,6 +512,7 @@ class Image:
         """Create copy of image with substitution of not None elements"""
         data = self._channel_arrays if data is None else data
         image_spacing = self._image_spacing if image_spacing is None else image_spacing
+        time_increment = self._time_increment if time_increment is None else time_increment
         file_path = self.file_path if file_path is None else file_path
         mask = self._mask_array if mask is _DEF else mask
         default_coloring = self.default_coloring if default_coloring is None else default_coloring
@@ -525,6 +527,7 @@ class Image:
         return self.__class__(
             data=data,
             spacing=image_spacing,
+            time_increment=time_increment,
             file_path=file_path,
             mask=mask,
             axes_order=self.axis_order,
