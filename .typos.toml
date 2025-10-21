@@ -1,0 +1,6 @@
+[default.extend-words]
+OME = "OME"
+OME-TIFF = "OME-TIFF"
+OME-XML = "OME-XML"
+OMERO = "OMERO"
+Bio-Formats = "Bio-Formats"

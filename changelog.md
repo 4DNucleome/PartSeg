@@ -7,8 +7,8 @@ All notable changes to this project will be documented in this file.
 ### 🚀 Features
 
 - Set units for viewer spawned from the view menu ([#1308](https://github.com/4DNucleome/PartSeg/pull/1308))
-- Add saving color maps in SOME tiffs ([#1312](https://github.com/4DNucleome/PartSeg/pull/1312))
-- Add saving and reading of time scale in ImageJ and SOME TIFF files ([#1323](https://github.com/4DNucleome/PartSeg/pull/1323))
+- Add saving color maps in OME tiffs ([#1312](https://github.com/4DNucleome/PartSeg/pull/1312))
+- Add saving and reading of time scale in ImageJ and OME TIFF files ([#1323](https://github.com/4DNucleome/PartSeg/pull/1323))
 
 ### 🐛 Bug Fixes
 
