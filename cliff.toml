@@ -50,10 +50,10 @@ split_commits = false
 commit_preprocessors = [
   # Replace issue numbers
   { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/pull/${2}))"},
-  { pattern = '\[([\w\.-]+)\]', replace = "\\[${1}\\]"},
+#  { pattern = '\[([\w\.-]+)\]', replace = "\\[${1}\\]"},
   # Check spelling of the commit with https://github.com/crate-ci/typos
   # If the spelling is incorrect, it will be automatically fixed.
-  { pattern = '.*', replace_command = 'typos --write-changes -' },
+  { pattern = '.*', replace_command = 'typos --write-changes --config .typos.toml -' },
 ]
 # regex for parsing and grouping commits
 commit_parsers = [

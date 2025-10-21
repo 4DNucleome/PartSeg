@@ -2,12 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.16.4 - 2025-10-15
+## 0.16.4 - 2025-10-21
 
 ### 🚀 Features
 
 - Set units for viewer spawned from the view menu ([#1308](https://github.com/4DNucleome/PartSeg/pull/1308))
 - Add saving color maps in OME tiffs ([#1312](https://github.com/4DNucleome/PartSeg/pull/1312))
+- Add saving and reading of time scale in ImageJ and OME TIFF files ([#1323](https://github.com/4DNucleome/PartSeg/pull/1323))
 
 ### 🐛 Bug Fixes
 
@@ -16,6 +17,10 @@ All notable changes to this project will be documented in this file.
 - Fix `--pre` test by stopping using the deprecated `sentry_sdk` method ([#1304](https://github.com/4DNucleome/PartSeg/pull/1304))
 - Fix saving in batch if the data is mask segmentation project ([#1309](https://github.com/4DNucleome/PartSeg/pull/1309))
 - Clean elements outside mask for multiple otsu method ([#1319](https://github.com/4DNucleome/PartSeg/pull/1319))
+
+### 📚 Documentation
+
+- Update changelog for 0.16.4
 
 ### 🧪 Testing
 
@@ -28,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - [Automatic] Constraints upgrades: `partsegcore-compiled-backend`, `psygnal`, `sentry-sdk` ([#1305](https://github.com/4DNucleome/PartSeg/pull/1305))
 - [Automatic] Constraints upgrades: `ipython`, `napari`, `pandas`, `pydantic`, `tifffile` ([#1311](https://github.com/4DNucleome/PartSeg/pull/1311))
 - [Automatic] Constraints upgrades: `pydantic`, `sentry-sdk` ([#1316](https://github.com/4DNucleome/PartSeg/pull/1316))
+- [Automatic] Constraints upgrades: `h5py`, `ipykernel`, `numpy`, `psygnal`, `pydantic`, `sentry-sdk`, `tifffile` ([#1322](https://github.com/4DNucleome/PartSeg/pull/1322))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -45,6 +51,8 @@ All notable changes to this project will be documented in this file.
 - Update licensing metadata to follow modern standards ([#1314](https://github.com/4DNucleome/PartSeg/pull/1314))
 - Make test log more readable by using 120 columns and colors ([#1320](https://github.com/4DNucleome/PartSeg/pull/1320))
 - [pre-commit.ci] pre-commit autoupdate ([#1318](https://github.com/4DNucleome/PartSeg/pull/1318))
+- Add changelog for 0.16.4 ([#1321](https://github.com/4DNucleome/PartSeg/pull/1321))
+- Use ruff formatter in place of black ([#1324](https://github.com/4DNucleome/PartSeg/pull/1324))
 
 ### 🛡️ Security
 
@@ -52,6 +60,7 @@ All notable changes to this project will be documented in this file.
 - *(deps)* Bump pyvista/setup-headless-display-action from 3 to 4 ([#1294](https://github.com/4DNucleome/PartSeg/pull/1294))
 - *(deps)* Bump actions/checkout from 4 to 5 in the github-actions group ([#1293](https://github.com/4DNucleome/PartSeg/pull/1293))
 - *(deps)* Bump actions/setup-python from 5 to 6 in the github-actions group ([#1303](https://github.com/4DNucleome/PartSeg/pull/1303))
+- *(deps)* Bump github/codeql-action from 3 to 4 ([#1315](https://github.com/4DNucleome/PartSeg/pull/1315))
 
 ## 0.16.3 - 2025-07-10
 

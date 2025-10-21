@@ -46,3 +46,4 @@ exclude cliff.toml
 exclude runtime.txt
 exclude .sourcery.yaml
 exclude survey_url.txt
+exclude .typos.toml
