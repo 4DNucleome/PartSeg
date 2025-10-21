@@ -632,7 +632,7 @@ class TiffImageReader(BaseImageReaderBuffer):
             ranges = image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
         if "finterval" in image_file.imagej_metadata:
-            with suppress(ValueError):
+            with suppress(ValueError, TypeError):
                 self.time_increment = float(image_file.imagej_metadata["finterval"])
         self.metadata = image_file.imagej_metadata
 
