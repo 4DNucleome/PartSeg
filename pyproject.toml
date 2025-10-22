@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 write_to = "package/PartSeg/version.py"
-fallback_version = "0.16.4dev0"
+fallback_version = "0.16.5dev0"
 
 [project]
 name = "PartSeg"
