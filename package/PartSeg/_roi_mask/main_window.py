@@ -16,6 +16,7 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QSpinBox,
     QTabWidget,
@@ -527,6 +528,12 @@ class AlgorithmOptions(QWidget):
         self.choose_components.check_change_signal.connect(image_view.refresh_selected)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
         self.choose_components.mouse_enter.connect(image_view.component_mark)
+        self.choose_components_wrapper = QScrollArea()
+        self.choose_components_wrapper.setWidget(self.choose_components)
+        self.choose_components_wrapper.setWidgetResizable(True)
+        self.choose_components_wrapper.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.choose_components_wrapper.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
         self.chosen_list = []
         self.progress_bar2 = QProgressBar()
         self.progress_bar2.setHidden(True)
@@ -567,7 +574,7 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.progress_info_lab)
         main_layout.addWidget(self.algorithm_choose_widget, 1)
-        main_layout.addWidget(self.choose_components)
+        main_layout.addWidget(self.choose_components_wrapper)
         down_layout = QHBoxLayout()
         down_layout.addWidget(self.keep_chosen_components_chk)
         down_layout.addWidget(self.show_parameters)
