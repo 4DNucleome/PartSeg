@@ -12,7 +12,7 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.0
+    rev: v0.14.1
     hooks:
       - id: ruff-check
       - id: ruff-format
@@ -21,14 +21,13 @@ repos:
     hooks:
     -   id: rst-backticks
 -   repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.22  # Use the ref you want to point at
+    rev: 1.0.0  # Use the ref you want to point at
     hooks:
     - id: mdformat
       exclude: TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
       args: ["--number"]
       additional_dependencies:
           - mdformat-gfm
-          - mdformat-frontmatter
           - mdformat-footnote
           - mdformat-gfm-alerts
           - mdformat-ruff
