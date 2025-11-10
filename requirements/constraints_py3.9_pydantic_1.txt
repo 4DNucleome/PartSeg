@@ -33,7 +33,7 @@ click==8.1.8
     # via
     #   dask
     #   typer
-cloudpickle==3.1.1
+cloudpickle==3.1.2
     # via dask
 comm==0.2.3
     # via ipykernel
@@ -69,7 +69,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2025.9.0
+fsspec==2025.10.0
     # via dask
 h5py==3.14.0
     # via partseg (pyproject.toml)
@@ -81,7 +81,7 @@ idna==3.11
     # via requests
 imagecodecs==2024.12.30
     # via partseg (pyproject.toml)
-imageio==2.37.0
+imageio==2.37.2
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
@@ -102,7 +102,7 @@ in-n-out==0.2.1
     # via app-model
 iniconfig==2.1.0
     # via pytest
-ipykernel==6.30.1
+ipykernel==6.31.0
     # via
     #   partseg (pyproject.toml)
     #   napari-console
@@ -159,7 +159,7 @@ markdown-it-py==3.0.0
     # via rich
 markupsafe==3.0.3
     # via jinja2
-matplotlib-inline==0.1.7
+matplotlib-inline==0.2.1
     # via
     #   ipykernel
     #   ipython
@@ -261,7 +261,7 @@ pooch==1.8.2
     # via scikit-image
 prompt-toolkit==3.0.52
     # via ipython
-psutil==7.1.1
+psutil==7.1.3
     # via
     #   ipykernel
     #   napari
@@ -307,11 +307,11 @@ pyopengl==3.1.10
     # via napari
 pyproject-hooks==1.2.0
     # via build
-pyqt6==6.9.1
+pyqt6==6.10.0
     # via
     #   partseg (pyproject.toml)
     #   napari
-pyqt6-qt6==6.9.2
+pyqt6-qt6==6.10.0
     # via pyqt6
 pyqt6-sip==13.10.2
     # via pyqt6
@@ -399,7 +399,7 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.42.0
+sentry-sdk==2.43.0
     # via partseg (pyproject.toml)
 setuptools==80.9.0
     # via
@@ -472,7 +472,7 @@ tornado==6.5.2
     #   jupyter-client
 tqdm==4.67.1
     # via napari
-traceback-with-variables==2.2.0
+traceback-with-variables==2.2.1
     # via partseg (pyproject.toml)
 traitlets==5.14.3
     # via
@@ -482,7 +482,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.19.2
+typer==0.20.0
     # via npe2
 typing-extensions==4.15.0
     # via
@@ -511,7 +511,7 @@ vispy==0.14.3
     #   napari-svg
 wcwidth==0.2.14
     # via prompt-toolkit
-wrapt==2.0.0
+wrapt==2.0.1
     # via napari
 xlrd==2.0.2
     # via partseg (pyproject.toml)
