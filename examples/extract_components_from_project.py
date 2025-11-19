@@ -25,7 +25,7 @@ def main():
     files = list(chain.from_iterable(glob(f) for f in args.project_files))
     for file_path in files:
         print(f"Processing {file_path}")
-        cut_components(Path(file_path), args.no_mask)
+        cut_components(Path(file_path))
 
 
 if __name__ == "__main__":
