@@ -275,7 +275,7 @@ class BaseImageReaderBuffer(BaseImageReader):
         read image file with optional mask file
 
         :param image_path: path or opened file contains image
-        :param mask_path:
+        :param mask_path: path or opened file contains mask
         :param callback_function: function for provide information about progress in reading file (for progressbar)
         :param default_spacing: used if file do not contains information about spacing
             (or metadata format is not supported)
