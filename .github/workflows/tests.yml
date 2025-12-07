@@ -40,7 +40,7 @@ jobs:
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test_data
           path: test_data
@@ -168,7 +168,7 @@ jobs:
           pip install codecov
 
       - name: Download coverage data
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           pattern: cov-reports-*
           path: coverage
@@ -181,7 +181,7 @@ jobs:
           python -Im coverage report --format=markdown --skip-empty --skip-covered >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage_xml
           path: coverage.xml
@@ -211,7 +211,7 @@ jobs:
       - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: test_data
           path: test_data
@@ -236,7 +236,7 @@ jobs:
         run: bash build_utils/create_environment_yml.sh
 
       - name: Upload environment file
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: environment
           path: environment.yml

@@ -35,7 +35,7 @@ jobs:
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test_data
           path: test_data
@@ -67,7 +67,7 @@ jobs:
       - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: test_data
           path: test_data
@@ -140,7 +140,7 @@ jobs:
         uv pip install -r requirements.txt
         uv pip install .
     - name: upload requirements
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: requirements
         path: requirements.txt
@@ -149,7 +149,7 @@ jobs:
         source .venv/bin/activate
         python build_utils/create_and_pack_executable.py
     - name: Upload bundle
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: bundle
         path: dist2/
