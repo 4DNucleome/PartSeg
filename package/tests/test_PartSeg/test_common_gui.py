@@ -722,7 +722,7 @@ class TestBaseMainWindow:
         window.settings.add_last_files([tmp_path / "test.txt"], "test")
         actions = window.recent_file_menu.actions()
         assert len(actions) == 1
-        assert actions[0].data() == ([tmp_path / "test.txt"], "test")
+        assert tuple(actions[0].data()) == ([tmp_path / "test.txt"], "test")
         monkeypatch.setattr(window, "sender", lambda: actions[0])
         main_menu = MagicMock()
         add_last_files = MagicMock()
