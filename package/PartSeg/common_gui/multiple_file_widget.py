@@ -104,7 +104,7 @@ class LoadRecentFiles(QDialog):
         )
 
     def get_files(self) -> list[tuple[list[str], str]]:
-        return [item.data(Qt.ItemDataRole.UserRole) for item in self.file_list.selectedItems()]
+        return [tuple(item.data(Qt.ItemDataRole.UserRole)) for item in self.file_list.selectedItems()]
 
     def accept(self) -> None:
         self.settings.set_in_profile("multiple_files_dialog_size", (self.size().width(), self.size().height()))
