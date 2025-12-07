@@ -95,6 +95,7 @@ hiddenimports = (
         "imagecodecs._imagecodecs",
         "PartSeg.plugins.napari_widgets",
         "PartSegCore.napari_io",
+        "tzdata",
     ]
     + [x.module_name for x in imageio_known_plugins.values()]
     + [x for x in collect_submodules("skimage") if "tests" not in x]
@@ -183,6 +184,7 @@ a = Analysis(
     + collect_data_files("freetype")
     + collect_data_files("skimage")
     + collect_data_files("fonticon_fa6")
+    + collect_data_files('tzdata')
     + collect_data_files("jsonschema_specifications")
     + collect_data_files("PartSegCore-compiled-backend")
     + pyzmq_data
