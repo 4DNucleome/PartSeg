@@ -95,6 +95,7 @@ hiddenimports = (
         "imagecodecs._imagecodecs",
         "PartSeg.plugins.napari_widgets",
         "PartSegCore.napari_io",
+        "tzdata",
     ]
     + [x.module_name for x in imageio_known_plugins.values()]
     + [x for x in collect_submodules("skimage") if "tests" not in x]
