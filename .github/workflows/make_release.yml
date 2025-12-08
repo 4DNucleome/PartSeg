@@ -15,7 +15,7 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: hynek/build-and-inspect-python-package@v2
@@ -31,7 +31,7 @@ jobs:
         os: ["ubuntu-22.04", "windows-2022", "macos-13", "macos-14"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -76,7 +76,7 @@ jobs:
       - build_pyinstaller_bundle
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
         with:
           pattern: 'PartSeg_bundle_*'
