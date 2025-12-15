@@ -91,7 +91,7 @@ class ResponseData(NamedTuple):
     values: list[MeasurementResult]
 
 
-CalculationResultList = list[ResponseData | ErrorInfo]
+CalculationResultList = list[Union[ResponseData, ErrorInfo]]
 WrappedResult = tuple[int, list[Union[ErrorInfo, ResponseData]]]
 
 
