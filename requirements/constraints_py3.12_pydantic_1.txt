@@ -37,13 +37,13 @@ cloudpickle==3.1.2
     # via dask
 comm==0.2.3
     # via ipykernel
-coverage==7.12.0
+coverage==7.13.0
     # via partseg (pyproject.toml)
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
-dask==2025.11.0
+dask==2025.12.0
     # via napari
-debugpy==1.8.17
+debugpy==1.8.18
     # via ipykernel
 decorator==5.2.1
     # via ipython
@@ -112,7 +112,7 @@ jsonschema==4.25.1
     # via napari
 jsonschema-specifications==2025.9.1
     # via jsonschema
-jupyter-client==8.6.3
+jupyter-client==8.7.0
     # via
     #   ipykernel
     #   qtconsole
@@ -167,7 +167,7 @@ napari-svg==0.2.1
     # via napari
 nest-asyncio==1.6.0
     # via ipykernel
-networkx==3.6
+networkx==3.6.1
     # via scikit-image
 nme==0.1.8
     # via partseg (pyproject.toml)
@@ -195,7 +195,7 @@ numpy==2.3.5
     #   vispy
 numpydoc==1.10.0
     # via napari
-oiffile==2025.5.10
+oiffile==2025.12.12
     # via partseg (pyproject.toml)
 openpyxl==3.1.5
     # via partseg (pyproject.toml)
@@ -435,7 +435,7 @@ superqt==0.7.6
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tifffile==2025.10.16
+tifffile==2025.12.12
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -449,7 +449,7 @@ toolz==1.1.0
     #   dask
     #   napari
     #   partd
-tornado==6.5.2
+tornado==6.5.3
     # via
     #   ipykernel
     #   jupyter-client
@@ -479,9 +479,9 @@ typing-extensions==4.15.0
     #   referencing
     #   superqt
     #   typer
-tzdata==2025.2
+tzdata==2025.3
     # via pandas
-urllib3==2.6.0
+urllib3==2.6.2
     # via
     #   requests
     #   sentry-sdk

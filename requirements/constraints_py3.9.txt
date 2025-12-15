@@ -45,7 +45,7 @@ czifile==2019.7.2.1
     # via partseg (pyproject.toml)
 dask==2024.8.0
     # via napari
-debugpy==1.8.17
+debugpy==1.8.18
     # via ipykernel
 decorator==5.2.1
     # via ipython
@@ -327,7 +327,6 @@ pyside6==6.3.1
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-    #   napari
 pyside6-addons==6.3.1
     # via pyside6
 pyside6-essentials==6.3.1
@@ -469,7 +468,7 @@ toolz==1.1.0
     #   dask
     #   napari
     #   partd
-tornado==6.5.2
+tornado==6.5.3
     # via
     #   ipykernel
     #   jupyter-client
@@ -505,9 +504,9 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
-tzdata==2025.2
+tzdata==2025.3
     # via pandas
-urllib3==2.6.0
+urllib3==2.6.2
     # via
     #   requests
     #   sentry-sdk
