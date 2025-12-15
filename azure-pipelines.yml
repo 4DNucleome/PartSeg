@@ -160,7 +160,7 @@ stages:
 
       - job: pyinstaller_linux
         variables:
-          test_path: dist/PartSeg/PartSeg _test
+          test_command: dist/PartSeg/PartSeg _test
           DISPLAY: ':99.0'
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         pool: { vmImage: 'Ubuntu-22.04' }
@@ -168,7 +168,7 @@ stages:
           - template: .azure-pipelines/linux_libs.yaml
           - template: .azure-pipelines/pyinstaller.yaml
             parameters:
-              test_path: $(test_path)
+              test_command: $(test_command)
               cache_dir: $(pip_cache_dir)
 
       - job: pyinstaller
@@ -177,15 +177,15 @@ stages:
           matrix:
             macos:
               imageName: 'macos-14'
-              test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
+              test_command: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
             windows:
               imageName: 'windows-2022'
-              test_path: dist\PartSeg\PartSeg _test
+              test_command: dist\PartSeg\PartSeg _test
         variables:
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         pool: {vmImage: $(imageName)}
         steps:
           - template: .azure-pipelines/pyinstaller.yaml
             parameters:
-              test_path: $(test_path)
+              test_command: $(test_command)
               cache_dir: $(pip_cache_dir)
