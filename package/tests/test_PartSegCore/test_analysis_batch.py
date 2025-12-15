@@ -453,7 +453,7 @@ def mask_operation_plan(request, simple_measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
-def wait_for_calculation(manager):
+def wait_for_calculation(manager: CalculationManager) -> None:
     for _ in range(int(120 / 0.1)):
         res = manager.get_results()
         if res.errors and res.errors[0][0].startswith("Unknown file"):

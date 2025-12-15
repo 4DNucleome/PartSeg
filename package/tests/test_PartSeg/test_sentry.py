@@ -10,8 +10,7 @@ from packaging.version import parse as parse_version
 from sentry_sdk.client import Client
 from sentry_sdk.serializer import serialize
 
-from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
-from PartSegCore.utils import safe_repr
+from PartSegCore.utils import prepare_error_data, safe_repr
 
 SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
 
