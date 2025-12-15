@@ -29,12 +29,10 @@ import logging
 import math
 import os
 import threading
-import traceback
 from collections import OrderedDict
 from enum import Enum
 from os import path
 from queue import Queue
-from traceback import StackSummary
 from typing import TYPE_CHECKING, Any, NamedTuple, Union
 
 import numpy as np
@@ -71,7 +69,7 @@ from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, report_empty_fun
-from PartSegCore.utils import iterate_names
+from PartSegCore.utils import ErrorInfo, iterate_names, prepare_error_data
 from PartSegImage import Image, TiffImageReader
 
 if TYPE_CHECKING:
@@ -93,8 +91,7 @@ class ResponseData(NamedTuple):
     values: list[MeasurementResult]
 
 
-CalculationResultList = list[ResponseData]
-ErrorInfo = tuple[Exception, Union[StackSummary, tuple[dict, StackSummary]]]
+CalculationResultList = list[Union[ResponseData, ErrorInfo]]
 WrappedResult = tuple[int, list[Union[ErrorInfo, ResponseData]]]
 
 
@@ -115,18 +112,6 @@ def get_data_loader(
     if root_type == RootType.Project:
         return LoadProject, ext in LoadProject.get_extensions()
     return LoadImageForBatch, ext in LoadImageForBatch.get_extensions()
-
-
-def prepare_error_data(exception: Exception) -> ErrorInfo:
-    try:
-        from sentry_sdk.serializer import serialize  # noqa: PLC0415
-        from sentry_sdk.utils import event_from_exception  # noqa: PLC0415
-
-        event = event_from_exception(exception)[0]
-        event = serialize(event)
-        return exception, (event, traceback.extract_tb(exception.__traceback__))
-    except ImportError:  # pragma: no cover
-        return exception, traceback.extract_tb(exception.__traceback__)
 
 
 def do_calculation(file_info: tuple[int, str], calculation: BaseCalculation) -> WrappedResult:

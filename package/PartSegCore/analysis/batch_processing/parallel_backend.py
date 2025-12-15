@@ -30,6 +30,7 @@ from typing import Any, Callable
 __author__ = "Grzegorz Bokota"
 
 from PartSegCore.plugins import register_if_need
+from PartSegCore.utils import prepare_error_data
 
 
 class SubprocessOrder(Enum):
@@ -231,7 +232,7 @@ class BatchWorker:
             self.result_queue.put((task_uuid, res))
         except Exception as e:  # pragma: no cover # pylint: disable=broad-except
             logging.exception("Exception in worker")
-            self.result_queue.put((task_uuid, (-1, [(e, traceback.extract_tb(e.__traceback__))])))
+            self.result_queue.put((task_uuid, (-1, [prepare_error_data(e)])))
 
     def run(self):
         """Worker main loop"""
