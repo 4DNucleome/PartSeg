@@ -463,8 +463,15 @@ def wait_for_calculation(manager):
         else:
             break
     else:  # pragma: no cover
+        for file_writer in manager.writer.file_dict.values():
+            file_writer.dump_data()
         manager.kill_jobs()
-        pytest.fail("jobs hanged")
+        pytest.fail(
+            f"Jobs hanged. "
+            f"Work {manager.batch_manager.has_work}, task {manager.batch_manager.work_task}, "
+            f"empty queue {manager.batch_manager.result_queue.empty()} "
+            f"Writing finished {manager.writer.writing_finished()}"
+        )
 
     manager.writer.finish()
     if sys.platform == "darwin":
