@@ -133,7 +133,7 @@ stages:
       strategy:
         matrix:
           macos:
-            imageName: 'macos-13'
+            imageName: 'macos-14'
           windows:
             imageName: 'windows-2022'
       pool: {vmImage: $(imageName)}
@@ -176,9 +176,6 @@ stages:
         strategy:
           matrix:
             macos:
-              imageName: 'macos-13'
-              test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
-            macos_arm:
               imageName: 'macos-14'
               test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
             windows:
