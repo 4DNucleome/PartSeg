@@ -45,7 +45,7 @@ czifile==2019.7.2.1
     # via partseg (pyproject.toml)
 dask==2025.12.0
     # via napari
-debugpy==1.8.18
+debugpy==1.8.19
     # via ipykernel
 decorator==5.2.1
     # via ipython
@@ -92,7 +92,7 @@ imageio==2.37.2
     #   scikit-image
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.7.0
+importlib-metadata==8.7.1
     # via
     #   build
     #   dask
@@ -398,7 +398,7 @@ scipy==1.15.3
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.47.0
+sentry-sdk==2.48.0
     # via partseg (pyproject.toml)
 setuptools==80.9.0
     # via
@@ -465,7 +465,7 @@ toolz==1.1.0
     #   dask
     #   napari
     #   partd
-tornado==6.5.3
+tornado==6.5.4
     # via
     #   ipykernel
     #   jupyter-client
@@ -481,7 +481,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.20.0
+typer==0.20.1
     # via npe2
 typing-extensions==4.15.0
     # via
