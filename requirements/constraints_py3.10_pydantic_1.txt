@@ -18,11 +18,11 @@ attrs==25.4.0
     #   referencing
 babel==2.17.0
     # via sphinx
-build==1.3.0
+build==1.4.0
     # via npe2
 cachey==0.2.1
     # via napari
-certifi==2025.11.12
+certifi==2026.1.4
     # via
     #   napari
     #   requests
@@ -37,7 +37,7 @@ cloudpickle==3.1.2
     # via dask
 comm==0.2.3
     # via ipykernel
-coverage==7.13.0
+coverage==7.13.1
     # via partseg (pyproject.toml)
 czifile==2019.7.2.1
     # via partseg (pyproject.toml)
@@ -69,7 +69,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2025.12.0
+fsspec==2026.1.0
     # via dask
 h5py==3.15.1
     # via partseg (pyproject.toml)
@@ -103,7 +103,7 @@ ipykernel==7.1.0
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==8.37.0
+ipython==8.38.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -114,11 +114,11 @@ jedi==0.19.2
     # via ipython
 jinja2==3.1.6
     # via sphinx
-jsonschema==4.25.1
+jsonschema==4.26.0
     # via napari
 jsonschema-specifications==2025.9.1
     # via jsonschema
-jupyter-client==8.7.0
+jupyter-client==8.8.0
     # via
     #   ipykernel
     #   qtconsole
@@ -236,7 +236,7 @@ partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==12.0.0
+pillow==12.1.0
     # via
     #   imageio
     #   napari
@@ -257,11 +257,11 @@ pooch==1.8.2
     # via scikit-image
 prompt-toolkit==3.0.52
     # via ipython
-psutil==7.1.3
+psutil==7.2.1
     # via
     #   ipykernel
     #   napari
-psygnal==0.15.0
+psygnal==0.15.1
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -297,13 +297,13 @@ pygments==2.19.2
     #   superqt
 pyinstaller==6.17.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2025.10
+pyinstaller-hooks-contrib==2025.11
     # via pyinstaller
 pyopengl==3.1.10
     # via napari
 pyproject-hooks==1.2.0
     # via build
-pyqt6==6.10.1
+pyqt6==6.10.2
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -394,7 +394,7 @@ scipy==1.15.3
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.48.0
+sentry-sdk==2.49.0
     # via partseg (pyproject.toml)
 setuptools==80.9.0
     # via
@@ -433,7 +433,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.7.6
+superqt==0.7.7
     # via
     #   partseg (pyproject.toml)
     #   magicgui
@@ -447,7 +447,7 @@ tifffile==2025.5.10
     #   napari
     #   oiffile
     #   scikit-image
-tomli==2.3.0
+tomli==2.4.0
     # via
     #   build
     #   npe2
@@ -477,7 +477,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.20.1
+typer==0.21.1
     # via npe2
 typing-extensions==4.15.0
     # via
@@ -495,7 +495,7 @@ typing-extensions==4.15.0
     #   typer
 tzdata==2025.3
     # via pandas
-urllib3==2.6.2
+urllib3==2.6.3
     # via
     #   requests
     #   sentry-sdk
