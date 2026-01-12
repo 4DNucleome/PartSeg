@@ -7,7 +7,7 @@ yml
 ci
 pre
 macOS
-numpy
+NumPy
 pre
 bool
 changelog
