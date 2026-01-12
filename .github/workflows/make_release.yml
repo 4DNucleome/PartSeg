@@ -50,7 +50,7 @@ jobs:
         run: python build_utils/create_and_pack_executable.py
 
       - name: Publish PartSeg bundle
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: PartSeg_bundle_${{ matrix.os }}
           path: dist2
@@ -72,12 +72,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           pattern: 'PartSeg_bundle_*'
           path: pyinstaller
           merge-multiple: true
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: Packages
           path: dist
