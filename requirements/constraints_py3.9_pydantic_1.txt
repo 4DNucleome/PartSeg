@@ -16,7 +16,7 @@ attrs==25.4.0
     # via
     #   jsonschema
     #   referencing
-babel==2.17.0
+babel==2.18.0
     # via sphinx
 build==1.4.0
     # via npe2
@@ -43,7 +43,7 @@ czifile==2019.7.2.1
     # via partseg (pyproject.toml)
 dask==2024.8.0
     # via napari
-debugpy==1.8.19
+debugpy==1.8.20
     # via ipykernel
 decorator==5.2.1
     # via ipython
@@ -209,7 +209,7 @@ oiffile==2024.5.24
     # via partseg (pyproject.toml)
 openpyxl==3.1.5
     # via partseg (pyproject.toml)
-packaging==25.0
+packaging==26.0
     # via
     #   partseg (pyproject.toml)
     #   build
@@ -257,11 +257,11 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-qt
-pooch==1.8.2
+pooch==1.9.0
     # via scikit-image
 prompt-toolkit==3.0.52
     # via ipython
-psutil==7.2.1
+psutil==7.2.2
     # via
     #   ipykernel
     #   napari
@@ -299,9 +299,9 @@ pygments==2.19.2
     #   rich
     #   sphinx
     #   superqt
-pyinstaller==6.17.0
+pyinstaller==6.18.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2025.11
+pyinstaller-hooks-contrib==2026.0
     # via pyinstaller
 pyopengl==3.1.10
     # via napari
@@ -311,7 +311,7 @@ pyqt6==6.10.2
     # via
     #   partseg (pyproject.toml)
     #   napari
-pyqt6-qt6==6.10.1
+pyqt6-qt6==6.10.2
     # via pyqt6
 pyqt6-sip==13.10.2
     # via pyqt6
@@ -356,7 +356,7 @@ pyzmq==27.1.0
     # via
     #   ipykernel
     #   jupyter-client
-qtawesome==1.4.0
+qtawesome==1.4.1
     # via partseg (pyproject.toml)
 qtconsole==5.7.0
     # via
@@ -381,7 +381,7 @@ requests==2.32.5
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.2.0
+rich==14.3.2
     # via
     #   npe2
     #   typer
@@ -398,9 +398,9 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.49.0
+sentry-sdk==2.51.0
     # via partseg (pyproject.toml)
-setuptools==80.9.0
+setuptools==80.10.2
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -469,7 +469,7 @@ tornado==6.5.4
     # via
     #   ipykernel
     #   jupyter-client
-tqdm==4.67.1
+tqdm==4.67.2
     # via napari
 traceback-with-variables==2.2.1
     # via partseg (pyproject.toml)
@@ -508,9 +508,9 @@ vispy==0.14.3
     #   partseg (pyproject.toml)
     #   napari
     #   napari-svg
-wcwidth==0.2.14
+wcwidth==0.5.3
     # via prompt-toolkit
-wrapt==2.0.1
+wrapt==2.1.0
     # via napari
 xlrd==2.0.2
     # via partseg (pyproject.toml)
