@@ -90,7 +90,7 @@ def _block_threads(monkeypatch, request):
             else:
                 old_start(self)
 
-    def not_start(self):
+    def not_start(self, time=None):
         raise RuntimeError("Thread should not be used in test")
 
     monkeypatch.setattr(QTimer, "start", not_start)
