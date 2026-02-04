@@ -936,7 +936,10 @@ class ImageView(QWidget):
 class NapariQtViewer(QtViewer):
     def __init__(self, viewer):
         super().__init__(viewer, show_welcome_screen=False)
-        self.widget(0).layout().setContentsMargins(0, 5, 0, 2)
+        layout = self.widget(0).layout()
+        if layout is not None:
+            # Before napari 0.7.0
+            layout.setContentsMargins(0, 5, 0, 2)
 
     def dragEnterEvent(self, event):  # pylint: disable=no-self-use
         """

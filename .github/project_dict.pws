@@ -1,4 +1,4 @@
-personal_ws-1.1 en 22
+personal_ws-1.1 en 29
 napari
 autoupdate
 aspell
@@ -27,3 +27,4 @@ cooldown
 otsu
 ome
 ImageJ
+QtViewer
