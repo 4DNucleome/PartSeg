@@ -227,10 +227,13 @@ class BaseMainWindow(QMainWindow):
         return [self.settings.colormap_dict[name][0] for name in colormaps_name]
 
     def napari_viewer_show(self):
-        viewer = Viewer(title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info)
+        viewer = Viewer(
+            title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info, show=False
+        )
         viewer.scale_bar.unit = "nm"
         viewer.theme = self.settings.theme_name
         viewer.create_initial_layers(image=True, roi=True, additional_layers=False, points=True)
+        viewer.show()
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda _x: self.close_viewer(viewer))
 
