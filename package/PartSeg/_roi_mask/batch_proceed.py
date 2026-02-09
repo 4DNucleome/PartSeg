@@ -35,7 +35,7 @@ class BatchProceed(QThread):
     def __init__(self):
         super().__init__()
         self.queue = Queue()
-        self.algorithm = Optional[None]
+        self.algorithm = None
         self.parameters = None
         self.file_list = []
         self.index = 0
