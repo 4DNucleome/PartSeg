@@ -126,7 +126,7 @@ jobs:
         uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
-          run: python -m tox ${{ inputs.tox_args }} -- ${{ inputs.pytest_args }}
+          run: python -m tox ${{ inputs.tox_args }} ${{ inputs.pytest_args != '' && format('-- {0}', inputs.pytest_args) || '' }}
         env:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: ${{ inputs.napari }}
