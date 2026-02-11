@@ -52,6 +52,12 @@ jobs:
   test:
     name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }} ${{ inputs.pydantic }}
     runs-on: ${{ inputs.os }}
+    env:
+      NAPARI: ${{ inputs.napari }}
+      BACKEND: ${{ inputs.qt_backend }}
+      PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+      TOX_ARGS: ${{ inputs.tox_args }}
+      PYTEST_ARGS: ${{ inputs.pytest_args }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -90,21 +96,15 @@ jobs:
 
       - name: Test with tox PartSegImage
         if: ${{ inputs.napari == 'latest' }}
-        run: python -m tox ${{ inputs.tox_args }} -- package/tests/test_PartSegImage ${{ inputs.pytest_args }}
+        run: python -m tox $TOX_ARGS -- package/tests/test_PartSegImage $PYTEST_ARGS
         env:
-          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: ${{ inputs.napari }}
-          BACKEND: ${{ inputs.qt_backend }}
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
       - name: Test with tox PartSegCore
         if: ${{ inputs.napari == 'latest' }}
-        run: python -m tox ${{ inputs.tox_args }} --  package/tests/test_PartSegCore ${{ inputs.pytest_args }}
+        run: python -m tox $TOX_ARGS --  package/tests/test_PartSegCore $PYTEST_ARGS
         env:
-          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: ${{ inputs.napari }}
-          BACKEND: ${{ inputs.qt_backend }}
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
@@ -113,11 +113,8 @@ jobs:
         uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
-          run: python -m tox ${{ inputs.tox_args }} -- package/tests/test_PartSeg ${{ inputs.pytest_args }}
+          run: python -m tox $TOX_ARGS -- package/tests/test_PartSeg $PYTEST_ARGS
         env:
-          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: ${{ inputs.napari }}
-          BACKEND: ${{ inputs.qt_backend }}
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
@@ -126,11 +123,9 @@ jobs:
         uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
-          run: python -m tox ${{ inputs.tox_args }} ${{ inputs.pytest_args != '' && format('-- {0}', inputs.pytest_args) || '' }}
+          run: python -m tox $TOX_ARGS $PYTEST_ARGS
         env:
-          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: ${{ inputs.napari }}
-          BACKEND: ${{ inputs.qt_backend }}
+          PYTEST_ARGS: ${{ inputs.pytest_args != '' && format('-- {0}', inputs.pytest_args) || '' }}
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
