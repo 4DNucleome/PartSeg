@@ -87,6 +87,8 @@ jobs:
 
       - name: Test with tox PartSegImage
         if: ${{ inputs.napari == 'latest' }}
+        shell: bash
+        # shellcheck disable=SC2086
         run: python -m tox $TOX_ARGS -- package/tests/test_PartSegImage $PYTEST_ARGS
         env:
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
@@ -94,6 +96,8 @@ jobs:
 
       - name: Test with tox PartSegCore
         if: ${{ inputs.napari == 'latest' }}
+        shell: bash
+        # shellcheck disable=SC2086
         run: python -m tox $TOX_ARGS --  package/tests/test_PartSegCore $PYTEST_ARGS
         env:
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
@@ -102,6 +106,8 @@ jobs:
       - name: Test with tox PartSeg
         if: ${{ inputs.napari == 'latest' }}
         timeout-minutes: ${{ inputs.timeout }}
+        shell: bash
+        # shellcheck disable=SC2086
         run: python -m tox $TOX_ARGS -- package/tests/test_PartSeg $PYTEST_ARGS
         env:
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
@@ -110,6 +116,8 @@ jobs:
       - name: Test with tox all
         if: ${{ inputs.napari != 'latest' }}
         timeout-minutes: ${{ inputs.timeout }}
+        shell: bash
+        # shellcheck disable=SC2086
         run: python -m tox $TOX_ARGS ${PYTEST_ARGS:+-- $PYTEST_ARGS}
         env:
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
