@@ -241,9 +241,12 @@ class BaseMainWindow(QMainWindow):
         if not self.settings.additional_layers:
             QMessageBox().information(self, "No data", "Last executed algorithm does not provide additional data")
             return
-        viewer = Viewer(title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info)
+        viewer = Viewer(
+            title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info, show=False
+        )
         viewer.theme = self.settings.theme_name
         viewer.create_initial_layers(image=with_channels, roi=False, additional_layers=True, points=False)
+        viewer.show()
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda _x: self.close_viewer(viewer))
 
