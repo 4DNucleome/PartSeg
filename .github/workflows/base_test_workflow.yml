@@ -123,9 +123,8 @@ jobs:
         uses: aganders3/headless-gui@v2
         timeout-minutes: ${{ inputs.timeout }}
         with:
-          run: python -m tox $TOX_ARGS $PYTEST_ARGS
+          run: python -m tox $TOX_ARGS ${PYTEST_ARGS:+-- $PYTEST_ARGS}
         env:
-          PYTEST_ARGS: ${{ inputs.pytest_args != '' && format('-- {0}', inputs.pytest_args) || '' }}
           PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
