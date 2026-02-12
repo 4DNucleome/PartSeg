@@ -3,3 +3,7 @@ reviews:
     github-checks:
       enabled: true
       timeout_ms: 900000  # 15 minutes (maximum allowed)
+
+  path_instructions:
+    - path: "package/tests/**/*.py"
+      instructions: "Docstrings are not required for test functions in test files."
