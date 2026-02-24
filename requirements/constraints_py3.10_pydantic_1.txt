@@ -299,7 +299,7 @@ pygments==2.19.2
     #   superqt
 pyinstaller==6.19.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2026.0
+pyinstaller-hooks-contrib==2026.1
     # via pyinstaller
 pyopengl==3.1.10
     # via napari
@@ -379,7 +379,7 @@ requests==2.32.5
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.3.2
+rich==14.3.3
     # via
     #   npe2
     #   typer
@@ -396,7 +396,7 @@ scipy==1.15.3
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.52.0
+sentry-sdk==2.53.0
     # via partseg (pyproject.toml)
 setuptools==82.0.0
     # via
@@ -479,7 +479,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.23.1
+typer==0.24.1
     # via npe2
 typing-extensions==4.15.0
     # via

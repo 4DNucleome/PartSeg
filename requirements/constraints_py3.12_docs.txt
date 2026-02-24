@@ -206,7 +206,7 @@ packaging==26.0
     #   scikit-image
     #   sphinx
     #   vispy
-pandas==3.0.0
+pandas==3.0.1
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -270,7 +270,7 @@ pydantic-core==2.41.5
     # via pydantic
 pydantic-extra-types==2.11.0
     # via npe2
-pydantic-settings==2.13.0
+pydantic-settings==2.13.1
     # via autodoc-pydantic
 pygments==2.19.2
     # via
@@ -334,7 +334,7 @@ requests==2.32.5
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.3.2
+rich==14.3.3
     # via
     #   npe2
     #   typer
@@ -346,12 +346,12 @@ rpds-py==0.30.0
     #   referencing
 scikit-image==0.26.0
     # via napari
-scipy==1.17.0
+scipy==1.17.1
     # via
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.52.0
+sentry-sdk==2.53.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -370,7 +370,7 @@ sphinx==9.1.0
     #   numpydoc
     #   sphinx-autodoc-typehints
     #   sphinx-qt-documentation
-sphinx-autodoc-typehints==3.6.2
+sphinx-autodoc-typehints==3.6.3
     # via partseg (pyproject.toml)
 sphinx-qt-documentation==0.4.1
     # via partseg (pyproject.toml)
@@ -395,7 +395,7 @@ superqt==0.7.8
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tifffile==2026.2.15
+tifffile==2026.2.20
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -425,7 +425,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.23.1
+typer==0.24.1
     # via npe2
 typing-extensions==4.15.0
     # via

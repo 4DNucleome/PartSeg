@@ -222,7 +222,7 @@ packaging==26.0
     #   scikit-image
     #   sphinx
     #   vispy
-pandas==3.0.0
+pandas==3.0.1
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -301,7 +301,7 @@ pygments==2.19.2
     #   superqt
 pyinstaller==6.19.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2026.0
+pyinstaller-hooks-contrib==2026.1
     # via pyinstaller
 pyopengl==3.1.10
     # via napari
@@ -379,7 +379,7 @@ requests==2.32.5
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.3.2
+rich==14.3.3
     # via
     #   npe2
     #   typer
@@ -393,12 +393,12 @@ scikit-image==0.26.0
     # via
     #   partseg (pyproject.toml)
     #   napari
-scipy==1.17.0
+scipy==1.17.1
     # via
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.52.0
+sentry-sdk==2.53.0
     # via partseg (pyproject.toml)
 setuptools==82.0.0
     # via
@@ -444,7 +444,7 @@ superqt==0.7.8
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tifffile==2026.2.15
+tifffile==2026.2.20
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -474,7 +474,7 @@ traitlets==5.14.3
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.23.1
+typer==0.24.1
     # via npe2
 typing-extensions==4.15.0
     # via
