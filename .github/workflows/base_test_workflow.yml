@@ -75,7 +75,7 @@ jobs:
 
       - name: Download test data
         if: ${{ inputs.test_data }}
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: test_data
           path: test_data
@@ -128,7 +128,7 @@ jobs:
           UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: timing-report-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}-${{ inputs.coverage }}${{ inputs.artifact_suffix }}
           path: |
@@ -136,7 +136,7 @@ jobs:
           retention-days: 7
 
       - name: Upload coverage data
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: ${{ inputs.coverage }}
         with:
           name: cov-reports-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}${{ inputs.artifact_suffix }}
