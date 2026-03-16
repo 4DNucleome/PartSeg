@@ -133,7 +133,6 @@ pyside = [
 pyside2 = [
     "PySide2!=5.15.0,>=5.12.3",
     "napari[pyside]<0.7.0",
-    "superqt<0.8.0"
 ]
 pyside6 = [
     "PySide6",
