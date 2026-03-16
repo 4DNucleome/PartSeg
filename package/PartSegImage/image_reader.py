@@ -9,9 +9,14 @@ from threading import Lock
 
 import numpy as np
 import tifffile
-from czifile.czifile import CziFile
+from czifile import CziFile
 from defusedxml import ElementTree
 from oiffile import OifFile
+
+from packaging.version import parse as parse_version
+from importlib import metadata
+
+CZIFILE_ABOVE_2026_3_12 = parse_version(metadata.version("czifile")) >= parse_version("2026.3.12")
 
 from PartSegImage.image import ChannelInfo, Image
 
@@ -291,9 +296,17 @@ class CziImageReader(BaseImageReaderBuffer):
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         image_file = CziFile(image_path)
-        image_data = image_file.asarray(max_workers=CZI_MAX_WORKERS)
-        image_data = self.update_array_shape(image_data, image_file.axes)
-        metadata = image_file.metadata(False)
+
+        if CZIFILE_ABOVE_2026_3_12:
+            image_data = image_file.asarray(maxworkers=CZI_MAX_WORKERS)
+            axes = image_file.scenes[0].axes
+            metadata = image_file.metadata(asdict=True)
+        else:
+            image_data = image_file.asarray(max_workers=CZI_MAX_WORKERS)
+            axes = image_file.axes
+            metadata = image_file.metadata(False)
+        image_data = self.update_array_shape(image_data, axes)
+
         with suppress(KeyError):
             scaling = metadata["ImageDocument"]["Metadata"]["Scaling"]["Items"]["Distance"]
             scale_info = {el["Id"]: el["Value"] for el in scaling}
