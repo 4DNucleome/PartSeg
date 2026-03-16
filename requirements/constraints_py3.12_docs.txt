@@ -26,12 +26,12 @@ build==1.4.0
     # via npe2
 cachey==0.2.1
     # via napari
-certifi==2026.1.4
+certifi==2026.2.25
     # via
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.4.4
+charset-normalizer==3.4.6
     # via requests
 click==8.3.1
     # via
@@ -41,7 +41,7 @@ cloudpickle==3.1.2
     # via dask
 comm==0.2.3
     # via ipykernel
-czifile==2019.7.2.1
+czifile==2026.3.15
     # via partseg (pyproject.toml)
 dask==2026.1.2
     # via napari
@@ -71,7 +71,7 @@ freetype-py==2.5.1
     # via vispy
 fsspec==2026.2.0
     # via dask
-h5py==3.15.1
+h5py==3.16.0
     # via partseg (pyproject.toml)
 heapdict==1.0.1
     # via cachey
@@ -79,15 +79,17 @@ hsluv==5.0.4
     # via vispy
 idna==3.11
     # via requests
-imagecodecs==2026.1.14
-    # via partseg (pyproject.toml)
-imageio==2.37.2
+imagecodecs==2026.3.6
+    # via
+    #   partseg (pyproject.toml)
+    #   czifile
+imageio==2.37.3
     # via
     #   partseg (pyproject.toml)
     #   napari
     #   napari-svg
     #   scikit-image
-imagesize==1.4.1
+imagesize==2.0.0
     # via sphinx
 in-n-out==0.2.1
     # via app-model
@@ -96,7 +98,7 @@ ipykernel==7.2.0
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==9.10.0
+ipython==9.11.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -122,9 +124,9 @@ jupyter-core==5.9.1
     #   ipykernel
     #   jupyter-client
     #   qtconsole
-kiwisolver==1.4.9
+kiwisolver==1.5.0
     # via vispy
-lazy-loader==0.4
+lazy-loader==0.5
     # via
     #   napari
     #   scikit-image
@@ -168,7 +170,7 @@ nme==0.1.8
     # via partseg (pyproject.toml)
 npe2==0.8.1
     # via napari
-numpy==2.4.2
+numpy==2.4.3
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -227,7 +229,7 @@ pillow==12.1.1
     #   scikit-image
 pint==0.25.2
     # via napari
-platformdirs==4.9.2
+platformdirs==4.9.4
     # via
     #   jupyter-core
     #   npe2
@@ -268,7 +270,7 @@ pydantic-compat==0.1.2
     # via app-model
 pydantic-core==2.41.5
     # via pydantic
-pydantic-extra-types==2.11.0
+pydantic-extra-types==2.11.1
     # via npe2
 pydantic-settings==2.13.1
     # via autodoc-pydantic
@@ -292,13 +294,13 @@ pyqt6==6.10.2
     #   napari
 pyqt6-qt6==6.10.2
     # via pyqt6
-pyqt6-sip==13.11.0
+pyqt6-sip==13.11.1
     # via pyqt6
 python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
     #   pandas
-python-dotenv==1.2.1
+python-dotenv==1.2.2
     # via pydantic-settings
 pyyaml==6.0.3
     # via
@@ -351,7 +353,7 @@ scipy==1.17.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.53.0
+sentry-sdk==2.54.0
     # via partseg (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -370,7 +372,7 @@ sphinx==9.1.0
     #   numpydoc
     #   sphinx-autodoc-typehints
     #   sphinx-qt-documentation
-sphinx-autodoc-typehints==3.6.3
+sphinx-autodoc-typehints==3.9.8
     # via partseg (pyproject.toml)
 sphinx-qt-documentation==0.4.1
     # via partseg (pyproject.toml)
@@ -388,17 +390,16 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.7.8
+superqt==0.8.0
     # via
     #   partseg (pyproject.toml)
     #   magicgui
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tifffile==2026.2.20
+tifffile==2026.3.3
     # via
     #   partseg (pyproject.toml)
-    #   czifile
     #   napari
     #   oiffile
     #   scikit-image
@@ -409,7 +410,7 @@ toolz==1.1.0
     #   dask
     #   napari
     #   partd
-tornado==6.5.4
+tornado==6.5.5
     # via
     #   ipykernel
     #   jupyter-client
@@ -456,7 +457,7 @@ vispy==0.15.2
     #   napari-svg
 wcwidth==0.6.0
     # via prompt-toolkit
-wrapt==2.1.1
+wrapt==2.1.2
     # via napari
 xlrd==2.0.2
     # via partseg (pyproject.toml)

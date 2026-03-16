@@ -24,12 +24,12 @@ build==1.4.0
     # via npe2
 cachey==0.2.1
     # via napari
-certifi==2026.1.4
+certifi==2026.2.25
     # via
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.4.4
+charset-normalizer==3.4.6
     # via requests
 click==8.1.8
     # via
@@ -41,7 +41,7 @@ comm==0.2.3
     # via ipykernel
 coverage==7.10.7
     # via partseg (pyproject.toml)
-czifile==2019.7.2.1
+czifile==2019.7.2.2
     # via partseg (pyproject.toml)
 dask==2024.8.0
     # via napari
@@ -90,7 +90,7 @@ imageio==2.37.2
     #   napari
     #   napari-svg
     #   scikit-image
-imagesize==1.4.1
+imagesize==1.5.0
     # via sphinx
 importlib-metadata==8.7.1
     # via
@@ -135,7 +135,7 @@ jupyter-core==5.8.1
     #   qtconsole
 kiwisolver==1.4.7
     # via vispy
-lazy-loader==0.4
+lazy-loader==0.5
     # via
     #   napari
     #   scikit-image
@@ -149,7 +149,7 @@ lxml==6.0.2
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
-lxml-html-clean==0.4.3
+lxml-html-clean==0.4.4
     # via lxml
 magicgui==0.10.1
     # via
@@ -303,7 +303,7 @@ pygments==2.19.2
     #   superqt
 pyinstaller==6.19.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2026.1
+pyinstaller-hooks-contrib==2026.3
     # via pyinstaller
 pyopengl==3.1.10
     # via napari
@@ -347,7 +347,7 @@ python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
     #   pandas
-pytz==2025.2
+pytz==2026.1.post1
     # via pandas
 pyyaml==6.0.3
     # via
@@ -400,9 +400,9 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.53.0
+sentry-sdk==2.54.0
     # via partseg (pyproject.toml)
-setuptools==82.0.0
+setuptools==82.0.1
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
@@ -467,7 +467,7 @@ toolz==1.1.0
     #   dask
     #   napari
     #   partd
-tornado==6.5.4
+tornado==6.5.5
     # via
     #   ipykernel
     #   jupyter-client
@@ -511,7 +511,7 @@ vispy==0.14.3
     #   napari-svg
 wcwidth==0.6.0
     # via prompt-toolkit
-wrapt==2.1.1
+wrapt==2.1.2
     # via napari
 xlrd==2.0.2
     # via partseg (pyproject.toml)
