@@ -1,15 +1,13 @@
 import inspect
 import typing
-
 from importlib import metadata
-from packaging.version import parse as parse_version
-import numpy as np
 
+import numpy as np
+from packaging.version import parse as parse_version
 
 if parse_version(metadata.version("czifile")) < parse_version("2026.3.12"):
-    from czifile import DECOMPRESS
     import imagecodecs
-
+    from czifile import DECOMPRESS
 
     class ZSTD1Header(typing.NamedTuple):
         """
@@ -20,7 +18,6 @@ if parse_version(metadata.version("czifile")) < parse_version("2026.3.12"):
 
         header_size: int
         hiLoByteUnpackPreprocessing: bool
-
 
     def parse_zstd1_header(data: bytes, size: int) -> ZSTD1Header:  # pragma: no cover
         """
@@ -42,10 +39,8 @@ if parse_version(metadata.version("czifile")) < parse_version("2026.3.12"):
 
         return ZSTD1Header(0, False)
 
-
     def _get_dtype():
         return inspect.currentframe().f_back.f_back.f_locals["de"].dtype
-
 
     def decode_zstd1(data: bytes) -> np.ndarray:
         """
@@ -54,15 +49,14 @@ if parse_version(metadata.version("czifile")) < parse_version("2026.3.12"):
         header = parse_zstd1_header(data, len(data))
         dtype = _get_dtype()
         if header.hiLoByteUnpackPreprocessing:
-            array_ = np.frombuffer(imagecodecs.zstd_decode(data[header.header_size:]), np.uint8).copy()
+            array_ = np.frombuffer(imagecodecs.zstd_decode(data[header.header_size :]), np.uint8).copy()
             half_size = array_.size // 2
             array = np.empty(half_size, np.uint16)
             array[:] = array_[:half_size] + (array_[half_size:].astype(np.uint16) << 8)
             array = array.view(dtype)
         else:
-            array = np.frombuffer(imagecodecs.zstd_decode(data[header.header_size:]), dtype).copy()
+            array = np.frombuffer(imagecodecs.zstd_decode(data[header.header_size :]), dtype).copy()
         return array
-
 
     def decode_zstd0(data: bytes) -> np.ndarray:
         """
@@ -70,7 +64,6 @@ if parse_version(metadata.version("czifile")) < parse_version("2026.3.12"):
         """
         dtype = _get_dtype()
         return np.frombuffer(imagecodecs.zstd_decode(data), dtype).copy()
-
 
     DECOMPRESS[5] = decode_zstd0
     DECOMPRESS[6] = decode_zstd1
