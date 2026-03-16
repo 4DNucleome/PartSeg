@@ -1,7 +1,10 @@
 import os
 import sys
 
-from PartSegImage import tifffile_fixes  # noqa: F401
+from PartSegImage import (
+    czifile_fixes,  # noqa: F401
+    tifffile_fixes,  # noqa: F401
+)
 from PartSegImage.channel_class import Channel
 from PartSegImage.image import ChannelInfo, ChannelInfoFull, Image
 from PartSegImage.image_reader import (
