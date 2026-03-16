@@ -2,6 +2,7 @@ import os.path
 import typing
 from abc import abstractmethod
 from contextlib import suppress
+from importlib import metadata
 from io import BytesIO
 from itertools import zip_longest
 from pathlib import Path
@@ -12,9 +13,7 @@ import tifffile
 from czifile import CziFile
 from defusedxml import ElementTree
 from oiffile import OifFile
-
 from packaging.version import parse as parse_version
-from importlib import metadata
 
 CZIFILE_ABOVE_2026_3_12 = parse_version(metadata.version("czifile")) >= parse_version("2026.3.12")
 
