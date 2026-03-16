@@ -7,7 +7,7 @@ from packaging.version import parse as parse_version
 
 if parse_version(metadata.version("czifile")) < parse_version("2026.3.12"):
     import imagecodecs
-    from czifile import DECOMPRESS
+    from czifile.czifile import DECOMPRESS
 
     class ZSTD1Header(typing.NamedTuple):
         """
