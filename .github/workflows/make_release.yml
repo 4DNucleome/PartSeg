@@ -50,7 +50,7 @@ jobs:
         run: python build_utils/create_and_pack_executable.py
 
       - name: Publish PartSeg bundle
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: PartSeg_bundle_${{ matrix.os }}
           path: dist2
