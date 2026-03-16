@@ -15,9 +15,9 @@ from defusedxml import ElementTree
 from oiffile import OifFile
 from packaging.version import parse as parse_version
 
-CZIFILE_ABOVE_2026_3_12 = parse_version(metadata.version("czifile")) >= parse_version("2026.3.12")
-
 from PartSegImage.image import ChannelInfo, Image
+
+CZIFILE_ABOVE_2026_3_12 = parse_version(metadata.version("czifile")) >= parse_version("2026.3.12")
 
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
