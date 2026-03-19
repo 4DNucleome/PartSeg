@@ -5,6 +5,7 @@ from functools import partial
 from typing import Union
 
 import numpy as np
+from PyQt6.QtWidgets import QSplitter
 from qtpy.QtCore import QByteArray, Qt, Signal, Slot
 from qtpy.QtGui import QCloseEvent, QGuiApplication, QIcon, QKeySequence, QTextOption
 from qtpy.QtWidgets import (
@@ -583,8 +584,10 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.progress_bar2)
         main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.progress_info_lab)
-        main_layout.addWidget(self.algorithm_choose_widget, 1)
-        main_layout.addWidget(self.choose_components)
+        split = QSplitter(Qt.Orientation.Vertical)
+        split.addWidget(self.algorithm_choose_widget)
+        split.addWidget(self.choose_components)
+        main_layout.addWidget(split, 1)
         down_layout = QHBoxLayout()
         down_layout.addWidget(self.keep_chosen_components_chk)
         down_layout.addWidget(self.show_parameters)
