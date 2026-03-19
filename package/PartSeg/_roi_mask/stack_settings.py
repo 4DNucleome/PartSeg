@@ -170,17 +170,15 @@ class StackSettings(BaseSettings):
                 data.selected_components,
                 self.keep_chosen_components,
             )
-            self.chosen_components_widget.set_chose(
-                sorted(state2.roi_extraction_parameters.keys()), state2.selected_components
-            )
             self.roi = state2.roi_info
+            self.chosen_components_widget.set_chosen(state2.selected_components)
+
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             self.set_history(data.history)
-            self.chosen_components_widget.set_chose(
-                sorted(data.roi_extraction_parameters.keys()), data.selected_components
-            )
             self.roi = data.roi_info
+            self.chosen_components_widget.set_chosen(data.selected_components)
+
             self.components_parameters_dict = data.roi_extraction_parameters
 
     @staticmethod
