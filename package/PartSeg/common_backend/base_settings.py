@@ -155,7 +155,11 @@ class ImageSettings(QObject):
         except ValueError as e:
             raise ValueError(ROI_NOT_FIT) from e
         self._additional_layers = {}
+        self.post_roi_set()
         self.roi_changed.emit(self._roi_info)
+
+    def post_roi_set(self) -> None:
+        """called after roi is set, for subclasses to override"""
 
     @property
     def sizes(self):

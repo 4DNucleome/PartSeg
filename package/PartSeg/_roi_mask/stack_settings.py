@@ -304,17 +304,16 @@ class StackSettings(BaseSettings):
             raise ValueError("ROI do not fit to image") from e
         if save_chosen:
             state2 = self.transform_state(state, new_roi_info, segmentation_parameters, list_of_components, save_chosen)
-            self.chosen_components_widget.set_chose(
-                sorted(state2.roi_extraction_parameters.keys()), state2.selected_components
-            )
             self.roi = state2.roi_info
+            self.chosen_components_widget.set_chosen(state2.selected_components)
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
-            selected_parameters = {i: segmentation_parameters[i] for i in new_roi_info.bound_info}
-
-            self.chosen_components_widget.set_chose(sorted(selected_parameters.keys()), list_of_components)
             self.roi = new_roi_info
+            self.chosen_components_widget.set_chosen(list_of_components)
             self.components_parameters_dict = segmentation_parameters
+
+    def post_roi_set(self):
+        self.chosen_components_widget.set_chose(self.roi_info.bound_info.keys(), [])
 
 
 def get_mask(
