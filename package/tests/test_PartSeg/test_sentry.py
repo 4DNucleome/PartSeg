@@ -10,8 +10,7 @@ from packaging.version import parse as parse_version
 from sentry_sdk.client import Client
 from sentry_sdk.serializer import serialize
 
-from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
-from PartSegCore.utils import safe_repr
+from PartSegCore.utils import prepare_error_data, safe_repr
 
 SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
 
@@ -49,9 +48,7 @@ def test_sentry_serialize_clip(monkeypatch):
 
 
 def test_sentry_variables_clip(monkeypatch):
-    letters = "abcdefghijklmnoprst"
-    for letter in letters:
-        locals()[letter] = 1
+    a = b = c = d = e = f = g = h = i = j = k = m = n = o = p = r = s = t = 1  # noqa: F841
     try:
         raise ValueError("eeee")
     except ValueError as ee:
@@ -65,9 +62,8 @@ def test_sentry_variables_clip(monkeypatch):
 
 def test_sentry_variables_clip_change_breadth(monkeypatch):
     monkeypatch.setattr(sentry_sdk.serializer, "MAX_DATABAG_BREADTH", 100)
-    letters = "abcdefghijklmnoprst"
-    for letter in letters:
-        locals()[letter] = 1
+    letters = "abcdefghijkmnoprst"
+    a = b = c = d = e = f = g = h = i = j = k = m = n = o = p = r = s = t = 1  # noqa: F841
     try:
         raise ValueError("eeee")
     except ValueError as ee:

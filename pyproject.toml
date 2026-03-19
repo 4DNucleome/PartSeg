@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 write_to = "package/PartSeg/version.py"
-fallback_version = "0.16.3dev0"
+fallback_version = "0.16.5dev0"
 
 [project]
 name = "PartSeg"
@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Image Processing",
@@ -131,11 +132,11 @@ pyside = [
 ]
 pyside2 = [
     "PySide2!=5.15.0,>=5.12.3",
-    "napari[pyside]",
+    "napari[pyside]<0.7.0",
 ]
 pyside6 = [
     "PySide6",
-    "napari[pyside6_experimental]>=0.5.0",
+    "napari[pyside6]>=0.5.0",
 ]
 test = [
     "coverage",

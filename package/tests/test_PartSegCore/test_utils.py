@@ -1,5 +1,6 @@
 # pylint: disable=no-self-use
 import json
+import multiprocessing
 from unittest.mock import MagicMock
 
 import pytest
@@ -13,6 +14,7 @@ from PartSegCore.utils import (
     ProfileDict,
     get_callback,
     iterate_names,
+    prepare_error_data,
     recursive_update_dict,
 )
 
@@ -361,3 +363,22 @@ def test_base_model_getitem():
         assert ob["c"] == "3"
     with pytest.raises(KeyError):
         ob["d"]  # pylint: disable=pointless-statement
+
+
+def raise_in_depth(num=10):
+    if num <= 0:
+        raise ValueError("Deep exception for testing")
+    return raise_in_depth(num - 1)
+
+
+def test_prepare_error_data_put_in_queue():
+    q = multiprocessing.Queue()
+    try:
+        raise_in_depth()
+        pytest.fail("Should have raise")
+    except Exception as e:
+        prepped_exc = prepare_error_data(e)
+        q.put((1, [prepped_exc]))
+
+    item = q.get(timeout=1)
+    assert item[0] == 1

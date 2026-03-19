@@ -1,7 +1,9 @@
 import contextlib
 from contextlib import suppress
+from importlib import metadata
 
 import pytest
+from packaging.version import parse as parse_version
 from qtpy.QtWidgets import QDialog, QInputDialog, QMessageBox
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
@@ -9,6 +11,8 @@ from PartSeg._roi_mask.main_window import ChosenComponents
 from PartSeg._roi_mask.stack_settings import StackSettings
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui import napari_image_view
+
+NAPARI_GE_0_7_0 = parse_version(metadata.version("napari")) >= parse_version("0.7.0a0")
 
 
 @pytest.fixture
@@ -90,7 +94,7 @@ def _block_threads(monkeypatch, request):
             else:
                 old_start(self)
 
-    def not_start(self):
+    def not_start(self, time=None):
         raise RuntimeError("Thread should not be used in test")
 
     monkeypatch.setattr(QTimer, "start", not_start)
@@ -120,7 +124,10 @@ def _reset_napari_settings(monkeypatch, tmp_path):
 
     from napari import settings
 
-    cp = settings.NapariSettings.__private_attributes__["_config_path"]
+    if NAPARI_GE_0_7_0:
+        cp = settings.NapariSettings.model_fields["config_path"]
+    else:
+        cp = settings.NapariSettings.__private_attributes__["_config_path"]
     monkeypatch.setattr(cp, "default", tmp_path / "save.yaml")
     monkeypatch.setattr(settings.NapariSettings, "save", _mock_save)
     settings._SETTINGS = None

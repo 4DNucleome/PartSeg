@@ -73,7 +73,7 @@ class TestNapariViewer:
     def test_base(self, image, analysis_segmentation2, tmp_path):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "")
+        viewer = Viewer(settings, "", show=False)
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 2
         viewer.create_initial_layers(True, True, True, True)
@@ -92,7 +92,7 @@ class TestNapariViewer:
     def test_points(self, image, tmp_path, qtbot):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "")
+        viewer = Viewer(settings, "", show=False)
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 2
         points = np.array([[0, 1, 1, 1], [0, 7, 10, 10]])
@@ -113,7 +113,7 @@ class TestNapariViewer:
     def test_image(self, image, image2, tmp_path, qtbot):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "test")
+        viewer = Viewer(settings, "test", show=False)
         with qtbot.waitSignal(viewer._sync_widget.sync_image_chk.stateChanged):
             viewer._sync_widget.sync_image_chk.setChecked(True)
         assert len(viewer.layers) == 2
@@ -125,7 +125,7 @@ class TestNapariViewer:
     def test_roi(self, image, tmp_path, qtbot):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "test")
+        viewer = Viewer(settings, "test", show=False)
         viewer._sync_widget.sync_image()
         assert len(viewer.layers) == 2
         viewer._sync_widget.sync_ROI_chk.setChecked(True)
@@ -135,10 +135,11 @@ class TestNapariViewer:
         assert len(viewer.layers) == 4
         viewer.close()
 
-    def test_additional(self, image, tmp_path, qtbot):
+    @pytest.mark.usefixtures("qtbot")
+    def test_additional(self, image, tmp_path):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "test")
+        viewer = Viewer(settings, "test", show=False)
         viewer._sync_widget.sync_image()
         assert len(viewer.layers) == 2
         settings._additional_layers = {

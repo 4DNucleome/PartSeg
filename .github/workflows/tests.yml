@@ -25,7 +25,7 @@ jobs:
     name: Action lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Check workflow files
         run: |
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
@@ -36,11 +36,11 @@ jobs:
     name: Download test data
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: test_data
           path: test_data
@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         os: ["ubuntu-24.04"]
         qt_backend: ["PyQt5"]
         tox_args: [ "" ]
@@ -97,7 +97,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         os: ["ubuntu-24.04", "macos-15", "windows-2022"]
         qt_backend: ["PySide2", "PyQt5"]
         include:
@@ -156,7 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test_coverage, test_minimal]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
@@ -168,7 +168,7 @@ jobs:
           pip install codecov
 
       - name: Download coverage data
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           pattern: cov-reports-*
           path: coverage
@@ -181,7 +181,7 @@ jobs:
           python -Im coverage report --format=markdown --skip-empty --skip-covered >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: coverage_xml
           path: coverage.xml
@@ -198,7 +198,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: download_data
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -211,7 +211,7 @@ jobs:
       - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: test_data
           path: test_data
@@ -236,7 +236,7 @@ jobs:
         run: bash build_utils/create_environment_yml.sh
 
       - name: Upload environment file
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: environment
           path: environment.yml
@@ -257,7 +257,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: hynek/build-and-inspect-python-package@v2

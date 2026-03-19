@@ -453,7 +453,7 @@ def mask_operation_plan(request, simple_measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
-def wait_for_calculation(manager):
+def wait_for_calculation(manager: CalculationManager) -> None:
     for _ in range(int(120 / 0.1)):
         res = manager.get_results()
         if res.errors and res.errors[0][0].startswith("Unknown file"):
@@ -463,8 +463,15 @@ def wait_for_calculation(manager):
         else:
             break
     else:  # pragma: no cover
+        for file_writer in manager.writer.file_dict.values():
+            file_writer.dump_data()
         manager.kill_jobs()
-        pytest.fail("jobs hanged")
+        pytest.fail(
+            f"Jobs hanged. "
+            f"Work {manager.batch_manager.has_work}, task {manager.batch_manager.work_task}, "
+            f"empty queue {manager.batch_manager.result_queue.empty()} "
+            f"Writing finished {manager.writer.writing_finished()}"
+        )
 
     manager.writer.finish()
     if sys.platform == "darwin":

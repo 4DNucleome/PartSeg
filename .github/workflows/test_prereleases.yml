@@ -32,11 +32,11 @@ jobs:
     name: Download test data
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: test_data
           path: test_data
@@ -53,7 +53,7 @@ jobs:
         platform: [windows-2022, macos-14, ubuntu-24.04]
         python: [3.12]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v6
@@ -62,13 +62,14 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'pyproject.toml'
 
-      - name: Install Windows OpenGL
-        uses: pyvista/setup-headless-display-action@v4
-
-      - uses: tlambert03/setup-qt-libs@v1
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19 # v4.2
+        with:
+          qt: true
+          wm: herbstluftwm
 
       - name: Download test data
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: test_data
           path: test_data
@@ -80,10 +81,8 @@ jobs:
 
       - name: Test with tox base
         # run tests using pip install --pre
-        uses: aganders3/headless-gui@v2
         timeout-minutes: 60
-        with:
-          run: python -m tox run -v -- -v package/tests/test_PartSegImage package/tests/test_PartSegCore
+        run: python -m tox run -v -- -v package/tests/test_PartSegImage package/tests/test_PartSegCore
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
@@ -94,10 +93,8 @@ jobs:
 
       - name: Test with tox linux
         # run tests using pip install --pre
-        uses: aganders3/headless-gui@v2
         timeout-minutes: 60
-        with:
-          run: python -m tox run -v -- -v package/tests/test_PartSeg
+        run: python -m tox run -v -- -v package/tests/test_PartSeg
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
@@ -124,41 +121,40 @@ jobs:
     name: "Test pyinstaller build"
     runs-on: "ubuntu-latest"
     steps:
-    - uses: actions/checkout@v5
-    - uses: actions/setup-python@v6
-      name: Install Python
+    - uses: actions/checkout@v6
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v7
       with:
-        python-version: 3.x
-    - uses: tlambert03/setup-qt-libs@v1
-    - name: Install uv
-      run: pip install uv
+        activate-environment: 'true'
+        python-version: '3.12'
+    - name: Setup headless display
+      uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19 # v4.2
+      with:
+        qt: true
+        wm: herbstluftwm
     - name: Compile PyInstaller requirements
       run: |
         uv pip compile --prerelease allow --python-version 3.12 --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller
     - name: Install dependencies
       run: |
-        uv venv --python 3.12
         uv pip install -r requirements.txt
         uv pip install .
     - name: upload requirements
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: requirements
         path: requirements.txt
     - name: Run PyInstaller
       run: |
-        source .venv/bin/activate
         python build_utils/create_and_pack_executable.py
     - name: Upload bundle
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: bundle
         path: dist2/
     - name: Test bundle
-      uses: aganders3/headless-gui@v2
       timeout-minutes: 60
-      with:
-        run: dist/PartSeg/PartSeg _test
+      run: dist/PartSeg/PartSeg _test
 
       # If something goes wrong, we can open an issue in the repo
     - name: Report Failures
