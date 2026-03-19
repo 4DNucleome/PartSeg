@@ -5,7 +5,6 @@ from functools import partial
 from typing import Union
 
 import numpy as np
-from PyQt6.QtWidgets import QSplitter
 from qtpy.QtCore import QByteArray, Qt, Signal, Slot
 from qtpy.QtGui import QCloseEvent, QGuiApplication, QIcon, QKeySequence, QTextOption
 from qtpy.QtWidgets import (
@@ -22,6 +21,7 @@ from qtpy.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QSpinBox,
+    QSplitter,
     QTabWidget,
     QTextEdit,
     QVBoxLayout,
