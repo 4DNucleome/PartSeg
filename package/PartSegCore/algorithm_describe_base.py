@@ -116,7 +116,7 @@ class _GetDescriptionClass:
         if klass is None:
             klass = type(obj)
 
-        name = typing.cast(str, self._name)
+        name = typing.cast("str", self._name)
         fields_dkt = {
             field.name: (
                 Annotated[field.value_type, field.user_name, field.range, field.help_text],
@@ -269,7 +269,7 @@ class Register(dict, typing.Generic[AlgorithmType]):
 
     def values(self) -> typing.Iterable[AlgorithmType]:
         # noinspection PyTypeChecker
-        return typing.cast(typing.Iterable[AlgorithmType], super().values())
+        return typing.cast("typing.Iterable[AlgorithmType]", super().values())
 
     def __eq__(self, other):
         return (
@@ -286,9 +286,9 @@ class Register(dict, typing.Generic[AlgorithmType]):
     def __getitem__(self, item) -> AlgorithmType:
         # FIXME add better strategy to get proper class when there is conflict of names
         try:
-            return typing.cast(AlgorithmType, super().__getitem__(item))
+            return typing.cast("AlgorithmType", super().__getitem__(item))
         except KeyError:
-            return typing.cast(AlgorithmType, super().__getitem__(self._old_mapping[item]))
+            return typing.cast("AlgorithmType", super().__getitem__(self._old_mapping[item]))
 
     def __contains__(self, item):
         return super().__contains__(item) or item in self._old_mapping
@@ -501,8 +501,8 @@ class ROIExtractionProfile(BaseModel, metaclass=ROIExtractionProfileMeta):  # py
             return v
         if "algorithm" not in values:
             return v
-        from PartSegCore.analysis import AnalysisAlgorithmSelection
-        from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
+        from PartSegCore.analysis import AnalysisAlgorithmSelection  # noqa: PLC0415
+        from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection  # noqa: PLC0415
 
         name = values["algorithm"]
         is_analysis = name in AnalysisAlgorithmSelection
@@ -599,7 +599,7 @@ def _calc_value_range(field_info: FieldInfo):
     if field_info.metadata is None:
         return (0, 1000)
 
-    import annotated_types as at
+    import annotated_types as at  # because of pydantic 1   # noqa: PLC0415
 
     value_range = (0, 1000)
     for el in field_info.metadata:

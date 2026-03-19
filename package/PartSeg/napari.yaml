@@ -4,25 +4,25 @@ contributions:
   commands:
   - id: PartSeg.load_roi_project
     title: Get PartSeg ROI project Reader
-    python_name: PartSegCore.napari_plugins.load_roi_project:napari_get_reader
+    python_name: PartSeg.plugins.napari_io.load_roi_project:napari_get_reader
   - id: PartSeg.load_image
     title: Get Image Reader
-    python_name: PartSegCore.napari_plugins.load_image:napari_get_reader
+    python_name: PartSeg.plugins.napari_io.load_image:napari_get_reader
   - id: PartSeg.write_tiff_image
     title: Write tiff Image
-    python_name: PartSegCore.napari_plugins.save_tiff_layer:napari_write_images
+    python_name: PartSeg.plugins.napari_io.save_tiff_layer:napari_write_images
   - id: PartSeg.write_tiff_labels
     title: Write tiff Labels
-    python_name: PartSegCore.napari_plugins.save_tiff_layer:napari_write_labels
+    python_name: PartSeg.plugins.napari_io.save_tiff_layer:napari_write_labels
   - id: PartSeg.load_mask_project
     title: Get PartSeg mask project Reader
-    python_name: PartSegCore.napari_plugins.load_mask_project:napari_get_reader
+    python_name: PartSeg.plugins.napari_io.load_mask_project:napari_get_reader
   - id: PartSeg.save_mask_roi
     title: Write Labels as mask project
-    python_name: PartSegCore.napari_plugins.save_mask_roi:napari_write_labels
+    python_name: PartSeg.plugins.napari_io.save_mask_roi:napari_write_labels
   - id: PartSeg.load_masked_image
     title: Get Reader for image with mask
-    python_name: PartSegCore.napari_plugins.load_masked_image:napari_get_reader
+    python_name: PartSeg.plugins.napari_io.load_masked_image:napari_get_reader
   - id: PartSeg.SimpleMeasurement
     title: Create Simple Measurement
     python_name: PartSeg.plugins.napari_widgets.simple_measurement_widget:SimpleMeasurement
@@ -77,6 +77,9 @@ contributions:
   - id: PartSeg.Metadata
     title: View Layer Metadata
     python_name: PartSeg.plugins.napari_widgets:LayerMetadata
+  - id: PartSeg.Settings
+    title: PartSeg Settings
+    python_name: PartSeg.plugins.napari_widgets:SettingsEditor
   readers:
   - command: PartSeg.load_roi_project
     filename_patterns:
@@ -162,3 +165,5 @@ contributions:
     display_name: Watershed
   - command: PartSeg.Metadata
     display_name: Layer Metadata
+  - command: PartSeg.Settings
+    display_name: Settings Editor

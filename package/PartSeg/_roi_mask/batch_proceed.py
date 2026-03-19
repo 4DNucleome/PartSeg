@@ -3,7 +3,7 @@ import re
 from functools import partial
 from pathlib import Path
 from queue import Queue
-from typing import NamedTuple, Optional, Union, cast
+from typing import TYPE_CHECKING, NamedTuple, Optional, Union, cast
 
 from pydantic import BaseModel
 from qtpy.QtCore import QThread, Signal
@@ -12,8 +12,10 @@ from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.mask.algorithm_description import MaskAlgorithmSelection
 from PartSegCore.mask.io_functions import LoadROIImage, LoadStackImage, MaskProjectTuple, SaveROI
-from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
+
+if TYPE_CHECKING:
+    from PartSegCore.segmentation import StackAlgorithm
 
 
 class BatchTask(NamedTuple):
@@ -33,7 +35,7 @@ class BatchProceed(QThread):
     def __init__(self):
         super().__init__()
         self.queue = Queue()
-        self.algorithm = Optional[None]
+        self.algorithm = None
         self.parameters = None
         self.file_list = []
         self.index = 0
@@ -67,7 +69,7 @@ class BatchProceed(QThread):
             try:
                 name = os.path.basename(file_path)
                 blank = get_mask(project_tuple.roi_info.roi, project_tuple.mask, project_tuple.selected_components)
-                algorithm = cast(StackAlgorithm, MaskAlgorithmSelection[task.parameters.algorithm]())
+                algorithm = cast("StackAlgorithm", MaskAlgorithmSelection[task.parameters.algorithm]())
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
                 algorithm.set_parameters(task.parameters.values)
@@ -81,7 +83,7 @@ class BatchProceed(QThread):
                     project_tuple,
                     segmentation.roi_info,
                     (
-                        {i: segmentation.parameters for i in segmentation.roi_info.bound_info}
+                        dict.fromkeys(segmentation.roi_info.bound_info, segmentation.parameters)
                         if segmentation.roi_info is not None
                         else {}
                     ),

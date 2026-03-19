@@ -104,7 +104,7 @@ class LoadRecentFiles(QDialog):
         )
 
     def get_files(self) -> list[tuple[list[str], str]]:
-        return [item.data(Qt.ItemDataRole.UserRole) for item in self.file_list.selectedItems()]
+        return [tuple(item.data(Qt.ItemDataRole.UserRole)) for item in self.file_list.selectedItems()]
 
     def accept(self) -> None:
         self.settings.set_in_profile("multiple_files_dialog_size", (self.size().width(), self.size().height()))
@@ -264,7 +264,7 @@ class MultipleFileWidget(QWidget):
             return
         normed_file_path = os.path.normpath(state.file_path)
         sub_dict = self.state_dict[normed_file_path]
-        name = f"state {self.state_dict_count[normed_file_path]+1}"
+        name = f"state {self.state_dict_count[normed_file_path] + 1}"
         if custom_name:
             name, ok = QInputDialog.getText(self, "Save name", "Save name:", text=name)
             if not ok:

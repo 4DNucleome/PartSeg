@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import sys
 import typing
@@ -39,13 +40,27 @@ class ChannelInfo:
 
 @dataclass(**ch_par)
 class ChannelInfoFull:
+    """Full channel information used in :py:class:`.Image`"""
+
     name: str
     color_map: str | np.ndarray
     contrast_limits: tuple[float, float]
 
     def __post_init__(self):
+        """Normalize color_map to numpy array if it is not string."""
         if not isinstance(self.color_map, (str, np.ndarray)):
-            self.color_map = np.array(self.color_map)
+            self.color_map = np.array(self.color_map, dtype=np.uint8)
+        if isinstance(self.color_map, np.ndarray):
+            if self.color_map.dtype != np.uint8:
+                message = f"Colormap as array need to be uint8, not {self.color_map.dtype}"
+                raise ValueError(message)
+            if self.color_map.ndim in {1, 2}:
+                if self.color_map.shape[0] not in {3, 4}:
+                    message = f"Color map need to have 3 or 4 elements (RGB or RGBA), not {self.color_map.shape}"
+                    raise ValueError(message)
+            else:
+                message = f"Colormap as sequence need to be 1d or 2d array, not {self.color_map.shape}"
+                raise ValueError(message)
 
 
 def minimal_dtype(val: int):
@@ -219,6 +234,7 @@ class Image:
         data: _IMAGE_DATA,
         *,
         spacing: Spacing,
+        time_increment: float = 1.0,
         file_path=None,
         mask: None | np.ndarray = None,
         channel_info: list[ChannelInfo | ChannelInfoFull] | None = None,
@@ -241,6 +257,8 @@ class Image:
         self._channel_arrays = self._split_data_on_channels(data, axes_order)
         self._image_spacing = (1.0,) * (3 - len(spacing)) + spacing
         self._image_spacing = tuple(el if el > 0 else 10**-6 for el in self._image_spacing)
+        self._time_increment = 1.0
+        self.time_increment = time_increment
 
         self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
         self.name = name
@@ -269,7 +287,7 @@ class Image:
 
         res = [
             ChannelInfoFull(
-                name=ch_inf.name or f"channel {i+1}",
+                name=ch_inf.name or f"channel {i + 1}",
                 color_map=(
                     ch_inf.color_map if ch_inf.color_map is not None else next(default_colors)  # skipcq: PTC-W0063
                 ),
@@ -283,7 +301,7 @@ class Image:
         ]
         res.extend(
             ChannelInfoFull(
-                name=f"channel {i+1}",
+                name=f"channel {i + 1}",
                 color_map=next(default_colors),  # skipcq: PTC-W0063
                 contrast_limits=(np.min(arr), np.max(arr)),
             )
@@ -485,6 +503,7 @@ class Image:
         self,
         data=None,
         image_spacing=None,
+        time_increment: float | None = None,
         file_path=None,
         mask=_DEF,
         default_coloring=None,
@@ -494,6 +513,7 @@ class Image:
         """Create copy of image with substitution of not None elements"""
         data = self._channel_arrays if data is None else data
         image_spacing = self._image_spacing if image_spacing is None else image_spacing
+        time_increment = self._time_increment if time_increment is None else time_increment
         file_path = self.file_path if file_path is None else file_path
         mask = self._mask_array if mask is _DEF else mask
         default_coloring = self.default_coloring if default_coloring is None else default_coloring
@@ -508,6 +528,7 @@ class Image:
         return self.__class__(
             data=data,
             spacing=image_spacing,
+            time_increment=time_increment,
             file_path=file_path,
             mask=mask,
             axes_order=self.axis_order,
@@ -709,9 +730,9 @@ class Image:
         array = self.fit_array_to_image(array)
         slices: list[int | slice] = [slice(None) for _ in range(len(self.array_axis_order))]
         axis_pos = self.get_array_axis_positions()
-        for name in kwargs:
+        for name, value in kwargs.items():
             if (n := name.upper()) in axis_pos:
-                slices[axis_pos[n]] = kwargs[name]
+                slices[axis_pos[n]] = value
         return array[tuple(slices)]
 
     def get_channel(self, num: int | str | Channel) -> np.ndarray:
@@ -758,6 +779,18 @@ class Image:
     def spacing(self) -> Spacing:
         """image spacing"""
         return tuple(self._image_spacing[1:]) if self.is_2d else self._image_spacing
+
+    @property
+    def time_increment(self) -> float:
+        """time spacing in seconds"""
+        return self._time_increment
+
+    @time_increment.setter
+    def time_increment(self, value: float):
+        """set time spacing in seconds"""
+        if value <= 0:
+            raise ValueError("Time increment must be positive")
+        self._time_increment = value
 
     def normalized_scaling(self, factor=DEFAULT_SCALE_FACTOR) -> Spacing:
         if self.is_2d:
@@ -896,10 +929,14 @@ class Image:
             axes_order=self.axis_order,
         )
 
-    def get_imagej_colors(self):
+    def get_imagej_colors(self) -> list[np.ndarray[tuple[typing.Literal[3], typing.Literal[256]], np.dtype[np.uint8]]]:
+        """Get colors in format used by imagej
+
+        :return: list of 3x256 arrays with RGB values
+        :rtype: list of numpy.ndarray
+        """
         res = []
         for color in self.default_coloring:
-
             if isinstance(color, str):
                 if color.startswith("#"):
                     color_array = _hex_to_rgb(color)
@@ -908,17 +945,43 @@ class Image:
                 res.append(np.array([np.linspace(0, x, num=256) for x in color_array]).astype(np.uint8))
             elif color.ndim == 1:
                 res.append(np.array([np.linspace(0, x, num=256) for x in color]).astype(np.uint8))
-            else:
-                if color.shape[1] != 256:
-                    res.append(
-                        np.array(
-                            [
-                                np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
-                                for x in color
-                            ]
-                        )
+            elif color.shape[1] != 256:
+                res.append(
+                    np.array(
+                        [
+                            np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
+                            for x in color
+                        ]
                     )
-                res.append(color)
+                )
+            else:
+                res.append(color.astype(np.uint8))
+        return res
+
+    def get_ome_colors(self) -> list[int]:
+        """The ome stores colors as single integer encoding RGB value
+
+        :returns: list of integers representing colors
+        """
+
+        res = []
+        default_colors = ["red", "blue", "green", "yellow", "magenta", "cyan"]
+        for i, color in enumerate(self.default_coloring):
+            if isinstance(color, str):
+                if color.startswith("#"):
+                    color_array = _hex_to_rgb(color)
+                else:
+                    color_array = _name_to_rgb(color)
+                res.append(_rgb_to_signed_int(color_array))
+            elif color.ndim == 1:
+                # treat as RGB
+                res.append(_rgb_to_signed_int(tuple(color)[:3]))
+            else:
+                logging.warning(
+                    "Do not support custom colormap in ome colors. Use %s", default_colors[i % len(default_colors)]
+                )
+                color_array = _name_to_rgb(default_colors[i % len(default_colors)])
+                res.append(_rgb_to_signed_int(color_array))
         return res
 
     def get_colors(self) -> list[str | list[int]]:
@@ -999,6 +1062,12 @@ def _name_to_rgb(name: str) -> tuple[int, int, int]:
     if name not in _NAMED_COLORS:
         raise ValueError(f"Unknown color name: {name}")
     return _hex_to_rgb(_NAMED_COLORS[name])
+
+
+def _rgb_to_signed_int(rgb: tuple[int, int, int]) -> int:
+    """Convert an RGB tuple to a signed integer representation."""
+    r, g, b = (np.int32(x) for x in rgb[:3])
+    return np.int32((r << 24) | (g << 16) | (b << 8) | np.int32(255))
 
 
 try:

@@ -867,7 +867,7 @@ class CreatePlan(QWidget):
         conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
         if len(conflict_mask) > 0:
             logging.info("Mask in use")
-            show_warning("In use", f'Masks {", ".join(conflict_mask)} are used in other places')
+            show_warning("In use", f"Masks {', '.join(conflict_mask)} are used in other places")
 
             return
         self.mask_set -= used_mask
@@ -1141,7 +1141,7 @@ class CalculateInfo(QWidget):
             )
             if not ok:
                 return None
-            return self._save_roi_profile(typing.cast(ROIExtractionProfile, data.copy(update={"name": text})))
+            return self._save_roi_profile(typing.cast("ROIExtractionProfile", data.copy(update={"name": text})))
         self.settings.roi_profiles[data.name] = data
         return None
 
@@ -1152,7 +1152,7 @@ class CalculateInfo(QWidget):
             )
             if not ok:
                 return None
-            return self._save_measurement_profile(typing.cast(MeasurementProfile, data.copy(update={"name": text})))
+            return self._save_measurement_profile(typing.cast("MeasurementProfile", data.copy(update={"name": text})))
         self.settings.measurement_profiles[data.name] = data
         return None
 

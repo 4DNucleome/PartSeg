@@ -2,10 +2,12 @@ import sys
 from abc import ABC
 from collections.abc import Iterable
 from enum import Enum
+from importlib.metadata import version
 from typing import Any, ClassVar, ForwardRef, Optional, Union
 
 import numpy as np
 from local_migrator import REGISTER, class_to_str, register_class, rename_key
+from packaging.version import parse as parse_version
 from pydantic import Field, validator
 from sympy import Symbol, symbols
 
@@ -18,6 +20,8 @@ from PartSegCore.universal_const import Units
 from PartSegCore.utils import BaseModel
 from PartSegImage import Channel
 from PartSegImage.image import Spacing
+
+PYDANTIC_2 = parse_version(version("pydantic")) >= parse_version("2.0.0")
 
 
 @register_class(
@@ -71,7 +75,7 @@ def has_roi_components(component_and_mask_info: Iterable[tuple[PerComponent, Are
 
 
 def _migrate_leaf_dict(dkt):
-    from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
+    from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT  # noqa: PLC0415
 
     new_dkt = dkt.copy()
     new_dkt["parameter_dict"] = new_dkt.pop("dict")
@@ -105,7 +109,7 @@ class Leaf(BaseModel):
     def _validate_parameters(cls, v, values):  # pylint: disable=no-self-use
         if not isinstance(v, dict) or "name" not in values:
             return v
-        from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
+        from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT  # noqa: PLC0415
 
         if values["name"] not in MEASUREMENT_DICT:
             return v
@@ -215,7 +219,7 @@ class Leaf(BaseModel):
 
         :param ndim: data dimensionality
         """
-        from PartSegCore.analysis import MEASUREMENT_DICT
+        from PartSegCore.analysis import MEASUREMENT_DICT  # noqa: PLC0415
 
         method = MEASUREMENT_DICT[self.name]
         if self.power != 1:
@@ -306,7 +310,10 @@ class Node(BaseModel):
         return self.left.need_mask() or self.right.need_mask()
 
 
-Node.update_forward_refs()
+if PYDANTIC_2:
+    Node.model_rebuild()
+else:
+    Node.update_forward_refs()
 
 
 @register_class(
@@ -394,12 +401,6 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_starting_leaf(cls) -> Leaf:
         """This leaf is put on a default list"""
-        if (
-            hasattr(cls, "__argument_class__")
-            and cls.__argument_class__ is not None
-            and cls.__argument_class__ is not BaseModel
-        ):
-            return Leaf(name=cls._display_name(), parameters=cls.__argument_class__())
         return Leaf(name=cls._display_name())
 
     @classmethod

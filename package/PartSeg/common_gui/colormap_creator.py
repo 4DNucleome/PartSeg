@@ -377,7 +377,7 @@ class ChannelPreview(QWidget):
 
     :param colormap: colormap to show
     :param accepted: if checkbox should be checked
-    :param name: name which will be emitted in all signals as firs argument
+    :param name: name which will be emitted in all signals as first argument
     """
 
     selection_changed = Signal(str, bool)

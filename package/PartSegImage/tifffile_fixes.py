@@ -35,7 +35,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
             {'root': {'key': 1, 'attr': 'name'}}
 
             """
-            from defusedxml import cElementTree as etree  # delayed import
+            from defusedxml import cElementTree as etree  # delayed import  # noqa: PLC0415
 
             at = tx = ""
             if prefix:

@@ -11,13 +11,14 @@ from typing import TYPE_CHECKING, Optional, Union
 import napari
 import numpy as np
 from local_migrator import register_class
+from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
 from napari.layers.labels import Labels
 from napari.qt import QtViewer
 from napari.qt.threading import thread_worker
-from napari.utils.colormaps.colormap import ColormapInterpolationMode
+from napari.utils.colormaps import DirectLabelColormap
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
@@ -38,13 +39,7 @@ from PartSegImage import Image
 if TYPE_CHECKING:
     from vispy.scene import BaseCamera
 
-try:
-    from napari._qt.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
-except ImportError:
-    from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
-_napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
-_napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
-_napari_ge_4_19 = parse_version(napari.__version__) >= parse_version("0.4.19")
+
 _napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 
 # if run with numpy<2 on macOS arm64 architecture compiled from pypi wheels
@@ -69,46 +64,17 @@ class _NapariImage(NapariImage):
 
 def get_highlight_colormap():
     cmap_dict = {0: (0, 0, 0, 0), 1: "white", None: (0, 0, 0, 0)}
-    if _napari_ge_5:
-        from napari.utils.colormaps import DirectLabelColormap
-
-        return {"colormap": DirectLabelColormap(color_dict=cmap_dict)}
-
-    return {"color": cmap_dict}
+    return {"colormap": DirectLabelColormap(color_dict=cmap_dict)}
 
 
-class QtViewerPushButton(QtViewerPushButton_):
-    def __init__(self, viewer, *args, **kwargs):
-        if _napari_ge_4_13:
-            super().__init__(*args, **kwargs)
-        else:
-            super().__init__(viewer, *args, **kwargs)
+class QtNDisplayButton(QtViewerPushButton):
+    def __init__(self, viewer):
+        super().__init__(button_name="ndisplay_button", tooltip="Toggle dimensions", slot=self.toggle_ndisplay)
+        self.viewer = viewer
+        self.setCheckable(True)
 
-
-if _napari_ge_4_13:
-
-    class QtNDisplayButton(QtViewerPushButton_):
-        def __init__(self, viewer):
-            super().__init__(button_name="ndisplay_button", tooltip="Toggle dimensions", slot=self.toggle_ndisplay)
-            self.viewer = viewer
-            self.setCheckable(True)
-
-        def toggle_ndisplay(self):
-            self.viewer.dims.ndisplay = 2 + (self.viewer.dims.ndisplay == 2)
-
-else:
-    from napari.qt import QtStateButton
-
-    class QtNDisplayButton(QtStateButton):
-        def __init__(self, viewer):
-            super().__init__(
-                "ndisplay_button",
-                viewer.dims,
-                "ndisplay",
-                viewer.dims.events.ndisplay,
-                2,
-                3,
-            )
+    def toggle_ndisplay(self):
+        self.viewer.dims.ndisplay = 2 + (self.viewer.dims.ndisplay == 2)
 
 
 ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
@@ -197,15 +163,13 @@ class ImageView(QWidget):
 
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
-        self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self._reset_view)
-        self.points_view_button = QtViewerPushButton(
-            self.viewer, "new_points", "Show points", self.toggle_points_visibility
-        )
+        self.reset_view_button = QtViewerPushButton("home", "Reset view", self._reset_view)
+        self.points_view_button = QtViewerPushButton("new_points", "Show points", self.toggle_points_visibility)
         self.points_view_button.setVisible(False)
         self.search_roi_btn = SearchROIButton(self.settings)
         self.search_roi_btn.clicked.connect(self._search_component)
         self.search_roi_btn.setDisabled(True)
-        self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
+        self.roll_dim_button = QtViewerPushButton("roll", "Roll dimension", self._rotate_dim)
         self.roll_dim_button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
         self.mask_chk = QCheckBox()
@@ -250,9 +214,8 @@ class ImageView(QWidget):
 
         if hasattr(self.viewer_widget.canvas, "background_color_override"):
             self.viewer_widget.canvas.background_color_override = "black"
-            if _napari_ge_4_17:
-                self.viewer.scale_bar.color = "white"
-                self.viewer.scale_bar.colored = True
+            self.viewer.scale_bar.color = "white"
+            self.viewer.scale_bar.colored = True
 
     def _connect_to_settings(self):
         self.settings.mask_changed.connect(self.set_mask)
@@ -483,40 +446,16 @@ class ImageView(QWidget):
             or colors.size == 0
         ):
             return {0: [0, 0, 0, 0], None: [0, 0, 0, 0]}
-
-        res = {x: colors[(x - 1) % colors.shape[0]] for x in range(1, image_info.roi_count + 1)}
+        res = {
+            x: colors[(x - 1) % colors.shape[0]]
+            for x in range(1, image_info.roi_info.get_components_num(self.roi_alternative_selection) + 1)
+        }
         res[0] = [0, 0, 0, 0]
         res[None] = [0, 0, 0, 0]
         return res
 
     def set_roi_colormap(self, image_info) -> None:
-        if _napari_ge_4_19:
-            from napari.utils.colormaps import DirectLabelColormap
-
-            image_info.roi.colormap = DirectLabelColormap(color_dict=self.get_roi_view_parameters(image_info))
-            return
-        if _napari_ge_4_13:
-            image_info.roi.color = self.get_roi_view_parameters(image_info)
-            return
-        colors = self.settings.label_colors / 255
-        if (
-            self.settings.get_from_profile(f"{self.name}.image_state.show_label", LabelEnum.Show_results)
-            == LabelEnum.Not_show
-            or image_info.roi_count == 0
-            or colors.size == 0
-        ):
-            image_info.roi.colormap = Colormap([[0, 0, 0, 0], [0, 0, 0, 0]])
-
-        res = [[*list(colors[(x - 1) % colors.shape[0]]), 1] for x in range(image_info.roi_count + 1)]
-        res[0] = [0, 0, 0, 0]
-        if len(res) < 2:
-            res += [[0, 0, 0, 0] for _ in range(2 - len(res))]
-
-        image_info.roi.colormap = Colormap(colors=res, interpolation=ColormapInterpolationMode.ZERO)
-        max_val = image_info.roi_count + 1
-        image_info.roi._all_vals = np.array(  # pylint: disable=protected-access
-            [0] + [(x + 1) / (max_val + 1) for x in range(1, max_val)]
-        )
+        image_info.roi.colormap = DirectLabelColormap(color_dict=self.get_roi_view_parameters(image_info))
 
     def update_roi_coloring(self):
         for image_info in self.image_info.values():
@@ -596,12 +535,8 @@ class ImageView(QWidget):
         else:
             image_info.mask.data = mask_marker
         image_info.mask.metadata["valid"] = True
-        if _napari_ge_4_19:
-            from napari.utils.colormaps import DirectLabelColormap
+        image_info.mask.colormap = DirectLabelColormap(color_dict=self.mask_color())
 
-            image_info.mask.colormap = DirectLabelColormap(color_dict=self.mask_color())
-        else:
-            image_info.mask.color = self.mask_color()
         image_info.mask.opacity = self.mask_opacity()
         image_info.mask.visible = self.mask_chk.isChecked()
         self._toggle_mask_chk_visibility()
@@ -620,12 +555,7 @@ class ImageView(QWidget):
         for image_info in self.image_info.values():
             if image_info.mask is not None:
                 image_info.mask.opacity = opacity
-                if _napari_ge_4_19:
-                    from napari.utils.colormaps import DirectLabelColormap
-
-                    image_info.mask.colormap = DirectLabelColormap(color_dict=colormap)
-                else:
-                    image_info.mask.color = colormap
+                image_info.mask.colormap = DirectLabelColormap(color_dict=colormap)
 
     def set_image(self, image: Optional[Image] = None):
         self.image_info = {}
@@ -1006,7 +936,10 @@ class ImageView(QWidget):
 class NapariQtViewer(QtViewer):
     def __init__(self, viewer):
         super().__init__(viewer, show_welcome_screen=False)
-        self.widget(0).layout().setContentsMargins(0, 5, 0, 2)
+        layout = self.widget(0).layout()
+        if layout is not None:
+            # Before napari 0.7.0
+            layout.setContentsMargins(0, 5, 0, 2)
 
     def dragEnterEvent(self, event):  # pylint: disable=no-self-use
         """
@@ -1120,7 +1053,7 @@ def _print_dict(dkt: MutableMapping, indent="") -> str:
     res = []
     for k, v in dkt.items():
         if isinstance(v, MutableMapping):
-            res.append(f'{indent}{k}:\n{_print_dict(v, f"{indent}  ")}')
+            res.append(f"{indent}{k}:\n{_print_dict(v, f'{indent}  ')}")
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)

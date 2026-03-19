@@ -761,7 +761,7 @@ class TestConvexFill:
         assert _convex_fill(arr) is None
 
 
-class TestSegmentationInfo:
+class TestROIInfo:
     def test_none(self):
         si = ROIInfo(None)
         assert si.roi is None
@@ -816,6 +816,21 @@ class TestSegmentationInfo:
         si = ROIInfo(data)
         assert np.all(si.bound_info[1].lower == 2)
         assert np.all(si.bound_info[1].upper == [10 * comp_num - 1, 8])
+
+    def test_alternative(self):
+        data = np.zeros((10, 10), dtype=np.uint8)
+        data[2:8, 2:4] = 1
+        data[2:8, 4:8] = 2
+        alt1 = np.copy(data)
+        alt1[data == 1] = 4
+        alt1[data == 2] = 1
+        alt2 = np.zeros((10, 10), dtype=np.uint8)
+
+        ri = ROIInfo(data, alternative={"alt1": alt1, "alt2": alt2})
+        assert ri.get_components_num("ROI") == 2
+        assert ri.get_components_num("alt1") == 4
+        assert ri.get_components_num("alt2") == 0
+        assert ri.get_components_num("alt3") == 2
 
 
 def test_bound_info():

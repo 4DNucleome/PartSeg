@@ -43,7 +43,10 @@ if napari_version <= parse_version("0.4.16"):
         return Path(qt_resources.__file__).parent / f"{key}.py"
 else:
     def import_resources():
+        from napari.utils import theme
         from napari import resources
+
+        del theme
 
         return os.path.join(os.path.dirname(resources.__file__), "icons")
 
@@ -62,7 +65,7 @@ from imageio.config.plugins import known_plugins as imageio_known_plugins
 
 hiddenimports = (
     [f"imagecodecs.{y}" for y in (x if x[0] == "_" else f"_{x}" for x in imagecodecs._extensions())]
-    + ["imagecodecs._shared"]
+    + ["imagecodecs._shared", "imagecodecs._shared_cython"]
     + plugins
     + ["pkg_resources.py2_warn", "ipykernel.datapub"]
     + [
@@ -83,6 +86,7 @@ hiddenimports = (
         "nme",
         "defusedxml.cElementTree",
         "vispy.app.backends._pyqt5",
+        "vispy.app.backends._pyqt6",
         "magicgui.backends._qtpy",
         "freetype",
         "psygnal._signal",
@@ -90,7 +94,8 @@ hiddenimports = (
         "psygnal._weak_callback",
         "imagecodecs._imagecodecs",
         "PartSeg.plugins.napari_widgets",
-        "PartSegCore.napari_plugins",
+        "PartSegCore.napari_io",
+        "tzdata",
     ]
     + [x.module_name for x in imageio_known_plugins.values()]
     + [x for x in collect_submodules("skimage") if "tests" not in x]
@@ -179,6 +184,7 @@ a = Analysis(
     + collect_data_files("freetype")
     + collect_data_files("skimage")
     + collect_data_files("fonticon_fa6")
+    + collect_data_files('tzdata')
     + collect_data_files("jsonschema_specifications")
     + collect_data_files("PartSegCore-compiled-backend")
     + pyzmq_data

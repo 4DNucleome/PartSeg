@@ -126,16 +126,16 @@ def test_register_errors():
         def get_fields(cls):
             return []  # pragma: no cover
 
-    with pytest.raises(ValueError, match="Class .* need to define classmethod 'get_name'"):
+    with pytest.raises(ValueError, match=r"Class .* need to define classmethod 'get_name'"):
         TestSelection.register(Alg1)
 
-    with pytest.raises(ValueError, match="Class .* need to implement classmethod 'get_name'"):
+    with pytest.raises(ValueError, match=r"Class .* need to implement classmethod 'get_name'"):
         TestSelection.register(Alg2)
 
-    with pytest.raises(ValueError, match="Class .* need to implement classmethod 'get_name'"):
+    with pytest.raises(ValueError, match=r"Class .* need to implement classmethod 'get_name'"):
         TestSelection.__register__["test1"] = Alg2
 
-    with pytest.raises(ValueError, match="Function get_name of class .* need return string not .*int"):
+    with pytest.raises(ValueError, match=r"Function get_name of class .* need return string not .*int"):
         TestSelection.register(Alg3)
 
 
@@ -172,7 +172,7 @@ def test_register_name_collision():
 
     TestSelection.register(Alg1, old_names=["0"])
     with pytest.raises(
-        ValueError, match="Object .* with this name: '1' already exist and register is not in replace mode"
+        ValueError, match=r"Object .* with this name: '1' already exist and register is not in replace mode"
     ):
         TestSelection.register(Alg2)
 
@@ -195,7 +195,7 @@ def test_register_not_subclass():
         def get_fields(cls):
             return []  # pragma: no cover
 
-    with pytest.raises(ValueError, match="Class .* need to be subclass of .*AlgorithmDescribeBase"):
+    with pytest.raises(ValueError, match=r"Class .* need to be subclass of .*AlgorithmDescribeBase"):
         TestSelection.register(Alg1)
 
 
@@ -566,7 +566,6 @@ class TestROIExtractionProfile:
         assert prof.dict()["values"]["threshold"]["values"]["threshold"] == 8000
 
     def test_pretty_print(self):
-
         prof1 = ROIExtractionProfile(name="aaa", algorithm="Lower threshold", values={})
         assert prof1.pretty_print(AnalysisAlgorithmSelection).startswith("ROI extraction profile name:")
         prof1 = ROIExtractionProfile(name="", algorithm="Lower threshold", values={})

@@ -687,7 +687,7 @@ class AlgorithmOptions(QWidget):
             settings=self.settings,
             system_widget=False,
             path="io.save_batch",
-            file_mode=PSaveDialog.Directory,
+            file_mode=PSaveDialog.FileMode.Directory,
         )
         if not dial.exec_():
             return
@@ -999,7 +999,7 @@ class MainWindow(BaseMainWindow):
             file_path=file_path,
             image=image,
             roi_info=roi_info,
-            roi_extraction_parameters={i: None for i in roi_info.bound_info},
+            roi_extraction_parameters=dict.fromkeys(roi_info.bound_info),
         )
 
     def set_data(self, data):

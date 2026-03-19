@@ -38,20 +38,14 @@ stages:
       - job: check_formating
         pool:
           vmImage: ubuntu-latest
-        variables:
-          PRE_COMMIT_HOME: $(Pipeline.Workspace)/pre-commit-cache
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.12', architecture: x64}}
           - script: echo "##vso[task.setvariable variable=PY]$(python -VV)"
-          - task: Cache@2
-            inputs:
-              key: pre-commit | .pre-commit-config.yaml | "$(PY)"
-              path: $(PRE_COMMIT_HOME)
           - bash: |
-              python -m pip install pre-commit
+              python -m pip install prek
             displayName: InstallDeps
-          - bash: pre-commit run --all --show-diff-on-failure
-            displayName: pre-commmit
+          - bash: prek run --all-files --show-diff-on-failure
+            displayName: Check Formatting (pre-commit hook)
 
   - stage: manifest_check
     dependsOn: []
@@ -139,9 +133,9 @@ stages:
       strategy:
         matrix:
           macos:
-            imageName: 'macos-13'
+            imageName: 'macos-14'
           windows:
-            imageName: 'windows-2019'
+            imageName: 'windows-2022'
       pool: {vmImage: $(imageName)}
       steps:
         - template: .azure-pipelines/tests.yaml
@@ -166,15 +160,15 @@ stages:
 
       - job: pyinstaller_linux
         variables:
-          test_path: dist/PartSeg/PartSeg _test
+          test_command: dist/PartSeg/PartSeg _test
           DISPLAY: ':99.0'
           pip_cache_dir: $(Pipeline.Workspace)/.pip
-        pool: { vmImage: 'Ubuntu-20.04' }
+        pool: { vmImage: 'Ubuntu-22.04' }
         steps:
           - template: .azure-pipelines/linux_libs.yaml
           - template: .azure-pipelines/pyinstaller.yaml
             parameters:
-              test_path: $(test_path)
+              test_command: $(test_command)
               cache_dir: $(pip_cache_dir)
 
       - job: pyinstaller
@@ -182,19 +176,16 @@ stages:
         strategy:
           matrix:
             macos:
-              imageName: 'macos-13'
-              test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
-            macos_arm:
               imageName: 'macos-14'
-              test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
+              test_command: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
             windows:
-              imageName: 'windows-2019'
-              test_path: dist\PartSeg\PartSeg _test
+              imageName: 'windows-2022'
+              test_command: dist\PartSeg\PartSeg _test
         variables:
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         pool: {vmImage: $(imageName)}
         steps:
           - template: .azure-pipelines/pyinstaller.yaml
             parameters:
-              test_path: $(test_path)
+              test_command: $(test_command)
               cache_dir: $(pip_cache_dir)

@@ -98,7 +98,7 @@ class CustomSaveDialog(LoadRegisterFileDialog):
             return
         with suppress(ValueError):
             self.stack_widget.setCurrentIndex(self.names.index(text))
-            if typing.cast(FormWidget, self.stack_widget.currentWidget()).has_elements():
+            if typing.cast("FormWidget", self.stack_widget.currentWidget()).has_elements():
                 self.stack_widget.show()
             else:
                 self.stack_widget.hide()
@@ -120,7 +120,7 @@ class CustomSaveDialog(LoadRegisterFileDialog):
     def accept(self):
         self.accepted_native = True
         if hasattr(self, "stack_widget"):
-            self.values = typing.cast(FormWidget, self.stack_widget.currentWidget()).get_values()
+            self.values = typing.cast("FormWidget", self.stack_widget.currentWidget()).get_values()
             super().accept()
             return
         save_class = self.io_register[self.selectedNameFilter()]
@@ -184,7 +184,10 @@ class PSaveDialog(CustomSaveDialog):
         super().accept()
         if self.result() != QDialog.DialogCode.Accepted:
             return
-        directory = os.path.dirname(self.selectedFiles()[0])
+        if self.fileMode() == QFileDialog.FileMode.Directory:
+            directory = self.selectedFiles()[0]
+        else:
+            directory = os.path.dirname(self.selectedFiles()[0])
         self.settings.add_path_history(directory)
         self.settings.set(self.path_in_dict, directory)
         if self.filter_path:

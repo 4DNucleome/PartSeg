@@ -14,7 +14,6 @@ from napari.utils import Colormap
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QObject, QTimer, Signal
 
-from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
@@ -43,9 +42,11 @@ from PartSeg.plugins.napari_widgets.algorithm_widgets import (
 )
 from PartSeg.plugins.napari_widgets.colormap_control import NapariColormapControl
 from PartSeg.plugins.napari_widgets.lables_control import LabelSelector, NapariLabelShow
-from PartSeg.plugins.napari_widgets.measurement_widget import update_properties
+from PartSeg.plugins.napari_widgets.measurement_widget import Measurement, update_properties
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSeg.plugins.napari_widgets.search_label_widget import HIGHLIGHT_LABEL_NAME
+from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
+from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
@@ -57,6 +58,7 @@ from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
 from PartSegCore.segmentation.watershed import WatershedSelection
+from PartSegCore.universal_const import LayerNamingFormat
 
 NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
 NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
@@ -64,12 +66,12 @@ NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
 if NAPARI_GE_4_19:
 
     def check_auto_mode(layer):
-        from napari.utils.colormaps import CyclicLabelColormap
+        from napari.utils.colormaps import CyclicLabelColormap  # noqa: PLC0415
 
         assert isinstance(layer.colormap, CyclicLabelColormap)
 
     def check_direct_mode(layer):
-        from napari.utils.colormaps import DirectLabelColormap
+        from napari.utils.colormaps import DirectLabelColormap  # noqa: PLC0415
 
         assert isinstance(layer.colormap, DirectLabelColormap)
 
@@ -85,7 +87,7 @@ else:
 @pytest.fixture(autouse=True)
 def _clean_settings(tmp_path):
     old_settings = _settings._SETTINGS
-    _settings._SETTINGS = PartSettings(tmp_path)
+    _settings._SETTINGS = _settings.PartSegNapariSettings(tmp_path)
     yield
     _settings._SETTINGS = old_settings
 
@@ -199,8 +201,6 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp
 
 
 def test_simple_measurement_create(make_napari_viewer, qtbot):
-    from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
-
     data = np.zeros((10, 10), dtype=np.uint8)
 
     viewer = make_napari_viewer()
@@ -227,8 +227,6 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
 @pytest.mark.enabledialog
 @pytest.mark.usefixtures("qtbot")
 def test_measurement_create(make_napari_viewer, bundle_test_dir, monkeypatch):
-    from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
-
     monkeypatch.setattr(
         "PartSeg.plugins.napari_widgets.measurement_widget.show_info",
         Mock(side_effect=RuntimeError("should not be called")),
@@ -639,3 +637,29 @@ class TestLayerMetadata:
 def test_enum():
     assert " " in str(CompareType.lower_threshold)
     assert " " in str(FlowType.dark_center)
+
+
+class TestSettingsWidget:
+    def test_create(self, qtbot):
+        w = _settings.SettingsEditor()
+        qtbot.addWidget(w.native)
+
+    def test_change_units(self, qtbot):
+        s = _settings.get_settings()
+        s.io_units = Units.µm
+        w = _settings.SettingsEditor()
+        qtbot.addWidget(w.native)
+        w.units_select.value = Units.nm
+        assert s.io_units == Units.nm
+        s.io_units = Units.mm
+        assert w.units_select.value == Units.mm
+
+    def test_change_layer_name_format(self, qtbot):
+        s = _settings.get_settings()
+        s.layer_naming_format = LayerNamingFormat.channel_only
+        w = _settings.SettingsEditor()
+        qtbot.addWidget(w.native)
+        w.layer_naming_select.value = LayerNamingFormat.channel_filename
+        assert s.layer_naming_format == LayerNamingFormat.channel_filename
+        s.layer_naming_format = LayerNamingFormat.channel_only
+        assert w.layer_naming_select.value == LayerNamingFormat.channel_only

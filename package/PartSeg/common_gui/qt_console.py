@@ -137,8 +137,8 @@ class QtConsole(RichJupyterWidget):  # pylint: disable=abstract-method
 
     def _update_theme(self, event=None):
         """Update the napari GUI theme."""
-        from napari.qt import get_stylesheet
-        from napari.utils.theme import get_theme, template
+        from napari.qt import get_stylesheet  # noqa: PLC0415
+        from napari.utils.theme import get_theme, template  # noqa: PLC0415
 
         # qtconsole unfortunately won't inherit the parent stylesheet
         # so it needs to be directly set

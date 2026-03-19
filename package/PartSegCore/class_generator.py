@@ -308,8 +308,7 @@ class BaseMeta(type):
                 defaults_dict[field_name] = default_value
             elif defaults:
                 raise TypeError(
-                    "Non-default namedtuple field {field_name} cannot "
-                    "follow default field(s) {default_names}".format(
+                    "Non-default namedtuple field {field_name} cannot follow default field(s) {default_names}".format(
                         field_name=field_name, default_names=", ".join(defaults_dict.keys())
                     )
                 )
@@ -393,10 +392,8 @@ def serialize_hook(dkt: dict):
             dkt["__error__"] = True
             return dkt
         del dkt["__subtype__"]
-        if "__Serializable__" in dkt:
-            del dkt["__Serializable__"]
-        else:
-            del dkt["__ReadOnly__"]
+        dkt.pop("__Serializable__", None)
+        dkt.pop("__ReadOnly__", None)
         if isinstance(cls, collections.abc.Iterator):
             keys = set(dkt.keys())
             for el in cls:

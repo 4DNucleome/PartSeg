@@ -8,7 +8,7 @@ requires_list = [x for x in requires("PartSeg") if ";" not in x and ">=" in x]
 requires_regexp = re.compile(r"^([A-Za-z][A-Za-z0-9\-]+).*>=(\d[^,)]+)")
 
 
-@pytest.mark.skipif(not os.environ.get("MINIMAL_REQUIREMENTS", False), reason="not running minimum requirement test")
+@pytest.mark.skipif(not os.environ.get("MINIMAL_REQUIREMENTS", ""), reason="not running minimum requirement test")
 @pytest.mark.parametrize("requirement_specifier", requires_list)
 def test_min_req(requirement_specifier):
     match = requires_regexp.match(requirement_specifier)

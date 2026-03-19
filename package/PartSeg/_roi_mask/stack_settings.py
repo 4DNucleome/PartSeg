@@ -218,6 +218,7 @@ class StackSettings(BaseSettings):
         """
 
         # TODO Refactor
+        new_roi_info = new_roi_info.fit_to_image(state.image)
         if not save_chosen or state.roi_info.roi is None or len(state.selected_components) == 0:
             return dataclasses.replace(
                 state,

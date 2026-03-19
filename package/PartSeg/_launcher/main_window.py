@@ -1,9 +1,10 @@
 import importlib
 import os
-import warnings
 from functools import partial
 from typing import TYPE_CHECKING
 
+import napari
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QSize, Qt, QThread, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QProgressBar, QToolButton, QWidget
@@ -19,6 +20,9 @@ if TYPE_CHECKING:
     from PartSeg.common_gui.main_window import BaseMainWindow
 
 
+_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
+
+
 class Prepare(QThread):
     def __init__(self, module: str):
         super().__init__()
@@ -30,7 +34,7 @@ class Prepare(QThread):
         if not self.module:  # pragma: no cover
             return
 
-        from PartSeg import plugins
+        from PartSeg import plugins  # noqa: PLC0415
 
         plugins.register()
         main_window_module = importlib.import_module(self.module)
@@ -142,8 +146,9 @@ class MainWindow(QMainWindow):
 
     def _update_theme(self):
         napari_settings = napari_get_settings(state_store.save_folder)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
+        if _napari_ge_5:
+            theme = get_theme(napari_settings.appearance.theme).to_rgb_dict()
+        else:
             theme = get_theme(napari_settings.appearance.theme, as_dict=True)
         # TODO understand qss overwrite mechanism
         self.setStyleSheet(napari_template(get_stylesheet(), **theme))

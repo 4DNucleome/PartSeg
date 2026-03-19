@@ -1,10 +1,12 @@
 import warnings
 
+import napari
 import numpy as np
 from magicgui.widgets import Container, HBox, PushButton, SpinBox, create_widget
 from napari import Viewer
 from napari.layers import Labels
 from napari.utils.notifications import show_info
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QTimer
 from vispy.geometry import Rect
 
@@ -12,6 +14,8 @@ from PartSeg.common_gui.napari_image_view import SearchType, get_highlight_color
 from PartSegCore.roi_info import ROIInfo
 
 HIGHLIGHT_LABEL_NAME = ".Highlight"
+
+_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 
 
 class SearchLabel(Container):
@@ -106,8 +110,10 @@ class SearchLabel(Container):
         u_bound = upper_bound[-2:][::-1]
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "Public access to Window.qt_viewer")
-            warnings.filterwarnings("ignore", "Access to QtViewer.view is deprecated")
-            rect = Rect(self.napari_viewer.window.qt_viewer.view.camera.get_state()["rect"])
+            if _napari_ge_5:
+                rect = Rect(self.napari_viewer.window.qt_viewer.canvas.view.camera.get_state()["rect"])
+            else:
+                rect = Rect(self.napari_viewer.window.qt_viewer.view.camera.get_state()["rect"])
         if rect.contains(*l_bound) and rect.contains(*u_bound):
             return
         size = u_bound - l_bound
@@ -124,8 +130,10 @@ class SearchLabel(Container):
         rect.pos = pos
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "Public access to Window.qt_viewer")
-            warnings.filterwarnings("ignore", "Access to QtViewer.view is deprecated")
-            self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
+            if _napari_ge_5:
+                self.napari_viewer.window.qt_viewer.canvas.view.camera.set_state({"rect": rect})
+            else:
+                self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
 
     @staticmethod
     def _data_to_world(layer: Labels, cords):
@@ -148,8 +156,10 @@ class SearchLabel(Container):
             rect = Rect(pos=(lower_bound - frame)[-2:][::-1], size=(diff + 2 * frame)[-2:][::-1])
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", "Public access to Window.qt_viewer")
-                warnings.filterwarnings("ignore", "Access to QtViewer.view is deprecated")
-                self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
+                if _napari_ge_5:
+                    self.napari_viewer.window.qt_viewer.canvas.view.camera.set_state({"rect": rect})
+                else:
+                    self.napari_viewer.window.qt_viewer.view.camera.set_state({"rect": rect})
         self._update_point(lower_bound, upper_bound)
 
     def _update_point(self, lower_bound, upper_bound):

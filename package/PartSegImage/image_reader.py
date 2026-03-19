@@ -1,23 +1,23 @@
-import inspect
 import os.path
 import typing
 from abc import abstractmethod
 from contextlib import suppress
-from importlib.metadata import version
+from importlib import metadata
 from io import BytesIO
 from itertools import zip_longest
 from pathlib import Path
 from threading import Lock
 
-import imagecodecs
 import numpy as np
 import tifffile
-from czifile.czifile import DECOMPRESS, CziFile
+from czifile import CziFile
 from defusedxml import ElementTree
 from oiffile import OifFile
 from packaging.version import parse as parse_version
 
 from PartSegImage.image import ChannelInfo, Image
+
+CZIFILE_ABOVE_2026_3_12 = parse_version(metadata.version("czifile")) >= parse_version("2026.3.12")
 
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
@@ -27,72 +27,6 @@ if typing.TYPE_CHECKING:
 
 
 CZI_MAX_WORKERS = None
-
-
-class ZSTD1Header(typing.NamedTuple):
-    """
-    ZSTD1 header structure
-    based on:
-    https://github.com/ZEISS/libczi/blob/4a60e22200cbf0c8ff2a59f69a81ef1b2b89bf4f/Src/libCZI/decoder_zstd.cpp#L19
-    """
-
-    header_size: int
-    hiLoByteUnpackPreprocessing: bool
-
-
-def parse_zstd1_header(data: bytes, size: int) -> ZSTD1Header:  # pragma: no cover
-    """
-    Parse ZSTD header
-
-    https://github.com/ZEISS/libczi/blob/4a60e22200cbf0c8ff2a59f69a81ef1b2b89bf4f/Src/libCZI/decoder_zstd.cpp#L84
-    """
-    if size < 1:
-        return ZSTD1Header(0, False)
-
-    if data[0] == 1:
-        return ZSTD1Header(1, False)
-
-    if data[0] == 3 and size < 3:
-        return ZSTD1Header(0, False)
-
-    if data[1] == 1:
-        return ZSTD1Header(3, bool(data[2] & 1))
-
-    return ZSTD1Header(0, False)
-
-
-def _get_dtype():
-    return inspect.currentframe().f_back.f_back.f_locals["de"].dtype
-
-
-def decode_zstd1(data: bytes) -> np.ndarray:
-    """
-    Decode ZSTD1 data
-    """
-    header = parse_zstd1_header(data, len(data))
-    dtype = _get_dtype()
-    if header.hiLoByteUnpackPreprocessing:
-        array_ = np.frombuffer(imagecodecs.zstd_decode(data[header.header_size :]), np.uint8).copy()
-        half_size = array_.size // 2
-        array = np.empty(half_size, np.uint16)
-        array[:] = array_[:half_size] + (array_[half_size:].astype(np.uint16) << 8)
-        array = array.view(dtype)
-    else:
-        array = np.frombuffer(imagecodecs.zstd_decode(data[header.header_size :]), dtype).copy()
-    return array
-
-
-def decode_zstd0(data: bytes) -> np.ndarray:
-    """
-    Decode ZSTD0 data
-    """
-    dtype = _get_dtype()
-    return np.frombuffer(imagecodecs.zstd_decode(data), dtype).copy()
-
-
-if parse_version(version("czifile")) == parse_version("2019.7.2"):
-    DECOMPRESS[5] = decode_zstd0
-    DECOMPRESS[6] = decode_zstd1
 
 
 def _empty(_, __):
@@ -126,6 +60,7 @@ class BaseImageReader:
     def __init__(self, callback_function: typing.Optional[typing.Callable[[str, int], typing.Any]] = None) -> None:
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
+        self.time_increment = 1.0
         self.channel_names: list[str] = []
         self.colors: list[typing.Optional[typing.Any]] = []
         self.ranges: list[tuple[float, float]] = []
@@ -360,9 +295,17 @@ class CziImageReader(BaseImageReaderBuffer):
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         image_file = CziFile(image_path)
-        image_data = image_file.asarray(max_workers=CZI_MAX_WORKERS)
-        image_data = self.update_array_shape(image_data, image_file.axes)
-        metadata = image_file.metadata(False)
+
+        if CZIFILE_ABOVE_2026_3_12:
+            image_data = image_file.asarray(maxworkers=CZI_MAX_WORKERS)
+            axes = image_file.scenes[0].axes
+            metadata = image_file.metadata(asdict=True)
+        else:
+            image_data = image_file.asarray(max_workers=CZI_MAX_WORKERS)
+            axes = image_file.axes
+            metadata = image_file.metadata(False)
+        image_data = self.update_array_shape(image_data, axes)
+
         with suppress(KeyError):
             scaling = metadata["ImageDocument"]["Metadata"]["Scaling"]["Items"]["Distance"]
             scale_info = {el["Id"]: el["Value"] for el in scaling}
@@ -452,7 +395,7 @@ class ObsepImageReader(BaseImageReader):
             float(xml_doc.find("net/node/attribute[@name='step width']/double").attrib["val"]) * name_to_scalar["um"]
         )
 
-        image.set_spacing((z_spacing,) + image.spacing[1:])
+        image.set_spacing((z_spacing, *image.spacing[1:]))
         image.file_path = str(image_path)
         return image
 
@@ -535,6 +478,7 @@ class TiffImageReader(BaseImageReaderBuffer):
             shift=self.shift,
             name=self.name,
             metadata_dict=self.metadata,
+            time_increment=self.time_increment,
         )
 
     @staticmethod
@@ -589,18 +533,49 @@ class TiffImageReader(BaseImageReaderBuffer):
             x_spacing, y_spacing = self.default_spacing[2], self.default_spacing[1]
         return x_spacing, y_spacing
 
-    def read_imagej_metadata(self, image_file):
+    @staticmethod
+    def _read_imagej_colors(
+        image_file: tifffile.TiffFile,
+    ) -> list[np.ndarray[tuple[int, int], np.dtype[np.uint8]]]:
+        """
+        Read colors from ImageJ metadata
+
+        :param image_file: tiff file to read
+        :return: list of colors or empty list if no colors
+        """
+        colors = image_file.imagej_metadata.get("LUTs", [])
+        if isinstance(colors, list) and colors and colors[0].shape[0] == 24:
+            # drop buggy colors that comes from bug in PartSeg with
+            # writing 64 bit integers in tifffile
+            return []
+        if isinstance(colors, np.ndarray):
+            return [colors]
+
+        return colors
+
+    def read_imagej_metadata(self, image_file: tifffile.TiffFile) -> None:
+        """
+        Read metadata from the ImageJ tiff file.
+
+        Read spacing, colors, channel names, ranges and other metadata.
+        Save original metadata in :py:attr:`metadata`
+
+        :param image_file: file to read
+        """
         try:
             z_spacing = image_file.imagej_metadata["spacing"] * name_to_scalar[image_file.imagej_metadata["unit"]]
         except KeyError:
             z_spacing = self.default_spacing[0]
         x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
         self.spacing = z_spacing, y_spacing, x_spacing
-        self.colors = image_file.imagej_metadata.get("LUTs", [])
+        self.colors = self._read_imagej_colors(image_file)
         self.channel_names = image_file.imagej_metadata.get("Labels", [])
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
+        if "finterval" in image_file.imagej_metadata:
+            with suppress(ValueError, TypeError):
+                self.time_increment = float(image_file.imagej_metadata["finterval"])
         self.metadata = image_file.imagej_metadata
 
     def _read_ome_channel_information(self, meta_data):
@@ -624,6 +599,12 @@ class TiffImageReader(BaseImageReaderBuffer):
                 meta_data["Pixels"][f"PhysicalSize{x}"] * name_to_scalar[meta_data["Pixels"][f"PhysicalSize{x}Unit"]]
                 for x in ["Z", "Y", "X"]
             ]
+        with suppress(KeyError):
+            time_increment = (
+                meta_data["Pixels"]["TimeIncrement"] * name_to_scalar[meta_data["Pixels"]["TimeIncrementUnit"]]
+            )
+            if time_increment > 0:
+                self.time_increment = time_increment
         with suppress(KeyError):
             self.shift = [
                 meta_data["Pixels"]["Plane"][0][f"Position{x}"]
@@ -658,4 +639,28 @@ name_to_scalar = {
     "centimeter": 10**-2,
     "cm": 10**-2,
     "cal": 2.54 * 10**-2,
-}  #: dict with known names of scalar to scalar value. Some may be  missed
+    "Ys": 10**24,  # yottasecond
+    "Zs": 10**21,  # zettasecond
+    "Es": 10**18,  # exasecond
+    "Ps": 10**15,  # petasecond
+    "Ts": 10**12,  # terasecond
+    "Gs": 10**9,  # gigasecond
+    "Ms": 10**6,  # megasecond
+    "ks": 10**3,  # kilosecond
+    "hs": 10**2,  # hectosecond
+    "das": 10**1,  # decasecond
+    "s": 1,  # second
+    "ds": 10**-1,  # decisecond
+    "cs": 10**-2,  # centisecond
+    "ms": 10**-3,  # millisecond
+    "µs": 10**-6,  # microsecond
+    "ns": 10**-9,  # nanosecond
+    "ps": 10**-12,  # picosecond
+    "fs": 10**-15,  # femtosecond
+    "as": 10**-18,  # attosecond
+    "zs": 10**-21,  # zeptosecond
+    "ys": 10**-24,  # yoctosecond
+    "min": 60,  # minute
+    "h": 3600,  # hour
+    "d": 86400,  # day
+}  #: dict with known names of scalar to scalar value. Some may be missed

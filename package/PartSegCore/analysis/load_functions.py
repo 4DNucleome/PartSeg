@@ -41,15 +41,15 @@ from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import GenericImageReader
 
 __all__ = [
-    "LoadStackImage",
+    "LoadImageForBatch",
     "LoadImageMask",
-    "LoadProject",
     "LoadMask",
-    "load_dict",
-    "load_metadata",
     "LoadMaskSegmentation",
     "LoadProfileFromJSON",
-    "LoadImageForBatch",
+    "LoadProject",
+    "LoadStackImage",
+    "load_dict",
+    "load_metadata",
 ]
 
 from PartSegImage.image import Image
@@ -142,7 +142,7 @@ def load_project_from_tar(tar_file, file_path):
 
 
 def load_project(
-    file: typing.Union[str, Path, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]
+    file: typing.Union[str, Path, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
 ) -> ProjectTuple:
     """Load project from archive"""
     tar_file, file_path = open_tar_file(file)

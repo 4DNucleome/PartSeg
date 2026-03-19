@@ -311,8 +311,8 @@ class ImportDialog(QDialog):
             item = self.list_view.topLevelItem(index)
             if item.checkState(0) == Qt.CheckState.Checked:
                 chk = self.list_view.itemWidget(item, 2)
-                if chk is not None and typing.cast(QRadioButton, chk).isChecked():
-                    res.append((item.text(0), typing.cast(QLineEdit, self.list_view.itemWidget(item, 3)).text()))
+                if chk is not None and typing.cast("QRadioButton", chk).isChecked():
+                    res.append((item.text(0), typing.cast("QLineEdit", self.list_view.itemWidget(item, 3)).text()))
                 else:
                     name = str(item.text(0))
                     res.append((name, name))

@@ -35,7 +35,7 @@ class SaveITKSnap(SaveBase):
 
 
 def register():
-    from PartSegCore.register import RegisterEnum
-    from PartSegCore.register import register as register_fun
+    from PartSegCore.register import RegisterEnum  # noqa: PLC0415
+    from PartSegCore.register import register as register_fun  # noqa: PLC0415
 
     register_fun(SaveITKSnap, RegisterEnum.analysis_save)

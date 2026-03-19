@@ -223,7 +223,9 @@ def measurement_profiles():
         MeasurementEntry(
             name="Colocalisation",
             calculation_tree=ColocalizationMeasurement.get_starting_leaf().replace_(
-                per_component=PerComponent.No, area=AreaType.ROI
+                per_component=PerComponent.No,
+                area=AreaType.ROI,
+                parameters=ColocalizationMeasurement.__argument_class__(),
             ),
         ),
     ]

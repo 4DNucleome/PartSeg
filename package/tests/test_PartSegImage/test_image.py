@@ -2,10 +2,11 @@
 import os
 
 import numpy as np
+import numpy.testing as npt
 import pytest
 from skimage.morphology import diamond
 
-from PartSegImage import Channel, ChannelInfo, Image, ImageWriter, TiffImageReader
+from PartSegImage import Channel, ChannelInfo, ChannelInfoFull, Image, ImageWriter, TiffImageReader
 from PartSegImage.image import FRAME_THICKNESS, _hex_to_rgb, _name_to_rgb
 
 
@@ -136,7 +137,7 @@ class TestImageBase:
             self.image_class(
                 np.zeros(data_shape),
                 spacing=(5, 5, 5),
-                mask=np.zeros(data_shape[:-2] + (40,)),
+                mask=np.zeros((*data_shape[:-2], 40)),
                 axes_order=self.image_class.axis_order,
             )
         with pytest.raises(ValueError, match="Wrong array shape"):
@@ -464,6 +465,16 @@ class TestImageBase:
         image = self.image_class(data, spacing=(1, 1), axes_order="XY")
         assert np.all(image.get_data() == data)
 
+    def test_set_time_increment(self):
+        data = np.zeros((1, 10, 20, 30, 3), np.uint8)
+        image = self.image_class(data, spacing=(1, 1, 1), file_path="", axes_order="TZYXC")
+        assert image.time_increment == 1
+        image.time_increment = 2
+        assert image.time_increment == 2
+        with pytest.raises(ValueError, match="Time increment must be positive"):
+            image.time_increment = -1
+        assert image.time_increment == 2
+
 
 class ChangeChannelPosImage(Image):
     axis_order = "TZCYX"
@@ -728,3 +739,44 @@ def test_name_to_rgb_vispy():
     # This test check mapping not defined in fallback dictionary
     pytest.importorskip("vispy", reason="vispy not installed")
     assert _name_to_rgb("lime") == (0, 255, 0)
+
+
+class TestChannelInfoFull:
+    RED_DEF = (255, 0, 0)
+    RED_2D_REF = [[0, 255], [0, 0], [0, 0]]
+
+    def test_str(self):
+        obj = ChannelInfoFull(name="test", color_map="gray", contrast_limits=(0, 20))
+        assert obj.name == "test"
+        assert obj.color_map == "gray"
+        assert obj.contrast_limits == (0, 20)
+
+    @pytest.mark.parametrize("color_map", [tuple(RED_DEF), np.array(RED_DEF, dtype=np.uint8), list(RED_DEF)])
+    def test_1d_colormap(self, color_map):
+        obj = ChannelInfoFull(name="test", color_map=color_map, contrast_limits=(0, 20))
+        assert obj.name == "test"
+        assert np.all(obj.contrast_limits == (0, 20))
+        assert isinstance(obj.color_map, np.ndarray)
+        assert obj.color_map.shape == (3,)
+        npt.assert_array_equal(obj.color_map, self.RED_DEF)
+
+    @pytest.mark.parametrize("color_map", [tuple(RED_2D_REF), np.array(RED_2D_REF, dtype=np.uint8), list(RED_2D_REF)])
+    def test_2d_colormap(self, color_map):
+        obj = ChannelInfoFull(name="test", color_map=color_map, contrast_limits=(0, 20))
+        assert obj.name == "test"
+        assert np.all(obj.contrast_limits == (0, 20))
+        assert isinstance(obj.color_map, np.ndarray)
+        assert obj.color_map.shape == (3, 2)
+        npt.assert_array_equal(obj.color_map, self.RED_2D_REF)
+
+    def test_wrong_dtype_colormap(self):
+        with pytest.raises(ValueError, match="Colormap as array need to be uint8"):
+            ChannelInfoFull(name="test", color_map=np.array(self.RED_DEF, dtype=np.float32), contrast_limits=(0, 20))
+
+    def test_wrong_colors_colormap(self):
+        with pytest.raises(ValueError, match="Color map need to have 3 or 4 elements"):
+            ChannelInfoFull(name="test", color_map=np.array([[0, 0], [0, 0]], dtype=np.uint8), contrast_limits=(0, 20))
+
+    def test_wrong_dimesnsion_colormap(self):
+        with pytest.raises(ValueError, match="Colormap as sequence need to"):
+            ChannelInfoFull(name="test", color_map=np.array([[[0]], [[0]]], dtype=np.uint8), contrast_limits=(0, 20))

@@ -118,7 +118,7 @@ In order to quantify features of chromosome 1 territory segmentation of FISH spe
 
 8. Execute segmentation
 
-9. Save segmentation profile with name "chromosome1_prof" (more details in [interface documentation](<>))  **TODO**
+9. Save segmentation profile with name "chromosome1_prof" (more details in [interface documentation](<>)) **TODO**
 
 Some background signal is always present in FISH, however specific signal is much brighter.
 As an example nucleus with two separate chromosome 1 territories is shown,

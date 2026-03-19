@@ -39,7 +39,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 from PartSeg import state_store
-from PartSeg.common_gui import exception_hooks, select_multiple_files
+from PartSeg.common_gui import algorithms_description, exception_hooks, multiple_file_widget, select_multiple_files
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.advanced_tabs import (
     RENDERING_LIST,
@@ -60,6 +60,8 @@ from PartSeg.common_gui.algorithms_description import (
     ProfileSelect,
     QtAlgorithmProperty,
     SubAlgorithmWidget,
+    _pretty_print,
+    recursive_update,
 )
 from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
 from PartSeg.common_gui.colormap_creator import ColormapLoad, ColormapSave, save_colormap_in_settings
@@ -459,13 +461,42 @@ class TestPSaveDialog:
     def test_reject_no_history_update(self, part_settings, tmp_path, qtbot, monkeypatch):
         dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3", system_widget=False)
         qtbot.addWidget(dialog)
-        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Rejected)
         part_settings.set("io.filter_save", SaveAsTiff.get_name())
         assert part_settings.get_path_history() == [str(Path.home())]
         dialog.show()
         dialog.accept()
         dialog.hide()
         assert part_settings.get_path_history() == [str(Path.home())]
+
+    def test_history_update(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3", system_widget=False)
+        qtbot.addWidget(dialog)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Accepted)
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        assert part_settings.get_path_history() == [str(Path.home())]
+        dialog.show()
+        dialog.accept()
+        dialog.hide()
+        assert part_settings.get_path_history() == [str(tmp_path), str(Path.home())]
+
+    def test_history_update_directory(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(
+            save_dict,
+            settings=part_settings,
+            path="io.test3",
+            system_widget=False,
+            file_mode=PSaveDialog.FileMode.Directory,
+        )
+        qtbot.addWidget(dialog)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Accepted)
+        monkeypatch.setattr(QFileDialog, "selectedFiles", lambda x: [tmp_path / "directory"])
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        assert part_settings.get_path_history() == [str(Path.home())]
+        dialog.show()
+        dialog.accept()
+        dialog.hide()
+        assert part_settings.get_path_history() == [str(tmp_path / "directory"), str(Path.home())]
 
     def test_selection_tiff_file(self, part_settings, tmp_path, qtbot, monkeypatch):
         part_settings.set("io.filter_save", SaveAsTiff.get_name())
@@ -691,7 +722,7 @@ class TestBaseMainWindow:
         window.settings.add_last_files([tmp_path / "test.txt"], "test")
         actions = window.recent_file_menu.actions()
         assert len(actions) == 1
-        assert actions[0].data() == ([tmp_path / "test.txt"], "test")
+        assert tuple(actions[0].data()) == ([tmp_path / "test.txt"], "test")
         monkeypatch.setattr(window, "sender", lambda: actions[0])
         main_menu = MagicMock()
         add_last_files = MagicMock()
@@ -1487,8 +1518,6 @@ def test_collapsable(qtbot):
 
 
 def test_multiple_files_tree_widget(qtbot, monkeypatch):
-    from PartSeg.common_gui import multiple_file_widget
-
     def _monkey_qmenu(func):
         res = QMenu()
         monkeypatch.setattr(res, "exec_", partial(func, res))
@@ -1562,18 +1591,11 @@ def test_exception_hooks_value_error(monkeypatch):
 
 
 def test_exception_hooks_other_exception():
-    raised = False
-    try:
+    with pytest.raises(ValueError, match="Test text"):
         exception_hooks.load_data_exception_hook(ValueError("Test text"))
-    except ValueError:
-        raised = True
-    finally:
-        assert raised
 
 
 def test_update_dict():
-    from PartSeg.common_gui.algorithms_description import recursive_update
-
     assert recursive_update({}, {}) == {}
     assert recursive_update(None, {}) == {}
     assert recursive_update(None, {"a": 1}) == {"a": 1}
@@ -1584,8 +1606,6 @@ def test_update_dict():
 
 
 def test_pretty_print():
-    from PartSeg.common_gui.algorithms_description import _pretty_print
-
     assert _pretty_print({"a": 1}) == "\n  a: 1"
     assert _pretty_print({"a": 1}, indent=0) == "\na: 1"
     assert _pretty_print({"a": {"a": 1}}) == "\n  a: \n    a: 1"
@@ -1627,8 +1647,6 @@ class TestBaseAlgorithmSettingsWidget:
         ],
     )
     def test_exception_occurred(self, monkeypatch, exc, expected, qtbot):
-        from PartSeg.common_gui import algorithms_description
-
         called = False
 
         def _exec(self):
@@ -1641,8 +1659,6 @@ class TestBaseAlgorithmSettingsWidget:
         assert called
 
     def test_exception_occurred_other_exception(self, monkeypatch, qtbot):
-        from PartSeg.common_gui import algorithms_description
-
         called = False
 
         def _exec(self):

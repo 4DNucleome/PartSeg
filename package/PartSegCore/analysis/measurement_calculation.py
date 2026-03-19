@@ -1447,9 +1447,7 @@ class SplitOnPartVolume(MeasurementMethodBase):
     __argument_class__ = SplitOnPartParameters
 
     @staticmethod
-    def calculate_property(
-        part_selection, area_array, voxel_size, result_scalar, **kwargs
-    ):  # pylint: disable=arguments-differ
+    def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=arguments-differ
         masked = MaskDistanceSplit.split(voxel_size=voxel_size, **kwargs)
         mask = masked == part_selection
         return np.count_nonzero(mask * area_array) * pixel_volume(voxel_size, result_scalar)
@@ -1499,9 +1497,21 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
         return True
 
 
-HARALIC_FEATURES = """AngularSecondMoment Contrast Correlation Variance
-InverseDifferenceMoment SumAverage SumVariance SumEntropy Entropy
-DifferenceVariance DifferenceEntropy InfoMeas1 InfoMeas2""".split()
+HARALIC_FEATURES = [
+    "AngularSecondMoment",
+    "Contrast",
+    "Correlation",
+    "Variance",
+    "InverseDifferenceMoment",
+    "SumAverage",
+    "SumVariance",
+    "SumEntropy",
+    "Entropy",
+    "DifferenceVariance",
+    "DifferenceEntropy",
+    "InfoMeas1",
+    "InfoMeas2",
+]
 
 
 class HaralickEnum(Enum):
@@ -1673,7 +1683,7 @@ class ColocalizationMeasurement(MeasurementMethodBase):
         return 1
 
 
-def pixel_volume(spacing, result_scalar):
+def pixel_volume(spacing: Sequence[float], result_scalar: float) -> float:
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
 

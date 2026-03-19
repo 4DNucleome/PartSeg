@@ -1,4 +1,5 @@
 from PartSeg._launcher.main_window import PartSegGUILauncher
+from PartSeg.plugins.napari_widgets._settings import SettingsEditor
 from PartSeg.plugins.napari_widgets.algorithm_widgets import (
     BorderSmooth,
     ConnectedComponents,
@@ -17,20 +18,21 @@ from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ROIAnalysis
 from PartSeg.plugins.napari_widgets.search_label_widget import SearchLabel
 
 __all__ = (
-    "PartSegGUILauncher",
     "BorderSmooth",
     "ConnectedComponents",
     "CopyLabelsWidget",
     "DoubleThreshold",
-    "NoiseFilter",
-    "SplitCoreObjects",
-    "Threshold",
-    "Watershed",
     "ImageColormap",
     "LabelSelector",
     "LayerMetadata",
     "MaskCreate",
+    "NoiseFilter",
+    "PartSegGUILauncher",
     "ROIAnalysisExtraction",
     "ROIMaskExtraction",
     "SearchLabel",
+    "SettingsEditor",
+    "SplitCoreObjects",
+    "Threshold",
+    "Watershed",
 )

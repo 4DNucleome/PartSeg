@@ -29,12 +29,10 @@ import logging
 import math
 import os
 import threading
-import traceback
 from collections import OrderedDict
 from enum import Enum
 from os import path
 from queue import Queue
-from traceback import StackSummary
 from typing import TYPE_CHECKING, Any, NamedTuple, Union
 
 import numpy as np
@@ -71,7 +69,7 @@ from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, report_empty_fun
-from PartSegCore.utils import iterate_names
+from PartSegCore.utils import ErrorInfo, iterate_names, prepare_error_data
 from PartSegImage import Image, TiffImageReader
 
 if TYPE_CHECKING:
@@ -93,8 +91,7 @@ class ResponseData(NamedTuple):
     values: list[MeasurementResult]
 
 
-CalculationResultList = list[ResponseData]
-ErrorInfo = tuple[Exception, Union[StackSummary, tuple[dict, StackSummary]]]
+CalculationResultList = list[Union[ResponseData, ErrorInfo]]
 WrappedResult = tuple[int, list[Union[ErrorInfo, ResponseData]]]
 
 
@@ -115,18 +112,6 @@ def get_data_loader(
     if root_type == RootType.Project:
         return LoadProject, ext in LoadProject.get_extensions()
     return LoadImageForBatch, ext in LoadImageForBatch.get_extensions()
-
-
-def prepare_error_data(exception: Exception) -> ErrorInfo:
-    try:
-        from sentry_sdk.serializer import serialize
-        from sentry_sdk.utils import event_from_exception
-
-        event = event_from_exception(exception)[0]
-        event = serialize(event)
-        return exception, (event, traceback.extract_tb(exception.__traceback__))
-    except ImportError:  # pragma: no cover
-        return exception, traceback.extract_tb(exception.__traceback__)
 
 
 def do_calculation(file_info: tuple[int, str], calculation: BaseCalculation) -> WrappedResult:
@@ -209,6 +194,8 @@ class CalculationProcess:
         if isinstance(projects, ProjectTuple):
             projects = [projects]
         for project in projects:
+            sub_calculation = FileCalculation(project.image.file_path, calculation.calculation)
+            self.calculation = sub_calculation
             try:
                 self.image = project.image
                 if calculation.overwrite_voxel_size:
@@ -223,14 +210,16 @@ class CalculationProcess:
                     self.history = project.history
                     self.algorithm_parameters = project.algorithm_parameters
 
-                self.iterate_over(calculation.calculation_plan.execution_tree)
+                self.iterate_over(sub_calculation.calculation_plan.execution_tree)
                 for el in self.measurement:
-                    el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
+                    el.set_filename(path.relpath(project.image.file_path, sub_calculation.base_prefix))
                 self.results.append(
-                    ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
+                    ResponseData(path.relpath(project.image.file_path, sub_calculation.base_prefix), self.measurement)
                 )
             except Exception as e:  # pylint: disable=broad-except
                 self.results.append(prepare_error_data(e))
+            finally:
+                self.calculation = calculation
             self._reset_image_cache()
         return self.results
 
@@ -863,19 +852,21 @@ class FileData:
         description = calculation_plan.pretty_print().split("\n")
         for i in range(math.ceil(len(description) / MAX_ROWS_IN_EXCEL_CELL)):
             to_write = description[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
-            sheet.write(f"A{i+2}", "\n".join(to_write))
+            sheet.write(f"A{i + 2}", "\n".join(to_write))
             sheet.set_row(i + 1, len(to_write) * 11 + 10)
 
         sheet.set_column(0, 0, max(map(len, description)))
         sheet.set_column(1, 1, 15)
         calculation_plan_str = json.dumps(calculation_plan, cls=PartSegEncoder)
         for i in range(math.ceil(len(calculation_plan_str) / MAX_CHAR_IN_EXCEL_CELL)):
-            sheet.write(f"B{i+2}", calculation_plan_str[i * MAX_CHAR_IN_EXCEL_CELL : (i + 1) * MAX_CHAR_IN_EXCEL_CELL])
+            sheet.write(
+                f"B{i + 2}", calculation_plan_str[i * MAX_CHAR_IN_EXCEL_CELL : (i + 1) * MAX_CHAR_IN_EXCEL_CELL]
+            )
 
         calculation_plan_pretty = json.dumps(calculation_plan, cls=PartSegEncoder, indent=2).split("\n")
         for i in range(math.ceil(len(calculation_plan_pretty) / MAX_ROWS_IN_EXCEL_CELL)):
             to_write = calculation_plan_pretty[i * MAX_ROWS_IN_EXCEL_CELL : (i + 1) * MAX_ROWS_IN_EXCEL_CELL]
-            sheet.write(f"C{i+2}", "\n".join(to_write))
+            sheet.write(f"C{i + 2}", "\n".join(to_write))
             sheet.set_row(i + 1, len(to_write) * 11 + 10)
 
         sheet.set_column(2, 2, max(map(len, calculation_plan_pretty)))

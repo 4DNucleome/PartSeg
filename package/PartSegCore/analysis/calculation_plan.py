@@ -150,7 +150,7 @@ def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     :param calculation: information about calculation
     :return: save path
     """
-    from PartSegCore.analysis.save_functions import save_dict
+    from PartSegCore.analysis.save_functions import save_dict  # noqa: PLC0415
 
     extension = save_dict[op.algorithm].get_default_extension()
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)

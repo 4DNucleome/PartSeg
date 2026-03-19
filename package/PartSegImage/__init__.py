@@ -1,7 +1,10 @@
 import os
 import sys
 
-from PartSegImage import tifffile_fixes  # noqa: F401
+from PartSegImage import (
+    czifile_fixes,  # noqa: F401
+    tifffile_fixes,  # noqa: F401
+)
 from PartSegImage.channel_class import Channel
 from PartSegImage.image import ChannelInfo, ChannelInfoFull, Image
 from PartSegImage.image_reader import (
@@ -19,15 +22,15 @@ __all__ = (
     "Channel",
     "ChannelInfo",
     "ChannelInfoFull",
-    "Image",
-    "TiffImageReader",
-    "IMAGEJImageWriter",
-    "ImageWriter",
-    "TiffFileException",
     "CziImageReader",
-    "OifImagReader",
-    "ObsepImageReader",
     "GenericImageReader",
+    "IMAGEJImageWriter",
+    "Image",
+    "ImageWriter",
+    "ObsepImageReader",
+    "OifImagReader",
+    "TiffFileException",
+    "TiffImageReader",
 )
 
 if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:  # pragma: no cover

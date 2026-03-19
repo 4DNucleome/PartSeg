@@ -1,5 +1,5 @@
 parameters:
-- name: test_path # name of the parameter; required
+- name: test_command # name of the parameter; required
   type: string # data type of the parameter; required
 - name: cache_dir # name of the parameter; required
   type: string
@@ -33,5 +33,5 @@ steps:
     inputs:
       targetPath: dist2
       publishLocation: pipeline
-  - script: ${{ parameters.test_path }}
+  - script: ${{ parameters.test_command }}
     displayName: TestBuild

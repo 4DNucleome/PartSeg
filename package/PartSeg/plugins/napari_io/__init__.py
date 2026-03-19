@@ -1,4 +1,4 @@
-from PartSegCore.napari_plugins import (
+from PartSeg.plugins.napari_io import (
     load_image,
     load_mask_project,
     load_masked_image,

@@ -19,12 +19,12 @@ from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Channel, Image, ImageWriter
 
 __all__ = [
-    "SaveProject",
-    "SaveCmap",
-    "SaveXYZ",
-    "SaveAsTiff",
     "SaveAsNumpy",
+    "SaveAsTiff",
+    "SaveCmap",
     "SaveProfilesToJSON",
+    "SaveProject",
+    "SaveXYZ",
     "save_dict",
 ]
 

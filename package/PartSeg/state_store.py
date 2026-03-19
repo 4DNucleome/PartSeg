@@ -35,14 +35,14 @@ save_folder = os.path.join(
 sentry_url = os.environ.get("PARTSEG_SENTRY_URL", "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302")
 
 __all__ = (
-    "auto_report",
     "always_report",
-    "custom_plugin_load",
+    "auto_report",
     "check_for_updates",
+    "custom_plugin_load",
     "develop",
     "report_errors",
-    "save_suffix",
     "save_folder",
+    "save_suffix",
     "sentry_url",
     "show_error_dialog",
 )

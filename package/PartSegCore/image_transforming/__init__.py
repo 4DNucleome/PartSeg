@@ -8,11 +8,11 @@ from PartSegCore.image_transforming.transform_base import TransformBase
 image_transform_dict = Register(CombineChannels, ImageProjection, InterpolateImage, SwapTimeStack)
 
 __all__ = (
-    "image_transform_dict",
     "CombineChannels",
     "CombineMode",
     "ImageProjection",
     "InterpolateImage",
     "SwapTimeStack",
     "TransformBase",
+    "image_transform_dict",
 )

@@ -64,7 +64,7 @@ def test_ome_save(tmp_path, bundle_test_dir, ome_xml, z_size):
         assert meta_data["Pixels"]["Channel"][0]["Name"] == "a"
         assert meta_data["Pixels"]["Channel"][1]["Name"] == "b"
         assert meta_data["Name"] == "Test"
-        xml_file = etree.fromstring(tiff.ome_metadata.encode("utf8"))  # nosec  # noqa: S320
+        xml_file = etree.fromstring(tiff.ome_metadata.encode("utf8"))  # nosec
         ome_xml.assert_(xml_file)  # noqa: PT009
     read_image = TiffImageReader.read_image(tmp_path / "test.tif")
     assert np.allclose(read_image.spacing, image.spacing)
@@ -94,11 +94,13 @@ def test_imagej_write_all_metadata(tmp_path, data_test_dir):
 
     image2 = TiffImageReader.read_image(tmp_path / "image.tif")
 
-    npt.assert_array_equal(image2.default_coloring, image.default_coloring)
+    npt.assert_array_equal(image2.default_coloring, image.get_imagej_colors())
 
 
-def test_imagej_save_color(tmp_path):
-    data = np.zeros((4, 20, 20), dtype=np.uint8)
+@pytest.fixture
+def data_to_save():
+    """Create image with 5 channels with different color definitions"""
+    data = np.zeros((5, 20, 20), dtype=np.uint8)
     data[:, 2:-2, 2:-2] = 20
     img = Image(
         data,
@@ -109,18 +111,39 @@ def test_imagej_save_color(tmp_path):
             ChannelInfo(name="ch2", color_map="#FFAA00", contrast_limits=(0, 30)),
             ChannelInfo(name="ch3", color_map="#FB1", contrast_limits=(0, 25)),
             ChannelInfo(name="ch4", color_map=(0, 180, 0), contrast_limits=(0, 22)),
+            ChannelInfo(
+                name="ch5",
+                color_map=np.linspace((0, 0, 0), (128, 255, 0), num=256, dtype=np.uint8).T,
+                contrast_limits=(0, 20),
+            ),
         ],
     )
     assert img.get_colors()[:3] == ["blue", "#FFAA00", "#FB1"]
     assert tuple(img.get_colors()[3]) == (0, 180, 0)
-    IMAGEJImageWriter.save(img, tmp_path / "image.tif")
+    return img
+
+
+def test_imagej_save_color(tmp_path, data_to_save):
+    IMAGEJImageWriter.save(data_to_save, tmp_path / "image.tif")
     image2 = TiffImageReader.read_image(tmp_path / "image.tif")
-    assert image2.channel_names == ["ch1", "ch2", "ch3", "ch4"]
-    assert image2.ranges == [(0, 20), (0, 30), (0, 25), (0, 22)]
+    assert image2.channel_names == ["ch1", "ch2", "ch3", "ch4", "ch5"]
+    npt.assert_array_equal(image2.ranges, [(0, 20), (0, 30), (0, 25), (0, 22), (0, 20)])
     assert tuple(image2.default_coloring[0][:, -1]) == (0, 0, 255)
     assert tuple(image2.default_coloring[1][:, -1]) == (255, 170, 0)
     assert tuple(image2.default_coloring[2][:, -1]) == (255, 187, 17)
     assert tuple(image2.default_coloring[3][:, -1]) == (0, 180, 0)
+    assert tuple(image2.default_coloring[4][:, -1]) == (128, 255, 0)
+
+
+def test_ome_save_color(tmp_path, data_to_save):
+    ImageWriter.save(data_to_save, tmp_path / "image.tif")
+    image2 = TiffImageReader.read_image(tmp_path / "image.tif")
+    assert image2.channel_names == ["ch1", "ch2", "ch3", "ch4", "ch5"]
+    assert tuple(image2.default_coloring[0]) == (0, 0, 255)
+    assert tuple(image2.default_coloring[1]) == (255, 170, 0)
+    assert tuple(image2.default_coloring[2]) == (255, 187, 17)
+    assert tuple(image2.default_coloring[3]) == (0, 180, 0)
+    assert tuple(image2.default_coloring[4]) == (255, 0, 255)  # fallback to magenta
 
 
 def test_save_mask_imagej(tmp_path):
@@ -135,3 +158,14 @@ def test_save_mask_imagej(tmp_path):
 
     read_mask = TiffImageReader.read_image(tmp_path / "mask.tif")
     assert np.all(np.isclose(read_mask.spacing, image.spacing))
+
+
+@pytest.mark.parametrize("time_increment", [2, 5])
+@pytest.mark.parametrize("save_method", [IMAGEJImageWriter.save, ImageWriter.save], ids=["ImageJ TIFF", "OME TIFF"])
+def test_save_time_meta(tmp_path, save_method, time_increment):
+    data = np.zeros((5, 10, 20, 20), dtype=np.uint8)
+    image = Image(data, spacing=(0.4, 0.1, 0.1), axes_order="TZYX", time_increment=time_increment)
+    save_method(image, tmp_path / "time_image.tif")
+    read_image = TiffImageReader.read_image(tmp_path / "time_image.tif")
+    assert np.all(np.isclose(image.spacing, read_image.spacing))
+    assert read_image.time_increment == time_increment
