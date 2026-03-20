@@ -314,7 +314,7 @@ class StackSettings(BaseSettings):
         if self.chosen_components_widget is not None:
             prev = self.chosen_components_widget.blockSignals(True)
             try:
-                self.chosen_components_widget.set_components(self.components_parameters_dict)
+                self.chosen_components_widget.set_components(self.roi_info.bound_info.keys(), [])
             finally:
                 self.chosen_components_widget.blockSignals(prev)
 
