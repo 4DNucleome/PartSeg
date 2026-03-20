@@ -311,7 +311,8 @@ class StackSettings(BaseSettings):
             self.components_parameters_dict = segmentation_parameters
 
     def post_roi_set(self):
-        self.chosen_components_widget.set_chose(self.roi_info.bound_info.keys(), [])
+        if self.chosen_components_widget is not None:
+            self.chosen_components_widget.set_chosen(self.components_parameters_dict)
 
 
 def get_mask(
