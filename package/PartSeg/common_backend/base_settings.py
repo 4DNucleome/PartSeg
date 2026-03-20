@@ -145,6 +145,7 @@ class ImageSettings(QObject):
         if val is None:
             self._roi_info = ROIInfo(val)
             self._additional_layers = {}
+            self.post_roi_set()
             self.roi_clean.emit()
             return
         try:
