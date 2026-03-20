@@ -448,10 +448,10 @@ class ChosenComponents(QScrollArea):
             el.mouse_enter.disconnect()
         self.check_box.clear()
 
-    def new_choose(self, num, chosen_components):
-        self.set_chose(range(1, num + 1), chosen_components)
+    def new_choose(self, num: int, chosen_components: Sequence[int]) -> None:
+        self.set_components(range(1, num + 1), chosen_components)
 
-    def set_chose(self, components_index, chosen_components: Union[Sequence[int], None] = None):
+    def set_components(self, components_index, chosen_components: Union[Sequence[int], None] = None):
         if chosen_components is None:
             chosen_components = []
         chosen_components = set(chosen_components)
@@ -474,6 +474,7 @@ class ChosenComponents(QScrollArea):
         chosen_components = set(chosen_components)
         for num, check in self.check_box.items():
             check.setChecked(num in chosen_components)
+        self.check_change_signal.emit()
 
     def check_change(self):
         self.check_change_signal.emit()
@@ -679,7 +680,7 @@ class AlgorithmOptions(QWidget):
 
     def _image_changed(self):
         self.settings.roi = None
-        self.choose_components.set_chose([], [])
+        self.choose_components.set_components([], [])
 
     def _execute_in_background_init(self):
         if self.batch_process.isRunning():
