@@ -312,8 +312,11 @@ class StackSettings(BaseSettings):
 
     def post_roi_set(self):
         if self.chosen_components_widget is not None:
-            with self.components_change_list.blockSignals(True):
+            prev = self.chosen_components_widget.blockSignals(True)
+            try:
                 self.chosen_components_widget.set_components(self.components_parameters_dict)
+            finally:
+                self.chosen_components_widget.blockSignals(prev)
 
 
 def get_mask(
