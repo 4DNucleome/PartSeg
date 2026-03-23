@@ -432,12 +432,22 @@ class ChosenComponents(QScrollArea):
         self.ensureWidgetVisible(check)
 
     def check_all(self):
-        for el in self.check_box.values():
-            el.setChecked(True)
+        prev = self.blockSignals(True)
+        try:
+            for el in self.check_box.values():
+                el.setChecked(True)
+        finally:
+            self.blockSignals(prev)
+        self.check_change_signal.emit()
 
     def un_check_all(self):
-        for el in self.check_box.values():
-            el.setChecked(False)
+        prev = self.blockSignals(True)
+        try:
+            for el in self.check_box.values():
+                el.setChecked(False)
+        finally:
+            self.blockSignals(prev)
+        self.check_change_signal.emit()
 
     def remove_components(self):
         self.check_layout.clear()
@@ -471,9 +481,13 @@ class ChosenComponents(QScrollArea):
         self.check_change_signal.emit()
 
     def set_chosen(self, chosen_components: Sequence[int]):
+        prev = self.blockSignals(True)
         chosen_components = set(chosen_components)
-        for num, check in self.check_box.items():
-            check.setChecked(num in chosen_components)
+        try:
+            for num, check in self.check_box.items():
+                check.setChecked(num in chosen_components)
+        finally:
+            self.blockSignals(prev)
         self.check_change_signal.emit()
 
     def check_change(self):
