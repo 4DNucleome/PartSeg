@@ -535,8 +535,7 @@ class BaseSettings(ViewSettings):
             raise ValueError(ROI_NOT_FIT) from e
         if result.points is not None:
             self.points = result.points
-        self._roi_info = roi_info
-        self.roi_changed.emit(self._roi_info)
+        self.roi = roi_info
 
     def _load_files_call(self, files_list: list[str]):
         self.request_load_files.emit(files_list)
