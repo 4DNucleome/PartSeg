@@ -168,7 +168,7 @@ jobs:
           pip install codecov
 
       - name: Download coverage data
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: cov-reports-*
           path: coverage
@@ -211,7 +211,7 @@ jobs:
       - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: test_data
           path: test_data
