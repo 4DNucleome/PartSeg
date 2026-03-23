@@ -127,11 +127,6 @@ class ImageSettings(QObject):
         return self.roi
 
     @property
-    def roi(self) -> np.ndarray:
-        """current roi"""
-        return self._roi_info.roi
-
-    @property
     def segmentation_info(self) -> ROIInfo:  # pragma: no cover
         warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi_info
@@ -139,6 +134,11 @@ class ImageSettings(QObject):
     @property
     def roi_info(self) -> ROIInfo:
         return self._roi_info
+
+    @property
+    def roi(self) -> np.ndarray:
+        """current roi"""
+        return self._roi_info.roi
 
     @roi.setter
     def roi(self, val: Union[np.ndarray, ROIInfo]):
