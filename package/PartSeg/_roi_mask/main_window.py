@@ -465,18 +465,20 @@ class ChosenComponents(QScrollArea):
         if chosen_components is None:
             chosen_components = []
         chosen_components = set(chosen_components)
-        self.blockSignals(True)
-        self.remove_components()
-        for el in components_index:
-            check = ComponentCheckBox(el)
-            if el in chosen_components:
-                check.setChecked(True)
-            check.stateChanged.connect(self.check_change)
-            check.mouse_enter.connect(self.mouse_enter.emit)
-            check.mouse_leave.connect(self.mouse_leave.emit)
-            self.check_box[el] = check
-            self.check_layout.addWidget(check)
-        self.blockSignals(False)
+        prev = self.blockSignals(True)
+        try:
+            self.remove_components()
+            for el in components_index:
+                check = ComponentCheckBox(el)
+                if el in chosen_components:
+                    check.setChecked(True)
+                check.stateChanged.connect(self.check_change)
+                check.mouse_enter.connect(self.mouse_enter.emit)
+                check.mouse_leave.connect(self.mouse_leave.emit)
+                self.check_box[el] = check
+                self.check_layout.addWidget(check)
+        finally:
+            self.blockSignals(prev)
         self.update()
         self.check_change_signal.emit()
 
