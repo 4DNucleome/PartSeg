@@ -14,7 +14,7 @@ appdirs==1.4.4
     #   napari
 asttokens==3.0.1
     # via stack-data
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
@@ -39,11 +39,11 @@ cloudpickle==3.1.2
     # via dask
 comm==0.2.3
     # via ipykernel
-coverage==7.13.4
+coverage==7.13.5
     # via partseg (pyproject.toml)
-czifile==2026.3.15
+czifile==2026.3.17
     # via partseg (pyproject.toml)
-dask==2026.1.2
+dask==2026.3.0
     # via napari
 debugpy==1.8.20
     # via ipykernel
@@ -239,7 +239,7 @@ pillow==12.1.1
     #   imageio
     #   napari
     #   scikit-image
-pint==0.25.2
+pint==0.25.3
     # via napari
 platformdirs==4.9.4
     # via
@@ -391,7 +391,7 @@ scipy==1.17.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.54.0
+sentry-sdk==2.55.0
     # via partseg (pyproject.toml)
 setuptools==82.0.1
     # via
