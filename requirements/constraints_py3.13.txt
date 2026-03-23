@@ -437,7 +437,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.8.0
+superqt==0.7.8
     # via
     #   partseg (pyproject.toml)
     #   magicgui
