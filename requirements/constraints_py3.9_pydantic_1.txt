@@ -14,7 +14,7 @@ appdirs==1.4.4
     #   napari
 asttokens==3.0.1
     # via stack-data
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
@@ -400,7 +400,7 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.54.0
+sentry-sdk==2.55.0
     # via partseg (pyproject.toml)
 setuptools==82.0.1
     # via
