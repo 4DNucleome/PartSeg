@@ -16,7 +16,7 @@ appdirs==1.4.4
     #   napari
 asttokens==3.0.1
     # via stack-data
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
@@ -41,11 +41,11 @@ cloudpickle==3.1.2
     # via dask
 comm==0.2.3
     # via ipykernel
-coverage==7.13.4
+coverage==7.13.5
     # via partseg (pyproject.toml)
 czifile==2019.7.2.3
     # via partseg (pyproject.toml)
-dask==2026.1.2
+dask==2026.3.0
     # via napari
 debugpy==1.8.20
     # via ipykernel
@@ -90,7 +90,7 @@ imageio==2.37.3
     #   scikit-image
 imagesize==2.0.0
     # via sphinx
-importlib-metadata==8.7.1
+importlib-metadata==9.0.0
     # via dask
 in-n-out==0.2.1
     # via app-model
@@ -241,7 +241,7 @@ pillow==12.1.1
     #   imageio
     #   napari
     #   scikit-image
-pint==0.25.2
+pint==0.25.3
     # via napari
 platformdirs==4.9.4
     # via
@@ -398,7 +398,7 @@ scipy==1.17.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.54.0
+sentry-sdk==2.55.0
     # via partseg (pyproject.toml)
 setuptools==82.0.1
     # via
@@ -437,7 +437,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 stack-data==0.6.3
     # via ipython
-superqt==0.8.0
+superqt==0.7.8
     # via
     #   partseg (pyproject.toml)
     #   magicgui
