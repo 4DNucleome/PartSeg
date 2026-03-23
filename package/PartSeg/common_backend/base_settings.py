@@ -529,13 +529,9 @@ class BaseSettings(ViewSettings):
         self.last_executed_algorithm = result.parameters.algorithm
         self.set_algorithm(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         # Fixme not use EventedDict here
-        try:
-            roi_info = result.roi_info.fit_to_image(self.image)
-        except ValueError as e:  # pragma: no cover
-            raise ValueError(ROI_NOT_FIT) from e
+        self.roi = result.roi_info
         if result.points is not None:
             self.points = result.points
-        self.roi = roi_info
 
     def _load_files_call(self, files_list: list[str]):
         self.request_load_files.emit(files_list)
