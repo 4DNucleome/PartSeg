@@ -2,8 +2,6 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.16.5 - 2026-03-24
-
 ### 🚀 Features
 
 - Use `QScrollArea` for components selection ([#1328](https://github.com/4DNucleome/PartSeg/pull/1328))
@@ -11,6 +9,10 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - Fix `QtViewer` initialization as preparation for napari 0.7.0 ([#1351](https://github.com/4DNucleome/PartSeg/pull/1351))
+
+### 📚 Documentation
+
+- Update changelog for 0.16.5 ([#1372](https://github.com/4DNucleome/PartSeg/pull/1372))
 
 ### 🧪 Testing
 
