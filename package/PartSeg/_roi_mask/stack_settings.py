@@ -170,17 +170,15 @@ class StackSettings(BaseSettings):
                 data.selected_components,
                 self.keep_chosen_components,
             )
-            self.chosen_components_widget.set_chose(
-                sorted(state2.roi_extraction_parameters.keys()), state2.selected_components
-            )
             self.roi = state2.roi_info
+            self.chosen_components_widget.set_chosen(state2.selected_components)
+
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             self.set_history(data.history)
-            self.chosen_components_widget.set_chose(
-                sorted(data.roi_extraction_parameters.keys()), data.selected_components
-            )
             self.roi = data.roi_info
+            self.chosen_components_widget.set_chosen(data.selected_components)
+
             self.components_parameters_dict = data.roi_extraction_parameters
 
     @staticmethod
@@ -304,17 +302,21 @@ class StackSettings(BaseSettings):
             raise ValueError("ROI do not fit to image") from e
         if save_chosen:
             state2 = self.transform_state(state, new_roi_info, segmentation_parameters, list_of_components, save_chosen)
-            self.chosen_components_widget.set_chose(
-                sorted(state2.roi_extraction_parameters.keys()), state2.selected_components
-            )
             self.roi = state2.roi_info
+            self.chosen_components_widget.set_chosen(state2.selected_components)
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
-            selected_parameters = {i: segmentation_parameters[i] for i in new_roi_info.bound_info}
-
-            self.chosen_components_widget.set_chose(sorted(selected_parameters.keys()), list_of_components)
             self.roi = new_roi_info
+            self.chosen_components_widget.set_chosen(list_of_components)
             self.components_parameters_dict = segmentation_parameters
+
+    def post_roi_set(self):
+        if self.chosen_components_widget is not None:
+            prev = self.chosen_components_widget.blockSignals(True)
+            try:
+                self.chosen_components_widget.set_components(self.roi_info.bound_info.keys(), [])
+            finally:
+                self.chosen_components_widget.blockSignals(prev)
 
 
 def get_mask(

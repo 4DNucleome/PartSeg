@@ -584,7 +584,7 @@ class ImageView(QWidget):
         else:
             logging.debug("[_remove_worker] %s", sender)
 
-    def _add_layer_util(self, index, layer, filters):
+    def _add_layer_util(self, index: int, layer: _NapariImage, filters: list[tuple[NoiseFilterType, float]]) -> None:
         if layer not in self.viewer.layers:
             self.viewer.add_layer(layer)
 

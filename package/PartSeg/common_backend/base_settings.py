@@ -127,11 +127,6 @@ class ImageSettings(QObject):
         return self.roi
 
     @property
-    def roi(self) -> np.ndarray:
-        """current roi"""
-        return self._roi_info.roi
-
-    @property
     def segmentation_info(self) -> ROIInfo:  # pragma: no cover
         warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi_info
@@ -140,11 +135,17 @@ class ImageSettings(QObject):
     def roi_info(self) -> ROIInfo:
         return self._roi_info
 
+    @property
+    def roi(self) -> np.ndarray:
+        """current roi"""
+        return self._roi_info.roi
+
     @roi.setter
     def roi(self, val: Union[np.ndarray, ROIInfo]):
         if val is None:
             self._roi_info = ROIInfo(val)
             self._additional_layers = {}
+            self.post_roi_set()
             self.roi_clean.emit()
             return
         try:
@@ -155,7 +156,11 @@ class ImageSettings(QObject):
         except ValueError as e:
             raise ValueError(ROI_NOT_FIT) from e
         self._additional_layers = {}
+        self.post_roi_set()
         self.roi_changed.emit(self._roi_info)
+
+    def post_roi_set(self) -> None:
+        """called after roi is set, for subclasses to override"""
 
     @property
     def sizes(self):
@@ -524,14 +529,9 @@ class BaseSettings(ViewSettings):
         self.last_executed_algorithm = result.parameters.algorithm
         self.set_algorithm(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         # Fixme not use EventedDict here
-        try:
-            roi_info = result.roi_info.fit_to_image(self.image)
-        except ValueError as e:  # pragma: no cover
-            raise ValueError(ROI_NOT_FIT) from e
+        self.roi = result.roi_info
         if result.points is not None:
             self.points = result.points
-        self._roi_info = roi_info
-        self.roi_changed.emit(self._roi_info)
 
     def _load_files_call(self, files_list: list[str]):
         self.request_load_files.emit(files_list)

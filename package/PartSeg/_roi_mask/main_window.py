@@ -1,6 +1,8 @@
 import os
+from collections.abc import Sequence
 from contextlib import suppress
 from functools import partial
+from typing import Union
 
 import numpy as np
 from qtpy.QtCore import QByteArray, Qt, Signal, Slot
@@ -16,8 +18,10 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QSpinBox,
+    QSplitter,
     QTabWidget,
     QTextEdit,
     QVBoxLayout,
@@ -393,7 +397,7 @@ class ComponentCheckBox(QCheckBox):
         self.mouse_leave.emit(self.number)
 
 
-class ChosenComponents(QWidget):
+class ChosenComponents(QScrollArea):
     """
     :type check_box: dict[int, ComponentCheckBox]
     """
@@ -404,6 +408,7 @@ class ChosenComponents(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.setWidget(QWidget(self))
         self.check_box = {}
         self.check_all_btn = QPushButton("Select all")
         self.check_all_btn.clicked.connect(self.check_all)
@@ -416,19 +421,33 @@ class ChosenComponents(QWidget):
         self.check_layout = FlowLayout()
         main_layout.addLayout(btn_layout)
         main_layout.addLayout(self.check_layout)
-        self.setLayout(main_layout)
+        self.widget().setLayout(main_layout)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
     def other_component_choose(self, num):
         check = self.check_box[num]
         check.setChecked(not check.isChecked())
+        self.ensureWidgetVisible(check)
 
     def check_all(self):
-        for el in self.check_box.values():
-            el.setChecked(True)
+        prev = self.blockSignals(True)
+        try:
+            for el in self.check_box.values():
+                el.setChecked(True)
+        finally:
+            self.blockSignals(prev)
+        self.check_change_signal.emit()
 
     def un_check_all(self):
-        for el in self.check_box.values():
-            el.setChecked(False)
+        prev = self.blockSignals(True)
+        try:
+            for el in self.check_box.values():
+                el.setChecked(False)
+        finally:
+            self.blockSignals(prev)
+        self.check_change_signal.emit()
 
     def remove_components(self):
         self.check_layout.clear()
@@ -439,24 +458,38 @@ class ChosenComponents(QWidget):
             el.mouse_enter.disconnect()
         self.check_box.clear()
 
-    def new_choose(self, num, chosen_components):
-        self.set_chose(range(1, num + 1), chosen_components)
+    def new_choose(self, num: int, chosen_components: Sequence[int]) -> None:
+        self.set_components(range(1, num + 1), chosen_components)
 
-    def set_chose(self, components_index, chosen_components):
+    def set_components(self, components_index, chosen_components: Union[Sequence[int], None] = None):
+        if chosen_components is None:
+            chosen_components = []
         chosen_components = set(chosen_components)
-        self.blockSignals(True)
-        self.remove_components()
-        for el in components_index:
-            check = ComponentCheckBox(el)
-            if el in chosen_components:
-                check.setChecked(True)
-            check.stateChanged.connect(self.check_change)
-            check.mouse_enter.connect(self.mouse_enter.emit)
-            check.mouse_leave.connect(self.mouse_leave.emit)
-            self.check_box[el] = check
-            self.check_layout.addWidget(check)
-        self.blockSignals(False)
+        prev = self.blockSignals(True)
+        try:
+            self.remove_components()
+            for el in components_index:
+                check = ComponentCheckBox(el)
+                if el in chosen_components:
+                    check.setChecked(True)
+                check.stateChanged.connect(self.check_change)
+                check.mouse_enter.connect(self.mouse_enter.emit)
+                check.mouse_leave.connect(self.mouse_leave.emit)
+                self.check_box[el] = check
+                self.check_layout.addWidget(check)
+        finally:
+            self.blockSignals(prev)
         self.update()
+        self.check_change_signal.emit()
+
+    def set_chosen(self, chosen_components: Sequence[int]):
+        prev = self.blockSignals(True)
+        chosen_components = set(chosen_components)
+        try:
+            for num, check in self.check_box.items():
+                check.setChecked(num in chosen_components)
+        finally:
+            self.blockSignals(prev)
         self.check_change_signal.emit()
 
     def check_change(self):
@@ -464,6 +497,7 @@ class ChosenComponents(QWidget):
 
     def change_state(self, num, val):
         self.check_box[num].setChecked(val)
+        self.ensureWidgetVisible(self.check_box[num])
 
     def get_state(self, num: int) -> bool:
         # TODO Check what situation create report of id ID: af9b57f074264169b4353aa1e61d8bc2
@@ -527,6 +561,7 @@ class AlgorithmOptions(QWidget):
         self.choose_components.check_change_signal.connect(image_view.refresh_selected)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
         self.choose_components.mouse_enter.connect(image_view.component_mark)
+
         self.chosen_list = []
         self.progress_bar2 = QProgressBar()
         self.progress_bar2.setHidden(True)
@@ -566,8 +601,10 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.progress_bar2)
         main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.progress_info_lab)
-        main_layout.addWidget(self.algorithm_choose_widget, 1)
-        main_layout.addWidget(self.choose_components)
+        split = QSplitter(Qt.Orientation.Vertical)
+        split.addWidget(self.algorithm_choose_widget)
+        split.addWidget(self.choose_components)
+        main_layout.addWidget(split, 1)
         down_layout = QHBoxLayout()
         down_layout.addWidget(self.keep_chosen_components_chk)
         down_layout.addWidget(self.show_parameters)
@@ -659,7 +696,7 @@ class AlgorithmOptions(QWidget):
 
     def _image_changed(self):
         self.settings.roi = None
-        self.choose_components.set_chose([], [])
+        self.choose_components.set_components([], [])
 
     def _execute_in_background_init(self):
         if self.batch_process.isRunning():
