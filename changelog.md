@@ -2,6 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.16.5 - 2026-03-24
+
+### 🚀 Features
+
+- Use `QScrollArea` for components selection ([#1328](https://github.com/4DNucleome/PartSeg/pull/1328))
+
+### 🐛 Bug Fixes
+
+- Fix `QtViewer` initialization as preparation for napari 0.7.0 ([#1351](https://github.com/4DNucleome/PartSeg/pull/1351))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `ipython`, `pydantic`, `scipy`, `sentry-sdk`, `traceback-with-variables` ([#1329](https://github.com/4DNucleome/PartSeg/pull/1329))
+- [Automatic] Constraints upgrades: `oiffile`, `tifffile` ([#1337](https://github.com/4DNucleome/PartSeg/pull/1337))
+- [Automatic] Constraints upgrades: `numpy`, `sentry-sdk`, `tifffile` ([#1341](https://github.com/4DNucleome/PartSeg/pull/1341))
+- [Automatic] Constraints upgrades: `imagecodecs`, `numpy`, `packaging`, `pandas`, `qtawesome`, `sentry-sdk`, `tifffile` ([#1347](https://github.com/4DNucleome/PartSeg/pull/1347))
+- [Automatic] Constraints upgrades: `ipykernel`, `ipython`, `oiffile`, `qtconsole`, `sentry-sdk`, `superqt`, `tifffile` ([#1353](https://github.com/4DNucleome/PartSeg/pull/1353))
+- [Automatic] Constraints upgrades: `pandas`, `scipy`, `sentry-sdk`, `tifffile` ([#1357](https://github.com/4DNucleome/PartSeg/pull/1357))
+- [Automatic] Constraints upgrades: `sentry-sdk` ([#1370](https://github.com/4DNucleome/PartSeg/pull/1370))
+
+### ⚙️ Miscellaneous Tasks
+
+- [pre-commit.ci] pre-commit autoupdate ([#1325](https://github.com/4DNucleome/PartSeg/pull/1325))
+- [pre-commit.ci] pre-commit autoupdate ([#1330](https://github.com/4DNucleome/PartSeg/pull/1330))
+- Add `tzdata` to hiddenimports, as preparation for `pandas` 3.0 ([#1335](https://github.com/4DNucleome/PartSeg/pull/1335))
+- [pre-commit.ci] pre-commit autoupdate ([#1333](https://github.com/4DNucleome/PartSeg/pull/1333))
+- Drop macOs-13 on Azure Pipelines, fix parameter name for pyinstaller template ([#1338](https://github.com/4DNucleome/PartSeg/pull/1338))
+- Add Python 3.13 to supported versions ([#1327](https://github.com/4DNucleome/PartSeg/pull/1327))
+- [pre-commit.ci] pre-commit autoupdate ([#1336](https://github.com/4DNucleome/PartSeg/pull/1336))
+- Update runners in make-release workflow ([#1344](https://github.com/4DNucleome/PartSeg/pull/1344))
+- Remove NumPy hack for building executable on macOS ([#1345](https://github.com/4DNucleome/PartSeg/pull/1345))
+- [pre-commit.ci] pre-commit autoupdate ([#1342](https://github.com/4DNucleome/PartSeg/pull/1342))
+- [pre-commit.ci] pre-commit autoupdate ([#1346](https://github.com/4DNucleome/PartSeg/pull/1346))
+- Accept `time` argument in `not_start` mock of timer `start` ([#1350](https://github.com/4DNucleome/PartSeg/pull/1350))
+- [pre-commit.ci] pre-commit autoupdate ([#1354](https://github.com/4DNucleome/PartSeg/pull/1354))
+- Update coderabbitai configuration to not expect docstrings in test ([#1355](https://github.com/4DNucleome/PartSeg/pull/1355))
+- Drop test against pyside2, fix test for napari 0.7.0, add testing against python 3.13 ([#1352](https://github.com/4DNucleome/PartSeg/pull/1352))
+- [pre-commit.ci] pre-commit autoupdate ([#1356](https://github.com/4DNucleome/PartSeg/pull/1356))
+- Move czifile fix to a separate file ([#1362](https://github.com/4DNucleome/PartSeg/pull/1362))
+- Fix overwriting default path for napari settings in tests ([#1363](https://github.com/4DNucleome/PartSeg/pull/1363))
+- [pre-commit.ci] pre-commit autoupdate ([#1359](https://github.com/4DNucleome/PartSeg/pull/1359))
+- Use `pyvista/setup-headless-display-action` for setup display ([#1367](https://github.com/4DNucleome/PartSeg/pull/1367))
+- [pre-commit.ci] pre-commit autoupdate ([#1371](https://github.com/4DNucleome/PartSeg/pull/1371))
+
+### 🛡️ Security
+
+- *(deps)* Bump peter-evans/create-pull-request from 7 to 8 ([#1340](https://github.com/4DNucleome/PartSeg/pull/1340))
+- *(deps)* Bump actions/upload-artifact from 6 to 7 in the github-actions group across 1 directory ([#1361](https://github.com/4DNucleome/PartSeg/pull/1361))
+- *(deps)* Bump actions/download-artifact from 7 to 8 in the github-actions group ([#1368](https://github.com/4DNucleome/PartSeg/pull/1368))
+
+### Build
+
+- *(deps)* Bump the github-actions group with 2 updates ([#1331](https://github.com/4DNucleome/PartSeg/pull/1331))
+- *(deps)* Bump actions/checkout from 5 to 6 in the github-actions group ([#1334](https://github.com/4DNucleome/PartSeg/pull/1334))
+- *(deps)* Bump the github-actions group with 2 updates ([#1339](https://github.com/4DNucleome/PartSeg/pull/1339))
+
 ## 0.16.4 - 2025-10-21
 
 ### 🚀 Features
