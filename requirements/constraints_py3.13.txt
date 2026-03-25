@@ -10,7 +10,7 @@ annotated-types==0.7.0
     # via pydantic
 app-model==0.4.0
     # via napari
-platformdirs==4.3.6
+
     # via
     #   partseg (pyproject.toml)
     #   napari
