@@ -5,8 +5,8 @@ Module with default values of application state
 import os
 import sys
 
-import appdirs
 import packaging.version
+import platformdirs
 
 from PartSeg import APP_LAB, APP_NAME, __version__, parsed_version
 
@@ -28,7 +28,7 @@ develop = False
 save_suffix = ""
 #: path to folder where save settings
 save_folder = os.path.join(
-    os.environ.get("PARTSEG_SETTINGS_DIR", appdirs.user_data_dir(APP_NAME, APP_LAB)),
+    os.environ.get("PARTSEG_SETTINGS_DIR", platformdirs.user_data_dir(APP_NAME, APP_LAB)),
     str(packaging.version.parse(__version__).base_version),
 )
 
