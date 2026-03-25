@@ -17,7 +17,8 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: napari",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3"
+    ,
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -45,7 +46,7 @@ dependencies = [
     "QtAwesome!=1.2.0,>=1.0.3",
     "QtPy>=1.10.0",
     "SimpleITK>=2.1.0",
-    "appdirs>=1.4.4",
+    "platformdirs>=4.3.0",
     "czifile>=2019.5.22",
     "defusedxml>=0.6.0",
     "fonticon-fontawesome6>=6.1.1",

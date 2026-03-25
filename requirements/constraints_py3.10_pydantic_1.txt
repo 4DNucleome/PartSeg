@@ -8,7 +8,7 @@ annotated-doc==0.0.4
     # via typer
 app-model==0.3.2
     # via napari
-appdirs==1.4.4
+
     # via
     #   partseg (pyproject.toml)
     #   napari
