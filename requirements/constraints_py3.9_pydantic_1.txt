@@ -8,10 +8,8 @@ annotated-doc==0.0.4
     # via typer
 app-model==0.3.2
     # via napari
-
-    # via
-    #   partseg (pyproject.toml)
-    #   napari
+appdirs==1.4.4
+    # via napari
 asttokens==3.0.1
     # via stack-data
 attrs==26.1.0
@@ -20,7 +18,7 @@ attrs==26.1.0
     #   referencing
 babel==2.18.0
     # via sphinx
-build==1.4.0
+build==1.4.2
     # via npe2
 cachey==0.2.1
     # via napari
@@ -251,6 +249,7 @@ pint==0.24.4
     # via napari
 platformdirs==4.4.0
     # via
+    #   partseg (pyproject.toml)
     #   jupyter-core
     #   npe2
     #   pint
@@ -360,7 +359,7 @@ pyzmq==27.1.0
     #   jupyter-client
 qtawesome==1.4.1
     # via partseg (pyproject.toml)
-qtconsole==5.7.1
+qtconsole==5.7.2
     # via
     #   partseg (pyproject.toml)
     #   napari-console
@@ -400,7 +399,7 @@ scipy==1.13.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.55.0
+sentry-sdk==2.56.0
     # via partseg (pyproject.toml)
 setuptools==82.0.1
     # via
@@ -453,7 +452,7 @@ tifffile==2024.8.30
     #   napari
     #   oiffile
     #   scikit-image
-tomli==2.4.0
+tomli==2.4.1
     # via
     #   build
     #   npe2

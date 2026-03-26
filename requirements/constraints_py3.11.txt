@@ -10,10 +10,8 @@ annotated-types==0.7.0
     # via pydantic
 app-model==0.4.0
     # via napari
-
-    # via
-    #   partseg (pyproject.toml)
-    #   napari
+appdirs==1.4.4
+    # via napari
 asttokens==3.0.1
     # via stack-data
 attrs==26.1.0
@@ -22,7 +20,7 @@ attrs==26.1.0
     #   referencing
 babel==2.18.0
     # via sphinx
-build==1.4.0
+build==1.4.2
     # via npe2
 cachey==0.2.1
     # via napari
@@ -245,6 +243,7 @@ pint==0.25.3
     # via napari
 platformdirs==4.9.4
     # via
+    #   partseg (pyproject.toml)
     #   jupyter-core
     #   npe2
     #   pint
@@ -319,14 +318,14 @@ pyside2==5.15.2.1
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
-pyside6==6.10.2
+pyside6==6.11.0
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
     #   napari
-pyside6-addons==6.10.2
+pyside6-addons==6.11.0
     # via pyside6
-pyside6-essentials==6.10.2
+pyside6-essentials==6.11.0
     # via
     #   pyside6
     #   pyside6-addons
@@ -356,7 +355,7 @@ pyzmq==27.1.0
     #   jupyter-client
 qtawesome==1.4.1
     # via partseg (pyproject.toml)
-qtconsole==5.7.1
+qtconsole==5.7.2
     # via
     #   partseg (pyproject.toml)
     #   napari-console
@@ -373,7 +372,7 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.5
+requests==2.33.0
     # via
     #   partseg (pyproject.toml)
     #   pooch
@@ -398,7 +397,7 @@ scipy==1.17.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.55.0
+sentry-sdk==2.56.0
     # via partseg (pyproject.toml)
 setuptools==82.0.1
     # via
@@ -408,7 +407,7 @@ shellingham==1.5.4
     # via typer
 shiboken2==5.15.2.1
     # via pyside2
-shiboken6==6.10.2
+shiboken6==6.11.0
     # via
     #   pyside6
     #   pyside6-addons
