@@ -956,23 +956,8 @@ class MainWindow(BaseMainWindow):
 
         self._setup_menu_bar()
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.main_menu)
-        sub_layout = QHBoxLayout()
-        sub2_layout = QVBoxLayout()
-        sub3_layout = QVBoxLayout()
-        sub_layout.addWidget(self.multiple_files)
-        sub_layout.addWidget(self.color_bar, 0)
-        sub3_layout.addWidget(self.image_view, 1)
-        sub3_layout.addWidget(self.info_text, 0)
-        sub2_layout.addWidget(self.options_panel, 1)
-        sub2_layout.addWidget(self.channel_control, 0)
-
-        sub_layout.addLayout(sub3_layout, 1)
-        sub_layout.addLayout(sub2_layout, 0)
-        layout.addLayout(sub_layout)
         self.widget = QWidget()
-        self.widget.setLayout(layout)
+        self.widget.setLayout(self._create_layout())
         self.setCentralWidget(self.widget)
         if initial_image is None:
             reader = TiffImageReader()
@@ -984,6 +969,31 @@ class MainWindow(BaseMainWindow):
         with suppress(KeyError):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
+
+    def _create_layout(self) -> QVBoxLayout:
+        layout = QVBoxLayout()
+        layout.addWidget(self.main_menu)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.addWidget(self.multiple_files)
+        widget_image = QWidget()
+        sub_layout = QHBoxLayout()
+        sub2_layout = QVBoxLayout()
+        sub3_layout = QVBoxLayout()
+        sub_layout.addWidget(self.color_bar, 0)
+        sub3_layout.addWidget(self.image_view, 1)
+        sub3_layout.addWidget(self.info_text, 0)
+        sub_layout.addLayout(sub3_layout, 1)
+        widget_image.setLayout(sub_layout)
+        splitter.addWidget(widget_image)
+
+        sub2_layout.addWidget(self.options_panel, 1)
+        sub2_layout.addWidget(self.channel_control, 0)
+        options_widget = QWidget()
+        options_widget.setLayout(sub2_layout)
+        splitter.addWidget(options_widget)
+
+        layout.addWidget(splitter, 1)
+        return layout
 
     def _setup_menu_bar(self):
         menu_bar = self.menuBar()
