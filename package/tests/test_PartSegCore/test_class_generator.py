@@ -3,10 +3,13 @@
 import sys
 import typing
 from collections import OrderedDict
+from copy import deepcopy
 
 import pytest
 
+from PartSegCore import class_generator
 from PartSegCore.algorithm_describe_base import Register
+from PartSegCore.analysis.measurement_base import Leaf, Node
 from PartSegCore.class_generator import BaseSerializableClass, base_serialize_register
 
 pytestmark = [
@@ -19,9 +22,6 @@ copy_register = Register()
 
 def setup_module():
     """setup any state specific to the execution of the given module."""
-    from copy import deepcopy
-
-    from PartSegCore import class_generator
 
     global copy_register  # pylint: disable=W0603  # noqa: PLW0603
     copy_register = deepcopy(class_generator.base_serialize_register)
@@ -31,7 +31,6 @@ def teardown_module():
     """teardown any state that was previously setup with a setup_module
     method.
     """
-    from PartSegCore import class_generator
 
     class_generator.base_serialize_register = copy_register
 
@@ -142,7 +141,7 @@ def test_typing():
         field1: typing.Union[str, float]
         field2: typing.Any
         field3: typing.Optional[int]
-        field4: typing.List[str]
+        field4: list[str]
 
     val = Test("a", [1, 2, 3], 5, ["a", "b"])
     assert val.field1 == "a"
@@ -159,7 +158,7 @@ def test_typing():
         field1: typing.Union[str, float]
         field2: typing.Any
         field3: typing.Optional[int]
-        field4: typing.List[str]
+        field4: list[str]
         field5: typing.Optional[MyClass]
 
     Test2("aa", 1, None, ["b", "c"], MyClass())
@@ -180,10 +179,10 @@ def test_generic_types():
         list2: typing.Union[str, int]
 
     class Test2(BaseSerializableClass):
-        list1: typing.List[int]
-        list2: typing.List
-        dict1: typing.Dict[str, int]
-        dict2: typing.Dict
+        list1: list[int]
+        list2: list
+        dict1: dict[str, int]
+        dict2: dict
 
     empty(Test1, Test2)
     base_serialize_register.clear()
@@ -263,7 +262,5 @@ def test_functions():
 
 
 def test_statistic_type():
-    from PartSegCore.analysis.measurement_base import Leaf, Node
-
     empty(Leaf, Node)
     base_serialize_register.clear()

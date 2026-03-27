@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Optional
 
 import numpy as np
 from pydantic import Field
@@ -18,9 +18,9 @@ class ProjectionType(Enum):
 
 
 class ImageProjectionParams(BaseModel):
-    projection_type: ProjectionType = Field(ProjectionType.MAX, suffix="Mask and ROI projection will allways use max")
-    keep_mask = False
-    keep_roi = False
+    projection_type: ProjectionType = Field(ProjectionType.MAX, suffix="Mask and ROI projection will always use max")
+    keep_mask: bool = False
+    keep_roi: bool = False
 
 
 def _calc_target_shape(image: Image):
@@ -39,7 +39,7 @@ class ImageProjection(TransformBase):
         roi_info: ROIInfo,
         arguments: ImageProjectionParams,  # type: ignore[override]
         callback_function: Optional[Callable[[str, int], None]] = None,
-    ) -> Tuple[Image, Optional[ROIInfo]]:
+    ) -> tuple[Image, Optional[ROIInfo]]:
         project_operator = getattr(np, arguments.projection_type.value)
         axis = image.array_axis_order.index("Z")
         target_shape = _calc_target_shape(image)
@@ -58,8 +58,8 @@ class ImageProjection(TransformBase):
         return (
             image.__class__(
                 data=new_channels,
-                image_spacing=tuple(spacing),
-                channel_names=image.channel_names,
+                spacing=tuple(spacing),
+                channel_info=image.channel_info,
                 mask=new_mask,
                 axes_order=image.axis_order,
             ),
@@ -67,7 +67,7 @@ class ImageProjection(TransformBase):
         )
 
     @classmethod
-    def get_fields_per_dimension(cls, component_list: List[str]):
+    def get_fields_per_dimension(cls, image: Image):
         return cls.__argument_class__
 
     @classmethod

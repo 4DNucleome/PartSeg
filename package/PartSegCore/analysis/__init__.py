@@ -7,11 +7,11 @@ from PartSegCore.analysis.load_functions import load_metadata
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT
 
 __all__ = (
+    "MEASUREMENT_DICT",
     "AnalysisAlgorithmSelection",
     "ProjectTuple",
     "SegmentationPipeline",
     "SegmentationPipelineElement",
-    "MEASUREMENT_DICT",
     "load_metadata",
 )
 

@@ -1,10 +1,10 @@
 import os
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 from napari.types import FullLayerData
 
-from PartSegImage import Image, ImageWriter
+from PartSegImage import ChannelInfo, Image, ImageWriter
 from PartSegImage.image import DEFAULT_SCALE_FACTOR
 
 
@@ -15,9 +15,9 @@ def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
     scale_shift = min(data.ndim, 3)
     image = Image(
         data,
-        np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
+        spacing=np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         axes_order="TZYX"[-data.ndim :],
-        channel_names=[meta["name"]],
+        channel_info=[ChannelInfo(name=meta["name"])],
         shift=np.divide(meta["translate"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         name="ROI",
     )
@@ -25,7 +25,7 @@ def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
     return path
 
 
-def napari_write_images(path: str, layer_data: List[FullLayerData]) -> List[str]:
+def napari_write_images(path: str, layer_data: list[FullLayerData]) -> list[str]:
     ext = os.path.splitext(path)[1]
     base_shape = layer_data[0][0].shape
     if not all(isinstance(x[0], np.ndarray) and x[0].shape == base_shape for x in layer_data) or ext.lower() not in {
@@ -42,17 +42,17 @@ def napari_write_images(path: str, layer_data: List[FullLayerData]) -> List[str]
         if data.shape[-1] < 6:
             axes += "C"
             scale_shift -= 1
-            channel_names = [f'{meta["name"]} {i}' for i in range(1, data.shape[-1] + 1)]
+            channel_names = [f"{meta['name']} {i}" for i in range(1, data.shape[-1] + 1)]
         axes = axes[-data.ndim :]
     else:
         data = [x[0] for x in layer_data]
-        axes = f"C{axes[-len(data[0].shape):]}"
+        axes = f"C{axes[-len(data[0].shape) :]}"
         scale_shift -= 1
     image = Image(
         data,
-        np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
+        spacing=np.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         axes_order=axes,
-        channel_names=channel_names,
+        channel_info=[ChannelInfo(name=x) for x in channel_names],
         shift=np.divide(meta["translate"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
         name="Image",
     )

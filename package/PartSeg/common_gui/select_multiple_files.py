@@ -2,7 +2,6 @@ import os
 from functools import partial
 from glob import glob
 from pathlib import Path
-from typing import List
 
 from qtpy.QtCore import QPoint, Qt, Signal
 from qtpy.QtGui import QDragEnterEvent, QDropEvent
@@ -38,7 +37,7 @@ class AcceptFiles(QDialog):
         discard = QPushButton("Discard", self)
         discard.clicked.connect(self.close)
         self.files = QListWidget(self)
-        self.files.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.files.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         for file_name in files:
             self.files.addItem(file_name)
         for i in range(self.files.count()):
@@ -78,7 +77,7 @@ class FileListItem(QListWidgetItem):
 class FileListWidget(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
 
 class AddFiles(QWidget):
@@ -89,7 +88,7 @@ class AddFiles(QWidget):
     def __init__(self, settings: BaseSettings, parent=None, btn_layout=QHBoxLayout):
         """TODO: to be defined1."""
         super().__init__(parent)
-        self.mask_list: List[MaskMapper] = []
+        self.mask_list: list[MaskMapper] = []
         self.settings = settings
         self.files_to_proceed = set()
         self.paths_input = QLineEdit(self)
@@ -175,7 +174,7 @@ class AddFiles(QWidget):
                 res_list.append(os.path.join(base_path, file_path.strip()))
         if missed_files := [x for x in res_list if not os.path.exists(x)]:
             if len(missed_files) > 6:
-                missed_files = missed_files[:6] + ["..."]
+                missed_files = [*missed_files[:6], "..."]
             missed_files_str = "<br>".join(missed_files)
             QMessageBox().warning(
                 self,
@@ -195,7 +194,7 @@ class AddFiles(QWidget):
             self.update_files_list(paths)
 
         else:
-            QMessageBox.warning(self, "No new files", "No new files found", QMessageBox.Ok)
+            QMessageBox.warning(self, "No new files", "No new files found", QMessageBox.StandardButton.Ok)
 
     def update_files_list(self, paths):
         dialog = AcceptFiles(paths)
@@ -209,7 +208,7 @@ class AddFiles(QWidget):
     def select_files(self):
         dial = QFileDialog(self, "Select files")
         dial.setDirectory(self.settings.get(IO_BATCH_DIRECTORY, self.settings.get(OPEN_DIRECTORY, str(Path.home()))))
-        dial.setFileMode(QFileDialog.ExistingFiles)
+        dial.setFileMode(QFileDialog.FileMode.ExistingFiles)
         if dial.exec_():
             self.settings.set(IO_BATCH_DIRECTORY, os.path.dirname(str(dial.selectedFiles()[0])))
             new_paths = sorted(set(map(str, dial.selectedFiles())) - self.files_to_proceed)

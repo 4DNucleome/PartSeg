@@ -9,9 +9,11 @@ from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, ROIExtractionResult
 from PartSegImage import Image
+
+if typing.TYPE_CHECKING:
+    from PartSegCore.segmentation import RestartableAlgorithm
 
 
 def _empty_fun(_a1, _a2):
@@ -21,9 +23,9 @@ def _empty_fun(_a1, _a2):
 @dataclass(frozen=True)
 class PipelineResult:
     roi_info: ROIInfo
-    additional_layers: typing.Dict[str, AdditionalLayerDescription]
+    additional_layers: dict[str, AdditionalLayerDescription]
     mask: np.ndarray
-    history: typing.List[HistoryElement]
+    history: list[HistoryElement]
     description: str
 
 
@@ -52,7 +54,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
 
 def calculate_segmentation_step(
     profile: ROIExtractionProfile, image: Image, mask: typing.Optional[np.ndarray]
-) -> typing.Tuple[ROIExtractionResult, str]:
+) -> tuple[ROIExtractionResult, str]:
     algorithm: RestartableAlgorithm = AnalysisAlgorithmSelection[profile.algorithm]()
     algorithm.set_image(image)
     algorithm.set_mask(mask)

@@ -1,7 +1,9 @@
 import contextlib
 from contextlib import suppress
+from importlib import metadata
 
 import pytest
+from packaging.version import parse as parse_version
 from qtpy.QtWidgets import QDialog, QInputDialog, QMessageBox
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
@@ -10,16 +12,18 @@ from PartSeg._roi_mask.stack_settings import StackSettings
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui import napari_image_view
 
+NAPARI_GE_0_7_0 = parse_version(metadata.version("napari")) >= parse_version("0.7.0a0")
 
-@pytest.fixture()
-def base_settings(image, tmp_path, measurement_profiles, qapp):
+
+@pytest.fixture
+def base_settings(image, tmp_path, measurement_profiles):
     settings = BaseSettings(tmp_path)
     settings.image = image
     return settings
 
 
-@pytest.fixture()
-def part_settings(image, tmp_path, measurement_profiles, qapp):
+@pytest.fixture
+def part_settings(image, tmp_path, measurement_profiles):
     settings = PartSettings(tmp_path)
     settings.image = image
     for el in measurement_profiles:
@@ -27,8 +31,8 @@ def part_settings(image, tmp_path, measurement_profiles, qapp):
     return settings
 
 
-@pytest.fixture()
-def stack_settings(tmp_path, image, qapp):
+@pytest.fixture
+def stack_settings(tmp_path, image):
     settings = StackSettings(tmp_path)
     settings.image = image
     chose = ChosenComponents()
@@ -37,8 +41,8 @@ def stack_settings(tmp_path, image, qapp):
     chose.deleteLater()
 
 
-@pytest.fixture()
-def part_settings_with_project(image, analysis_segmentation2, tmp_path, qapp):
+@pytest.fixture
+def part_settings_with_project(image, analysis_segmentation2, tmp_path):
     settings = PartSettings(tmp_path)
     settings.image = image
     settings.set_project_info(analysis_segmentation2)
@@ -62,7 +66,7 @@ def _disable_threads_viewer_patch_add_layer(monkeypatch, request):
         if layer not in self.viewer.layers:
             self.viewer.add_layer(layer)
 
-    monkeypatch.setattr(napari_image_view.ImageView, "_add_layer_util", _add_layer_util)
+        monkeypatch.setattr(napari_image_view.ImageView, "_add_layer_util", _add_layer_util)
 
 
 @pytest.fixture(autouse=True)
@@ -90,7 +94,7 @@ def _block_threads(monkeypatch, request):
             else:
                 old_start(self)
 
-    def not_start(self):
+    def not_start(self, time=None):
         raise RuntimeError("Thread should not be used in test")
 
     monkeypatch.setattr(QTimer, "start", not_start)
@@ -120,7 +124,10 @@ def _reset_napari_settings(monkeypatch, tmp_path):
 
     from napari import settings
 
-    cp = settings.NapariSettings.__private_attributes__["_config_path"]
+    if NAPARI_GE_0_7_0:
+        cp = settings.NapariSettings.model_fields["config_path"]
+    else:
+        cp = settings.NapariSettings.__private_attributes__["_config_path"]
     monkeypatch.setattr(cp, "default", tmp_path / "save.yaml")
     monkeypatch.setattr(settings.NapariSettings, "save", _mock_save)
     settings._SETTINGS = None
@@ -173,3 +180,9 @@ def _mock_throttler(monkeypatch):
 
         if hasattr(qt_main_window, "QSignalThrottler"):
             monkeypatch.setattr(qt_main_window, "QSignalThrottler", DummyThrottler)
+    with contextlib.suppress(ImportError):
+        monkeypatch.setattr(
+            "napari._qt.threads.status_checker.StatusChecker.start",
+            lambda x: None,
+            raising=False,
+        )

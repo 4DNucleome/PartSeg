@@ -1,7 +1,8 @@
 import os
+from collections.abc import Sequence
 from contextlib import suppress
 from functools import partial
-from typing import Type
+from typing import Union
 
 import numpy as np
 from qtpy.QtCore import QByteArray, Qt, Signal, Slot
@@ -17,8 +18,10 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QSpinBox,
+    QSplitter,
     QTabWidget,
     QTextEdit,
     QVBoxLayout,
@@ -34,7 +37,7 @@ from PartSeg._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
 from PartSeg._roi_mask.simple_measurements import SimpleMeasurements
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY, ROI_NOT_FIT
-from PartSeg.common_gui.advanced_tabs import AdvancedWindow
+from PartSeg.common_gui.advanced_tabs import AdvancedWindow, ImageMetadata
 from PartSeg.common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
@@ -89,15 +92,13 @@ class MaskDialog(MaskDialogBase):
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
-        # TODO Check me
-        # self.settings.roi = seg["segmentation"]
         self.settings._set_roi_info(  # pylint: disable=protected-access
             ROIInfo(seg["segmentation"]),
             False,
             history.roi_extraction_parameters["selected"],
             history.roi_extraction_parameters["parameters"],
         )
-        self.settings.mask = seg["mask"] if "mask" in seg else None
+        self.settings.mask = seg.get("mask")
         self.close()
 
 
@@ -211,11 +212,11 @@ class MainMenu(BaseMainMenu):
                 self,
                 "Not supported",
                 "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             )
 
-            if res == QMessageBox.Yes:
+            if res == QMessageBox.StandardButton.Yes:
                 image = image.swap_time_and_stack()
             else:
                 return False
@@ -314,7 +315,9 @@ class MainMenu(BaseMainMenu):
         save_location, _selected_filter, save_class, values = dial.get_result()
 
         def exception_hook(exception):
-            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
+            QMessageBox.critical(
+                self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.StandardButton.Ok
+            )
             raise exception
 
         dial = ExecuteFunctionDialog(
@@ -326,8 +329,12 @@ class MainMenu(BaseMainMenu):
         dial.exec_()
 
     def save_result(self):
-        if self.settings.image_path is not None and QMessageBox.Yes == QMessageBox.question(
-            self, "Copy", "Copy name to clipboard?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes
+        if self.settings.image_path is not None and QMessageBox.StandardButton.Yes == QMessageBox.question(
+            self,
+            "Copy",
+            "Copy name to clipboard?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
         ):
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(os.path.splitext(os.path.basename(self.settings.image_path))[0])
@@ -347,24 +354,24 @@ class MainMenu(BaseMainMenu):
             return
         res = dial.get_result()
         potential_names = self.settings.get_file_names_for_save_result(res.save_destination)
-        conflict = []
-        for el in potential_names:
-            if os.path.exists(el):
-                conflict.append(el)
+        conflict = [el for el in potential_names if os.path.exists(el)]
+
         if conflict:
             # TODO modify because of long lists
             conflict_str = "\n".join(conflict)
-            if QMessageBox.No == QMessageBox.warning(
+            if QMessageBox.StandardButton.No == QMessageBox.warning(
                 self,
                 "Overwrite",
                 f"Overwrite files:\n {conflict_str}",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             ):
                 self.save_result()
 
         def exception_hook(exception):
-            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
+            QMessageBox.critical(
+                self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.StandardButton.Ok
+            )
 
         dial = ExecuteFunctionDialog(
             res.save_class.save,
@@ -390,9 +397,9 @@ class ComponentCheckBox(QCheckBox):
         self.mouse_leave.emit(self.number)
 
 
-class ChosenComponents(QWidget):
+class ChosenComponents(QScrollArea):
     """
-    :type check_box: dict[int, QCheckBox]
+    :type check_box: dict[int, ComponentCheckBox]
     """
 
     check_change_signal = Signal()
@@ -401,6 +408,7 @@ class ChosenComponents(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.setWidget(QWidget(self))
         self.check_box = {}
         self.check_all_btn = QPushButton("Select all")
         self.check_all_btn.clicked.connect(self.check_all)
@@ -413,19 +421,33 @@ class ChosenComponents(QWidget):
         self.check_layout = FlowLayout()
         main_layout.addLayout(btn_layout)
         main_layout.addLayout(self.check_layout)
-        self.setLayout(main_layout)
+        self.widget().setLayout(main_layout)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
     def other_component_choose(self, num):
         check = self.check_box[num]
         check.setChecked(not check.isChecked())
+        self.ensureWidgetVisible(check)
 
     def check_all(self):
-        for el in self.check_box.values():
-            el.setChecked(True)
+        prev = self.blockSignals(True)
+        try:
+            for el in self.check_box.values():
+                el.setChecked(True)
+        finally:
+            self.blockSignals(prev)
+        self.check_change_signal.emit()
 
     def un_check_all(self):
-        for el in self.check_box.values():
-            el.setChecked(False)
+        prev = self.blockSignals(True)
+        try:
+            for el in self.check_box.values():
+                el.setChecked(False)
+        finally:
+            self.blockSignals(prev)
+        self.check_change_signal.emit()
 
     def remove_components(self):
         self.check_layout.clear()
@@ -436,24 +458,38 @@ class ChosenComponents(QWidget):
             el.mouse_enter.disconnect()
         self.check_box.clear()
 
-    def new_choose(self, num, chosen_components):
-        self.set_chose(range(1, num + 1), chosen_components)
+    def new_choose(self, num: int, chosen_components: Sequence[int]) -> None:
+        self.set_components(range(1, num + 1), chosen_components)
 
-    def set_chose(self, components_index, chosen_components):
+    def set_components(self, components_index, chosen_components: Union[Sequence[int], None] = None):
+        if chosen_components is None:
+            chosen_components = []
         chosen_components = set(chosen_components)
-        self.blockSignals(True)
-        self.remove_components()
-        for el in components_index:
-            check = ComponentCheckBox(el)
-            if el in chosen_components:
-                check.setChecked(True)
-            check.stateChanged.connect(self.check_change)
-            check.mouse_enter.connect(self.mouse_enter.emit)
-            check.mouse_leave.connect(self.mouse_leave.emit)
-            self.check_box[el] = check
-            self.check_layout.addWidget(check)
-        self.blockSignals(False)
+        prev = self.blockSignals(True)
+        try:
+            self.remove_components()
+            for el in components_index:
+                check = ComponentCheckBox(el)
+                if el in chosen_components:
+                    check.setChecked(True)
+                check.stateChanged.connect(self.check_change)
+                check.mouse_enter.connect(self.mouse_enter.emit)
+                check.mouse_leave.connect(self.mouse_leave.emit)
+                self.check_box[el] = check
+                self.check_layout.addWidget(check)
+        finally:
+            self.blockSignals(prev)
         self.update()
+        self.check_change_signal.emit()
+
+    def set_chosen(self, chosen_components: Sequence[int]):
+        prev = self.blockSignals(True)
+        chosen_components = set(chosen_components)
+        try:
+            for num, check in self.check_box.items():
+                check.setChecked(num in chosen_components)
+        finally:
+            self.blockSignals(prev)
         self.check_change_signal.emit()
 
     def check_change(self):
@@ -461,6 +497,7 @@ class ChosenComponents(QWidget):
 
     def change_state(self, num, val):
         self.check_box[num].setChecked(val)
+        self.ensureWidgetVisible(self.check_box[num])
 
     def get_state(self, num: int) -> bool:
         # TODO Check what situation create report of id ID: af9b57f074264169b4353aa1e61d8bc2
@@ -524,8 +561,7 @@ class AlgorithmOptions(QWidget):
         self.choose_components.check_change_signal.connect(image_view.refresh_selected)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
         self.choose_components.mouse_enter.connect(image_view.component_mark)
-        # WARNING works only with one channels algorithms
-        # SynchronizeValues.add_synchronization("channels_chose", widgets_list)
+
         self.chosen_list = []
         self.progress_bar2 = QProgressBar()
         self.progress_bar2.setHidden(True)
@@ -565,8 +601,10 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.progress_bar2)
         main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.progress_info_lab)
-        main_layout.addWidget(self.algorithm_choose_widget, 1)
-        main_layout.addWidget(self.choose_components)
+        split = QSplitter(Qt.Orientation.Vertical)
+        split.addWidget(self.algorithm_choose_widget)
+        split.addWidget(self.choose_components)
+        main_layout.addWidget(split, 1)
         down_layout = QHBoxLayout()
         down_layout.addWidget(self.keep_chosen_components_chk)
         down_layout.addWidget(self.show_parameters)
@@ -658,7 +696,7 @@ class AlgorithmOptions(QWidget):
 
     def _image_changed(self):
         self.settings.roi = None
-        self.choose_components.set_chose([], [])
+        self.choose_components.set_components([], [])
 
     def _execute_in_background_init(self):
         if self.batch_process.isRunning():
@@ -686,7 +724,7 @@ class AlgorithmOptions(QWidget):
             settings=self.settings,
             system_widget=False,
             path="io.save_batch",
-            file_mode=PSaveDialog.Directory,
+            file_mode=PSaveDialog.FileMode.Directory,
         )
         if not dial.exec_():
             return
@@ -769,7 +807,7 @@ class ImageInformation(QWidget):
         super().__init__(parent)
         self._settings = settings
         self.path = QTextEdit("<b>Path:</b> example image")
-        self.path.setWordWrapMode(QTextOption.WrapAnywhere)
+        self.path.setWordWrapMode(QTextOption.WrapMode.WrapAnywhere)
         self.path.setReadOnly(True)
         self.setMinimumHeight(20)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
@@ -785,8 +823,8 @@ class ImageInformation(QWidget):
         self.sync_dirs.stateChanged.connect(self.set_sync_dirs)
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
-            el.setAlignment(Qt.AlignRight)
-            el.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            el.setAlignment(Qt.AlignmentFlag.AlignRight)
+            el.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
             el.setRange(0, 100000)
             # noinspection PyUnresolvedReferences
             el.valueChanged.connect(self.image_spacing_change)
@@ -867,14 +905,16 @@ class Options(QTabWidget):
         self._settings = settings
         self.algorithm_options = AlgorithmOptions(settings, image_view)
         self.image_properties = ImageInformation(settings)
+        self.image_metadata = ImageMetadata(settings)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
         self.algorithm_options.batch_process.multiple_result.connect(
             partial(self.image_properties.multiple_files.setChecked, True)
         )
         self.addTab(self.image_properties, "Image")
+        self.addTab(self.image_metadata, "Image metadata")
         self.addTab(self.algorithm_options, "Segmentation")
         self.setMinimumWidth(370)
-        self.setCurrentIndex(1)
+        self.setCurrentIndex(2)
 
     def get_chosen_components(self):
         return self.algorithm_options.get_chosen_components()
@@ -884,12 +924,12 @@ class MainWindow(BaseMainWindow):
     settings: StackSettings
 
     @classmethod
-    def get_setting_class(cls) -> Type[StackSettings]:
+    def get_setting_class(cls) -> type[StackSettings]:
         return StackSettings
 
     initial_image_path = PartSegData.segmentation_mask_default_image
 
-    def __init__(  # noqa: PLR0915
+    def __init__(
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
         super().__init__(config_folder, title, settings, io_functions.load_dict, signal_fun)
@@ -898,7 +938,7 @@ class MainWindow(BaseMainWindow):
         self.image_view = StackImageView(self.settings, self.channel_control, name="channelcontrol")
         self.image_view.setMinimumWidth(450)
         self.info_text = QLabel()
-        self.info_text.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self.info_text.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.image_view.text_info_change.connect(self.info_text.setText)
         self.options_panel = Options(self.settings, self.image_view)
         self.main_menu = MainMenu(self.settings, self)
@@ -914,28 +954,7 @@ class MainWindow(BaseMainWindow):
         icon = QIcon(os.path.join(PartSegData.icons_dir, "icon_stack.png"))
         self.setWindowIcon(icon)
 
-        menu_bar = self.menuBar()
-        file_menu = menu_bar.addMenu("File")
-        file_menu.addAction("&Open").triggered.connect(self.main_menu.load_image)
-        file_menu.addMenu(self.recent_file_menu)
-        file_menu.addAction("&Save segmentation").triggered.connect(self.main_menu.save_segmentation)
-        file_menu.addAction("&Save components").triggered.connect(self.main_menu.save_result)
-        view_menu = menu_bar.addMenu("View")
-        view_menu.addAction("Settings and Measurement").triggered.connect(self.main_menu.show_advanced_window)
-        view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
-        view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
-        view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
-        view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
-        view_menu.addAction("Toggle console").triggered.connect(self._toggle_console)
-        view_menu.addAction("Toggle scale bar").triggered.connect(self._toggle_scale_bar)
-        action = view_menu.addAction("Screenshot")
-        action.triggered.connect(self.screenshot(self.image_view))
-        action.setShortcut(QKeySequence.Print)
-        image_menu = menu_bar.addMenu("Image operations")
-        image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
-        help_menu = menu_bar.addMenu("Help")
-        help_menu.addAction("State directory").triggered.connect(self.show_settings_directory)
-        help_menu.addAction("About").triggered.connect(self.show_about_dialog)
+        self._setup_menu_bar()
 
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
@@ -966,6 +985,30 @@ class MainWindow(BaseMainWindow):
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
 
+    def _setup_menu_bar(self):
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu("File")
+        file_menu.addAction("&Open").triggered.connect(self.main_menu.load_image)
+        file_menu.addMenu(self.recent_file_menu)
+        file_menu.addAction("&Save segmentation").triggered.connect(self.main_menu.save_segmentation)
+        file_menu.addAction("&Save components").triggered.connect(self.main_menu.save_result)
+        view_menu = menu_bar.addMenu("View")
+        view_menu.addAction("Settings and Measurement").triggered.connect(self.main_menu.show_advanced_window)
+        view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
+        view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
+        view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
+        view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
+        view_menu.addAction("Toggle console").triggered.connect(self._toggle_console)
+        view_menu.addAction("Toggle scale bar").triggered.connect(self._toggle_scale_bar)
+        action = view_menu.addAction("Screenshot")
+        action.triggered.connect(self.screenshot(self.image_view))
+        action.setShortcut(QKeySequence.StandardKey.Print)
+        image_menu = menu_bar.addMenu("Image operations")
+        image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
+        help_menu = menu_bar.addMenu("Help")
+        help_menu.addAction("State directory").triggered.connect(self.show_settings_directory)
+        help_menu.addAction("About").triggered.connect(self.show_about_dialog)
+
     def _toggle_scale_bar(self):
         self.image_view.toggle_scale_bar()
         super()._toggle_scale_bar()
@@ -993,7 +1036,7 @@ class MainWindow(BaseMainWindow):
             file_path=file_path,
             image=image,
             roi_info=roi_info,
-            roi_extraction_parameters={i: None for i in roi_info.bound_info},
+            roi_extraction_parameters=dict.fromkeys(roi_info.bound_info),
         )
 
     def set_data(self, data):

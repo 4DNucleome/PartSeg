@@ -1,21 +1,33 @@
+from __future__ import annotations
+
 import copy
 import inspect
 import itertools
+import traceback
 import typing
 import warnings
 import weakref
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from contextlib import suppress
-from types import MethodType
+from traceback import StackSummary
+from typing import Union
 
 import numpy as np
+from local_migrator import register_class
+from psygnal import Signal
 from pydantic import BaseModel as PydanticBaseModel
+from sentry_sdk.utils import safe_repr as _safe_repr
+
+ErrorInfo = tuple[Exception, Union[StackSummary, tuple[dict, StackSummary]]]
+
 
 __author__ = "Grzegorz Bokota"
 
-from local_migrator import register_class
-from psygnal import Signal
+if typing.TYPE_CHECKING:
+    from types import MethodType
+
+    from napari.layers import Image
 
 
 def bisect(arr, val, comp):
@@ -49,7 +61,7 @@ class CallbackBase(ABC):
 
 
 class CallbackFun(CallbackBase):
-    def __init__(self, fun: typing.Callable, max_args: typing.Optional[int] = None):
+    def __init__(self, fun: typing.Callable, max_args: int | None = None):
         self.fun = fun
         self.count = _inspect_signature(fun) if max_args is None else max_args
 
@@ -61,7 +73,7 @@ class CallbackFun(CallbackBase):
 
 
 class CallbackMethod(CallbackBase):
-    def __init__(self, method, max_args: typing.Optional[int] = None):
+    def __init__(self, method, max_args: int | None = None):
         obj, name = self._get_proper_name(method)
         self.ref = weakref.ref(obj)
         self.name = name
@@ -90,7 +102,7 @@ class CallbackMethod(CallbackBase):
             getattr(obj, self.name)(*args[: self.count], **kwarg)
 
 
-def _inspect_signature(slot: typing.Callable) -> typing.Optional[int]:
+def _inspect_signature(slot: typing.Callable) -> int | None:
     """
     count maximal number of positional argument
     :param slot: callable to be checked
@@ -112,7 +124,7 @@ def _inspect_signature(slot: typing.Callable) -> typing.Optional[int]:
     return count
 
 
-def get_callback(callback: typing.Union[typing.Callable, MethodType], max_args=None) -> CallbackBase:
+def get_callback(callback: typing.Callable | MethodType, max_args=None) -> CallbackBase:
     if inspect.ismethod(callback):
         return CallbackMethod(callback, max_args)
 
@@ -169,7 +181,7 @@ class EventedDict(typing.MutableMapping):
         if k in self._dict and isinstance(self._dict[k], EventedDict):
             self._dict[k].setted.disconnect(self._propagate_setitem)
             self._dict[k].deleted.disconnect(self._propagate_del)
-        old_value = self._dict[k] if k in self._dict else None
+        old_value = self._dict.get(k)
         with suppress(ValueError):
             if old_value == v:
                 return
@@ -251,7 +263,7 @@ class ProfileDict:
     Dict for storing recursive data. The path is dot separated.
 
     :param klass: class of stored data. Same as in :py:class:`EventedDict`
-    :parma kwargs: initial data
+    :param kwargs: initial data
 
     >>> dkt = ProfileDict()
     >>> dkt.set(["aa", "bb", "c1"], 7)
@@ -265,7 +277,7 @@ class ProfileDict:
 
     def __init__(self, klass=None, **kwargs):
         self._my_dict = EventedDict(klass, **kwargs)
-        self._callback_dict: typing.Dict[str, typing.List[CallbackBase]] = defaultdict(list)
+        self._callback_dict: dict[str, list[CallbackBase]] = defaultdict(list)
 
         self._my_dict.setted.connect(self._call_callback)
         self._my_dict.deleted.connect(self._call_callback)
@@ -278,7 +290,7 @@ class ProfileDict:
         return self._my_dict
 
     @my_dict.setter
-    def my_dict(self, value: typing.Union[dict, EventedDict]):
+    def my_dict(self, value: dict | EventedDict):
         if isinstance(value, dict):
             value = EventedDict(**value)
 
@@ -288,7 +300,7 @@ class ProfileDict:
         self._my_dict.setted.connect(self._call_callback)
         self._my_dict.deleted.connect(self._call_callback)
 
-    def update(self, ob: typing.Union["ProfileDict", dict, None] = None, **kwargs):
+    def update(self, ob: ProfileDict | dict | None = None, **kwargs):
         """
         Update dict recursively. Use :py:func:`~.recursive_update_dict`
 
@@ -309,7 +321,7 @@ class ProfileDict:
             callback()
 
     def connect(
-        self, key_path: typing.Union[typing.Sequence[str], str], callback: typing.Callable[[], typing.Any], maxargs=None
+        self, key_path: typing.Sequence[str] | str, callback: typing.Callable[[], typing.Any], maxargs=None
     ) -> typing.Callable:
         """
         Connect function to receive information when object on path was changed using :py:meth:`.set`
@@ -325,7 +337,7 @@ class ProfileDict:
         self._callback_dict[key_path].append(get_callback(callback, maxargs))
         return callback
 
-    def set(self, key_path: typing.Union[typing.Sequence[str], str], value):
+    def set(self, key_path: typing.Sequence[str] | str, value):
         """
         Set value from dict
 
@@ -335,23 +347,22 @@ class ProfileDict:
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         curr_dict = self.my_dict
-
-        for i, key in enumerate(key_path[:-1]):
-            try:
+        i = 0
+        try:
+            for i, key in enumerate(key_path[:-1]):  # noqa: B007
                 # TODO add check if next step element is dict and create custom information
                 curr_dict = curr_dict[key]
-            except KeyError:
-                for key2 in key_path[i:-1]:
-                    with curr_dict.setted.blocked():
-                        curr_dict[key2] = {}
-                    curr_dict = curr_dict[key2]
-                break
+        except KeyError:
+            for key2 in key_path[i:-1]:
+                with curr_dict.setted.blocked():
+                    curr_dict[key2] = {}
+                curr_dict = curr_dict[key2]
         if isinstance(value, dict):
             value = EventedDict(**value)
         curr_dict[key_path[-1]] = value
         return curr_dict[key_path[-1]]
 
-    def _call_callback(self, key_path: typing.Union[typing.Sequence[str], str]):
+    def _call_callback(self, key_path: typing.Sequence[str] | str):
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         full_path = ".".join(key_path[1:])
@@ -369,7 +380,7 @@ class ProfileDict:
         for callback in callback_list:
             callback(full_path)
 
-    def get(self, key_path: typing.Union[list, str], default=None):
+    def get(self, key_path: list | str, default=None):
         """
         Get value from dict.
 
@@ -381,15 +392,15 @@ class ProfileDict:
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         curr_dict = self.my_dict
-        for key in key_path:
-            try:
+        try:
+            for key in key_path:
                 curr_dict = curr_dict[key]
-            except KeyError as e:
-                if default is None:
-                    raise e
+        except KeyError as e:
+            if default is None:
+                raise e
 
-                val = copy.deepcopy(default)
-                return self.set(key_path, val)
+            val = copy.deepcopy(default)
+            return self.set(key_path, val)
 
         return curr_dict
 
@@ -403,7 +414,7 @@ class ProfileDict:
         warnings.warn("Deprecated, use pop errors instead", FutureWarning, stacklevel=2)
         self.pop_errors()
 
-    def pop_errors(self) -> typing.List[typing.Tuple[str, dict]]:
+    def pop_errors(self) -> list[tuple[str, dict]]:
         """Remove problematic entries from dict"""
         error_list = []
         for group, up_dkt in list(self.my_dict.items()):
@@ -452,7 +463,7 @@ class BaseModel(PydanticBaseModel):
         return copy_res
 
 
-def iterate_names(base_name: str, data_dict, max_length=None) -> typing.Optional[str]:
+def iterate_names(base_name: str, data_dict, max_length=None) -> str | None:
     if base_name not in data_dict:
         return base_name[:max_length]
     if max_length is not None:
@@ -462,3 +473,46 @@ def iterate_names(base_name: str, data_dict, max_length=None) -> typing.Optional
         if res_name not in data_dict:
             return res_name
     return None
+
+
+def napari_image_repr(image: Image) -> str:
+    return (
+        f"<Image of shape: {image.data.shape}, dtype: {image.data.dtype}, "
+        f"slice {getattr(image, '_slice_indices', None)}>"
+    )
+
+
+def safe_repr(val):
+    from napari.layers import Image  # noqa: PLC0415
+
+    if isinstance(val, np.ndarray):
+        return numpy_repr(val)
+    if isinstance(val, Image):
+        return napari_image_repr(val)
+    return _safe_repr(val)
+
+
+def pre_prepare_traceback_for_queue(exc: BaseException) -> StackSummary:
+    """
+    Prepare exception for sending it through the multiprocessing queue.
+
+    :param exc: exception to prepare
+    :return: prepared exception
+    """
+    traceback_list = traceback.extract_tb(exc.__traceback__)
+    for el in traceback_list:
+        if hasattr(el, "_code"):
+            del el._code
+    return traceback_list
+
+
+def prepare_error_data(exception: Exception) -> ErrorInfo:
+    try:
+        from sentry_sdk.serializer import serialize  # noqa: PLC0415
+        from sentry_sdk.utils import event_from_exception  # noqa: PLC0415
+
+        event = event_from_exception(exception)[0]
+        event = serialize(event)
+        return exception, (event, pre_prepare_traceback_for_queue(exception))
+    except ImportError:  # pragma: no cover
+        return exception, pre_prepare_traceback_for_queue(exception)

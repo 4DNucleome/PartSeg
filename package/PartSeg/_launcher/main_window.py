@@ -1,9 +1,10 @@
 import importlib
 import os
-import warnings
 from functools import partial
-from typing import Type
+from typing import TYPE_CHECKING
 
+import napari
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QSize, Qt, QThread, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QProgressBar, QToolButton, QWidget
@@ -12,9 +13,14 @@ from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME, state_store
 from PartSeg.common_backend import napari_get_settings
 from PartSeg.common_backend.base_settings import BaseSettings, get_stylesheet, get_theme, napari_template
 from PartSeg.common_backend.load_backup import import_config
-from PartSeg.common_gui.main_window import BaseMainWindow
 from PartSegData import icons_dir
 from PartSegImage import TiffImageReader
+
+if TYPE_CHECKING:
+    from PartSeg.common_gui.main_window import BaseMainWindow
+
+
+_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 
 
 class Prepare(QThread):
@@ -28,11 +34,11 @@ class Prepare(QThread):
         if not self.module:  # pragma: no cover
             return
 
-        from PartSeg import plugins
+        from PartSeg import plugins  # noqa: PLC0415
 
         plugins.register()
         main_window_module = importlib.import_module(self.module)
-        main_window: Type[BaseMainWindow] = main_window_module.MainWindow
+        main_window: type[BaseMainWindow] = main_window_module.MainWindow
         settings: BaseSettings = main_window.get_setting_class()(main_window_module.CONFIG_FOLDER)
         self.errors = settings.load()
         reader = TiffImageReader()
@@ -140,8 +146,9 @@ class MainWindow(QMainWindow):
 
     def _update_theme(self):
         napari_settings = napari_get_settings(state_store.save_folder)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
+        if _napari_ge_5:
+            theme = get_theme(napari_settings.appearance.theme).to_rgb_dict()
+        else:
             theme = get_theme(napari_settings.appearance.theme, as_dict=True)
         # TODO understand qss overwrite mechanism
         self.setStyleSheet(napari_template(get_stylesheet(), **theme))

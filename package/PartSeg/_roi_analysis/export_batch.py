@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import tarfile
 import time
@@ -307,7 +308,7 @@ class ExportProjectDialog(QDialog):
 
 def _extract_information_from_excel_to_export(
     excel_path: typing.Union[str, Path], base_folder: typing.Union[str, Path]
-) -> typing.List[typing.Tuple[str, bool]]:
+) -> list[tuple[str, bool]]:
     """Extract information from Excel file to export"""
     file_list = []
     file_set = set()
@@ -391,7 +392,7 @@ def sleep_with_rate(response: requests.Response):
     reset = int(response.headers["X-RateLimit-Reset"])
     sleep_time = reset - time.time()
     if sleep_time > 0:
-        print(f"Sleeping for {sleep_time} seconds")
+        logging.info("Sleeping for %s seconds", sleep_time)
         time.sleep(sleep_time)
 
 

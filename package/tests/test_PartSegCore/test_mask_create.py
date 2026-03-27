@@ -409,7 +409,7 @@ class TestCalculateMask:
         self, dilate, radius, fill_holes, max_holes_size, save_components, clip_to_mask, reversed_mask, old_mask
     ):
         mask = np.zeros((1, 6, 6, 15), dtype=np.uint8)
-        im = Image(data=mask.copy(), image_spacing=(3, 1, 1), file_path="", axes_order="TZYX")
+        im = Image(data=mask.copy(), spacing=(3, 1, 1), file_path="", axes_order="TZYX")
         mask[:, 1:-1, 1:-1, 2:5] = 1
         mask[:, 2:-2, 2:-2, 3:4] = 0
         mask[:, 1:-1, 1:-1, 6:9] = 2

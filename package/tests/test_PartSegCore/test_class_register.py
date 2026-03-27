@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from local_migrator import REGISTER, class_to_str, register_class, rename_key, update_argument
@@ -9,7 +9,7 @@ class SampleClass1:
     pass
 
 
-def rename_a_to_c(dkt: Dict[str, Any]) -> Dict[str, Any]:
+def rename_a_to_c(dkt: dict[str, Any]) -> dict[str, Any]:
     dkt = dict(dkt)
     dkt["c"] = dkt["a"]
     del dkt["a"]
@@ -83,7 +83,9 @@ def test_update_argument(clean_register):
         @classmethod
         @update_argument("arg")
         def call_func(cls, aa, arg: MigrateClass):
-            print(aa, arg.a)
+            assert arg.a == 1
+            assert arg.b == 2
+            assert aa == 1
 
     ClassToCall.call_func(aa=1, arg={"a": 1, "b": 2})
     ClassToCall.call_func(1, {"a": 1, "b": 2})

@@ -12,7 +12,7 @@ from PartSeg.common_gui.algorithms_description import FormWidget, QtAlgorithmPro
 from PartSeg.common_gui.custom_save_dialog import FormDialog
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
-from PartSegImage import Channel, Image
+from PartSegImage import Channel, ChannelInfo, Image
 
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
@@ -50,7 +50,7 @@ class NapariFormWidgetWithMask(NapariFormWidget):
 
 class NapariFormDialog(FormDialog):
     @staticmethod
-    def widget_class() -> typing.Type[FormWidget]:
+    def widget_class() -> type[FormWidget]:
         return NapariFormWidget
 
     def __init__(self, *args, **kwargs):
@@ -61,15 +61,17 @@ class NapariFormDialog(FormDialog):
 def generate_image(viewer: Viewer, *layer_names):
     axis_order = Image.axis_order.replace("C", "")
     image_list = []
+    if isinstance(layer_names[0], str):
+        layer_names = [Channel(el) for el in layer_names]
     for name in dict.fromkeys(layer_names):
-        image_layer = viewer.layers[name]
+        image_layer = viewer.layers[name.value]
         data_scale = image_layer.scale[-3:] / UNIT_SCALE[Units.nm.value]
         image_list.append(
             Image(
                 image_layer.data,
-                data_scale,
+                spacing=data_scale,
                 axes_order=axis_order[-image_layer.data.ndim :],
-                channel_names=[image_layer.name],
+                channel_info=[ChannelInfo(name=name.value)],
             )
         )
     res_image = image_list[0]

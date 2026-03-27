@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from magicgui.widgets import create_widget
 from napari import Viewer
@@ -13,8 +13,11 @@ from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSeg.plugins import register as register_plugins
 from PartSeg.plugins.napari_widgets._settings import get_settings
 from PartSeg.plugins.napari_widgets.utils import NapariFormDialog, generate_image
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from PartSegCore.roi_info import ROIInfo
+from PartSegImage import Channel
+
+if TYPE_CHECKING:
+    from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 
 
 class NapariMeasurementSettings(MeasurementSettings):
@@ -56,11 +59,13 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         if self.channels_chose.value is None:
             return
         for name in compute_class.get_channels_num():
-            if name not in self.napari_viewer.layers:
+            if name.value not in self.napari_viewer.layers:
                 show_info(f"Cannot calculate this measurement because image do not have layer {name}")
                 return
         units = self.units_choose.currentEnum()
-        image = generate_image(self.napari_viewer, self.channels_chose.value.name, *compute_class.get_channels_num())
+        image = generate_image(
+            self.napari_viewer, Channel(self.channels_chose.value.name), *compute_class.get_channels_num()
+        )
         if self.mask_chose.value is not None:
             image.set_mask(self.mask_chose.value.data)
         roi_info = ROIInfo(self.roi_chose.value.data).fit_to_image(image)

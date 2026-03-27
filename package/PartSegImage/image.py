@@ -1,20 +1,66 @@
+from __future__ import annotations
+
+import logging
 import re
+import sys
 import typing
 import warnings
-from collections.abc import Iterable
 from contextlib import suppress
+from copy import copy
+from dataclasses import dataclass
+from functools import wraps
+from itertools import cycle, zip_longest
 
 import numpy as np
 
-from PartSegImage import Channel
+from PartSegImage.channel_class import Channel
 
-Spacing = typing.Tuple[typing.Union[float, int], ...]
-_IMAGE_DATA = typing.Union[typing.List[np.ndarray], np.ndarray]
+Spacing = tuple[typing.Union[float, int], ...]
+_IMAGE_DATA = typing.Union[list[np.ndarray], np.ndarray]
 
 _DEF = object()
 FRAME_THICKNESS = 2
 
 DEFAULT_SCALE_FACTOR = 10**9
+
+ch_par: dict[str, bool]
+
+if sys.version_info[:2] > (3, 9):
+    ch_par = {"kw_only": True, "slots": True}
+else:
+    ch_par = {}
+
+
+@dataclass(**ch_par)
+class ChannelInfo:
+    name: str
+    color_map: str | np.ndarray | tuple | list | None = None
+    contrast_limits: tuple[float, float] | None = None
+
+
+@dataclass(**ch_par)
+class ChannelInfoFull:
+    """Full channel information used in :py:class:`.Image`"""
+
+    name: str
+    color_map: str | np.ndarray
+    contrast_limits: tuple[float, float]
+
+    def __post_init__(self):
+        """Normalize color_map to numpy array if it is not string."""
+        if not isinstance(self.color_map, (str, np.ndarray)):
+            self.color_map = np.array(self.color_map, dtype=np.uint8)
+        if isinstance(self.color_map, np.ndarray):
+            if self.color_map.dtype != np.uint8:
+                message = f"Colormap as array need to be uint8, not {self.color_map.dtype}"
+                raise ValueError(message)
+            if self.color_map.ndim in {1, 2}:
+                if self.color_map.shape[0] not in {3, 4}:
+                    message = f"Color map need to have 3 or 4 elements (RGB or RGBA), not {self.color_map.shape}"
+                    raise ValueError(message)
+            else:
+                message = f"Colormap as sequence need to be 1d or 2d array, not {self.color_map.shape}"
+                raise ValueError(message)
 
 
 def minimal_dtype(val: int):
@@ -32,8 +78,8 @@ def minimal_dtype(val: int):
 
 def reduce_array(
     array: np.ndarray,
-    components: typing.Optional[typing.Collection[int]] = None,
-    max_val: typing.Optional[int] = None,
+    components: typing.Collection[int] | None = None,
+    max_val: int | None = None,
     dtype=None,
 ) -> np.ndarray:
     """
@@ -63,17 +109,101 @@ def reduce_array(
     return translate[array]
 
 
+def rename_argument(from_name: str, to_name: str, since_version: str):
+    def decorator(fun):
+        @wraps(fun)
+        def _fun(*args, **kwargs):
+            if from_name in kwargs:
+                warnings.warn(
+                    f"Argument {from_name} is deprecated since {since_version}. Use {to_name} instead",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                kwargs[to_name] = kwargs.pop(from_name)
+            return fun(*args, **kwargs)
+
+        return _fun
+
+    return decorator
+
+
+def positional_to_named(fun):
+    @wraps(fun)
+    def _fun(*args, **kwargs):
+        if len(args) > 2:
+            warnings.warn(
+                "Since PartSeg 0.15.4 all arguments, except first one, should be named",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        new_kwargs = dict(
+            zip(
+                (
+                    "spacing",
+                    "file_path",
+                    "mask",
+                    "default_coloring",
+                    "ranges",
+                    "axes_order",
+                    "shift",
+                    "name",
+                    "metadata_dict",
+                ),
+                args[2:],
+                # start from 2 because first two arguments are self and data
+            )
+        )
+
+        kwargs.update(new_kwargs)
+
+        return fun(*args[:2], **kwargs)
+
+    return _fun
+
+
+def merge_into_channel_info(fun):
+    @wraps(fun)
+    def _fun(*args, **kwargs):
+        if "channel_info" in kwargs:
+            fun(*args, **kwargs)
+            return None
+        channel_names = kwargs.pop("channel_names", [])
+        default_coloring = kwargs.pop("default_coloring", [])
+        ranges = kwargs.pop("ranges", [])
+        if any([channel_names, default_coloring, ranges]):
+            if isinstance(channel_names, str):
+                channel_names = [channel_names]
+            if channel_names is None:
+                channel_names = []
+            if default_coloring is None:
+                default_coloring = []
+            if ranges is None:
+                ranges = []
+            warnings.warn(
+                "Using channel_names, default_coloring and ranges is deprecated since PartSeg 0.15.4",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            channel_info = [
+                ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
+                for name, color, contrast_limits in zip_longest(channel_names, default_coloring, ranges)
+            ]
+            kwargs["channel_info"] = channel_info
+        return fun(*args, **kwargs)
+
+    return _fun
+
+
 class Image:
     """
     Base class for Images used in PartSeg
 
     :param data: 5-dim array with order: time, z, y, x, channel
-    :param image_spacing: spacing for z, y, x
+    :param spacing: spacing for z, y, x
     :param file_path: path to image on disc
     :param mask: mask array in shape z,y,x
-    :param default_coloring: default colormap - not used yet
-    :param ranges: default ranges for channels
-    :param channel_names: labels for channels
+    :param channel_info: list of metadata stored per channel
     :param axes_order: allow to create Image object form data with different axes order, or missed axes
 
     :cvar str ~.axis_order: internal order of axes
@@ -96,27 +226,91 @@ class Image:
         cls.array_axis_order = cls.axis_order.replace("C", "")
         return super().__new__(cls)
 
+    @positional_to_named
+    @rename_argument("image_spacing", "spacing", "0.15.4")
+    @merge_into_channel_info
     def __init__(
         self,
         data: _IMAGE_DATA,
-        image_spacing: Spacing,
+        *,
+        spacing: Spacing,
+        time_increment: float = 1.0,
         file_path=None,
-        mask: typing.Union[None, np.ndarray] = None,
-        default_coloring=None,
-        ranges=None,
-        channel_names=None,
-        axes_order: typing.Optional[str] = None,
-        shift: typing.Optional[Spacing] = None,
+        mask: None | np.ndarray = None,
+        channel_info: list[ChannelInfo | ChannelInfoFull] | None = None,
+        axes_order: str | None = None,
+        shift: Spacing | None = None,
         name: str = "",
+        metadata_dict: dict | None = None,
     ):
         # TODO add time distance to image spacing
-        if axes_order is None:
+        if axes_order is None:  # pragma: no cover
             warnings.warn(
                 f"axes_order should be provided, Currently it uses {self.__class__}.axis_order",
                 category=DeprecationWarning,
                 stacklevel=2,
             )
             axes_order = self.axis_order
+        self._check_data_dimensionality(data, axes_order)
+        if not isinstance(spacing, tuple):
+            spacing = tuple(spacing)
+        self._channel_arrays = self._split_data_on_channels(data, axes_order)
+        self._image_spacing = (1.0,) * (3 - len(spacing)) + spacing
+        self._image_spacing = tuple(el if el > 0 else 10**-6 for el in self._image_spacing)
+        self._time_increment = 1.0
+        self.time_increment = time_increment
+
+        self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
+        self.name = name
+
+        self.file_path = file_path
+
+        self._mask_array = self._fit_mask(mask, data, axes_order)
+        self._channel_info = self._adjust_channel_info(channel_info, self._channel_arrays)
+        self.metadata = dict(metadata_dict) if metadata_dict is not None else {}
+
+    @staticmethod
+    def _adjust_channel_info(
+        channel_info: list[ChannelInfo | ChannelInfoFull] | None,
+        channel_array: list[np.ndarray],
+        default_colors=("red", "blue", "green", "yellow", "magenta", "cyan"),
+    ) -> list[ChannelInfoFull]:
+        default_colors = cycle(default_colors)
+        if channel_info is None:
+            ranges = [(np.min(x), np.max(x)) for x in channel_array]
+            return [
+                ChannelInfoFull(name=f"channel {i}", color_map=x[0], contrast_limits=x[1])
+                for i, x in enumerate(zip(default_colors, ranges), start=1)
+            ]
+
+        channel_info = channel_info[: len(channel_array)]
+
+        res = [
+            ChannelInfoFull(
+                name=ch_inf.name or f"channel {i + 1}",
+                color_map=(
+                    ch_inf.color_map if ch_inf.color_map is not None else next(default_colors)  # skipcq: PTC-W0063
+                ),
+                contrast_limits=(
+                    ch_inf.contrast_limits
+                    if ch_inf.contrast_limits is not None
+                    else (np.min(channel_array[i]), np.max(channel_array[i]))
+                ),
+            )
+            for i, ch_inf in enumerate(channel_info)
+        ]
+        res.extend(
+            ChannelInfoFull(
+                name=f"channel {i + 1}",
+                color_map=next(default_colors),  # skipcq: PTC-W0063
+                contrast_limits=(np.min(arr), np.max(arr)),
+            )
+            for i, arr in enumerate(channel_array[len(res) :], start=len(channel_info))
+        )
+        return res
+
+    @staticmethod
+    def _check_data_dimensionality(data, axes_order):
         if (isinstance(data, list) and any(x.ndim + 1 != len(axes_order) for x in data)) or (
             not isinstance(data, list) and data.ndim != len(axes_order)
         ):
@@ -128,33 +322,15 @@ class Image:
                 "Data should have same number of dimensions "
                 f"like length of axes_order (axis :{len(axes_order)}, ndim: {ndim}"
             )
-        if not isinstance(image_spacing, tuple):
-            image_spacing = tuple(image_spacing)
-        self._channel_arrays = self._split_data_on_channels(data, axes_order)
-        self._image_spacing = (1.0,) * (3 - len(image_spacing)) + image_spacing
-        self._image_spacing = tuple(el if el > 0 else 10**-6 for el in self._image_spacing)
 
-        self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
-        self.name = name
-
-        self.file_path = file_path
-        self.default_coloring = default_coloring
-        if self.default_coloring is not None:
-            self.default_coloring = [np.array(x) for x in default_coloring]
-
-        self._channel_names = self._prepare_channel_names(channel_names, self.channels)
-        if ranges is None:
-            self.ranges = list(
-                zip((np.min(c) for c in self._channel_arrays), (np.max(c) for c in self._channel_arrays))
-            )
-        else:
-            self.ranges = ranges
-        self._mask_array = self._prepare_mask(mask, data, axes_order)
-        if self._mask_array is not None:
-            self._mask_array = self.fit_mask_to_image(self._mask_array)
+    def _fit_mask(self, mask, data, axes_order):
+        mask_array = self._prepare_mask(mask, data, axes_order)
+        if mask_array is not None:
+            mask_array = self.fit_mask_to_image(mask_array)
+        return mask_array
 
     @classmethod
-    def _prepare_mask(cls, mask, data, axes_order) -> typing.Optional[np.ndarray]:
+    def _prepare_mask(cls, mask, data, axes_order) -> np.ndarray | None:
         if mask is None:
             return None
 
@@ -168,22 +344,8 @@ class Image:
         mask = cls._fit_array_to_image(data_shape, mask)
         return cls.reorder_axes(mask, axes_order.replace("C", ""))
 
-    @staticmethod
-    def _prepare_channel_names(channel_names, channels_num) -> typing.List[str]:
-        default_channel_names = [f"channel {i + 1}" for i in range(channels_num)]
-        if isinstance(channel_names, str):
-            channel_names = [channel_names]
-        if isinstance(channel_names, Iterable):
-            channel_names_list = [str(x) for x in channel_names]
-            channel_names_list = channel_names_list[:channels_num] + default_channel_names[len(channel_names_list) :]
-        else:
-            channel_names_list = default_channel_names
-        return channel_names_list[:channels_num]
-
     @classmethod
-    def _split_data_on_channels(
-        cls, data: typing.Union[np.ndarray, typing.List[np.ndarray]], axes_order: str
-    ) -> typing.List[np.ndarray]:
+    def _split_data_on_channels(cls, data: np.ndarray | list[np.ndarray], axes_order: str) -> list[np.ndarray]:
         if isinstance(data, list) and not axes_order.startswith("C"):  # pragma: no cover
             raise ValueError("When passing data as list of numpy arrays then Channel must be first axis.")
         if "C" not in axes_order:
@@ -198,7 +360,7 @@ class Image:
 
         if not isinstance(data, np.ndarray):
             raise TypeError("If `data` is list of arrays then `axes_order` must start with `C`")  # pragma: no cover
-        pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(data.ndim)]
+        pos: list[slice | int] = [slice(None) for _ in range(data.ndim)]
         c_pos = axes_order.index("C")
         res = []
         for i in range(data.shape[c_pos]):
@@ -207,9 +369,7 @@ class Image:
         return res
 
     @staticmethod
-    def _merge_channel_names(
-        base_channel_names: typing.List[str], new_channel_names: typing.List[str]
-    ) -> typing.List[str]:
+    def _merge_channel_names(base_channel_names: list[str], new_channel_names: list[str]) -> list[str]:
         base_channel_names = base_channel_names[:]
         reg = re.compile(r"channel \d+")
         for name in new_channel_names:
@@ -227,7 +387,19 @@ class Image:
             base_channel_names.append(new_name)
         return base_channel_names
 
-    def merge(self, image: "Image", axis: str) -> "Image":
+    @property
+    def channel_info(self) -> list[ChannelInfoFull]:
+        return [copy(x) for x in self._channel_info]
+
+    @property
+    def ranges(self) -> list[tuple[float, float]]:
+        return [x.contrast_limits for x in self._channel_info]
+
+    @property
+    def default_coloring(self) -> list[str | np.ndarray]:
+        return [x.color_map for x in self._channel_info]
+
+    def merge(self, image: Image, axis: str) -> Image:
         """
         Produce new image merging image data along given axis. All metadata
         are obtained from self.
@@ -242,6 +414,7 @@ class Image:
                 self._channel_arrays + [self.reorder_axes(x, image.array_axis_order) for x in image._channel_arrays]
             )
             channel_names = self._merge_channel_names(self.channel_names, image.channel_names)
+            color_map = self.default_coloring + image.default_coloring
         else:
             index = self.array_axis_order.index(axis)
             data = self._image_data_normalize(
@@ -251,15 +424,18 @@ class Image:
                 ]
             )
             channel_names = self.channel_names
+            color_map = self.default_coloring
 
-        return self.substitute(data=data, ranges=self.ranges + image.ranges, channel_names=channel_names)
+        return self.substitute(
+            data=data, ranges=self.ranges + image.ranges, channel_names=channel_names, default_coloring=color_map
+        )
 
     @property
-    def channel_names(self) -> typing.List[str]:
-        return self._channel_names[:]
+    def channel_names(self) -> list[str]:
+        return [x.name for x in self._channel_info]
 
     @property
-    def channel_pos(self) -> int:
+    def channel_pos(self) -> int:  # pragma: no cover
         """Channel axis. Need to have 'C' in :py:attr:`axis_order`"""
         warnings.warn(
             "channel_pos is deprecated and code its using may not work properly", category=FutureWarning, stacklevel=2
@@ -327,32 +503,40 @@ class Image:
         self,
         data=None,
         image_spacing=None,
+        time_increment: float | None = None,
         file_path=None,
         mask=_DEF,
         default_coloring=None,
         ranges=None,
         channel_names=None,
-    ) -> "Image":
+    ) -> Image:
         """Create copy of image with substitution of not None elements"""
         data = self._channel_arrays if data is None else data
         image_spacing = self._image_spacing if image_spacing is None else image_spacing
+        time_increment = self._time_increment if time_increment is None else time_increment
         file_path = self.file_path if file_path is None else file_path
         mask = self._mask_array if mask is _DEF else mask
         default_coloring = self.default_coloring if default_coloring is None else default_coloring
         ranges = self.ranges if ranges is None else ranges
         channel_names = self.channel_names if channel_names is None else channel_names
+
+        channel_info = [
+            ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
+            for name, color, contrast_limits in zip_longest(channel_names, default_coloring, ranges)
+        ]
+
         return self.__class__(
             data=data,
-            image_spacing=image_spacing,
+            spacing=image_spacing,
+            time_increment=time_increment,
             file_path=file_path,
             mask=mask,
-            default_coloring=default_coloring,
-            ranges=ranges,
-            channel_names=channel_names,
             axes_order=self.axis_order,
+            channel_info=channel_info,
+            metadata_dict=self.metadata,
         )
 
-    def set_mask(self, mask: typing.Optional[np.ndarray], axes: typing.Optional[str] = None):
+    def set_mask(self, mask: np.ndarray | None, axes: str | None = None):
         """
         Set mask for image, check if it has proper shape.
 
@@ -373,12 +557,12 @@ class Image:
         return self._channel_arrays[0]
 
     @property
-    def mask(self) -> typing.Optional[np.ndarray]:
+    def mask(self) -> np.ndarray | None:
         return self._mask_array[:] if self._mask_array is not None else None
 
     @staticmethod
     def _fit_array_to_image(base_shape, array: np.ndarray) -> np.ndarray:
-        """change shape of array with inserting singe dimensional entries"""
+        """change shape of array with inserting single dimensional entries"""
         shape = list(array.shape)
         for i, el in enumerate(base_shape):
             if el == 1 and el != shape[i]:
@@ -391,11 +575,11 @@ class Image:
 
     def fit_array_to_image(self, array: np.ndarray) -> np.ndarray:
         """
-        Change shape of array with inserting singe dimensional entries
+        Change shape of array with inserting single dimensional entries
 
         :param np.ndarray array: array to be fitted
 
-        :return: reshaped array witha added missing 1 in shape
+        :return: reshaped array with added missing 1 in shape
 
         :raises ValueError: if cannot fit array
         """
@@ -412,8 +596,6 @@ class Image:
         if np.max(array) == 1:
             return array.astype(np.uint8)
         unique = np.unique(array)
-        if unique.size == 2 and unique[1] == 1:
-            return array.astype(np.uint8)
         if unique.size == 1:
             if unique[0] != 0:
                 return np.ones(array.shape, dtype=np.uint8)
@@ -425,11 +607,13 @@ class Image:
         """
         :return: numpy array in imagej tiff order axes
         """
-        return self._reorder_axes(
-            np.stack(self._channel_arrays, axis=self.axis_order.index("C")), self.axis_order, "TZCYX"
-        )
+        if "C" in self.axis_order:
+            return self._reorder_axes(
+                np.stack(self._channel_arrays, axis=self.axis_order.index("C")), self.axis_order, "TZCYX"
+            )
+        return self._reorder_axes(self._channel_arrays[0], self.axis_order, "TZCYX")
 
-    def get_mask_for_save(self) -> typing.Optional[np.ndarray]:
+    def get_mask_for_save(self) -> np.ndarray | None:
         """
         :return: if image has mask then return mask with axes in proper order
         """
@@ -468,7 +652,7 @@ class Image:
         return self._channel_arrays[0].shape[self.time_pos]
 
     @property
-    def plane_shape(self) -> typing.Tuple[int, int]:
+    def plane_shape(self) -> tuple[int, int]:
         """y,x size of image"""
         return self._channel_arrays[0].shape[self.y_pos], self._channel_arrays[0].shape[self.x_pos]
 
@@ -486,7 +670,7 @@ class Image:
         return self.substitute(data=self._image_data_normalize(image_array_list))
 
     @classmethod
-    def get_axis_positions(cls) -> typing.Dict[str, int]:
+    def get_axis_positions(cls) -> dict[str, int]:
         """
         :return: dict with mapping axis to its position
         :rtype: dict
@@ -494,7 +678,7 @@ class Image:
         return {letter: i for i, letter in enumerate(cls.axis_order)}
 
     @classmethod
-    def get_array_axis_positions(cls) -> typing.Dict[str, int]:
+    def get_array_axis_positions(cls) -> dict[str, int]:
         """
         :return: dict with mapping axis to its position for array fitted to image
         :rtype: dict
@@ -509,15 +693,15 @@ class Image:
         :return:
         :rtype:
         """
-        slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.array_axis_order))]
+        slices: list[int | slice] = [slice(None) for _ in range(len(self.array_axis_order))]
         axis_pos = self.get_array_axis_positions()
-        if "C" in kwargs and isinstance(kwargs["C"], str):
-            kwargs["C"] = self.channel_names.index(kwargs["C"])
         if "c" in kwargs:
-            if isinstance(kwargs["c"], str):
-                kwargs["C"] = self.channel_names.index(kwargs.pop("c"))
-            else:
-                kwargs["C"] = kwargs.pop("c")
+            kwargs["C"] = kwargs.pop("c")
+        if "C" in kwargs:
+            if isinstance(kwargs["C"], Channel):
+                kwargs["C"] = kwargs["C"].value
+            if isinstance(kwargs["C"], str):
+                kwargs["C"] = self.channel_names.index(kwargs["C"])
 
         channel = kwargs.pop("C", slice(None) if "C" in self.axis_order else 0)
         if isinstance(channel, Channel):
@@ -531,13 +715,11 @@ class Image:
                     axis_order = axis_order.replace(name.upper(), "")
 
         slices_t = tuple(slices)
-        if isinstance(channel, str):
-            channel = self._channel_names.index(channel)
         if isinstance(channel, int):
             return self._channel_arrays[channel][slices_t]
         return np.stack([x[slices_t] for x in self._channel_arrays[channel]], axis=axis_order.index("C"))
 
-    def clip_array(self, array: np.ndarray, **kwargs: typing.Union[int, slice]) -> np.ndarray:
+    def clip_array(self, array: np.ndarray, **kwargs: int | slice) -> np.ndarray:
         """
         Clip array by axis. Axis is selected by single letter from :py:attr:`axis_order`
 
@@ -546,22 +728,30 @@ class Image:
         :return: clipped array
         """
         array = self.fit_array_to_image(array)
-        slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.array_axis_order))]
+        slices: list[int | slice] = [slice(None) for _ in range(len(self.array_axis_order))]
         axis_pos = self.get_array_axis_positions()
-        for name in kwargs:
+        for name, value in kwargs.items():
             if (n := name.upper()) in axis_pos:
-                slices[axis_pos[n]] = kwargs[name]
+                slices[axis_pos[n]] = value
         return array[tuple(slices)]
 
-    def get_channel(self, num) -> np.ndarray:
+    def get_channel(self, num: int | str | Channel) -> np.ndarray:
         """
         Alias for :py:func:`get_sub_data` with argument ``c=num``
 
-        :param int | str num: channel num to be extracted
+        :param int | str | Channel num: channel num or name to be extracted
         :return: given channel array
         :rtype: numpy.ndarray
         """
         return self.get_data_by_axis(c=num)
+
+    def has_channel(self, num: int | str | Channel) -> bool:
+        if isinstance(num, Channel):
+            num = num.value
+
+        if isinstance(num, str):
+            return num in self.channel_names
+        return 0 <= num < self.channels
 
     def get_layer(self, time: int, stack: int) -> np.ndarray:
         """
@@ -590,6 +780,18 @@ class Image:
         """image spacing"""
         return tuple(self._image_spacing[1:]) if self.is_2d else self._image_spacing
 
+    @property
+    def time_increment(self) -> float:
+        """time spacing in seconds"""
+        return self._time_increment
+
+    @time_increment.setter
+    def time_increment(self, value: float):
+        """set time spacing in seconds"""
+        if value <= 0:
+            raise ValueError("Time increment must be positive")
+        self._time_increment = value
+
     def normalized_scaling(self, factor=DEFAULT_SCALE_FACTOR) -> Spacing:
         if self.is_2d:
             return (1, 1, *tuple(np.multiply(self.spacing, factor)))
@@ -615,7 +817,7 @@ class Image:
         self._image_spacing = tuple(value)
 
     @staticmethod
-    def _frame_array(array: typing.Optional[np.ndarray], index_to_add: typing.List[int], frame=FRAME_THICKNESS):
+    def _frame_array(array: np.ndarray | None, index_to_add: list[int], frame=FRAME_THICKNESS):
         if array is None:  # pragma: no cover
             return array
         result_shape = list(array.shape)
@@ -630,7 +832,7 @@ class Image:
         return data
 
     @staticmethod
-    def calc_index_to_frame(array_axis: str, important_axis: str) -> typing.List[int]:
+    def calc_index_to_frame(array_axis: str, important_axis: str) -> list[int]:
         """
         calculate in which axis frame should be added
 
@@ -654,7 +856,7 @@ class Image:
 
     def _cut_image_slices(
         self, cut_area: typing.Iterable[slice], frame: int
-    ) -> typing.Tuple[typing.List[np.ndarray], typing.Optional[np.ndarray]]:
+    ) -> tuple[list[np.ndarray], np.ndarray | None]:
         new_mask = None
         cut_area = self._frame_cut_area(cut_area, frame)
         new_image = [x[tuple(cut_area)] for x in self._channel_arrays]
@@ -662,7 +864,7 @@ class Image:
             new_mask = self._mask_array[tuple(cut_area)]
         return new_image, new_mask
 
-    def _roi_to_slices(self, roi: np.ndarray) -> typing.List[slice]:
+    def _roi_to_slices(self, roi: np.ndarray) -> list[slice]:
         cut_area = self.fit_array_to_image(roi)
         points = np.nonzero(cut_area)
         lower_bound = np.min(points, axis=1)
@@ -693,11 +895,11 @@ class Image:
 
     def cut_image(
         self,
-        cut_area: typing.Union[np.ndarray, typing.Iterable[slice]],
+        cut_area: np.ndarray | typing.Iterable[slice],
         replace_mask=False,
         frame: int = FRAME_THICKNESS,
         zero_out_cut_area: bool = True,
-    ) -> "Image":
+    ) -> Image:
         """
         Create new image base on mask or list of slices
         :param bool replace_mask: if cut area is represented by mask array,
@@ -720,48 +922,74 @@ class Image:
 
         return self.__class__(
             data=self._image_data_normalize(new_image),
-            image_spacing=self._image_spacing,
+            spacing=self._image_spacing,
             file_path=None,
             mask=new_mask,
-            default_coloring=self.default_coloring,
-            ranges=self.ranges,
-            channel_names=self.channel_names,
+            channel_info=self._channel_info,
             axes_order=self.axis_order,
         )
 
-    def get_imagej_colors(self):
-        # TODO review
-        if self.default_coloring is None:
-            return None
-        try:
-            if len(self.default_coloring) != self.channels:
-                return None
-        except TypeError:
-            return None
+    def get_imagej_colors(self) -> list[np.ndarray[tuple[typing.Literal[3], typing.Literal[256]], np.dtype[np.uint8]]]:
+        """Get colors in format used by imagej
+
+        :return: list of 3x256 arrays with RGB values
+        :rtype: list of numpy.ndarray
+        """
         res = []
         for color in self.default_coloring:
-            if color.ndim == 1:
-                res.append(np.array([np.linspace(0, x, num=256) for x in color]))
-            else:
-                if color.shape[1] != 256:
-                    res.append(
-                        np.array(
-                            [
-                                np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
-                                for x in color
-                            ]
-                        )
+            if isinstance(color, str):
+                if color.startswith("#"):
+                    color_array = _hex_to_rgb(color)
+                else:
+                    color_array = _name_to_rgb(color)
+                res.append(np.array([np.linspace(0, x, num=256) for x in color_array]).astype(np.uint8))
+            elif color.ndim == 1:
+                res.append(np.array([np.linspace(0, x, num=256) for x in color]).astype(np.uint8))
+            elif color.shape[1] != 256:
+                res.append(
+                    np.array(
+                        [
+                            np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
+                            for x in color
+                        ]
                     )
-                res.append(color)
+                )
+            else:
+                res.append(color.astype(np.uint8))
         return res
 
-    def get_colors(self):
-        # TODO review
-        if self.default_coloring is None:
-            return None
+    def get_ome_colors(self) -> list[int]:
+        """The ome stores colors as single integer encoding RGB value
+
+        :returns: list of integers representing colors
+        """
+
         res = []
+        default_colors = ["red", "blue", "green", "yellow", "magenta", "cyan"]
+        for i, color in enumerate(self.default_coloring):
+            if isinstance(color, str):
+                if color.startswith("#"):
+                    color_array = _hex_to_rgb(color)
+                else:
+                    color_array = _name_to_rgb(color)
+                res.append(_rgb_to_signed_int(color_array))
+            elif color.ndim == 1:
+                # treat as RGB
+                res.append(_rgb_to_signed_int(tuple(color)[:3]))
+            else:
+                logging.warning(
+                    "Do not support custom colormap in ome colors. Use %s", default_colors[i % len(default_colors)]
+                )
+                color_array = _name_to_rgb(default_colors[i % len(default_colors)])
+                res.append(_rgb_to_signed_int(color_array))
+        return res
+
+    def get_colors(self) -> list[str | list[int]]:
+        res: list[str | list[int]] = []
         for color in self.default_coloring:
-            if color.ndim == 2:
+            if isinstance(color, str):
+                res.append(color)
+            elif color.ndim == 2:
                 res.append(list(color[:, -1]))
             else:
                 res.append(list(color))
@@ -775,7 +1003,7 @@ class Image:
         """image spacing in micrometers"""
         return tuple(float(x * 10**6) for x in self.shift)
 
-    def get_ranges(self) -> typing.List[typing.Tuple[float, float]]:
+    def get_ranges(self) -> list[tuple[float, float]]:
         """image brightness ranges for each channel"""
         return self.ranges[:]
 
@@ -804,3 +1032,57 @@ class Image:
         if "C" not in cls.axis_order:
             return data[0]
         return np.stack(data, axis=cls.axis_order.index("C"))
+
+
+def _hex_to_rgb(hex_code: str) -> tuple[int, int, int]:
+    """
+    Convert a hex color code to an RGB tuple.
+
+    :param str hex_code: The hex color code, either short form (#RGB) or long form (#RRGGBB)
+    :return: A tuple containing the RGB values (R, G, B)
+    """
+    hex_code = hex_code.lstrip("#")
+
+    if len(hex_code) in {3, 4}:
+        hex_code = "".join([c * 2 for c in hex_code])
+    elif len(hex_code) not in {6, 8}:
+        raise ValueError(f"Invalid hex code format: {hex_code}")
+
+    return int(hex_code[:2], 16), int(hex_code[2:4], 16), int(hex_code[4:6], 16)
+
+
+def _name_to_rgb(name: str) -> tuple[int, int, int]:
+    """
+    Convert a color name to an RGB tuple.
+
+    :param str name: The color name
+    :return: A tuple containing the RGB values (R, G, B)
+    """
+    name = name.lower()
+    if name not in _NAMED_COLORS:
+        raise ValueError(f"Unknown color name: {name}")
+    return _hex_to_rgb(_NAMED_COLORS[name])
+
+
+def _rgb_to_signed_int(rgb: tuple[int, int, int]) -> int:
+    """Convert an RGB tuple to a signed integer representation."""
+    r, g, b = (np.int32(x) for x in rgb[:3])
+    return np.int32((r << 24) | (g << 16) | (b << 8) | np.int32(255))
+
+
+try:
+    from vispy.color import get_color_dict
+except ImportError:  # pragma: no cover
+    _NAMED_COLORS = {
+        "red": "#FF0000",
+        "green": "#008000",
+        "blue": "#0000FF",
+        "yellow": "#FFFF00",
+        "cyan": "#00FFFF",
+        "magenta": "#FF00FF",
+        "white": "#FFFFFF",
+        "black": "#000000",
+        "orange": "#FFA500",
+    }
+else:
+    _NAMED_COLORS = get_color_dict()

@@ -1,8 +1,8 @@
 import functools
 import os.path
 
+from PartSeg.plugins.napari_io.loader import partseg_loader
 from PartSegCore.mask.io_functions import LoadStackImageWithMask
-from PartSegCore.napari_plugins.loader import partseg_loader
 
 
 def napari_get_reader(path: str):

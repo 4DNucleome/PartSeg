@@ -1,4 +1,5 @@
 import json
+import urllib.error
 import urllib.request
 from datetime import date, timedelta
 from io import StringIO
@@ -6,13 +7,14 @@ from unittest.mock import MagicMock
 
 import packaging.version
 import pytest
+from qtpy.QtWidgets import QMessageBox
 
 from PartSeg import state_store
 from PartSeg._launcher import check_version
 from PartSeg._launcher.check_version import IGNORE_FILE
 
 
-@pytest.mark.enablethread()
+@pytest.mark.enablethread
 @pytest.mark.parametrize("thread", [False, True])
 @pytest.mark.parametrize("package_name", ["PartSeg", "sample_name"])
 def test_fetching(thread, package_name, monkeypatch, qtbot):
@@ -43,9 +45,9 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
     values = ["", ""]
 
     class MockMessageBox:
-        Information = 1
-        Ok = 2
-        Ignore = 3
+        StandardButton = QMessageBox.StandardButton
+
+        Icon = QMessageBox.Icon
 
         def __init__(self, _type, title, message, _buttons):
             values[0] = title
@@ -53,7 +55,7 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
 
         @staticmethod
         def exec_():
-            return check_version.QMessageBox.Ok
+            return check_version.QMessageBox.StandardButton.Ok
 
     chk_thr = check_version.CheckVersionThread(base_version="0.10.0")
     chk_thr.release = "0.11.0"
@@ -67,15 +69,17 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
         assert "You can update it from pypi" in values[1]
 
 
-def test_no_update(monkeypatch, qtbot):
-    monkeypatch.setattr("PartSeg.state_store.save_folder", False)
+def test_no_update(monkeypatch, qtbot, tmp_path):
+    # check if nothing is reported on ulr error
+    monkeypatch.setattr("PartSeg.state_store.save_folder", tmp_path)
 
     def urlopen_mock(url):
-        raise RuntimeError
+        raise urllib.error.URLError("test purpose")
 
     monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
-    chk_thr = check_version.CheckVersionThread()
+    chk_thr = check_version.CheckVersionThread(base_version="0.10.0")
     chk_thr.run()
+    assert chk_thr.release == "0.10.0"
 
 
 def test_error_report(monkeypatch, qtbot):
@@ -117,13 +121,15 @@ def test_ignore_file_exists_old_date(monkeypatch, qtbot, tmp_path):
     monkeypatch.setattr(state_store, "save_folder", tmp_path)
 
     def urlopen_mock(_url):
-        return StringIO("")
+        return StringIO('{"info": {"version": "0.11.0", "home_page": "example.org"}}')
 
     monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
 
-    chk_thr = check_version.CheckVersionThread()
+    chk_thr = check_version.CheckVersionThread(base_version="0.10.0")
     chk_thr.run()
     assert not (tmp_path / IGNORE_FILE).exists()
+    assert chk_thr.release == "0.11.0"
+    assert chk_thr.url == "example.org"
 
 
 def test_create_ignore(qtbot, tmp_path, monkeypatch):

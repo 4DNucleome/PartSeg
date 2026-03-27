@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import re
@@ -42,7 +43,7 @@ def check_segmentation_type(tar_file: TarFile) -> SegmentationType:
         return SegmentationType.analysis
     if "metadata.json" in names:
         return SegmentationType.mask
-    raise WrongFileTypeException
+    raise WrongFileTypeException  # pragma: no cover
 
 
 def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
@@ -56,8 +57,24 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
     return tar_info
 
 
-class SaveBase(AlgorithmDescribeBase, ABC):
-    need_functions: typing.ClassVar[typing.List[str]] = [
+class _IOBase(AlgorithmDescribeBase, ABC):
+    @classmethod
+    def get_name_with_suffix(cls):
+        return cls.get_name()
+
+    @classmethod
+    def get_extensions(cls) -> list[str]:
+        match = re.match(r".*\((.*)\)", cls.get_name())
+        if match is None:
+            raise ValueError(f"No extensions found in {cls.get_name()}")
+        extensions = match[1].split(" ")
+        if not all(x.startswith("*.") for x in extensions):
+            raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
+        return [x[1:] for x in extensions]
+
+
+class SaveBase(_IOBase, ABC):
+    need_functions: typing.ClassVar[list[str]] = [
         "save",
         "get_short_name",
         "get_name_with_suffix",
@@ -92,15 +109,6 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         raise NotImplementedError
 
     @classmethod
-    def get_name_with_suffix(cls):
-        return cls.get_name()
-
-    @classmethod
-    def get_default_extension(cls):
-        match = re.search(r"\(\*(\.\w+)", cls.get_name_with_suffix())
-        return match[1] if match else ""
-
-    @classmethod
     def need_segmentation(cls):
         return True
 
@@ -109,23 +117,17 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         return False
 
     @classmethod
-    def get_extensions(cls) -> typing.List[str]:
-        match = re.match(r".*\((.*)\)", cls.get_name())
-        if match is None:
-            raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match[1].split(" ")
-        if not all(x.startswith("*.") for x in extensions):
-            raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
-        return [x[1:] for x in extensions]
+    def get_default_extension(cls):
+        match = re.search(r"\(\*(\.\w+)", cls.get_name_with_suffix())
+        return match[1] if match else ""
 
 
-class LoadBase(AlgorithmDescribeBase, ABC):
-    need_functions: typing.ClassVar[typing.List[str]] = [
+class LoadBase(_IOBase, ABC):
+    need_functions: typing.ClassVar[list[str]] = [
         "load",
         "get_short_name",
         "get_name_with_suffix",
         "number_of_files",
-        "correct_files_order",
         "get_next_file",
         "partial",
     ]
@@ -139,11 +141,11 @@ class LoadBase(AlgorithmDescribeBase, ABC):
     @abstractmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
+    ) -> typing.Union[ProjectInfoBase, list[ProjectInfoBase]]:
         """
         Function for load data
 
@@ -156,20 +158,6 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         raise NotImplementedError
 
     @classmethod
-    def get_name_with_suffix(cls):
-        return cls.get_name()
-
-    @classmethod
-    def get_extensions(cls) -> typing.List[str]:
-        match = re.match(r".*\((.*)\)", cls.get_name())
-        if match is None:
-            raise ValueError(f"No extensions found in {cls.get_name()}")
-        extensions = match[1].split(" ")
-        if not all(x.startswith("*.") for x in extensions):
-            raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
-        return [x[1:] for x in extensions]
-
-    @classmethod
     def get_fields(cls):
         return []
 
@@ -179,11 +167,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         return 1
 
     @classmethod
-    def correct_files_order(cls, paths):
-        return paths
-
-    @classmethod
-    def get_next_file(cls, file_paths: typing.List[str]):
+    def get_next_file(cls, file_paths: list[str]):
         return file_paths[0]
 
     @classmethod
@@ -192,25 +176,25 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         return False
 
 
-def load_metadata_base(data: typing.Union[str, Path]):
+def load_metadata_base(data: typing.Union[str, Path, typing.TextIO]):
     try:
-        if isinstance(data, typing.TextIO):
+        if isinstance(data, io.TextIOBase):
             decoded_data = json.load(data, object_hook=partseg_object_hook)
         elif os.path.exists(data):
             with open(data, encoding="utf-8") as ff:
                 decoded_data = json.load(ff, object_hook=partseg_object_hook)
         else:
             decoded_data = json.loads(data, object_hook=partseg_object_hook)
-    except ValueError as e:
+    except ValueError as e:  # pragma: no cover
         try:
             decoded_data = json.loads(str(data), object_hook=partseg_object_hook)
-        except Exception:  # pragma: no cover
+        except Exception:
             raise e  # noqa: B904
 
     return decoded_data
 
 
-def load_metadata_part(data: typing.Union[str, Path]) -> typing.Tuple[typing.Any, typing.List[typing.Tuple[str, dict]]]:
+def load_metadata_part(data: typing.Union[str, Path]) -> tuple[typing.Any, list[tuple[str, dict]]]:
     """
     Load serialized data. Get valid entries.
 
@@ -234,7 +218,7 @@ load_matadata_part = load_metadata_part
 # backward compatibility
 
 
-def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapping]:
+def find_problematic_entries(data: typing.Any) -> list[typing.MutableMapping]:
     """
     Find top nodes with ``"__error__"`` key. If node found
     then its children is not checked.
@@ -252,7 +236,7 @@ def find_problematic_entries(data: typing.Any) -> typing.List[typing.MutableMapp
     return res
 
 
-def find_problematic_leafs(data: typing.Any) -> typing.List[typing.MutableMapping]:
+def find_problematic_leafs(data: typing.Any) -> list[typing.MutableMapping]:
     """
     Find bottom nodes with ``"__error__"`` key. If any
     children has ``"__error__"`` then such node is not returned.
@@ -287,7 +271,7 @@ def proxy_callback(
 
 def open_tar_file(
     file_data: typing.Union[str, Path, TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase], mode="r"
-) -> typing.Tuple[TarFile, str]:
+) -> tuple[TarFile, str]:
     """Create tar file from path or buffer. If passed :py:class:`TarFile` then return it."""
     if isinstance(file_data, TarFile):
         tar_file = file_data
@@ -299,7 +283,7 @@ def open_tar_file(
         tar_file = TarFile.open(fileobj=file_data)
         file_path = ""
     else:
-        raise ValueError(f"wrong type of file_ argument: {type(file_data)}")
+        raise ValueError(f"wrong type of file_data argument: {type(file_data)}")
     return tar_file, file_path
 
 
@@ -325,13 +309,14 @@ class SaveMaskAsTiff(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):
         if project_info.image.mask is None and project_info.mask is not None:
             ImageWriter.save_mask(project_info.image.substitute(mask=project_info.mask), save_location)
-        ImageWriter.save_mask(project_info.image, save_location)
+        else:
+            ImageWriter.save_mask(project_info.image, save_location)
 
 
 def tar_to_buff(tar_file, member_name) -> BytesIO:
@@ -352,7 +337,7 @@ class SaveScreenshot(SaveBase):
         cls,
         save_location: typing.Union[str, BytesIO, Path],
         project_info,
-        parameters: dict,
+        parameters: typing.Optional[dict] = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -363,7 +348,7 @@ class SaveScreenshot(SaveBase):
         return "Screenshot (*.png *.jpg *.jpeg)"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return []
 
 
@@ -436,7 +421,7 @@ class LoadPoints(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -449,7 +434,7 @@ class LoadPoints(LoadBase):
         return "Points (*.csv)"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return ["text"]
 
     @classmethod
@@ -465,12 +450,12 @@ class LoadPlanJson(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
     ):
-        from PartSegCore.analysis.calculation_plan import CalculationPlan
+        from PartSegCore.analysis.calculation_plan import CalculationPlan  # noqa: PLC0415
 
         res, err = load_metadata_part(load_locations[0])
         res_dkt = {}
@@ -495,7 +480,7 @@ class LoadPlanExcel(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,

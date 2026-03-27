@@ -16,16 +16,31 @@ concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_COLOR: 1
+  COLUMNS: 120
+
 jobs:
+  actionlint:
+    name: Action lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check workflow files
+        run: |
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color -ignore SC2129
+        shell: bash
+
   download_data:
     name: Download test data
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
           name: test_data
           path: test_data
@@ -39,36 +54,40 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.8", "3.9", "3.10"]
-        os: ["ubuntu-20.04"]
+        python_version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: ["ubuntu-24.04"]
         qt_backend: ["PyQt5"]
         tox_args: [ "" ]
         include:
-          - python_version: "3.9"
-            os: "macos-11"
+          - python_version: "3.11"
+            os: "macos-15-intel"
             qt_backend: "PyQt5"
-          - python_version: "3.9"
-            os: "windows-2019"
-            qt_backend: "PyQt5"
-          - python_version: "3.9"
-            os: "ubuntu-20.04"
-            qt_backend: "PySide2"
-          - python_version: "3.9"
-            os: "ubuntu-22.04"
-            qt_backend: "PySide6"
-          - python_version: "3.9"
-            os: "ubuntu-22.04"
+          - python_version: "3.12"
+            os: "macos-15"
             qt_backend: "PyQt6"
           - python_version: "3.11"
+            os: "windows-latest"
+            qt_backend: "PyQt5"
+          - python_version: "3.10"
+            os: "ubuntu-22.04"
+            qt_backend: "PySide2"
+          - python_version: "3.10"
+            os: "ubuntu-24.04"
+            qt_backend: "PySide6"
+          - python_version: "3.12"
+            os: "ubuntu-22.04"
+            qt_backend: "PyQt6"
+          - python_version: "3.10"
             os: "ubuntu-22.04"
             qt_backend: "PyQt5"
-            tox_args: "-vv -e py311-PyQt5-all"
+            pydantic: "_pydantic_1"
     with:
       test_data: True
       python_version: ${{ matrix.python_version }}
       os: ${{ matrix.os }}
       qt_backend: ${{ matrix.qt_backend }}
       tox_args: ${{ matrix.tox_args }}
+      pydantic: ${{ matrix.pydantic }}
 
   base-test-main:
     name: Base py${{ matrix.python_version }}
@@ -78,32 +97,48 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.8", "3.9", "3.10"]
-        os: ["ubuntu-20.04", "macos-11", "windows-2019"]
+        python_version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: ["ubuntu-24.04", "macos-15", "windows-2022"]
         qt_backend: ["PySide2", "PyQt5"]
         include:
-          - python_version: "3.11"
+          - python_version: "3.12"
             qt_backend: "PyQt5"
             os: "ubuntu-22.04"
-          - python_version: "3.9"
+          - python_version: "3.10"
             os: "ubuntu-22.04"
             qt_backend: "PySide6"
-          - python_version: "3.9"
+          - python_version: "3.11"
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
+          - python_version: "3.11"
+            os: "ubuntu-22.04"
+            qt_backend: "PyQt5"
+            pydantic: "_pydantic_1"
+        exclude:
+          - python_version: "3.11"
+            qt_backend: "PySide2"
+          - python_version: "3.12"
+            qt_backend: "PySide2"
+          - os: "macos-15"
+            qt_backend: "PySide2"
+          - os: "macos-15"
+            python_version: "3.9"
     with:
       test_data: True
       python_version: ${{ matrix.python_version }}
       os: ${{ matrix.os }}
       qt_backend: ${{ matrix.qt_backend }}
+      pydantic: ${{ matrix.pydantic }}
+      artifact_suffix: "-main"
+      pytest_args: "-v"
 
   test_coverage:
     needs: download_data
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       test_data: True
-      python_version: "3.8"
-      tox_args: "-e py38-PyQt5-coverage"
+      python_version: "3.12"
+      tox_args: "-e py312-PyQt5-coverage"
       coverage: true
 
   test_minimal:
@@ -112,30 +147,71 @@ jobs:
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       test_data: True
-      python_version: "3.8"
-      tox_args: "-e py38-PyQt5-minimal"
+      python_version: "3.9"
+      tox_args: "-e py39-PyQt5-minimal"
       coverage: true
+
+  coverage_prepare:
+    name: Prepare coverage
+    runs-on: ubuntu-latest
+    needs: [test_coverage, test_minimal]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+          cache-dependency-path: pyproject.toml
+          cache: 'pip'
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install codecov
+
+      - name: Download coverage data
+        uses: actions/download-artifact@v8
+        with:
+          pattern: cov-reports-*
+          path: coverage
+          merge-multiple: true
+      - name: combine coverage data
+        run: |
+          python -Im coverage combine coverage
+          python -Im coverage xml -o coverage.xml
+          # Report and write to summary.
+          python -Im coverage report --format=markdown --skip-empty --skip-covered >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage_xml
+          path: coverage.xml
+          retention-days: 5
+
+      - name: Upload coverage data
+        uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   test_conda:
     name: Test PartSeg conda
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: download_data
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Setup Miniconda
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-          miniforge-variant: mambaforge
           use-mamba: true
           channels: conda-forge
           channel-priority: strict
-          python-version: "3.9"
+          python-version: "3.12"
 
       - uses: tlambert03/setup-qt-libs@v1
 
       - name: Download test data
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v8
         with:
           name: test_data
           path: test_data
@@ -160,7 +236,7 @@ jobs:
         run: bash build_utils/create_environment_yml.sh
 
       - name: Upload environment file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
           name: environment
           path: environment.yml
@@ -171,9 +247,9 @@ jobs:
         run: sed -e "s/{sys_platform}/{platform}/g" tox.ini -i
 
       - name: Test with tox
-        uses: aganders3/headless-gui@v1
+        uses: aganders3/headless-gui@v2
         with:
-          run: conda run -n test --no-capture-output tox -e py39-PySide2-conda
+          run: conda run -n test --no-capture-output tox -e py312-PySide2-conda
         timeout-minutes: 60
 
   check-package:
@@ -181,7 +257,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: hynek/build-and-inspect-python-package@v1
+      - uses: hynek/build-and-inspect-python-package@v2

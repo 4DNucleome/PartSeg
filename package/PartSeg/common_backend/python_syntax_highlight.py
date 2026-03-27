@@ -17,7 +17,7 @@ def get_text_char_format(style):
     """
 
     text_char_format = QtGui.QTextCharFormat()
-    text_char_format.setFontFamily("monospace")
+    text_char_format.setFontFamilies(["monospace"])
     if style.get("color"):
         text_char_format.setForeground(QtGui.QColor(f"#{style['color']}"))
 
@@ -73,7 +73,7 @@ class Pylighter(QtGui.QSyntaxHighlighter):
 
         # dirty, dirty hack
         # The core problem is that pygemnts by default use string streams,
-        # that will not handle QTextCharFormat, so wee need use `data` property to work around this.
+        # that will not handle QTextCharFormat, so we need use `data` property to work around this.
         for i in range(len(text)):
             with contextlib.suppress(IndexError):
                 self.setFormat(i, 1, self.formatter.data[p + i])

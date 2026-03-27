@@ -14,12 +14,12 @@ MASK_NAME = "ROI Mask"
 ANALYSIS_NAME = "ROI Analysis"
 
 __all__ = (
-    "__author__",
-    "parsed_version",
-    "__version__",
-    "changelog",
+    "ANALYSIS_NAME",
+    "APP_LAB",
     "APP_NAME",
     "MASK_NAME",
-    "APP_LAB",
-    "ANALYSIS_NAME",
+    "__author__",
+    "__version__",
+    "changelog",
+    "parsed_version",
 )

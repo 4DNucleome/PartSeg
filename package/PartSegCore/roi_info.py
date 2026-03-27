@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 import numpy as np
 
@@ -20,7 +20,7 @@ class BoundInfo(NamedTuple):
         """Size of bounding box"""
         return self.upper - self.lower + 1
 
-    def get_slices(self, margin=0) -> List[slice]:
+    def get_slices(self, margin=0) -> list[slice]:
         return [slice(max(x - margin, 0), y + 1 + margin) for x, y in zip(self.lower, self.upper)]
 
     def del_dim(self, axis: int):
@@ -45,8 +45,8 @@ class ROIInfo:
     def __init__(
         self,
         roi: Optional[np.ndarray],
-        annotations: Optional[Dict[int, Any]] = None,
-        alternative: Optional[Dict[str, np.ndarray]] = None,
+        annotations: Optional[dict[int, Any]] = None,
+        alternative: Optional[dict[str, np.ndarray]] = None,
     ):
         annotations = {} if annotations is None else annotations
         self.annotations = {int(k): v for k, v in annotations.items()}
@@ -62,6 +62,7 @@ class ROIInfo:
         self.roi = roi
         self.bound_info = self.calc_bounds(roi)
         self.sizes = np.bincount(roi.flat)
+        self._alternative_component_size = {}
 
     def fit_to_image(self, image: Image) -> "ROIInfo":
         if self.roi is None:
@@ -70,6 +71,23 @@ class ROIInfo:
         alternatives = {k: image.fit_array_to_image(v) for k, v in self.alternative.items()}
         return ROIInfo(roi, self.annotations, alternatives)
 
+    def get_components_num(self, name):
+        """
+        Get the number of components for a given representation.
+
+        Args:
+            name (str): Name of the representation. Use "ROI" for the main ROI,
+                       or the name of an alternative representation.
+
+        Returns:
+            int: Maximum component number in the specified representation.
+        """
+        if name == "ROI" or name not in self.alternative:
+            return max(self.bound_info)
+        if name not in self._alternative_component_size:
+            self._alternative_component_size[name] = np.max(self.alternative[name])
+        return self._alternative_component_size[name]
+
     def __str__(self):
         return f"ROIInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
 
@@ -77,7 +95,7 @@ class ROIInfo:
         return f"ROIInfo(roi={numpy_repr(self.roi)}, bound_info={self.bound_info}, sizes={self.sizes!r})"
 
     @staticmethod
-    def calc_bounds(roi: np.ndarray) -> Dict[int, BoundInfo]:
+    def calc_bounds(roi: np.ndarray) -> dict[int, BoundInfo]:
         """
         Calculate bounding boxes components
 

@@ -1,21 +1,24 @@
 import itertools
 import logging
+import platform
+from collections.abc import MutableMapping
 from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
-from typing import Dict, List, MutableMapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import napari
 import numpy as np
 from local_migrator import register_class
+from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
 from napari.layers.labels import Labels
 from napari.qt import QtViewer
 from napari.qt.threading import thread_worker
-from napari.utils.colormaps.colormap import ColormapInterpolationMode
+from napari.utils.colormaps import DirectLabelColormap
 from packaging.version import parse as parse_version
 from qtpy.QtCore import QEvent, QPoint, Qt, QTimer, Signal, Slot
 from qtpy.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QMenu, QSpinBox, QToolTip, QVBoxLayout, QWidget
@@ -23,7 +26,6 @@ from scipy.ndimage import binary_dilation
 from superqt import QEnumComboBox, ensure_main_thread
 from vispy.color import Color, Colormap
 from vispy.geometry.rect import Rect
-from vispy.scene import BaseCamera
 
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.advanced_tabs import RENDERING_LIST, RENDERING_MODE_NAME_STR, SEARCH_ZOOM_FACTOR_STR
@@ -34,59 +36,58 @@ from PartSegCore.image_operations import NoiseFilterType, bilateral, gaussian, m
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
-try:
-    from napari._qt.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
-except ImportError:
-    from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton as QtViewerPushButton_
-_napari_ge_4_13 = parse_version(napari.__version__) >= parse_version("0.4.13a1")
-_napari_ge_4_17 = parse_version(napari.__version__) >= parse_version("0.4.17a1")
+if TYPE_CHECKING:
+    from vispy.scene import BaseCamera
 
 
-class QtViewerPushButton(QtViewerPushButton_):
-    def __init__(self, viewer, *args, **kwargs):
-        if _napari_ge_4_13:
-            super().__init__(*args, **kwargs)
-        else:
-            super().__init__(viewer, *args, **kwargs)
+_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 
-
-if _napari_ge_4_13:
-
-    class QtNDisplayButton(QtViewerPushButton_):
-        def __init__(self, viewer):
-            super().__init__(button_name="ndisplay_button", tooltip="Toggle dimensions", slot=self.toggle_ndisplay)
-            self.viewer = viewer
-            self.setCheckable(True)
-
-        def toggle_ndisplay(self):
-            self.viewer.dims.ndisplay = 2 + (self.viewer.dims.ndisplay == 2)
-
+# if run with numpy<2 on macOS arm64 architecture compiled from pypi wheels
+# then it will crash with bus error if numpy is used in different thread
+if (
+    parse_version(np.__version__) < parse_version("2")
+    and platform.system() == "Darwin"
+    and platform.machine() == "arm64"
+):  # pragma: no cover
+    try:
+        USE_THREADS = "cibw-run" not in np.show_config("dicts")["Python Information"]["path"]
+    except (KeyError, TypeError):
+        USE_THREADS = True
 else:
-    from napari.qt import QtStateButton
+    USE_THREADS = True
 
-    class QtNDisplayButton(QtStateButton):
-        def __init__(self, viewer):
-            super().__init__(
-                "ndisplay_button",
-                viewer.dims,
-                "ndisplay",
-                viewer.dims.events.ndisplay,
-                2,
-                3,
-            )
+
+class _NapariImage(NapariImage):
+    def _update_thumbnail(self, *_, **__):
+        """Disable thumbnail update"""
+
+
+def get_highlight_colormap():
+    cmap_dict = {0: (0, 0, 0, 0), 1: "white", None: (0, 0, 0, 0)}
+    return {"colormap": DirectLabelColormap(color_dict=cmap_dict)}
+
+
+class QtNDisplayButton(QtViewerPushButton):
+    def __init__(self, viewer):
+        super().__init__(button_name="ndisplay_button", tooltip="Toggle dimensions", slot=self.toggle_ndisplay)
+        self.viewer = viewer
+        self.setCheckable(True)
+
+    def toggle_ndisplay(self):
+        self.viewer.dims.ndisplay = 2 + (self.viewer.dims.ndisplay == 2)
 
 
 ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
 NEXT_ORDER = {"xy": "zy", "zy": "zx", "zx": "xy"}
 
-ColorInfo = Dict[int, Union[str, List[float]]]
+ColorInfo = dict[Optional[int], Union[str, list[float]]]
 
 
 @dataclass
 class ImageInfo:
     image: Image
-    layers: List[NapariImage]
-    filter_info: List[Tuple[NoiseFilterType, float]] = field(default_factory=list)
+    layers: list[NapariImage]
+    filter_info: list[tuple[NoiseFilterType, float]] = field(default_factory=list)
     mask: Optional[Labels] = None
     mask_array: Optional[np.ndarray] = None
     roi: Optional[Labels] = None
@@ -94,14 +95,14 @@ class ImageInfo:
     roi_count: int = 0
     highlight: Optional[Labels] = None
 
-    def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
+    def coords_in(self, coords: Union[list[int], np.ndarray]) -> bool:
         if not self.layers:
             return False
         fst_layer = self.layers[0]
         moved_coords = self.translated_coords(coords)
         return np.all(moved_coords >= 0) and np.all(moved_coords < fst_layer.data.shape)
 
-    def translated_coords(self, coords: Union[List[int], np.ndarray]) -> np.ndarray:
+    def translated_coords(self, coords: Union[list[int], np.ndarray]) -> np.ndarray:
         if not self.layers:
             return np.array(coords)
         fst_layer = self.layers[0]
@@ -144,7 +145,7 @@ class ImageView(QWidget):
         self.settings = settings
         self.channel_property = channel_property
         self.name = name
-        self.image_info: Dict[str, ImageInfo] = {}
+        self.image_info: dict[str, ImageInfo] = {}
         self.current_image = ""
         self._current_order = "xy"
         self.components = None
@@ -162,16 +163,14 @@ class ImageView(QWidget):
 
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
-        self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self._reset_view)
-        self.points_view_button = QtViewerPushButton(
-            self.viewer, "new_points", "Show points", self.toggle_points_visibility
-        )
+        self.reset_view_button = QtViewerPushButton("home", "Reset view", self._reset_view)
+        self.points_view_button = QtViewerPushButton("new_points", "Show points", self.toggle_points_visibility)
         self.points_view_button.setVisible(False)
         self.search_roi_btn = SearchROIButton(self.settings)
         self.search_roi_btn.clicked.connect(self._search_component)
         self.search_roi_btn.setDisabled(True)
-        self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
-        self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.roll_dim_button = QtViewerPushButton("roll", "Roll dimension", self._rotate_dim)
+        self.roll_dim_button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
         self.mask_chk = QCheckBox()
         self.mask_chk.setVisible(False)
@@ -215,9 +214,8 @@ class ImageView(QWidget):
 
         if hasattr(self.viewer_widget.canvas, "background_color_override"):
             self.viewer_widget.canvas.background_color_override = "black"
-            if _napari_ge_4_17:
-                self.viewer.scale_bar.color = "white"
-                self.viewer.scale_bar.colored = True
+            self.viewer.scale_bar.color = "white"
+            self.viewer.scale_bar.colored = True
 
     def _connect_to_settings(self):
         self.settings.mask_changed.connect(self.set_mask)
@@ -372,7 +370,7 @@ class ImageView(QWidget):
             return
         text = f"{cords}: "
         if bright_array:
-            text += str(bright_array[0]) if len(bright_array) == 1 else str(bright_array)
+            text += str(bright_array[0]) if len(bright_array) == 1 else "[" + ", ".join(map(str, bright_array)) + "]"
         self.components = components
         text += _print_list(components, " component")
         text += _print_list(alt_components, " alt")
@@ -385,7 +383,7 @@ class ImageView(QWidget):
     def mask_color(self) -> ColorInfo:
         """Get mask marking color"""
         color = Color(np.divide(self.settings.get_from_profile("mask_presentation_color", [255, 255, 255]), 255))
-        return {0: (0, 0, 0, 0), 1: color.rgba}
+        return {0: (0, 0, 0, 0), 1: color.rgba, None: (0, 0, 0, 0)}
 
     def get_image(self, image: Optional[Image]) -> Image:
         if image is not None:
@@ -447,35 +445,17 @@ class ImageView(QWidget):
             or image_info.roi_count == 0
             or colors.size == 0
         ):
-            return {x: [0, 0, 0, 0] for x in range(image_info.roi_count + 1)}
-
-        res = {x: colors[(x - 1) % colors.shape[0]] for x in range(1, image_info.roi_count + 1)}
+            return {0: [0, 0, 0, 0], None: [0, 0, 0, 0]}
+        res = {
+            x: colors[(x - 1) % colors.shape[0]]
+            for x in range(1, image_info.roi_info.get_components_num(self.roi_alternative_selection) + 1)
+        }
         res[0] = [0, 0, 0, 0]
+        res[None] = [0, 0, 0, 0]
         return res
 
     def set_roi_colormap(self, image_info) -> None:
-        if _napari_ge_4_13:
-            image_info.roi.color = self.get_roi_view_parameters(image_info)
-            return
-        colors = self.settings.label_colors / 255
-        if (
-            self.settings.get_from_profile(f"{self.name}.image_state.show_label", LabelEnum.Show_results)
-            == LabelEnum.Not_show
-            or image_info.roi_count == 0
-            or colors.size == 0
-        ):
-            image_info.roi.colormap = Colormap([[0, 0, 0, 0], [0, 0, 0, 0]])
-
-        res = [[*list(colors[(x - 1) % colors.shape[0]]), 1] for x in range(image_info.roi_count + 1)]
-        res[0] = [0, 0, 0, 0]
-        if len(res) < 2:
-            res += [[0, 0, 0, 0] for _ in range(2 - len(res))]
-
-        image_info.roi.colormap = Colormap(colors=res, interpolation=ColormapInterpolationMode.ZERO)
-        max_val = image_info.roi_count + 1
-        image_info.roi._all_vals = np.array(  # pylint: disable=protected-access
-            [0] + [(x + 1) / (max_val + 1) for x in range(1, max_val)]
-        )
+        image_info.roi.colormap = DirectLabelColormap(color_dict=self.get_roi_view_parameters(image_info))
 
     def update_roi_coloring(self):
         for image_info in self.image_info.values():
@@ -555,7 +535,8 @@ class ImageView(QWidget):
         else:
             image_info.mask.data = mask_marker
         image_info.mask.metadata["valid"] = True
-        image_info.mask.color = self.mask_color()
+        image_info.mask.colormap = DirectLabelColormap(color_dict=self.mask_color())
+
         image_info.mask.opacity = self.mask_opacity()
         image_info.mask.visible = self.mask_chk.isChecked()
         self._toggle_mask_chk_visibility()
@@ -574,7 +555,7 @@ class ImageView(QWidget):
         for image_info in self.image_info.values():
             if image_info.mask is not None:
                 image_info.mask.opacity = opacity
-                image_info.mask.color = colormap
+                image_info.mask.colormap = DirectLabelColormap(color_dict=colormap)
 
     def set_image(self, image: Optional[Image] = None):
         self.image_info = {}
@@ -584,7 +565,7 @@ class ImageView(QWidget):
         return image.file_path in self.image_info
 
     @staticmethod
-    def calculate_filter(array: np.ndarray, parameters: Tuple[NoiseFilterType, float]) -> Optional[np.ndarray]:
+    def calculate_filter(array: np.ndarray, parameters: tuple[NoiseFilterType, float]) -> Optional[np.ndarray]:
         if parameters[0] == NoiseFilterType.No or parameters[1] == 0:
             return array
         if parameters[0] == NoiseFilterType.Gauss:
@@ -603,7 +584,7 @@ class ImageView(QWidget):
         else:
             logging.debug("[_remove_worker] %s", sender)
 
-    def _add_layer_util(self, index, layer, filters):
+    def _add_layer_util(self, index: int, layer: _NapariImage, filters: list[tuple[NoiseFilterType, float]]) -> None:
         if layer not in self.viewer.layers:
             self.viewer.add_layer(layer)
 
@@ -630,7 +611,7 @@ class ImageView(QWidget):
         else:
             self.viewer.layers.move(self.viewer.layers.index(layer), index)
 
-    def _add_image(self, image_data: Tuple[ImageInfo, bool]):
+    def _add_image(self, image_data: tuple[ImageInfo, bool]):
         image_info, replace = image_data
         image = image_info.image
 
@@ -643,7 +624,7 @@ class ImageView(QWidget):
         for i, layer in enumerate(image_info.layers):
             try:
                 self._add_layer_util(i, layer, filters)
-            except AssertionError:
+            except AssertionError:  # noqa: PERF203
                 layer.colormap = "gray"
                 self._add_layer_util(i, layer, filters)
 
@@ -704,14 +685,21 @@ class ImageView(QWidget):
 
         return image
 
-    def _prepare_layers(self, image, parameters, replace):
-        worker = prepare_layers(image, parameters, replace)
-        worker.returned.connect(self._add_image)
-        worker.finished.connect(self._remove_worker)
-        self.worker_list.append(worker)
-        worker.start()
+    if USE_THREADS:  # pragma: no cover
 
-    def images_bounds(self) -> Tuple[List[int], List[int]]:
+        def _prepare_layers(self, image, parameters, replace):
+            worker = prepare_layers(image, parameters, replace)
+            worker.returned.connect(self._add_image)
+            worker.finished.connect(self._remove_worker)
+            self.worker_list.append(worker)
+            worker.start()
+
+    else:  # pragma: no cover
+
+        def _prepare_layers(self, image, parameters, replace):
+            self._add_image(_prepare_layers(image, parameters, replace))
+
+    def images_bounds(self) -> tuple[list[int], list[int]]:
         ranges = []
         for image_info in self.image_info.values():
             if not image_info.layers:
@@ -799,7 +787,12 @@ class ImageView(QWidget):
         return super().event(event)
 
     def _search_component(self):
-        max_components = max(max(image_info.roi_info.bound_info) for image_info in self.image_info.values())
+        try:
+            max_components = max(max(image_info.roi_info.bound_info) for image_info in self.image_info.values())
+        except ValueError as e:
+            if "empty" in e.args[0]:
+                return
+            raise e
         if self.viewer.dims.ndisplay == 3:
             self._search_type = SearchType.Highlight
 
@@ -836,8 +829,8 @@ class ImageView(QWidget):
                 component_mark,
                 scale=image_info.roi.scale,
                 blending="translucent",
-                color={0: (0, 0, 0, 0), 1: "white"},
                 opacity=0.7,
+                **get_highlight_colormap(),
             )
             self.viewer.layers.selection.active = active_layer
         else:
@@ -922,7 +915,7 @@ class ImageView(QWidget):
     def _data_to_world(layer: Layer, cords):
         return layer._transforms[1:3].simplified(cords)  # pylint: disable=protected-access
 
-    def _bounding_box(self, num) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+    def _bounding_box(self, num) -> Optional[tuple[np.ndarray, np.ndarray]]:
         lower_bound_list = []
         upper_bound_list = []
         for image_info in self.image_info.values():
@@ -943,7 +936,10 @@ class ImageView(QWidget):
 class NapariQtViewer(QtViewer):
     def __init__(self, viewer):
         super().__init__(viewer, show_welcome_screen=False)
-        self.widget(0).layout().setContentsMargins(0, 5, 0, 2)
+        layout = self.widget(0).layout()
+        if layout is not None:
+            # Before napari 0.7.0
+            layout.setContentsMargins(0, 5, 0, 2)
 
     def dragEnterEvent(self, event):  # pylint: disable=no-self-use
         """
@@ -962,6 +958,17 @@ class NapariQtViewer(QtViewer):
     def closeEvent(self, event):
         self.close()
         super().closeEvent(event)
+
+    def _render(self):
+        if _napari_ge_5:
+            return self.canvas._scene_canvas.render()
+        return self.canvas.render()
+
+    if _napari_ge_5:
+
+        @property
+        def view(self):
+            return self.canvas.view
 
 
 class SearchComponentModal(QtPopup):
@@ -996,15 +1003,15 @@ class SearchComponentModal(QtPopup):
 
 @dataclass
 class ImageParameters:
-    limits: List[Tuple[float, float]]
-    visibility: List[bool]
-    gamma: List[float]
-    colormaps: List[Colormap]
-    scaling: Tuple[Union[float, int]]
+    limits: list[tuple[float, float]]
+    visibility: list[bool]
+    gamma: list[float]
+    colormaps: list[Colormap]
+    scaling: tuple[Union[float, int]]
     layers: int = 0
 
 
-def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:
+def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> tuple[ImageInfo, bool]:
     image_layers = []
     for i in range(image.channels):
         lim = list(param.limits[i])
@@ -1013,7 +1020,7 @@ def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tupl
         blending = "additive" if i != 0 else "translucent"
         data = image.get_channel(i)
 
-        layer = NapariImage(
+        layer = _NapariImage(
             data,
             colormap=param.colormaps[i],
             visible=param.visibility[i],
@@ -1046,7 +1053,7 @@ def _print_dict(dkt: MutableMapping, indent="") -> str:
     res = []
     for k, v in dkt.items():
         if isinstance(v, MutableMapping):
-            res.append(f'{indent}{k}:\n{_print_dict(v, f"{indent}  ")}')
+            res.append(f"{indent}{k}:\n{_print_dict(v, f'{indent}  ')}")
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)

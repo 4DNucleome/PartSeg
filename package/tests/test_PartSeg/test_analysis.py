@@ -18,7 +18,7 @@ class TestMeasurementWidget:
         widget = MeasurementWidget(part_settings)
         qtbot.addWidget(widget)
 
-        assert widget.measurement_type.count() == 3
+        assert widget.measurement_type.count() == 4
         part_settings.set_project_info(analysis_segmentation)
 
         with qtbot.waitSignal(widget.measurement_type.currentIndexChanged):
@@ -28,13 +28,13 @@ class TestMeasurementWidget:
         qmessagebox_path.information.assert_called_once()
         assert qmessagebox_path.information.call_args[0][1] == "Need mask"
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     def test_base(self, qtbot, analysis_segmentation, part_settings):
         widget = MeasurementWidget(part_settings)
         qtbot.addWidget(widget)
 
-        assert widget.measurement_type.count() == 3
+        assert widget.measurement_type.count() == 4
         part_settings.set_project_info(analysis_segmentation)
         widget.measurement_type.setCurrentIndex(1)
         assert widget.recalculate_button.isEnabled()
@@ -46,13 +46,13 @@ class TestMeasurementWidget:
         assert widget.info_field.columnCount() == 2
         assert widget.info_field.rowCount() == 2
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     def test_base2(self, qtbot, analysis_segmentation2, part_settings):
         widget = MeasurementWidget(part_settings)
         qtbot.addWidget(widget)
 
-        assert widget.measurement_type.count() == 3
+        assert widget.measurement_type.count() == 4
         part_settings.set_project_info(analysis_segmentation2)
         widget.measurement_type.setCurrentIndex(2)
         assert widget.recalculate_button.isEnabled()
@@ -64,10 +64,27 @@ class TestMeasurementWidget:
         assert widget.info_field.columnCount() == 3
         assert widget.info_field.rowCount() == 2
 
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
+    def test_base_channels(self, qtbot, analysis_segmentation2, part_settings):
+        widget = MeasurementWidget(part_settings)
+        qtbot.addWidget(widget)
+
+        part_settings.set_project_info(analysis_segmentation2)
+        widget.measurement_type.setCurrentIndex(3)
+        assert widget.recalculate_button.isEnabled()
+        widget.recalculate_button.click()
+        assert widget.info_field.columnCount() == 2
+        assert widget.info_field.rowCount() == 4
+        assert widget.info_field.item(1, 1).text() == "4"
+        widget.horizontal_measurement_present.setChecked(True)
+        assert widget.info_field.columnCount() == 4
+        assert widget.info_field.rowCount() == 2
+
 
 class TestSimpleMeasurementsWidget:
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     def test_base(self, stack_settings, stack_segmentation1, qtbot):
         widget = SimpleMeasurements(stack_settings)
         qtbot.addWidget(widget)

@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 import textwrap
 import typing
 import uuid
@@ -151,7 +150,7 @@ def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     :param calculation: information about calculation
     :return: save path
     """
-    from PartSegCore.analysis.save_functions import save_dict
+    from PartSegCore.analysis.save_functions import save_dict  # noqa: PLC0415
 
     extension = save_dict[op.algorithm].get_default_extension()
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
@@ -299,7 +298,7 @@ class CalculationTree:
     def __init__(
         self,
         operation: typing.Union[PydanticBaseModel, ROIExtractionProfile, MeasurementCalculate, RootType],
-        children: typing.List["CalculationTree"],
+        children: list["CalculationTree"],
     ):
         if operation == "root":
             operation = RootType.Image
@@ -405,7 +404,7 @@ class Calculation(BaseCalculation):
     :ivar CalculationPlan ~.calculation_plan: plan of calculation
     :ivar str uuid: ~.uuid of whole calculation
     :ivar ~.voxel_size: default voxel size (for files which do not contains this information in metadata
-    :ivar typing.List[str] ~.file_list: list of files to be proceed
+    :ivar list[str] ~.file_list: list of files to be proceed
     """
 
     def __init__(
@@ -428,7 +427,7 @@ class Calculation(BaseCalculation):
             voxel_size,
             overwrite_voxel_size,
         )
-        self.file_list: typing.List[str] = file_list
+        self.file_list: list[str] = file_list
 
     def get_base_calculation(self) -> BaseCalculation:
         """Extract py:class:`BaseCalculation` from instance."""
@@ -503,7 +502,7 @@ class CalculationPlan:
     :type execution_tree: CalculationTree
     """
 
-    correct_name: typing.ClassVar[typing.Dict[str, typing.Union[BaseModel, Enum]]] = {
+    correct_name: typing.ClassVar[dict[str, typing.Union[BaseModel, Enum]]] = {
         MaskCreate.__name__: MaskCreate,
         MaskUse.__name__: MaskUse,
         Save.__name__: Save,
@@ -550,9 +549,9 @@ class CalculationPlan:
     def __repr__(self):
         return f"CalculationPlan(name={self.name!r}, execution_tree={self.execution_tree!r})"
 
-    def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
+    def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> list[MeasurementCalculate]:
         """
-        Get all measurement Calculation bellow given node
+        Get all measurement Calculation below given node
 
         :param node: Node for start, if absent then start from plan root
         :return: list of measurements
@@ -589,7 +588,7 @@ class CalculationPlan:
     def __deepcopy__(self, memo):
         return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
-    def get_node(self, search_pos: typing.Optional[typing.List[int]] = None, parent=False) -> CalculationTree:
+    def get_node(self, search_pos: typing.Optional[list[int]] = None, parent=False) -> CalculationTree:
         """
         :param search_pos:
         :return: CalculationTree
@@ -767,7 +766,6 @@ class CalculationPlan:
         :return: str
         """
         if el.__class__.__name__ not in CalculationPlan.correct_name:
-            print(el, el.__class__.__name__, file=sys.stderr)
             raise ValueError(f"Unknown type {el.__class__.__name__}")
         if isinstance(el, RootType):
             return f"Root: {el}"
@@ -807,7 +805,7 @@ class CalculationPlan:
         raise ValueError(f"Unknown type {type(el)}")
 
     def pretty_print(self) -> str:
-        return f"Calcualation Plan: {self.name}\n{self._pretty_print(self.execution_tree, 0)}"
+        return f"Calculation Plan: {self.name}\n{self._pretty_print(self.execution_tree, 0)}"
 
     def _pretty_print(self, elem: CalculationTree, indent) -> str:
         if isinstance(elem.operation, str):

@@ -1,6 +1,6 @@
 from contextlib import suppress
 from functools import partial
-from typing import List, Union
+from typing import Union
 
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget
@@ -109,7 +109,7 @@ class MaskWidget(QWidget):
         # noinspection PyUnresolvedReferences
         self.values_changed.emit()
 
-    def get_dilate_radius(self) -> Union[int, List[int]]:
+    def get_dilate_radius(self) -> Union[int, list[int]]:
         radius = calculate_operation_radius(
             self.dilate_radius.value(), self.settings.image_spacing, self.dilate_dim.currentEnum()
         )

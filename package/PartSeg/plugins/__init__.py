@@ -1,24 +1,30 @@
 import contextlib
 import importlib
-import itertools
+import logging
 import os
 import pkgutil
 import sys
 import typing
-from importlib.metadata import entry_points
+from pathlib import Path
 
 import PartSegCore.plugins
 
 
 def register_napari_plugins():  # pragma: no cover
-    import npe2
+    import npe2  # noqa: PLC0415
 
-    import PartSeg
+    import PartSeg  # noqa: PLC0415
 
     with contextlib.suppress(ValueError):
         npe2.PluginManager.instance().register(
             os.path.join(os.path.dirname(os.path.dirname(PartSeg.__file__)), "napari.yaml")
         )
+        base_path = Path(__file__).parent.parent.parent / "plugins"
+        for el in base_path.glob("*/napari.yaml"):
+            try:
+                npe2.PluginManager.instance().register(str(el))
+            except Exception:  # noqa: PERF203
+                logging.exception("Failed to register %s", el)
 
 
 def get_plugins():
@@ -30,10 +36,7 @@ def get_plugins():
     else:
         sys.path.append(os.path.dirname(__file__))
         packages = list(pkgutil.iter_modules(__path__))
-    packages2 = itertools.chain(
-        entry_points().get("PartSeg.plugins", []),
-        entry_points().get("partseg.plugins", []),
-    )
+    packages2 = PartSegCore.plugins.iter_entrypoints("PartSeg.plugins")
     return [importlib.import_module(el.name) for el in packages] + [el.load() for el in packages2]
 
 

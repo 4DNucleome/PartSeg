@@ -1,11 +1,12 @@
 """
 Module with default values of application state
 """
+
 import os
 import sys
 
-import appdirs
 import packaging.version
+import platformdirs
 
 from PartSeg import APP_LAB, APP_NAME, __version__, parsed_version
 
@@ -27,21 +28,21 @@ develop = False
 save_suffix = ""
 #: path to folder where save settings
 save_folder = os.path.join(
-    os.environ.get("PARTSEG_SETTINGS_DIR", appdirs.user_data_dir(APP_NAME, APP_LAB)),
+    os.environ.get("PARTSEG_SETTINGS_DIR", platformdirs.user_data_dir(APP_NAME, APP_LAB)),
     str(packaging.version.parse(__version__).base_version),
 )
 
 sentry_url = os.environ.get("PARTSEG_SENTRY_URL", "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302")
 
 __all__ = (
-    "auto_report",
     "always_report",
-    "custom_plugin_load",
+    "auto_report",
     "check_for_updates",
+    "custom_plugin_load",
     "develop",
     "report_errors",
-    "save_suffix",
     "save_folder",
+    "save_suffix",
     "sentry_url",
     "show_error_dialog",
 )

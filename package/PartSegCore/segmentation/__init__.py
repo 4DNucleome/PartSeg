@@ -1,6 +1,7 @@
 """
 This module contains roi_extraction algorithms
 """
+
 import os
 import sys
 
@@ -12,12 +13,12 @@ from PartSegCore.segmentation.threshold import BaseThreshold
 from PartSegCore.segmentation.watershed import BaseWatershed
 
 __all__ = [
-    "ROIExtractionAlgorithm",
+    "BaseThreshold",
     "BaseWatershed",
     "NoiseFilteringBase",
-    "BaseThreshold",
-    "RestartableAlgorithm",
+    "ROIExtractionAlgorithm",
     "ROIExtractionResult",
+    "RestartableAlgorithm",
     "StackAlgorithm",
 ]
 

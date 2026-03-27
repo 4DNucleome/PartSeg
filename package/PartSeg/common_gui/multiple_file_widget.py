@@ -2,7 +2,6 @@ import os
 from collections import Counter, defaultdict
 from functools import partial
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 from qtpy.QtCore import Qt, QTimer, Signal, Slot
 from qtpy.QtGui import QFontMetrics, QMouseEvent, QResizeEvent
@@ -42,7 +41,7 @@ class MultipleFilesTreeWidget(QTreeWidget):
     def __init__(self, compare, parent=None):
         super().__init__(parent)
         self.compare = compare
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.showContextMenu)
 
     def showContextMenu(self, point):
@@ -67,7 +66,7 @@ class MultipleFilesTreeWidget(QTreeWidget):
         self.compare = compare
 
     def mouseMoveEvent(self, event):  # pylint: disable=no-self-use
-        QApplication.setOverrideCursor(Qt.ArrowCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
         super().mouseMoveEvent(event)
 
 
@@ -76,14 +75,14 @@ class LoadRecentFiles(QDialog):
         super().__init__(parent)
         self.settings = settings
         self.file_list = QListWidget()
-        self.file_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.file_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.cancel_btn = QPushButton("Cancel", clicked=self.reject)
         self.load_btn = QPushButton("Load", clicked=self.accept)
 
         for name_list, method in settings.get_last_files_multiple():
             entry = f"{name_list[0]} {method}"
             item = QListWidgetItem(entry, self.file_list)
-            item.setData(Qt.UserRole, (name_list, method))
+            item.setData(Qt.ItemDataRole.UserRole, (name_list, method))
 
         last_set = {(tuple(x), y) for x, y in settings.get_last_files_multiple()}
         for name_list, method in settings.get_last_files():
@@ -91,7 +90,7 @@ class LoadRecentFiles(QDialog):
                 continue
             entry = f"{name_list[0]} {method}"
             item = QListWidgetItem(entry, self.file_list)
-            item.setData(Qt.UserRole, (name_list, method))
+            item.setData(Qt.ItemDataRole.UserRole, (name_list, method))
 
         layout = QGridLayout()
         layout.addWidget(QLabel("Select files"))
@@ -104,8 +103,8 @@ class LoadRecentFiles(QDialog):
             *self.settings.get_from_profile("multiple_files_dialog_size", (self.size().width(), self.size().height()))
         )
 
-    def get_files(self) -> List[Tuple[List[str], str]]:
-        return [item.data(Qt.UserRole) for item in self.file_list.selectedItems()]
+    def get_files(self) -> list[tuple[list[str], str]]:
+        return [tuple(item.data(Qt.ItemDataRole.UserRole)) for item in self.file_list.selectedItems()]
 
     def accept(self) -> None:
         self.settings.set_in_profile("multiple_files_dialog_size", (self.size().width(), self.size().height()))
@@ -115,10 +114,10 @@ class LoadRecentFiles(QDialog):
 class MultipleFileWidget(QWidget):
     _add_state = Signal(object, bool)
 
-    def __init__(self, settings: BaseSettings, load_dict: Dict[str, LoadBase], compare_in_context_menu=False):
+    def __init__(self, settings: BaseSettings, load_dict: dict[str, LoadBase], compare_in_context_menu=False):
         super().__init__()
         self.settings = settings
-        self.state_dict: Dict[str, Dict[str, ProjectInfoBase]] = defaultdict(dict)
+        self.state_dict: dict[str, dict[str, ProjectInfoBase]] = defaultdict(dict)
         self.state_dict_count = Counter()
         self.file_list = []
         self.load_register = load_dict
@@ -257,16 +256,15 @@ class MultipleFileWidget(QWidget):
         self.save_state_action(state, custom_name)
 
     def save_state_action(self, state: ProjectInfoBase, custom_name):
-        # TODO left elipsis
+        # TODO left ellipsis
         if isinstance(state, list):
             self.add_states(state)
             return
-        # state: ProjectInfoBase = self.get_state()
         if not isinstance(state, ProjectInfoBase):  # workaround for PointsInfo load
             return
         normed_file_path = os.path.normpath(state.file_path)
         sub_dict = self.state_dict[normed_file_path]
-        name = f"state {self.state_dict_count[normed_file_path]+1}"
+        name = f"state {self.state_dict_count[normed_file_path] + 1}"
         if custom_name:
             name, ok = QInputDialog.getText(self, "Save name", "Save name:", text=name)
             if not ok:
@@ -281,7 +279,7 @@ class MultipleFileWidget(QWidget):
         except ValueError:
             metric = QFontMetrics(self.file_view.font())
             width = self.file_view.width() - 45
-            clipped_text = metric.elidedText(normed_file_path, Qt.ElideLeft, width)
+            clipped_text = metric.elidedText(normed_file_path, Qt.TextElideMode.ElideLeft, width)
             item = QTreeWidgetItem(self.file_view, [clipped_text])
             item.setToolTip(0, normed_file_path)
             self.file_list.append(normed_file_path)
@@ -372,7 +370,7 @@ class MultipleFileWidget(QWidget):
     def set_compare_in_context_menu(self, compare: bool):
         self.file_view.set_show_compare(compare)
 
-    def add_states(self, states: List[ProjectInfoBase]):
+    def add_states(self, states: list[ProjectInfoBase]):
         """add multiple states to widget"""
         for el in states:
             self.save_state_action(el, False)
@@ -382,7 +380,7 @@ class MultipleLoadDialog(CustomLoadDialog):
     def __init__(self, load_register, history=None):
         load_register = {key: val for key, val in load_register.items() if not val.partial()}
         super().__init__(load_register=load_register, history=history)
-        self.setFileMode(QFileDialog.ExistingFiles)
+        self.setFileMode(QFileDialog.FileMode.ExistingFiles)
 
     def accept(self):
         self.files_list.extend(self.selectedFiles())

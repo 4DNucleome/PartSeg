@@ -22,7 +22,7 @@ from PartSegImage.image import minimal_dtype, reduce_array
 class StackSettings(BaseSettings):
     load_metadata = staticmethod(load_metadata)
     components_change_list = Signal([int, list])
-    save_locations_keys: typing.ClassVar[typing.List[str]] = [
+    save_locations_keys: typing.ClassVar[list[str]] = [
         "save_batch",
         "save_components_directory",
         "save_segmentation_directory",
@@ -36,7 +36,7 @@ class StackSettings(BaseSettings):
         super().__init__(json_path, profile_name)
         self.chosen_components_widget = None
         self.keep_chosen_components = False
-        self.components_parameters_dict: typing.Dict[int, ROIExtractionProfile] = {}
+        self.components_parameters_dict: dict[int, ROIExtractionProfile] = {}
 
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (
@@ -86,7 +86,7 @@ class StackSettings(BaseSettings):
 
         return res
 
-    def chosen_components(self) -> typing.List[int]:
+    def chosen_components(self) -> list[int]:
         """
         Needs instance of :py:class:`PartSeg.segmentation_mask.main_window.ChosenComponents` on variable
         Py:attr:`chosen_components_widget` (or something implementing its interface)
@@ -170,17 +170,15 @@ class StackSettings(BaseSettings):
                 data.selected_components,
                 self.keep_chosen_components,
             )
-            self.chosen_components_widget.set_chose(
-                sorted(state2.roi_extraction_parameters.keys()), state2.selected_components
-            )
             self.roi = state2.roi_info
+            self.chosen_components_widget.set_chosen(state2.selected_components)
+
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             self.set_history(data.history)
-            self.chosen_components_widget.set_chose(
-                sorted(data.roi_extraction_parameters.keys()), data.selected_components
-            )
             self.roi = data.roi_info
+            self.chosen_components_widget.set_chosen(data.selected_components)
+
             self.components_parameters_dict = data.roi_extraction_parameters
 
     @staticmethod
@@ -202,22 +200,23 @@ class StackSettings(BaseSettings):
         cls,
         state: MaskProjectTuple,
         new_roi_info: ROIInfo,
-        new_roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]],
-        list_of_components: typing.List[int],
+        new_roi_extraction_parameters: dict[int, typing.Optional[ROIExtractionProfile]],
+        list_of_components: list[int],
         save_chosen: bool = True,
     ) -> MaskProjectTuple:
         """
 
         :param MaskProjectTuple state: state to be transformed
         :param ROIInfo new_roi_info: roi description
-        :param typing.Dict[int, typing.Optional[ROIExtractionProfile]] new_roi_extraction_parameters:
+        :param dict[int, typing.Optional[ROIExtractionProfile]] new_roi_extraction_parameters:
             Parameters used to extract roi
-        :param typing.List[int] list_of_components: list of components from new_roi which should be selected
+        :param list[int] list_of_components: list of components from new_roi which should be selected
         :param bool save_chosen: if save currently selected components
         :return: new state
         """
 
         # TODO Refactor
+        new_roi_info = new_roi_info.fit_to_image(state.image)
         if not save_chosen or state.roi_info.roi is None or len(state.selected_components) == 0:
             return dataclasses.replace(
                 state,
@@ -280,8 +279,8 @@ class StackSettings(BaseSettings):
             roi_extraction_parameters=components_parameters_dict,
         )
 
-    def compare_history(self, history: typing.List[HistoryElement]):
-        # TODO check dict comparision
+    def compare_history(self, history: list[HistoryElement]):
+        # TODO check dict comparison
         if len(history) != self.history_size():
             return False
         return not any(
@@ -303,21 +302,25 @@ class StackSettings(BaseSettings):
             raise ValueError("ROI do not fit to image") from e
         if save_chosen:
             state2 = self.transform_state(state, new_roi_info, segmentation_parameters, list_of_components, save_chosen)
-            self.chosen_components_widget.set_chose(
-                sorted(state2.roi_extraction_parameters.keys()), state2.selected_components
-            )
             self.roi = state2.roi_info
+            self.chosen_components_widget.set_chosen(state2.selected_components)
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
-            selected_parameters = {i: segmentation_parameters[i] for i in new_roi_info.bound_info}
-
-            self.chosen_components_widget.set_chose(sorted(selected_parameters.keys()), list_of_components)
             self.roi = new_roi_info
+            self.chosen_components_widget.set_chosen(list_of_components)
             self.components_parameters_dict = segmentation_parameters
+
+    def post_roi_set(self):
+        if self.chosen_components_widget is not None:
+            prev = self.chosen_components_widget.blockSignals(True)
+            try:
+                self.chosen_components_widget.set_components(self.roi_info.bound_info.keys(), [])
+            finally:
+                self.chosen_components_widget.blockSignals(prev)
 
 
 def get_mask(
-    segmentation: typing.Optional[np.ndarray], mask: typing.Optional[np.ndarray], selected: typing.List[int]
+    segmentation: typing.Optional[np.ndarray], mask: typing.Optional[np.ndarray], selected: list[int]
 ) -> np.ndarray:
     """
     Calculate mask base on segmentation, current mask and list of chosen components.

@@ -102,7 +102,7 @@ def calculate_mask(
     roi: np.ndarray,
     old_mask: typing.Optional[np.ndarray],
     spacing: typing.Iterable[typing.Union[float, int]],
-    components: typing.Optional[typing.List[int]] = None,
+    components: typing.Optional[list[int]] = None,
     time_axis: typing.Optional[int] = 0,
 ) -> np.ndarray:
     """
@@ -115,7 +115,7 @@ def calculate_mask(
     :param typing.Optional[np.ndarray] old_mask: if in mask_description there is set to crop and old_mask is not None
         then final mask is clipped to this area
     :param typing.Iterable[typing.Union[float,int]] spacing: spacing of image. Needed for calculating radius of dilate
-    :param typing.Optional[typing.List[int]] components: If present inform which components
+    :param typing.Optional[list[int]] components: If present inform which components
         should be used when calculation mask, otherwise use all.
     :param typing.Optional[int] time_axis: which axis of array should be treated as time. IF none then none.
     :return: new mask
@@ -136,7 +136,7 @@ def calculate_mask(
     mask = np.copy(roi) if mask_description.save_components else np.array(roi > 0)
     if time_axis is None:
         return _calculate_mask(mask_description, dilate_radius, mask, old_mask)
-    slices: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]
+    slices: list[typing.Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]
     final_shape = list(mask.shape)
     final_shape[time_axis] = 1
     final_shape = tuple(final_shape)
@@ -151,7 +151,7 @@ def calculate_mask(
 
 def _calculate_mask(
     mask_description: MaskProperty,
-    dilate_radius: typing.List[int],
+    dilate_radius: list[int],
     mask: np.ndarray,
     old_mask: typing.Union[None, np.ndarray],
 ) -> np.ndarray:
@@ -173,7 +173,7 @@ def _calculate_mask(
 
 def _cut_components(
     mask: np.ndarray, image: np.ndarray, borders: int = 0
-) -> typing.Iterator[typing.Tuple[np.ndarray, typing.List[slice], int]]:
+) -> typing.Iterator[tuple[np.ndarray, list[slice], int]]:
     sizes = np.bincount(mask.flat)
     for i, size in enumerate(sizes[1:], 1):
         if size > 0:
@@ -229,7 +229,7 @@ def fill_holes_in_mask(mask: np.ndarray, volume: int) -> np.ndarray:
     component_mask = sitk.GetArrayFromImage(
         sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(holes_mask)))
     )
-    border_set: typing.Set[int] = set()
+    border_set: set[int] = set()
     for dim_num in range(component_mask.ndim):
         border_set.update(list(np.unique(np.take(component_mask, [0, -1], axis=dim_num))))
     if 0 in border_set:

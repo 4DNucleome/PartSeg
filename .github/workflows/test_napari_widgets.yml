@@ -17,17 +17,17 @@ concurrency:
 
 jobs:
   test-latest-release:
-    name: Test latest release ${{ matrix.napari }} ${{ matrix.qt_backend }}
+    name: Test latest release ${{ matrix.qt_backend }}
     strategy:
       fail-fast: false
       matrix:
         qt_backend: ["PyQt5", "PySide2"]
-        os: ["ubuntu-22.04"]
+        os: ["ubuntu-24.04"]
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: "3.10"
       os: ${{ matrix.os }}
-      napari: "napari417"
+      napari: "napari54"
       qt_backend: ${{ matrix.qt_backend }}
       timeout: 10
 
@@ -36,16 +36,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        napari: ["napari414", "napari415", "napari416"]
+        napari: ["napari419", "napari54"]
         qt_backend: ["PyQt5"]
         include:
-          - napari: "napari414"
+          - napari: "napari54"
             qt_backend: "PySide2"
     if: github.event_name == 'push'
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: "3.9"
-      os: "ubuntu-20.04"
+      os: "ubuntu-24.04"
       napari: ${{ matrix.napari }}
       qt_backend: ${{ matrix.qt_backend }}
       timeout: 10

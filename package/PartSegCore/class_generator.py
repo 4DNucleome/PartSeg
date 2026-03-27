@@ -149,8 +149,6 @@ def extract_type_name(type_):
 
 def extract_type_info(type_):
     # noinspection PyUnresolvedReferences
-    # if issubclass(type_, (typing.Any, typing.Union)):
-    #    return str(type_), type_.__module__
     if not hasattr(type_, "__module__"):
         return type_.__name__, None
 
@@ -238,9 +236,11 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     del global_state[typename]
 
     signature = ", ".join(
-        f"{name_}: {translate_dict[type_]} = {pprint.pformat(defaults_dict[name_])}"
-        if name_ in defaults_dict
-        else f"{name_}: {translate_dict[type_]}"
+        (
+            f"{name_}: {translate_dict[type_]} = {pprint.pformat(defaults_dict[name_])}"
+            if name_ in defaults_dict
+            else f"{name_}: {translate_dict[type_]}"
+        )
         for name_, type_ in types.items()
     )
 
@@ -308,8 +308,7 @@ class BaseMeta(type):
                 defaults_dict[field_name] = default_value
             elif defaults:
                 raise TypeError(
-                    "Non-default namedtuple field {field_name} cannot "
-                    "follow default field(s) {default_names}".format(
+                    "Non-default namedtuple field {field_name} cannot follow default field(s) {default_names}".format(
                         field_name=field_name, default_names=", ".join(defaults_dict.keys())
                     )
                 )
@@ -364,7 +363,7 @@ class BaseSerializableClass(metaclass=BaseMeta):
     def replace_(self, **_kwargs):
         return self
 
-    def as_tuple(self) -> typing.Tuple:
+    def as_tuple(self) -> tuple:
         """declare interface"""
 
     @classmethod
@@ -393,10 +392,8 @@ def serialize_hook(dkt: dict):
             dkt["__error__"] = True
             return dkt
         del dkt["__subtype__"]
-        if "__Serializable__" in dkt:
-            del dkt["__Serializable__"]
-        else:
-            del dkt["__ReadOnly__"]
+        dkt.pop("__Serializable__", None)
+        dkt.pop("__ReadOnly__", None)
         if isinstance(cls, collections.abc.Iterator):
             keys = set(dkt.keys())
             for el in cls:

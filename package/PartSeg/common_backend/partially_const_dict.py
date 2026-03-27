@@ -1,13 +1,13 @@
 import itertools
-from collections.abc import MutableMapping
-from typing import Any, ClassVar, Dict, Generic, Iterator, Tuple, TypeVar, Union
+from collections.abc import Iterator, MutableMapping
+from typing import Any, ClassVar, Generic, TypeVar, Union
 
 from qtpy.QtCore import QObject, Signal
 
 from PartSeg.common_backend.abstract_class import QtMeta
 
 T = TypeVar("T")
-RemovableInfo = Tuple[T, bool]
+RemovableInfo = tuple[T, bool]
 
 
 class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
@@ -18,8 +18,8 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
     item_added = Signal(object)
     """Signal with item added to dict"""
     item_removed = Signal(object)
-    """Signal with item remove fom dict"""
-    const_item_dict: ClassVar[Dict[str, Any]] = {}
+    """Signal with item remove from dict"""
+    const_item_dict: ClassVar[dict[str, Any]] = {}
     """Dict with non removable elements"""
 
     def __init__(self, editable_items):
@@ -69,7 +69,7 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
 
     def get_position(self, key: str) -> int:
         """
-        Get item position as unique int. For soring purpose
+        Get item position as unique int. For sorting purpose
 
         :raise KeyError: if element not in dict
         """

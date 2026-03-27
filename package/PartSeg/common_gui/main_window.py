@@ -2,7 +2,7 @@ import dataclasses
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional, Type, Union
+from typing import Optional, Union
 
 from napari import __version__
 from packaging.version import parse as parse_version
@@ -130,7 +130,7 @@ class BaseMainWindow(QMainWindow):
     """Signal emitted when window has shown. Used to hide Launcher."""
 
     @classmethod
-    def get_setting_class(cls) -> Type[BaseSettings]:
+    def get_setting_class(cls) -> type[BaseSettings]:
         """Get constructor for :py:attr:`settings`"""
         return BaseSettings
 
@@ -161,7 +161,7 @@ class BaseMainWindow(QMainWindow):
             self.show_signal.connect(signal_fun)
         self.settings = settings
         self._load_dict = load_dict
-        self.viewer_list: List[Viewer] = []
+        self.viewer_list: list[Viewer] = []
         self.files_num = 1
         self.setAcceptDrops(True)
         self.setWindowTitle(title)
@@ -219,7 +219,7 @@ class BaseMainWindow(QMainWindow):
     def toggle_multiple_files(self):
         self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget", False))
 
-    def get_colormaps(self) -> List[Optional[colormap.Colormap]]:
+    def get_colormaps(self) -> list[Optional[colormap.Colormap]]:
         channel_num = self.settings.image.channels
         if not self.channel_info:
             return [None for _ in range(channel_num)]
@@ -227,19 +227,26 @@ class BaseMainWindow(QMainWindow):
         return [self.settings.colormap_dict[name][0] for name in colormaps_name]
 
     def napari_viewer_show(self):
-        viewer = Viewer(title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info)
+        viewer = Viewer(
+            title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info, show=False
+        )
+        viewer.scale_bar.unit = "nm"
         viewer.theme = self.settings.theme_name
         viewer.create_initial_layers(image=True, roi=True, additional_layers=False, points=True)
+        viewer.show()
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda _x: self.close_viewer(viewer))
 
     def additional_layers_show(self, with_channels=False):
         if not self.settings.additional_layers:
-            QMessageBox().information(self, "No data", "Last executed algoritm does not provide additional data")
+            QMessageBox().information(self, "No data", "Last executed algorithm does not provide additional data")
             return
-        viewer = Viewer(title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info)
+        viewer = Viewer(
+            title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info, show=False
+        )
         viewer.theme = self.settings.theme_name
         viewer.create_initial_layers(image=with_channels, roi=False, additional_layers=True, points=False)
+        viewer.show()
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda _x: self.close_viewer(viewer))
 
@@ -264,7 +271,7 @@ class BaseMainWindow(QMainWindow):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 
-    def read_drop(self, paths: List[str]):
+    def read_drop(self, paths: list[str]):
         """Function to process loading files by drag and drop."""
         self._read_drop(paths, self._load_dict)
 
@@ -384,6 +391,6 @@ class BaseMainWindow(QMainWindow):
         """Remove after drop napari 0.4.16"""
         if NAPARI_LE_4_16 and self._scale_bar_warning and self.settings.theme_name == "light":  # pragma: no cover
             QMessageBox.warning(
-                self, "Not supported", "Scale bar is not supported for light theme and napari bellow 0.4.17"
+                self, "Not supported", "Scale bar is not supported for light theme and napari below 0.4.17"
             )
             self._scale_bar_warning = False

@@ -1,12 +1,13 @@
 import bisect
 import json
 import typing
+from collections.abc import Iterable
 from contextlib import suppress
 from functools import partial
 from io import BytesIO
 from math import ceil
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Optional
 
 import local_migrator
 import numpy as np
@@ -71,8 +72,8 @@ class ColormapEdit(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.color_list: List[Color] = []
-        self.position_list: List[float] = []
+        self.color_list: list[Color] = []
+        self.position_list: list[float] = []
         self.move_ind = None
         self.image = convert_colormap_to_image(Colormap([(0, 0, 0)]))
         self.setMinimumHeight(60)
@@ -88,9 +89,9 @@ class ColormapEdit(QWidget):
         for pos_factor in self.position_list:
             pos = width * pos_factor
             point = QPointF(pos + margin, self.height() / 2)
-            painter.setBrush(QBrush(Qt.black))
+            painter.setBrush(QBrush(Qt.GlobalColor.black))
             painter.drawEllipse(point, 5, 5)
-            painter.setBrush(QBrush(Qt.white))
+            painter.setBrush(QBrush(Qt.GlobalColor.white))
             painter.drawEllipse(point, 3, 3)
 
         painter.restore()
@@ -149,7 +150,7 @@ class ColormapEdit(QWidget):
 
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         """
-        If click near marker remove it. Otherwise emmit `double_click` signal with event position factor.
+        If click near marker remove it. Otherwise emit `double_click` signal with event position factor.
         """
         ratio = self._get_ratio(event)
         if ratio is None:
@@ -376,12 +377,13 @@ class ChannelPreview(QWidget):
 
     :param colormap: colormap to show
     :param accepted: if checkbox should be checked
-    :param name: name which will be emitted in all signals as firs argument
+    :param name: name which will be emitted in all signals as first argument
     """
 
     selection_changed = Signal(str, bool)
     """checkbox selection changed (name)"""
-    edit_request = Signal([str], [Colormap])
+    edit_request_name = Signal(str)
+    edit_request_colormap = Signal(Colormap)
     """send after pressing edit signal (name) (ColorMap object)"""
     remove_request = Signal(str)
     """Signal with name of colormap (name)"""
@@ -419,9 +421,9 @@ class ChannelPreview(QWidget):
         layout.addWidget(self.label)
         self.setLayout(layout)
         self.checked.stateChanged.connect(self._selection_changed)
-        self.edit_btn.clicked.connect(partial(self.edit_request.emit, name))
+        self.edit_btn.clicked.connect(partial(self.edit_request_name.emit, name))
         if len(colormap.controls) < 20:
-            self.edit_btn.clicked.connect(partial(self.edit_request[Colormap].emit, colormap))
+            self.edit_btn.clicked.connect(partial(self.edit_request_colormap.emit, colormap))
             self.edit_btn.setToolTip("Create colormap base on this")
         else:
             self.edit_btn.setDisabled(True)
@@ -486,16 +488,16 @@ class ColormapList(QWidget):
     """Hide or show colormap"""
 
     def __init__(
-        self, colormap_map: Dict[str, Tuple[Colormap, bool]], selected: Optional[Iterable[str]] = None, parent=None
+        self, colormap_map: dict[str, tuple[Colormap, bool]], selected: Optional[Iterable[str]] = None, parent=None
     ):
         super().__init__(parent=parent)
         self._selected = set() if selected is None else set(selected)
         self._blocked = set()
         self.current_columns = 1
         self.colormap_map = colormap_map
-        self._widget_dict: Dict[str, ChannelPreview] = {}
+        self._widget_dict: dict[str, ChannelPreview] = {}
         self.scroll_area = QScrollArea()
-        self.central_widget = QWidget()
+        self.central_widget = QWidget(self)
         layout2 = QVBoxLayout()
         self.grid_layout = QGridLayout()
         layout2.addLayout(self.grid_layout)
@@ -514,7 +516,7 @@ class ColormapList(QWidget):
     def showEvent(self, event: QShowEvent):
         self.refresh()
 
-    def get_selected(self) -> Set[str]:
+    def get_selected(self) -> set[str]:
         """Already selected colormaps"""
         return self._selected
 
@@ -525,7 +527,7 @@ class ColormapList(QWidget):
             self._selected.remove(name)
         self.visibility_colormap_change.emit(name, selected)
 
-    def blocked(self) -> Set[str]:
+    def blocked(self) -> set[str]:
         """Channels that cannot be turn of and remove"""
         return self._blocked
 
@@ -539,7 +541,7 @@ class ColormapList(QWidget):
 
     def refresh(self):
         layout: QGridLayout = self.grid_layout
-        cache_dict: Dict[str, ChannelPreview] = {}
+        cache_dict: dict[str, ChannelPreview] = {}
         self._widget_dict = {}
         for _ in range(layout.count()):
             el: ChannelPreview = layout.takeAt(0).widget()
@@ -547,7 +549,7 @@ class ColormapList(QWidget):
                 cache_dict[el.name] = el
             else:
                 el.deleteLater()
-                el.edit_request[Colormap].disconnect()
+                el.edit_request_colormap.disconnect()
                 el.remove_request.disconnect()
                 el.selection_changed.disconnect()
         selected = self.get_selected()
@@ -560,7 +562,7 @@ class ColormapList(QWidget):
                 widget.set_chosen(name in selected)
             else:
                 widget = self._create_colormap_preview(colormap, name, removable)
-                widget.edit_request[Colormap].connect(self.edit_signal)
+                widget.edit_request_colormap.connect(self.edit_signal)
                 widget.remove_request.connect(self._remove_request)
                 widget.selection_changed.connect(self.change_selection)
             layout.addWidget(widget, i // columns, i % columns)
@@ -615,7 +617,7 @@ class PColormapList(ColormapList):
         for protect used channels from uncheck or remove
     """
 
-    def __init__(self, settings: ViewSettings, control_names: List[str]):
+    def __init__(self, settings: ViewSettings, control_names: list[str]):
         super().__init__(settings.colormap_dict)
         settings.colormap_dict.colormap_removed.connect(self.refresh)
         settings.colormap_dict.colormap_added.connect(self.refresh)
@@ -623,14 +625,14 @@ class PColormapList(ColormapList):
         self.settings = settings
         self.color_names = control_names
 
-    def get_selected(self) -> Set[str]:
+    def get_selected(self) -> set[str]:
         return set(self.settings.chosen_colormap)
 
     def change_selection(self, name, selected):
         self.visibility_colormap_change.emit(name, selected)
         self.settings.chosen_colormap_change(name, selected)
 
-    def blocked(self) -> Set[str]:
+    def blocked(self) -> set[str]:
         # TODO check only currently presented channels
         blocked = set()
         for el in self.color_names:
@@ -683,7 +685,7 @@ class ColormapLoad(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,

@@ -29,6 +29,7 @@ exclude .zenodo.json
 exclude tox*
 exclude .pre-commit-config.yaml
 exclude .deepsource.toml
+exclude .coderabbit.yaml
 exclude help/**
 exclude docs/**
 exclude images/**
@@ -44,3 +45,5 @@ exclude dist/**.swp
 exclude cliff.toml
 exclude runtime.txt
 exclude .sourcery.yaml
+exclude survey_url.txt
+exclude .typos.toml

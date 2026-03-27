@@ -1,5 +1,5 @@
 # pylint: disable=no-self-use
-
+import json
 import os
 import shutil
 import sys
@@ -39,9 +39,10 @@ from PartSegCore.analysis.calculation_plan import (
 )
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
-from PartSegCore.analysis.save_functions import save_dict
+from PartSegCore.analysis.save_functions import SaveAsTiff, save_dict
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import LoadPlanExcel, SaveBase
+from PartSegCore.json_hooks import PartSegEncoder
 from PartSegCore.mask.io_functions import MaskProjectTuple, SaveROI, SaveROIOptions
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.roi_info import ROIInfo
@@ -98,7 +99,7 @@ class DummySpacingCheck(DummyExtraction):
         return ROIExtractionResult(np.ones(self.image.shape, dtype=np.uint8), self.get_segmentation_profile())
 
 
-@pytest.fixture()
+@pytest.fixture
 def _register_dummy_extraction():
     assert "Dummy" not in AnalysisAlgorithmSelection.__register__
     AnalysisAlgorithmSelection.register(DummyExtraction)
@@ -107,7 +108,7 @@ def _register_dummy_extraction():
     assert "Dummy" not in AnalysisAlgorithmSelection.__register__
 
 
-@pytest.fixture()
+@pytest.fixture
 def _register_dummy_spacing():
     assert "Dummy" not in AnalysisAlgorithmSelection.__register__
     AnalysisAlgorithmSelection.register(DummySpacingCheck)
@@ -116,24 +117,24 @@ def _register_dummy_spacing():
     assert "Dummy" not in AnalysisAlgorithmSelection.__register__
 
 
-@pytest.fixture()
+@pytest.fixture
 def _prepare_spacing_data(tmp_path):
     data = np.zeros((4, 1, 10, 10), dtype=np.uint8)
     data[:, :, 2:-2, 2:-2] = 1
     tifffile.imwrite(tmp_path / "test1.tiff", data)
 
-    image = Image(data, (1, 1, 1), axes_order="ZCYX", file_path=tmp_path / "test2.tiff")
+    image = Image(data, spacing=(1, 1, 1), axes_order="ZCYX", file_path=tmp_path / "test2.tiff")
     ImageWriter.save(image, image.file_path)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _prepare_mask_project_data(tmp_path):
     data = np.zeros((4, 10, 10), dtype=np.uint8)
     data[:, 2:4, 2:4] = 1
     data[:, 6:8, 2:4] = 2
     data[:, 6:8, 6:8] = 3
 
-    image = Image(data, (1, 1, 1), axes_order="ZYX", file_path=tmp_path / "test.tiff")
+    image = Image(data, spacing=(1, 1, 1), axes_order="ZYX", file_path=tmp_path / "test.tiff")
     ImageWriter.save(image, image.file_path)
 
     roi = np.zeros(data.shape, dtype=np.uint8)
@@ -149,7 +150,7 @@ def _prepare_mask_project_data(tmp_path):
     SaveROI.save(tmp_path / "test.seg", proj, SaveROIOptions())
 
 
-@pytest.fixture()
+@pytest.fixture
 def ltww_segmentation():
     parameters = LowerThresholdFlowAlgorithm.__argument_class__(
         channel=1,
@@ -169,7 +170,7 @@ def ltww_segmentation():
     return ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
 
 
-@pytest.fixture()
+@pytest.fixture
 def measurement_list():
     chosen_fields = [
         MeasurementEntry(
@@ -193,7 +194,7 @@ def measurement_list():
     return MeasurementCalculate(channel=0, units=Units.µm, measurement_profile=statistic, name_prefix="")
 
 
-@pytest.fixture()
+@pytest.fixture
 def simple_measurement_list():
     chosen_fields = [
         MeasurementEntry(
@@ -205,7 +206,7 @@ def simple_measurement_list():
     return MeasurementCalculate(channel=-1, units=Units.µm, measurement_profile=statistic, name_prefix="")
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan_dummy(simple_measurement_list):
     tree = CalculationTree(
         RootType.Mask_project,
@@ -219,13 +220,13 @@ def calculation_plan_dummy(simple_measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan_dummy_spacing(calculation_plan_dummy):
     calculation_plan_dummy.execution_tree.operation = RootType.Image
     return calculation_plan_dummy
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan(ltww_segmentation, measurement_list):
     mask_suffix = MaskSuffix(name="", suffix="_mask")
     tree = CalculationTree(
@@ -237,7 +238,7 @@ def calculation_plan(ltww_segmentation, measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan_long(ltww_segmentation, measurement_list):
     mask_suffix = MaskSuffix(name="", suffix="_mask")
     children = []
@@ -256,17 +257,30 @@ def calculation_plan_long(ltww_segmentation, measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan2(ltww_segmentation, measurement_list):
     ltww_segmentation.values.channel = 0
 
     tree = CalculationTree(
-        RootType.Mask_project, [CalculationTree(ltww_segmentation, [CalculationTree(measurement_list, [])])]
+        RootType.Mask_project,
+        [
+            CalculationTree(ltww_segmentation, [CalculationTree(measurement_list, [])]),
+            CalculationTree(
+                Save(
+                    suffix="_suffix",
+                    directory="sub",
+                    algorithm=SaveAsTiff.get_name(),
+                    short_name=SaveAsTiff.get_short_name(),
+                    values={},
+                ),
+                [],
+            ),
+        ],
     )
     return CalculationPlan(tree=tree, name="test2")
 
 
-@pytest.fixture()
+@pytest.fixture
 def simple_plan(simple_measurement_list):
     def _create_simple_plan(root_type: RootType, save: Save):
         parameters = {
@@ -286,7 +300,7 @@ def simple_plan(simple_measurement_list):
     return _create_simple_plan
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan3(ltww_segmentation):
     mask_suffix = MaskSuffix(name="", suffix="_mask")
     chosen_fields = [
@@ -439,16 +453,25 @@ def mask_operation_plan(request, simple_measurement_list):
     return CalculationPlan(tree=tree, name="test")
 
 
-def wait_for_calculation(manager):
+def wait_for_calculation(manager: CalculationManager) -> None:
     for _ in range(int(120 / 0.1)):
-        manager.get_results()
+        res = manager.get_results()
+        if res.errors and res.errors[0][0].startswith("Unknown file"):
+            pytest.fail(str(res.errors))  # pragma: no cover
         if manager.has_work:
             time.sleep(0.1)
         else:
             break
     else:  # pragma: no cover
+        for file_writer in manager.writer.file_dict.values():
+            file_writer.dump_data()
         manager.kill_jobs()
-        pytest.fail("jobs hanged")
+        pytest.fail(
+            f"Jobs hanged. "
+            f"Work {manager.batch_manager.has_work}, task {manager.batch_manager.work_task}, "
+            f"empty queue {manager.batch_manager.result_queue.empty()} "
+            f"Writing finished {manager.writer.writing_finished()}"
+        )
 
     manager.writer.finish()
     if sys.platform == "darwin":
@@ -529,7 +552,7 @@ class TestCalculationProcess:
         df = pd.read_excel(os.path.join(tmpdir, "test.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (8, 4)
         for i in range(8):
-            assert os.path.basename(df.name.units[i]) == f"stack1_component{i+1}.tif"
+            assert os.path.basename(df.name.units[i]) == f"stack1_component{i + 1}.tif"
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_long(self, tmpdir, data_test_dir, monkeypatch, calculation_plan_long):
@@ -560,7 +583,7 @@ class TestCalculationProcess:
         assert str(data["test"]) == str(calculation_plan_long)
 
         df2 = pd.read_excel(res_path, header=[0, 1], engine=ENGINE, sheet_name="info test")
-        assert df2.shape == (154, 3)
+        assert df2.shape == (152, 3)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_error(self, tmp_path, data_test_dir, monkeypatch, calculation_plan):
@@ -602,14 +625,14 @@ class TestCalculationProcess:
         str(df2.loc[0]["error description"]).startswith("[Errno 2]")
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_mask_project(self, tmpdir, data_test_dir, calculation_plan2):
+    def test_full_pipeline_mask_project(self, tmp_path, data_test_dir, calculation_plan2):
         file_pattern = os.path.join(data_test_dir, "*nucleus.seg")
         file_paths = glob(file_pattern)
         calc = Calculation(
             file_paths,
             base_prefix=data_test_dir,
-            result_prefix=data_test_dir,
-            measurement_file_path=os.path.join(tmpdir, "test2.xlsx"),
+            result_prefix=str(tmp_path),
+            measurement_file_path=os.path.join(tmp_path, "test2.xlsx"),
             sheet_name="Sheet1",
             calculation_plan=calculation_plan2,
             voxel_size=(1, 1, 1),
@@ -620,9 +643,13 @@ class TestCalculationProcess:
         manager.add_calculation(calc)
         wait_for_calculation(manager)
 
-        assert os.path.exists(os.path.join(tmpdir, "test2.xlsx"))
-        df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
+        assert os.path.exists(os.path.join(tmp_path, "test2.xlsx"))
+        df = pd.read_excel(os.path.join(tmp_path, "test2.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (2, 4)
+        assert (tmp_path / "sub").is_dir()
+        assert len(list((tmp_path / "sub").iterdir())) == 2
+        assert (tmp_path / "sub" / "test_nucleus_component1_suffix.tiff").exists()
+        assert (tmp_path / "sub" / "test_nucleus_component3_suffix.tiff").exists()
 
     def test_do_calculation(self, tmpdir, data_test_dir, calculation_plan3):
         file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif")
@@ -814,3 +841,8 @@ class TestSheetData:
 
         assert sheet_data.get_data_to_write()[0] == "test_name"
         assert "wait_rows=0" in repr(sheet_data)
+
+
+def test_calculation_plan_serialize(calculation_plan_long):
+    text = json.dumps(calculation_plan_long, cls=PartSegEncoder, indent=2)
+    assert text.count("\n") == 7627

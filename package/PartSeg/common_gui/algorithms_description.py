@@ -10,7 +10,6 @@ import numpy as np
 from magicgui.widgets import ComboBox, EmptyWidget, Widget, create_widget
 from napari.layers.base import Layer
 from pydantic import BaseModel
-from pydantic.fields import UndefinedType
 from qtpy.QtCore import QMargins, QObject, Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -50,6 +49,11 @@ from PartSegCore.segmentation.algorithm_base import (
 )
 from PartSegImage import Channel, Image
 
+try:
+    from pydantic.fields import UndefinedType
+except ImportError:  # pragma: no cover
+    from pydantic_core import PydanticUndefinedType as UndefinedType
+
 logger = logging.getLogger(__name__)
 ignore_logger(__name__)
 
@@ -66,14 +70,14 @@ def _pretty_print(data, indent=2) -> str:
     if isinstance(data, typing.Mapping):
         res = "\n"
         for k, v in data.items():
-            res += f"{' ' * indent}{k}: {_pretty_print(v, indent+2)}\n"
+            res += f"{' ' * indent}{k}: {_pretty_print(v, indent + 2)}\n"
         return res[:-1]
     return str(data)
 
 
 class ProfileSelect(QComboBox):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
         self._settings = None
 
     def _update_choices(self):
@@ -161,7 +165,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 mgi_options=ob.mgi_options,
             )
         if isinstance(ob, str):
-            if ob.lower() == "hline" or len(ob) > 5 and all(x == "-" for x in ob):
+            if ob.lower() == "hline" or (len(ob) > 5 and all(x == "-" for x in ob)):
                 return Hline()
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
@@ -189,7 +193,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
     @classmethod
     def _get_field_from_value_type(cls, ap: AlgorithmProperty):
         if issubclass(ap.value_type, Channel):
-            res = ChannelComboBox()
+            res = ChannelComboBox(parent=None)
             res.change_channels_num(10)
         elif issubclass(ap.value_type, AlgorithmDescribeBase):
             res = SubAlgorithmWidget(ap)
@@ -205,7 +209,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(ap.value_type, ROIExtractionProfile):
             res = ProfileSelect()
         elif issubclass(ap.value_type, list):
-            res = QComboBox()
+            res = QComboBox(parent=None)
             res.addItems(list(map(str, ap.possible_values)))
         elif issubclass(ap.value_type, BaseModel):
             res = FieldsList([cls.from_algorithm_property(x) for x in base_model_to_algorithm_property(ap.value_type)])
@@ -278,7 +282,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
     @staticmethod
     def get_getter_and_setter_function(  # noqa: PLR0911
         widget: typing.Union[QWidget, Widget],
-    ) -> typing.Tuple[
+    ) -> tuple[
         typing.Callable[
             [typing.Union[QWidget, Widget]],
             typing.Any,
@@ -316,7 +320,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
 class FieldsList(QObject):
     changed = Signal()
 
-    def __init__(self, field_list: typing.List[QtAlgorithmProperty]):
+    def __init__(self, field_list: list[QtAlgorithmProperty]):
         super().__init__()
         self.field_list = field_list
         for el in field_list:
@@ -374,9 +378,7 @@ def _any_arguments(fun):
     return _any
 
 
-FieldAllowedTypes = typing.Union[
-    typing.List[AlgorithmProperty], typing.Type[BaseModel], typing.Type[AlgorithmDescribeBase]
-]
+FieldAllowedTypes = typing.Union[list[AlgorithmProperty], type[BaseModel], type[AlgorithmDescribeBase]]
 
 
 class FormWidget(QWidget):
@@ -393,8 +395,8 @@ class FormWidget(QWidget):
         super().__init__(parent=parent)
         if start_values is None:
             start_values = {}
-        self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = {}
-        self.channels_chose: typing.List[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
+        self.widgets_dict: dict[str, QtAlgorithmProperty] = {}
+        self.channels_chose: list[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
         layout = QFormLayout()
         layout.setContentsMargins(10, 0, 10, 0)
         self._model_class = None
@@ -435,7 +437,7 @@ class FormWidget(QWidget):
             self.widgets_dict[ap.name] = ap
         ap.change_fun.connect(_any_arguments(self.value_changed.emit))
         if isinstance(ap.get_field(), SubAlgorithmWidget):
-            w = typing.cast(SubAlgorithmWidget, ap.get_field())
+            w = typing.cast("SubAlgorithmWidget", ap.get_field())
             layout.addRow(label, w.choose)
             layout.addRow(ap.get_field())
             if ap.name in start_values:
@@ -444,11 +446,11 @@ class FormWidget(QWidget):
             return
         if isinstance(ap.get_field(), FieldsList):
             layout.addRow(label)
-            for el in typing.cast(FieldsList, ap.get_field()).field_list:
+            for el in typing.cast("FieldsList", ap.get_field()).field_list:
                 self._add_to_layout(layout, el, start_values.get(ap.name, {}), settings, add_to_widget_dict=False)
             return
         if isinstance(ap.get_field(), Widget):
-            widget = typing.cast(Widget, ap.get_field()).native
+            widget = typing.cast("Widget", ap.get_field()).native
         else:
             widget = ap.get_field()
         if ap.is_multiline():
@@ -506,7 +508,7 @@ class SubAlgorithmWidget(QWidget):
             )
         self.starting_values = {}
         self.property = algorithm_property
-        self.widgets_dict: typing.Dict[str, FormWidget] = {}
+        self.widgets_dict: dict[str, FormWidget] = {}
         # TODO protect for recursion
         widget = self._get_form_widget(algorithm_property)
         widget.value_changed.connect(self.values_changed)
@@ -557,7 +559,7 @@ class SubAlgorithmWidget(QWidget):
     def recursive_get_values(self):
         return {name: el.recursive_get_values() for name, el in self.widgets_dict.items()}
 
-    def get_values(self) -> typing.Dict[str, typing.Any]:
+    def get_values(self) -> dict[str, typing.Any]:
         name = self.choose.currentText()
         values = self.widgets_dict[name].get_values()
         return {"name": name, "values": values}
@@ -566,13 +568,13 @@ class SubAlgorithmWidget(QWidget):
         for i in range(self.layout().count()):
             el = self.layout().itemAt(i)
             if el.widget() and isinstance(el.widget(), FormWidget):
-                typing.cast(FormWidget, el.widget()).image_changed(image)
+                typing.cast("FormWidget", el.widget()).image_changed(image)
 
     def algorithm_choose(self, name):
         if name not in self.widgets_dict:
             if name not in self.property.possible_values:
                 return
-            start_dict = {} if name not in self.starting_values else self.starting_values[name]
+            start_dict = self.starting_values.get(name, {})
             self.widgets_dict[name] = self._get_form_widget(self.property.possible_values[name], start_dict)
 
             self.layout().addWidget(self.widgets_dict[name])
@@ -595,7 +597,12 @@ class SubAlgorithmWidget(QWidget):
 
     def paintEvent(self, event: QPaintEvent):
         name = self.choose.currentText()
-        if self.widgets_dict[name].has_elements() and event.rect().top() == 0 and event.rect().left() == 0:
+        if (
+            name in self.widgets_dict
+            and self.widgets_dict[name].has_elements()
+            and event.rect().top() == 0
+            and event.rect().left() == 0
+        ):
             painter = QPainter(self)
             painter.drawRect(self.rect() - QMargins(1, -1, 1, 1))
 
@@ -604,7 +611,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     values_changed = Signal()
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings: BaseSettings, algorithm: typing.Type[ROIExtractionAlgorithm], parent=None):
+    def __init__(self, settings: BaseSettings, algorithm: type[ROIExtractionAlgorithm], parent=None):
         """
         For algorithm which works on one channel
         """
@@ -710,9 +717,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
 
-    def __init__(
-        self, settings, algorithm: typing.Type[ROIExtractionAlgorithm], selector: typing.List[QWidget], parent=None
-    ):
+    def __init__(self, settings, algorithm: type[ROIExtractionAlgorithm], selector: list[QWidget], parent=None):
         super().__init__(settings, algorithm, parent=parent)
         self.selector = selector[:]
         self.algorithm_thread.finished.connect(self.enable_selector)
@@ -746,16 +751,16 @@ class AlgorithmChooseBase(QWidget):
     progress_signal = Signal(str, int)
     algorithm_changed = Signal(str)
 
-    algorithm_dict: typing.Dict[str, InteractiveAlgorithmSettingsWidget]
+    algorithm_dict: dict[str, InteractiveAlgorithmSettingsWidget]
 
-    def __init__(self, settings: BaseSettings, algorithms: typing.Type[AlgorithmSelection], parent=None):
+    def __init__(self, settings: BaseSettings, algorithms: type[AlgorithmSelection], parent=None):
         super().__init__(parent=parent)
         self.settings = settings
         self.algorithms = algorithms
         settings.algorithm_changed.connect(self.updated_algorithm)
         self.stack_layout = QStackedLayout()
         self.algorithm_choose = QComboBox()
-        self.algorithm_dict: typing.Dict[str, BaseAlgorithmSettingsWidget] = {}
+        self.algorithm_dict: dict[str, BaseAlgorithmSettingsWidget] = {}
         self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
         self.add_widgets_to_algorithm()
 
@@ -791,7 +796,7 @@ class AlgorithmChooseBase(QWidget):
         if algorithms is not None:
             self.algorithms = algorithms
         for _ in range(self.stack_layout.count()):
-            widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.takeAt(0).widget())
+            widget = typing.cast("InteractiveAlgorithmSettingsWidget", self.stack_layout.takeAt(0).widget())
             widget.algorithm_thread.execution_done.disconnect()
             widget.algorithm_thread.finished.disconnect()
             widget.algorithm_thread.started.disconnect()
@@ -818,7 +823,7 @@ class AlgorithmChooseBase(QWidget):
 
     def change_algorithm(self, name, values: typing.Optional[dict] = None):
         self.settings.set_algorithm("current_algorithm", name)
-        widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
+        widget = typing.cast("InteractiveAlgorithmSettingsWidget", self.stack_layout.currentWidget())
         blocked = self.blockSignals(True)
         if name != widget.name:
             widget = self.algorithm_dict[name]
@@ -836,7 +841,7 @@ class AlgorithmChooseBase(QWidget):
         self.algorithm_changed.emit(name)
 
     def current_widget(self) -> InteractiveAlgorithmSettingsWidget:
-        return typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
+        return typing.cast("InteractiveAlgorithmSettingsWidget", self.stack_layout.currentWidget())
 
     def current_parameters(self) -> ROIExtractionProfile:
         widget = self.current_widget()
@@ -847,12 +852,12 @@ class AlgorithmChooseBase(QWidget):
 
 
 class AlgorithmChoose(AlgorithmChooseBase):
-    def __init__(self, settings: BaseSettings, algorithms: typing.Type[AlgorithmSelection], parent=None):
+    def __init__(self, settings: BaseSettings, algorithms: type[AlgorithmSelection], parent=None):
         super().__init__(settings, algorithms, parent)
         self.settings.image_changed.connect(self.image_changed)
 
     def image_changed(self):
-        current_widget = typing.cast(InteractiveAlgorithmSettingsWidget, self.stack_layout.currentWidget())
+        current_widget = typing.cast("InteractiveAlgorithmSettingsWidget", self.stack_layout.currentWidget())
         prev_block = self.blockSignals(True)
         current_widget.image_changed(self.settings.image)
         if hasattr(self.settings, "mask") and hasattr(current_widget, "change_mask"):

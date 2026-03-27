@@ -6,17 +6,20 @@ import re
 import sys
 import warnings
 from argparse import Namespace
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, NamedTuple, Optional, Union
 
 import napari.utils.theme
 import numpy as np
+import pint
 from napari.qt import get_stylesheet
 from napari.utils import Colormap
 from napari.utils.theme import get_theme
 from napari.utils.theme import template as napari_template
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QObject, Signal
 from qtpy.QtWidgets import QMessageBox, QWidget
 
@@ -36,6 +39,8 @@ from PartSegImage import Image
 if TYPE_CHECKING:  # pragma: no cover
     from napari.settings import NapariSettings
 logger = logging.getLogger(__name__)
+
+_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
@@ -89,7 +94,7 @@ class ImageSettings(QObject):
         raise AttributeError("noise_remove_image_part not supported")
 
     @property
-    def additional_layers(self) -> Dict[str, AdditionalLayerDescription]:
+    def additional_layers(self) -> dict[str, AdditionalLayerDescription]:
         return self._additional_layers
 
     @additional_layers.setter
@@ -122,11 +127,6 @@ class ImageSettings(QObject):
         return self.roi
 
     @property
-    def roi(self) -> np.ndarray:
-        """current roi"""
-        return self._roi_info.roi
-
-    @property
     def segmentation_info(self) -> ROIInfo:  # pragma: no cover
         warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning, stacklevel=2)
         return self.roi_info
@@ -135,11 +135,17 @@ class ImageSettings(QObject):
     def roi_info(self) -> ROIInfo:
         return self._roi_info
 
+    @property
+    def roi(self) -> np.ndarray:
+        """current roi"""
+        return self._roi_info.roi
+
     @roi.setter
     def roi(self, val: Union[np.ndarray, ROIInfo]):
         if val is None:
             self._roi_info = ROIInfo(val)
             self._additional_layers = {}
+            self.post_roi_set()
             self.roi_clean.emit()
             return
         try:
@@ -150,7 +156,11 @@ class ImageSettings(QObject):
         except ValueError as e:
             raise ValueError(ROI_NOT_FIT) from e
         self._additional_layers = {}
+        self.post_roi_set()
         self.roi_changed.emit(self._roi_info)
+
+    def post_roi_set(self) -> None:
+        """called after roi is set, for subclasses to override"""
 
     @property
     def sizes(self):
@@ -258,7 +268,7 @@ class ViewSettings(ImageSettings):
         self.view_settings_dict = ProfileDict()
         self.colormap_dict = ColormapDict(self.get_from_profile("custom_colormap", {}))
         self.label_color_dict = LabelColorDict(self.get_from_profile("custom_label_colors", {}))
-        self.cached_labels: Optional[Tuple[str, np.ndarray]] = None
+        self.cached_labels: Optional[tuple[str, np.ndarray]] = None
 
     @property
     def theme_name(self) -> str:
@@ -268,6 +278,8 @@ class ViewSettings(ImageSettings):
     @property
     def theme(self):
         """Theme as structure."""
+        if _napari_ge_5:
+            return get_theme(self.theme_name)
         try:
             return get_theme(self.theme_name, as_dict=False)
         except TypeError:  # pragma: no cover
@@ -284,7 +296,10 @@ class ViewSettings(ImageSettings):
         """QSS style sheet for current theme."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)
-            theme = get_theme(self.theme_name, as_dict=True)
+            if _napari_ge_5:
+                theme = get_theme(self.theme_name).to_rgb_dict()
+            else:
+                theme = get_theme(self.theme_name, as_dict=True)
         # TODO understand qss overwrite mechanism
         return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
@@ -447,7 +462,7 @@ class BaseSettings(ViewSettings):
     load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
-    save_locations_keys: ClassVar[List[str]] = []
+    save_locations_keys: ClassVar[list[str]] = []
 
     def __init__(self, json_path: Union[Path, str], profile_name: str = "default"):
         """
@@ -462,10 +477,11 @@ class BaseSettings(ViewSettings):
         self._last_algorithm_dict = ProfileDict()
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""
-        self.history: List[HistoryElement] = []
+        self.history: list[HistoryElement] = []
         self.history_index = -1
         self.last_executed_algorithm = ""
         self._points = None
+        pint.get_application_registry()("nm")  # enforce pint registry initialization
 
     def _image_changed(self):
         super()._image_changed()
@@ -513,16 +529,11 @@ class BaseSettings(ViewSettings):
         self.last_executed_algorithm = result.parameters.algorithm
         self.set_algorithm(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         # Fixme not use EventedDict here
-        try:
-            roi_info = result.roi_info.fit_to_image(self.image)
-        except ValueError as e:  # pragma: no cover
-            raise ValueError(ROI_NOT_FIT) from e
+        self.roi = result.roi_info
         if result.points is not None:
             self.points = result.points
-        self._roi_info = roi_info
-        self.roi_changed.emit(self._roi_info)
 
-    def _load_files_call(self, files_list: List[str]):
+    def _load_files_call(self, files_list: list[str]):
         self.request_load_files.emit(files_list)
 
     def add_history_element(self, elem: HistoryElement) -> None:
@@ -556,11 +567,11 @@ class BaseSettings(ViewSettings):
             return self.history[self.history_index + 1]
         return None
 
-    def set_history(self, history: List[HistoryElement]):
+    def set_history(self, history: list[HistoryElement]):
         self.history = history
         self.history_index = len(self.history) - 1
 
-    def get_history(self) -> List[HistoryElement]:
+    def get_history(self) -> list[HistoryElement]:
         return self.history[: self.history_index + 1]
 
     @staticmethod
@@ -579,7 +590,7 @@ class BaseSettings(ViewSettings):
         except ValueError as e:
             raise ValueError("mask do not fit to image") from e
 
-    def get_save_list(self) -> List[SaveSettingsDescription]:
+    def get_save_list(self) -> list[SaveSettingsDescription]:
         """List of files in which program save the state."""
         return [
             SaveSettingsDescription("segmentation_settings.json", self._roi_dict),
@@ -587,7 +598,7 @@ class BaseSettings(ViewSettings):
             SaveSettingsDescription("algorithm_settings.json", self._last_algorithm_dict),
         ]
 
-    def get_path_history(self) -> List[str]:
+    def get_path_history(self) -> list[str]:
         """
         return list containing last 10 elements added with :py:meth:`.add_path_history` and
         last opened in each category form :py:attr:`save_location_keys`
@@ -607,7 +618,7 @@ class BaseSettings(ViewSettings):
             data_list = data_list[: keep_len - 1]
         return [value, *data_list]
 
-    def get_last_files(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
+    def get_last_files(self) -> list[tuple[tuple[Union[str, Path], ...], str]]:
         return self.get(FILE_HISTORY, [])
 
     def add_load_files_history(self, file_path: Sequence[Union[str, Path]], load_method: str):  # pragma: no cover
@@ -619,10 +630,10 @@ class BaseSettings(ViewSettings):
         # keep list of files as list because json serialize tuple to list
         self.add_path_history(os.path.dirname(file_path[0]))
 
-    def get_last_files_multiple(self) -> List[Tuple[Tuple[Union[str, Path], ...], str]]:
+    def get_last_files_multiple(self) -> list[tuple[tuple[Union[str, Path], ...], str]]:
         return self.get(MULTIPLE_FILES_OPEN_HISTORY, [])
 
-    def add_last_files_multiple(self, file_paths: List[Union[str, Path]], load_method: str):
+    def add_last_files_multiple(self, file_paths: list[Union[str, Path]], load_method: str):
         self.set(
             MULTIPLE_FILES_OPEN_HISTORY,
             self._add_elem_to_list(
@@ -718,13 +729,13 @@ class BaseSettings(ViewSettings):
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
                 with open(os.path.join(folder_path, el.file_name), "w", encoding="utf-8") as ff:
                     ff.write(dump_string)
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except   # noqa: PERF203
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
             logger.error(errors_list)
         return errors_list
 
-    def _load_settings_file(self, file_path: Union[Path, str]) -> Tuple[ProfileDict, Any]:
+    def _load_settings_file(self, file_path: Union[Path, str]) -> tuple[ProfileDict, Any]:
         error = None
         data: ProfileDict = self.load_metadata(file_path)
         if isinstance(data, dict) and "__error__" in data:

@@ -39,7 +39,7 @@ from qtpy.QtWidgets import (
 from superqt import QEnumComboBox
 
 from PartSeg import state_store
-from PartSeg.common_gui import exception_hooks, select_multiple_files
+from PartSeg.common_gui import algorithms_description, exception_hooks, multiple_file_widget, select_multiple_files
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.advanced_tabs import (
     RENDERING_LIST,
@@ -60,6 +60,8 @@ from PartSeg.common_gui.algorithms_description import (
     ProfileSelect,
     QtAlgorithmProperty,
     SubAlgorithmWidget,
+    _pretty_print,
+    recursive_update,
 )
 from PartSeg.common_gui.collapse_checkbox import CollapseCheckbox
 from PartSeg.common_gui.colormap_creator import ColormapLoad, ColormapSave, save_colormap_in_settings
@@ -148,15 +150,16 @@ class Enum2(Enum):
         return f"{self.name} eee"
 
 
-@pytest.fixture()
+@pytest.fixture
 def _example_tiff_files(tmp_path):
     for i in range(5):
         ImageWriter.save(
-            Image(np.random.random((10, 10)), image_spacing=(1, 1), axes_order="XY"), tmp_path / f"img_{i}.tif"
+            Image(np.random.default_rng().uniform(size=(10, 10)), spacing=(1, 1), axes_order="XY"),
+            tmp_path / f"img_{i}.tif",
         )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mf_widget(qtbot, part_settings):
     res = MultipleFileWidget(
         part_settings,
@@ -169,12 +172,12 @@ def mf_widget(qtbot, part_settings):
     return res
 
 
-@pytest.fixture()
+@pytest.fixture
 def _example_mask_project_files(tmp_path):
     data = np.zeros((10, 10), dtype=np.uint8)
     data[:5] = 1
     data[5:] = 2
-    image = Image(data, image_spacing=(1, 1), axes_order="XY", file_path=str(tmp_path / "mask.tif"))
+    image = Image(data, spacing=(1, 1), axes_order="XY", file_path=str(tmp_path / "mask.tif"))
     ImageWriter.save(image, image.file_path)
     project = MaskProjectTuple(file_path=image.file_path, image=image, roi_info=ROIInfo(image.fit_array_to_image(data)))
     SaveROI.save(tmp_path / "proj.seg", project, SaveROIOptions())
@@ -199,7 +202,7 @@ class TestEnumComboBox:
             widget.set_value(Enum2.test2)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_accept_files(monkeypatch):
     def accept(*_):
         return True
@@ -207,7 +210,7 @@ def _mock_accept_files(monkeypatch):
     monkeypatch.setattr(select_multiple_files.AcceptFiles, "exec_", accept)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_warning(monkeypatch):
     warning_show = [0]
 
@@ -393,64 +396,122 @@ class TestSearchCombBox:
         assert widget.itemText(2) == "test3"
 
 
-def test_create_load_dialog(qtbot):
-    dialog = CustomLoadDialog(load_dict, history=["/aaa/"])
-    assert dialog.acceptMode() == CustomLoadDialog.AcceptOpen
-    dialog = CustomLoadDialog(LoadProject, history=["/aaa/"])
-    assert dialog.acceptMode() == CustomLoadDialog.AcceptOpen
-    result = dialog.get_result()
-    assert result.load_class is LoadProject
-    assert result.selected_filter == LoadProject.get_name_with_suffix()
-    assert result.load_location == []
+class TestCustomDialog:
+    def test_create_load_with_dict(self, qtbot):
+        dialog = CustomLoadDialog(load_dict, history=["/aaa/"])
+        qtbot.addWidget(dialog)
+        assert dialog.acceptMode() == CustomLoadDialog.AcceptMode.AcceptOpen
+
+    def test_create_load_with_class(self, qtbot):
+        dialog = CustomLoadDialog(LoadProject, history=["/aaa/"])
+        qtbot.addWidget(dialog)
+        assert dialog.acceptMode() == CustomLoadDialog.AcceptMode.AcceptOpen
+        result = dialog.get_result()
+        assert result.load_class is LoadProject
+        assert result.selected_filter == LoadProject.get_name_with_suffix()
+        assert result.load_location == []
+
+    def test_create_save_with_dict(self, qtbot):
+        dialog = CustomSaveDialog(save_dict, history=["/aaa/"])
+        qtbot.addWidget(dialog)
+        assert dialog.acceptMode() == CustomSaveDialog.AcceptMode.AcceptSave
+
+    def test_create_save_with_class(self, qtbot):
+        dialog = CustomSaveDialog(SaveProject, history=["/aaa/"])
+        qtbot.addWidget(dialog)
+        assert not hasattr(dialog, "stack_widget")
+
+    def test_create_save_with_dict_no_system(self, qtbot):
+        dialog = CustomSaveDialog(save_dict, system_widget=False)
+        qtbot.addWidget(dialog)
+        assert hasattr(dialog, "stack_widget")
 
 
-def test_create_save_dialog(qtbot):
-    dialog = CustomSaveDialog(save_dict, history=["/aaa/"])
-    assert dialog.acceptMode() == CustomSaveDialog.AcceptSave
-    dialog = CustomSaveDialog(SaveProject, history=["/aaa/"])
-    assert not hasattr(dialog, "stack_widget")
-    dialog = CustomSaveDialog(save_dict, system_widget=False)
-    assert hasattr(dialog, "stack_widget")
-
-
-def test_p_save_dialog(part_settings, tmp_path, qtbot, monkeypatch):
+@pytest.fixture
+def _mock_selected_files(monkeypatch, tmp_path):
     def selected_files(self):
         return [str(tmp_path / "test.tif")]
 
     monkeypatch.setattr(QFileDialog, "selectedFiles", selected_files)
 
-    assert part_settings.get_path_history() == [str(Path.home())]
 
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test")
-    qtbot.addWidget(dialog)
-    assert Path(dialog.directory().path()) == Path.home()
-    assert Path(part_settings.get("io.test")) == Path.home()
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test2", default_directory=str(tmp_path))
-    qtbot.addWidget(dialog)
-    assert Path(dialog.directory().path()) == tmp_path
-    assert Path(part_settings.get("io.test2")) == tmp_path
-    part_settings.set("io.test3", str(tmp_path))
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
-    qtbot.addWidget(dialog)
-    assert Path(dialog.directory().path()) == tmp_path
-    assert Path(part_settings.get("io.test3")) == tmp_path
+@pytest.mark.usefixtures("_mock_selected_files")
+class TestPSaveDialog:
+    def test_creation(self, part_settings, tmp_path, qtbot, monkeypatch):
+        assert part_settings.get_path_history() == [str(Path.home())]
 
-    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Rejected)
-    part_settings.set("io.filter_save", SaveAsTiff.get_name())
-    assert part_settings.get_path_history() == [str(Path.home())]
-    dialog.show()
-    dialog.accept()
-    assert part_settings.get_path_history() == [str(Path.home())]
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test")
+        qtbot.addWidget(dialog)
+        assert Path(dialog.directory().path()) == Path.home()
+        assert Path(part_settings.get("io.test")) == Path.home()
 
-    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
-    dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save")
-    qtbot.addWidget(dialog)
-    assert SaveAsTiff.get_name() in dialog.nameFilters()
-    dialog.show()
-    dialog.selectFile(str(tmp_path / "test.tif"))
-    dialog.accept()
-    assert dialog.selectedNameFilter() == SaveAsTiff.get_name()
-    assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
+    def test_creation_with_default(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test2", default_directory=str(tmp_path))
+        qtbot.addWidget(dialog)
+        assert Path(dialog.directory().path()) == tmp_path
+        assert Path(part_settings.get("io.test2")) == tmp_path
+
+    def test_creation_read_path_from_settings(self, part_settings, tmp_path, qtbot, monkeypatch):
+        part_settings.set("io.test3", str(tmp_path))
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3")
+        qtbot.addWidget(dialog)
+        assert Path(dialog.directory().path()) == tmp_path
+        assert Path(part_settings.get("io.test3")) == tmp_path
+
+    def test_reject_no_history_update(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3", system_widget=False)
+        qtbot.addWidget(dialog)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Rejected)
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        assert part_settings.get_path_history() == [str(Path.home())]
+        dialog.show()
+        dialog.accept()
+        dialog.hide()
+        assert part_settings.get_path_history() == [str(Path.home())]
+
+    def test_history_update(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(save_dict, settings=part_settings, path="io.test3", system_widget=False)
+        qtbot.addWidget(dialog)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Accepted)
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        assert part_settings.get_path_history() == [str(Path.home())]
+        dialog.show()
+        dialog.accept()
+        dialog.hide()
+        assert part_settings.get_path_history() == [str(tmp_path), str(Path.home())]
+
+    def test_history_update_directory(self, part_settings, tmp_path, qtbot, monkeypatch):
+        dialog = PSaveDialog(
+            save_dict,
+            settings=part_settings,
+            path="io.test3",
+            system_widget=False,
+            file_mode=PSaveDialog.FileMode.Directory,
+        )
+        qtbot.addWidget(dialog)
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Accepted)
+        monkeypatch.setattr(QFileDialog, "selectedFiles", lambda x: [tmp_path / "directory"])
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        assert part_settings.get_path_history() == [str(Path.home())]
+        dialog.show()
+        dialog.accept()
+        dialog.hide()
+        assert part_settings.get_path_history() == [str(tmp_path / "directory"), str(Path.home())]
+
+    def test_selection_tiff_file(self, part_settings, tmp_path, qtbot, monkeypatch):
+        part_settings.set("io.filter_save", SaveAsTiff.get_name())
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
+        dialog = PSaveDialog(
+            save_dict, settings=part_settings, path="io.test4", filter_path="io.filter_save", system_widget=False
+        )
+        qtbot.addWidget(dialog)
+        assert SaveAsTiff.get_name() in dialog.nameFilters()
+        dialog.show()
+        dialog.selectFile(str(tmp_path / "test.tif"))
+        dialog.accept()
+        dialog.hide()
+        assert dialog.selectedNameFilter() == SaveAsTiff.get_name()
+        assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
 
 
 def test_form_dialog(qtbot):
@@ -459,6 +520,7 @@ def test_form_dialog(qtbot):
         AlgorithmProperty("bbb", "Bbb", False),
     ]
     form = FormDialog(fields, values={"aaa": 2.0})
+    qtbot.addWidget(form)
     assert form.get_values() == {"aaa": 2.0, "bbb": False}
     form.set_values({"aaa": 5.0, "bbb": True})
     assert form.get_values() == {"aaa": 5.0, "bbb": True}
@@ -502,11 +564,11 @@ def test_p_load_dialog(part_settings, tmp_path, qtbot, monkeypatch):
     assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
 
 
-def test_str_filter(part_settings, tmp_path, qtbot, monkeypatch):
+def test_str_filter_save(part_settings, tmp_path, qtbot, monkeypatch):
     tiff_text = "Test (*.tiff)"
-    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.Accepted)
+    monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Accepted)
     monkeypatch.setattr(QFileDialog, "selectedFiles", lambda x: [str(tmp_path / "test.tif")])
-    dialog = PSaveDialog(tiff_text, settings=part_settings, path="io.save_test")
+    dialog = PSaveDialog(tiff_text, settings=part_settings, path="io.save_test", system_widget=False)
     qtbot.addWidget(dialog)
     assert tiff_text in dialog.nameFilters()
     dialog.show()
@@ -515,6 +577,9 @@ def test_str_filter(part_settings, tmp_path, qtbot, monkeypatch):
     assert dialog.selectedNameFilter() == tiff_text
     assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
 
+
+def test_str_filter_load(part_settings, tmp_path, qtbot, monkeypatch):
+    tiff_text = "Test (*.tiff)"
     with (tmp_path / "test2.tif").open("w") as f:
         f.write("eeeeeee")
 
@@ -525,6 +590,7 @@ def test_str_filter(part_settings, tmp_path, qtbot, monkeypatch):
     dialog.selectFile(str(tmp_path / "test2.tif"))
     if IS_MACOS:
         monkeypatch.setattr(dialog, "selectedFiles", lambda: [str(tmp_path / "test2.tif")])
+        monkeypatch.setattr(QFileDialog, "result", lambda x: QFileDialog.DialogCode.Accepted)
     dialog.accept()
     assert dialog.selectedNameFilter() == tiff_text
     assert [Path(x) for x in part_settings.get_path_history()] == [tmp_path, Path.home()]
@@ -560,8 +626,8 @@ class TestMultipleFileWidget:
     def check_load_files(parameter, custom_name):
         return not custom_name and os.path.basename(parameter.file_path) == "img_4.tif"
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     @pytest.mark.usefixtures("_example_tiff_files")
     def test_load_recent(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [
@@ -587,8 +653,8 @@ class TestMultipleFileWidget:
         assert part_settings.get_last_files_multiple() == file_list
         assert mf_widget.file_view.topLevelItemCount() == 5
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     @pytest.mark.usefixtures("_example_tiff_files")
     def test_load_files(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         file_list = [[[str(tmp_path / f"img_{i}.tif")], LoadStackImage.get_name()] for i in range(5)]
@@ -612,8 +678,8 @@ class TestMultipleFileWidget:
         part_settings.load()
         assert part_settings.get_last_files_multiple() == file_list
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     @pytest.mark.usefixtures("_example_mask_project_files")
     def test_load_mask_project(self, part_settings, qtbot, monkeypatch, tmp_path, mf_widget):
         load_property = LoadProperty(
@@ -644,8 +710,8 @@ class TestBaseMainWindow:
         window = BaseMainWindow(config_folder=tmp_path)
         qtbot.add_widget(window)
 
-    @pytest.mark.enablethread()
-    @pytest.mark.enabledialog()
+    @pytest.mark.enablethread
+    @pytest.mark.enabledialog
     def test_recent(self, tmp_path, qtbot, monkeypatch):
         load_mock = MagicMock()
         load_mock.load = MagicMock(return_value=1)
@@ -656,7 +722,7 @@ class TestBaseMainWindow:
         window.settings.add_last_files([tmp_path / "test.txt"], "test")
         actions = window.recent_file_menu.actions()
         assert len(actions) == 1
-        assert actions[0].data() == ([tmp_path / "test.txt"], "test")
+        assert tuple(actions[0].data()) == ([tmp_path / "test.txt"], "test")
         monkeypatch.setattr(window, "sender", lambda: actions[0])
         main_menu = MagicMock()
         add_last_files = MagicMock()
@@ -861,7 +927,7 @@ class TestFormWidget:
                 return "1"
 
             @classmethod
-            def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
                 return [AlgorithmProperty("field", "Field", 1)]
 
         class SampleClass2(AlgorithmDescribeBase):
@@ -870,7 +936,7 @@ class TestFormWidget:
                 return "2"
 
             @classmethod
-            def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
                 return [AlgorithmProperty("field_", "Field", 2)]
 
         SampleSelection.register(SampleClass1)
@@ -884,6 +950,7 @@ class TestFormWidget:
         qtbot.add_widget(form)
         assert form.has_elements()
         assert isinstance(form.get_values(), SampleModel)
+        assert form.get_values().check_selection.values == {"field": 1}
         assert form.get_values() == SampleModel(
             field1=10, check_selection=SampleSelection(name="1", values={"field": 1})
         )
@@ -1095,8 +1162,18 @@ class EnumQtAl(Enum):
 
 
 class ModelQtAl(BaseModel):
-    field1 = 1
-    field2 = 2.0
+    field1: int = 1
+    field2: float = 2.0
+    __hash__ = None
+
+    def __eq__(self, other):  # pragma: no cover
+        """For testing purposes only"""
+        if isinstance(other, dict):
+            try:
+                return self.field1 == other["field1"] and self.field2 == other["field2"]
+            except KeyError:
+                return False
+        return super().__eq__(other)
 
 
 class TestQtAlgorithmProperty:
@@ -1441,8 +1518,6 @@ def test_collapsable(qtbot):
 
 
 def test_multiple_files_tree_widget(qtbot, monkeypatch):
-    from PartSeg.common_gui import multiple_file_widget
-
     def _monkey_qmenu(func):
         res = QMenu()
         monkeypatch.setattr(res, "exec_", partial(func, res))
@@ -1516,18 +1591,11 @@ def test_exception_hooks_value_error(monkeypatch):
 
 
 def test_exception_hooks_other_exception():
-    raised = False
-    try:
+    with pytest.raises(ValueError, match="Test text"):
         exception_hooks.load_data_exception_hook(ValueError("Test text"))
-    except ValueError:
-        raised = True
-    finally:
-        assert raised
 
 
 def test_update_dict():
-    from PartSeg.common_gui.algorithms_description import recursive_update
-
     assert recursive_update({}, {}) == {}
     assert recursive_update(None, {}) == {}
     assert recursive_update(None, {"a": 1}) == {"a": 1}
@@ -1538,8 +1606,6 @@ def test_update_dict():
 
 
 def test_pretty_print():
-    from PartSeg.common_gui.algorithms_description import _pretty_print
-
     assert _pretty_print({"a": 1}) == "\n  a: 1"
     assert _pretty_print({"a": 1}, indent=0) == "\na: 1"
     assert _pretty_print({"a": {"a": 1}}) == "\n  a: \n    a: 1"
@@ -1581,8 +1647,6 @@ class TestBaseAlgorithmSettingsWidget:
         ],
     )
     def test_exception_occurred(self, monkeypatch, exc, expected, qtbot):
-        from PartSeg.common_gui import algorithms_description
-
         called = False
 
         def _exec(self):
@@ -1595,8 +1659,6 @@ class TestBaseAlgorithmSettingsWidget:
         assert called
 
     def test_exception_occurred_other_exception(self, monkeypatch, qtbot):
-        from PartSeg.common_gui import algorithms_description
-
         called = False
 
         def _exec(self):
@@ -1743,7 +1805,7 @@ class TestErrorDialog:
         assert "body=This" in mock_web.call_args.args[0]
 
     @patch("requests.post")
-    @patch("sentry_sdk.push_scope")
+    @patch("sentry_sdk.new_scope")
     def test_send_report(self, sentry_mock, request_mock, qtbot):
         dialog = ErrorDialog(ValueError("aaa"), "Test text")
         qtbot.addWidget(dialog)
@@ -1753,7 +1815,7 @@ class TestErrorDialog:
         request_mock.assert_not_called()
 
     @patch("requests.post")
-    @patch("sentry_sdk.push_scope")
+    @patch("sentry_sdk.new_scope")
     @pytest.mark.parametrize(
         ("email", "expected", "return_code", "post_call_count"),
         [
@@ -1941,8 +2003,8 @@ def test_labels_meth(cls_):
 
 def test_save_colormap_in_settings(part_settings):
     class DummyColormap(typing.NamedTuple):
-        colors: typing.List[typing.List[float]]
-        controls: typing.List[float]
+        colors: list[list[float]]
+        controls: list[float]
 
     assert "custom_aaa" not in part_settings.colormap_dict
     cmap = Colormap([[0, 0, 0, 0], [1, 1, 1, 1]], controls=[0, 1])

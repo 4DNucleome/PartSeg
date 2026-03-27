@@ -1,5 +1,6 @@
 import warnings
 from collections import OrderedDict
+from collections.abc import Generator, Iterator, MutableMapping, Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import reduce
@@ -7,16 +8,8 @@ from math import pi
 from typing import (
     Any,
     Callable,
-    Dict,
-    Generator,
-    Iterator,
-    List,
-    MutableMapping,
     NamedTuple,
     Optional,
-    Sequence,
-    Set,
-    Tuple,
     Union,
 )
 
@@ -88,7 +81,7 @@ class ComponentsInfo(NamedTuple):
 
     roi_components: np.ndarray
     mask_components: np.ndarray
-    components_translation: Dict[int, List[int]]
+    components_translation: dict[int, list[int]]
 
     def has_components(self):
         return all(len(x) for x in self.components_translation.values())
@@ -98,9 +91,9 @@ def empty_fun(_a0=None, _a1=None):
     """This function is being used as dummy reporting function."""
 
 
-MeasurementValueType = Union[float, List[float], str]
-MeasurementResultType = Tuple[MeasurementValueType, str]
-MeasurementResultInputType = Tuple[MeasurementValueType, str, Tuple[PerComponent, AreaType]]
+MeasurementValueType = Union[float, list[float], str]
+MeasurementResultType = tuple[MeasurementValueType, str]
+MeasurementResultInputType = tuple[MeasurementValueType, str, tuple[PerComponent, AreaType]]
 
 
 FILE_NAME_STR = "File name"
@@ -114,8 +107,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def __init__(self, components_info: ComponentsInfo):
         self.components_info = components_info
         self._data_dict = OrderedDict()
-        self._units_dict: Dict[str, str] = {}
-        self._type_dict: Dict[str, Tuple[PerComponent, AreaType]] = {}
+        self._units_dict: dict[str, str] = {}
+        self._type_dict: dict[str, tuple[PerComponent, AreaType]] = {}
         self._units_dict["Mask component"] = ""
         self._units_dict["Segmentation component"] = ""
 
@@ -164,7 +157,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         self._units_dict[FILE_NAME_STR] = ""
         self._data_dict.move_to_end(FILE_NAME_STR, False)
 
-    def get_component_info(self, all_components: bool = False) -> Tuple[bool, bool]:
+    def get_component_info(self, all_components: bool = False) -> tuple[bool, bool]:
         """
         Get information which type of components are in storage.
 
@@ -175,7 +168,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
         return has_mask_components(self._type_dict.values()), has_roi_components(self._type_dict.values())
 
-    def get_labels(self, expand=True, all_components=False) -> List[str]:
+    def get_labels(self, expand=True, all_components=False) -> list[str]:
         """
         If expand is false return list of keys of this storage.
         Otherwise return  labels for measurement. Base are keys of this storage.
@@ -193,7 +186,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             labels.insert(index, "Segmentation component")
         return labels
 
-    def get_units(self, all_components=False) -> List[str]:
+    def get_units(self, all_components=False) -> list[str]:
         return [self._units_dict[x] for x in self.get_labels(all_components=all_components)]
 
     def get_global_names(self):
@@ -208,7 +201,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             res = [name]
             iterator = iter(self._data_dict.keys())
             with suppress(StopIteration):
-                next(iterator)  # skipcq: PTC-W0063`
+                next(iterator)  # skipcq: PTC-W0063
         else:
             res = []
             iterator = iter(self._data_dict.keys())
@@ -233,13 +226,13 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             res = [[name] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
             with suppress(StopIteration):
-                next(iterator)  # skipcq: PTC-W0063`
+                next(iterator)  # skipcq: PTC-W0063
         else:
             res = [[] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
         return res, iterator
 
-    def get_separated(self, all_components=False) -> List[List[MeasurementValueType]]:
+    def get_separated(self, all_components=False) -> list[list[MeasurementValueType]]:
         """Get measurements separated for each component"""
         mask_components, roi_components = self.get_component_info(all_components)
         if not mask_components and not roi_components:
@@ -271,7 +264,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
 class MeasurementProfile(BaseModel):
     name: str
-    chosen_fields: List[MeasurementEntry]
+    chosen_fields: list[MeasurementEntry]
     name_prefix: str = ""
 
     @property
@@ -291,7 +284,7 @@ class MeasurementProfile(BaseModel):
             return tree.area == AreaType.Mask_without_ROI
         return self._need_mask_without_segmentation(tree.left) or self._need_mask_without_segmentation(tree.right)
 
-    def _get_par_component_and_area_type(self, tree: Union[Node, Leaf]) -> Tuple[PerComponent, AreaType]:
+    def _get_par_component_and_area_type(self, tree: Union[Node, Leaf]) -> tuple[PerComponent, AreaType]:
         if isinstance(tree, Leaf):
             method = MEASUREMENT_DICT[tree.name]
             area_type = method.area_type(tree.area)
@@ -316,7 +309,7 @@ class MeasurementProfile(BaseModel):
             res_area = AreaType.Mask_without_ROI
         return res_par, res_area
 
-    def get_channels_num(self) -> Set[Channel]:
+    def get_channels_num(self) -> set[Channel]:
         resp = set()
         for el in self.chosen_fields:
             resp.update(el.get_channel_num(MEASUREMENT_DICT))
@@ -415,7 +408,6 @@ class MeasurementProfile(BaseModel):
         if node.per_component == PerComponent.No:
             return method.calculate_property(**kw)
         # TODO use cache for per component calculate
-        # kw["_cache"] = False
         val = []
         if method.area_type(node.area) == AreaType.ROI and node.per_component != PerComponent.Per_Mask_component:
             components = segmentation_mask_map.roi_components
@@ -431,7 +423,7 @@ class MeasurementProfile(BaseModel):
 
     def _calculate_leaf(
         self, node: Leaf, segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
-    ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
+    ) -> tuple[Union[float, np.ndarray], symbols, AreaType]:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
 
         hash_str = hash_fun_call_name(
@@ -453,7 +445,7 @@ class MeasurementProfile(BaseModel):
 
     def _calculate_node(
         self, node: Node, segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
-    ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
+    ) -> tuple[Union[float, np.ndarray], symbols, AreaType]:
         if node.op != "/":
             raise ValueError(f"Wrong measurement: {node}")
         left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
@@ -486,7 +478,7 @@ class MeasurementProfile(BaseModel):
 
     def calculate_tree(
         self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
-    ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
+    ) -> tuple[Union[float, np.ndarray], symbols, AreaType]:
         """
         Main function for calculation tree of measurements. It is executed recursively
 
@@ -529,7 +521,7 @@ class MeasurementProfile(BaseModel):
                     res[num] = res[num][1:]
         return ComponentsInfo(components, mask_components, res)
 
-    def get_component_and_area_info(self) -> List[Tuple[PerComponent, AreaType]]:
+    def get_component_and_area_info(self) -> list[tuple[PerComponent, AreaType]]:
         """For each measurement check if is per component and in which types"""
         res = []
         for el in self.chosen_fields:
@@ -565,7 +557,7 @@ class MeasurementProfile(BaseModel):
         :param roi: array with segmentation labeled as positive integers
         :param result_units: units which should be used to present results.
         :param range_changed: callback function to set information about steps range
-        :param step_changed: callback function fo set information about steps done
+        :param step_changed: callback function for set information about steps done
         :param time: which data point should be measured
         :return: measurements
         """
@@ -707,7 +699,7 @@ def get_main_axis_length(
     index: int, area_array: np.ndarray, channel: np.ndarray, voxel_size, result_scalar, _cache=False, **kwargs
 ):
     if _cache and "_area" in kwargs and "_per_component" in kwargs and "channel_num" in kwargs:
-        help_dict: Dict = kwargs["help_dict"]
+        help_dict: dict = kwargs["help_dict"]
         _area: AreaType = kwargs["_area"]
         _per_component: PerComponent = kwargs["_per_component"]
         hash_name = hash_fun_call_name(
@@ -722,7 +714,7 @@ def get_main_axis_length(
 
 def hash_fun_call_name(
     fun: Union[Callable, MeasurementMethodBase],
-    arguments: Dict,
+    arguments: dict,
     area: AreaType,
     per_component: PerComponent,
     channel: Channel,
@@ -1455,9 +1447,7 @@ class SplitOnPartVolume(MeasurementMethodBase):
     __argument_class__ = SplitOnPartParameters
 
     @staticmethod
-    def calculate_property(
-        part_selection, area_array, voxel_size, result_scalar, **kwargs
-    ):  # pylint: disable=arguments-differ
+    def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=arguments-differ
         masked = MaskDistanceSplit.split(voxel_size=voxel_size, **kwargs)
         mask = masked == part_selection
         return np.count_nonzero(mask * area_array) * pixel_volume(voxel_size, result_scalar)
@@ -1507,9 +1497,21 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
         return True
 
 
-HARALIC_FEATURES = """AngularSecondMoment Contrast Correlation Variance
-InverseDifferenceMoment SumAverage SumVariance SumEntropy Entropy
-DifferenceVariance DifferenceEntropy InfoMeas1 InfoMeas2""".split()
+HARALIC_FEATURES = [
+    "AngularSecondMoment",
+    "Contrast",
+    "Correlation",
+    "Variance",
+    "InverseDifferenceMoment",
+    "SumAverage",
+    "SumVariance",
+    "SumEntropy",
+    "Entropy",
+    "DifferenceVariance",
+    "DifferenceEntropy",
+    "InfoMeas1",
+    "InfoMeas2",
+]
 
 
 class HaralickEnum(Enum):
@@ -1534,9 +1536,11 @@ class HaralickEnum(Enum):
 def _rescale_image(data: np.ndarray):
     if data.dtype == np.uint8:
         return data
+    if np.issubdtype(data.dtype, np.integer) and data.min() >= 0 and data.max() < 255:
+        return data.astype(np.uint8)
     min_val = data.min()
     max_val = data.max()
-    return ((data - min_val) / ((max_val - min_val) / 255)).astype(np.uint8)
+    return ((data - min_val) / ((max_val - min_val) / 254)).astype(np.uint8)
 
 
 class HaralickParameters(BaseModel):
@@ -1564,7 +1568,7 @@ class Haralick(MeasurementMethodBase):
         if isinstance(feature, str):
             feature = HaralickEnum(feature)
         if _cache := _cache and "_area" in kwargs and "_per_component" in kwargs:
-            help_dict: Dict = kwargs["help_dict"]
+            help_dict: dict = kwargs["help_dict"]
             _area: AreaType = kwargs["_area"]
             _per_component: PerComponent = kwargs["_per_component"]
             hash_name = hash_fun_call_name(
@@ -1679,7 +1683,7 @@ class ColocalizationMeasurement(MeasurementMethodBase):
         return 1
 
 
-def pixel_volume(spacing, result_scalar):
+def pixel_volume(spacing: Sequence[float], result_scalar: float) -> float:
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
 

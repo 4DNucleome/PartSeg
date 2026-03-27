@@ -14,10 +14,10 @@ and consume results (:py:meth:`BatchManager.get_result`) until
    }
 
 """
+
 import logging
 import multiprocessing
 import os
-import sys
 import time
 import traceback
 import uuid
@@ -25,11 +25,12 @@ from contextlib import suppress
 from enum import Enum
 from queue import Empty, Queue
 from threading import RLock, Timer
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable
 
 __author__ = "Grzegorz Bokota"
 
 from PartSegCore.plugins import register_if_need
+from PartSegCore.utils import prepare_error_data
 
 
 class SubprocessOrder(Enum):
@@ -68,7 +69,7 @@ class BatchManager:
         self.process_list = []
         self.locker = RLock()
 
-    def get_result(self) -> List[Tuple[uuid.UUID, Any]]:
+    def get_result(self) -> list[tuple[uuid.UUID, Any]]:
         """
         Clean result queue and return it as list
 
@@ -84,7 +85,7 @@ class BatchManager:
             Timer(0.1, self._change_process_num, args=[-self.number_off_available_process]).start()
         return res
 
-    def add_work(self, individual_parameters_list: List, global_parameters, fun: Callable[[Any, Any], Any]) -> str:
+    def add_work(self, individual_parameters_list: list, global_parameters, fun: Callable[[Any, Any], Any]) -> str:
         """
         This function add next works to internal structures.
         Number of works is length of ``individual_parameters_list``
@@ -207,7 +208,7 @@ class BatchWorker:
         task_queue: Queue,
         order_queue: Queue,
         result_queue: Queue,
-        calculation_dict: Dict[uuid.UUID, Tuple[Any, Callable[[Any, Any], Any]]],
+        calculation_dict: dict[uuid.UUID, tuple[Any, Callable[[Any, Any], Any]]],
     ):
         self.task_queue = task_queue
         self.order_queue = order_queue
@@ -215,7 +216,7 @@ class BatchWorker:
         self.calculation_dict = calculation_dict
         self.canceled_tasks = set()
 
-    def calculate_task(self, val: Tuple[Any, uuid.UUID]):
+    def calculate_task(self, val: tuple[Any, uuid.UUID]):
         """
         Calculate single task.
         ``val`` is tuple with two elements (task_data, uuid).
@@ -230,11 +231,8 @@ class BatchWorker:
             res = fun(data, global_data)
             self.result_queue.put((task_uuid, res))
         except Exception as e:  # pragma: no cover # pylint: disable=broad-except
-            traceback.print_exc()
-            exc_type, _exc_obj, exc_tb = sys.exc_info()
-            f_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print(exc_type, f_name, exc_tb.tb_lineno, file=sys.stderr)
-            self.result_queue.put((task_uuid, (-1, [(e, traceback.extract_tb(e.__traceback__))])))
+            logging.exception("Exception in worker")
+            self.result_queue.put((task_uuid, (-1, [prepare_error_data(e)])))
 
     def run(self):
         """Worker main loop"""
@@ -262,7 +260,7 @@ class BatchWorker:
         logging.info("Process %s ended", os.getpid())
 
 
-def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: Dict[uuid.UUID, Any]):
+def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: dict[uuid.UUID, Any]):
     """
     Function for spawning worker. Designed as argument for :py:meth:`multiprocessing.Process`.
 
@@ -271,10 +269,13 @@ def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, cal
     :param result_queue: Queue for calculation result
     :param calculation_dict: dict with global parameters
     """
-    register_if_need()
-    with suppress(ImportError):
-        from PartSeg.plugins import register_if_need as register
+    try:
+        register_if_need()
+        with suppress(ImportError):
+            from PartSeg.plugins import register_if_need as register  # noqa: PLC0415
 
-        register()
-    worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
-    worker.run()
+            register()
+        worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
+        worker.run()
+    except Exception as e:  # pragma: no cover # pylint: disable=broad-except
+        result_queue.put(("-1", (-1, [(e, traceback.extract_tb(e.__traceback__))])))

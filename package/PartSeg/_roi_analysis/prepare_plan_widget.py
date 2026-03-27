@@ -80,7 +80,7 @@ class MaskDialog(QDialog):
         super().__init__()
         self.mask_names = mask_names
         completer = QCompleter(list(mask_names))
-        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.setWindowTitle("Masks name choose")
         self.mask1_name = QLineEdit()
         self.cancel_btn = QPushButton("Cancel")
@@ -119,7 +119,7 @@ class TwoMaskDialog(QDialog):
         super().__init__()
         self.mask_names = mask_names
         completer = QCompleter(list(mask_names))
-        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.setWindowTitle("Masks name choose")
         self.mask1_name = QLineEdit()
         self.mask2_name = QLineEdit()
@@ -294,9 +294,7 @@ class ProtectedGroupBox(QGroupBox):
             self.protect = previous
 
     @classmethod
-    def refresh_profiles(
-        cls, list_widget: typing.Union[QListWidget, SearchableListWidget], new_values: typing.List[str]
-    ):
+    def refresh_profiles(cls, list_widget: typing.Union[QListWidget, SearchableListWidget], new_values: list[str]):
         index = cls.get_index(list_widget.currentItem(), new_values)
         list_widget.clear()
         list_widget.addItems(new_values)
@@ -304,7 +302,7 @@ class ProtectedGroupBox(QGroupBox):
             list_widget.setCurrentRow(index)
 
     @staticmethod
-    def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
+    def get_index(item: QListWidgetItem, new_values: list[str]) -> int:
         if item is None:
             return -1
         text = item.text()
@@ -319,7 +317,7 @@ class OtherOperations(ProtectedGroupBox):
 
     def __init__(self, parent=None):
         super().__init__("Other operations:", parent)
-        self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
+        self.save_translate_dict: dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
         self.save_constructor = None
 
         self.change_root = QEnumComboBox(self, enum_class=RootType)
@@ -642,7 +640,7 @@ class SelectMaskOp(ProtectedGroupBox):
 
         self.add_mask_btn.setDisabled(True)
 
-    def update_mask_set(self, mask_set: typing.Set[str]):
+    def update_mask_set(self, mask_set: set[str]):
         self.mask_set = mask_set
 
     def set_replace(self, replace: bool):
@@ -692,7 +690,7 @@ class CreatePlan(QWidget):
     def __init__(self, settings: PartSettings):
         super().__init__()
         self.settings = settings
-        self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
+        self.save_translate_dict: dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
         self._mask_set = set()
         self.plan = PlanPreview(self)
         self.save_plan_btn = QPushButton("Save")
@@ -869,7 +867,7 @@ class CreatePlan(QWidget):
         conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
         if len(conflict_mask) > 0:
             logging.info("Mask in use")
-            show_warning("In use", f'Masks {", ".join(conflict_mask)} are used in other places')
+            show_warning("In use", f"Masks {', '.join(conflict_mask)} are used in other places")
 
             return
         self.mask_set -= used_mask
@@ -943,7 +941,7 @@ class PlanPreview(QTreeWidget):
         self.calculation_plan = None
         self.header().close()
         self.itemSelectionChanged.connect(self.set_path)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         if calculation_plan is not None:
             self.set_plan(calculation_plan)
 
@@ -1001,7 +999,7 @@ class PlanPreview(QTreeWidget):
         widget.setText(0, CalculationPlan.get_el_name(node_plan.operation))
         self.setCurrentItem(widget)
         if isinstance(node_plan.operation, (MeasurementCalculate, ROIExtractionProfile)):
-            widget.setData(0, Qt.UserRole, node_plan.operation)
+            widget.setData(0, Qt.ItemDataRole.UserRole, node_plan.operation)
         if isinstance(node_plan.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
@@ -1120,7 +1118,7 @@ class CalculateInfo(QWidget):
 
     def _context_menu(self, point):
         item = self.plan_view.itemAt(point)
-        data = item.data(0, Qt.UserRole)
+        data = item.data(0, Qt.ItemDataRole.UserRole)
         if data is None:
             return
 
@@ -1143,7 +1141,7 @@ class CalculateInfo(QWidget):
             )
             if not ok:
                 return None
-            return self._save_roi_profile(typing.cast(ROIExtractionProfile, data.copy(update={"name": text})))
+            return self._save_roi_profile(typing.cast("ROIExtractionProfile", data.copy(update={"name": text})))
         self.settings.roi_profiles[data.name] = data
         return None
 
@@ -1154,7 +1152,7 @@ class CalculateInfo(QWidget):
             )
             if not ok:
                 return None
-            return self._save_measurement_profile(typing.cast(MeasurementProfile, data.copy(update={"name": text})))
+            return self._save_measurement_profile(typing.cast("MeasurementProfile", data.copy(update={"name": text})))
         self.settings.measurement_profiles[data.name] = data
         return None
 

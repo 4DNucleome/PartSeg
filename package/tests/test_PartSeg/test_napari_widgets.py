@@ -1,7 +1,8 @@
 import contextlib
 import gc
 import json
-from unittest.mock import patch
+from importlib.metadata import version
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -10,9 +11,9 @@ from local_migrator import object_hook
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from napari.utils import Colormap
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QObject, QTimer, Signal
 
-from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
@@ -20,6 +21,7 @@ from PartSeg.common_gui.napari_image_view import SearchType
 from PartSeg.plugins.napari_widgets import (
     CopyLabelsWidget,
     ImageColormap,
+    LayerMetadata,
     MaskCreate,
     ROIAnalysisExtraction,
     ROIMaskExtraction,
@@ -40,9 +42,11 @@ from PartSeg.plugins.napari_widgets.algorithm_widgets import (
 )
 from PartSeg.plugins.napari_widgets.colormap_control import NapariColormapControl
 from PartSeg.plugins.napari_widgets.lables_control import LabelSelector, NapariLabelShow
-from PartSeg.plugins.napari_widgets.measurement_widget import update_properties
+from PartSeg.plugins.napari_widgets.measurement_widget import Measurement, update_properties
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSeg.plugins.napari_widgets.search_label_widget import HIGHLIGHT_LABEL_NAME
+from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
+from PartSegCore import Units
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import AnalysisAlgorithmSelection
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
@@ -54,12 +58,36 @@ from PartSegCore.segmentation.border_smoothing import SmoothAlgorithmSelection
 from PartSegCore.segmentation.noise_filtering import NoiseFilterSelection
 from PartSegCore.segmentation.threshold import DoubleThresholdSelection, ThresholdSelection
 from PartSegCore.segmentation.watershed import WatershedSelection
+from PartSegCore.universal_const import LayerNamingFormat
+
+NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
+NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
+
+if NAPARI_GE_4_19:
+
+    def check_auto_mode(layer):
+        from napari.utils.colormaps import CyclicLabelColormap  # noqa: PLC0415
+
+        assert isinstance(layer.colormap, CyclicLabelColormap)
+
+    def check_direct_mode(layer):
+        from napari.utils.colormaps import DirectLabelColormap  # noqa: PLC0415
+
+        assert isinstance(layer.colormap, DirectLabelColormap)
+
+else:
+
+    def check_auto_mode(layer):
+        assert layer.color_mode == "auto"
+
+    def check_direct_mode(layer):
+        assert layer.color_mode == "direct"
 
 
 @pytest.fixture(autouse=True)
 def _clean_settings(tmp_path):
     old_settings = _settings._SETTINGS
-    _settings._SETTINGS = PartSettings(tmp_path)
+    _settings._SETTINGS = _settings.PartSegNapariSettings(tmp_path)
     yield
     _settings._SETTINGS = old_settings
 
@@ -173,8 +201,6 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp
 
 
 def test_simple_measurement_create(make_napari_viewer, qtbot):
-    from PartSeg.plugins.napari_widgets.simple_measurement_widget import SimpleMeasurement
-
     data = np.zeros((10, 10), dtype=np.uint8)
 
     viewer = make_napari_viewer()
@@ -197,10 +223,14 @@ def test_simple_measurement_create(make_napari_viewer, qtbot):
     assert measurement.calculate_btn.enabled
 
 
-@pytest.mark.enablethread()
-@pytest.mark.enabledialog()
-def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
-    from PartSeg.plugins.napari_widgets.measurement_widget import Measurement
+@pytest.mark.enablethread
+@pytest.mark.enabledialog
+@pytest.mark.usefixtures("qtbot")
+def test_measurement_create(make_napari_viewer, bundle_test_dir, monkeypatch):
+    monkeypatch.setattr(
+        "PartSeg.plugins.napari_widgets.measurement_widget.show_info",
+        Mock(side_effect=RuntimeError("should not be called")),
+    )
 
     data = np.zeros((10, 10), dtype=np.uint8)
     data[2:5, 2:-2] = 1
@@ -209,6 +239,7 @@ def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
     viewer = make_napari_viewer()
     viewer.add_labels(data, name="label")
     viewer.add_image(data, name="image")
+    viewer.add_image(data, name="image2")
     measurement = Measurement(viewer)
     viewer.window.add_dock_widget(measurement)
     measurement.reset_choices()
@@ -219,7 +250,11 @@ def test_measurement_create(make_napari_viewer, qtbot, bundle_test_dir):
     assert measurement.measurement_widget.measurement_type.currentText() == "test"
     assert measurement.measurement_widget.recalculate_button.isEnabled()
     assert measurement.measurement_widget.check_if_measurement_can_be_calculated("test") == "test"
+    assert measurement.measurement_widget.info_field.rowCount() == 0
+    assert measurement.measurement_widget.info_field.columnCount() == 3
     measurement.measurement_widget.append_measurement_result()
+    assert measurement.measurement_widget.info_field.rowCount() == 8
+    assert measurement.measurement_widget.info_field.columnCount() == 3
 
 
 def test_update_properties():
@@ -256,7 +291,7 @@ def test_mask_create(make_napari_viewer, qtbot):
     assert "Mask" in viewer.layers
 
 
-@pytest.fixture()
+@pytest.fixture
 def _shutdown_timers(monkeypatch):
     register = []
     old_start = QTimer.start
@@ -277,7 +312,7 @@ def _shutdown_timers(monkeypatch):
             assert not timer.isActive()
 
 
-@pytest.mark.enablethread()
+@pytest.mark.enablethread
 @pytest.mark.usefixtures("_shutdown_timers")
 def test_search_labels(make_napari_viewer, qtbot):
     viewer = make_napari_viewer()
@@ -304,7 +339,7 @@ def test_search_labels(make_napari_viewer, qtbot):
     search.component_selector.value = 2
 
 
-@pytest.fixture()
+@pytest.fixture
 def viewer_with_data(make_napari_viewer):
     viewer = make_napari_viewer()
     data = np.zeros((10, 10), dtype=np.uint8)
@@ -351,9 +386,10 @@ def test_napari_label_show(viewer_with_data, qtbot):
     assert not widget.apply_label_btn.isEnabled()
     viewer_with_data.layers.selection.remove(viewer_with_data.layers["image"])
     assert widget.apply_label_btn.isEnabled()
-    assert viewer_with_data.layers["label"].color_mode == "auto"
-    widget.apply_label_btn.click()
-    assert viewer_with_data.layers["label"].color_mode == "direct"
+    check_auto_mode(viewer_with_data.layers["label"])
+    with qtbot.waitSignal(widget.apply_label_btn.clicked):
+        widget.apply_label_btn.click()
+    check_direct_mode(viewer_with_data.layers["label"])
 
 
 def test_napari_colormap_control(viewer_with_data, qtbot):
@@ -375,7 +411,7 @@ def ndim_param(request):
     return request.param
 
 
-@pytest.fixture()
+@pytest.fixture
 def napari_image(ndim_param):
     shape = (1,) * max(ndim_param - 3, 0) + (10,) * min(ndim_param, 3)
     slice_ = (slice(None),) * max(ndim_param - 3, 0) + (slice(2, 8),) * min(ndim_param, 3)
@@ -385,7 +421,7 @@ def napari_image(ndim_param):
     return NapariImage(data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def napari_labels(ndim_param):
     shape = (1,) * max(ndim_param - 3, 0) + (10,) * min(ndim_param, 3)
     slice_ = (slice(None),) * max(ndim_param - 3, 0) + (slice(2, 8),) * min(ndim_param, 3)
@@ -498,7 +534,7 @@ def test_split_core_objects_model(napari_labels):
     assert model.run_calculation()["layer_type"] == "labels"
 
 
-@pytest.fixture()
+@pytest.fixture
 def napari_labels2():
     data = np.zeros((10, 10, 10), dtype=np.uint8)
     data[5, 2:-2, 2:5] = 1
@@ -516,7 +552,7 @@ class MockDebouncer(QObject):
         self.triggered.emit()
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_labels(make_napari_viewer, qtbot, napari_labels2, monkeypatch):
     monkeypatch.setattr("PartSeg.plugins.napari_widgets.copy_labels.QSignalDebouncer", MockDebouncer)
     viewer = make_napari_viewer()
@@ -563,6 +599,67 @@ class TestCopyLabels:
         assert not copy_labels.checkbox_layout.itemAt(0).widget().isChecked()
 
 
+class TestLayerMetadata:
+    def test_init(self, make_napari_viewer, qtbot):
+        viewer = make_napari_viewer()
+        widget = LayerMetadata(viewer)
+        qtbot.addWidget(widget)
+        assert widget._dict_viewer._data == {}
+
+    def test_init_with_layer(self, make_napari_viewer, qtbot):
+        viewer = make_napari_viewer()
+        viewer.add_image(
+            np.ones((10, 10)),
+            contrast_limits=[0, 1],
+            metadata={"foo": "bar"},
+        )
+        widget = LayerMetadata(viewer)
+        viewer.window.add_dock_widget(widget)
+        widget.reset_choices()
+        assert widget.layer_selector.value is not None
+        assert widget._dict_viewer._data == {"foo": "bar"}
+
+    def test_add_layer_post_init(self, make_napari_viewer, qtbot):
+        viewer = make_napari_viewer()
+        widget = LayerMetadata(viewer)
+        viewer.window.add_dock_widget(widget)
+        assert widget._dict_viewer._data == {}
+        viewer.add_image(
+            np.ones((10, 10)),
+            contrast_limits=[0, 1],
+            metadata={"foo": "bar"},
+        )
+        widget.reset_choices()
+        assert widget.layer_selector.value is not None
+        assert widget._dict_viewer._data == {"foo": "bar"}
+
+
 def test_enum():
     assert " " in str(CompareType.lower_threshold)
     assert " " in str(FlowType.dark_center)
+
+
+class TestSettingsWidget:
+    def test_create(self, qtbot):
+        w = _settings.SettingsEditor()
+        qtbot.addWidget(w.native)
+
+    def test_change_units(self, qtbot):
+        s = _settings.get_settings()
+        s.io_units = Units.µm
+        w = _settings.SettingsEditor()
+        qtbot.addWidget(w.native)
+        w.units_select.value = Units.nm
+        assert s.io_units == Units.nm
+        s.io_units = Units.mm
+        assert w.units_select.value == Units.mm
+
+    def test_change_layer_name_format(self, qtbot):
+        s = _settings.get_settings()
+        s.layer_naming_format = LayerNamingFormat.channel_only
+        w = _settings.SettingsEditor()
+        qtbot.addWidget(w.native)
+        w.layer_naming_select.value = LayerNamingFormat.channel_filename
+        assert s.layer_naming_format == LayerNamingFormat.channel_filename
+        s.layer_naming_format = LayerNamingFormat.channel_only
+        assert w.layer_naming_select.value == LayerNamingFormat.channel_only

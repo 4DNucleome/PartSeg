@@ -26,12 +26,12 @@ class ImageWriter(BaseImageWriter):
     """class for saving TIFF images"""
 
     @classmethod
-    def prepare_metadata(cls, image: Image, channels: int):
+    def prepare_metadata(cls, image: Image, channels: int) -> dict:
         spacing = image.get_um_spacing()
         shift = image.get_um_shift()
         plane_li = [
             {
-                "TheT": t,
+                "TheT": t,  # codespell:ignore thet
                 "TheZ": z,
                 "TheC": c,
                 "PositionZ": shift[0] if len(shift) == 3 else 0,
@@ -49,9 +49,11 @@ class ImageWriter(BaseImageWriter):
                 "PhysicalSizeZ": spacing[0] if len(spacing) == 3 else 1,
                 "PhysicalSizeY": spacing[-2],
                 "PhysicalSizeX": spacing[-1],
+                "TimeIncrement": image.time_increment,
                 "PhysicalSizeZUnit": "µm",
                 "PhysicalSizeYUnit": "µm",
                 "PhysicalSizeXUnit": "µm",
+                "TimeIncrementUnit": "s",
             },
             "Plane": plane_li,
             "Creator": "PartSeg",
@@ -76,6 +78,7 @@ class ImageWriter(BaseImageWriter):
         metadata["Channel"] = {
             "Name": image.channel_names,
             "axes": "TZYXC",
+            "Color": image.get_ome_colors(),
         }
         cls._save(data, save_path, metadata, compression)
 
@@ -124,9 +127,13 @@ class IMAGEJImageWriter(BaseImageWriter):
         """
         data = image.get_image_for_save()
         spacing = image.get_um_spacing()
-        metadata: typing.Dict[str, typing.Any] = {"mode": "color", "unit": "\\u00B5m"}
+        metadata: dict[str, typing.Any] = {"mode": "color", "unit": "\\u00B5m"}
         if len(spacing) == 3:
             metadata["spacing"] = spacing[0]
+        if image.is_time:
+            metadata["finterval"] = image.time_increment
+            if image.time_increment != 0:
+                metadata["fps"] = 1 / image.time_increment
         if image.channel_names is not None:
             metadata["Labels"] = image.channel_names * image.layers
         coloring = image.get_imagej_colors()
@@ -150,7 +157,7 @@ class IMAGEJImageWriter(BaseImageWriter):
             return
         mask_max = np.max(mask)
         mask = mask.astype(minimal_dtype(mask_max))
-        metadata: typing.Dict[str, typing.Union[str, float]] = {"mode": "color", "unit": "\\u00B5m"}
+        metadata: dict[str, typing.Union[str, float]] = {"mode": "color", "unit": "\\u00B5m"}
         spacing = image.get_um_spacing()
         if len(spacing) == 3:
             metadata["spacing"] = spacing[0]

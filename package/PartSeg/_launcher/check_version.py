@@ -24,9 +24,7 @@ class CheckVersionThread(QThread):
     .. _PYPI: https://pypi.org/project/PartSeg/
     """
 
-    def __init__(
-        self, package_name="PartSeg", default_url="https://4dnucleome.cent.uw.edu.pl/PartSeg/", base_version=__version__
-    ):
+    def __init__(self, package_name="PartSeg", default_url="https://partseg.github.io/", base_version=__version__):
         super().__init__()
         self.release = base_version
         self.base_release = base_version
@@ -42,22 +40,23 @@ class CheckVersionThread(QThread):
             return
         try:
             if os.path.exists(os.path.join(state_store.save_folder, IGNORE_FILE)):
-                with open(os.path.join(state_store.save_folder, IGNORE_FILE), encoding="utf-8") as f_p, suppress(
-                    ValueError
+                with (
+                    open(os.path.join(state_store.save_folder, IGNORE_FILE), encoding="utf-8") as f_p,
+                    suppress(ValueError),
                 ):
                     old_date = date.fromisoformat(f_p.read())
                     if (date.today() - old_date).days < IGNORE_DAYS:
                         return
                 os.remove(os.path.join(state_store.save_folder, IGNORE_FILE))
 
-            with urllib.request.urlopen(f"https://pypi.org/pypi/{self.package_name}/json") as r:  # nosec  # noqa: S310
+            with urllib.request.urlopen(f"https://pypi.org/pypi/{self.package_name}/json") as r:  # nosec
                 data = json.load(r)
             self.release = data["info"]["version"]
             self.url = data["info"]["home_page"]
         except (KeyError, urllib.error.URLError):  # pragma: no cover
             pass
         except Exception as e:  # pylint: disable=broad-except
-            with sentry_sdk.push_scope() as scope:
+            with sentry_sdk.new_scope() as scope:
                 scope.set_tag("auto_report", "true")
                 scope.set_tag("check_version", "true")
                 sentry_sdk.capture_exception(e)
@@ -69,24 +68,24 @@ class CheckVersionThread(QThread):
         if remote_version > my_version:
             if getattr(sys, "frozen", False):
                 message = QMessageBox(
-                    QMessageBox.Information,
+                    QMessageBox.Icon.Information,
                     "New release",
                     f"You use outdated version of PartSeg. "
                     f"Your version is {my_version} and current is {remote_version}. "
                     f"You can download next release form {self.url}",
-                    QMessageBox.Ok | QMessageBox.Ignore,
+                    QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Ignore,
                 )
             else:
                 message = QMessageBox(
-                    QMessageBox.Information,
+                    QMessageBox.Icon.Information,
                     "New release",
                     f"You use outdated version of PartSeg. "
                     f"Your version is {my_version} and current is {remote_version}. "
                     "You can update it from pypi (pip install -U PartSeg)",
-                    QMessageBox.Ok | QMessageBox.Ignore,
+                    QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Ignore,
                 )
 
-            if message.exec_() == QMessageBox.Ignore:
+            if message.exec_() == QMessageBox.StandardButton.Ignore:
                 os.makedirs(state_store.save_folder, exist_ok=True)
                 with open(os.path.join(state_store.save_folder, IGNORE_FILE), "w", encoding="utf-8") as f_p:
                     f_p.write(date.today().isoformat())

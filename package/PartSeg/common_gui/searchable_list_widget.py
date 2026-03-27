@@ -22,7 +22,7 @@ class SearchableListWidget(QWidget):
         return super().__getattr__(item)
 
     def update_visible(self, text):
-        items_text = [x.text() for x in self.list_widget.findItems(text, Qt.MatchContains)]
+        items_text = [x.text() for x in self.list_widget.findItems(text, Qt.MatchFlag.MatchContains)]
         for index in range(self.list_widget.count()):
             item = self.item(index)
             item.setHidden(item.text() not in items_text)

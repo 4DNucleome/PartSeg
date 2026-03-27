@@ -19,6 +19,7 @@ The documentation is incomplete. Many utilities are undocumented.
    interface-overview/interface-overview
    state_store
    error_reporting
+   survey_mechanism
 
 
 Indices and tables

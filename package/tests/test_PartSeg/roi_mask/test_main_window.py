@@ -9,13 +9,13 @@ from PartSegCore.roi_info import ROIInfo
 
 class TestMaskMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
-    @pytest.mark.pyside_skip()
+    @pytest.mark.pyside_skip
     def test_opening(self, qtbot, tmpdir):
         main_window = MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
         qtbot.wait(50)
 
-    @pytest.mark.pyside_skip()
+    @pytest.mark.pyside_skip
     def test_change_theme(self, qtbot, tmpdir):
         main_window = MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
@@ -23,7 +23,7 @@ class TestMaskMainWindow:
         main_window.settings.theme_name = "dark"
         assert main_window.image_view.viewer.theme == "dark"
 
-    @pytest.mark.pyside_skip()
+    @pytest.mark.pyside_skip
     def test_scale_bar(self, qtbot, tmpdir):
         main_window = MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
@@ -43,7 +43,7 @@ class TestMaskMainWindow:
         res = MainWindow.get_project_info(str(tmp_path / "test.tiff"), image, ROIInfo(roi))
         assert res.roi_extraction_parameters == {1: None}
 
-    @pytest.mark.pyside_skip()
+    @pytest.mark.pyside_skip
     def test_window_title(self, tmpdir, image, image2, qtbot):
         main_window = MainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)

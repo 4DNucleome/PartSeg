@@ -9,7 +9,6 @@ from packaging.version import parse as parse_version
 import platform
 import zmq
 import itertools
-import pkg_resources
 import debugpy._vendored
 import importlib.metadata
 
@@ -44,7 +43,10 @@ if napari_version <= parse_version("0.4.16"):
         return Path(qt_resources.__file__).parent / f"{key}.py"
 else:
     def import_resources():
+        from napari.utils import theme
         from napari import resources
+
+        del theme
 
         return os.path.join(os.path.dirname(resources.__file__), "icons")
 
@@ -63,9 +65,9 @@ from imageio.config.plugins import known_plugins as imageio_known_plugins
 
 hiddenimports = (
     [f"imagecodecs.{y}" for y in (x if x[0] == "_" else f"_{x}" for x in imagecodecs._extensions())]
-    + ["imagecodecs._shared"]
+    + ["imagecodecs._shared", "imagecodecs._shared_cython"]
     + plugins
-    + ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"]
+    + ["pkg_resources.py2_warn", "ipykernel.datapub"]
     + [
         "numpy.core._dtype_ctypes",
         "sentry_sdk.integrations.logging",
@@ -84,7 +86,7 @@ hiddenimports = (
         "nme",
         "defusedxml.cElementTree",
         "vispy.app.backends._pyqt5",
-        "scipy.spatial.transform._rotation_groups",
+        "vispy.app.backends._pyqt6",
         "magicgui.backends._qtpy",
         "freetype",
         "psygnal._signal",
@@ -92,9 +94,12 @@ hiddenimports = (
         "psygnal._weak_callback",
         "imagecodecs._imagecodecs",
         "PartSeg.plugins.napari_widgets",
-        "PartSegCore.napari_plugins",
+        "PartSegCore.napari_io",
+        "tzdata",
     ]
-    + [x.module_name for x in imageio_known_plugins.values()] + [x for x in collect_submodules("skimage") if "tests" not in x]
+    + [x.module_name for x in imageio_known_plugins.values()]
+    + [x for x in collect_submodules("skimage") if "tests" not in x]
+    + collect_submodules("scipy")
 )
 
 
@@ -127,10 +132,10 @@ napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
 napari_resource_dest_path = os.path.relpath(os.path.dirname(napari_resource_path), napari_base_path)
 
 packages = itertools.chain(
-    importlib.metadata.entry_points().get("PartSeg.plugins", []),
-    importlib.metadata.entry_points().get("partseg.plugins", []),
-    importlib.metadata.entry_points().get("PartSegCore.plugins", []),
-    importlib.metadata.entry_points().get("partsegcore.plugins", []),
+    importlib.metadata.entry_points(group="PartSeg.plugins"),
+    importlib.metadata.entry_points(group="partseg.plugins"),
+    importlib.metadata.entry_points(group="PartSegCore.plugins"),
+    importlib.metadata.entry_points(group="partsegcore.plugins"),
 )
 
 plugins_data = [(os.path.join(base_path, "napari.yaml"), ".")]
@@ -165,7 +170,7 @@ a = Analysis(
         ]
     ]
     + qt_data
-    + [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "plugins/itk_snap_save")]
+    + [(os.path.join(base_path, "napari.yaml"), "PartSeg")]
     + [(os.path.join(base_path, "plugins/napari_widgets/__init__.py"), "plugins/napari")]
     + [(os.path.join(base_path, "plugins/napari_widgets/simple_measurement_widget.py"), "plugins/napari")]
     # + [ ("Readme.md", "/"), ("changelog.md", "/")]
@@ -174,8 +179,12 @@ a = Analysis(
     + collect_data_files("dask")
     + collect_data_files("vispy")
     + collect_data_files("napari")
+    + collect_data_files("napari_svg")
+    + collect_data_files("napari_console")
     + collect_data_files("freetype")
     + collect_data_files("skimage")
+    + collect_data_files("fonticon_fa6")
+    + collect_data_files('tzdata')
     + collect_data_files("jsonschema_specifications")
     + collect_data_files("PartSegCore-compiled-backend")
     + pyzmq_data

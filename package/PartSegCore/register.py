@@ -12,8 +12,8 @@ register: function for registering operation in inner structures.
 
 register_dict: holds information where register given operation type. Strongly suggest to use register function instead.
 """
+
 from enum import Enum
-from typing import Type
 
 from PartSegCore import io_utils
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase
@@ -29,8 +29,6 @@ from PartSegCore.segmentation import (
     threshold,
     watershed,
 )
-
-# from .mask.io_functions import
 
 qss_list = []
 
@@ -112,7 +110,7 @@ reload_module_list = [
 ]
 
 
-def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False, old_names=None):
+def register(target: type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False, old_names=None):
     """
     Function for registering new operations in PartSeg inner structures.
 

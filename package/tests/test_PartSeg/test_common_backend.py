@@ -16,6 +16,7 @@ import sentry_sdk
 from packaging.version import parse
 from qtpy.QtWidgets import QMessageBox
 
+import PartSegCore.utils
 from PartSeg import state_store
 from PartSeg.common_backend import (
     base_argparser,
@@ -96,7 +97,7 @@ class TestExceptHook:
         except_hook.show_warning(header, text, exception)
         assert len(exec_list) == 1
 
-    def test_my_excepthook(self, monkeypatch, capsys):
+    def test_my_excepthook(self, monkeypatch, caplog):
         catch_list = []
         error_list = []
         exit_list = []
@@ -126,7 +127,8 @@ class TestExceptHook:
         monkeypatch.setattr(state_store, "show_error_dialog", False)
         except_hook.my_excepthook(KeyboardInterrupt, KeyboardInterrupt(), [])
         assert exit_list == [1]
-        assert capsys.readouterr().err == "KeyboardInterrupt close\n"
+        assert "KeyboardInterrupt close\n" in caplog.text
+        caplog.clear()
 
         except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
         assert len(catch_list) == 1
@@ -137,7 +139,7 @@ class TestExceptHook:
 
         except_hook.my_excepthook(KeyboardInterrupt, KeyboardInterrupt(), [])
         assert exit_list == [1, 1]
-        assert capsys.readouterr().err == "KeyboardInterrupt close\n"
+        assert "KeyboardInterrupt close\n" in caplog.text
 
         except_hook.my_excepthook(RuntimeError, RuntimeError("aaa"), [])
         assert len(error_list) == 1
@@ -187,14 +189,12 @@ class TestBaseArgparse:
         parser.parse_args([])
 
     def test_safe_repr(self):
-        assert base_argparser.safe_repr(1) == "1"
-        assert base_argparser.safe_repr(np.arange(3)) == "array([0, 1, 2])"
+        assert PartSegCore.utils.safe_repr(1) == "1"
+        assert PartSegCore.utils.safe_repr(np.arange(3)) == "array([0, 1, 2])"
 
     def test_safe_repr_napari_image(self):
-        assert (
-            base_argparser.safe_repr(napari.layers.Image(np.zeros((10, 10, 5))))
-            == "<Image of shape: (10, 10, 5), dtype: float64, slice"
-            " (0, slice(None, None, None), slice(None, None, None))>"
+        assert PartSegCore.utils.safe_repr(napari.layers.Image(np.zeros((10, 10, 5)))).startswith(
+            "<Image of shape: (10, 10, 5), dtype: float64, slice"
         )
 
 
@@ -247,17 +247,17 @@ class TestProgressThread:
 
 
 class TestSegmentationThread:
-    def test_empty_image(self, capsys):
+    def test_empty_image(self, caplog):
         thr = segmentation_thread.SegmentationThread(ROIExtractionAlgorithmForTest())
         assert thr.get_info_text() == "text"
         thr.set_parameters(a=1)
         thr.run()
-        assert capsys.readouterr().err.startswith("No image in")
+        assert "No image in" in caplog.text
 
     def test_run(self, qtbot):
         algorithm = ROIExtractionAlgorithmForTest()
         thr = segmentation_thread.SegmentationThread(algorithm)
-        image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
+        image = Image(np.zeros((10, 10), dtype=np.uint8), spacing=(1, 1), axes_order="XY")
         algorithm.set_image(image)
         with qtbot.waitSignals([thr.execution_done, thr.progress_signal]):
             thr.run()
@@ -265,7 +265,7 @@ class TestSegmentationThread:
     def test_run_return_none(self, qtbot):
         algorithm = ROIExtractionAlgorithmForTest(return_none=True)
         thr = segmentation_thread.SegmentationThread(algorithm)
-        image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
+        image = Image(np.zeros((10, 10), dtype=np.uint8), spacing=(1, 1), axes_order="XY")
         algorithm.set_image(image)
         with qtbot.assertNotEmitted(thr.execution_done):
             thr.run()
@@ -273,7 +273,7 @@ class TestSegmentationThread:
     def test_run_exception(self, qtbot):
         algorithm = ROIExtractionAlgorithmForTest(raise_=True)
         thr = segmentation_thread.SegmentationThread(algorithm)
-        image = Image(np.zeros((10, 10), dtype=np.uint8), image_spacing=(1, 1), axes_order="XY")
+        image = Image(np.zeros((10, 10), dtype=np.uint8), spacing=(1, 1), axes_order="XY")
         algorithm.set_image(image)
         with qtbot.assertNotEmitted(thr.execution_done), qtbot.waitSignal(thr.exception_occurred):
             thr.run()
@@ -364,7 +364,7 @@ class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
         return "test"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return [AlgorithmProperty("a", "A", 0)]
 
 
@@ -464,13 +464,13 @@ class TestLoadBackup:
             assert not (tmp_path / "0.13.13").exists()
 
 
-@pytest.fixture()
+@pytest.fixture
 def image(tmp_path):
-    data = np.random.random((10, 10, 2))
-    return Image(data=data, image_spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
+    data = np.random.default_rng().uniform(size=(10, 10, 2))
+    return Image(data=data, spacing=(10, 10), axes_order="XYC", file_path=str(tmp_path / "test.tiff"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def roi():
     data = np.zeros((10, 10), dtype=np.uint8)
     data[2:-2, 2:5] = 1
@@ -710,21 +710,23 @@ class TestBaseSettings:
         assert res[0] == {"cc": 11, "dd": 12}
 
     def test_base_settings_verify_image(self):
-        assert base_settings.BaseSettings.verify_image(Image(np.zeros((10, 10)), (10, 10), axes_order="YX"))
-        assert base_settings.BaseSettings.verify_image(Image(np.zeros((10, 10, 10)), (10, 10, 10), axes_order="ZYX"))
+        assert base_settings.BaseSettings.verify_image(Image(np.zeros((10, 10)), spacing=(10, 10), axes_order="YX"))
+        assert base_settings.BaseSettings.verify_image(
+            Image(np.zeros((10, 10, 10)), spacing=(10, 10, 10), axes_order="ZYX")
+        )
         with pytest.raises(base_settings.SwapTimeStackException):
             base_settings.BaseSettings.verify_image(
-                Image(np.zeros((10, 10, 10)), (10, 10, 10), axes_order="TYX"), silent=False
+                Image(np.zeros((10, 10, 10)), spacing=(10, 10, 10), axes_order="TYX"), silent=False
             )
 
         new_image = base_settings.BaseSettings.verify_image(
-            Image(np.zeros((10, 10, 10)), (10, 10, 10), axes_order="TYX"), silent=True
+            Image(np.zeros((10, 10, 10)), spacing=(10, 10, 10), axes_order="TYX"), silent=True
         )
         assert new_image.is_stack
         assert not new_image.is_time
         with pytest.raises(base_settings.TimeAndStackException):
             base_settings.BaseSettings.verify_image(
-                Image(np.zeros((2, 10, 10, 10)), (10, 10, 10), axes_order="TZYX"), silent=True
+                Image(np.zeros((2, 10, 10, 10)), spacing=(10, 10, 10), axes_order="TZYX"), silent=True
             )
 
     def test_base_settings_path_history(self, tmp_path, qtbot, monkeypatch):

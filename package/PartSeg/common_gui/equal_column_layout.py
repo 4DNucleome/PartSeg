@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import List
 
 from qtpy.QtCore import QRect, QSize
 from qtpy.QtWidgets import QLayout, QLayoutItem
@@ -13,7 +12,7 @@ class LayoutPosition(Enum):
 class EqualColumnLayout(QLayout):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._item_list: List[QLayoutItem] = []
+        self._item_list: list[QLayoutItem] = []
 
     def addItem(self, item: QLayoutItem):
         self._item_list.append(item)

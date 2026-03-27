@@ -74,7 +74,7 @@ class SaveExcel(SaveBase):
         return "Excel (*.xlsx)"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return []
 
 
@@ -153,14 +153,13 @@ class ProgressView(QWidget):
     def task_cancel_remove(self):
         index = self.task_view.selectionModel().currentIndex()
         task: CalculationProcessItem = typing.cast(
-            CalculationProcessItem, self.task_que.item(index.row(), index.column())
+            "CalculationProcessItem", self.task_que.item(index.row(), index.column())
         )
         if task.is_finished():
             self.calculation_manager.remove_calculation(task.calculation)
         else:
             self.calculation_manager.cancel_calculation(task.calculation)
         self.task_que.takeRow(index.row())
-        print(task)
 
     def new_task(self):
         self.whole_progress.setMaximum(self.calculation_manager.calculation_size)
@@ -377,7 +376,7 @@ class CalculationPrepare(QDialog):
 
     def __init__(
         self,
-        file_list: typing.List[os.PathLike],
+        file_list: list[os.PathLike],
         calculation_plan: CalculationPlan,
         measurement_file_path: os.PathLike,
         settings: PartSettings,

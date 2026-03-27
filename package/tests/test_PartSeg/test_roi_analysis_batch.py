@@ -163,7 +163,7 @@ class TestFileMaskWidget:
         assert widget.first_text.text() == "file_path"
 
 
-@pytest.fixture()
+@pytest.fixture
 def calculation_plan(measurement_profiles):
     roi_extraction = AnalysisAlgorithmSelection.get_default()
     return prepare_plan_widget.CalculationPlan(
@@ -535,7 +535,7 @@ class TestSelectMeasurementOp:
 
         widget = prepare_plan_widget.SelectMeasurementOp(part_settings)
         qtbot.addWidget(widget)
-        assert widget.measurements_list.count() == 2
+        assert widget.measurements_list.count() == 3
         with qtbot.assert_not_emitted(widget.set_of_measurement_add):
             widget._measurement_add()
         widget.measurements_list.setCurrentRow(0)

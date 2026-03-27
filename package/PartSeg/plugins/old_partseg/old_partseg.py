@@ -45,9 +45,11 @@ class LoadPartSegOld(LoadBase):
             "channel": 0,
             "minimum_size": algorithm_dict["minimum_size"],
             "threshold": {"name": "Manual", "values": {"threshold": algorithm_dict["threshold"]}},
-            "noise_removal": {"name": "Gauss", "values": {"gauss_type": DimensionType.Layer, "radius": 1.0}}
-            if algorithm_dict["use_gauss"]
-            else {"name": "None", "values": {}},
+            "noise_removal": (
+                {"name": "Gauss", "values": {"gauss_type": DimensionType.Layer, "radius": 1.0}}
+                if algorithm_dict["use_gauss"]
+                else {"name": "None", "values": {}}
+            ),
             "side_connection": True,
         }
 
@@ -62,7 +64,7 @@ class LoadPartSegOld(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,

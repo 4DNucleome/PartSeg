@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import List, Optional, Tuple, Type, Union, cast
+from typing import Optional, Union, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -34,7 +34,7 @@ from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer, StringViewer
 from PartSeg.common_backend.base_settings import IO_SAVE_DIRECTORY
-from PartSeg.common_gui.advanced_tabs import AdvancedWindow
+from PartSeg.common_gui.advanced_tabs import AdvancedWindow, ImageMetadata
 from PartSeg.common_gui.custom_load_dialog import PLoadDialog
 from PartSeg.common_gui.custom_save_dialog import FormDialog, PSaveDialog
 from PartSeg.common_gui.error_report import DataImportErrorDialog
@@ -49,7 +49,7 @@ from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
 
-_DialogType = Union[Type[str], Type[int], Type[float]]
+_DialogType = Union[type[str], type[int], type[float]]
 
 
 def h_line():
@@ -100,7 +100,7 @@ class Properties(QWidget):
 
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
-            el.setAlignment(Qt.AlignRight)
+            el.setAlignment(Qt.AlignmentFlag.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 1000000)
             # noinspection PyUnresolvedReferences
@@ -225,7 +225,7 @@ class Properties(QWidget):
         self.update_spacing()
 
     def event(self, event: QEvent):
-        if event.type() == QEvent.WindowActivate and self.isVisible():
+        if event.type() == QEvent.Type.WindowActivate and self.isVisible():
             self.update_spacing()
         return super().event(event)
 
@@ -366,7 +366,7 @@ class MeasurementSettings(QWidget):
     def __init__(self, settings: PartSettings, parent=None):  # noqa: PLR0915
         super().__init__(parent)
         self.chosen_element: Optional[MeasurementListWidgetItem] = None
-        self.chosen_element_area: Optional[Tuple[AreaType, float]] = None
+        self.chosen_element_area: Optional[tuple[AreaType, float]] = None
         self.settings = settings
         self.profile_list = QListWidget(self)
         self.profile_description = QTextEdit(self)
@@ -533,7 +533,9 @@ class MeasurementSettings(QWidget):
             self.profile_description.setText("")
             return
         item = self.profile_list.currentItem()
-        if item is None:
+        if item is None or item.text() not in self.settings.measurement_profiles:
+            # item.text() is not in self.settings.measurement_profiles just after delete
+            # when list content is not updated
             self.profile_description.setText("")
             return
         profile = self.settings.measurement_profiles[item.text()]
@@ -565,7 +567,7 @@ class MeasurementSettings(QWidget):
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
-            item = cast(MeasurementListWidgetItem, self.profile_options.currentItem())
+            item = cast("MeasurementListWidgetItem", self.profile_options.currentItem())
             leaf = self.get_parameters(
                 deepcopy(item.stat),
                 self.measurement_area_choose.currentEnum(),
@@ -709,7 +711,7 @@ class MeasurementSettings(QWidget):
                 return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
-            element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+            element = cast("MeasurementListWidgetItem", self.profile_options_chosen.item(i))
             selected_values.append(MeasurementEntry(name=element.text(), calculation_tree=element.stat))
         stat_prof = MeasurementProfile(name=self.profile_name.text(), chosen_fields=selected_values)
         self.settings.measurement_profiles[stat_prof.name] = stat_prof
@@ -735,7 +737,7 @@ class MeasurementSettings(QWidget):
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
-                element = cast(MeasurementListWidgetItem, self.profile_options_chosen.item(i))
+                element = cast("MeasurementListWidgetItem", self.profile_options_chosen.item(i))
                 selected_values.append(
                     MeasurementEntry(name=val_dialog.result[element.text()], calculation_tree=element.stat)
                 )
@@ -805,7 +807,7 @@ class MeasurementSettings(QWidget):
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             measurement_dict = self.settings.measurement_profiles
-            imp = ImportDialog(stat, measurement_dict, StringViewer, MeasurementProfile)
+            imp = ImportDialog(stat, measurement_dict, StringViewer, MeasurementProfile, parent=self)
             if not imp.exec_():
                 return
             for original_name, final_name in imp.get_import_list():
@@ -824,9 +826,11 @@ class SegAdvancedWindow(AdvancedWindow):
 
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = Properties(settings)
+        self.image_metadata = ImageMetadata(settings)
         self.measurement = MeasurementWidget(settings)
         self.measurement_settings = MeasurementSettings(settings)
         self.insertTab(0, self.advanced_settings, "Properties")
+        self.insertTab(1, self.image_metadata, "Image metadata")
         self.addTab(self.measurement_settings, "Measurements settings")
         self.addTab(self.measurement, "Measurements")
         self.setCurrentWidget(self.advanced_settings)
@@ -837,7 +841,7 @@ class MultipleInput(QDialog):
         self,
         text: str,
         help_text: str = "",
-        objects_list: Optional[List[Union[Tuple[str, _DialogType], Tuple[str, _DialogType, str]]]] = None,
+        objects_list: Optional[list[Union[tuple[str, _DialogType], tuple[str, _DialogType, str]]]] = None,
         parent: Optional[QWidget] = None,
     ):
         if objects_list is None:  # pragma: no cover
@@ -887,7 +891,7 @@ class MultipleInput(QDialog):
     def accept_response(self):
         res = {}
         for name, (type_of, item) in self.object_dict.items():
-            if type_of == str:
+            if type_of is str:
                 val = str(item.text())
                 if not val.strip():
                     QMessageBox.warning(self, "Not all fields filled", "")

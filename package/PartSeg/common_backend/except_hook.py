@@ -1,3 +1,4 @@
+import logging
 import sys
 
 import sentry_sdk
@@ -23,7 +24,7 @@ def my_excepthook(type_, value, trace_back):
     # log the exception here
     if state_store.show_error_dialog and not isinstance(value, KeyboardInterrupt):
         if state_store.auto_report or state_store.always_report:
-            with sentry_sdk.push_scope() as scope:
+            with sentry_sdk.new_scope() as scope:
                 scope.set_tag("auto_report", "true")
                 scope.set_tag("main_thread", QCoreApplication.instance().thread() == QThread.currentThread())
                 sentry_sdk.capture_exception(value)
@@ -34,7 +35,7 @@ def my_excepthook(type_, value, trace_back):
         except ImportError:
             sys.__excepthook__(type_, value, trace_back)
     elif isinstance(value, KeyboardInterrupt):
-        print("KeyboardInterrupt close", file=sys.stderr)
+        logging.warning("KeyboardInterrupt close")
         sys.exit(1)
     else:
         # then call the default handler
@@ -55,7 +56,7 @@ def show_error(error=None):
     if error is None:
         return
 
-    from PartSeg.common_gui.error_report import ErrorDialog, QMessageFromException
+    from PartSeg.common_gui.error_report import ErrorDialog, QMessageFromException  # noqa: PLC0415
 
     if isinstance(error, TiffFileException):
         QMessageFromException.critical(
@@ -86,7 +87,7 @@ def show_warning(header=None, text=None, exception=None):
     This function is to ensure creation warning dialog in main thread.
     """
     if exception is not None:
-        from PartSeg.common_gui.error_report import QMessageFromException
+        from PartSeg.common_gui.error_report import QMessageFromException  # noqa: PLC0415
 
         message = QMessageFromException(QMessageBox.Icon.Warning, header, text, exception=exception)
     else:

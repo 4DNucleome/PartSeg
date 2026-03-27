@@ -81,7 +81,7 @@ class TestBaseMainWindow:
         qtbot.addWidget(main_window)
         assert len(main_window.get_colormaps()) == part_settings.image.channels
 
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     def test_napari_viewer(self, qtbot, part_settings):
         main_window = BaseMainWindow(settings=part_settings)
         qtbot.addWidget(main_window)
@@ -105,7 +105,8 @@ class TestBaseMainWindow:
         assert not main_window.viewer_list
         information_mock.assert_called_once()
 
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
+    @pytest.mark.pyside6_skip
     def test_napari_viewer_additional_layers(self, qtbot, part_settings, monkeypatch):
         main_window = BaseMainWindow(settings=part_settings)
         qtbot.addWidget(main_window)
@@ -192,7 +193,7 @@ class TestBaseMainMenu:
         set_project_info_mock.assert_not_called()
 
     def test_time_and_stack_image(self, qtbot, part_settings, monkeypatch):
-        image = Image(np.zeros((10, 10, 10, 10)), image_spacing=(1, 1, 1), axes_order="TZXY")
+        image = Image(np.zeros((10, 10, 10, 10)), spacing=(1, 1, 1), axes_order="TZXY")
         main_menu = BaseMainMenu(part_settings, None)
         qtbot.addWidget(main_menu)
         warnings_mock = MagicMock()

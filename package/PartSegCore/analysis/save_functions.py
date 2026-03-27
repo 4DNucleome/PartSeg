@@ -19,12 +19,12 @@ from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Channel, Image, ImageWriter
 
 __all__ = [
-    "SaveProject",
-    "SaveCmap",
-    "SaveXYZ",
-    "SaveAsTiff",
     "SaveAsNumpy",
+    "SaveAsTiff",
+    "SaveCmap",
     "SaveProfilesToJSON",
+    "SaveProject",
+    "SaveXYZ",
     "save_dict",
 ]
 
@@ -35,7 +35,7 @@ def save_project(
     image: Image,
     roi_info: ROIInfo,
     mask: typing.Optional[np.ndarray],
-    history: typing.List[HistoryElement],
+    history: list[HistoryElement],
     algorithm_parameters: dict,
 ):
     # TODO add support for binary objects
@@ -122,14 +122,14 @@ def _save_cmap(
             meta_group.attrs[key] = val
 
     grp = cmap_file["Chimera"]
-    grp.attrs["CLASS"] = np.string_("GROUP")
-    grp.attrs["TITLE"] = np.string_("")
-    grp.attrs["VERSION"] = np.string_("1.0")
+    grp.attrs["CLASS"] = np.bytes_("GROUP")
+    grp.attrs["TITLE"] = np.bytes_("")
+    grp.attrs["VERSION"] = np.bytes_("1.0")
 
     grp = cmap_file["Chimera/image1"]
-    grp.attrs["CLASS"] = np.string_("GROUP")
-    grp.attrs["TITLE"] = np.string_("")
-    grp.attrs["VERSION"] = np.string_("1.0")
+    grp.attrs["CLASS"] = np.bytes_("GROUP")
+    grp.attrs["TITLE"] = np.bytes_("")
+    grp.attrs["VERSION"] = np.bytes_("1.0")
     grp.attrs["step"] = np.array(spacing, dtype=np.float32)[::-1] * UNIT_SCALE[cmap_profile["units"].value]
 
     return cmap_file
@@ -398,7 +398,7 @@ class SaveProfilesToJSON(SaveBase):
         return "Segment profile (*.json)"
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return []
 
 

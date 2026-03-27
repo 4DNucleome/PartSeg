@@ -12,7 +12,12 @@ from PartSeg import state_store
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
-from PartSegCore.analysis.measurement_calculation import ComponentsNumber, MeasurementProfile, Volume
+from PartSegCore.analysis.measurement_calculation import (
+    ColocalizationMeasurement,
+    ComponentsNumber,
+    MeasurementProfile,
+    Volume,
+)
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
@@ -20,14 +25,13 @@ from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderRim, LowerThresholdAlgorithm
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
-from PartSegImage import Image
+from PartSegImage import ChannelInfo, Image
 
 
 @pytest.fixture(scope="module")
 def data_test_dir():
     """Return path to directory with test data that need to be downloaded"""
     return Path(__file__).absolute().parent.parent.parent / "test_data"
-    # return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "test_data")
 
 
 @pytest.fixture(autouse=True)
@@ -41,36 +45,36 @@ def bundle_test_dir():
     return Path(os.path.join(os.path.dirname(__file__), "test_data"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def image(tmp_path):
-    data = np.zeros([20, 20, 20, 2], dtype=np.uint8)
+    data = np.zeros([20, 20, 20, 2], dtype=np.uint16)
     data[10:-1, 1:-1, 1:-1, 0] = 20
     data[1:10, 1:-1, 1:-1, 1] = 20
     data[1:-1, 1:5, 1:-1, 1] = 20
     data[1:-1, -5:-1, 1:-1, 1] = 20
 
-    return Image(data, (10**-3, 10**-3, 10**-3), axes_order="ZYXC", file_path=str(tmp_path / "test.tiff"))
+    return Image(data, spacing=(10**-3, 10**-3, 10**-3), axes_order="ZYXC", file_path=str(tmp_path / "test.tiff"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def image2(image, tmp_path):
     data = np.zeros([20, 20, 20, 1], dtype=np.uint8)
     data[10:-1, 1:-1, 1:-1, 0] = 20
-    img = image.merge(Image(data, (10**-3, 10**-3, 10**-3), axes_order="ZYXC"), "C")
+    img = image.merge(Image(data, spacing=(10**-3, 10**-3, 10**-3), axes_order="ZYXC"), "C")
     img.file_path = str(tmp_path / "test2.tiff")
     return img
 
 
-@pytest.fixture()
+@pytest.fixture
 def image2d(tmp_path):
     data = np.zeros([20, 20], dtype=np.uint8)
     data[10:-1, 1:-1] = 20
-    return Image(data, (10**-3, 10**-3), axes_order="YX", file_path=str(tmp_path / "test.tiff"))
+    return Image(data, spacing=(10**-3, 10**-3), axes_order="YX", file_path=str(tmp_path / "test.tiff"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack_image():
-    data = np.zeros([20, 40, 40], dtype=np.uint8)
+    data = np.zeros([20, 40, 40, 3], dtype=np.uint8)
     for x, y in itertools.product([0, 20], repeat=2):
         data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = 100
     for x, y in itertools.product([0, 20], repeat=2):
@@ -78,10 +82,23 @@ def stack_image():
     for x, y in itertools.product([0, 20], repeat=2):
         data[5:-5, x + 6 : x + 14, y + 6 : y + 14] = 140
 
-    return MaskProjectTuple("test_path", Image(data, (2, 1, 1), axes_order="ZYX", file_path="test_path"))
+    return MaskProjectTuple(
+        "test_path",
+        Image(
+            data,
+            spacing=(2, 1, 1),
+            axes_order="ZYXC",
+            file_path="test_path",
+            channel_info=[
+                ChannelInfo(name="channel 1", color_map="#00FF00FF"),
+                ChannelInfo(name="channel 2", color_map="#00FF"),
+                ChannelInfo(name="channel 3", color_map="#FF0000"),
+            ],
+        ),
+    )
 
 
-@pytest.fixture()
+@pytest.fixture
 def algorithm_parameters():
     algorithm_parameters = {
         "algorithm_name": "Lower threshold",
@@ -96,7 +113,7 @@ def algorithm_parameters():
     return deepcopy(algorithm_parameters)
 
 
-@pytest.fixture()
+@pytest.fixture
 def roi_extraction_profile():
     return ROIExtractionProfile(
         name="test",
@@ -105,7 +122,7 @@ def roi_extraction_profile():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask_segmentation_parameters():
     return ROIExtractionProfile(
         name="",
@@ -124,7 +141,7 @@ def mask_segmentation_parameters():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack_segmentation1(stack_image: MaskProjectTuple, mask_segmentation_parameters):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
@@ -136,7 +153,7 @@ def stack_segmentation1(stack_image: MaskProjectTuple, mask_segmentation_paramet
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def analysis_segmentation(stack_image: MaskProjectTuple):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
@@ -145,13 +162,13 @@ def analysis_segmentation(stack_image: MaskProjectTuple):
     return ProjectTuple(file_path=stack_image.file_path, image=stack_image.image, roi_info=data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def analysis_segmentation2(analysis_segmentation: ProjectTuple):
     mask = (analysis_segmentation.roi_info.roi > 0).astype(np.uint8)
     return dataclasses.replace(analysis_segmentation, mask=mask)
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_parameters):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
@@ -164,12 +181,12 @@ def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_paramet
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask_property():
     return MaskProperty.simple_mask()
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask_property_non_default():
     return MaskProperty(
         dilate=RadiusType.R2D,
@@ -182,7 +199,7 @@ def mask_property_non_default():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def measurement_profiles():
     statistics = [
         MeasurementEntry(
@@ -202,19 +219,31 @@ def measurement_profiles():
             calculation_tree=Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
         ),
     ]
-    return MeasurementProfile(name="statistic1", chosen_fields=statistics), MeasurementProfile(
-        name="statistic2", chosen_fields=statistics + statistics2
+    statistics3 = [
+        MeasurementEntry(
+            name="Colocalisation",
+            calculation_tree=ColocalizationMeasurement.get_starting_leaf().replace_(
+                per_component=PerComponent.No,
+                area=AreaType.ROI,
+                parameters=ColocalizationMeasurement.__argument_class__(),
+            ),
+        ),
+    ]
+    return (
+        MeasurementProfile(name="statistic1", chosen_fields=statistics),
+        MeasurementProfile(name="statistic2", chosen_fields=statistics + statistics2),
+        MeasurementProfile(name="statistic3", chosen_fields=statistics + statistics2 + statistics3),
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def border_rim_profile():
     return ROIExtractionProfile(
         name="border_profile", algorithm=BorderRim.get_name(), values=BorderRim.get_default_values()
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def lower_threshold_profile():
     return ROIExtractionProfile(
         name="lower_profile",
@@ -223,7 +252,7 @@ def lower_threshold_profile():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mask_threshold_profile():
     return ROIExtractionProfile(
         name="mask_profile",
@@ -232,7 +261,7 @@ def mask_threshold_profile():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_pipeline(border_rim_profile, lower_threshold_profile, mask_property):
     return SegmentationPipeline(
         name="sample_pipeline",
@@ -241,7 +270,7 @@ def sample_pipeline(border_rim_profile, lower_threshold_profile, mask_property):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_pipeline2(border_rim_profile, lower_threshold_profile, mask_property):
     return SegmentationPipeline(
         name="sample_pipeline2",
@@ -250,7 +279,7 @@ def sample_pipeline2(border_rim_profile, lower_threshold_profile, mask_property)
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def history_element(image, lower_threshold_profile):
     roi = np.zeros(image.shape, dtype=np.uint8)
     roi[0, 2:10] = 1
@@ -270,11 +299,17 @@ def history_element(image, lower_threshold_profile):
 def pytest_collection_modifyitems(session, config, items):
     image_tests = [x for x in items if "PartSegImage" in str(x.fspath)]
     core_tests = [x for x in items if "PartSegCore" in str(x.fspath)]
+    # put test_analysis_batch after all other core test to
+    # increase probability that more specific test will fail before
+    # batch integration tests
+    core_test_batch = [x for x in core_tests if "test_analysis_batch" in str(x.fspath)]
+    core_tests_non_batch = [x for x in core_tests if x not in core_test_batch]
+    core_tests = core_tests_non_batch + core_test_batch
     other_test = [x for x in items if "PartSegCore" not in str(x.fspath) and "PartSegImage" not in str(x.fspath)]
     items[:] = image_tests + core_tests + other_test
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item):  # pragma: no cover
     if platform.system() == "Windows" and any(item.iter_markers(name="windows_ci_skip")):
         pytest.skip("glBindFramebuffer with no OpenGL")
     if platform.system() == "Windows" and any(item.iter_markers(name="pyside_skip")):
@@ -282,3 +317,8 @@ def pytest_runtest_setup(item):
 
         if qtpy.API_NAME == "PySide2":
             pytest.skip("PySide2 problems")
+    if any(item.iter_markers(name="pyside6_skip")):
+        import qtpy
+
+        if qtpy.API_NAME == "PySide6":
+            pytest.skip("PySide6 problems")

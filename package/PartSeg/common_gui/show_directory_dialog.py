@@ -13,7 +13,7 @@ class DirectoryDialog(QDialog):
         self.path_to_directory = path_to_directory
         text_label = QLabel(path_to_directory)
         text_label.setWordWrap(True)
-        text_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        text_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         open_btn = QPushButton("Open directory")
         open_btn.clicked.connect(self.open_folder)
         close_btn = QPushButton("Close")

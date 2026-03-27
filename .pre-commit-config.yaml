@@ -1,14 +1,6 @@
-default_language_version:
-    python: python3.8
-
 repos:
--   repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1
-    hooks:
-    - id: black
-      pass_filenames: true
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v6.0.0
     hooks:
     - id: check-json
     - id: check-yaml
@@ -19,40 +11,40 @@ repos:
       exclude: .*\.md
     - id: debug-statements
     - id: mixed-line-ending
--   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.4.0
-    hooks:
-    - id: setup-cfg-fmt
-      args: ["--include-version-classifiers", "--max-py-version", "3.11"]
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.290
+    rev: v0.15.7
     hooks:
-      - id: ruff
--   repo: https://github.com/asottile/pyupgrade
-    rev: v3.11.0
-    hooks:
-    - id: pyupgrade
-      args: ["--py38-plus"]
+      - id: ruff-check
+      - id: ruff-format
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
     -   id: rst-backticks
 -   repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.17  # Use the ref you want to point at
+    rev: 1.0.0  # Use the ref you want to point at
     hooks:
     - id: mdformat
       exclude: TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
       args: ["--number"]
       additional_dependencies:
           - mdformat-gfm
-          - mdformat-black
+          - mdformat-footnote
+          - mdformat-gfm-alerts
+          - mdformat-ruff
           - mdformat-toc
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.5.1'  # Use the sha / tag you want to point at
+    rev: 'v1.19.1'  # Use the sha / tag you want to point at
     hooks:
     -   id: mypy
         files: ^package/PartSegImage/.+\.py
+
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.4.2
+    hooks:
+    - id: codespell
+      additional_dependencies:
+      - tomli
 
 
 ci:

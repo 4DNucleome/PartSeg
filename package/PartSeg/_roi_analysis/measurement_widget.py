@@ -1,7 +1,6 @@
 import locale
 import os
 from enum import Enum
-from typing import List, Tuple
 
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QKeyEvent, QResizeEvent
@@ -56,7 +55,7 @@ class MeasurementsStorage:
         self.header = []
         self.max_rows = 0
         self.content = []
-        self.measurements: List[MeasurementResult] = []
+        self.measurements: list[MeasurementResult] = []
 
     def get_size(self, save_orientation: bool):
         if save_orientation:
@@ -116,13 +115,13 @@ class MeasurementsStorage:
         val = sublist[y]
         return locale.str(val) if isinstance(val, float) else str(val)
 
-    def get_header(self, save_orientation: bool) -> List[str]:
+    def get_header(self, save_orientation: bool) -> list[str]:
         if save_orientation:
             return [str(i) for i in range(self.max_rows)]
 
         return self.header
 
-    def get_rows(self, save_orientation: bool) -> List[str]:
+    def get_rows(self, save_orientation: bool) -> list[str]:
         return self.get_header(not save_orientation)
 
 
@@ -234,7 +233,7 @@ class MeasurementWidgetBase(QWidget):
             for c in range(self.info_field.columnCount()):
                 try:
                     s += str(self.info_field.item(r, c).text()) + "\t"
-                except AttributeError:
+                except AttributeError:  # noqa: PERF203
                     s += "\t"
             s = s[:-1] + "\n"  # eliminate last '\t'
         self.clip.setText(s)
@@ -284,18 +283,18 @@ class MeasurementWidgetBase(QWidget):
         raise NotImplementedError
 
     def keyPressEvent(self, e: QKeyEvent):
-        if not e.modifiers() & Qt.ControlModifier:
+        if not e.modifiers() & Qt.KeyboardModifier.ControlModifier:
             return
         selected = self.info_field.selectedRanges()
 
-        if e.key() == Qt.Key_C:  # copy
+        if e.key() == Qt.Key.Key_C:  # copy
             s = ""
 
             for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
                 for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
                     try:
                         s += str(self.info_field.item(r, c).text()) + "\t"
-                    except AttributeError:
+                    except AttributeError:  # noqa: PERF203
                         s += "\t"
                 s = s[:-1] + "\n"  # eliminate last '\t'
             self.clip.setText(s)
@@ -315,7 +314,7 @@ class MeasurementWidgetBase(QWidget):
         self.measurement_type.blockSignals(False)
 
     @staticmethod
-    def _move_widgets(widgets_list: List[Tuple[QWidget, int]], layout1: QBoxLayout, layout2: QBoxLayout):
+    def _move_widgets(widgets_list: list[tuple[QWidget, int]], layout1: QBoxLayout, layout2: QBoxLayout):
         for el in widgets_list:
             layout1.removeWidget(el[0])
             layout2.addWidget(el[0], el[1])
@@ -366,16 +365,12 @@ class MeasurementWidget(MeasurementWidgetBase):
             return
         units = self.units_choose.currentEnum()
 
-        # FIXME find which errors should be displayed as warning
-        # def exception_hook(exception):
-        #    QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
-
         for num in compute_class.get_channels_num():
-            if num >= self.settings.image.channels:
+            if not self.settings.image.has_channel(num):
                 QMessageBox.warning(
                     self,
                     "Measurement error",
-                    f"Cannot calculate this measurement because image do not have channel {num+1}",
+                    f"Cannot calculate this measurement because image do not have channel {num}",
                 )
                 return
 

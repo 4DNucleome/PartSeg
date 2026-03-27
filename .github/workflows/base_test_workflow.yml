@@ -1,3 +1,5 @@
+name: Base Test Workflow
+
 on:
   workflow_call:
     inputs:
@@ -7,8 +9,12 @@ on:
       os:
         required: false
         type: string
-        default: "ubuntu-20.04"
+        default: "ubuntu-24.04"
       tox_args:
+        required: false
+        type: string
+        default: ""
+      pytest_args:
         required: false
         type: string
         default: ""
@@ -32,82 +38,108 @@ on:
         required: false
         type: number
         default: 60
+      pydantic:
+        required: false
+        type: string
+        default: ""
+      artifact_suffix:
+        required: false
+        type: string
+        default: ""
 
 
 jobs:
   test:
-    name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }}
+    name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }} ${{ inputs.pydantic }}
     runs-on: ${{ inputs.os }}
+    env:
+      NAPARI: ${{ inputs.napari }}
+      BACKEND: ${{ inputs.qt_backend }}
+      PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+      TOX_ARGS: ${{ inputs.tox_args }}
+      PYTEST_ARGS: ${{ inputs.pytest_args }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         name: Install Python ${{ inputs.python_version }}
         with:
           python-version: ${{ inputs.python_version }}
           cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
+          cache-dependency-path: 'pyproject.toml'
 
-#      - name: Install ubuntu libraries
-#        if: runner.os == 'Linux'
-#        run: |
-#          sudo apt update
-#          sudo apt-get install -y libegl1 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 x11-utils libxcb-cursor0
-
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        if: runner.os == 'Linux'
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0 # v4.3
         with:
-          packages: libegl1 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 x11-utils libxcb-cursor0 libhdf5-dev
-          version: 1.0
-
-
-      - name: Install Windows OpenGL
-        if: runner.os == 'Windows'
-        run: |
-          git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-          powershell gl-ci-helpers/appveyor/install_opengl.ps1
-          if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
+          qt: true
+          wm: herbstluftwm
 
       - name: Download test data
         if: ${{ inputs.test_data }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v8
         with:
           name: test_data
           path: test_data
 
       - name: Install dependencies
         run: |
-          python -m pip install -r requirements/requirements_dev.txt tox-gh-actions>=2.12.0 tox-min-req
+          python -m pip install -r requirements/requirements_dev.txt tox-gh-actions>=2.12.0 tox-min-req tox-uv
           pip list
 
-      - name: Test with tox
-        uses: aganders3/headless-gui@v1
-        timeout-minutes: ${{ inputs.timeout }}
-        with:
-          run: python -m tox ${{ inputs.tox_args }}
+      - name: Test with tox PartSegImage
+        if: ${{ inputs.napari == 'latest' }}
+        shell: bash
+        run: |
+          # shellcheck disable=SC2086
+          python -m tox $TOX_ARGS -- package/tests/test_PartSegImage $PYTEST_ARGS
         env:
-          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
-          NAPARI: ${{ inputs.napari }}
-          BACKEND: ${{ inputs.qt_backend }}
-          PIP_CONSTRAINT: requirements/constraints_py${{ inputs.python_version }}.txt
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
 
-      - uses: actions/upload-artifact@v3
+      - name: Test with tox PartSegCore
+        if: ${{ inputs.napari == 'latest' }}
+        shell: bash
+        run: |
+          # shellcheck disable=SC2086
+          python -m tox $TOX_ARGS --  package/tests/test_PartSegCore $PYTEST_ARGS
+        env:
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+
+      - name: Test with tox PartSeg
+        if: ${{ inputs.napari == 'latest' }}
+        timeout-minutes: ${{ inputs.timeout }}
+        shell: bash
+        run: |
+          # shellcheck disable=SC2086
+          python -m tox $TOX_ARGS -- package/tests/test_PartSeg $PYTEST_ARGS
+        env:
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+
+      - name: Test with tox all
+        if: ${{ inputs.napari != 'latest' }}
+        timeout-minutes: ${{ inputs.timeout }}
+        shell: bash
+        run: |
+          # shellcheck disable=SC2086
+          python -m tox $TOX_ARGS ${PYTEST_ARGS:+-- $PYTEST_ARGS}
+        env:
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+
+
+      - uses: actions/upload-artifact@v7
         with:
-          name: upload pytest timing reports as json
+          name: timing-report-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}-${{ inputs.coverage }}${{ inputs.artifact_suffix }}
           path: |
             ./report-*.json
           retention-days: 7
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v7
         if: ${{ inputs.coverage }}
         with:
-          name: coverage_report ${{ inputs.tox_args }}
+          name: cov-reports-${{ inputs.os }}-py-${{ inputs.python_version }}-${{ inputs.napari }}-${{ inputs.qt_backend }}${{ inputs.artifact_suffix }}
+          include-hidden-files: 'true'
           path: |
-            ./htmlcov
-          retention-days: 7
-
-      - uses: codecov/codecov-action@v3
-        if: ${{ inputs.coverage }}
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+            ./.coverage.*

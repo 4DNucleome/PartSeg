@@ -69,10 +69,10 @@ class MaskProjectTuple(ProjectInfoBase):
     :ivar typing.Optional[np.ndarray] ~.mask: Mask limiting segmentation area.
     :ivar ROIInfo ~.roi_info: ROI information.
     :ivar SegmentationInfo ~.roi_info: ROI description
-    :ivar typing.List[int] ~.selected_components: list of selected components
-    :ivar typing.Dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
+    :ivar list[int] ~.selected_components: list of selected components
+    :ivar dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
         For each component description set of parameters used for segmentation
-    :ivar typing.List[HistoryElement] history: list of operations needed to create :py:attr:`mask`
+    :ivar list[HistoryElement] history: list of operations needed to create :py:attr:`mask`
     :ivar str ~.errors: information about problems meet during calculation
     :ivar typing.Optional[typing.List[float]] ~.spacing: information about spacing when image is missed.
         For napari read plugin
@@ -82,14 +82,14 @@ class MaskProjectTuple(ProjectInfoBase):
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
     roi_info: ROIInfo = dataclasses.field(default_factory=lambda: ROIInfo(None))
-    additional_layers: typing.Dict[str, AdditionalLayerDescription] = dataclasses.field(default_factory=dict)
-    selected_components: typing.List[int] = dataclasses.field(default_factory=list)
-    roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]] = dataclasses.field(
+    additional_layers: dict[str, AdditionalLayerDescription] = dataclasses.field(default_factory=dict)
+    selected_components: list[int] = dataclasses.field(default_factory=list)
+    roi_extraction_parameters: dict[int, typing.Optional[ROIExtractionProfile]] = dataclasses.field(
         default_factory=dict
     )
-    history: typing.List[HistoryElement] = dataclasses.field(default_factory=list)
+    history: list[HistoryElement] = dataclasses.field(default_factory=list)
     errors: str = ""
-    spacing: typing.Optional[typing.List[float]] = None
+    spacing: typing.Optional[list[float]] = None
     points: typing.Optional[np.ndarray] = None
     frame_thickness: int = FRAME_THICKNESS
 
@@ -106,7 +106,7 @@ class MaskProjectTuple(ProjectInfoBase):
         return MaskProjectTuple(file_path=self.file_path, image=self.image.substitute(), mask=self.mask)
 
     @property
-    def roi(self):
+    def roi(self):  # pragma: no cover
         warnings.warn("roi is deprecated", DeprecationWarning, stacklevel=2)
         return self.roi_info.roi
 
@@ -122,7 +122,7 @@ class SaveROIOptions(BaseModel):
         " then data outside ROI will be replaced with zeros.",
     )
     frame_thickness: int = Field(2, title="Frame thickness", description="Thickness of frame around ROI")
-    spacing: typing.List[float] = Field([10**-6, 10**-6, 10**-6], hidden=True)
+    spacing: list[float] = Field([10**-6, 10**-6, 10**-6], hidden=True)
 
 
 def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile, parameters: SaveROIOptions):
@@ -132,7 +132,7 @@ def _save_mask_roi(project: MaskProjectTuple, tar_file: tarfile.TarFile, paramet
         spacing = project.image.spacing
     else:
         spacing = parameters.spacing
-    segmentation_image = Image(project.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", ""))
+    segmentation_image = Image(project.roi_info.roi, spacing=spacing, axes_order=Image.axis_order.replace("C", ""))
     try:
         ImageWriter.save(segmentation_image, segmentation_buff, compression=None)
     except ValueError:
@@ -293,11 +293,11 @@ def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, 
     step_changed(6)
     return MaskProjectTuple(
         file_path=file_path,
-        image=metadata["base_file"] if "base_file" in metadata else None,
+        image=metadata.get("base_file"),
         roi_info=roi_info,
         selected_components=metadata["components"],
         mask=mask,
-        roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
+        roi_extraction_parameters=metadata.get("parameters"),
         history=history,
         spacing=([10 ** (-9), *list(spacing)]) if spacing is not None else None,
         frame_thickness=metadata.get("frame_thickness", FRAME_THICKNESS),
@@ -336,7 +336,7 @@ class LoadROI(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -374,7 +374,7 @@ class LoadROIParameters(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -423,7 +423,7 @@ class LoadROIImage(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -447,8 +447,6 @@ class LoadROIImage(LoadBase):
             callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"],
         )
-        # noinspection PyProtectedMember
-        # image.file_path = load_locations[0]
         return dataclasses.replace(
             seg, file_path=image.file_path, image=image, roi_info=seg.roi_info.fit_to_image(image)
         )
@@ -470,7 +468,7 @@ class LoadStackImage(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
@@ -496,7 +494,7 @@ class LoadStackImageWithMask(LoadBase):
         return "img_with_mask"
 
     @classmethod
-    def get_next_file(cls, file_paths: typing.List[str]):
+    def get_next_file(cls, file_paths: list[str]):
         base, ext = os.path.splitext(file_paths[0])
         return f"{base}_mask{ext}"
 
@@ -507,11 +505,11 @@ class LoadStackImageWithMask(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
+    ) -> typing.Union[ProjectInfoBase, list[ProjectInfoBase]]:
         if metadata is None:
             metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
         image = GenericImageReader.read_image(
@@ -574,7 +572,7 @@ def save_components(
     points: typing.Optional[np.ndarray] = None,
     range_changed=None,
     step_changed=None,
-    writer_class: typing.Type[BaseImageWriter] = ImageWriter,
+    writer_class: type[BaseImageWriter] = ImageWriter,
 ):
     if range_changed is None:
         range_changed = empty_fun
@@ -716,7 +714,7 @@ class SaveParametersJSON(SaveBase):
                 json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=PartSegEncoder)
 
     @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
         return []
 
     @classmethod
@@ -732,11 +730,11 @@ class LoadROIFromTIFF(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        load_locations: list[typing.Union[str, BytesIO, Path]],
         range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
         step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
+    ) -> typing.Union[ProjectInfoBase, list[ProjectInfoBase]]:
         image = TiffImageReader.read_image(load_locations[0])
         roi = image.get_channel(0)
         return MaskProjectTuple(

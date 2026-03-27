@@ -2,7 +2,6 @@
 This module contains simple, useful widgets which implementation is too short to create separated files for them
 """
 
-
 import math
 import typing
 import warnings
@@ -83,7 +82,7 @@ class EnumComboBox(QEnumComboBox):
         For proper showing labels overload the ``__str__`` function of given :py:class:`enum.Enum`
     """
 
-    def __init__(self, enum: type(EnumType), parent=None):
+    def __init__(self, enum, parent=None):
         warnings.warn(
             "EnumComboBox is deprecated, use superqt.QEnumComboBox instead", category=DeprecationWarning, stacklevel=2
         )
@@ -121,7 +120,7 @@ class Spacing(QWidget):
         unit: Units,
         parent=None,
         input_type: QAbstractSpinBox = QDoubleSpinBox,
-        data_range: typing.Tuple[float, float] = (0, 100000),
+        data_range: tuple[float, float] = (0, 100000),
     ):
         """
         :param title: title of the widget
@@ -141,12 +140,13 @@ class Spacing(QWidget):
             lab = QLabel(f"{name}:")
             layout.addWidget(lab)
             val = QDoubleSpinBox()
-            val.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            val.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
             val.setRange(*data_range)
             val.setValue(value * UNIT_SCALE[unit.value])
-            val.setAlignment(Qt.AlignRight)
+            val.setAlignment(Qt.AlignmentFlag.AlignRight)
             font = val.font()
             fm = QFontMetrics(font)
+            # TODO check width attribute
             val_len = max(fm.width(str(data_range[0])), fm.width(str(data_range[1]))) + fm.width(" " * 8)
             val.setFixedWidth(val_len)
             layout.addWidget(val)
@@ -171,7 +171,7 @@ class Spacing(QWidget):
 
 def right_label(text):
     label = QLabel(text)
-    label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
+    label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight)
     return label
 
 
@@ -189,7 +189,7 @@ class CustomSpinBox(QSpinBox):
 
     def __init__(self, *args, bounds=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+        self.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
         if bounds is not None:
             warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)  # pragma: no cover
 
@@ -208,7 +208,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
 
     def __init__(self, *args, bounds=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+        self.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
         if bounds is not None:
             warnings.warn("bounds parameter is deprecated", FutureWarning, stacklevel=2)  # pragma: no cover
 
@@ -281,7 +281,7 @@ class InfoLabel(QWidget):
     :param parent: passed to :py:class:`QWidget` constructor
     """
 
-    def __init__(self, text_list: typing.List[str], delay: int = 10000, parent=None):
+    def __init__(self, text_list: list[str], delay: int = 10000, parent=None):
         if len(text_list) == 0:
             raise ValueError("List of text to show should be non empty.")
         super().__init__(parent)
@@ -351,7 +351,7 @@ class TextShow(QTextEdit):
         self.lines = lines
         self.setReadOnly(True)
         p: QPalette = self.palette()
-        p.setColor(QPalette.Base, p.color(self.backgroundRole()))
+        p.setColor(QPalette.ColorRole.Base, p.color(self.backgroundRole()))
         self.setPalette(p)
 
     def height(self):

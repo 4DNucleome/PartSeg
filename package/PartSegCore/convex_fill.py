@@ -4,7 +4,7 @@ from scipy.spatial import ConvexHull
 try:
     from scipy.spatial import QhullError
 except ImportError:
-    # Scipy bellow 1.8.0
+    # Scipy below 1.8.0
     from scipy.spatial.qhull import QhullError
 # this two functions are from
 # https://stackoverflow.com/questions/37117878/generating-a-filled-polygon-inside-a-numpy-array/37123933#37123933
@@ -79,7 +79,7 @@ def convex_fill(array: np.ndarray):
         upper_bound = np.max(points, axis=1)
         cut_area = tuple(slice(x, y + 1) for x, y in zip(lower_bound, upper_bound))
         if array.ndim == 3:
-            cut_area = (slice(None),) + cut_area[1:]
+            cut_area = (slice(None), *cut_area[1:])
         component = component[cut_area]
         if array.ndim == 2:
             res = _convex_fill(component)
@@ -91,7 +91,7 @@ def convex_fill(array: np.ndarray):
                 res = _convex_fill(component[j])
                 if res is None:
                     continue
-                new_cut = (j,) + cut_area[1:]
+                new_cut = (j, *cut_area[1:])
                 tmp = array[new_cut]
                 tmp[res > 0] = i
                 array[new_cut] = tmp

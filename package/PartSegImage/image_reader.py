@@ -2,23 +2,31 @@ import os.path
 import typing
 from abc import abstractmethod
 from contextlib import suppress
+from importlib import metadata
 from io import BytesIO
+from itertools import zip_longest
 from pathlib import Path
 from threading import Lock
 
 import numpy as np
 import tifffile
-from czifile.czifile import CziFile
+from czifile import CziFile
 from defusedxml import ElementTree
 from oiffile import OifFile
+from packaging.version import parse as parse_version
 
-from PartSegImage.image import Image
+from PartSegImage.image import ChannelInfo, Image
+
+CZIFILE_ABOVE_2026_3_12 = parse_version(metadata.version("czifile")) >= parse_version("2026.3.12")
 
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
 
 if typing.TYPE_CHECKING:
     from xml.etree.ElementTree import Element  # nosec
+
+
+CZI_MAX_WORKERS = None
 
 
 def _empty(_, __):
@@ -49,13 +57,23 @@ class BaseImageReader:
         """
         return cls.image_class.axis_order
 
-    def __init__(self, callback_function=None):
+    def __init__(self, callback_function: typing.Optional[typing.Callable[[str, int], typing.Any]] = None) -> None:
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
+        self.time_increment = 1.0
+        self.channel_names: list[str] = []
+        self.colors: list[typing.Optional[typing.Any]] = []
+        self.ranges: list[tuple[float, float]] = []
         if callback_function is None:
             self.callback_function = _empty
         else:
             self.callback_function = callback_function
+
+    def _get_channel_info(self) -> list[ChannelInfo]:
+        return [
+            ChannelInfo(name=name, color_map=color, contrast_limits=contrast_limits)
+            for name, color, contrast_limits in zip_longest(self.channel_names, self.colors, self.ranges)
+        ]
 
     def set_default_spacing(self, spacing):
         spacing = tuple(spacing)
@@ -63,7 +81,7 @@ class BaseImageReader:
             # one micrometer
             spacing = (10 ** (-6), *spacing)
         if len(spacing) != 3:
-            raise ValueError(f"wrong spacing {spacing}")
+            raise ValueError(f"wrong spacing {spacing}")  # pragma: no cover
         self.default_spacing = spacing
 
     @abstractmethod
@@ -86,7 +104,7 @@ class BaseImageReader:
         image_path: typing.Union[str, Path],
         mask_path=None,
         callback_function: typing.Optional[typing.Callable] = None,
-        default_spacing: typing.Optional[typing.Tuple[float, float, float]] = None,
+        default_spacing: typing.Optional[tuple[float, float, float]] = None,
     ) -> Image:
         """
         read image file with optional mask file
@@ -105,7 +123,7 @@ class BaseImageReader:
         return instance.read(image_path, mask_path)
 
     @staticmethod
-    def _reduce_obsolete_dummy_axes(array, axes) -> typing.Tuple[np.ndarray, str]:
+    def _reduce_obsolete_dummy_axes(array, axes) -> tuple[np.ndarray, str]:
         """
         If there are duplicates in axes string then remove dimensions of size one
 
@@ -146,8 +164,7 @@ class BaseImageReader:
                 axes_li[1] = "Z"
             i = 0
             while i < len(axes_li):
-                name = axes_li[i]
-                if name not in final_mapping_dict and array.shape[i] == 1:
+                if array.shape[i] == 1:
                     array = array.take(0, i)
                     axes_li.pop(i)
                 else:
@@ -158,7 +175,7 @@ class BaseImageReader:
             raise NotImplementedError(
                 f"Data type not supported ({e.args[0]}). Please contact with author for update code"
             ) from e
-        if len(final_mapping) != len(set(final_mapping)):
+        if len(final_mapping) != len(set(final_mapping)):  # pragma: no cover
             raise NotImplementedError("Data type not supported. Please contact with author for update code")
         if len(array.shape) < len(cls.return_order()):
             array = np.reshape(array, array.shape + (1,) * (len(cls.return_order()) - len(array.shape)))
@@ -187,7 +204,7 @@ class BaseImageReaderBuffer(BaseImageReader):
         image_path: typing.Union[str, Path, BytesIO],
         mask_path=None,
         callback_function: typing.Optional[typing.Callable] = None,
-        default_spacing: typing.Optional[typing.Tuple[float, float, float]] = None,
+        default_spacing: typing.Optional[tuple[float, float, float]] = None,
     ) -> Image:
         """
         read image file with optional mask file
@@ -219,11 +236,11 @@ class GenericImageReader(BaseImageReaderBuffer):
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
-            if isinstance(image_path, BytesIO):  # pragma: no cover
+            if isinstance(image_path, BytesIO):
                 raise NotImplementedError("Oif format is not supported for BytesIO")
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext == ".obsep":
-            if isinstance(image_path, BytesIO):  # pragma: no cover
+            if isinstance(image_path, BytesIO):
                 raise NotImplementedError("Obsep format is not supported for BytesIO")
             return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
@@ -233,7 +250,11 @@ class OifImagReader(BaseImageReader):
     def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
         with OifFile(image_path) as image_file:
             tiffs = tifffile.natural_sorted(image_file.glob("*.tif"))
-            with tifffile.TiffFile(image_file.open_file(tiffs[0]), name=tiffs[0]) as tif_file:
+
+            with (
+                image_file.open_file(tiffs[0]) as tiff_buffer,
+                tifffile.TiffFile(tiff_buffer, name=tiffs[0]) as tif_file,
+            ):
                 axes = image_file.series[0].axes + tif_file.series[0].axes
             image_data = image_file.asarray()
             image_data = self.update_array_shape(image_data, axes)
@@ -241,7 +262,11 @@ class OifImagReader(BaseImageReader):
                 self._read_scale_parameter(image_file)
                 # TODO add mask reading
         return self.image_class(
-            image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
+            image_data,
+            spacing=self.spacing,
+            file_path=os.path.abspath(image_path),
+            axes_order=self.return_order(),
+            metadata_dict=image_file.mainfile,
         )
 
     def _read_scale_parameter(self, image_file):
@@ -270,9 +295,17 @@ class CziImageReader(BaseImageReaderBuffer):
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         image_file = CziFile(image_path)
-        image_data = image_file.asarray()
-        image_data = self.update_array_shape(image_data, image_file.axes)
-        metadata = image_file.metadata(False)
+
+        if CZIFILE_ABOVE_2026_3_12:
+            image_data = image_file.asarray(maxworkers=CZI_MAX_WORKERS)
+            axes = image_file.scenes[0].axes
+            metadata = image_file.metadata(asdict=True)
+        else:
+            image_data = image_file.asarray(max_workers=CZI_MAX_WORKERS)
+            axes = image_file.axes
+            metadata = image_file.metadata(False)
+        image_data = self.update_array_shape(image_data, axes)
+
         with suppress(KeyError):
             scaling = metadata["ImageDocument"]["Metadata"]["Scaling"]["Items"]["Distance"]
             scale_info = {el["Id"]: el["Value"] for el in scaling}
@@ -281,10 +314,25 @@ class CziImageReader(BaseImageReaderBuffer):
                 scale_info.get("Y", self.default_spacing[1]),
                 scale_info.get("X", self.default_spacing[2]),
             )
+        with suppress(KeyError):
+            channel_meta = metadata["ImageDocument"]["Metadata"]["DisplaySetting"]["Channels"]["Channel"]
+            if isinstance(channel_meta, dict):
+                # single channel saved in czifile
+                channel_meta = [channel_meta]
+            self.channel_names = [x.get("Name", f"Channel_{i}") for i, x in enumerate(channel_meta, start=1)]
+            self.colors = [x.get("Color") for x in channel_meta]
         # TODO add mask reading
         if isinstance(image_path, BytesIO):
             image_path = ""
-        return self.image_class(image_data, self.spacing, file_path=image_path, axes_order=self.return_order())
+        image_file.close()
+        return self.image_class(
+            image_data,
+            spacing=self.spacing,
+            file_path=image_path,
+            axes_order=self.return_order(),
+            metadata_dict=metadata,
+            channel_info=self._get_channel_info(),
+        )
 
     @classmethod
     def update_array_shape(cls, array: np.ndarray, axes: str):
@@ -307,10 +355,10 @@ class ObsepImageReader(BaseImageReader):
     def _search_for_files(
         self,
         directory: Path,
-        channels: typing.List["Element"],
+        channels: list["Element"],
         suffix: str = "",
         required: bool = False,
-    ) -> typing.List[Image]:
+    ) -> list[Image]:
         possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
         channel_list = []
         for channel in channels:
@@ -334,7 +382,7 @@ class ObsepImageReader(BaseImageReader):
         xml_doc = ElementTree.parse(image_path).getroot()
         channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
         if not channels:
-            raise ValueError("Information about channel images not found")
+            raise ValueError("Information about channel images not found")  # pragma: no cover
         channel_list = [
             *self._search_for_files(directory, channels, required=True),
             *self._search_for_files(directory, channels, "_deconv"),
@@ -347,7 +395,7 @@ class ObsepImageReader(BaseImageReader):
             float(xml_doc.find("net/node/attribute[@name='step width']/double").attrib["val"]) * name_to_scalar["um"]
         )
 
-        image.set_spacing((z_spacing,) + image.spacing[1:])
+        image.set_spacing((z_spacing, *image.spacing[1:]))
         image.file_path = str(image_path)
         return image
 
@@ -362,17 +410,15 @@ class TiffImageReader(BaseImageReaderBuffer):
 
     def __init__(self, callback_function=None):
         super().__init__(callback_function)
-        self.colors = None
-        self.channel_names = None
-        self.ranges = None
         self.shift = (0, 0, 0)
         self.name = ""
+        self.metadata = {}
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         """
         Read tiff image from tiff_file
         """
-        self.spacing, self.colors, self.channel_names, self.ranges = self.default_spacing, None, None, None
+        self.spacing, self.colors, self.channel_names, self.ranges = self.default_spacing, [], [], []
         with tifffile.TiffFile(image_path) as image_file:
             total_pages_num = len(image_file.series[0])
 
@@ -404,7 +450,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                     mask_data = mask_file.asarray()
                     mask_data = self.update_array_shape(mask_data, mask_file.series[0].axes)
                     if "C" in self.return_order():
-                        pos: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(mask_data.ndim)]
+                        pos: list[typing.Union[slice, int]] = [slice(None) for _ in range(mask_data.ndim)]
                         pos[self.return_order().index("C")] = 0
                         mask_data = mask_data[tuple(pos)]
 
@@ -424,15 +470,15 @@ class TiffImageReader(BaseImageReaderBuffer):
             image_path = ""
         return self.image_class(
             image_data,
-            self.spacing,
+            spacing=self.spacing,
             mask=mask_data,
-            default_coloring=self.colors,
-            channel_names=self.channel_names,
-            ranges=self.ranges,
+            channel_info=self._get_channel_info(),
             file_path=os.path.abspath(image_path),
             axes_order=self.return_order(),
             shift=self.shift,
             name=self.name,
+            metadata_dict=self.metadata,
+            time_increment=self.time_increment,
         )
 
     @staticmethod
@@ -487,18 +533,50 @@ class TiffImageReader(BaseImageReaderBuffer):
             x_spacing, y_spacing = self.default_spacing[2], self.default_spacing[1]
         return x_spacing, y_spacing
 
-    def read_imagej_metadata(self, image_file):
+    @staticmethod
+    def _read_imagej_colors(
+        image_file: tifffile.TiffFile,
+    ) -> list[np.ndarray[tuple[int, int], np.dtype[np.uint8]]]:
+        """
+        Read colors from ImageJ metadata
+
+        :param image_file: tiff file to read
+        :return: list of colors or empty list if no colors
+        """
+        colors = image_file.imagej_metadata.get("LUTs", [])
+        if isinstance(colors, list) and colors and colors[0].shape[0] == 24:
+            # drop buggy colors that comes from bug in PartSeg with
+            # writing 64 bit integers in tifffile
+            return []
+        if isinstance(colors, np.ndarray):
+            return [colors]
+
+        return colors
+
+    def read_imagej_metadata(self, image_file: tifffile.TiffFile) -> None:
+        """
+        Read metadata from the ImageJ tiff file.
+
+        Read spacing, colors, channel names, ranges and other metadata.
+        Save original metadata in :py:attr:`metadata`
+
+        :param image_file: file to read
+        """
         try:
             z_spacing = image_file.imagej_metadata["spacing"] * name_to_scalar[image_file.imagej_metadata["unit"]]
         except KeyError:
             z_spacing = self.default_spacing[0]
         x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
         self.spacing = z_spacing, y_spacing, x_spacing
-        self.colors = image_file.imagej_metadata.get("LUTs")
-        self.channel_names = image_file.imagej_metadata.get("Labels")
+        self.colors = self._read_imagej_colors(image_file)
+        self.channel_names = image_file.imagej_metadata.get("Labels", [])
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
+        if "finterval" in image_file.imagej_metadata:
+            with suppress(ValueError, TypeError):
+                self.time_increment = float(image_file.imagej_metadata["finterval"])
+        self.metadata = image_file.imagej_metadata
 
     def _read_ome_channel_information(self, meta_data):
         if "Channel" not in meta_data["Pixels"]:
@@ -522,11 +600,18 @@ class TiffImageReader(BaseImageReaderBuffer):
                 for x in ["Z", "Y", "X"]
             ]
         with suppress(KeyError):
+            time_increment = (
+                meta_data["Pixels"]["TimeIncrement"] * name_to_scalar[meta_data["Pixels"]["TimeIncrementUnit"]]
+            )
+            if time_increment > 0:
+                self.time_increment = time_increment
+        with suppress(KeyError):
             self.shift = [
                 meta_data["Pixels"]["Plane"][0][f"Position{x}"]
                 * name_to_scalar[meta_data["Pixels"]["Plane"][0][f"Position{x}Unit"]]
                 for x in ["Z", "Y", "X"]
             ]
+        self.metadata = meta_data
         self.name = meta_data.get("Name", "")
         self._read_ome_channel_information(meta_data)
 
@@ -537,6 +622,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                 self.colors = [x[:3] for x in image_file.lsm_metadata["ChannelColors"]["Colors"]]
             if "ColorNames" in image_file.lsm_metadata["ChannelColors"]:
                 self.channel_names = image_file.lsm_metadata["ChannelColors"]["ColorNames"]
+        self.metadata = image_file.lsm_metadata
 
 
 name_to_scalar = {
@@ -553,4 +639,28 @@ name_to_scalar = {
     "centimeter": 10**-2,
     "cm": 10**-2,
     "cal": 2.54 * 10**-2,
-}  #: dict with known names of scalar to scalar value. Some may be  missed
+    "Ys": 10**24,  # yottasecond
+    "Zs": 10**21,  # zettasecond
+    "Es": 10**18,  # exasecond
+    "Ps": 10**15,  # petasecond
+    "Ts": 10**12,  # terasecond
+    "Gs": 10**9,  # gigasecond
+    "Ms": 10**6,  # megasecond
+    "ks": 10**3,  # kilosecond
+    "hs": 10**2,  # hectosecond
+    "das": 10**1,  # decasecond
+    "s": 1,  # second
+    "ds": 10**-1,  # decisecond
+    "cs": 10**-2,  # centisecond
+    "ms": 10**-3,  # millisecond
+    "µs": 10**-6,  # microsecond
+    "ns": 10**-9,  # nanosecond
+    "ps": 10**-12,  # picosecond
+    "fs": 10**-15,  # femtosecond
+    "as": 10**-18,  # attosecond
+    "zs": 10**-21,  # zeptosecond
+    "ys": 10**-24,  # yoctosecond
+    "min": 60,  # minute
+    "h": 3600,  # hour
+    "d": 86400,  # day
+}  #: dict with known names of scalar to scalar value. Some may be missed

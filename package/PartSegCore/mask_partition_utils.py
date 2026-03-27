@@ -6,8 +6,9 @@ allow user to preview, for better intuition how it works and which parameters ar
 Better option is to implement this utils as class based with base class :py:class:`AlgorithmDescribeBase`.
 Then do not need to manage algorithm parameters in places where it is used.
 
-Both class from this module are designed for spherical mask, but may be useful als for others.
+Both class from this module are designed for spherical mask, but may be useful also for others.
 """
+
 import typing
 
 import numpy as np

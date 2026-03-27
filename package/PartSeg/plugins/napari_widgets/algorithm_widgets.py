@@ -1,6 +1,6 @@
 import operator
 from enum import Enum
-from typing import Optional, Type
+from typing import Optional
 
 import numpy as np
 import SimpleITK as sitk
@@ -217,7 +217,7 @@ class SplitCoreObjectsModel(AlgModel):
 
 
 class AlgorithmWidgetBase(QWidget):
-    __data_model__: Type[BaseModel]
+    __data_model__: type[BaseModel]
 
     def __init__(self, napari_viewer: Viewer, parent=None):
         super().__init__(parent)

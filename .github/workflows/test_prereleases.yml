@@ -8,22 +8,35 @@ on:
     branches:
       - master
       - develop
-      - bugfix/fix_pre_tests
   schedule:
     - cron: '0 */12 * * *'  # every 12 hours
+  pull_request:
+    paths:
+      - '.github/workflows/test_prereleases.yml'
+      - 'pyproject.toml'
+      - 'launcher.spec'
+      - 'requirements/pre_test_problematic_version.txt'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+
+concurrency:
+  group: pre-test-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+  COLUMNS: 120
 
 jobs:
   download_data:
     name: Download test data
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
           name: test_data
           path: test_data
@@ -31,35 +44,32 @@ jobs:
 
 
   test:
-    name: ${{ matrix.platform }} py${{ matrix.python }} ${{ matrix.backend }} --pre
+    name: ${{ matrix.platform }} py${{ matrix.python }} --pre
     runs-on: ${{ matrix.platform }}
     needs: download_data
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-2022, macos-12, ubuntu-22.04]
-        python: [3.9]
+        platform: [windows-2022, macos-14, ubuntu-24.04]
+        python: [3.12]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
+          cache-dependency-path: 'pyproject.toml'
 
-      - name: Install Windows OpenGL
-        if: runner.os == 'Windows'
-        run: |
-          git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-          powershell gl-ci-helpers/appveyor/install_opengl.ps1
-          if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
-
-      - uses: tlambert03/setup-qt-libs@v1
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0 # v4.3
+        with:
+          qt: true
+          wm: herbstluftwm
 
       - name: Download test data
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v8
         with:
           name: test_data
           path: test_data
@@ -69,17 +79,29 @@ jobs:
           pip install --upgrade pip
           pip install setuptools tox tox-gh-actions>=2.12.0
 
-      - name: Test with tox linux
+      - name: Test with tox base
         # run tests using pip install --pre
-        uses: aganders3/headless-gui@v1
         timeout-minutes: 60
-        with:
-          run: python -m tox -v --pre
+        run: python -m tox run -v -- -v package/tests/test_PartSegImage package/tests/test_PartSegCore
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: latest
-          BACKEND: PyQt5
+          BACKEND: PyQt6
+          PIP_CONSTRAINT: requirements/pre_test_problematic_version.txt
+          PIP_PRE: 1
+
+      - name: Test with tox linux
+        # run tests using pip install --pre
+        timeout-minutes: 60
+        run: python -m tox run -v -- -v package/tests/test_PartSeg
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          PYVISTA_OFF_SCREEN: True  # required for opengl on windows
+          NAPARI: latest
+          BACKEND: PyQt6
+          PIP_CONSTRAINT: requirements/pre_test_problematic_version.txt
+          PIP_PRE: 1
 
       # If something goes wrong, we can open an issue in the repo
       - name: Report Failures
@@ -99,38 +121,40 @@ jobs:
     name: "Test pyinstaller build"
     runs-on: "ubuntu-latest"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      name: Install Python 3.9
+    - uses: actions/checkout@v6
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v7
       with:
-        python-version: 3.9
-    - uses: tlambert03/setup-qt-libs@v1
+        activate-environment: 'true'
+        python-version: '3.12'
+    - name: Setup headless display
+      uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0 # v4.3
+      with:
+        qt: true
+        wm: herbstluftwm
+    - name: Compile PyInstaller requirements
+      run: |
+        uv pip compile --prerelease allow --python-version 3.12 --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller
     - name: Install dependencies
       run: |
-        pip install --upgrade pip
-        pip install pip-tools
-    - name: Compile and install PyInstaller requirements
-      run: |
-        pip-compile --upgrade -o requirements.txt setup.cfg --extra pyinstaller  --pre
-        pip-sync
-        pip install .
+        uv pip install -r requirements.txt
+        uv pip install .
     - name: upload requirements
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v7
       with:
         name: requirements
         path: requirements.txt
     - name: Run PyInstaller
-      run: python  build_utils/create_and_pack_executable.py
+      run: |
+        python build_utils/create_and_pack_executable.py
     - name: Upload bundle
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v7
       with:
         name: bundle
         path: dist2/
     - name: Test bundle
-      uses: aganders3/headless-gui@v1
       timeout-minutes: 60
-      with:
-        run: dist/PartSeg/PartSeg _test
+      run: dist/PartSeg/PartSeg _test
 
       # If something goes wrong, we can open an issue in the repo
     - name: Report Failures
@@ -138,8 +162,8 @@ jobs:
       uses: JasonEtco/create-an-issue@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PLATFORM: ${{ matrix.platform }}
-        PYTHON: ${{ matrix.python }}
+        PLATFORM: "linux"
+        PYTHON: "3.12"
         RUN_ID: ${{ github.run_id }}
         TITLE: '[test-bot] pyinstaller bundle --pre is failing'
       with:

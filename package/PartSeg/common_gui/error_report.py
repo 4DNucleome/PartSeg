@@ -3,6 +3,7 @@ THis module contains widgets used for error reporting. The report backed is sent
 
 .. _sentry: https://sentry.io
 """
+
 import getpass
 import io
 import os
@@ -11,12 +12,14 @@ import re
 import traceback
 import typing
 from contextlib import suppress
+from importlib.metadata import version
 
 import numpy as np
 import requests
 import sentry_sdk
 from napari.settings import get_settings
 from napari.utils.theme import get_theme
+from packaging.version import parse as parse_version
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QApplication,
@@ -52,6 +55,7 @@ _EMAIL_REGEXP = re.compile(r"[\w+]+@\w+\.\w+")
 _FEEDBACK_URL = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
     organization_slug="cent", project_slug="partseg"
 )
+_napari_ge_5 = parse_version(version("napari")) >= parse_version("0.5.0a1")
 
 
 def _print_traceback(exception, file_):
@@ -81,7 +85,10 @@ class ErrorDialog(QDialog):
         self.create_issue_btn = QPushButton("Create issue")
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
-        theme = get_theme(get_settings().appearance.theme, as_dict=False)
+        if _napari_ge_5:
+            theme = get_theme(get_settings().appearance.theme)
+        else:
+            theme = get_theme(get_settings().appearance.theme, as_dict=False)
         self._highlight = Pylighter(self.error_description.document(), "python", theme.syntax_style)
         self.traceback_summary = additional_info
         if additional_info is None:
@@ -183,7 +190,7 @@ class ErrorDialog(QDialog):
             for name in ["napari", "numpy", "SimpleITK", "PartSegData", "PartSegCore_compiled_backend"]:
                 try:
                     versions_dkt[name] = version(name)
-                except PackageNotFoundError:  # pragma: no cover
+                except PackageNotFoundError:  # pragma: no cover   # noqa: PERF203
                     versions_dkt[name] = "not found"
 
         data["body"] += "Packages: \n```\n" + "\n".join(f"{k}=={v}" for k, v in versions_dkt.items()) + "\n```\n"
@@ -194,7 +201,7 @@ class ErrorDialog(QDialog):
         """
         Function with construct final error message and send it using sentry.
         """
-        with sentry_sdk.push_scope() as scope:
+        with sentry_sdk.new_scope() as scope:
             text = f"{self.desc.text()}\n\nVersion: {__version__}\n"
             if len(self.additional_notes) > 0:
                 scope.set_extra("additional_notes", self.additional_notes)
@@ -210,7 +217,7 @@ class ErrorDialog(QDialog):
 
             event_id = sentry_sdk.capture_event(event, hint=hint)
         if event_id is None:
-            event_id = sentry_sdk.hub.Hub.current.last_event_id()
+            event_id = sentry_sdk.scope.Scope.last_event_id()
 
         if len(self.additional_info.toPlainText()) > 0:
             contact_text = self.contact_info.text()
@@ -251,7 +258,7 @@ class ExceptionListItem(QListWidgetItem):
     # TODO Prevent from reporting disc error
     def __init__(
         self,
-        exception: typing.Union[Exception, typing.Tuple[Exception, typing.List]],
+        exception: typing.Union[Exception, tuple[Exception, list]],
         parent: typing.Optional[QListWidget] = None,
     ):
         if isinstance(exception, Exception):
@@ -259,9 +266,9 @@ class ExceptionListItem(QListWidgetItem):
         else:
             exception, traceback_summary = exception
         if isinstance(exception, SegmentationLimitException):
-            super().__init__(f"{exception}", parent, QListWidgetItem.UserType)
+            super().__init__(f"{exception}", parent, QListWidgetItem.ItemType.UserType)
         elif isinstance(exception, Exception):
-            super().__init__(f"{type(exception)}: {exception}", parent, QListWidgetItem.UserType)
+            super().__init__(f"{type(exception)}: {exception}", parent, QListWidgetItem.ItemType.UserType)
             self.setToolTip("Double click for report")
         self.exception = exception
         self.additional_info = traceback_summary
@@ -292,7 +299,7 @@ class ExceptionList(QListWidget):
 class DataImportErrorDialog(QDialog):
     def __init__(
         self,
-        errors: typing.Dict[str, typing.Union[Exception, typing.List[typing.Tuple[str, dict]]]],
+        errors: dict[str, typing.Union[Exception, list[tuple[str, dict]]]],
         parent: typing.Optional[QWidget] = None,
         text: str = "During import data part of the entries was filtered out",
     ):
@@ -357,7 +364,7 @@ class QMessageFromException(QMessageBox):
 
     """
 
-    def __init__(self, icon, title, text, exception, standard_buttons=QMessageBox.Ok, parent=None):
+    def __init__(self, icon, title, text, exception, standard_buttons=QMessageBox.StandardButton.Ok, parent=None):
         super().__init__(icon, title, text, standard_buttons, parent)
         self.exception = exception
         stream = io.StringIO()

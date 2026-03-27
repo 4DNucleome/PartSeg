@@ -84,7 +84,7 @@ class SimpleMeasurement(Container):
             )
             return
         data_scale = data_layer.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]
-        image = Image(data_layer.data, data_scale, axes_order="TZYX"[-data_ndim:])
+        image = Image(data_layer.data, spacing=data_scale, axes_order="TZYX"[-data_ndim:])
         worker = _prepare_data(profile, image, self.labels_choice.value.data)
         worker.returned.connect(self._calculate_next)
         worker.errored.connect(self._finished)

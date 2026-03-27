@@ -17,13 +17,13 @@ stages:
   - stage: GetTestData
     jobs:
     - job: linux
-      pool: {vmImage: 'Ubuntu-22.04'}
+      pool: {vmImage: 'Ubuntu-24.04'}
       steps:
         - script: bash build_utils/download_data.sh
           displayName: "download data"
         - task: UsePythonVersion@0
           inputs:
-            versionSpec: '3.9'
+            versionSpec: '3.12'
           displayName: 'Use Python $(python.version)'
         - script: python build_utils/cut_changelog.py changelog_cut.md
           displayName: "Cut changelog"
@@ -38,20 +38,14 @@ stages:
       - job: check_formating
         pool:
           vmImage: ubuntu-latest
-        variables:
-          PRE_COMMIT_HOME: $(Pipeline.Workspace)/pre-commit-cache
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.12', architecture: x64}}
           - script: echo "##vso[task.setvariable variable=PY]$(python -VV)"
-          - task: Cache@2
-            inputs:
-              key: pre-commit | .pre-commit-config.yaml | "$(PY)"
-              path: $(PRE_COMMIT_HOME)
           - bash: |
-              python -m pip install pre-commit
+              python -m pip install prek
             displayName: InstallDeps
-          - bash: pre-commit run --all --show-diff-on-failure
-            displayName: pre-commmit
+          - bash: prek run --all-files --show-diff-on-failure
+            displayName: Check Formatting (pre-commit hook)
 
   - stage: manifest_check
     dependsOn: []
@@ -59,9 +53,9 @@ stages:
       - job: manifest_check
         pool: {vmImage: 'Ubuntu-latest'}
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.10', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.12', architecture: x64}}
           - bash: |
-              python -m pip install check-manifest==0.49 numpy==1.22.3
+              python -m pip install check-manifest==0.50 numpy==2.0.2
             displayName: InstallDeps
           - bash: check-manifest
             displayName: check-manifest
@@ -74,10 +68,10 @@ stages:
         variables:
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.12', architecture: x64}}
           - template: .azure-pipelines/pip_cache.yaml
             parameters:
-              key: doc | requirements/constraints_py3.9.txt | "$(PY)"
+              key: doc | requirements/constraints_py3.12_docs.txt | "$(PY)"
               path: $(pip_cache_dir)
           - bash: |
               python -m pip install tox
@@ -91,22 +85,24 @@ stages:
               artifactName: docs
 
       - job: Notebook_check
-        pool: {vmImage: 'Ubuntu-22.04'}
+        pool: {vmImage: 'Ubuntu-24.04'}
         continueOnError: true
         variables:
           DATA_PATH: typy_neuronow2
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.9', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.12', architecture: x64}}
           - template: .azure-pipelines/pip_cache.yaml
             parameters:
-              key: notebook | requirements/constraints_py3.9.txt | "$(PY)"
+              key: notebook | requirements/constraints_py3.12.txt | "$(PY)"
               path: $(pip_cache_dir)
           - bash: |
               python -m pip install tox
-            displayName: Test notebook
+            displayName: "Install tox"
           - bash: tox -e jupyter
             displayName: "Run Notebook"
+            env:
+              PIP_CONSTRAINT: requirements/constraints_py3.12.txt
 
   - stage: Tests_linux
     dependsOn: [GetTestData, formatting_check]
@@ -115,7 +111,7 @@ stages:
       pip_cache_dir: $(Pipeline.Workspace)/.pip
     jobs:
     - job: test_linux
-      pool: { vmImage: 'ubuntu-22.04' }
+      pool: { vmImage: 'ubuntu-24.04' }
       variables:
         AZURE_PIPELINES: 1
         DISPLAY: ':99.0'
@@ -137,9 +133,9 @@ stages:
       strategy:
         matrix:
           macos:
-            imageName: 'macos-11'
+            imageName: 'macos-14'
           windows:
-            imageName: 'windows-2019'
+            imageName: 'windows-2022'
       pool: {vmImage: $(imageName)}
       steps:
         - template: .azure-pipelines/tests.yaml
@@ -150,7 +146,7 @@ stages:
     dependsOn: GetTestData
     jobs:
       - job: sdist
-        pool: {vmImage: 'Ubuntu-20.04'}
+        pool: {vmImage: 'Ubuntu-22.04'}
         steps:
           - task: UsePythonVersion@0
           - bash: pip install -r requirements/requirements_dev.txt
@@ -164,15 +160,15 @@ stages:
 
       - job: pyinstaller_linux
         variables:
-          test_path: dist/PartSeg/PartSeg _test
+          test_command: dist/PartSeg/PartSeg _test
           DISPLAY: ':99.0'
           pip_cache_dir: $(Pipeline.Workspace)/.pip
-        pool: { vmImage: 'Ubuntu-20.04' }
+        pool: { vmImage: 'Ubuntu-22.04' }
         steps:
           - template: .azure-pipelines/linux_libs.yaml
           - template: .azure-pipelines/pyinstaller.yaml
             parameters:
-              test_path: $(test_path)
+              test_command: $(test_command)
               cache_dir: $(pip_cache_dir)
 
       - job: pyinstaller
@@ -180,16 +176,16 @@ stages:
         strategy:
           matrix:
             macos:
-              imageName: 'macos-11'
-              test_path: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
+              imageName: 'macos-14'
+              test_command: dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test || dist/PartSeg/PartSeg _test
             windows:
-              imageName: 'windows-2019'
-              test_path: dist\PartSeg\PartSeg _test
+              imageName: 'windows-2022'
+              test_command: dist\PartSeg\PartSeg _test
         variables:
           pip_cache_dir: $(Pipeline.Workspace)/.pip
         pool: {vmImage: $(imageName)}
         steps:
           - template: .azure-pipelines/pyinstaller.yaml
             parameters:
-              test_path: $(test_path)
+              test_command: $(test_command)
               cache_dir: $(pip_cache_dir)

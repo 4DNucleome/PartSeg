@@ -3,7 +3,7 @@
 import operator
 from abc import ABC
 from copy import deepcopy
-from typing import List, Type, Union
+from typing import Union
 
 import numpy as np
 import pytest
@@ -35,13 +35,13 @@ def get_two_parts_array():
 
 
 def get_two_parts():
-    return Image(get_two_parts_array(), (100, 50, 50), "", axes_order="TZYX")
+    return Image(get_two_parts_array(), spacing=(100, 50, 50), file_path="", axes_order="TZYX")
 
 
 def get_two_parts_reversed():
     data = get_two_parts_array()
     data = 100 - data
-    return Image(data, (100, 50, 50), "", axes_order="TZYX")
+    return Image(data, spacing=(100, 50, 50), file_path="", axes_order="TZYX")
 
 
 def get_multiple_part_array(part_num):
@@ -54,19 +54,19 @@ def get_multiple_part_array(part_num):
 
 
 def get_multiple_part(part_num):
-    return Image(get_multiple_part_array(part_num), (100, 50, 50), "", axes_order="TZYX")
+    return Image(get_multiple_part_array(part_num), spacing=(100, 50, 50), file_path="", axes_order="TZYX")
 
 
 def get_multiple_part_reversed(part_num):
     data = 100 - get_multiple_part_array(part_num)
-    return Image(data, (100, 50, 50), "", axes_order="TZYX")
+    return Image(data, spacing=(100, 50, 50), file_path="", axes_order="TZYX")
 
 
 def get_two_parts_side():
     data = get_two_parts_array()
     data[0, 25, 40:45, 50] = 49
     data[0, 25, 45:50, 51] = 49
-    return Image(data, (100, 50, 50), "", axes_order="TZYX")
+    return Image(data, spacing=(100, 50, 50), file_path="", axes_order="TZYX")
 
 
 def get_two_parts_side_reversed():
@@ -74,7 +74,7 @@ def get_two_parts_side_reversed():
     data[0, 25, 40:45, 50] = 49
     data[0, 25, 45:50, 51] = 49
     data = 100 - data
-    return Image(data, (100, 50, 50), "", axes_order="TZYX")
+    return Image(data, spacing=(100, 50, 50), file_path="", axes_order="TZYX")
 
 
 def empty(_s: str, _i: int):
@@ -85,7 +85,7 @@ def empty(_s: str, _i: int):
 def test_base_parameters(algorithm_name):
     algorithm_class = AnalysisAlgorithmSelection[algorithm_name]
     assert algorithm_class.get_name() == algorithm_name
-    algorithm_class: Type[ROIExtractionAlgorithm]
+    algorithm_class: type[ROIExtractionAlgorithm]
     obj = algorithm_class()
     values = algorithm_class.get_default_values()
     obj.set_parameters(values)
@@ -119,7 +119,7 @@ class BaseThreshold:
     def get_side_object():
         raise NotImplementedError
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         raise NotImplementedError
 
 
@@ -172,7 +172,7 @@ class TestLowerThreshold(BaseOneThreshold):
     def get_side_object():
         return get_two_parts_side()
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         return sa.LowerThresholdAlgorithm
 
 
@@ -194,7 +194,7 @@ class TestUpperThreshold(BaseOneThreshold):
     def get_side_object():
         return get_two_parts_side_reversed()
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         return sa.UpperThresholdAlgorithm
 
 
@@ -345,7 +345,7 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
     get_side_object = staticmethod(get_two_parts_side)
     get_multiple_part = staticmethod(get_multiple_part)
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         return sa.LowerThresholdFlowAlgorithm
 
 
@@ -369,7 +369,7 @@ class TestUpperThresholdFlow(BaseFlowThreshold):
     get_side_object = staticmethod(get_two_parts_side_reversed)
     get_multiple_part = staticmethod(get_multiple_part_reversed)
 
-    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
+    def get_algorithm_class(self) -> type[ROIExtractionAlgorithm]:
         return sa.UpperThresholdFlowAlgorithm
 
 
@@ -514,7 +514,7 @@ class TestMaskCreate:
             clip_to_mask=False,
         )
         res_array1 = np.zeros((1, 30, 30, 30), dtype=np.uint8)
-        slices: List[Union[int, slice]] = [slice(None)] * 4
+        slices: list[Union[int, slice]] = [slice(None)] * 4
         for i in range(1, 4):
             slices[i] = slice(10 - radius, 20 + radius)
         if radius_type == RadiusType.R2D:
@@ -656,7 +656,7 @@ class TestPipeline:
         data = np.zeros((1, 50, 100, 100, 2), dtype=np.uint16)
         data[0, 10:40, 20:80, 20:60, 0] = 10
         data[0, 10:40, 20:80, 40:80, 1] = 10
-        return Image(data, (100, 50, 50), "", axes_order="TZYXC")
+        return Image(data, spacing=(100, 50, 50), file_path="", axes_order="TZYXC")
 
     @pytest.mark.parametrize("use_mask", [True, False])
     def test_pipeline_simple(self, use_mask):
@@ -761,7 +761,7 @@ class TestConvexFill:
         assert _convex_fill(arr) is None
 
 
-class TestSegmentationInfo:
+class TestROIInfo:
     def test_none(self):
         si = ROIInfo(None)
         assert si.roi is None
@@ -816,6 +816,21 @@ class TestSegmentationInfo:
         si = ROIInfo(data)
         assert np.all(si.bound_info[1].lower == 2)
         assert np.all(si.bound_info[1].upper == [10 * comp_num - 1, 8])
+
+    def test_alternative(self):
+        data = np.zeros((10, 10), dtype=np.uint8)
+        data[2:8, 2:4] = 1
+        data[2:8, 4:8] = 2
+        alt1 = np.copy(data)
+        alt1[data == 1] = 4
+        alt1[data == 2] = 1
+        alt2 = np.zeros((10, 10), dtype=np.uint8)
+
+        ri = ROIInfo(data, alternative={"alt1": alt1, "alt2": alt2})
+        assert ri.get_components_num("ROI") == 2
+        assert ri.get_components_num("alt1") == 4
+        assert ri.get_components_num("alt2") == 0
+        assert ri.get_components_num("alt3") == 2
 
 
 def test_bound_info():

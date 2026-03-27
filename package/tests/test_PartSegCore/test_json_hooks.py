@@ -4,6 +4,7 @@ from PartSegCore import Units
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.io_utils import find_problematic_leafs
 from PartSegCore.json_hooks import PartSegEncoder, partseg_object_hook
+from PartSegCore.segmentation.noise_filtering import BilateralNoiseFilteringParams, GaussNoiseFilteringParams
 from PartSegCore.utils import ProfileDict
 
 
@@ -46,8 +47,6 @@ def test_plugin_bugfix():
 
 def _test_prepare(bundle_test_dir):  # pragma: no cover
     """Prepare test data for test_error_reported. After call this the names of class should be manually broken"""
-    from PartSegCore.segmentation.noise_filtering import BilateralNoiseFilteringParams, GaussNoiseFilteringParams
-
     dkt = ProfileDict()
     dkt.set("a.b", GaussNoiseFilteringParams())
     dkt.set("a.c", BilateralNoiseFilteringParams())

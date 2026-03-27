@@ -1,328 +1,816 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+## 0.16.5 - 2026-03-24
+
+### 🚀 Features
+
+- Use `QScrollArea` for components selection ([#1328](https://github.com/4DNucleome/PartSeg/pull/1328))
+
+### 🐛 Bug Fixes
+
+- Fix `QtViewer` initialization as preparation for napari 0.7.0 ([#1351](https://github.com/4DNucleome/PartSeg/pull/1351))
+
+### 📚 Documentation
+
+- Update changelog for 0.16.5 ([#1372](https://github.com/4DNucleome/PartSeg/pull/1372))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `ipython`, `pydantic`, `scipy`, `sentry-sdk`, `traceback-with-variables` ([#1329](https://github.com/4DNucleome/PartSeg/pull/1329))
+- [Automatic] Constraints upgrades: `oiffile`, `tifffile` ([#1337](https://github.com/4DNucleome/PartSeg/pull/1337))
+- [Automatic] Constraints upgrades: `numpy`, `sentry-sdk`, `tifffile` ([#1341](https://github.com/4DNucleome/PartSeg/pull/1341))
+- [Automatic] Constraints upgrades: `imagecodecs`, `numpy`, `packaging`, `pandas`, `qtawesome`, `sentry-sdk`, `tifffile` ([#1347](https://github.com/4DNucleome/PartSeg/pull/1347))
+- [Automatic] Constraints upgrades: `ipykernel`, `ipython`, `oiffile`, `qtconsole`, `sentry-sdk`, `superqt`, `tifffile` ([#1353](https://github.com/4DNucleome/PartSeg/pull/1353))
+- [Automatic] Constraints upgrades: `pandas`, `scipy`, `sentry-sdk`, `tifffile` ([#1357](https://github.com/4DNucleome/PartSeg/pull/1357))
+- [Automatic] Constraints upgrades: `sentry-sdk` ([#1370](https://github.com/4DNucleome/PartSeg/pull/1370))
+
+### ⚙️ Miscellaneous Tasks
+
+- [pre-commit.ci] pre-commit autoupdate ([#1325](https://github.com/4DNucleome/PartSeg/pull/1325))
+- [pre-commit.ci] pre-commit autoupdate ([#1330](https://github.com/4DNucleome/PartSeg/pull/1330))
+- Add `tzdata` to hiddenimports, as preparation for `pandas` 3.0 ([#1335](https://github.com/4DNucleome/PartSeg/pull/1335))
+- [pre-commit.ci] pre-commit autoupdate ([#1333](https://github.com/4DNucleome/PartSeg/pull/1333))
+- Drop macOS-13 on Azure Pipelines, fix parameter name for pyinstaller template ([#1338](https://github.com/4DNucleome/PartSeg/pull/1338))
+- Add Python 3.13 to supported versions ([#1327](https://github.com/4DNucleome/PartSeg/pull/1327))
+- [pre-commit.ci] pre-commit autoupdate ([#1336](https://github.com/4DNucleome/PartSeg/pull/1336))
+- Update runners in make-release workflow ([#1344](https://github.com/4DNucleome/PartSeg/pull/1344))
+- Remove NumPy hack for building executable on macOS ([#1345](https://github.com/4DNucleome/PartSeg/pull/1345))
+- [pre-commit.ci] pre-commit autoupdate ([#1342](https://github.com/4DNucleome/PartSeg/pull/1342))
+- [pre-commit.ci] pre-commit autoupdate ([#1346](https://github.com/4DNucleome/PartSeg/pull/1346))
+- Accept `time` argument in `not_start` mock of timer `start` ([#1350](https://github.com/4DNucleome/PartSeg/pull/1350))
+- [pre-commit.ci] pre-commit autoupdate ([#1354](https://github.com/4DNucleome/PartSeg/pull/1354))
+- Update coderabbitai configuration to not expect docstrings in tests ([#1355](https://github.com/4DNucleome/PartSeg/pull/1355))
+- Drop test against pyside2, fix test for napari 0.7.0, add testing against Python 3.13 ([#1352](https://github.com/4DNucleome/PartSeg/pull/1352))
+- [pre-commit.ci] pre-commit autoupdate ([#1356](https://github.com/4DNucleome/PartSeg/pull/1356))
+- Move czifile fix to a separate file ([#1362](https://github.com/4DNucleome/PartSeg/pull/1362))
+- Fix overwriting default path for napari settings in tests ([#1363](https://github.com/4DNucleome/PartSeg/pull/1363))
+- [pre-commit.ci] pre-commit autoupdate ([#1359](https://github.com/4DNucleome/PartSeg/pull/1359))
+- Use `pyvista/setup-headless-display-action` to set up the display ([#1367](https://github.com/4DNucleome/PartSeg/pull/1367))
+- [pre-commit.ci] pre-commit autoupdate ([#1371](https://github.com/4DNucleome/PartSeg/pull/1371))
+
+### 🛡️ Security
+
+- *(deps)* Bump peter-evans/create-pull-request from 7 to 8 ([#1340](https://github.com/4DNucleome/PartSeg/pull/1340))
+- *(deps)* Bump actions/upload-artifact from 6 to 7 in the github-actions group across 1 directory ([#1361](https://github.com/4DNucleome/PartSeg/pull/1361))
+- *(deps)* Bump actions/download-artifact from 7 to 8 in the github-actions group ([#1368](https://github.com/4DNucleome/PartSeg/pull/1368))
+
+### Build
+
+- *(deps)* Bump the github-actions group with 2 updates ([#1331](https://github.com/4DNucleome/PartSeg/pull/1331))
+- *(deps)* Bump actions/checkout from 5 to 6 in the github-actions group ([#1334](https://github.com/4DNucleome/PartSeg/pull/1334))
+- *(deps)* Bump the github-actions group with 2 updates ([#1339](https://github.com/4DNucleome/PartSeg/pull/1339))
+
+## 0.16.4 - 2025-10-21
+
+### 🚀 Features
+
+- Set units for viewer spawned from the view menu ([#1308](https://github.com/4DNucleome/PartSeg/pull/1308))
+- Add saving color maps in OME tiffs ([#1312](https://github.com/4DNucleome/PartSeg/pull/1312))
+- Add saving and reading of time scale in ImageJ and OME TIFF files ([#1323](https://github.com/4DNucleome/PartSeg/pull/1323))
+
+### 🐛 Bug Fixes
+
+- Fit ROI shape to image to solve problem of saving data in batch process ([#1288](https://github.com/4DNucleome/PartSeg/pull/1288))
+- If save dialog is used to select directory save it in history not parent ([#1289](https://github.com/4DNucleome/PartSeg/pull/1289))
+- Fix `--pre` test by stopping using the deprecated `sentry_sdk` method ([#1304](https://github.com/4DNucleome/PartSeg/pull/1304))
+- Fix saving in batch if the data is mask segmentation project ([#1309](https://github.com/4DNucleome/PartSeg/pull/1309))
+- Clean elements outside mask for multiple otsu method ([#1319](https://github.com/4DNucleome/PartSeg/pull/1319))
+
+### 📚 Documentation
+
+- Update changelog for 0.16.4
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `pandas` ([#1285](https://github.com/4DNucleome/PartSeg/pull/1285))
+- [Automatic] Constraints upgrades: `ipykernel`, `numpy`, `scipy`, `sentry-sdk` ([#1287](https://github.com/4DNucleome/PartSeg/pull/1287))
+- [Automatic] Constraints upgrades: `imagecodecs`, `ipykernel`, `napari`, `sentry-sdk` ([#1290](https://github.com/4DNucleome/PartSeg/pull/1290))
+- [Automatic] Constraints upgrades: `napari`, `psygnal`, `sentry-sdk`, `superqt` ([#1295](https://github.com/4DNucleome/PartSeg/pull/1295))
+- [Automatic] Constraints upgrades: `pandas`, `requests` ([#1297](https://github.com/4DNucleome/PartSeg/pull/1297))
+- [Automatic] Constraints upgrades: `ipython`, `numpy`, `pydantic`, `qtconsole`, `scipy`, `sentry-sdk`, `tifffile`, `xlsxwriter` ([#1301](https://github.com/4DNucleome/PartSeg/pull/1301))
+- [Automatic] Constraints upgrades: `partsegcore-compiled-backend`, `psygnal`, `sentry-sdk` ([#1305](https://github.com/4DNucleome/PartSeg/pull/1305))
+- [Automatic] Constraints upgrades: `ipython`, `napari`, `pandas`, `pydantic`, `tifffile` ([#1311](https://github.com/4DNucleome/PartSeg/pull/1311))
+- [Automatic] Constraints upgrades: `pydantic`, `sentry-sdk` ([#1316](https://github.com/4DNucleome/PartSeg/pull/1316))
+- [Automatic] Constraints upgrades: `h5py`, `ipykernel`, `numpy`, `psygnal`, `pydantic`, `sentry-sdk`, `tifffile` ([#1322](https://github.com/4DNucleome/PartSeg/pull/1322))
+
+### ⚙️ Miscellaneous Tasks
+
+- [pre-commit.ci] pre-commit autoupdate ([#1286](https://github.com/4DNucleome/PartSeg/pull/1286))
+- [pre-commit.ci] pre-commit autoupdate ([#1291](https://github.com/4DNucleome/PartSeg/pull/1291))
+- [pre-commit.ci] pre-commit autoupdate ([#1296](https://github.com/4DNucleome/PartSeg/pull/1296))
+- [pre-commit.ci] pre-commit autoupdate ([#1298](https://github.com/4DNucleome/PartSeg/pull/1298))
+- Add more wait on coderabbit review ([#1300](https://github.com/4DNucleome/PartSeg/pull/1300))
+- Use prek for initial check of code format ([#1299](https://github.com/4DNucleome/PartSeg/pull/1299))
+- [pre-commit.ci] pre-commit autoupdate ([#1302](https://github.com/4DNucleome/PartSeg/pull/1302))
+- Use most recent macOS images on GitHub Actions ([#1310](https://github.com/4DNucleome/PartSeg/pull/1310))
+- [pre-commit.ci] pre-commit autoupdate ([#1306](https://github.com/4DNucleome/PartSeg/pull/1306))
+- [pre-commit.ci] pre-commit autoupdate ([#1313](https://github.com/4DNucleome/PartSeg/pull/1313))
+- Add cooldown of dependabot PR ([#1317](https://github.com/4DNucleome/PartSeg/pull/1317))
+- Update licensing metadata to follow modern standards ([#1314](https://github.com/4DNucleome/PartSeg/pull/1314))
+- Make test log more readable by using 120 columns and colors ([#1320](https://github.com/4DNucleome/PartSeg/pull/1320))
+- [pre-commit.ci] pre-commit autoupdate ([#1318](https://github.com/4DNucleome/PartSeg/pull/1318))
+- Add changelog for 0.16.4 ([#1321](https://github.com/4DNucleome/PartSeg/pull/1321))
+- Use ruff formatter in place of black ([#1324](https://github.com/4DNucleome/PartSeg/pull/1324))
+
+### 🛡️ Security
+
+- *(deps)* Bump actions/download-artifact from 4 to 5 in the github-actions group ([#1292](https://github.com/4DNucleome/PartSeg/pull/1292))
+- *(deps)* Bump pyvista/setup-headless-display-action from 3 to 4 ([#1294](https://github.com/4DNucleome/PartSeg/pull/1294))
+- *(deps)* Bump actions/checkout from 4 to 5 in the github-actions group ([#1293](https://github.com/4DNucleome/PartSeg/pull/1293))
+- *(deps)* Bump actions/setup-python from 5 to 6 in the github-actions group ([#1303](https://github.com/4DNucleome/PartSeg/pull/1303))
+- *(deps)* Bump github/codeql-action from 3 to 4 ([#1315](https://github.com/4DNucleome/PartSeg/pull/1315))
+
+## 0.16.3 - 2025-07-10
+
+### 🐛 Bug Fixes
+
+- Do not use default parameters in default leaf ([#1283](https://github.com/4DNucleome/PartSeg/pull/1283))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `napari`, `numpy`, `pydantic`, `sentry-sdk`, `tifffile`, `vispy` ([#1273](https://github.com/4DNucleome/PartSeg/pull/1273))
+- [Automatic] Constraints upgrades: `h5py`, `ipython`, `magicgui`, `numpy`, `pandas`, `pydantic`, `requests`, `sentry-sdk`, `superqt`, `tifffile`, `xlrd` ([#1276](https://github.com/4DNucleome/PartSeg/pull/1276))
+- [Automatic] Constraints upgrades: `numpy`, `pygments`, `scipy`, `simpleitk`, `superqt`, `xlsxwriter` ([#1278](https://github.com/4DNucleome/PartSeg/pull/1278))
+- [Automatic] Constraints upgrades: `ipython`, `napari`, `partsegcore-compiled-backend`, `psygnal`, `sentry-sdk` ([#1281](https://github.com/4DNucleome/PartSeg/pull/1281))
+
+### ⚙️ Miscellaneous Tasks
+
+- Block `sentry==3.0.0a1` for pre-tests ([#1272](https://github.com/4DNucleome/PartSeg/pull/1272))
+- Add fallback version for `setuptools_scm` ([#1271](https://github.com/4DNucleome/PartSeg/pull/1271))
+- [pre-commit.ci] pre-commit autoupdate ([#1270](https://github.com/4DNucleome/PartSeg/pull/1270))
+- Use ubuntu 22.04 when building pyinstaller bundle ([#1275](https://github.com/4DNucleome/PartSeg/pull/1275))
+- [pre-commit.ci] pre-commit autoupdate ([#1274](https://github.com/4DNucleome/PartSeg/pull/1274))
+- [pre-commit.ci] pre-commit autoupdate ([#1277](https://github.com/4DNucleome/PartSeg/pull/1277))
+- Block sentry alpha 3.0.0a1 and 3.0.0a2 ([#1279](https://github.com/4DNucleome/PartSeg/pull/1279))
+- Block `pytest-qt==4.5.0` (for `pyside2` compatibility) ([#1282](https://github.com/4DNucleome/PartSeg/pull/1282))
+- [pre-commit.ci] pre-commit autoupdate ([#1280](https://github.com/4DNucleome/PartSeg/pull/1280))
+- Migrate Windows images from 2019 to 2022 in Azure Pipelines and GitHub Actions ([#1284](https://github.com/4DNucleome/PartSeg/pull/1284))
+
+## 0.16.2 - 2025-05-12
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `numpy`, `partsegcore-compiled-backend`, `tifffile` ([#1253](https://github.com/4DNucleome/PartSeg/pull/1253))
+- [Automatic] Constraints upgrades: `imagecodecs`, `ipython`, `pydantic`, `sentry-sdk`, `superqt`, `tifffile` ([#1255](https://github.com/4DNucleome/PartSeg/pull/1255))
+- [Automatic] Constraints upgrades: `ipython`, `napari`, `numpy`, `packaging`, `pydantic`, `sentry-sdk`, `simpleitk`, `sympy`, `xlsxwriter` ([#1266](https://github.com/4DNucleome/PartSeg/pull/1266))
+- [Automatic] Constraints upgrades: `oiffile`, `psygnal`, `scipy`, `sentry-sdk`, `tifffile` ([#1267](https://github.com/4DNucleome/PartSeg/pull/1267))
+
+### ⚙️ Miscellaneous Tasks
+
+- [pre-commit.ci] pre-commit autoupdate ([#1251](https://github.com/4DNucleome/PartSeg/pull/1251))
+- Prepare for napari 0.6.0 deprecations ([#1256](https://github.com/4DNucleome/PartSeg/pull/1256))
+- [pre-commit.ci] pre-commit autoupdate ([#1254](https://github.com/4DNucleome/PartSeg/pull/1254))
+- [pre-commit.ci] pre-commit autoupdate ([#1259](https://github.com/4DNucleome/PartSeg/pull/1259))
+- Update workflow to use Ubuntu 22.04 instead of 20.04 ([#1261](https://github.com/4DNucleome/PartSeg/pull/1261))
+- [pre-commit.ci] pre-commit autoupdate ([#1260](https://github.com/4DNucleome/PartSeg/pull/1260))
+- Try to fix Upgrade dependencies workflow part 2 ([#1265](https://github.com/4DNucleome/PartSeg/pull/1265))
+- [pre-commit.ci] pre-commit autoupdate ([#1268](https://github.com/4DNucleome/PartSeg/pull/1268))
+
+### 🛡️ Security
+
+- *(deps)* Bump peter-evans/create-pull-request from 6 to 7 ([#1262](https://github.com/4DNucleome/PartSeg/pull/1262))
+- *(deps)* Bump codecov/codecov-action from 4 to 5 ([#1263](https://github.com/4DNucleome/PartSeg/pull/1263))
+
+## 0.16.1 - 2025-03-10
+
+### 🐛 Bug Fixes
+
+- Fix rendering of alternative representation if there are more components in the alternative representation than in ROI ([#1240](https://github.com/4DNucleome/PartSeg/pull/1240))
+- Enable czifile workaround for 2019.7.2.1 ([#1246](https://github.com/4DNucleome/PartSeg/pull/1246))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `ipython`, `magicgui`, `numpy`, `partsegcore-compiled-backend`, `pydantic` ([#1231](https://github.com/4DNucleome/PartSeg/pull/1231))
+- [Automatic] Constraints upgrades: `imagecodecs` ([#1233](https://github.com/4DNucleome/PartSeg/pull/1233))
+- [Automatic] Constraints upgrades: `oiffile`, `pygments`, `scipy`, `superqt` ([#1234](https://github.com/4DNucleome/PartSeg/pull/1234))
+- [Automatic] Constraints upgrades: `imageio`, `napari`, `numpy`, `partsegcore-compiled-backend`, `pydantic`, `pygments`, `scipy`, `sentry-sdk`, `simpleitk`, `tifffile`, `xlsxwriter` ([#1236](https://github.com/4DNucleome/PartSeg/pull/1236))
+- [Automatic] Constraints upgrades: `ipython`, `xlsxwriter` ([#1239](https://github.com/4DNucleome/PartSeg/pull/1239))
+- [Automatic] Constraints upgrades: `numpy`, `partsegcore-compiled-backend`, `psygnal`, `qtpy`, `scipy`, `sentry-sdk` ([#1241](https://github.com/4DNucleome/PartSeg/pull/1241))
+- [Automatic] Constraints upgrades: `czifile`, `h5py`, `ipython`, `qtawesome`, `sentry-sdk`, `tifffile`, `traceback-with-variables` ([#1247](https://github.com/4DNucleome/PartSeg/pull/1247))
+
+### ⚙️ Miscellaneous Tasks
+
+- [pre-commit.ci] pre-commit autoupdate ([#1232](https://github.com/4DNucleome/PartSeg/pull/1232))
+- [pre-commit.ci] pre-commit autoupdate ([#1235](https://github.com/4DNucleome/PartSeg/pull/1235))
+- [pre-commit.ci] pre-commit autoupdate ([#1237](https://github.com/4DNucleome/PartSeg/pull/1237))
+- Drop python 3.9 tests for napari repository ([#1244](https://github.com/4DNucleome/PartSeg/pull/1244))
+- Block ipykernel 7.0.0a1 ([#1248](https://github.com/4DNucleome/PartSeg/pull/1248))
+- [pre-commit.ci] pre-commit autoupdate ([#1242](https://github.com/4DNucleome/PartSeg/pull/1242))
+- Switch to `get_qapp` from `get_app` to handle napari deprecation ([#1249](https://github.com/4DNucleome/PartSeg/pull/1249))
+
+## 0.16.0 - 2024-12-21
+
+### 🚀 Features
+
+- Allow set units that will be used for load/save data using PartSeg as napari plugin ([#1228](https://github.com/4DNucleome/PartSeg/pull/1228))
+- Show filename when importing with PartSeg in napari ([#1226](https://github.com/4DNucleome/PartSeg/pull/1226))
+
+### 🐛 Bug Fixes
+
+- Fix error when image changed during segmentation ([#1218](https://github.com/4DNucleome/PartSeg/pull/1218))
+- Fix pre release tests ([#1219](https://github.com/4DNucleome/PartSeg/pull/1219))
+- Drop imagej LUTs of size `24*x` ([#1227](https://github.com/4DNucleome/PartSeg/pull/1227))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `h5py`, `imageio`, `ipython`, `napari`, `numpy`, `sentry-sdk` ([#1201](https://github.com/4DNucleome/PartSeg/pull/1201))
+- [Automatic] Constraints upgrades: `sentry-sdk` ([#1214](https://github.com/4DNucleome/PartSeg/pull/1214))
+- [Automatic] Constraints upgrades: `ipython`, `traceback-with-variables` ([#1221](https://github.com/4DNucleome/PartSeg/pull/1221))
+- [Automatic] Constraints upgrades: `numpy`, `packaging`, `pydantic`, `qtconsole`, `qtpy`, `sentry-sdk`, `traceback-with-variables` ([#1223](https://github.com/4DNucleome/PartSeg/pull/1223))
+- [Automatic] Constraints upgrades: `imageio`, `ipython`, `pydantic` ([#1225](https://github.com/4DNucleome/PartSeg/pull/1225))
+- [Automatic] Constraints upgrades: `napari`, `numpy`, `pydantic`, `sentry-sdk`, `six`, `superqt`, `tifffile` ([#1229](https://github.com/4DNucleome/PartSeg/pull/1229))
+
+### ⚙️ Miscellaneous Tasks
+
+- Stop using mambaforge in tests ([#1203](https://github.com/4DNucleome/PartSeg/pull/1203))
+- [pre-commit.ci] pre-commit autoupdate ([#1202](https://github.com/4DNucleome/PartSeg/pull/1202))
+- [pre-commit.ci] pre-commit autoupdate ([#1204](https://github.com/4DNucleome/PartSeg/pull/1204))
+- Remove defining default version of language in pre-commit configuration ([#1208](https://github.com/4DNucleome/PartSeg/pull/1208))
+- [pre-commit.ci] pre-commit autoupdate ([#1209](https://github.com/4DNucleome/PartSeg/pull/1209))
+- Drop python 3.8 ([#1206](https://github.com/4DNucleome/PartSeg/pull/1206))
+- Use `PublishPipelineArtifact` in place of `PublishBuildArtifacts` to reduce CI fragility ([#1213](https://github.com/4DNucleome/PartSeg/pull/1213))
+- Update CI configuration to use more modern OS and python versions ([#1207](https://github.com/4DNucleome/PartSeg/pull/1207))
+- Fix `upgrade-dependencies.yaml`docs constraints ([#1215](https://github.com/4DNucleome/PartSeg/pull/1215))
+- [pre-commit.ci] pre-commit autoupdate ([#1216](https://github.com/4DNucleome/PartSeg/pull/1216))
+- Add changelog 0.16.0a1
+- [pre-commit.ci] pre-commit autoupdate ([#1222](https://github.com/4DNucleome/PartSeg/pull/1222))
+- [pre-commit.ci] pre-commit autoupdate ([#1230](https://github.com/4DNucleome/PartSeg/pull/1230))
+
+## 0.15.4 - 2024-09-27
+
+### 🚀 Features
+
+- Add preview of image metadata ([#1154](https://github.com/4DNucleome/PartSeg/pull/1154))
+- Add option to combine channels using sum and max ([#1159](https://github.com/4DNucleome/PartSeg/pull/1159))
+- Add metadata viewer as napari widget ([#1195](https://github.com/4DNucleome/PartSeg/pull/1195))
+- Read channel colors from `*.czi` metadata ([#1198](https://github.com/4DNucleome/PartSeg/pull/1198))
+- Use image color when add layer to napari ([#1200](https://github.com/4DNucleome/PartSeg/pull/1200))
+
+### 🐛 Bug Fixes
+
+- Fix selection of custom label colors for napari 0.5.0 ([#1138](https://github.com/4DNucleome/PartSeg/pull/1138))
+- Add pint call to enforce initialization of unit registry ([#1146](https://github.com/4DNucleome/PartSeg/pull/1146))
+- Workaround for lack of zsd support in czifile ([#1142](https://github.com/4DNucleome/PartSeg/pull/1142))
+- Fix preparing data for `mahotas.haralick` to avoid overflow problem ([#1150](https://github.com/4DNucleome/PartSeg/pull/1150))
+- Fix `use_convex` type from `int` to `bool` for segmentation algorithms ([#1152](https://github.com/4DNucleome/PartSeg/pull/1152))
+- Prevent propagation of decreasing contrast limits set by user ([#1166](https://github.com/4DNucleome/PartSeg/pull/1166))
+- Prevent error on searching component if there is no component ([#1167](https://github.com/4DNucleome/PartSeg/pull/1167))
+- Fix checking if channel requested by MeasurementProfile exists ([#1165](https://github.com/4DNucleome/PartSeg/pull/1165))
+- Fix trying to access to just deleted measurement profile from edit window. ([#1168](https://github.com/4DNucleome/PartSeg/pull/1168))
+- Fix bug in code for checking for survey file ([#1174](https://github.com/4DNucleome/PartSeg/pull/1174))
+- Fix plugin discovery in bundle to register them in napari viewer ([#1175](https://github.com/4DNucleome/PartSeg/pull/1175))
+- Fix problem with setting range of auto-generated widget ([#1187](https://github.com/4DNucleome/PartSeg/pull/1187))
+- Fix reading channel names from single channel czi files ([#1194](https://github.com/4DNucleome/PartSeg/pull/1194))
+
+### 🚜 Refactor
+
+- Make warnings error in tests ([#1192](https://github.com/4DNucleome/PartSeg/pull/1192))
+- Merge all channel-specific attributes of the Image class ([#1191](https://github.com/4DNucleome/PartSeg/pull/1191))
+
+### 📚 Documentation
+
+- Change homepage URL ([#1139](https://github.com/4DNucleome/PartSeg/pull/1139))
+- Add link for download macOS arm bundle ([#1140](https://github.com/4DNucleome/PartSeg/pull/1140))
+- Add changelog for 0.15.4 release
+- Update changelog ([#1176](https://github.com/4DNucleome/PartSeg/pull/1176))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `napari`, `sentry-sdk`, `sympy` ([#1128](https://github.com/4DNucleome/PartSeg/pull/1128))
+- [Automatic] Constraints upgrades: `mahotas`, `numpy`, `sentry-sdk`, `sympy` ([#1145](https://github.com/4DNucleome/PartSeg/pull/1145))
+- [Automatic] Constraints upgrades: `numpy`, `tifffile` ([#1163](https://github.com/4DNucleome/PartSeg/pull/1163))
+- [Automatic] Constraints upgrades: `napari`, `sentry-sdk`, `tifffile` ([#1169](https://github.com/4DNucleome/PartSeg/pull/1169))
+- [Automatic] Constraints upgrades: `magicgui`, `sentry-sdk` ([#1172](https://github.com/4DNucleome/PartSeg/pull/1172))
+- [Automatic] Constraints upgrades: `sympy`, `tifffile` ([#1177](https://github.com/4DNucleome/PartSeg/pull/1177))
+- [Automatic] Constraints upgrades: `imageio`, `napari`, `numpy` ([#1180](https://github.com/4DNucleome/PartSeg/pull/1180))
+- Constraints upgrades: `sentry-sdk` and fix tests ([#1182](https://github.com/4DNucleome/PartSeg/pull/1182))
+- `napari==0.5.3` related fixes, Constraints upgrades: `imageio`, `ipython`, `numpy`, `qtconsole`, `scipy`, `simpleitk`, `tifffile` ([#1183](https://github.com/4DNucleome/PartSeg/pull/1183))
+- [Automatic] Constraints upgrades: `numpy`, `pydantic` ([#1188](https://github.com/4DNucleome/PartSeg/pull/1188))
+- [Automatic] Constraints upgrades: `imagecodecs`, `pandas`, `pydantic`, `sentry-sdk`, `sympy`, `tifffile` ([#1190](https://github.com/4DNucleome/PartSeg/pull/1190))
+
+### ⚙️ Miscellaneous Tasks
+
+- Speedup tests by use `tox-uv` ([#1141](https://github.com/4DNucleome/PartSeg/pull/1141))
+- Get additional dict from PR branch for checking PR title ([#1144](https://github.com/4DNucleome/PartSeg/pull/1144))
+- Relax numpy constraint ([#1143](https://github.com/4DNucleome/PartSeg/pull/1143))
+- Allow to skip spellchecking PR title ([#1147](https://github.com/4DNucleome/PartSeg/pull/1147))
+- [pre-commit.ci] pre-commit autoupdate ([#1149](https://github.com/4DNucleome/PartSeg/pull/1149))
+- Create only archive with version in name on azures pipeline ([#1151](https://github.com/4DNucleome/PartSeg/pull/1151))
+- Fix tests for napari from repository ([#1148](https://github.com/4DNucleome/PartSeg/pull/1148))
+- Use python 3.11 to determine updated packages in PR description ([#1160](https://github.com/4DNucleome/PartSeg/pull/1160))
+- [pre-commit.ci] pre-commit autoupdate ([#1164](https://github.com/4DNucleome/PartSeg/pull/1164))
+- [pre-commit.ci] pre-commit autoupdate ([#1170](https://github.com/4DNucleome/PartSeg/pull/1170))
+- Disable thumbnail generation in napari layer as it is fragile and not used ([#1171](https://github.com/4DNucleome/PartSeg/pull/1171))
+- [pre-commit.ci] pre-commit autoupdate ([#1173](https://github.com/4DNucleome/PartSeg/pull/1173))
+- [pre-commit.ci] pre-commit autoupdate ([#1178](https://github.com/4DNucleome/PartSeg/pull/1178))
+- Fix call of logger to properly pass arguments to messages ([#1179](https://github.com/4DNucleome/PartSeg/pull/1179))
+- Fix coverage files upload by enable hidden files upload ([#1186](https://github.com/4DNucleome/PartSeg/pull/1186))
+- [pre-commit.ci] pre-commit autoupdate ([#1184](https://github.com/4DNucleome/PartSeg/pull/1184))
+- Use PyQt6 in pre-tests ([#1196](https://github.com/4DNucleome/PartSeg/pull/1196))
+- Add missed code from #1191 ([#1197](https://github.com/4DNucleome/PartSeg/pull/1197))
+- [pre-commit.ci] pre-commit autoupdate ([#1189](https://github.com/4DNucleome/PartSeg/pull/1189))
+- Auto add "skip check PR title" label in update dependencies PR ([#1199](https://github.com/4DNucleome/PartSeg/pull/1199))
+
+### Build
+
+- Remove PyOpenGL-accelerate from dependencies because of numpy incompatibility ([#1155](https://github.com/4DNucleome/PartSeg/pull/1155))
+- Update install constraints on numpy and qt packages ([#1157](https://github.com/4DNucleome/PartSeg/pull/1157))
+- Enforce napari 0.5.0 for Qt6 bindings ([#1161](https://github.com/4DNucleome/PartSeg/pull/1161))
+- Require napari>=0.5.0 only for python 3.9+ ([#1162](https://github.com/4DNucleome/PartSeg/pull/1162))
+
+## 0.15.3 - 2024-07-08
+
+### 🚀 Features
+
+- Pydantic 2 compatibility ([#1084](https://github.com/4DNucleome/PartSeg/pull/1084))
+
+### 🐛 Bug Fixes
+
+- Fix rendering icons in colormap preview ([#1040](https://github.com/4DNucleome/PartSeg/pull/1040))
+- Fix test for validation length of message for sentry-sdk 2.0 release ([#1098](https://github.com/4DNucleome/PartSeg/pull/1098))
+- When fix reader check lowercase extension for validate compatibility ([#1097](https://github.com/4DNucleome/PartSeg/pull/1097))
+- Fix napari 0.5.0 compatibility ([#1116](https://github.com/4DNucleome/PartSeg/pull/1116))
+
+### 🚜 Refactor
+
+- Fix Qt flags ([#1041](https://github.com/4DNucleome/PartSeg/pull/1041))
+- Fix qt flags in roi mask code ([#1042](https://github.com/4DNucleome/PartSeg/pull/1042))
+- Fix qt flags in roi analysis ([#1043](https://github.com/4DNucleome/PartSeg/pull/1043))
+- Migrate from setup.cfg to `pyproject.toml` ([#1070](https://github.com/4DNucleome/PartSeg/pull/1070))
+
+### 📚 Documentation
+
+- Allow to use newer release of build docs dependencies ([#1057](https://github.com/4DNucleome/PartSeg/pull/1057))
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `ipython`, `numpy`, `oiffile`, `pandas`, `psygnal`, `pyinstaller`, `qtconsole`, `qtpy`, `sentry-sdk`, `simpleitk`, `superqt`, `tifffile`, `xlsxwriter` ([#1020](https://github.com/4DNucleome/PartSeg/pull/1020))
+- [Automatic] Constraints upgrades: `h5py`, `imageio`, `ipython`, `numpy`, `packaging`, `pydantic`, `pyinstaller`, `pyqt5`, `scipy`, `sentry-sdk`, `superqt`, `tifffile`, `xlsxwriter` ([#1027](https://github.com/4DNucleome/PartSeg/pull/1027))
+- [Automatic] Constraints upgrades: `imageio`, `magicgui`, `xlsxwriter` ([#1030](https://github.com/4DNucleome/PartSeg/pull/1030))
+- [Automatic] Constraints upgrades: `ipykernel`, `pandas`, `qtpy` ([#1032](https://github.com/4DNucleome/PartSeg/pull/1032))
+- [Automatic] Constraints upgrades: `imageio`, `ipykernel`, `ipython`, `numpy`, `pandas`, `psygnal`, `pygments`, `pyinstaller`, `qtconsole`, `scipy`, `sentry-sdk`, `simpleitk` ([#1035](https://github.com/4DNucleome/PartSeg/pull/1035))
+- [Automatic] Constraints upgrades: `imagecodecs`, `imageio`, `ipykernel`, `magicgui`, `pandas`, `pyinstaller`, `qtawesome`, `sentry-sdk`, `tifffile` ([#1048](https://github.com/4DNucleome/PartSeg/pull/1048))
+- [Automatic] Constraints upgrades: `ipykernel`, `numpy`, `pandas`, `partsegcore-compiled-backend`, `pydantic`, `scipy`, `sentry-sdk` ([#1058](https://github.com/4DNucleome/PartSeg/pull/1058))
+- Improve test of PartSegImage ([#1072](https://github.com/4DNucleome/PartSeg/pull/1072))
+- Improve test suite for `PartSegCore` ([#1077](https://github.com/4DNucleome/PartSeg/pull/1077))
+- [Automatic] Constraints upgrades: `imageio`, `ipykernel`, `local-migrator`, `napari`, `numpy`, `pandas`, `partsegcore-compiled-backend`, `pyinstaller`, `sentry-sdk`, `tifffile`, `vispy`, `xlsxwriter` ([#1063](https://github.com/4DNucleome/PartSeg/pull/1063))
+- [Automatic] Constraints upgrades: `magicgui`, `packaging`, `psygnal`, `pyinstaller`, `sentry-sdk`, `superqt` ([#1086](https://github.com/4DNucleome/PartSeg/pull/1086))
+- [Automatic] Constraints upgrades: `psygnal`, `pydantic`, `sentry-sdk`, `vispy` ([#1090](https://github.com/4DNucleome/PartSeg/pull/1090))
+- [Automatic] Constraints upgrades: `h5py`, `ipykernel`, `mahotas`, `pandas`, `psygnal`, `pydantic`, `pyinstaller`, `qtawesome`, `scipy`, `sentry-sdk`, `superqt` ([#1092](https://github.com/4DNucleome/PartSeg/pull/1092))
+- [Automatic] Constraints upgrades: `imageio`, `tifffile` ([#1100](https://github.com/4DNucleome/PartSeg/pull/1100))
+- [Automatic] Constraints upgrades: `pydantic`, `sentry-sdk`, `superqt`, `tifffile` ([#1102](https://github.com/4DNucleome/PartSeg/pull/1102))
+- [Automatic] Constraints upgrades: `psygnal`, `pygments`, `qtconsole`, `sentry-sdk`, `superqt`, `tifffile` ([#1105](https://github.com/4DNucleome/PartSeg/pull/1105))
+- [Automatic] Constraints upgrades: `imagecodecs`, `magicgui`, `oiffile`, `openpyxl`, `packaging`, `pydantic`, `pyinstaller`, `requests`, `scipy`, `sentry-sdk`, `superqt`, `sympy`, `tifffile`, `vispy` ([#1107](https://github.com/4DNucleome/PartSeg/pull/1107))
+- [Automatic] Constraints upgrades: `pydantic` ([#1112](https://github.com/4DNucleome/PartSeg/pull/1112))
+
+### ⚙️ Miscellaneous Tasks
+
+- [pre-commit.ci] pre-commit autoupdate ([#1019](https://github.com/4DNucleome/PartSeg/pull/1019))
+- Remove plugin page preview as it is no longer maintained ([#1021](https://github.com/4DNucleome/PartSeg/pull/1021))
+- [pre-commit.ci] pre-commit autoupdate ([#1022](https://github.com/4DNucleome/PartSeg/pull/1022))
+- [pre-commit.ci] pre-commit autoupdate ([#1026](https://github.com/4DNucleome/PartSeg/pull/1026))
+- [pre-commit.ci] pre-commit autoupdate ([#1031](https://github.com/4DNucleome/PartSeg/pull/1031))
+- [pre-commit.ci] pre-commit autoupdate ([#1034](https://github.com/4DNucleome/PartSeg/pull/1034))
+- Use new semgrep configuration ([#1039](https://github.com/4DNucleome/PartSeg/pull/1039))
+- Upload raw coverage information ([#1044](https://github.com/4DNucleome/PartSeg/pull/1044))
+- [pre-commit.ci] pre-commit autoupdate ([#1036](https://github.com/4DNucleome/PartSeg/pull/1036))
+- Run coverage upload in separate steep ([#1053](https://github.com/4DNucleome/PartSeg/pull/1053))
+- Generate local report in `Tests` workflow and use proper script for fetch report ([#1054](https://github.com/4DNucleome/PartSeg/pull/1054))
+- Move coverage back to main workflow ([#1055](https://github.com/4DNucleome/PartSeg/pull/1055))
+- [pre-commit.ci] pre-commit autoupdate ([#1056](https://github.com/4DNucleome/PartSeg/pull/1056))
+- [pre-commit.ci] pre-commit autoupdate ([#1059](https://github.com/4DNucleome/PartSeg/pull/1059))
+- Update `actions/upload-artifact` and `actions/download-artifact` from 3 to 4 ([#1062](https://github.com/4DNucleome/PartSeg/pull/1062))
+- [pre-commit.ci] pre-commit autoupdate ([#1064](https://github.com/4DNucleome/PartSeg/pull/1064))
+- Group actions update ([#1065](https://github.com/4DNucleome/PartSeg/pull/1065))
+- [pre-commit.ci] pre-commit autoupdate ([#1068](https://github.com/4DNucleome/PartSeg/pull/1068))
+- Remove requirement of 2 builds upload to codecov.io ([#1073](https://github.com/4DNucleome/PartSeg/pull/1073))
+- Re add tests to coverage report ([#1074](https://github.com/4DNucleome/PartSeg/pull/1074))
+- Switch from setup.cfg to pyproject.toml in workflows ([#1076](https://github.com/4DNucleome/PartSeg/pull/1076))
+- Fix compiling pyinstaller pre-deps ([#1075](https://github.com/4DNucleome/PartSeg/pull/1075))
+- Add codespell to pre-commit and fix pointed bugs ([#1078](https://github.com/4DNucleome/PartSeg/pull/1078))
+- Add new ruff rules and apply them ([#1079](https://github.com/4DNucleome/PartSeg/pull/1079))
+- [pre-commit.ci] pre-commit autoupdate ([#1080](https://github.com/4DNucleome/PartSeg/pull/1080))
+- [pre-commit.ci] pre-commit autoupdate ([#1081](https://github.com/4DNucleome/PartSeg/pull/1081))
+- Fix upgrade depenecies workflow ([#1083](https://github.com/4DNucleome/PartSeg/pull/1083))
+- Block using `mpmath==1.4.0a0` and `sentry-sdk` 2.0.0a1/a2 in pre-test ([#1085](https://github.com/4DNucleome/PartSeg/pull/1085))
+- [pre-commit.ci] pre-commit autoupdate ([#1089](https://github.com/4DNucleome/PartSeg/pull/1089))
+- Fix jupyter failing test by using constraints ([#1093](https://github.com/4DNucleome/PartSeg/pull/1093))
+- [pre-commit.ci] pre-commit autoupdate ([#1091](https://github.com/4DNucleome/PartSeg/pull/1091))
+- [pre-commit.ci] pre-commit autoupdate ([#1096](https://github.com/4DNucleome/PartSeg/pull/1096))
+- Add python 3.12 testing ([#1087](https://github.com/4DNucleome/PartSeg/pull/1087))
+- Exclude pyside2 on python 3.11 and 3.12 from testing ([#1099](https://github.com/4DNucleome/PartSeg/pull/1099))
+- [pre-commit.ci] pre-commit autoupdate ([#1101](https://github.com/4DNucleome/PartSeg/pull/1101))
+- [pre-commit.ci] pre-commit autoupdate ([#1103](https://github.com/4DNucleome/PartSeg/pull/1103))
+- Bump macos runners to macos-13 (both azure and GHA) ([#1113](https://github.com/4DNucleome/PartSeg/pull/1113))
+- [pre-commit.ci] pre-commit autoupdate ([#1108](https://github.com/4DNucleome/PartSeg/pull/1108))
+- Remove pyqt5 from constraints ([#1118](https://github.com/4DNucleome/PartSeg/pull/1118))
+- Add workflow for releases from GHA ([#1117](https://github.com/4DNucleome/PartSeg/pull/1117))
+- Add actionlint to CI to early prevent bug in github workflows ([#1119](https://github.com/4DNucleome/PartSeg/pull/1119))
+- Fix release workflow, by update permissions
+- Check if release notes are properly created ([#1122](https://github.com/4DNucleome/PartSeg/pull/1122))
+- Proper use enum in checking new version ([#1123](https://github.com/4DNucleome/PartSeg/pull/1123))
+- Refactor and simplify menu bar creation, add workaround for macOS numpy problem ([#1124](https://github.com/4DNucleome/PartSeg/pull/1124))
+- Simplify release workflow ([#1126](https://github.com/4DNucleome/PartSeg/pull/1126))
+- Fix `make_release.yml` to proper detect release, attempt 3 ([#1127](https://github.com/4DNucleome/PartSeg/pull/1127))
+
+### 🛡️ Security
+
+- *(deps)* Bump actions/checkout from 3 to 4 ([#1029](https://github.com/4DNucleome/PartSeg/pull/1029))
+- *(deps)* Bump conda-incubator/setup-miniconda from 2 to 3 ([#1038](https://github.com/4DNucleome/PartSeg/pull/1038))
+- *(deps)* Bump aganders3/headless-gui from 1 to 2 ([#1047](https://github.com/4DNucleome/PartSeg/pull/1047))
+- *(deps)* Bump actions/checkout from 3 to 4 ([#1045](https://github.com/4DNucleome/PartSeg/pull/1045))
+- *(deps)* Bump hynek/build-and-inspect-python-package from 1 to 2 ([#1050](https://github.com/4DNucleome/PartSeg/pull/1050))
+- *(deps)* Bump actions/setup-python from 4 to 5 ([#1046](https://github.com/4DNucleome/PartSeg/pull/1046))
+- *(deps)* Bump github/codeql-action from 2 to 3 ([#1051](https://github.com/4DNucleome/PartSeg/pull/1051))
+- *(deps)* Bump peter-evans/create-pull-request from 5 to 6 ([#1067](https://github.com/4DNucleome/PartSeg/pull/1067))
+- *(deps)* Bump codecov/codecov-action from 3 to 4 ([#1066](https://github.com/4DNucleome/PartSeg/pull/1066))
+
+### Build
+
+- Fix not bundling `Font Awesome 6 Free-Solid-900.otf` file to executable ([#1114](https://github.com/4DNucleome/PartSeg/pull/1114))
+- Update readme and release to point to GitHub releases ([#1115](https://github.com/4DNucleome/PartSeg/pull/1115))
+- Do not create archive twice when create bundle ([#1120](https://github.com/4DNucleome/PartSeg/pull/1120))
+- Enable macOS-arm bundle builds ([#1121](https://github.com/4DNucleome/PartSeg/pull/1121))
+
 ## 0.15.2 - 2023-08-28
 
-### Bug Fixes
+### 🐛 Bug Fixes
 
-- Fix range threshold selection of algorithms (#1009)
-- When run batch check if file extension is supported by loader (#1016)
-- Do not allow to select and render corrupted batch plans (#1015)
+- Fix range threshold selection of algorithms ([#1009](https://github.com/4DNucleome/PartSeg/pull/1009))
+- When run batch check if file extension is supported by loader ([#1016](https://github.com/4DNucleome/PartSeg/pull/1016))
+- Do not allow to select and render corrupted batch plans ([#1015](https://github.com/4DNucleome/PartSeg/pull/1015))
 
-### Testing
+### 🧪 Testing
 
-- \[Automatic\] Constraints upgrades: `imagecodecs`, `ipykernel`, `magicgui`, `psygnal`, `scipy`, `superqt`, `tifffile` (#1011)
-- \[Automatic\] Constraints upgrades: `imageio`, `pyinstaller`, `tifffile` (#1018)
+- [Automatic] Constraints upgrades: `imagecodecs`, `ipykernel`, `magicgui`, `psygnal`, `scipy`, `superqt`, `tifffile` ([#1011](https://github.com/4DNucleome/PartSeg/pull/1011))
+- [Automatic] Constraints upgrades: `imageio`, `pyinstaller`, `tifffile` ([#1018](https://github.com/4DNucleome/PartSeg/pull/1018))
 
-### Ci
+### ⚙️ Miscellaneous Tasks
 
-- Use faster version of black (#1010)
-- \[pre-commit.ci\] pre-commit autoupdate (#1013)
+- Use faster version of black ([#1010](https://github.com/4DNucleome/PartSeg/pull/1010))
+- [pre-commit.ci] pre-commit autoupdate ([#1013](https://github.com/4DNucleome/PartSeg/pull/1013))
 
-## 0.15.1 - 2023-08-09
+## 0.15.1 - 2023-08-08
 
-### Bug Fixes
+### 🚀 Features
 
-- Fix possible problem of double registration napari plugin in PartSeg bundle (#974)
-- Bump OS versions for part of testing workflows.  (#977)
-- Bump os version for main tests workflow. (#979)
-- Ensure that the module `PartSegCore.channel_class` is present in bundle (#980)
-- Lower npe2 schema version to work with older napari version (#981)
-- Generate test report per platfom (#978)
-- Importing plugins in bundle keeping proper module names (#983)
-- Fix napari repo workflow (#985)
-- Fix bug in read tiff files with double `Q` in axes but one related to dummy dimmension (#992)
-- Fix bug that lead to corupted state when saving calculation plan to excel file (#995)
-- Enable python 3.11 test on CI, fix minor errors (#869)
+- Allow to save multiple napari image layers to single tiff file ([#1000](https://github.com/4DNucleome/PartSeg/pull/1000))
+- Add option to export batch project with data ([#996](https://github.com/4DNucleome/PartSeg/pull/996))
 
-### Features
+### 🐛 Bug Fixes
 
-- Allow to save multiple napari image layers to single tiff file (#1000)
-- Add option to export batch project with data (#996)
+- Fix possible problem of double registration napari plugin in PartSeg bundle ([#974](https://github.com/4DNucleome/PartSeg/pull/974))
+- Bump OS versions for part of testing workflows. ([#977](https://github.com/4DNucleome/PartSeg/pull/977))
+- Bump os version for main tests workflow. ([#979](https://github.com/4DNucleome/PartSeg/pull/979))
+- Ensure that the module `PartSegCore.channel_class` is present in bundle ([#980](https://github.com/4DNucleome/PartSeg/pull/980))
+- Lower npe2 schema version to work with older napari version ([#981](https://github.com/4DNucleome/PartSeg/pull/981))
+- Generate test report per platform ([#978](https://github.com/4DNucleome/PartSeg/pull/978))
+- Importing plugins in bundle keeping proper module names ([#983](https://github.com/4DNucleome/PartSeg/pull/983))
+- Fix napari repo workflow ([#985](https://github.com/4DNucleome/PartSeg/pull/985))
+- Fix bug in read tiff files with double `Q` in axes but one related to dummy dimension ([#992](https://github.com/4DNucleome/PartSeg/pull/992))
+- Fix bug that lead to corrupted state when saving calculation plan to excel file ([#995](https://github.com/4DNucleome/PartSeg/pull/995))
+- Enable python 3.11 test on CI, fix minor errors ([#869](https://github.com/4DNucleome/PartSeg/pull/869))
 
-### Testing
+### 🧪 Testing
 
-- \[Automatic\] Constraints upgrades: `imageio`, `ipython`, `psygnal`, `scipy`, `sentry-sdk` (#975)
-- \[Automatic\] Constraints upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `napari`, `numpy`, `pandas`, `pydantic`, `pyinstaller`, `scipy`, `sentry-sdk`, `tifffile`, `vispy` (#986)
-- \[Automatic\] Constraints upgrades: `imagecodecs`, `sentry-sdk`, `tifffile` (#997)
-- \[Automatic\] Constraints upgrades: `ipykernel`, `pydantic` (#1002)
-- \[Automatic\] Constraints upgrades: `numpy`, `pygments`, `sentry-sdk`, `superqt` (#1007)
+- [Automatic] Constraints upgrades: `imageio`, `ipython`, `psygnal`, `scipy`, `sentry-sdk` ([#975](https://github.com/4DNucleome/PartSeg/pull/975))
+- [Automatic] Constraints upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `napari`, `numpy`, `pandas`, `pydantic`, `pyinstaller`, `scipy`, `sentry-sdk`, `tifffile`, `vispy` ([#986](https://github.com/4DNucleome/PartSeg/pull/986))
+- [Automatic] Constraints upgrades: `imagecodecs`, `sentry-sdk`, `tifffile` ([#997](https://github.com/4DNucleome/PartSeg/pull/997))
+- [Automatic] Constraints upgrades: `ipykernel`, `pydantic` ([#1002](https://github.com/4DNucleome/PartSeg/pull/1002))
+- [Automatic] Constraints upgrades: `numpy`, `pygments`, `sentry-sdk`, `superqt` ([#1007](https://github.com/4DNucleome/PartSeg/pull/1007))
 
-### Ci
+### ⚙️ Miscellaneous Tasks
 
-- \[pre-commit.ci\] pre-commit autoupdate (#973)
-- \[pre-commit.ci\] pre-commit autoupdate (#982)
-- \[pre-commit.ci\] pre-commit autoupdate (#987)
-- \[pre-commit.ci\] pre-commit autoupdate (#988)
-- \[pre-commit.ci\] pre-commit autoupdate (#991)
-- \[pre-commit.ci\] pre-commit autoupdate (#998)
-- \[pre-commit.ci\] pre-commit autoupdate (#1004)
-- Change markdown linter from pre-commit to mdformat (#1006)
+- [pre-commit.ci] pre-commit autoupdate ([#973](https://github.com/4DNucleome/PartSeg/pull/973))
+- [pre-commit.ci] pre-commit autoupdate ([#982](https://github.com/4DNucleome/PartSeg/pull/982))
+- [pre-commit.ci] pre-commit autoupdate ([#987](https://github.com/4DNucleome/PartSeg/pull/987))
+- [pre-commit.ci] pre-commit autoupdate ([#988](https://github.com/4DNucleome/PartSeg/pull/988))
+- [pre-commit.ci] pre-commit autoupdate ([#991](https://github.com/4DNucleome/PartSeg/pull/991))
+- [pre-commit.ci] pre-commit autoupdate ([#998](https://github.com/4DNucleome/PartSeg/pull/998))
+- [pre-commit.ci] pre-commit autoupdate ([#1004](https://github.com/4DNucleome/PartSeg/pull/1004))
+- Change markdown linter from pre-commit to mdformat ([#1006](https://github.com/4DNucleome/PartSeg/pull/1006))
+- [pre-commit.ci] pre-commit autoupdate ([#1008](https://github.com/4DNucleome/PartSeg/pull/1008))
 
 ## 0.15.0 - 2023-05-30
 
-### Bug Fixes
+### 🚀 Features
 
-- Print all exceptions instead of the latest one in exception dialog (#799)
-- Fix ROIExtractionResult `__str__`and `__repr__` to use `ROIExtractionResult` not `SegmentationResult` (#810)
-- Fix code to address changes in the napari repository (#817)
-- Fix the problem with resize of multiline widgets (#832)
-- Fix tox configuration to run all required tests (#840)
-- Fix MSO `step_limit` description in GUI (#843)
-- Fix `redefined-while-unused`import code for python 3.9.7 (#844)
-- Fix warnings reported by Deepsource (#846)
-- Ensure that "ROI" layer is in the proper place for proper visualization (#856)
-- Fix tests of napari widgets (#862)
-- Fix build of the bundle for a new psygnal release (#863)
-- Fix minimal requirements pipeline (#877)
-- Fix bug with generation of form for the model with hidden field (#920)
-- Update pyinstaller configuration (#926)
-- Use text icon, not pixmap icon in colormap and labels list (#938)
-- Resolve warnings when testing custom save dialog. (#941)
-- Add padding zeros for component num when load Mask seg file to ROI GUI (#944)
-- Proper calculate bounds for watershed napari widget (#969)
-- Fix bug in the wrong order of axis saved in napari contribution (#972)
+- Add `PARTSEG_SENTRY_URL` env variable support and basic documentation about error reporting ([#802](https://github.com/4DNucleome/PartSeg/pull/802))
+- Allow to see underlying exception when show warning caused by exception ([#829](https://github.com/4DNucleome/PartSeg/pull/829))
+- Add voxel size measurement and allow to overwrite voxel size in batch ([#853](https://github.com/4DNucleome/PartSeg/pull/853))
+- Add alpha support for Qt6 ([#866](https://github.com/4DNucleome/PartSeg/pull/866))
+- Add option to create projection alongside z-axis ([#919](https://github.com/4DNucleome/PartSeg/pull/919))
+- Add napari image custom representation for better error report via sentry ([#861](https://github.com/4DNucleome/PartSeg/pull/861))
+- Add import and export operation for labels and colormaps ([#936](https://github.com/4DNucleome/PartSeg/pull/936))
+- Implement napari widgets for colormap and labels control ([#935](https://github.com/4DNucleome/PartSeg/pull/935))
+- Add forget all button to multiple files widget ([#942](https://github.com/4DNucleome/PartSeg/pull/942))
+- Do not abort processing whole mask segmentation project during exception on single component ([#943](https://github.com/4DNucleome/PartSeg/pull/943))
+- Add distance based watersheed to flow methods ([#915](https://github.com/4DNucleome/PartSeg/pull/915))
+- Add napari widgets for all group of algorithms ([#958](https://github.com/4DNucleome/PartSeg/pull/958))
+- Add napari widget to copy labels along z-axis ([#968](https://github.com/4DNucleome/PartSeg/pull/968))
 
-### Dependency
+### 🐛 Bug Fixes
 
-- \[Automatic\] Dependency upgrades (#824)
-- \[Automatic\] Dependency upgrades (#828)
-- \[Automatic\] Dependency upgrades: `ipykernel`, `packaging` (#838)
-- \[Automatic\] Dependency upgrades: `imageio`, `ipykernel`, `napari`, `numpy`, `sentry` (#850)
-- \[Automatic\] Dependency upgrades: `imagecodecs`, `ipykernel`, `numpy`, `psygnal` (#859)
-- \[Automatic\] Dependency upgrades: `pydantic`, `pygments`, `xlsxwriter` (#874)
-- \[Automatic\] Dependency upgrades: `imageio`, `packaging`, `scipy`, `xlsxwriter` (#878)
-- \[Automatic\] Dependency upgrades: `ipykernel`, `requests`, `sentry`, `xlsxwriter` (#884)
-- \[Automatic\] Dependency upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `pandas`, `sentry`, `tifffile` (#889)
-- \[Automatic\] Dependency upgrades: `ipython`, `pyqt5` (#893)
-- \[Automatic\] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `numpy`, `openpyxl`, `psygnal`, `pydantic`, `pyinstaller`, `pyqt5`, `scipy`, `sentry-sdk`, `tifffile`, `xlsxwriter` (#897)
-- \[Automatic\] Dependency upgrades: `imageio`, `psygnal` (#905)
-- \[Automatic\] Dependency upgrades: `ipython`, `magicgui`, `scipy`, `sentry-sdk`, `tifffile` (#906)
-- \[Automatic\] Dependency upgrades: `imagecodecs`, `imageio`, `ipykernel`, `openpyxl`, `pydantic`, `pyinstaller`, `qtawesome`, `qtconsole`, `sentry-sdk`, `tifffile`, `xlsxwriter` (#908)
-- \[Automatic\] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `pandas`, `psygnal`, `pydantic`, `pygments`, `pyinstaller`, `qtpy`, `sentry-sdk`, `tifffile` (#917)
+- Print all exceptions instead of the latest one in exception dialog ([#799](https://github.com/4DNucleome/PartSeg/pull/799))
+- Fix ROIExtractionResult `__str__`and `__repr__` to use `ROIExtractionResult` not `SegmentationResult` ([#810](https://github.com/4DNucleome/PartSeg/pull/810))
+- Fix code to address changes in napari repository ([#817](https://github.com/4DNucleome/PartSeg/pull/817))
+- Fix problem with resize of multiline widgets ([#832](https://github.com/4DNucleome/PartSeg/pull/832))
+- Fix tox configuration to run all required tests ([#840](https://github.com/4DNucleome/PartSeg/pull/840))
+- Fix MSO `step_limit` description in GUI ([#843](https://github.com/4DNucleome/PartSeg/pull/843))
+- Fix `redefined-while-unused`import code for python 3.9.7 ([#844](https://github.com/4DNucleome/PartSeg/pull/844))
+- Fix warnings reported by Deepsource ([#846](https://github.com/4DNucleome/PartSeg/pull/846))
+- Ensure that "ROI" layer is in proper place for proper visualization ([#856](https://github.com/4DNucleome/PartSeg/pull/856))
+- Fix tests of napari widgets ([#862](https://github.com/4DNucleome/PartSeg/pull/862))
+- Fix build of bundle for a new psygnal release ([#863](https://github.com/4DNucleome/PartSeg/pull/863))
+- Fix minimal requirements pipeline ([#877](https://github.com/4DNucleome/PartSeg/pull/877))
+- Update pyinstaller configuration ([#926](https://github.com/4DNucleome/PartSeg/pull/926))
+- Use text icon, not pixmap icon in colormap and labels list ([#938](https://github.com/4DNucleome/PartSeg/pull/938))
+- Resolve warnings when testing custom save dialog. ([#941](https://github.com/4DNucleome/PartSeg/pull/941))
+- Add padding zeros for component num when load Mask seg file to ROI GUI ([#944](https://github.com/4DNucleome/PartSeg/pull/944))
+- Proper calculate bounds for watershed napari widget ([#969](https://github.com/4DNucleome/PartSeg/pull/969))
+- Fix bug in the wrong order of axis saved in napari contribution ([#972](https://github.com/4DNucleome/PartSeg/pull/972))
 
-### Documentation
+### 🚜 Refactor
 
-- Update README and project metadata (#805)
+- Simplify and refactor github workflows. ([#864](https://github.com/4DNucleome/PartSeg/pull/864))
+- Better load Mask project in Roi Analysis ([#921](https://github.com/4DNucleome/PartSeg/pull/921))
+- Use more descriptive names in `pylint: disable` ([#922](https://github.com/4DNucleome/PartSeg/pull/922))
+- Remove `pkg_resources` usage as it is deprecated ([#967](https://github.com/4DNucleome/PartSeg/pull/967))
+- Convert napari plugin to npe2 ([#966](https://github.com/4DNucleome/PartSeg/pull/966))
 
-### Features
+### 📚 Documentation
 
-- Add `PARTSEG_SENTRY_URL` env variable support and basic documentation about error reporting (#802)
-- Allow to see underlying exception when show warning caused by exception (#829)
-- Add voxel size measurement and allow to overwrite voxel size in batch (#853)
-- Add alpha support for Qt6 (#866)
-- Add option to create projection alongside z-axis (#919)
-- Add napari image custom representation for better error report via sentry (#861)
-- Add import and export operation for labels and colormaps (#936)
-- Implement napari widgets for colormap and lables control (#935)
-- Add forget all button to multiple files widget (#942)
-- Do not abort processing whole mask segmentation project during exception on single component (#943)
-- Add distance based watersheed to flow methods (#915)
-- Add napari widgets for all group of algoritms (#958)
-- Add napari widget to copy lables along z-axis (#968)
+- Update README and project metadata ([#805](https://github.com/4DNucleome/PartSeg/pull/805))
+- Create release notes for PartSeg 0.15.0 ([#971](https://github.com/4DNucleome/PartSeg/pull/971))
 
-### Miscellaneous Tasks
+### 🎨 Styling
 
-- Improve ruff configuration, remove isort (#815)
-- Use `fail_on_no_env` feature from `tox-gh-actions` (#842)
-- Add python 3.11 to list of supported versions (#867)
-- Disable python 3.11 test because of timeout (#870)
-- Bump ruff to 0.0.218, remove flake8 from pre-commit (#880)
-- Replace GabrielBB/xvfb-action@v1 by aganders3/headless-gui, part 2 (#887)
-- Better minimal requirements test (#888)
-- Improve regexp for proper generate list of packages in update report (#894)
-- Add check for PR title (#933)
-- Migrate from `nme` to `local_migrator` (#951)
+- Change default theme to dark, remove blinking windows on startup. ([#809](https://github.com/4DNucleome/PartSeg/pull/809))
 
-### Refactor
+### 🧪 Testing
 
-- Simplify and refactor github workflows. (#864)
-- Better load Mask project in Roi Analysis (#921)
-- Use more descriptive names in `pylint: disable` (#922)
-- Remove `pkg_resources` usage as it is deprecated (#967)
-- Convert napari plugin to npe2 (#966)
+- [Automatic] Dependency upgrades: `packaging`, `pyinstaller`, `pyopengl-accelerate`, `tifffile`, `xlsxwriter` ([#932](https://github.com/4DNucleome/PartSeg/pull/932))
+- [Automatic] Constraints upgrades: `fonticon-fontawesome6`, `imageio`, `numpy`, `partsegcore-compiled-backend`, `pygments`, `sentry-sdk` ([#937](https://github.com/4DNucleome/PartSeg/pull/937))
+- [Automatic] Constraints upgrades: `imageio`, `ipython`, `pandas`, `requests`, `sentry-sdk` ([#948](https://github.com/4DNucleome/PartSeg/pull/948))
+- [Automatic] Constraints upgrades: `ipython`, `nme`, `qtconsole`, `requests`, `sentry-sdk` ([#955](https://github.com/4DNucleome/PartSeg/pull/955))
+- [Automatic] Constraints upgrades: `ipykernel`, `local-migrator`, `pyinstaller`, `sentry-sdk`, `sympy` ([#957](https://github.com/4DNucleome/PartSeg/pull/957))
+- [Automatic] Constraints upgrades: `sentry-sdk`, `xlsxwriter` ([#959](https://github.com/4DNucleome/PartSeg/pull/959))
+- [Automatic] Constraints upgrades: `requests` ([#961](https://github.com/4DNucleome/PartSeg/pull/961))
+- [Automatic] Constraints upgrades: `imageio`, `pandas`, `pydantic`, `pyopengl-accelerate`, `sentry-sdk`, `xlsxwriter` ([#970](https://github.com/4DNucleome/PartSeg/pull/970))
 
-### Security
+### ⚙️ Miscellaneous Tasks
 
-- Bump peter-evans/create-pull-request from 4 to 5 (#928)
+- Improve ruff configuration, remove isort ([#815](https://github.com/4DNucleome/PartSeg/pull/815))
+- Use `fail_on_no_env` feature from `tox-gh-actions` ([#842](https://github.com/4DNucleome/PartSeg/pull/842))
+- Add python 3.11 to list of supported versions ([#867](https://github.com/4DNucleome/PartSeg/pull/867))
+- Disable python 3.11 test because of timeout ([#870](https://github.com/4DNucleome/PartSeg/pull/870))
+- Bump ruff to 0.0.218, remove flake8 from pre-commit ([#880](https://github.com/4DNucleome/PartSeg/pull/880))
+- Replace GabrielBB/xvfb-action@v1 by aganders3/headless-gui, part 2 ([#887](https://github.com/4DNucleome/PartSeg/pull/887))
+- Better minimal requirements test ([#888](https://github.com/4DNucleome/PartSeg/pull/888))
+- Improve regexp for proper generate list of packages in update report ([#894](https://github.com/4DNucleome/PartSeg/pull/894))
+- Add check for PR title ([#933](https://github.com/4DNucleome/PartSeg/pull/933))
+- Update codecov configuration to wait on two reports before post information ([#934](https://github.com/4DNucleome/PartSeg/pull/934))
+- [pre-commit.ci] pre-commit autoupdate ([#945](https://github.com/4DNucleome/PartSeg/pull/945))
+- Migrate from `nme` to `local_migrator` ([#951](https://github.com/4DNucleome/PartSeg/pull/951))
+- [pre-commit.ci] pre-commit autoupdate ([#956](https://github.com/4DNucleome/PartSeg/pull/956))
+- [pre-commit.ci] pre-commit autoupdate ([#964](https://github.com/4DNucleome/PartSeg/pull/964))
 
-### Styling
+### 🛡️ Security
 
-- Change default theme to dark, remove blinking windows on startup. (#809)
+- *(deps)* Bump peter-evans/create-pull-request from 4 to 5 ([#928](https://github.com/4DNucleome/PartSeg/pull/928))
 
-### Testing
+### Bugfix
 
-- \[Automatic\] Dependency upgrades: `packaging`, `pyinstaller`, `pyopengl-accelerate`, `tifffile`, `xlsxwriter` (#932)
-- \[Automatic\] Constraints upgrades: `fonticon-fontawesome6`, `imageio`, `numpy`, `partsegcore-compiled-backend`, `pygments`, `sentry-sdk` (#937)
-- \[Automatic\] Constraints upgrades: `imageio`, `ipython`, `pandas`, `requests`, `sentry-sdk` (#948)
-- \[Automatic\] Constraints upgrades: `ipython`, `nme`, `qtconsole`, `requests`, `sentry-sdk` (#955)
-- \[Automatic\] Constraints upgrades: `ipykernel`, `local-migrator`, `pyinstaller`, `sentry-sdk`, `sympy` (#957)
-- \[Automatic\] Constraints upgrades: `sentry-sdk`, `xlsxwriter` (#959)
-- \[Automatic\] Constraints upgrades: `requests` (#961)
+- Fix bug with generation of form for model with hidden field ([#920](https://github.com/4DNucleome/PartSeg/pull/920))
 
-### Ci
+### Dep
 
-- Update codecov configuration to wait on two reports before post information (#934)
-- \[pre-commit.ci\] pre-commit autoupdate (#945)
-- \[pre-commit.ci\] pre-commit autoupdate (#956)
-- \[pre-commit.ci\] pre-commit autoupdate (#964)
+- [Automatic] Dependency upgrades ([#824](https://github.com/4DNucleome/PartSeg/pull/824))
+- [Automatic] Dependency upgrades ([#828](https://github.com/4DNucleome/PartSeg/pull/828))
+- [Automatic] Dependency upgrades: `ipykernel`, `packaging` ([#838](https://github.com/4DNucleome/PartSeg/pull/838))
+- [Automatic] Dependency upgrades: `imageio`, `ipykernel`, `napari`, `numpy`, `sentry` ([#850](https://github.com/4DNucleome/PartSeg/pull/850))
+- [Automatic] Dependency upgrades: `imagecodecs`, `ipykernel`, `numpy`, `psygnal` ([#859](https://github.com/4DNucleome/PartSeg/pull/859))
+- [Automatic] Dependency upgrades: `pydantic`, `pygments`, `xlsxwriter` ([#874](https://github.com/4DNucleome/PartSeg/pull/874))
+- [Automatic] Dependency upgrades: `imageio`, `packaging`, `scipy`, `xlsxwriter` ([#878](https://github.com/4DNucleome/PartSeg/pull/878))
+- [Automatic] Dependency upgrades: `ipykernel`, `requests`, `sentry`, `xlsxwriter` ([#884](https://github.com/4DNucleome/PartSeg/pull/884))
+- [Automatic] Dependency upgrades: `h5py`, `imagecodecs`, `imageio`, `ipykernel`, `pandas`, `sentry`, `tifffile` ([#889](https://github.com/4DNucleome/PartSeg/pull/889))
+- [Automatic] Dependency upgrades: `ipython`, `pyqt5` ([#893](https://github.com/4DNucleome/PartSeg/pull/893))
+- [Automatic] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `numpy`, `openpyxl`, `psygnal`, `pydantic`, `pyinstaller`, `pyqt5`, `scipy`, `sentry-sdk`, `tifffile`, `xlsxwriter` ([#897](https://github.com/4DNucleome/PartSeg/pull/897))
+- [Automatic] Dependency upgrades: `imageio`, `psygnal` ([#905](https://github.com/4DNucleome/PartSeg/pull/905))
+- [Automatic] Dependency upgrades: `ipython`, `magicgui`, `scipy`, `sentry-sdk`, `tifffile` ([#906](https://github.com/4DNucleome/PartSeg/pull/906))
+- [Automatic] Dependency upgrades: `imagecodecs`, `imageio`, `ipykernel`, `openpyxl`, `pydantic`, `pyinstaller`, `qtawesome`, `qtconsole`, `sentry-sdk`, `tifffile`, `xlsxwriter` ([#908](https://github.com/4DNucleome/PartSeg/pull/908))
+- [Automatic] Dependency upgrades: `imageio`, `ipykernel`, `ipython`, `pandas`, `psygnal`, `pydantic`, `pygments`, `pyinstaller`, `qtpy`, `sentry-sdk`, `tifffile` ([#917](https://github.com/4DNucleome/PartSeg/pull/917))
 
 ## 0.14.6 - 2022-11-13
 
-### Bug Fixes
+### 🐛 Bug Fixes
 
-- Fix bug when loading already created project causing hide of ROI layer (#787)
-
-### Features
-
-- Improve error message if segmentation do not fit in ROI Mask (#788)
+- Fix bug when loading already created project causing hide of ROI layer ([#787](https://github.com/4DNucleome/PartSeg/pull/787))
 
 ## 0.14.5 - 2022-11-09
 
-### Bug Fixes
+### 🚀 Features
 
-- Fix scalebar color (#774)
-- Fix bug when saving segmentation parameters in mask analysis (#781)
-- Fix multiple errors related to loading a new file in interactive mode (#784)
+- Add option for ensure type in EventedDict and use it to validate profiles structures ([#776](https://github.com/4DNucleome/PartSeg/pull/776))
+- Add option to create issue from error report dialog ([#782](https://github.com/4DNucleome/PartSeg/pull/782))
+- Add option for multiline field in algorithm parameters ([#766](https://github.com/4DNucleome/PartSeg/pull/766))
 
-### Features
+### 🐛 Bug Fixes
 
-- Add an option for ensuring type in EventedDict and use it to validate profiles structures (#776)
-- Add an option to create an issue from the error report dialog (#782)
-- Add option for the multiline field in algorithm parameters (#766)
+- Fix scalebar color ([#774](https://github.com/4DNucleome/PartSeg/pull/774))
+- Fix bug when saving segmentation parameters in mask analysis ([#781](https://github.com/4DNucleome/PartSeg/pull/781))
+- Fix multiple error related to loading new file in interactive mode ([#784](https://github.com/4DNucleome/PartSeg/pull/784))
 
-### Refactor
+### 🚜 Refactor
 
-- Optimize CLI actions (#772)
-- Clean warnings about threshold methods (#783)
+- Optimize CLI actions ([#772](https://github.com/4DNucleome/PartSeg/pull/772))
+- Clean warnings about threshold methods ([#783](https://github.com/4DNucleome/PartSeg/pull/783))
 
 ### Build
 
-- Bump chanzuckerberg/napari-hub-preview-action from 0.1.5 to 0.1.6 (#775)
+- *(deps)* Bump chanzuckerberg/napari-hub-preview-action from 0.1.5 to 0.1.6 ([#775](https://github.com/4DNucleome/PartSeg/pull/775))
 
 ## 0.14.4 - 2022-10-24
 
-### Bug Fixes
+### 🚀 Features
 
-- Fix `get_theme` calls to prepare for napari 0.4.17 (#729)
-- Fix sentry tests (#742)
-- Fix reporting error in load settings from the drive (#725)
-- Fix saving pipeline from GUI (#756)
-- Fix profile export/import dialogs (#761)
-- Enable the "Compare" button if ROI is available (#765)
-- Fix bug in cut with ROI to not make black artifacts (#767)
+- Load alternatives labeling when open PartSeg projects in napari ([#731](https://github.com/4DNucleome/PartSeg/pull/731))
+- Add option to toggle scale bar ([#733](https://github.com/4DNucleome/PartSeg/pull/733))
+- Allow customize settings directory using the `PARTSEG_SETTINGS_DIR` environment variable ([#751](https://github.com/4DNucleome/PartSeg/pull/751))
+- Separate recent algorithms from general application settings ([#752](https://github.com/4DNucleome/PartSeg/pull/752))
+- Add multiple otsu as threshold method with selection range of components ([#710](https://github.com/4DNucleome/PartSeg/pull/710))
+- Add function to load components from Mask Segmentation with background in ROI Analysis ([#768](https://github.com/4DNucleome/PartSeg/pull/768))
 
-### Features
+### 🐛 Bug Fixes
 
-- Load alternatives labeling when opening PartSeg projects in napari (#731)
-- Add option to toggle scale bar (#733)
-- Allow customizing the settings directory using the `PARTSEG_SETTINGS_DIR` environment variable (#751)
-- Separate recent algorithms from general application settings (#752)
-- Add multiple otsu as threshold method with selection range of components (#710)
-- Add function to load components from Mask Segmentation with a background in ROI Analysis (#768)
+- Fix typos
+- Fix `get_theme` calls to prepare for napari 0.4.17 ([#729](https://github.com/4DNucleome/PartSeg/pull/729))
+- Fix saving pipeline from GUI ([#756](https://github.com/4DNucleome/PartSeg/pull/756))
+- Fix profile export/import dialogs ([#761](https://github.com/4DNucleome/PartSeg/pull/761))
+- Enable compare button if ROI is available ([#765](https://github.com/4DNucleome/PartSeg/pull/765))
+- Fix bug in cut with roi to do not make black artifacts ([#767](https://github.com/4DNucleome/PartSeg/pull/767))
 
-### Miscellaneous Tasks
+### 🧪 Testing
 
-- Prepare pyinstaller configuration for napari 0.4.17 (#748)
-- Add ruff linter (#754)
+- Add new build and inspect wheel action ([#747](https://github.com/4DNucleome/PartSeg/pull/747))
 
-### Testing
+### ⚙️ Miscellaneous Tasks
 
-- Add new build and inspect wheel action (#747)
+- Prepare pyinstaller configuration for napari 0.4.17 ([#748](https://github.com/4DNucleome/PartSeg/pull/748))
+- Add ruff linter ([#754](https://github.com/4DNucleome/PartSeg/pull/754))
+
+### Bugfix
+
+- Fix sentry tests ([#742](https://github.com/4DNucleome/PartSeg/pull/742))
+- Fix reporting error in load settings from drive ([#725](https://github.com/4DNucleome/PartSeg/pull/725))
 
 ### Build
 
-- Bump actions/checkout from 2 to 3 (#716)
-- Bump actions/download-artifact from 1 to 3 (#709)
+- *(deps)* Bump actions/checkout from 2 to 3 ([#716](https://github.com/4DNucleome/PartSeg/pull/716))
+- *(deps)* Bump actions/download-artifact from 1 to 3 ([#709](https://github.com/4DNucleome/PartSeg/pull/709))
 
 ## 0.14.3 - 2022-08-18
 
-### Bug Fixes
+### 🐛 Bug Fixes
 
-- Fix lack of rendering ROI when load image from segmentation (#694)
-- Fix running ROI extraction from napari widget (#695)
-- Delay setting image if an algorithm is still running (#627)
-- Wrong error report when no component is found in restartable segmentation algorithm. (#633)
-- Fix the process of building documentation (#653)
+- Delay setting image if an algorithm is still running ([#627](https://github.com/4DNucleome/PartSeg/pull/627))
+- Wrong error report when no component is found in restartable segmentation algorithm. ([#633](https://github.com/4DNucleome/PartSeg/pull/633))
+- Fix process of build documentation ([#653](https://github.com/4DNucleome/PartSeg/pull/653))
 
-### Refactor
+### 🚜 Refactor
 
-- Clean potential vulnerabilities  (#630)
+- Clean potential vulnerabilities ([#630](https://github.com/4DNucleome/PartSeg/pull/630))
 
-### Testing
+### 🧪 Testing
 
-- Add more tests for common GUI elements  (#622)
-- Report coverage per package. (#639)
-- Update conda environment to not use PyQt5 in test (#646)
-- Add tests files to calculate coverage (#655)
+- Add more tests for common GUI elements ([#622](https://github.com/4DNucleome/PartSeg/pull/622))
+- Report coverage per package. ([#639](https://github.com/4DNucleome/PartSeg/pull/639))
+- Update conda environment to not use PyQt5 in test ([#646](https://github.com/4DNucleome/PartSeg/pull/646))
+- Add tests files to calculate coverage ([#655](https://github.com/4DNucleome/PartSeg/pull/655))
+
+### Build
+
+- *(deps)* Bump qtpy from 2.0.1 to 2.1.0 in /requirements ([#613](https://github.com/4DNucleome/PartSeg/pull/613))
+- *(deps)* Bump pyinstaller from 5.0.1 to 5.1 in /requirements ([#629](https://github.com/4DNucleome/PartSeg/pull/629))
+- *(deps)* Bump tifffile from 2022.4.28 to 2022.5.4 in /requirements ([#619](https://github.com/4DNucleome/PartSeg/pull/619))
+- *(deps)* Bump codecov/codecov-action from 1 to 3 ([#637](https://github.com/4DNucleome/PartSeg/pull/637))
+- *(deps)* Bump requests from 2.27.1 to 2.28.0 in /requirements ([#647](https://github.com/4DNucleome/PartSeg/pull/647))
+- *(deps)* Bump actions/setup-python from 3 to 4 ([#648](https://github.com/4DNucleome/PartSeg/pull/648))
+- *(deps)* Bump pyqt5 from 5.15.6 to 5.15.7 in /requirements ([#652](https://github.com/4DNucleome/PartSeg/pull/652))
+- *(deps)* Bump sentry-sdk from 1.5.12 to 1.6.0 in /requirements ([#659](https://github.com/4DNucleome/PartSeg/pull/659))
+- *(deps)* Bump numpy from 1.22.4 to 1.23.0 in /requirements ([#660](https://github.com/4DNucleome/PartSeg/pull/660))
+- *(deps)* Bump lxml from 4.9.0 to 4.9.1 in /requirements ([#665](https://github.com/4DNucleome/PartSeg/pull/665))
+- *(deps)* Bump mahotas from 1.4.12 to 1.4.13 in /requirements ([#662](https://github.com/4DNucleome/PartSeg/pull/662))
+- *(deps)* Bump pyinstaller from 5.1 to 5.2 in /requirements ([#667](https://github.com/4DNucleome/PartSeg/pull/667))
 
 ## 0.14.2 - 2022-05-05
 
-### Bug Fixes
+### 🐛 Bug Fixes
 
-- Fix bug in save label colors between sessions (#610)
-- Register PartSeg plugins before starting napari widgets. (#611)
-- Mouse interaction with components works again after highlight. (#620)
+- Fix bug in save label colors between sessions ([#610](https://github.com/4DNucleome/PartSeg/pull/610))
+- Register PartSeg plugins before start napari widgets. ([#611](https://github.com/4DNucleome/PartSeg/pull/611))
+- Mouse interaction with components work again after highlight. ([#620](https://github.com/4DNucleome/PartSeg/pull/620))
 
-### Refactor
+### 🚜 Refactor
 
-- Limit test run (#603)
-- Filter and solve warnings in tests (#607)
-- Use QAbstractSpinBox.AdaptiveDecimalStepType in SpinBox instead of hardcoded bounds (#616)
-- Clean and test `PartSeg.common_gui.universal_gui_part` (#617)
+- Limit test run ([#603](https://github.com/4DNucleome/PartSeg/pull/603))
+- Filter and solve warnings in tests ([#607](https://github.com/4DNucleome/PartSeg/pull/607))
+- Use QAbstractSpinBox.AdaptiveDecimalStepType in SpinBox instead of hardcoded bounds ([#616](https://github.com/4DNucleome/PartSeg/pull/616))
+- Clean and test `PartSeg.common_gui.universal_gui_part` ([#617](https://github.com/4DNucleome/PartSeg/pull/617))
 
-### Testing
+### 📚 Documentation
 
-- Speedup test by setup cache for pip (#604)
-- Setup cache for azure pipelines workflows (#606)
+- Update changelog ([#621](https://github.com/4DNucleome/PartSeg/pull/621))
+
+### 🧪 Testing
+
+- Speedup test by setup cache for pip ([#604](https://github.com/4DNucleome/PartSeg/pull/604))
+- Setup cache for azure pipelines workflows ([#606](https://github.com/4DNucleome/PartSeg/pull/606))
+
+### Build
+
+- *(deps)* Bump sentry-sdk from 1.5.10 to 1.5.11 in /requirements ([#615](https://github.com/4DNucleome/PartSeg/pull/615))
 
 ## 0.14.1 - 2022-04-27
 
-### Bug Fixes
+### 🚀 Features
 
-- Update build wheels and sdist to have proper version tag (#583)
-- Fix removing the first measurement entry in the napari Measurement widget (#584)
-- Fix compatibility bug for conda Pyside2 version (#595)
-- Error when synchronization is loaded, and newly loaded image has different dimensionality than currently loaded. (#598)
+- Use pygments for coloring code in exception window ([#591](https://github.com/4DNucleome/PartSeg/pull/591))
+- Add option to calculate Measurement per Mask component ([#590](https://github.com/4DNucleome/PartSeg/pull/590))
 
-### Features
+### 🐛 Bug Fixes
 
-- Use pygments for coloring code in exception window (#591)
-- Add option to calculate Measurement per Mask component (#590)
+- Update build wheels and sdist to have proper version tag ([#583](https://github.com/4DNucleome/PartSeg/pull/583))
+- Fix removing the first measurement entry in the napari Measurement widget ([#584](https://github.com/4DNucleome/PartSeg/pull/584))
+- Fix compatybility bug for conda Pyside2 version ([#595](https://github.com/4DNucleome/PartSeg/pull/595))
+- Error when synchronization is loaded and new iloaded image has different dimensionality than currently loaded. ([#598](https://github.com/4DNucleome/PartSeg/pull/598))
 
-### Refactor
+### 🚜 Refactor
 
-- Refactor the creation batch plan widgets and add tests for it (#587)
-- Drop napari bellow 0.4.12 (#592)
-- Update the order of ROI Mask algorithms to be the same as in older PartSeg versions (#600)
+- Refactor the create batch plan widgets and add test for it ([#587](https://github.com/4DNucleome/PartSeg/pull/587))
+- Drop napari below 0.4.12 ([#592](https://github.com/4DNucleome/PartSeg/pull/592))
+- Update the order of ROI Mask algorithms to be the same as in older PartSeg versions ([#600](https://github.com/4DNucleome/PartSeg/pull/600))
+
+### Build
+
+- *(deps)* Bump partsegcore-compiled-backend from 0.13.11 to 0.14.0 in /requirements ([#582](https://github.com/4DNucleome/PartSeg/pull/582))
+- *(deps)* Bump simpleitk from 2.1.1 to 2.1.1.2 in /requirements ([#589](https://github.com/4DNucleome/PartSeg/pull/589))
+- *(deps)* Bump pyinstaller from 4.10 to 5.0 in /requirements ([#586](https://github.com/4DNucleome/PartSeg/pull/586))
 
 ## 0.14.0 - 2022-04-14
 
-### Bug Fixes
+### 🚀 Features
 
-- Fix "Show selected" rendering mode in PartSeg ROI Mask (#565)
-- Add access by operator `[]` to `pydantic.BaseModel` base structures for keeping backward compatibility (#579)
+- Allow to set zoom factor from interface in Search Label napari plugin ([#538](https://github.com/4DNucleome/PartSeg/pull/538))
+- Add controlling of zoom factor of search ROI in main GUI ([#540](https://github.com/4DNucleome/PartSeg/pull/540))
+- Better serialization mechanism allow for declaration data structure migration locally ([#462](https://github.com/4DNucleome/PartSeg/pull/462))
+- Make \`\*.obsep" file possible to load in PartSeg Analysis ([#564](https://github.com/4DNucleome/PartSeg/pull/564))
+- Add option to extract measurement profile or roi extraction profile from batch plan ([#568](https://github.com/4DNucleome/PartSeg/pull/568))
+- Allow import calculation plan from batch result excel file ([#567](https://github.com/4DNucleome/PartSeg/pull/567))
+- Improve error reporting when fail to deserialize data ([#574](https://github.com/4DNucleome/PartSeg/pull/574))
+- Launch PartSeg GUI from napari ([#581](https://github.com/4DNucleome/PartSeg/pull/581))
 
-### Features
+### 🐛 Bug Fixes
 
-- Allow setting zoom factor from the interface in Search Label napari plugin (#538)
-- Add controlling of zoom factor of search ROI in main GUI (#540)
-- Better serialization mechanism allow for declaration data structure migration locally (#462)
-- Make \`\*.obsep" file possible to load in PartSeg Analysis (#564)
-- Add option to extract measurement profile or ROI extraction profile from the batch plan (#568)
-- Allow import calculation plan from batch result excel file (#567)
-- Improve error reporting when failing to deserialize data (#574)
-- Launch PartSeg GUI from napari #581
+- Fix "Show selected" rendering mode in PartSeg ROI Mask ([#565](https://github.com/4DNucleome/PartSeg/pull/565))
 
-### Refactor
+### 🚜 Refactor
 
-- Store PartSegImage.Image channels as separated arrays (#554)
-- Remove deprecated modules. (#429)
-- Switch serialization backend to `nme` (#569)
+- Store PartSegImage.Image channels as separated arrays ([#554](https://github.com/4DNucleome/PartSeg/pull/554))
+- Remove deprecated modules. ([#429](https://github.com/4DNucleome/PartSeg/pull/429))
+- Switch serialization backen to `nme` ([#569](https://github.com/4DNucleome/PartSeg/pull/569))
 
-### Testing
+### 📚 Documentation
 
-- Add test of creating AboutDialog (#539)
-- Setup test for python 3.10. Disable `class_generator` test for this python (#570)
+- Update changelog and add new badges to readme ([#580](https://github.com/4DNucleome/PartSeg/pull/580))
+
+### 🧪 Testing
+
+- Add test of creating AboutDialog ([#539](https://github.com/4DNucleome/PartSeg/pull/539))
+- Setup test for python 3.10. Disable class_generator test for this python ([#570](https://github.com/4DNucleome/PartSeg/pull/570))
+
+### Bugfix
+
+- Add access by operator [] to pydantic.BaseModel base structures for keep backward compatybility ([#579](https://github.com/4DNucleome/PartSeg/pull/579))
+
+### Build
+
+- *(deps)* Bump sentry-sdk from 1.5.2 to 1.5.3 in /requirements ([#512](https://github.com/4DNucleome/PartSeg/pull/512))
+- *(deps)* Bump ipython from 8.0.0 to 8.0.1 in /requirements ([#513](https://github.com/4DNucleome/PartSeg/pull/513))
+- *(deps)* Bump pandas from 1.3.5 to 1.4.0 in /requirements ([#514](https://github.com/4DNucleome/PartSeg/pull/514))
+- *(deps)* Bump oiffile from 2021.6.6 to 2022.2.2 in /requirements ([#521](https://github.com/4DNucleome/PartSeg/pull/521))
+- *(deps)* Bump numpy from 1.22.1 to 1.22.2 in /requirements ([#524](https://github.com/4DNucleome/PartSeg/pull/524))
+- *(deps)* Bump tifffile from 2021.11.2 to 2022.2.2 in /requirements ([#523](https://github.com/4DNucleome/PartSeg/pull/523))
+- *(deps)* Bump qtpy from 2.0.0 to 2.0.1 in /requirements ([#522](https://github.com/4DNucleome/PartSeg/pull/522))
+- *(deps)* Bump sentry-sdk from 1.5.3 to 1.5.4 in /requirements ([#515](https://github.com/4DNucleome/PartSeg/pull/515))
+- *(deps)* Bump pyinstaller from 4.8 to 4.10 in /requirements ([#545](https://github.com/4DNucleome/PartSeg/pull/545))
+- *(deps)* Bump pillow from 9.0.0 to 9.0.1 in /requirements ([#549](https://github.com/4DNucleome/PartSeg/pull/549))
+- *(deps)* Bump sphinx from 4.4.0 to 4.5.0 in /requirements ([#561](https://github.com/4DNucleome/PartSeg/pull/561))
+- *(deps)* Bump tifffile from 2022.2.9 to 2022.3.25 in /requirements ([#562](https://github.com/4DNucleome/PartSeg/pull/562))
+- *(deps)* Bump sympy from 1.10 to 1.10.1 in /requirements ([#556](https://github.com/4DNucleome/PartSeg/pull/556))
+- *(deps)* Bump sentry-sdk from 1.5.7 to 1.5.8 in /requirements ([#557](https://github.com/4DNucleome/PartSeg/pull/557))
 
 ## 0.13.15
 
@@ -415,7 +903,7 @@
 ### Features
 
 - Add randomization option for correlation calculation (#421)
-- Add Imagej TIFF writter for image. (#405)
+- Add Imagej TIFF writer for image. (#405)
 - Mask create widget for napari (#395)
 - In napari roi extraction method show information from roi extraction method (#408)
 - Add `*[0-9].tif` button in batch processing window (#412)
@@ -435,13 +923,13 @@
 
 ### Features
 
-- Add CellFromNucleusFlow "Cell from nucleus flow" cell segmentation method  (#367)
+- Add CellFromNucleusFlow "Cell from nucleus flow" cell segmentation method (#367)
 - When cutting components in PartSeg ROI mask allow not masking outer data (#379)
 - Theme selection in GUI (#381)
 - Allow return points from ROI extraction algorithm (#382)
 - Add measurement to get ROI annotation by name. (#386)
 - PartSeg ROI extraction algorithms as napari plugins (#387)
-- Add  Pearson, Mander's, Intensity, Spearman colocalization measurements (#392)
+- Add Pearson, Mander's, Intensity, Spearman colocalization measurements (#392)
 - Separate standalone napari settings from PartSeg embedded napari settings (#397)
 
 ### Performance
@@ -642,7 +1130,7 @@
 ## 0.9.6
 
 - fix bug in loading project with mask
-- upgrade PyInstaller version (bug  GHSA-7fcj-pq9j-wh2r)
+- upgrade PyInstaller version (bug GHSA-7fcj-pq9j-wh2r)
 
 ## 0.9.5
 

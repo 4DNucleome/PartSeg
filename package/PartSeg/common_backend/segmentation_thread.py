@@ -1,5 +1,5 @@
 import dataclasses
-import sys
+import logging
 
 from qtpy.QtCore import QMutex, QThread, Signal
 
@@ -48,7 +48,11 @@ class SegmentationThread(QThread):
         """the calculation are done here"""
         if self.algorithm.image is None:
             # assertion for running algorithm without image
-            print(f"No image in class {self.algorithm.__class__}", file=sys.stderr)
+            logging.error(
+                "No image in class %s",
+                self.algorithm.__class__,
+                stack_info=True,
+            )
             return
         try:
             segment_data = self.algorithm.calculation_run_wrap(self.send_info)
@@ -59,6 +63,10 @@ class SegmentationThread(QThread):
             return
         if segment_data is None:
             return
+        if self._image is not None:
+            # image changed during calculation
+            return
+
         self.execution_done.emit(segment_data)
 
     def finished_task(self):

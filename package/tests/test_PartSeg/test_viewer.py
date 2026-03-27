@@ -1,9 +1,11 @@
 import platform
+from importlib.metadata import version
 
 import numpy as np
 import pytest
 import qtpy
 from napari.layers import Labels, Points
+from packaging.version import parse as parse_version
 from qtpy.QtCore import QCoreApplication
 
 from PartSeg._roi_analysis.image_view import ResultImageView
@@ -17,9 +19,11 @@ pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system(
 
 pytestmark = pytest.mark.filterwarnings("ignore:Public access to Window.qt_viewer")
 
+MOCK_APP_FIXTURE_NAME = "mock_app_model" if parse_version(version("napari")) >= parse_version("0.5.4") else "mock_app"
+
 
 class TestResultImageView:
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     @pyside_skip
     def test_simple(self, qtbot, part_settings, image):
         prop = ChannelProperty(part_settings, "test")
@@ -38,7 +42,7 @@ class TestResultImageView:
         assert not viewer.available_alternatives()
         viewer.hide()
 
-    @pytest.mark.windows_ci_skip()
+    @pytest.mark.windows_ci_skip
     @pyside_skip
     def test_set_roi(self, qtbot, part_settings, image):
         prop = ChannelProperty(part_settings, "test")
@@ -63,31 +67,32 @@ class TestResultImageView:
 
 
 @pyside_skip
-@pytest.mark.windows_ci_skip()
+@pytest.mark.windows_ci_skip
+@pytest.mark.usefixtures(MOCK_APP_FIXTURE_NAME)
 class TestNapariViewer:
     def test_base(self, image, analysis_segmentation2, tmp_path):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "")
+        viewer = Viewer(settings, "", show=False)
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 2
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 2
         settings.image = analysis_segmentation2.image
         viewer.create_initial_layers(True, True, True, True)
-        assert len(viewer.layers) == 1
+        assert len(viewer.layers) == 3
         settings.roi = analysis_segmentation2.roi_info.roi
         viewer.create_initial_layers(True, True, True, True)
-        assert len(viewer.layers) == 2
+        assert len(viewer.layers) == 4
         settings.mask = analysis_segmentation2.mask
         viewer.create_initial_layers(True, True, True, True)
-        assert len(viewer.layers) == 3
+        assert len(viewer.layers) == 5
         viewer.close()
 
     def test_points(self, image, tmp_path, qtbot):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "")
+        viewer = Viewer(settings, "", show=False)
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 2
         points = np.array([[0, 1, 1, 1], [0, 7, 10, 10]])
@@ -108,7 +113,7 @@ class TestNapariViewer:
     def test_image(self, image, image2, tmp_path, qtbot):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "test")
+        viewer = Viewer(settings, "test", show=False)
         with qtbot.waitSignal(viewer._sync_widget.sync_image_chk.stateChanged):
             viewer._sync_widget.sync_image_chk.setChecked(True)
         assert len(viewer.layers) == 2
@@ -120,7 +125,7 @@ class TestNapariViewer:
     def test_roi(self, image, tmp_path, qtbot):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "test")
+        viewer = Viewer(settings, "test", show=False)
         viewer._sync_widget.sync_image()
         assert len(viewer.layers) == 2
         viewer._sync_widget.sync_ROI_chk.setChecked(True)
@@ -130,10 +135,11 @@ class TestNapariViewer:
         assert len(viewer.layers) == 4
         viewer.close()
 
-    def test_additional(self, image, tmp_path, qtbot):
+    @pytest.mark.usefixtures("qtbot")
+    def test_additional(self, image, tmp_path):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "test")
+        viewer = Viewer(settings, "test", show=False)
         viewer._sync_widget.sync_image()
         assert len(viewer.layers) == 2
         settings._additional_layers = {
