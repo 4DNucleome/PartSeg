@@ -992,7 +992,7 @@ class MainWindow(BaseMainWindow):
         options_widget.setLayout(sub2_layout)
         splitter.addWidget(options_widget)
 
-        layout.addWidget(splitter)
+        layout.addWidget(splitter, 1)
         return layout
 
     def _setup_menu_bar(self):
