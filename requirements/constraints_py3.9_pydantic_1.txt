@@ -289,7 +289,7 @@ pydantic==1.10.26
     #   pydantic-compat
 pydantic-compat==0.1.2
     # via app-model
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   partseg (pyproject.toml)
     #   ipython

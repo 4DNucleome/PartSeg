@@ -71,7 +71,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2026.2.0
+fsspec==2026.3.0
     # via dask
 h5py==3.16.0
     # via partseg (pyproject.toml)
@@ -105,7 +105,7 @@ ipykernel==6.31.0
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==8.38.0
+ipython==8.39.0
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -291,7 +291,7 @@ pydantic-core==2.41.5
     # via pydantic
 pydantic-extra-types==2.11.1
     # via npe2
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   partseg (pyproject.toml)
     #   ipython
