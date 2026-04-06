@@ -27,9 +27,9 @@ certifi==2026.2.25
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via requests
-click==8.3.1
+click==8.3.2
     # via
     #   dask
     #   typer
@@ -65,7 +65,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2026.2.0
+fsspec==2026.3.0
     # via dask
 h5py==3.16.0
     # via partseg (pyproject.toml)
@@ -97,7 +97,7 @@ ipykernel==7.2.0
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==9.10.0
+ipython==9.10.1
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -177,7 +177,7 @@ npe2==0.7.9
     # via
     #   -r requirements/version_denylist.txt
     #   napari
-numpy==2.4.3
+numpy==2.4.4
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -218,7 +218,7 @@ packaging==26.0
     #   scikit-image
     #   sphinx
     #   vispy
-pandas==3.0.1
+pandas==3.0.2
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -232,7 +232,7 @@ partsegdata==0.10.0
     # via partseg (pyproject.toml)
 pexpect==4.9.0
     # via ipython
-pillow==12.1.1
+pillow==12.2.0
     # via
     #   imageio
     #   napari
@@ -281,7 +281,7 @@ pydantic==1.10.26
     #   pydantic-compat
 pydantic-compat==0.1.2
     # via app-model
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   partseg (pyproject.toml)
     #   ipython
@@ -294,17 +294,17 @@ pygments==2.19.2
     #   superqt
 pyinstaller==6.19.0
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2026.3
+pyinstaller-hooks-contrib==2026.4
     # via pyinstaller
 pyopengl==3.1.10
     # via napari
 pyproject-hooks==1.2.0
     # via build
-pyqt6==6.10.2
+pyqt6==6.11.0
     # via
     #   partseg (pyproject.toml)
     #   napari
-pyqt6-qt6==6.10.2
+pyqt6-qt6==6.11.0
     # via pyqt6
 pyqt6-sip==13.11.1
     # via pyqt6
@@ -365,7 +365,7 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.0
+requests==2.33.1
     # via
     #   partseg (pyproject.toml)
     #   pooch
@@ -390,7 +390,7 @@ scipy==1.17.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.56.0
+sentry-sdk==2.57.0
     # via partseg (pyproject.toml)
 setuptools==82.0.1
     # via
