@@ -20,7 +20,7 @@ autodoc-pydantic==2.2.0
     # via partseg (pyproject.toml)
 babel==2.18.0
     # via sphinx
-build==1.4.2
+build==1.4.3
     # via npe2
 cachey==0.2.1
     # via napari
@@ -39,7 +39,7 @@ cloudpickle==3.1.2
     # via dask
 comm==0.2.3
     # via ipykernel
-czifile==2026.3.17
+czifile==2026.4.11
     # via partseg (pyproject.toml)
 dask==2026.3.0
     # via napari
@@ -134,7 +134,7 @@ local-migrator==0.1.10
     #   nme
 locket==1.0.0
     # via partd
-magicgui==0.10.1
+magicgui==0.10.2
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -225,7 +225,7 @@ pillow==12.2.0
     #   scikit-image
 pint==0.25.3
     # via napari
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   partseg (pyproject.toml)
     #   jupyter-core
@@ -309,7 +309,7 @@ pyzmq==27.1.0
     # via
     #   ipykernel
     #   jupyter-client
-qtawesome==1.4.1
+qtawesome==1.4.2
     # via partseg (pyproject.toml)
 qtconsole==5.7.2
     # via
@@ -334,7 +334,7 @@ requests==2.33.1
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.3.3
+rich==15.0.0
     # via
     #   npe2
     #   typer
@@ -369,7 +369,7 @@ sphinx==9.1.0
     #   autodoc-pydantic
     #   sphinx-autodoc-typehints
     #   sphinx-qt-documentation
-sphinx-autodoc-typehints==3.9.11
+sphinx-autodoc-typehints==3.10.0
     # via partseg (pyproject.toml)
 sphinx-qt-documentation==0.4.1
     # via partseg (pyproject.toml)
@@ -394,7 +394,7 @@ superqt==0.8.1
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tifffile==2026.3.3
+tifffile==2026.4.11
     # via
     #   partseg (pyproject.toml)
     #   napari
