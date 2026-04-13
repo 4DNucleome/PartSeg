@@ -18,7 +18,7 @@ attrs==26.1.0
     #   referencing
 babel==2.18.0
     # via sphinx
-build==1.4.2
+build==1.4.3
     # via npe2
 cachey==0.2.1
     # via napari
@@ -143,13 +143,13 @@ local-migrator==0.1.10
     #   nme
 locket==1.0.0
     # via partd
-lxml==6.0.2
+lxml==6.0.4
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
 lxml-html-clean==0.4.4
     # via lxml
-magicgui==0.10.1
+magicgui==0.10.2
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -357,7 +357,7 @@ pyzmq==27.1.0
     # via
     #   ipykernel
     #   jupyter-client
-qtawesome==1.4.1
+qtawesome==1.4.2
     # via partseg (pyproject.toml)
 qtconsole==5.7.2
     # via
@@ -382,7 +382,7 @@ requests==2.32.5
     #   pooch
     #   pyconify
     #   sphinx
-rich==14.3.3
+rich==15.0.0
     # via
     #   npe2
     #   typer
