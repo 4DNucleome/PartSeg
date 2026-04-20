@@ -49,7 +49,7 @@ decorator==5.2.1
     # via ipython
 defusedxml==0.7.1
     # via partseg (pyproject.toml)
-docstring-parser==0.17.0
+docstring-parser==0.18.0
     # via magicgui
 docutils==0.22.4
     # via sphinx
@@ -135,7 +135,7 @@ local-migrator==0.1.10
     #   nme
 locket==1.0.0
     # via partd
-lxml==6.0.4
+lxml==6.1.0
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
@@ -201,7 +201,7 @@ oiffile==2026.2.8
     # via partseg (pyproject.toml)
 openpyxl==3.1.5
     # via partseg (pyproject.toml)
-packaging==26.0
+packaging==26.1
     # via
     #   partseg (pyproject.toml)
     #   build
@@ -390,7 +390,7 @@ scipy==1.17.1
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.57.0
+sentry-sdk==2.58.0
     # via partseg (pyproject.toml)
 setuptools==82.0.1
     # via
@@ -497,5 +497,5 @@ xlrd==2.0.2
     # via partseg (pyproject.toml)
 xlsxwriter==3.2.9
     # via partseg (pyproject.toml)
-zipp==3.23.0
+zipp==3.23.1
     # via importlib-metadata
