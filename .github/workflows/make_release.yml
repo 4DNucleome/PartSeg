@@ -96,7 +96,7 @@ jobs:
         shell: bash
 
       - name: Create Release
-        uses: "softprops/action-gh-release@v2"
+        uses: "softprops/action-gh-release@v3"
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         with:
           tag_name: ${{ github.ref }}
