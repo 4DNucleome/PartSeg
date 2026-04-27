@@ -200,7 +200,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Setup Miniconda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v3.3.0
         with:
           miniforge-version: latest
           use-mamba: true
