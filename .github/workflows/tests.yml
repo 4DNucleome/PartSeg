@@ -188,7 +188,7 @@ jobs:
           retention-days: 5
 
       - name: Upload coverage data
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v6.0.1
         with:
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
