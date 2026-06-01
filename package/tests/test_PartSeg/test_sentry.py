@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 from unittest.mock import Mock
 
 import numpy as np
@@ -50,6 +51,7 @@ def test_sentry_variables_clip_change_breadth(monkeypatch):
             sentry_sdk.capture_event(event, hint=hint)
 
 
+@pytest.mark.xfail(os.environ.get("MINIMAL_REQUIREMENTS", "") == "1", reason="old sentry", strict=True)
 def test_sentry_report(monkeypatch):
     message = "a" * TEST_SIZE_DATA
     mock = Mock()
