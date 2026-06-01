@@ -462,7 +462,7 @@ class TiffImageReader(BaseImageReaderBuffer):
 
             image_file.report_func = report_func
             try:
-                image_data = image_file.asarray(squeeze=True)
+                image_data = image_file.asarray(squeeze=TIFFFILE_GE_2026_5_2 or None)
                 # Since tifffile version 2026.5.2, the `image_file.series` is returned in squeezed format
                 # So we need squeezed array in such situation
 
