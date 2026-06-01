@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 
 _napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
-_napari_lt_7_1 = parse_version(napari.__version__) < parse_version("0.7.1")
+_napari_le_7_0 = parse_version(napari.__version__) <= parse_version("0.7.0")
 
 # if run with numpy<2 on macOS arm64 architecture compiled from pypi wheels
 # then it will crash with bus error if numpy is used in different thread
@@ -243,7 +243,7 @@ class ImageView(QWidget):
             self.points_layer.visible = not self.points_layer.visible
 
     def toggle_scale_bar(self):
-        if _napari_lt_7_1:
+        if _napari_le_7_0:
             self.viewer.scale_bar.unit = "nm"
         self.viewer.scale_bar.visible = not self.viewer.scale_bar.visible
 

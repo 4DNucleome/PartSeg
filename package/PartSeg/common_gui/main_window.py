@@ -41,7 +41,7 @@ OPEN_FILE_FILTER = "io.open_filter"
 _EXIT = object()
 
 NAPARI_LE_4_16 = parse_version(napari.__version__) <= parse_version("0.4.16")
-_napari_lt_7_1 = parse_version(napari.__version__) < parse_version("0.7.1")
+_napari_le_7_0 = parse_version(napari.__version__) <= parse_version("0.7.0")
 
 
 class BaseMainMenu(QWidget):
@@ -231,7 +231,7 @@ class BaseMainWindow(QMainWindow):
         viewer = Viewer(
             title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info, show=False
         )
-        if _napari_lt_7_1:
+        if _napari_le_7_0:
             viewer.scale_bar.unit = "nm"
         viewer.theme = self.settings.theme_name
         viewer.create_initial_layers(image=True, roi=True, additional_layers=False, points=True)
