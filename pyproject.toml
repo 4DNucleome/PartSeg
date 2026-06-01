@@ -382,3 +382,7 @@ toplevel = ["PartSeg", "PartSegCore", "PartSegImage"]
 [tool.codespell]
 skip = "package/tests/test_data/ome.xsd.xml,launcher.spec,publications,dist,_build"
 ignore-words-list = "setted"
+
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
