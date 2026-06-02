@@ -1,50 +1,20 @@
 import multiprocessing
-from importlib.metadata import version as package_version
+import os
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
 import sentry_sdk
 import sentry_sdk.serializer
 import sentry_sdk.utils
-from packaging.version import parse as parse_version
 from sentry_sdk.client import Client
 from sentry_sdk.serializer import serialize
 
 from PartSegCore.utils import prepare_error_data, safe_repr
 
-SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
-
-if SENTRY_GE_1_29:
-    DEFAULT_ERROR_REPORT = sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH
-    CONST_NAME = "DEFAULT_MAX_VALUE_LENGTH"
-else:
-    DEFAULT_ERROR_REPORT = sentry_sdk.utils.MAX_STRING_LENGTH
-    CONST_NAME = "MAX_STRING_LENGTH"
-
-NEW_CLIP_LIMIT = DEFAULT_ERROR_REPORT * 10
-TEST_SIZE_DATA = DEFAULT_ERROR_REPORT + 10
-
-
-def test_message_clip(monkeypatch):
-    message = "a" * TEST_SIZE_DATA
-    assert len(sentry_sdk.utils.strip_string(message).value) == DEFAULT_ERROR_REPORT
-    monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, NEW_CLIP_LIMIT)
-    assert len(sentry_sdk.utils.strip_string(message)) == len(message)
-
-
-def test_sentry_serialize_clip(monkeypatch):
-    message = "a" * TEST_SIZE_DATA
-    try:
-        raise ValueError("eeee")
-    except ValueError as e:
-        event, _hint = sentry_sdk.utils.event_from_exception(e)
-        event["message"] = message
-
-        clipped = serialize(event)
-        assert len(clipped["message"]) == DEFAULT_ERROR_REPORT
-        monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, NEW_CLIP_LIMIT)
-        clipped = serialize(event)
-        assert len(clipped["message"]) == TEST_SIZE_DATA
+BASE_SIZE = 10**4
+NEW_CLIP_LIMIT = BASE_SIZE * 10
+TEST_SIZE_DATA = BASE_SIZE + 10
 
 
 def test_sentry_variables_clip(monkeypatch):
@@ -81,14 +51,15 @@ def test_sentry_variables_clip_change_breadth(monkeypatch):
             sentry_sdk.capture_event(event, hint=hint)
 
 
+@pytest.mark.xfail(os.environ.get("MINIMAL_REQUIREMENTS", "") == "1", reason="old sentry", strict=True)
 def test_sentry_report(monkeypatch):
     message = "a" * TEST_SIZE_DATA
-    happen = [False]
+    mock = Mock()
 
     def check_event(event):
-        happen[0] = True
-        assert len(event["message"]) == DEFAULT_ERROR_REPORT
-        assert len(event["extra"]["lorem"]) == DEFAULT_ERROR_REPORT
+        mock(event)
+        assert len(event["message"]) == TEST_SIZE_DATA
+        assert len(event["extra"]["lorem"]) == TEST_SIZE_DATA
 
     def check_envelope(envelope):
         check_event(envelope.get_event())
@@ -105,16 +76,15 @@ def test_sentry_report(monkeypatch):
             scope.set_client(client)
             scope.set_extra("lorem", message)
             sentry_sdk.capture_event(event, hint=hint)
-        assert happen[0] is True
+    mock.assert_called_once()
 
 
 def test_sentry_report_no_clip(monkeypatch):
     message = "a" * 5000
-    happen = [False]
-    monkeypatch.setattr(sentry_sdk.utils, CONST_NAME, 10**4)
+    mock = Mock()
 
     def check_event(event):
-        happen[0] = True
+        mock(event)
         assert len(event["message"]) == 5000
         assert len(event["extra"]["lorem"]) == 5000
 
@@ -133,7 +103,7 @@ def test_sentry_report_no_clip(monkeypatch):
             scope.set_extra("lorem", message)
             event_id = sentry_sdk.capture_event(event, hint=hint)
         assert event_id is not None
-        assert happen[0] is True
+    mock.assert_called_once()
 
 
 def exception_fun(num: int):

@@ -19,7 +19,7 @@ from PartSeg import __version__, state_store
 from PartSeg.common_backend.except_hook import my_excepthook
 from PartSegCore.utils import safe_repr
 
-SENTRY_GE_1_29 = parse_version(package_version("sentry_sdk")) >= parse_version("1.29.0")
+SENTRY_GE_2_61 = parse_version(package_version("sentry_sdk")) >= parse_version("2.61.0")
 
 
 def proper_suffix(val: str):
@@ -135,13 +135,14 @@ def _setup_sentry():  # pragma: no cover
     if not state_store.sentry_url:
         state_store.report_errors = False
         return
-    sentry_sdk.utils.MAX_STRING_LENGTH = 10**4
-    if getattr(sentry_sdk.utils, "DEFAULT_MAX_VALUE_LENGTH", 5000) < 10**4:
-        sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH = 10**4
+    if not SENTRY_GE_2_61:
+        sentry_sdk.utils.MAX_STRING_LENGTH = 10**4
+        if getattr(sentry_sdk.utils, "DEFAULT_MAX_VALUE_LENGTH", 5000) < 10**4:
+            sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH = 10**4
     sentry_sdk.serializer.safe_repr = safe_repr
     sentry_sdk.serializer.MAX_DATABAG_BREADTH = 100
     init_kwargs = {"release": f"PartSeg@{__version__}"}
-    if SENTRY_GE_1_29:
+    if not SENTRY_GE_2_61:
         init_kwargs["max_value_length"] = sentry_sdk.utils.DEFAULT_MAX_VALUE_LENGTH
     sentry_sdk.init(
         state_store.sentry_url,
