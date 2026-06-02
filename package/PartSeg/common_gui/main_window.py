@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
-from napari import __version__
+import napari
 from packaging.version import parse as parse_version
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
@@ -40,7 +40,8 @@ OPEN_FILE_FILTER = "io.open_filter"
 
 _EXIT = object()
 
-NAPARI_LE_4_16 = parse_version(__version__) <= parse_version("0.4.16")
+NAPARI_LE_4_16 = parse_version(napari.__version__) <= parse_version("0.4.16")
+_napari_le_7_0 = parse_version(napari.__version__) <= parse_version("0.7.0")
 
 
 class BaseMainMenu(QWidget):
@@ -230,7 +231,8 @@ class BaseMainWindow(QMainWindow):
         viewer = Viewer(
             title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info, show=False
         )
-        viewer.scale_bar.unit = "nm"
+        if _napari_le_7_0:
+            viewer.scale_bar.unit = "nm"
         viewer.theme = self.settings.theme_name
         viewer.create_initial_layers(image=True, roi=True, additional_layers=False, points=True)
         viewer.show()

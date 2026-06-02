@@ -18,6 +18,7 @@ from packaging.version import parse as parse_version
 from PartSegImage.image import ChannelInfo, Image
 
 CZIFILE_ABOVE_2026_3_12 = parse_version(metadata.version("czifile")) >= parse_version("2026.3.12")
+TIFFFILE_GE_2026_5_2 = parse_version(metadata.version("tifffile")) >= parse_version("2026.5.2")
 
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
@@ -461,7 +462,10 @@ class TiffImageReader(BaseImageReaderBuffer):
 
             image_file.report_func = report_func
             try:
-                image_data = image_file.asarray()
+                image_data = image_file.asarray(squeeze=TIFFFILE_GE_2026_5_2 or None)
+                # Since tifffile version 2026.5.2, the `image_file.series` is returned in squeezed format
+                # So we need squeezed array in such situation
+
             except ValueError as e:  # pragma: no cover
                 raise TiffFileException(*e.args) from e
             image_data = self.update_array_shape(image_data, axes)
