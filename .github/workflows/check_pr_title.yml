@@ -34,7 +34,7 @@ jobs:
 
 
       - name: Install aspell
-        run: sudo apt-get install aspell
+        run: sudo apt-get update && sudo apt-get install aspell
 
       - name: Check PR title spelling
         env:
