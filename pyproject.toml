@@ -57,7 +57,6 @@ dependencies = [
     "magicgui>=0.7.0",
     "mahotas>=1.4.13",
     "napari>=0.5.0",
-    "nme>=0.1.7",
     "numpy>=1.23.0",
     "oiffile>=2020.1.18",
     "openpyxl>=3.0.7",
