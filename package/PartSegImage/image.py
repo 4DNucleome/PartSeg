@@ -15,7 +15,7 @@ import numpy as np
 from PartSegImage.channel_class import Channel
 
 Spacing = tuple[float | int, ...]
-_IMAGE_DATA = typing.Union[list[np.ndarray], np.ndarray]
+_IMAGE_DATA: typing.TypeAlias = list[np.ndarray] | np.ndarray
 
 _DEF = object()
 FRAME_THICKNESS = 2

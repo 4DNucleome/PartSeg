@@ -16,7 +16,7 @@ class LoadProperty(typing.NamedTuple):
     load_class: type[LoadBase]
 
 
-IORegister = typing.Union[dict[str, type(LoadBase)], type(LoadBase), str, list[type(LoadBase)]]
+IORegister: typing.TypeAlias = dict[str, type[LoadBase]] | type(LoadBase) | str | list[type[LoadBase]]
 
 
 class IOMethodMock:

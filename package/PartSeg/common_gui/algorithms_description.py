@@ -378,7 +378,7 @@ def _any_arguments(fun):
     return _any
 
 
-FieldAllowedTypes = typing.Union[list[AlgorithmProperty], type[BaseModel], type[AlgorithmDescribeBase]]
+FieldAllowedTypes: typing.TypeAlias = list[AlgorithmProperty] | type[BaseModel] | type[AlgorithmDescribeBase]
 
 
 class FormWidget(QWidget):

@@ -1,7 +1,6 @@
 """Implementation of PartSeg measurement feature for napari viewer."""
 
 import warnings
-from typing import Optional
 
 import numpy as np
 from magicgui.widgets import CheckBox, Container, HBox, PushButton, Table, VBox, create_widget
@@ -30,7 +29,7 @@ class SimpleMeasurement(Container):
         self.labels_choice = create_widget(annotation=NapariLabels, label="Labels")
         self.scale_units_select = create_widget(annotation=Units, label="Data units")  # EnumComboBox(Units)
         self.units_select = create_widget(annotation=Units, label="Units")
-        self.image_choice = create_widget(annotation=Optional[NapariImage], label="Image", options={})
+        self.image_choice = create_widget(annotation=NapariImage | None, label="Image", options={})
         self.table = Table()
         self.calculate_btn = PushButton(text="Calculate")
         self.margins = (0, 0, 0, 0)

@@ -64,7 +64,7 @@ class AlgorithmProperty:
         default_value: str | float | object,
         options_range=None,
         possible_values=None,
-        value_type=None,
+        value_type: type | UnionType | None = None,
         help_text="",
         per_dimension=False,
         mgi_options=None,

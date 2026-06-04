@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import numpy as np
 from magicgui.widgets import create_widget
@@ -34,7 +33,7 @@ class MaskCreate(QWidget):
         self.viewer = napari_viewer
         self.settings = get_settings()
         self.roi_select = create_widget(annotation=Labels, label="ROI", options={})
-        self.mask_select = create_widget(annotation=Optional[Labels], label="Base mask", options={})
+        self.mask_select = create_widget(annotation=Labels | None, label="Base mask", options={})
         self.mask_widget = NapariMaskWidget(self.settings, self.roi_select)
         self.create = QPushButton("Create")
         self.name = QLineEdit()

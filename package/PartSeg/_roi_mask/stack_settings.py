@@ -285,7 +285,7 @@ class StackSettings(BaseSettings):
             return False
         return not any(
             el2.mask_property != el1.mask_property or el2.roi_extraction_parameters != el1.roi_extraction_parameters
-            for el1, el2 in zip(self.history, history)
+            for el1, el2 in zip(self.history, history, strict=True)
         )
 
     def _set_roi_info(

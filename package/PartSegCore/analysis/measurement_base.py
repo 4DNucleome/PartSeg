@@ -3,7 +3,7 @@ from abc import ABC
 from collections.abc import Iterable
 from enum import Enum
 from importlib.metadata import version
-from typing import Any, ClassVar, ForwardRef
+from typing import Any, ClassVar, ForwardRef, Union
 
 import numpy as np
 from local_migrator import REGISTER, class_to_str, register_class, rename_key
@@ -267,11 +267,11 @@ class Node(BaseModel):
     Class for describe operation between two measurements
     """
 
-    left: Node | Leaf
+    left: Union[Node, Leaf]  # noqa: UP007
     op: str = Field(
         description="Operation to perform between left and right child. Currently only division (`/`) supported"
     )
-    right: Node | Leaf
+    right: Union[Node, Leaf]  # noqa: UP007
 
     def get_channel_num(self, measurement_dict: dict[str, "MeasurementMethodBase"]) -> set[Channel]:
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)

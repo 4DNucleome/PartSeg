@@ -37,7 +37,7 @@ class NapariFormWidget(FormWidget):
 class NapariFormWidgetWithMask(NapariFormWidget):
     @classmethod
     def _element_list_map(cls, fields) -> typing.Iterable[QtAlgorithmProperty]:
-        mask = AlgorithmProperty("mask", "Mask", None, value_type=typing.Optional[Labels])
+        mask = AlgorithmProperty("mask", "Mask", None, value_type=Labels | None)
         return super()._element_list_map(itertools.chain([mask], fields))
 
     def get_layers(self):

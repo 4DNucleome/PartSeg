@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import Union, cast
+from typing import TypeAlias, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -49,13 +49,13 @@ from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
 
-_DialogType = Union[type[str], type[int], type[float]]
+_DialogType: TypeAlias = type[str] | type[int] | type[float]
 
 
 def h_line():
     toto = QFrame()
-    toto.setFrameShape(QFrame.HLine)
-    toto.setFrameShadow(QFrame.Sunken)
+    toto.setFrameShape(QFrame.Shape.HLine)
+    toto.setFrameShadow(QFrame.Shadow.Sunken)
     return toto
 
 

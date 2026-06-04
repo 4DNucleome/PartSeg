@@ -8,7 +8,6 @@ from math import pi
 from typing import (
     Any,
     NamedTuple,
-    Union,
 )
 
 import numpy as np
@@ -89,7 +88,7 @@ def empty_fun(_a0=None, _a1=None):
     """This function is being used as dummy reporting function."""
 
 
-MeasurementValueType = Union[float, list[float], str]
+MeasurementValueType = float | list[float] | str
 MeasurementResultType = tuple[MeasurementValueType, str]
 MeasurementResultInputType = tuple[MeasurementValueType, str, tuple[PerComponent, AreaType]]
 

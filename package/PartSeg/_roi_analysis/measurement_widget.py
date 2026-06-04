@@ -89,7 +89,7 @@ class MeasurementsStorage:
                 values = data.get_separated()
                 units = data.get_units()
             else:
-                values, units = zip(*list(data.values()))
+                values, units = zip(*list(data.values()), strict=True)
                 values = [values]
             self.max_rows = max(self.max_rows, len(values[0]))
             self.content.extend(values)
