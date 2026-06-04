@@ -128,7 +128,7 @@ class CustomLoadDialog(LoadRegisterFileDialog):
 class PLoadDialog(CustomLoadDialog):
     def __init__(
         self,
-        load_register: dict[str, type(LoadBase)] | type(LoadBase),
+        load_register: dict[str, type[LoadBase]] | type[LoadBase],
         *,
         settings: "BaseSettings",
         path: str,
