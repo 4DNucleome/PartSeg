@@ -1,6 +1,5 @@
 import operator
 from enum import Enum
-from typing import Optional
 
 import numpy as np
 import SimpleITK as sitk
@@ -53,7 +52,7 @@ class ThresholdModel(AlgModel):
         arbitrary_types_allowed = True
 
     data: NapariImage
-    mask: Optional[Labels] = None
+    mask: Labels | None = None
     operator: CompareType = CompareType.lower_threshold
     threshold: ThresholdSelection = ThresholdSelection.get_default()
 
@@ -111,7 +110,7 @@ class WatershedModel(AlgModel):
     data: NapariImage
     flow_area: Labels
     core_objects: Labels
-    mask: Optional[Labels] = None
+    mask: Labels | None = None
     watershed: WatershedSelection = WatershedSelection.get_default()
     side_connection: bool = True
     operator: FlowType = FlowType.bright_center

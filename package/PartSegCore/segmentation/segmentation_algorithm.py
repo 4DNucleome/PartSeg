@@ -1,8 +1,8 @@
 import operator
 from abc import ABC
+from collections.abc import Callable
 from itertools import product
 from math import ceil
-from typing import Callable, Optional
 
 import numpy as np
 import SimpleITK as sitk
@@ -251,7 +251,7 @@ class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
     def get_name(cls):
         return "Threshold"
 
-    def _threshold_image(self, image: np.ndarray) -> Optional[np.ndarray]:
+    def _threshold_image(self, image: np.ndarray) -> np.ndarray | None:
         return None
 
     def _threshold_and_exclude(self, image, report_fun):

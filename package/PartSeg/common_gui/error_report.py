@@ -10,7 +10,6 @@ import os
 import pprint
 import re
 import traceback
-import typing
 from contextlib import suppress
 from importlib.metadata import version
 
@@ -258,8 +257,8 @@ class ExceptionListItem(QListWidgetItem):
     # TODO Prevent from reporting disc error
     def __init__(
         self,
-        exception: typing.Union[Exception, tuple[Exception, list]],
-        parent: typing.Optional[QListWidget] = None,
+        exception: Exception | tuple[Exception, list],
+        parent: QListWidget | None = None,
     ):
         if isinstance(exception, Exception):
             traceback_summary = None
@@ -299,8 +298,8 @@ class ExceptionList(QListWidget):
 class DataImportErrorDialog(QDialog):
     def __init__(
         self,
-        errors: dict[str, typing.Union[Exception, list[tuple[str, dict]]]],
-        parent: typing.Optional[QWidget] = None,
+        errors: dict[str, Exception | list[tuple[str, dict]]],
+        parent: QWidget | None = None,
         text: str = "During import data part of the entries was filtered out",
     ):
         super().__init__(parent)

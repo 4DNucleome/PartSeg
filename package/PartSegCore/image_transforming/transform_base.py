@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from PartSegCore.roi_info import ROIInfo
@@ -13,12 +13,12 @@ class TransformBase(AlgorithmDescribeBase, ABC):
         image: Image,
         roi_info: ROIInfo,
         arguments: dict,
-        callback_function: Optional[Callable[[str, int], None]] = None,
-    ) -> tuple[Image, Optional[ROIInfo]]:
+        callback_function: Callable[[str, int], None] | None = None,
+    ) -> tuple[Image, ROIInfo | None]:
         raise NotImplementedError
 
     @classmethod
-    def get_fields_per_dimension(cls, image: Image) -> list[Union[str, AlgorithmProperty]]:
+    def get_fields_per_dimension(cls, image: Image) -> list[str | AlgorithmProperty]:
         raise NotImplementedError
 
     @classmethod

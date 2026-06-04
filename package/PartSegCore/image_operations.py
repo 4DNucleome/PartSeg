@@ -1,6 +1,5 @@
 from collections.abc import Iterable
 from enum import Enum
-from typing import Union
 
 import numpy as np
 import SimpleITK as sitk
@@ -79,7 +78,7 @@ def bilateral(image: np.ndarray, radius: float, layer=True):
     return _generic_image_operation(image, radius, sitk.Bilateral, layer)
 
 
-def median(image: np.ndarray, radius: Union[int, list[int]], layer=True):
+def median(image: np.ndarray, radius: int | list[int], layer=True):
     """
     Median blur of image.
 

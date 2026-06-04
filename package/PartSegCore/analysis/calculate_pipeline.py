@@ -29,7 +29,7 @@ class PipelineResult:
     description: str
 
 
-def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline: SegmentationPipeline, report_fun):
+def calculate_pipeline(image: Image, mask: np.ndarray | None, pipeline: SegmentationPipeline, report_fun):
     history = []
     report_fun("max", 2 * len(pipeline.mask_history) + 1)
     for i, el in enumerate(pipeline.mask_history):
@@ -53,7 +53,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
 
 
 def calculate_segmentation_step(
-    profile: ROIExtractionProfile, image: Image, mask: typing.Optional[np.ndarray]
+    profile: ROIExtractionProfile, image: Image, mask: np.ndarray | None
 ) -> tuple[ROIExtractionResult, str]:
     algorithm: RestartableAlgorithm = AnalysisAlgorithmSelection[profile.algorithm]()
     algorithm.set_image(image)

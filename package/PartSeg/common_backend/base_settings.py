@@ -6,11 +6,11 @@ import re
 import sys
 import warnings
 from argparse import Namespace
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, NamedTuple, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
 import napari.utils.theme
 import numpy as np
@@ -68,11 +68,11 @@ class ImageSettings(QObject):
 
     def __init__(self):
         super().__init__()
-        self._image: Optional[Image] = None
+        self._image: Image | None = None
         self._image_path = ""
         self._roi_info = ROIInfo(None)
         self._additional_layers = {}
-        self._parent: Optional[QWidget] = None
+        self._parent: QWidget | None = None
 
     def set_parent(self, parent: QWidget):
         self._parent = parent
@@ -141,7 +141,7 @@ class ImageSettings(QObject):
         return self._roi_info.roi
 
     @roi.setter
-    def roi(self, val: Union[np.ndarray, ROIInfo]):
+    def roi(self, val: np.ndarray | ROIInfo):
         if val is None:
             self._roi_info = ROIInfo(val)
             self._additional_layers = {}
@@ -268,7 +268,7 @@ class ViewSettings(ImageSettings):
         self.view_settings_dict = ProfileDict()
         self.colormap_dict = ColormapDict(self.get_from_profile("custom_colormap", {}))
         self.label_color_dict = LabelColorDict(self.get_from_profile("custom_label_colors", {}))
-        self.cached_labels: Optional[tuple[str, np.ndarray]] = None
+        self.cached_labels: tuple[str, np.ndarray] | None = None
 
     @property
     def theme_name(self) -> str:
@@ -371,7 +371,7 @@ class ViewSettings(ImageSettings):
         # TODO update sorting rule
         self.chosen_colormap = sorted(colormaps, key=self.colormap_dict.get_position)
 
-    def get_channel_info(self, view: str, num: int, default: Optional[str] = None) -> str:  # pragma: no cover
+    def get_channel_info(self, view: str, num: int, default: str | None = None) -> str:  # pragma: no cover
         warnings.warn(
             "get_channel_info is deprecated, use get_channel_colormap_name instead",
             category=DeprecationWarning,
@@ -379,7 +379,7 @@ class ViewSettings(ImageSettings):
         )
         return self.get_channel_colormap_name(view, num, default)
 
-    def get_channel_colormap_name(self, view: str, num: int, default: Optional[str] = None) -> str:
+    def get_channel_colormap_name(self, view: str, num: int, default: str | None = None) -> str:
         cm = self.chosen_colormap
         if default is None:
             default = cm[num % len(cm)]
@@ -442,7 +442,7 @@ class ViewSettings(ImageSettings):
 
 class SaveSettingsDescription(NamedTuple):
     file_name: str
-    values: Union[dict, ProfileDict]
+    values: dict | ProfileDict
 
 
 class BaseSettings(ViewSettings):
@@ -464,7 +464,7 @@ class BaseSettings(ViewSettings):
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
     save_locations_keys: ClassVar[list[str]] = []
 
-    def __init__(self, json_path: Union[Path, str], profile_name: str = "default"):
+    def __init__(self, json_path: Path | str, profile_name: str = "default"):
         """
         :param json_path: path to store
         :param profile_name: name of profile to be used. default value is "default"
@@ -561,7 +561,7 @@ class BaseSettings(ViewSettings):
     def history_next_element(self) -> HistoryElement:
         return self.history[self.history_index + 1]
 
-    def history_pop(self) -> Optional[HistoryElement]:
+    def history_pop(self) -> HistoryElement | None:
         if self.history_index != -1:
             self.history_index -= 1
             return self.history[self.history_index + 1]
@@ -618,22 +618,22 @@ class BaseSettings(ViewSettings):
             data_list = data_list[: keep_len - 1]
         return [value, *data_list]
 
-    def get_last_files(self) -> list[tuple[tuple[Union[str, Path], ...], str]]:
+    def get_last_files(self) -> list[tuple[tuple[str | Path, ...], str]]:
         return self.get(FILE_HISTORY, [])
 
-    def add_load_files_history(self, file_path: Sequence[Union[str, Path]], load_method: str):  # pragma: no cover
+    def add_load_files_history(self, file_path: Sequence[str | Path], load_method: str):  # pragma: no cover
         warnings.warn("`add_load_files_history` is deprecated", FutureWarning, stacklevel=2)
         return self.add_last_files(file_path, load_method)
 
-    def add_last_files(self, file_path: Sequence[Union[str, Path]], load_method: str):
+    def add_last_files(self, file_path: Sequence[str | Path], load_method: str):
         self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [list(file_path), load_method]))
         # keep list of files as list because json serialize tuple to list
         self.add_path_history(os.path.dirname(file_path[0]))
 
-    def get_last_files_multiple(self) -> list[tuple[tuple[Union[str, Path], ...], str]]:
+    def get_last_files_multiple(self) -> list[tuple[tuple[str | Path, ...], str]]:
         return self.get(MULTIPLE_FILES_OPEN_HISTORY, [])
 
-    def add_last_files_multiple(self, file_paths: list[Union[str, Path]], load_method: str):
+    def add_last_files_multiple(self, file_paths: list[str | Path], load_method: str):
         self.set(
             MULTIPLE_FILES_OPEN_HISTORY,
             self._add_elem_to_list(
@@ -643,7 +643,7 @@ class BaseSettings(ViewSettings):
         # keep list of files as list because json serialize tuple to list
         self.add_path_history(os.path.dirname(file_paths[0]))
 
-    def add_path_history(self, dir_path: Union[str, Path]):
+    def add_path_history(self, dir_path: str | Path):
         """Save path in history of visited directories. Store only 10 last"""
         dir_path = str(dir_path)
         self.set(DIR_HISTORY, self._add_elem_to_list(self.get(DIR_HISTORY, []), dir_path))
@@ -708,7 +708,7 @@ class BaseSettings(ViewSettings):
         with open(file_path, "w", encoding="utf-8") as ff:
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 
-    def dump(self, folder_path: Union[Path, str, None] = None):
+    def dump(self, folder_path: Path | str | None = None):
         """
         Save current application settings to disc.
 
@@ -735,7 +735,7 @@ class BaseSettings(ViewSettings):
             logger.error(errors_list)
         return errors_list
 
-    def _load_settings_file(self, file_path: Union[Path, str]) -> tuple[ProfileDict, Any]:
+    def _load_settings_file(self, file_path: Path | str) -> tuple[ProfileDict, Any]:
         error = None
         data: ProfileDict = self.load_metadata(file_path)
         if isinstance(data, dict) and "__error__" in data:
@@ -750,7 +750,7 @@ class BaseSettings(ViewSettings):
             logger.error("error in load data from %s problematic keys are %s", file_path, filtered_str)
         return data, error
 
-    def load(self, folder_path: Union[Path, str, None] = None):
+    def load(self, folder_path: Path | str | None = None):
         """
         Load settings state from given directory
 
@@ -794,7 +794,7 @@ class BaseSettings(ViewSettings):
         raise NotImplementedError  # pragma: no cover
 
     @staticmethod
-    def verify_image(image: Image, silent=True) -> Union[Image, bool]:
+    def verify_image(image: Image, silent=True) -> Image | bool:
         if image.is_time:
             if image.is_stack:
                 raise TimeAndStackException

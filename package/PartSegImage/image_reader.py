@@ -58,12 +58,12 @@ class BaseImageReader:
         """
         return cls.image_class.axis_order
 
-    def __init__(self, callback_function: typing.Optional[typing.Callable[[str, int], typing.Any]] = None) -> None:
+    def __init__(self, callback_function: typing.Callable[[str, int], typing.Any] | None = None) -> None:
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
         self.time_increment = 1.0
         self.channel_names: list[str] = []
-        self.colors: list[typing.Optional[typing.Any]] = []
+        self.colors: list[typing.Any | None] = []
         self.ranges: list[tuple[float, float]] = []
         if callback_function is None:
             self.callback_function = _empty
@@ -86,7 +86,7 @@ class BaseImageReader:
         self.default_spacing = spacing
 
     @abstractmethod
-    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: str | Path, mask_path=None, ext=None) -> Image:
         """
         Main function to read image. If ext is not set then it may be deduced from path to file.
         If BytesIO is given and non default data file type is needed then ext need to be set
@@ -102,10 +102,10 @@ class BaseImageReader:
     @classmethod
     def read_image(
         cls,
-        image_path: typing.Union[str, Path],
+        image_path: str | Path,
         mask_path=None,
-        callback_function: typing.Optional[typing.Callable] = None,
-        default_spacing: typing.Optional[tuple[float, float, float]] = None,
+        callback_function: typing.Callable | None = None,
+        default_spacing: tuple[float, float, float] | None = None,
     ) -> Image:
         """
         read image file with optional mask file
@@ -135,7 +135,7 @@ class BaseImageReader:
 
         ax_li = []
         shape_li = []
-        for dim, ax in zip(array.shape, axes):
+        for dim, ax in zip(array.shape, axes, strict=True):
             if dim != 1:
                 ax_li.append(ax)
                 shape_li.append(dim)
@@ -186,7 +186,7 @@ class BaseImageReader:
 
 class BaseImageReaderBuffer(BaseImageReader):
     @abstractmethod
-    def read(self, image_path: typing.Union[str, Path, BytesIO], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: str | Path | BytesIO, mask_path=None, ext=None) -> Image:
         """
         Main function to read image. If ext is not set then it may be deduced from path to file.
         If BytesIO is given and non default data file type is needed then ext need to be set
@@ -202,10 +202,10 @@ class BaseImageReaderBuffer(BaseImageReader):
     @classmethod
     def read_image(
         cls,
-        image_path: typing.Union[str, Path, BytesIO],
+        image_path: str | Path | BytesIO,
         mask_path=None,
-        callback_function: typing.Optional[typing.Callable] = None,
-        default_spacing: typing.Optional[tuple[float, float, float]] = None,
+        callback_function: typing.Callable | None = None,
+        default_spacing: tuple[float, float, float] | None = None,
     ) -> Image:
         """
         read image file with optional mask file
@@ -227,7 +227,7 @@ class BaseImageReaderBuffer(BaseImageReader):
 class GenericImageReader(BaseImageReaderBuffer):
     """This class try to decide which method use base on path"""
 
-    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: str | BytesIO | Path, mask_path=None, ext=None) -> Image:
         if ext is None:
             if isinstance(image_path, (str, Path)):
                 ext = os.path.splitext(image_path)[1]
@@ -248,7 +248,7 @@ class GenericImageReader(BaseImageReaderBuffer):
 
 
 class OifImagReader(BaseImageReader):
-    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: str | Path, mask_path=None, ext=None) -> Image:
         with OifFile(image_path) as image_file:
             tiffs = tifffile.natural_sorted(image_file.glob("*.tif"))
 
@@ -294,7 +294,7 @@ class CziImageReader(BaseImageReaderBuffer):
     This class is to read data from czi files. Masks will be treated as TIFF.
     """
 
-    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: str | BytesIO | Path, mask_path=None, ext=None) -> Image:
         image_file = CziFile(image_path)
 
         if CZIFILE_ABOVE_2026_3_12:
@@ -378,7 +378,7 @@ class ObsepImageReader(BaseImageReader):
             channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
         return channel_list
 
-    def read(self, image_path: typing.Union[str, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: str | Path, mask_path=None, ext=None) -> Image:
         directory = Path(os.path.dirname(image_path))
         xml_doc = ElementTree.parse(image_path).getroot()
         channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
@@ -415,7 +415,7 @@ class TiffImageReader(BaseImageReaderBuffer):
         self.name = ""
         self.metadata = {}
 
-    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+    def read(self, image_path: str | BytesIO | Path, mask_path=None, ext=None) -> Image:
         """
         Read tiff image from tiff_file
         """
@@ -451,7 +451,7 @@ class TiffImageReader(BaseImageReaderBuffer):
                     mask_data = mask_file.asarray()
                     mask_data = self.update_array_shape(mask_data, mask_file.series[0].axes)
                     if "C" in self.return_order():
-                        pos: list[typing.Union[slice, int]] = [slice(None) for _ in range(mask_data.ndim)]
+                        pos: list[slice | int] = [slice(None) for _ in range(mask_data.ndim)]
                         pos[self.return_order().index("C")] = 0
                         mask_data = mask_data[tuple(pos)]
 
@@ -576,7 +576,7 @@ class TiffImageReader(BaseImageReaderBuffer):
         self.channel_names = image_file.imagej_metadata.get("Labels", [])
         if "Ranges" in image_file.imagej_metadata:
             ranges = image_file.imagej_metadata["Ranges"]
-            self.ranges = list(zip(ranges[::2], ranges[1::2]))
+            self.ranges = list(zip(ranges[::2], ranges[1::2], strict=True))
         if "finterval" in image_file.imagej_metadata:
             with suppress(ValueError, TypeError):
                 self.time_increment = float(image_file.imagej_metadata["finterval"])

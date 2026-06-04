@@ -372,7 +372,7 @@ class ChannelProperty(QWidget):
         self._settings.connect_to_profile(widget.viewer_name, self.refresh_values)
         self.change_current(widget.viewer_name, 0)
 
-    def refresh_values(self, path: typing.Optional[str]):
+    def refresh_values(self, path: str | None):
         if path is None or path.startswith(self.current_name):
             self.change_current(self.current_name, self.current_channel)
 
@@ -466,7 +466,7 @@ class ColorComboBoxGroup(QWidget):
         self,
         settings: ViewSettings,
         viewer_name: str,
-        channel_property: typing.Optional[ChannelProperty] = None,
+        channel_property: ChannelProperty | None = None,
         height: int = 40,
     ):
         super().__init__()
@@ -507,7 +507,7 @@ class ColorComboBoxGroup(QWidget):
             el: ColorComboBox = self.layout().itemAt(i).widget()
             el.setCurrentText(self.settings.get_channel_colormap_name(self.viewer_name, i))
 
-    def update_color_list(self, colors: typing.Optional[list[str]] = None):
+    def update_color_list(self, colors: list[str] | None = None):
         """Update list of available colormaps in each selector"""
         if colors is None:
             colors = self.settings.chosen_colormap
@@ -541,7 +541,7 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     @property
-    def current_colors(self) -> list[typing.Optional[str]]:
+    def current_colors(self) -> list[str | None]:
         """List of  current colors. None if channel is not selected."""
         resp = []
         for i in range(self.layout().count()):
@@ -553,7 +553,7 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     @property
-    def current_colormaps(self) -> list[typing.Optional[Colormap]]:
+    def current_colormaps(self) -> list[Colormap | None]:
         """List of current colormaps. None if channel is not selected"""
         resp = []
         for i in range(self.layout().count()):
@@ -624,8 +624,8 @@ class ColorComboBoxGroup(QWidget):
             for i in range(self.layout().count())
         ]
 
-    def get_limits(self) -> list[typing.Union[tuple[int, int], None]]:
-        resp: list[typing.Union[tuple[int, int], None]] = [(0, 0)] * self.layout().count()
+    def get_limits(self) -> list[tuple[int, int] | None]:
+        resp: list[tuple[int, int] | None] = [(0, 0)] * self.layout().count()
         for i in range(self.layout().count()):
             resp[i] = (
                 self.settings.get_from_profile(f"{self.viewer_name}.range_{i}", (0, 65000))

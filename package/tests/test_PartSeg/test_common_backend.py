@@ -2,11 +2,10 @@
 import argparse
 import json
 import sys
-import typing
+from collections.abc import Callable
 from functools import partial
 from io import BytesIO
 from pathlib import Path
-from typing import Callable, Optional
 from unittest.mock import MagicMock, patch
 
 import napari.layers
@@ -346,7 +345,7 @@ class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
     def support_z(cls):
         return True  # for class interfce, # pragma: no cover
 
-    def calculation_run(self, report_fun: Callable[[str, int], None]) -> Optional[ROIExtractionResult]:
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult | None:
         if self.raise_:
             raise RuntimeError("ee")
         if self.return_none:
@@ -364,7 +363,7 @@ class ROIExtractionAlgorithmForTest(ROIExtractionAlgorithm):
         return "test"
 
     @classmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         return [AlgorithmProperty("a", "A", 0)]
 
 

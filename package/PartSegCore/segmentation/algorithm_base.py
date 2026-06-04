@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from collections.abc import MutableMapping
+from collections.abc import Callable, MutableMapping
 from copy import deepcopy
 from dataclasses import dataclass, field
 from textwrap import indent
-from typing import Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 from local_migrator import REGISTER, class_to_str
@@ -72,9 +72,9 @@ class ROIExtractionResult:
     info_text: str = ""
     roi_annotation: dict = field(default_factory=dict)
     alternative_representation: dict[str, np.ndarray] = field(default_factory=dict)
-    file_path: Optional[str] = None
-    roi_info: Optional[ROIInfo] = None
-    points: Optional[np.ndarray] = None
+    file_path: str | None = None
+    roi_info: ROIInfo | None = None
+    points: np.ndarray | None = None
 
     def __post_init__(self):
         if "ROI" in self.alternative_representation:
@@ -133,10 +133,10 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
 
     def __init__(self):
         super().__init__()
-        self.image: Optional[Image] = None
+        self.image: Image | None = None
         self.channel = None
         self.segmentation = None
-        self._mask: Optional[np.ndarray] = None
+        self._mask: np.ndarray | None = None
         self.new_parameters: dict[str, Any] = {}
 
     def __repr__(self):  # pragma: no cover
@@ -162,13 +162,13 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
         self.mask = None
 
     @property
-    def mask(self) -> Optional[np.ndarray]:
+    def mask(self) -> np.ndarray | None:
         if self._mask is not None and not self.support_time():
             return self.image.clip_array(self._mask, t=0)
         return self._mask
 
     @mask.setter
-    def mask(self, val: Optional[np.ndarray]):
+    def mask(self, val: np.ndarray | None):
         if val is None:
             self._mask = None
             return

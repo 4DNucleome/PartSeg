@@ -97,7 +97,7 @@ class PartSettings(BaseSettings):
             points=self.points,
         )
 
-    def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo, PointsInfo]):
+    def set_project_info(self, data: ProjectTuple | MaskInfo | PointsInfo):
         if isinstance(data, MaskInfo):
             self.mask = data.mask_array
             return

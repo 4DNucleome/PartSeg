@@ -138,9 +138,9 @@ def test_subclasses():
 
 def test_typing():
     class Test(BaseSerializableClass):
-        field1: typing.Union[str, float]
+        field1: str | float
         field2: typing.Any
-        field3: typing.Optional[int]
+        field3: int | None
         field4: list[str]
 
     val = Test("a", [1, 2, 3], 5, ["a", "b"])
@@ -155,11 +155,11 @@ def test_typing():
             self.k = k
 
     class Test2(BaseSerializableClass):
-        field1: typing.Union[str, float]
+        field1: str | float
         field2: typing.Any
-        field3: typing.Optional[int]
+        field3: int | None
         field4: list[str]
-        field5: typing.Optional[MyClass]
+        field5: MyClass | None
 
     Test2("aa", 1, None, ["b", "c"], MyClass())
     base_serialize_register.clear()
@@ -175,8 +175,8 @@ def test_forward_ref():
 
 def test_generic_types():
     class Test1(BaseSerializableClass):
-        list1: typing.Optional[int]
-        list2: typing.Union[str, int]
+        list1: int | None
+        list2: str | int
 
     class Test2(BaseSerializableClass):
         list1: list[int]

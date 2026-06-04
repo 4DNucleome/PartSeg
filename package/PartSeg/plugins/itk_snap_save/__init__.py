@@ -1,4 +1,3 @@
-import typing
 from io import BytesIO
 from pathlib import Path
 
@@ -24,7 +23,7 @@ class SaveITKSnap(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: ProjectTuple,
         parameters: dict,
         range_changed=None,

@@ -1,18 +1,11 @@
 import importlib
 import itertools
 import pkgutil
-import sys
 import typing
 from importlib.metadata import entry_points
 
 
 def iter_entrypoints(group: str):
-    if sys.version_info < (3, 10):
-        return itertools.chain(
-            entry_points().get(group, []),
-            entry_points().get(group.lower(), []),
-        )
-
     return itertools.chain(
         entry_points().select(group=group),
         entry_points().select(group=group.lower()),

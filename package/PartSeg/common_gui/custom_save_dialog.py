@@ -15,7 +15,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 
 class SaveProperty(typing.NamedTuple):
-    save_destination: typing.Union[str, list[str]]
+    save_destination: str | list[str]
     selected_filter: str
     save_class: SaveBase
     parameters: dict
@@ -55,10 +55,10 @@ class CustomSaveDialog(LoadRegisterFileDialog):
         self,
         save_register: IORegister,
         system_widget=True,
-        base_values: typing.Optional[dict] = None,
+        base_values: dict | None = None,
         parent=None,
         caption="Save file",
-        history: typing.Optional[list[str]] = None,
+        history: list[str] | None = None,
         file_mode=QFileDialog.FileMode.AnyFile,
     ):
         super().__init__(save_register, caption, parent)
@@ -154,10 +154,10 @@ class PSaveDialog(CustomSaveDialog):
         *,
         settings: "BaseSettings",
         path: str,
-        default_directory: typing.Optional[str] = None,
+        default_directory: str | None = None,
         filter_path="",
         system_widget=True,
-        base_values: typing.Optional[dict] = None,
+        base_values: dict | None = None,
         parent=None,
         caption="Save file",
         file_mode=QFileDialog.FileMode.AnyFile,

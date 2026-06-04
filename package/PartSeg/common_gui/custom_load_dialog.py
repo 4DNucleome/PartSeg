@@ -11,7 +11,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 
 class LoadProperty(typing.NamedTuple):
-    load_location: list[typing.Union[str, Path]]
+    load_location: list[str | Path]
     selected_filter: str
     load_class: type[LoadBase]
 
@@ -88,7 +88,7 @@ class CustomLoadDialog(LoadRegisterFileDialog):
         load_register: IORegister,
         parent=None,
         caption="Load file",
-        history: typing.Optional[list[str]] = None,
+        history: list[str] | None = None,
     ):
         super().__init__(load_register, caption, parent)
         self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
@@ -128,11 +128,11 @@ class CustomLoadDialog(LoadRegisterFileDialog):
 class PLoadDialog(CustomLoadDialog):
     def __init__(
         self,
-        load_register: typing.Union[dict[str, type(LoadBase)], type(LoadBase)],
+        load_register: dict[str, type(LoadBase)] | type(LoadBase),
         *,
         settings: "BaseSettings",
         path: str,
-        default_directory: typing.Optional[str] = None,
+        default_directory: str | None = None,
         filter_path="",
         parent=None,
         caption="Load file",
@@ -167,8 +167,8 @@ class SelectDirectoryDialog(QFileDialog):
     def __init__(
         self,
         settings: "BaseSettings",
-        settings_path: typing.Union[str, list[str]],
-        default_directory: typing.Optional[str] = None,
+        settings_path: str | list[str],
+        default_directory: str | None = None,
         parent=None,
     ) -> None:
         super().__init__(parent, "Select directory")

@@ -1,6 +1,5 @@
 import dataclasses
 import os
-import typing
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -18,7 +17,7 @@ from PartSegImage import Channel
 
 class SaveModeling(SaveBase):
     @classmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         return [
             AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty("clip", "Clip area", False),
@@ -43,7 +42,7 @@ class SaveModeling(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: ProjectTuple,
         parameters: dict,
         range_changed=None,

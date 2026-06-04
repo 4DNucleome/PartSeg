@@ -6,7 +6,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import napari
 import numpy as np
@@ -81,7 +81,7 @@ class QtNDisplayButton(QtViewerPushButton):
 ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
 NEXT_ORDER = {"xy": "zy", "zy": "zx", "zx": "xy"}
 
-ColorInfo = dict[Optional[int], Union[str, list[float]]]
+ColorInfo = dict[int | None, str | list[float]]
 
 
 @dataclass
@@ -89,21 +89,21 @@ class ImageInfo:
     image: Image
     layers: list[NapariImage]
     filter_info: list[tuple[NoiseFilterType, float]] = field(default_factory=list)
-    mask: Optional[Labels] = None
-    mask_array: Optional[np.ndarray] = None
-    roi: Optional[Labels] = None
+    mask: Labels | None = None
+    mask_array: np.ndarray | None = None
+    roi: Labels | None = None
     roi_info: ROIInfo = field(default_factory=lambda: ROIInfo(None))
     roi_count: int = 0
-    highlight: Optional[Labels] = None
+    highlight: Labels | None = None
 
-    def coords_in(self, coords: Union[list[int], np.ndarray]) -> bool:
+    def coords_in(self, coords: list[int] | np.ndarray) -> bool:
         if not self.layers:
             return False
         fst_layer = self.layers[0]
         moved_coords = self.translated_coords(coords)
         return np.all(moved_coords >= 0) and np.all(moved_coords < fst_layer.data.shape)
 
-    def translated_coords(self, coords: Union[list[int], np.ndarray]) -> np.ndarray:
+    def translated_coords(self, coords: list[int] | np.ndarray) -> np.ndarray:
         if not self.layers:
             return np.array(coords)
         fst_layer = self.layers[0]
@@ -138,7 +138,7 @@ class ImageView(QWidget):
         settings: BaseSettings,
         channel_property: ChannelProperty,
         name: str,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
         ndisplay=2,
     ):
         super().__init__(parent=parent)
@@ -302,7 +302,7 @@ class ImageView(QWidget):
             if image_info.mask is not None:
                 image_info.mask.visible = self.mask_chk.isChecked()
 
-    def update_spacing_info(self, image: Optional[Image] = None) -> None:
+    def update_spacing_info(self, image: Image | None = None) -> None:
         """
         Update spacing of image if not provide, then use image pointed by settings.
 
@@ -387,7 +387,7 @@ class ImageView(QWidget):
         color = Color(np.divide(self.settings.get_from_profile("mask_presentation_color", [255, 255, 255]), 255))
         return {0: (0, 0, 0, 0), 1: color.rgba, None: (0, 0, 0, 0)}
 
-    def get_image(self, image: Optional[Image]) -> Image:
+    def get_image(self, image: Image | None) -> Image:
         if image is not None:
             return image
         if self.current_image not in self.image_info:
@@ -407,7 +407,7 @@ class ImageView(QWidget):
             self.points_view_button.setVisible(False)
             self.points_layer.data = np.empty((0, 4))
 
-    def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
+    def set_roi(self, roi_info: ROIInfo | None = None, image: Image | None = None) -> None:
         image = self.get_image(image)
         if roi_info is None:
             roi_info = self.settings.roi_info
@@ -515,7 +515,7 @@ class ImageView(QWidget):
         image_info.roi = self.viewer.add_labels(roi, **kwargs)
         image_info.roi.contour = border_thick if only_border else 0
 
-    def set_mask(self, mask: Optional[np.ndarray] = None, image: Optional[Image] = None) -> None:
+    def set_mask(self, mask: np.ndarray | None = None, image: Image | None = None) -> None:
         image = self.get_image(image)
         if image.file_path not in self.image_info:
             raise ValueError("Image not added to viewer")
@@ -559,7 +559,7 @@ class ImageView(QWidget):
                 image_info.mask.opacity = opacity
                 image_info.mask.colormap = DirectLabelColormap(color_dict=colormap)
 
-    def set_image(self, image: Optional[Image] = None):
+    def set_image(self, image: Image | None = None):
         self.image_info = {}
         self.add_image(image, True)
 
@@ -567,7 +567,7 @@ class ImageView(QWidget):
         return image.file_path in self.image_info
 
     @staticmethod
-    def calculate_filter(array: np.ndarray, parameters: tuple[NoiseFilterType, float]) -> Optional[np.ndarray]:
+    def calculate_filter(array: np.ndarray, parameters: tuple[NoiseFilterType, float]) -> np.ndarray | None:
         if parameters[0] == NoiseFilterType.No or parameters[1] == 0:
             return array
         if parameters[0] == NoiseFilterType.Gauss:
@@ -605,7 +605,7 @@ class ImageView(QWidget):
         if data_ is not None:
             layer_.data = data_
 
-    def _add_or_move_layer(self, layer: Optional[Layer], index):
+    def _add_or_move_layer(self, layer: Layer | None, index):
         if layer is None:
             return
         if layer not in self.viewer.layers:
@@ -656,7 +656,7 @@ class ImageView(QWidget):
         self._toggle_mask_chk_visibility()
         self.image_added.emit()
 
-    def add_image(self, image: Optional[Image], replace=False):
+    def add_image(self, image: Image | None, replace=False):
         if image is None:
             image = self.settings.image
 
@@ -676,7 +676,7 @@ class ImageView(QWidget):
         visibility = self.channel_control.channel_visibility
         limits = self.channel_control.get_limits()
         ranges = image.get_ranges()
-        limits = [ranges[i] if x is None else x for i, x in zip(range(image.channels), limits)]
+        limits = [ranges[i] if x is None else x for i, x in zip(range(image.channels), limits, strict=True)]
         gamma = self.channel_control.get_gamma()
         colormaps = [self.channel_control.selected_colormaps[i] for i in range(image.channels)]
         parameters = ImageParameters(
@@ -714,7 +714,7 @@ class ImageView(QWidget):
             ]
 
         visible = [ranges[i] for i in self.viewer.dims.displayed]
-        min_shape, max_shape, _ = zip(*visible)
+        min_shape, max_shape, _ = zip(*visible, strict=True)
         size = np.subtract(max_shape, min_shape)
         return size, min_shape
 
@@ -729,7 +729,7 @@ class ImageView(QWidget):
         n_row = np.ceil(np.sqrt(len(self.image_info))).astype(int)
         n_row = max(1, n_row)
         scene_size, _ = self.images_bounds()
-        for image_info, pos in zip(self.image_info.values(), itertools.product(range(n_row), repeat=2)):
+        for image_info, pos in zip(self.image_info.values(), itertools.product(range(n_row), repeat=2), strict=True):
             translate_2d = np.multiply(scene_size[-2:], pos)
             for layer in image_info.layers:
                 self._shift_layer(layer, translate_2d)
@@ -917,7 +917,7 @@ class ImageView(QWidget):
     def _data_to_world(layer: Layer, cords):
         return layer._transforms[1:3].simplified(cords)  # pylint: disable=protected-access
 
-    def _bounding_box(self, num) -> Optional[tuple[np.ndarray, np.ndarray]]:
+    def _bounding_box(self, num) -> tuple[np.ndarray, np.ndarray] | None:
         lower_bound_list = []
         upper_bound_list = []
         for image_info in self.image_info.values():
@@ -1009,7 +1009,7 @@ class ImageParameters:
     visibility: list[bool]
     gamma: list[float]
     colormaps: list[Colormap]
-    scaling: tuple[Union[float, int]]
+    scaling: tuple[float | int]
     layers: int = 0
 
 

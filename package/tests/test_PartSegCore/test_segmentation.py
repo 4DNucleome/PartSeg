@@ -3,7 +3,6 @@
 import operator
 from abc import ABC
 from copy import deepcopy
-from typing import Union
 
 import numpy as np
 import pytest
@@ -514,7 +513,7 @@ class TestMaskCreate:
             clip_to_mask=False,
         )
         res_array1 = np.zeros((1, 30, 30, 30), dtype=np.uint8)
-        slices: list[Union[int, slice]] = [slice(None)] * 4
+        slices: list[int | slice] = [slice(None)] * 4
         for i in range(1, 4):
             slices[i] = slice(10 - radius, 20 + radius)
         if radius_type == RadiusType.R2D:

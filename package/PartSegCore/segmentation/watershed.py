@@ -4,8 +4,9 @@ This module contains PartSeg wrappers for function for :py:mod:`..sprawl_utils.f
 
 import warnings
 from abc import ABC
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 from local_migrator import update_argument

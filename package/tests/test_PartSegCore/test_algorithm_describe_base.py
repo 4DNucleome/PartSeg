@@ -1,7 +1,6 @@
 # pylint: disable=no-self-use
 import math
 import sys
-import typing
 from enum import Enum
 
 import pytest
@@ -73,7 +72,7 @@ def test_algorithm_selection():
             return "test1"
 
         @classmethod
-        def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+        def get_fields(cls) -> list[AlgorithmProperty | str]:
             return []
 
     class Class2(AlgorithmDescribeBase):
@@ -82,7 +81,7 @@ def test_algorithm_selection():
             return "test2"
 
         @classmethod
-        def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+        def get_fields(cls) -> list[AlgorithmProperty | str]:
             return []
 
     TestSelection.register(Class1)
@@ -379,7 +378,7 @@ def test_base_model_to_algorithm_property_algorithm_describe_base():
             return "1"
 
         @classmethod
-        def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+        def get_fields(cls) -> list[AlgorithmProperty | str]:
             return []
 
     class SampleClass2(AlgorithmDescribeBase):
@@ -388,7 +387,7 @@ def test_base_model_to_algorithm_property_algorithm_describe_base():
             return "2"
 
         @classmethod
-        def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+        def get_fields(cls) -> list[AlgorithmProperty | str]:
             return []
 
     SampleSelection.register(SampleClass1)
@@ -482,7 +481,7 @@ class TestAlgorithmDescribeBase:
                 return "sample"
 
             @classmethod
-            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[AlgorithmProperty | str]:
                 return ["aaaa", AlgorithmProperty("name", "Name", 1, options_range=(1, 10), help_text="ceeeec")]
 
         assert SampleAlgorithm.get_name() == "sample"
@@ -528,7 +527,7 @@ class TestAlgorithmDescribeBase:
                 return "sample2"
 
             @classmethod
-            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[AlgorithmProperty | str]:
                 return [
                     *super().get_fields(),
                     AlgorithmProperty("name2", "Name 2", 3.0, options_range=(1, 10), help_text="deeeed"),

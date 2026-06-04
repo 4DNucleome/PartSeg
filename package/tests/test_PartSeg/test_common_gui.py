@@ -927,7 +927,7 @@ class TestFormWidget:
                 return "1"
 
             @classmethod
-            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[AlgorithmProperty | str]:
                 return [AlgorithmProperty("field", "Field", 1)]
 
         class SampleClass2(AlgorithmDescribeBase):
@@ -936,7 +936,7 @@ class TestFormWidget:
                 return "2"
 
             @classmethod
-            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[AlgorithmProperty | str]:
                 return [AlgorithmProperty("field_", "Field", 2)]
 
         SampleSelection.register(SampleClass1)

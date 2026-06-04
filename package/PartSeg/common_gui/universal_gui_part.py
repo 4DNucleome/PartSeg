@@ -37,7 +37,7 @@ class ChannelComboBox(QComboBox):
         """Return current channel. Starting from 0"""
         return Channel(self.currentIndex())
 
-    def set_value(self, val: typing.Union[Channel, int]):
+    def set_value(self, val: Channel | int):
         """Set current channel . Starting from 0"""
         if isinstance(val, Channel):
             self.setCurrentIndex(val.value)
@@ -100,7 +100,7 @@ class EnumComboBox(QEnumComboBox):
     def _emit_signal(self):
         self.current_choose.emit(self.get_value())
 
-    def set_value(self, value: typing.Union[EnumType, int]):
+    def set_value(self, value: EnumType | int):
         """Set value with Eunum or int"""
         if isinstance(value, int):
             self.setCurrentIndex(value)
@@ -116,7 +116,7 @@ class Spacing(QWidget):
     def __init__(
         self,
         title: str,
-        data_sequence: typing.Sequence[typing.Union[float, int]],
+        data_sequence: typing.Sequence[float | int],
         unit: Units,
         parent=None,
         input_type: QAbstractSpinBox = QDoubleSpinBox,
@@ -136,7 +136,7 @@ class Spacing(QWidget):
         self.elements = []
         if len(data_sequence) == 2:
             data_sequence = (1, *tuple(data_sequence))
-        for name, value in zip(["z", "y", "x"], data_sequence):
+        for name, value in zip(["z", "y", "x"], data_sequence, strict=True):
             lab = QLabel(f"{name}:")
             layout.addWidget(lab)
             val = QDoubleSpinBox()
@@ -162,7 +162,7 @@ class Spacing(QWidget):
         return [x.value() / UNIT_SCALE[self.units.currentEnum().value] for x in self.elements]
 
     def set_values(self, value_list):
-        for val, wid in zip(value_list, self.elements):
+        for val, wid in zip(value_list, self.elements, strict=True):
             wid.setValue(val)
 
     def get_unit_str(self):

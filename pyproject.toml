@@ -20,7 +20,6 @@ classifiers = [
     "Programming Language :: Python :: 3"
     ,
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -38,7 +37,7 @@ license = "BSD-3-Clause"
 license-files = [
     "License.txt",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "IPython>=7.7.0",
     "PartSegCore-compiled-backend>=0.13.11,<0.16.0",
@@ -281,7 +280,7 @@ exclude = [
     "foo.py",
     "package/PartSeg/version.py",
 ]
-target-version = "py39"
+target-version = "py310"
 fix = true
 
 [tool.ruff.lint]

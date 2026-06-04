@@ -2,7 +2,6 @@ import dataclasses
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Union
 
 import napari
 from packaging.version import parse as parse_version
@@ -137,10 +136,10 @@ class BaseMainWindow(QMainWindow):
 
     def __init__(
         self,
-        config_folder: Union[str, Path, None] = None,
+        config_folder: str | Path | None = None,
         title="PartSeg",
-        settings: Optional[BaseSettings] = None,
-        load_dict: Optional[Register] = None,
+        settings: BaseSettings | None = None,
+        load_dict: Register | None = None,
         signal_fun=None,
     ):
         if settings is None:
@@ -220,7 +219,7 @@ class BaseMainWindow(QMainWindow):
     def toggle_multiple_files(self):
         self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget", False))
 
-    def get_colormaps(self) -> list[Optional[colormap.Colormap]]:
+    def get_colormaps(self) -> list[colormap.Colormap | None]:
         channel_num = self.settings.image.channels
         if not self.channel_info:
             return [None for _ in range(channel_num)]

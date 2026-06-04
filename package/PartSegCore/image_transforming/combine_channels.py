@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from enum import Enum, auto
-from typing import Callable, Optional, Union
 
 import numpy as np
 
@@ -20,7 +20,7 @@ class CombineChannels(TransformBase):
         return [AlgorithmProperty("combine_mode", "Combine Mode", CombineMode.Sum)]
 
     @classmethod
-    def get_fields_per_dimension(cls, image: Image) -> list[Union[str, AlgorithmProperty]]:
+    def get_fields_per_dimension(cls, image: Image) -> list[str | AlgorithmProperty]:
         return [
             AlgorithmProperty("combine_mode", "Combine Mode", CombineMode.Sum),
             *[AlgorithmProperty(f"channel_{i}", f"Channel {i}", False) for i in range(image.channels)],
@@ -34,10 +34,10 @@ class CombineChannels(TransformBase):
     def transform(
         cls,
         image: Image,
-        roi_info: Optional[ROIInfo],
+        roi_info: ROIInfo | None,
         arguments: dict,
-        callback_function: Optional[Callable[[str, int], None]] = None,
-    ) -> tuple[Image, Optional[ROIInfo]]:
+        callback_function: Callable[[str, int], None] | None = None,
+    ) -> tuple[Image, ROIInfo | None]:
         channels = [i for i, x in enumerate(x for x in arguments.items() if x[0].startswith("channel")) if x[1]]
         if not channels:
             return image, roi_info
@@ -58,5 +58,6 @@ class CombineChannels(TransformBase):
     def calculate_initial(cls, image: Image):
         min_val = min(image.spacing)
         return {
-            f"scale_{letter}": x / min_val for x, letter in zip(image.spacing, image.get_dimension_letters().lower())
+            f"scale_{letter}": x / min_val
+            for x, letter in zip(image.spacing, image.get_dimension_letters().lower(), strict=True)
         }

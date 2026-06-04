@@ -142,7 +142,7 @@ def load_project_from_tar(tar_file, file_path):
 
 
 def load_project(
-    file: typing.Union[str, Path, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
+    file: str | Path | tarfile.TarFile | TextIOBase | BufferedIOBase | RawIOBase | IOBase,
 ) -> ProjectTuple:
     """Load project from archive"""
     tar_file, file_path = open_tar_file(file)
@@ -165,10 +165,10 @@ class LoadProject(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ) -> ProjectTuple:
         return load_project(load_locations[0])
 
@@ -185,10 +185,10 @@ class LoadStackImage(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ):
         if metadata is None:
             metadata = {"default_spacing": tuple(1 / UNIT_SCALE[Units.nm.value] for _ in range(3))}
@@ -224,10 +224,10 @@ class LoadImageMask(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ):
         if metadata is None:
             metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
@@ -263,10 +263,10 @@ class LoadMask(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ):
         image_file = TiffFile(load_locations[0])
         count_pages = [0]
@@ -297,10 +297,10 @@ def _mask_data_outside_mask(file_path):
 
 
 def load_mask_project(
-    load_locations: list[typing.Union[str, BytesIO, Path]],
+    load_locations: list[str | BytesIO | Path],
     range_changed: typing.Callable[[int, int], typing.Any],
     step_changed: typing.Callable[[int], typing.Any],
-    metadata: typing.Optional[dict] = None,
+    metadata: dict | None = None,
 ):
     data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
     zero_out_cut_area = _mask_data_outside_mask(load_locations[0])
@@ -349,10 +349,10 @@ class LoadMaskSegmentation(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ) -> list[ProjectTuple]:
         if range_changed is None:
 
@@ -375,10 +375,10 @@ class LoadProfileFromJSON(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ) -> tuple[dict, list]:
         return load_metadata_part(load_locations[0])
 
@@ -387,7 +387,7 @@ class LoadProfileFromJSON(LoadBase):
         return "Segment profile (*.json)"
 
 
-def load_metadata(data: typing.Union[str, Path]):
+def load_metadata(data: str | Path):
     """
     Load metadata saved in json format for segmentation mask
 
@@ -427,11 +427,11 @@ class LoadImageForBatch(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
-    ) -> typing.Union[ProjectTuple, list[ProjectTuple]]:
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
+    ) -> ProjectTuple | list[ProjectTuple]:
         ext = os.path.splitext(load_locations[0])[1].lower()
 
         for loader in load_dict.values():

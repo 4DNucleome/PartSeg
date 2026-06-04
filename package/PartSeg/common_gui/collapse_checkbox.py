@@ -1,4 +1,3 @@
-import typing
 from contextlib import suppress
 
 import qtawesome as qta
@@ -19,7 +18,7 @@ class CollapseCheckbox(QCheckBox):
     :param info_text: optional text to be show
     """
 
-    def __init__(self, info_text: str = "", parent: typing.Optional[QWidget] = None):
+    def __init__(self, info_text: str = "", parent: QWidget | None = None):
         super().__init__(info_text or "-", parent)
         self.hide_list = []
         self.stateChanged.connect(self.hide_element)

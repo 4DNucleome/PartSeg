@@ -3,7 +3,7 @@ from abc import ABC
 from collections.abc import Iterable
 from enum import Enum
 from importlib.metadata import version
-from typing import Any, ClassVar, ForwardRef, Optional, Union
+from typing import Any, ClassVar, ForwardRef
 
 import numpy as np
 from local_migrator import REGISTER, class_to_str, register_class, rename_key
@@ -101,9 +101,9 @@ class Leaf(BaseModel):
     name: str
     parameters: Any = Field(default_factory=dict)
     power: float = 1.0
-    area: Optional[AreaType] = None
-    per_component: Optional[PerComponent] = None
-    channel: Optional[Channel] = None
+    area: AreaType | None = None
+    per_component: PerComponent | None = None
+    channel: Channel | None = None
 
     @validator("parameters")
     def _validate_parameters(cls, v, values):  # pylint: disable=no-self-use
@@ -267,11 +267,11 @@ class Node(BaseModel):
     Class for describe operation between two measurements
     """
 
-    left: Union[Node, Leaf]
+    left: Node | Leaf
     op: str = Field(
         description="Operation to perform between left and right child. Currently only division (`/`) supported"
     )
-    right: Union[Node, Leaf]
+    right: Node | Leaf
 
     def get_channel_num(self, measurement_dict: dict[str, "MeasurementMethodBase"]) -> set[Channel]:
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
@@ -327,7 +327,7 @@ class MeasurementEntry(BaseModel):
     """Describe single measurement in measurement set"""
 
     name: str
-    calculation_tree: Union[Node, Leaf]
+    calculation_tree: Node | Leaf
 
     def get_unit(self, unit: Units, ndim) -> str:
         return str(self.calculation_tree.get_unit(ndim)).format(str(unit))

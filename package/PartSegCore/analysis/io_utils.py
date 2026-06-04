@@ -26,11 +26,11 @@ class ProjectTuple(ProjectInfoBase):
     image: Image
     roi_info: ROIInfo = field(default_factory=lambda: ROIInfo(None))
     additional_layers: dict[str, AdditionalLayerDescription] = field(default_factory=dict)
-    mask: typing.Optional[np.ndarray] = None
+    mask: np.ndarray | None = None
     history: list[HistoryElement] = field(default_factory=list)
     algorithm_parameters: dict = field(default_factory=dict)
     errors: str = ""
-    points: typing.Optional[np.ndarray] = None
+    points: np.ndarray | None = None
 
     def get_raw_copy(self):
         return ProjectTuple(self.file_path, self.image.substitute(mask=None))

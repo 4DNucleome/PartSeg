@@ -3,7 +3,6 @@ import logging
 import os
 import tarfile
 import time
-import typing
 import zipfile
 from contextlib import suppress
 from pathlib import Path
@@ -48,7 +47,7 @@ class ExportProjectDialog(QDialog):
     """Export data for zenodo"""
 
     def __init__(
-        self, excel_path: str, base_folder: str, settings: PartSettings, parent: typing.Optional[QWidget] = None
+        self, excel_path: str, base_folder: str, settings: PartSettings, parent: QWidget | None = None
     ) -> None:
         super().__init__(parent=parent)
         self.setWindowTitle("Export batch with data")
@@ -307,7 +306,7 @@ class ExportProjectDialog(QDialog):
 
 
 def _extract_information_from_excel_to_export(
-    excel_path: typing.Union[str, Path], base_folder: typing.Union[str, Path]
+    excel_path: str | Path, base_folder: str | Path
 ) -> list[tuple[str, bool]]:
     """Extract information from Excel file to export"""
     file_list = []

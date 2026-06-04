@@ -34,7 +34,7 @@ class SimpleMeasurement(Container):
         self.table = Table()
         self.calculate_btn = PushButton(text="Calculate")
         self.margins = (0, 0, 0, 0)
-        self.measurement_result: Optional[MeasurementResult] = None
+        self.measurement_result: MeasurementResult | None = None
         self.worker = None
 
         options_layout = HBox(

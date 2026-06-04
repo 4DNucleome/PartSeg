@@ -79,18 +79,16 @@ class MaskProjectTuple(ProjectInfoBase):
     """
 
     file_path: str
-    image: typing.Union[Image, str, None]
-    mask: typing.Optional[np.ndarray] = None
+    image: Image | str | None
+    mask: np.ndarray | None = None
     roi_info: ROIInfo = dataclasses.field(default_factory=lambda: ROIInfo(None))
     additional_layers: dict[str, AdditionalLayerDescription] = dataclasses.field(default_factory=dict)
     selected_components: list[int] = dataclasses.field(default_factory=list)
-    roi_extraction_parameters: dict[int, typing.Optional[ROIExtractionProfile]] = dataclasses.field(
-        default_factory=dict
-    )
+    roi_extraction_parameters: dict[int, ROIExtractionProfile | None] = dataclasses.field(default_factory=dict)
     history: list[HistoryElement] = dataclasses.field(default_factory=list)
     errors: str = ""
-    spacing: typing.Optional[list[float]] = None
-    points: typing.Optional[np.ndarray] = None
+    spacing: list[float] | None = None
+    points: np.ndarray | None = None
     frame_thickness: int = FRAME_THICKNESS
 
     def get_raw_copy(self):
@@ -209,7 +207,7 @@ def _save_mask_history(project: MaskProjectTuple, tar_file: tarfile.TarFile):
 
 
 def save_stack_segmentation(
-    file_data: typing.Union[tarfile.TarFile, str, Path, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
+    file_data: tarfile.TarFile | str | Path | TextIOBase | BufferedIOBase | RawIOBase | IOBase,
     segmentation_info: MaskProjectTuple,
     parameters: SaveROIOptions,
     range_changed=empty_fun,
@@ -304,7 +302,7 @@ def load_stack_segmentation_from_tar(tar_file: tarfile.TarFile, file_path: str, 
     )
 
 
-def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=None, step_changed=None):
+def load_stack_segmentation(file_data: str | Path, range_changed=None, step_changed=None):
     if range_changed is None:
         range_changed = empty_fun
     if step_changed is None:
@@ -336,10 +334,10 @@ class LoadROI(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ) -> MaskProjectTuple:
         segmentation_tuple = load_stack_segmentation(
             load_locations[0], range_changed=range_changed, step_changed=step_changed
@@ -374,10 +372,10 @@ class LoadROIParameters(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ) -> MaskProjectTuple:
         file_data = load_locations[0]
 
@@ -423,10 +421,10 @@ class LoadROIImage(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ) -> MaskProjectTuple:
         seg = LoadROI.load(load_locations)
         base_file = load_locations[1] if len(load_locations) > 1 else seg.image
@@ -468,10 +466,10 @@ class LoadStackImage(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ) -> MaskProjectTuple:
         if metadata is None:
             metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
@@ -505,11 +503,11 @@ class LoadStackImageWithMask(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
-    ) -> typing.Union[ProjectInfoBase, list[ProjectInfoBase]]:
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
+    ) -> ProjectInfoBase | list[ProjectInfoBase]:
         if metadata is None:
             metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
         image = GenericImageReader.read_image(
@@ -545,7 +543,7 @@ class SaveROI(SaveBase):
     @update_argument("parameters")
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: MaskProjectTuple,
         parameters: SaveROIOptions,
         range_changed=None,
@@ -568,8 +566,8 @@ def save_components(
     components: list,
     dir_path: str,
     roi_info: ROIInfo,
-    parameters: typing.Optional[SaveComponentsOptions] = None,
-    points: typing.Optional[np.ndarray] = None,
+    parameters: SaveComponentsOptions | None = None,
+    points: np.ndarray | None = None,
     range_changed=None,
     step_changed=None,
     writer_class: type[BaseImageWriter] = ImageWriter,
@@ -629,7 +627,7 @@ class SaveComponents(SaveBase):
     @update_argument("parameters")
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: MaskProjectTuple,
         parameters: SaveComponentsOptions,
         range_changed=None,
@@ -662,7 +660,7 @@ class SaveComponentsImagej(SaveBase):
     @update_argument("parameters")
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: MaskProjectTuple,
         parameters: SaveComponentsOptions,
         range_changed=None,
@@ -693,9 +691,9 @@ class SaveParametersJSON(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
-        project_info: typing.Union[ROIExtractionProfile, MaskProjectTuple],
-        parameters: typing.Optional[dict] = None,
+        save_location: str | BytesIO | Path,
+        project_info: ROIExtractionProfile | MaskProjectTuple,
+        parameters: dict | None = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -714,7 +712,7 @@ class SaveParametersJSON(SaveBase):
                 json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=PartSegEncoder)
 
     @classmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         return []
 
     @classmethod
@@ -730,11 +728,11 @@ class LoadROIFromTIFF(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
-    ) -> typing.Union[ProjectInfoBase, list[ProjectInfoBase]]:
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
+    ) -> ProjectInfoBase | list[ProjectInfoBase]:
         image = TiffImageReader.read_image(load_locations[0])
         roi = image.get_channel(0)
         return MaskProjectTuple(
@@ -753,7 +751,7 @@ class LoadROIFromTIFF(LoadBase):
         return "ROI from tiff (*.tif *.tiff)"
 
 
-def load_metadata(data: typing.Union[str, Path, typing.TextIO]):
+def load_metadata(data: str | Path | typing.TextIO):
     """
     Load metadata saved in json format for segmentation mask
     :param data: path to json file, string with json, or opened file

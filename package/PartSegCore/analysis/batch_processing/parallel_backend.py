@@ -21,11 +21,12 @@ import os
 import time
 import traceback
 import uuid
+from collections.abc import Callable
 from contextlib import suppress
 from enum import Enum
 from queue import Empty, Queue
 from threading import RLock, Timer
-from typing import Any, Callable
+from typing import Any
 
 __author__ = "Grzegorz Bokota"
 

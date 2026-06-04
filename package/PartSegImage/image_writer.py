@@ -13,12 +13,12 @@ from PartSegImage.image import Image, minimal_dtype
 class BaseImageWriter(ABC):
     @classmethod
     @abstractmethod
-    def save(cls, image: Image, save_path: typing.Union[str, BytesIO, Path], compression="ADOBE_DEFLATE"):
+    def save(cls, image: Image, save_path: str | BytesIO | Path, compression="ADOBE_DEFLATE"):
         pass
 
     @classmethod
     @abstractmethod
-    def save_mask(cls, image: Image, save_path: typing.Union[str, Path], compression="ADOBE_DEFLATE"):
+    def save_mask(cls, image: Image, save_path: str | Path, compression="ADOBE_DEFLATE"):
         pass
 
 
@@ -64,7 +64,7 @@ class ImageWriter(BaseImageWriter):
         return metadata
 
     @classmethod
-    def save(cls, image: Image, save_path: typing.Union[str, BytesIO, Path], compression="ADOBE_DEFLATE"):
+    def save(cls, image: Image, save_path: str | BytesIO | Path, compression="ADOBE_DEFLATE"):
         """
         Save image as tiff to path or buffer
 
@@ -83,7 +83,7 @@ class ImageWriter(BaseImageWriter):
         cls._save(data, save_path, metadata, compression)
 
     @classmethod
-    def save_mask(cls, image: Image, save_path: typing.Union[str, Path], compression="ADOBE_DEFLATE"):
+    def save_mask(cls, image: Image, save_path: str | Path, compression="ADOBE_DEFLATE"):
         """
         Save mask connected to image as tiff to path or buffer
 
@@ -119,7 +119,7 @@ class IMAGEJImageWriter(BaseImageWriter):
     """class for saving TIFF images"""
 
     @classmethod
-    def save(cls, image: Image, save_path: typing.Union[str, BytesIO, Path], compression=""):
+    def save(cls, image: Image, save_path: str | BytesIO | Path, compression=""):
         """
         Save image as tiff to path or buffer
         :param image: image for save
@@ -146,7 +146,7 @@ class IMAGEJImageWriter(BaseImageWriter):
         cls._save(data, save_path, resolution, metadata)
 
     @classmethod
-    def save_mask(cls, image: Image, save_path: typing.Union[str, Path], compression=""):
+    def save_mask(cls, image: Image, save_path: str | Path, compression=""):
         """
         Save mask connected to image as tiff to path or buffer
         :param image: mast is obtain with :py:meth:`.Image.get_mask_for_save`
@@ -157,7 +157,7 @@ class IMAGEJImageWriter(BaseImageWriter):
             return
         mask_max = np.max(mask)
         mask = mask.astype(minimal_dtype(mask_max))
-        metadata: dict[str, typing.Union[str, float]] = {"mode": "color", "unit": "\\u00B5m"}
+        metadata: dict[str, str | float] = {"mode": "color", "unit": "\\u00B5m"}
         spacing = image.get_um_spacing()
         if len(spacing) == 3:
             metadata["spacing"] = spacing[0]

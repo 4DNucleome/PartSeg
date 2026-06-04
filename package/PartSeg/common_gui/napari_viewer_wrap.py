@@ -1,5 +1,4 @@
 from contextlib import suppress
-from typing import Optional
 
 from napari import Viewer as NViewer
 from napari.utils.colormaps import Colormap
@@ -46,7 +45,7 @@ class SynchronizeWidget(QWidget):
         self.settings.additional_layers_changed.connect(self._sync_additional)
         self.settings.points_changed.connect(self._sync_points)
 
-    def get_colormaps(self) -> list[Optional[Colormap]]:
+    def get_colormaps(self) -> list[Colormap | None]:
         channel_num = self.settings.image.channels
         if not self.partseg_viewer_name:
             return [None for _ in range(channel_num)]
