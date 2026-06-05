@@ -21,13 +21,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        qt_backend: ["PyQt5", "PySide2"]
+        qt_backend: ["PyQt6", "PySide6"]
         os: ["ubuntu-24.04"]
     uses: ./.github/workflows/base_test_workflow.yml
     with:
       python_version: "3.13"
       os: ${{ matrix.os }}
-      napari: "napari54"
+      napari: "napari70"
       qt_backend: ${{ matrix.qt_backend }}
       timeout: 10
 

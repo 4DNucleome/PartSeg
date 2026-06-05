@@ -355,7 +355,7 @@ class TestImageBase:
         assert image.voxel_size == (1, 2, 3)
         with pytest.raises(ValueError, match="Correction of spacing fail"):
             image.set_spacing((1, 2, 3, 4))
-        with pytest.raises(TypeError, match="is not iterable"):
+        with pytest.raises(TypeError, match=r"is not.*iterable"):
             # noinspection PyTypeChecker
             image.set_spacing(1)
         image.set_spacing((1, 0, 4))
