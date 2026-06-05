@@ -24,22 +24,22 @@ def find_density_orientation(img, voxel_size, cutoff=1):
     points_l[:, 1] *= voxel_size[-2]
     points_l[:, 2] *= voxel_size[-1]
     points = points_l.astype(np.float64)
-    punkty_wazone = np.empty(points.shape)
+    weighted_points = np.empty(points.shape)
     for i in range(3):
-        punkty_wazone[:, i] = points[:, i] * weights
-    mean = np.sum(punkty_wazone, axis=0) / np.sum(weights)
+        weighted_points[:, i] = points[:, i] * weights
+    mean = np.sum(weighted_points, axis=0) / np.sum(weights)
     points_shifted = points - mean
-    wheighted_points_shifted = np.copy(points_shifted)
+    weighted_points_shifted = np.copy(points_shifted)
     for i in range(3):
-        wheighted_points_shifted[:, i] *= weights
-    cov = np.dot(wheighted_points_shifted.transpose(), points_shifted) * 1 / (len(weights) - 1)
+        weighted_points_shifted[:, i] *= weights
+    cov = np.dot(weighted_points_shifted.transpose(), points_shifted) * 1 / (len(weights) - 1)
     # cov variable is weighted covariance matrix
     values, vectors = np.linalg.eig(cov)
     sorted_values = sorted(((values[i], vectors[:, i]) for i in range(3)), key=lambda y: y[0], reverse=True)
     values = [x[0] for x in sorted_values]
     vectors = np.array([x[1] for x in sorted_values]).T
     w_n = values / np.sum(values) * 1000  # Drawing coordinates
-    return vectors, w_n
+    return vectors.real, w_n
 
 
 def get_rotation_parameters(isometric_matrix):  # pragma: no cover
