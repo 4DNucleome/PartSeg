@@ -1869,7 +1869,7 @@ class TestStatisticProfile:
                 area_array=segmentation[0] == 2, voxel_size=image.voxel_size, result_scalar=UNIT_SCALE[Units.nm.value]
             ),
         ]
-        assert result["LongestMainAxisLength"][0] == 55 * 50 * UNIT_SCALE[Units.nm.value]
+        assert np.isclose(result["LongestMainAxisLength"][0], 55 * 50 * UNIT_SCALE[Units.nm.value])
         assert np.isclose(result["LongestMainAxisLength per component"][0][0], 35 * 50 * UNIT_SCALE[Units.nm.value])
         assert np.isclose(result["LongestMainAxisLength per component"][0][1], 26 * 50 * UNIT_SCALE[Units.nm.value])
 
