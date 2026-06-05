@@ -20,6 +20,8 @@ def find_density_orientation(
 
     points_l = np.nonzero(np.array(img > cutoff))
     weights = img[points_l]
+    if len(weights) < 2:  # pragma: no cover
+        raise ValueError("Not enough points to calculate orientation")
     points_l = np.transpose(points_l).astype(np.float64)
     if len(voxel_size) >= 3:
         points_l[:, 0] *= voxel_size[-3]
