@@ -4,7 +4,9 @@ from math import acos, pi, sqrt
 import numpy as np
 
 
-def find_density_orientation(img, voxel_size, cutoff=1):
+def find_density_orientation(
+    img, voxel_size, cutoff=1
+) -> tuple[np.ndarray[tuple[int, int], np.dtype[np.float64]], np.ndarray]:
     """
     Identify axis of point set.
 
@@ -31,17 +33,14 @@ def find_density_orientation(img, voxel_size, cutoff=1):
 
     cov = np.dot(weighted_points_shifted.transpose(), points_shifted) * 1 / (len(weights) - 1)
     # cov variable is weighted covariance matrix
-    values, vectors = np.linalg.eig(cov)
+    values: np.ndarray[tuple[int], np.dtype[np.float64]]
+    vectors: np.ndarray[tuple[int, int], np.dtype[np.float64]]
+    values, vectors = np.linalg.eigh(cov)
     sorted_values = sorted(((values[i], vectors[:, i]) for i in range(3)), key=lambda y: y[0], reverse=True)
-    values = [x[0] for x in sorted_values]
+    values = np.array([x[0] for x in sorted_values])
     vectors = np.array([x[1] for x in sorted_values]).T
-    if np.any(vectors.imag):  # pragma: no cover
-        raise ValueError(
-            "Complex eigenvectors found, which should not happen for "
-            f"real symmetric matrices. Abs {np.max(np.abs(vectors.imag))}"
-        )
     w_n = values / np.sum(values) * 1000  # Drawing coordinates
-    return vectors.real, w_n
+    return vectors, w_n
 
 
 def get_rotation_parameters(isometric_matrix):  # pragma: no cover
