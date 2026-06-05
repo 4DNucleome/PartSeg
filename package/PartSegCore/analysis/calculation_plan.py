@@ -258,6 +258,9 @@ class MaskFile(MaskMapper):
         if not os.path.exists(self.path_to_file):  # pragma: no cover
             logging.error("File does not exists: %s", self.path_to_file)
             raise ValueError(f"File for mapping mask does not exists: {self.path_to_file}")
+        if self.name_dict is None:
+            self.name_dict = {}
+
         with open(self.path_to_file, encoding="utf-8") as map_file:
             dir_name = os.path.dirname(self.path_to_file)
             for i, line in enumerate(map_file):

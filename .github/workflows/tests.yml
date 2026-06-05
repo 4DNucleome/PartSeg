@@ -104,7 +104,7 @@ jobs:
           - python_version: "3.12"
             qt_backend: "PyQt5"
             os: "ubuntu-22.04"
-          - python_version: "3.11"
+          - python_version: "3.10"
             os: "ubuntu-22.04"
             qt_backend: "PySide2"
           - python_version: "3.11"

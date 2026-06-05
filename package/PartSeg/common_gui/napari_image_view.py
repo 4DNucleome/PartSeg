@@ -729,7 +729,7 @@ class ImageView(QWidget):
         n_row = np.ceil(np.sqrt(len(self.image_info))).astype(int)
         n_row = max(1, n_row)
         scene_size, _ = self.images_bounds()
-        for image_info, pos in zip(self.image_info.values(), itertools.product(range(n_row), repeat=2), strict=True):
+        for image_info, pos in zip(self.image_info.values(), itertools.product(range(n_row), repeat=2), strict=False):
             translate_2d = np.multiply(scene_size[-2:], pos)
             for layer in image_info.layers:
                 self._shift_layer(layer, translate_2d)

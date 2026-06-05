@@ -29,6 +29,10 @@ class SaveITKSnap(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
+        if isinstance(save_location, BytesIO):  # pragma: no cover
+            raise NotImplementedError("Cannot save to BytesIO")
+        if project_info.roi_info.roi is None:
+            raise ValueError("ROI is empty, cannot save")
         mask = SimpleITK.GetImageFromArray(project_info.roi_info.roi)
         SimpleITK.WriteImage(mask, save_location)
 

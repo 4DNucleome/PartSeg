@@ -415,7 +415,7 @@ class Image:
             index = self.array_axis_order.index(axis)
             data = self._image_data_normalize(
                 [
-                    np.concatenate((y, self.reorder_axes(y, image.array_axis_order)), axis=index)
+                    np.concatenate((x, self.reorder_axes(y, image.array_axis_order)), axis=index)
                     for x, y in zip(self._channel_arrays, image._channel_arrays, strict=True)
                 ]
             )

@@ -48,6 +48,8 @@ class SaveModeling(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
+        if isinstance(save_location, BytesIO):
+            raise NotImplementedError("Cannot save to BytesIO")
         if not os.path.exists(save_location):
             os.makedirs(save_location)
         if not os.path.isdir(save_location):

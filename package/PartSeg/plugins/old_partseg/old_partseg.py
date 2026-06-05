@@ -73,7 +73,7 @@ class LoadPartSegOld(LoadBase):
         file_ob: str | tarfile.TarFile | TextIOBase | BufferedIOBase | RawIOBase | IOBase = load_locations[0]
         if isinstance(file_ob, tarfile.TarFile):
             res = cls._load(file_ob, "")
-        elif isinstance(file_ob, str):
+        elif isinstance(file_ob, str | Path):
             with tarfile.open(file_ob) as tar_file:
                 res = cls._load(tar_file, file_ob)
         elif isinstance(file_ob, (BufferedIOBase, RawIOBase, IOBase)):

@@ -334,6 +334,8 @@ class LabelsLoad(LoadBase):
         step_changed: Callable[[int], Any] | None = None,
         metadata: dict | None = None,
     ) -> list[list[float]]:
+        if isinstance(byt := load_locations[0], BytesIO):
+            return json.loads(byt.read().decode("utf-8"))
         with open(load_locations[0]) as f_p:
             return json.load(f_p)
 
@@ -358,6 +360,9 @@ class LabelsSave(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
+        if isinstance(save_location, BytesIO):
+            save_location.write(json.dumps(project_info).encode("utf-8"))
+            return
         with open(save_location, "w") as f_p:
             json.dump(project_info, f_p)
 
