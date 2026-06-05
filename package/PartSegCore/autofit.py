@@ -35,7 +35,7 @@ def find_density_orientation(img, voxel_size, cutoff=1):
     sorted_values = sorted(((values[i], vectors[:, i]) for i in range(3)), key=lambda y: y[0], reverse=True)
     values = [x[0] for x in sorted_values]
     vectors = np.array([x[1] for x in sorted_values]).T
-    if np.any(vectors.imag):
+    if np.any(vectors.imag):  # pragma: no cover
         raise ValueError("Complex eigenvectors found, which should not happen for real symmetric matrices")
     w_n = values / np.sum(values) * 1000  # Drawing coordinates
     return vectors.real, w_n
