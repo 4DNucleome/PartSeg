@@ -1,14 +1,12 @@
 # pylint: disable=no-self-use
 import gc
 from functools import partial
-from importlib.metadata import version
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 from napari.layers import Image as NapariImage
 from napari.qt import QtViewer
-from packaging.version import parse as parse_version
 from qtpy.QtCore import QPoint
 from vispy.geometry import Rect
 
@@ -28,24 +26,11 @@ from PartSegCore.image_operations import NoiseFilterType
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
-NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
-NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
+EXPECTED_RANGE = (0, 0, 1)
 
 
-if NAPARI_GE_5_0:
-    EXPECTED_RANGE = (0, 0, 1)
-else:
-    EXPECTED_RANGE = (0, 1, 1)
-
-if NAPARI_GE_4_19:
-
-    def get_color_dict(layer):
-        return layer.colormap.color_dict
-
-else:
-
-    def get_color_dict(layer):
-        return layer.color
+def get_color_dict(layer):
+    return layer.color
 
 
 def test_image_info():
@@ -79,8 +64,7 @@ def image_view(base_settings, image2, qtbot, request):
     view.deleteLater()
     qtbot.wait(50)
     gc.collect()
-    if hasattr(QtViewer, "_instances"):
-        QtViewer._instances.clear()
+    QtViewer._instances.clear()
 
 
 class TestImageView:

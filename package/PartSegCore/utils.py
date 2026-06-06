@@ -444,10 +444,24 @@ class BaseModel(PydanticBaseModel):
         extra = "forbid"
 
     def __getitem__(self, item):
-        if item in self.__fields__:
+        if item in self.__class__.model_fields:
             warnings.warn("Access to attribute by [] is deprecated. Use . instead", FutureWarning, stacklevel=2)
             return getattr(self, item)
         raise KeyError(f"{item} not found in {self.__class__.__name__}")
+
+    def model_copy(self: PydanticBaseModel, *, validate: bool = True, **kwargs: typing.Any) -> PydanticBaseModel:
+        copy_res = super().model_copy(**kwargs)
+        if validate:
+            return self.__class__.model_validate(
+                dict(
+                    copy_res.model_dump(  # pylint: disable=protected-access
+                        mode="python",
+                        round_trip=True,
+                        exclude_unset=True,
+                    )
+                )
+            )
+        return copy_res
 
     def copy(self: PydanticBaseModel, *, validate: bool = True, **kwargs: typing.Any) -> PydanticBaseModel:
         copy_res = super().copy(**kwargs)

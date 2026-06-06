@@ -1,12 +1,10 @@
 # pylint: disable=no-self-use
 
 import os
-from importlib.metadata import version
 
 import numpy as np
 import pytest
 from napari.layers import Image, Labels, Layer
-from packaging.version import parse as parse_version
 
 from PartSeg.plugins.napari_io.load_image import napari_get_reader as napari_get_reader_image
 from PartSeg.plugins.napari_io.load_mask_project import napari_get_reader as napari_get_reader_mask
@@ -45,9 +43,6 @@ def test_project_to_layers_analysis(analysis_segmentation):
     assert not l4.visible
 
 
-@pytest.mark.skipif(
-    parse_version(version("napari")) < parse_version("0.4.19a16"), reason="not supported by old napari versions"
-)
 def test_passing_colormap(analysis_segmentation):
     res = project_to_layers(analysis_segmentation)
     l1 = Layer.create(*res[0])

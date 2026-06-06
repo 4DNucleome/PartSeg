@@ -1,7 +1,6 @@
 import contextlib
 import gc
 import json
-from importlib.metadata import version
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -11,7 +10,6 @@ from local_migrator import object_hook
 from napari.layers import Image as NapariImage
 from napari.layers import Labels
 from napari.utils import Colormap
-from packaging.version import parse as parse_version
 from qtpy.QtCore import QObject, QTimer, Signal
 
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
@@ -60,28 +58,17 @@ from PartSegCore.segmentation.threshold import DoubleThresholdSelection, Thresho
 from PartSegCore.segmentation.watershed import WatershedSelection
 from PartSegCore.universal_const import LayerNamingFormat
 
-NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
-NAPARI_GE_4_19 = parse_version(version("napari")) >= parse_version("0.4.19a1")
 
-if NAPARI_GE_4_19:
+def check_auto_mode(layer):
+    from napari.utils.colormaps import CyclicLabelColormap  # noqa: PLC0415
 
-    def check_auto_mode(layer):
-        from napari.utils.colormaps import CyclicLabelColormap  # noqa: PLC0415
+    assert isinstance(layer.colormap, CyclicLabelColormap)
 
-        assert isinstance(layer.colormap, CyclicLabelColormap)
 
-    def check_direct_mode(layer):
-        from napari.utils.colormaps import DirectLabelColormap  # noqa: PLC0415
+def check_direct_mode(layer):
+    from napari.utils.colormaps import DirectLabelColormap  # noqa: PLC0415
 
-        assert isinstance(layer.colormap, DirectLabelColormap)
-
-else:
-
-    def check_auto_mode(layer):
-        assert layer.color_mode == "auto"
-
-    def check_direct_mode(layer):
-        assert layer.color_mode == "direct"
+    assert isinstance(layer.colormap, DirectLabelColormap)
 
 
 @pytest.fixture(autouse=True)

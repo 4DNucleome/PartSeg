@@ -27,7 +27,7 @@ def import_config():
     if os.path.exists(state_store.save_folder):
         return
     version = packaging.version.parse(parsed_version.base_version)
-    base_folder = os.path.dirname(state_store.save_folder)
+    base_folder: str = os.path.dirname(state_store.save_folder)
     possible_folders = glob(os.path.join(base_folder, "*"))
     versions = sorted(
         (
@@ -46,15 +46,11 @@ def import_config():
             "Import from old version",
             "There is no configuration folder for this version of PartSeg\n"
             "Would you like to import it from " + before_name + " version of PartSeg",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.Yes,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
         )
-        if resp == QMessageBox.Yes:
+        if resp == QMessageBox.StandardButton.Yes:
             shutil.copytree(os.path.join(base_folder, before_name), state_store.save_folder)
             if os.path.exists(os.path.join(state_store.save_folder, IGNORE_FILE)):
                 os.remove(os.path.join(state_store.save_folder, IGNORE_FILE))
-            napari_settings = napari_get_settings(state_store.save_folder)
-            if hasattr(napari_settings, "load") and napari_settings.load is not None:
-                napari_settings.load()
-            elif getattr(napari_settings, "_load", None) is not None:
-                napari_settings._load()  # pylint: disable=protected-access
+            napari_get_settings(state_store.save_folder)

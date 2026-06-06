@@ -18,7 +18,6 @@ import requests
 import sentry_sdk
 from napari.settings import get_settings
 from napari.utils.theme import get_theme
-from packaging.version import parse as parse_version
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QApplication,
@@ -54,7 +53,6 @@ _EMAIL_REGEXP = re.compile(r"[\w+]+@\w+\.\w+")
 _FEEDBACK_URL = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
     organization_slug="cent", project_slug="partseg"
 )
-_napari_ge_5 = parse_version(version("napari")) >= parse_version("0.5.0a1")
 
 
 def _print_traceback(exception, file_):
@@ -84,10 +82,7 @@ class ErrorDialog(QDialog):
         self.create_issue_btn = QPushButton("Create issue")
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
-        if _napari_ge_5:
-            theme = get_theme(get_settings().appearance.theme)
-        else:
-            theme = get_theme(get_settings().appearance.theme, as_dict=False)
+        theme = get_theme(get_settings().appearance.theme)
         self._highlight = Pylighter(self.error_description.document(), "python", theme.syntax_style)
         self.traceback_summary = additional_info
         if additional_info is None:

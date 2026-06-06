@@ -212,11 +212,7 @@ class ImageView(QWidget):
         layout.addWidget(self.viewer_widget)
 
         self.setLayout(layout)
-
-        if hasattr(self.viewer_widget.canvas, "background_color_override"):
-            self.viewer_widget.canvas.background_color_override = "black"
-            self.viewer.scale_bar.color = "white"
-            self.viewer.scale_bar.colored = True
+        self.viewer_widget.canvas.background_color_override = "black"
 
     def _connect_to_settings(self):
         self.settings.mask_changed.connect(self.set_mask)
@@ -327,21 +323,13 @@ class ImageView(QWidget):
             image_info.mask.scale = image.normalized_scaling()
 
     def _active_layer(self):
-        if hasattr(self.viewer.layers, "selection"):
-            return self.viewer.layers.selection.active
-        return self.viewer.active_layer
+        return self.viewer.layers.selection.active
 
-    def _coordinates(self):
+    def _coordinates(self) -> list[int] | None:
         active_layer = self._active_layer()
         if active_layer is None:
             return None
-        if (
-            hasattr(self.viewer, "cursor")
-            and hasattr(self.viewer.cursor, "position")
-            and hasattr(active_layer, "world_to_data")
-        ):
-            return [int(x) for x in active_layer.world_to_data(self.viewer.cursor.position)]
-        return [int(x) for x in active_layer.coordinates]
+        return [int(x) for x in active_layer.world_to_data(self.viewer.cursor.position)]
 
     def print_info(self, event=None):
         cords = self._coordinates()
