@@ -30,7 +30,7 @@ EXPECTED_RANGE = (0, 0, 1)
 
 
 def get_color_dict(layer):
-    return layer.color
+    return layer.colormap.color_dict
 
 
 def test_image_info():
