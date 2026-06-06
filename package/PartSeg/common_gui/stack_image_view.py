@@ -19,6 +19,11 @@ max_step = log(1.2, step)
 
 class ColorBar(QLabel):
     def __init__(self, settings: ViewSettings, image_view: list[ImageView] | ImageView):
+        """Widget for color bar
+
+        param settings: view settings
+        param image_view: image view or list of image views
+        """
         super().__init__()
         self.image_view = image_view
         self._settings = settings

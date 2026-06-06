@@ -19,6 +19,11 @@ class CollapseCheckbox(QCheckBox):
     """
 
     def __init__(self, info_text: str = "", parent: QWidget | None = None):
+        """Check box for hide widgets.
+
+        param info_text: text to be shown
+        param parent: parent widget
+        """
         super().__init__(info_text or "-", parent)
         self.hide_list = []
         self.stateChanged.connect(self.hide_element)

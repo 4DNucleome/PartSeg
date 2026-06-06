@@ -505,7 +505,7 @@ class CalculationPlan:
     :type execution_tree: CalculationTree
     """
 
-    correct_name: typing.ClassVar[dict[str, BaseModel | Enum]] = {
+    correct_name: typing.ClassVar[dict[str, type[BaseModel] | type[Enum]]] = {
         MaskCreate.__name__: MaskCreate,
         MaskUse.__name__: MaskUse,
         Save.__name__: Save,
@@ -521,6 +521,11 @@ class CalculationPlan:
     }
 
     def __init__(self, tree: CalculationTree | None = None, name: str = ""):
+        """Calculate plan for batch calculation.
+
+        param tree: calculation tree
+        param name: name of calculation plan
+        """
         if tree is None:
             self.execution_tree = CalculationTree(RootType.Image, [])
         else:
