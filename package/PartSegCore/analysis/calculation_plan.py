@@ -521,7 +521,8 @@ class CalculationPlan:
     }
 
     def __init__(self, tree: CalculationTree | None = None, name: str = ""):
-        """Calculate plan for batch calculation.
+        """
+        Calculate plan for batch calculation.
 
         param tree: calculation tree
         param name: name of calculation plan
