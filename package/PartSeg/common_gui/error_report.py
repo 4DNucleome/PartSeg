@@ -11,7 +11,7 @@ import pprint
 import re
 import traceback
 from contextlib import suppress
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 
 import numpy as np
 import requests
@@ -183,14 +183,11 @@ class ErrorDialog(QDialog):
 
         versions_dkt = {"PartSeg": __version__}
 
-        with suppress(ModuleNotFoundError):
-            from importlib.metadata import PackageNotFoundError, version
-
-            for name in ["napari", "numpy", "SimpleITK", "PartSegData", "PartSegCore_compiled_backend"]:
-                try:
-                    versions_dkt[name] = version(name)
-                except PackageNotFoundError:  # pragma: no cover   # noqa: PERF203
-                    versions_dkt[name] = "not found"
+        for name in ["napari", "numpy", "SimpleITK", "PartSegData", "PartSegCore_compiled_backend"]:
+            try:
+                versions_dkt[name] = version(name)
+            except PackageNotFoundError:  # pragma: no cover   # noqa: PERF203
+                versions_dkt[name] = "not found"
 
         data["body"] += "Packages: \n```\n" + "\n".join(f"{k}=={v}" for k, v in versions_dkt.items()) + "\n```\n"
 
