@@ -4,9 +4,9 @@ import os
 import shutil
 import sys
 import time
+from collections.abc import Callable
 from glob import glob
 from itertools import dropwhile
-from typing import Callable
 
 import numpy as np
 import pandas as pd

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import re
-import sys
 import typing
 import warnings
 from contextlib import suppress
@@ -15,30 +14,26 @@ import numpy as np
 
 from PartSegImage.channel_class import Channel
 
-Spacing = tuple[typing.Union[float, int], ...]
-_IMAGE_DATA = typing.Union[list[np.ndarray], np.ndarray]
+Spacing = tuple[float | int, ...]
+_IMAGE_DATA: typing.TypeAlias = list[np.ndarray] | np.ndarray
 
 _DEF = object()
 FRAME_THICKNESS = 2
 
 DEFAULT_SCALE_FACTOR = 10**9
 
-ch_par: dict[str, bool]
 
-if sys.version_info[:2] > (3, 9):
-    ch_par = {"kw_only": True, "slots": True}
-else:
-    ch_par = {}
+CH_PAR: dict[str, bool] = {"kw_only": True, "slots": True}
 
 
-@dataclass(**ch_par)
+@dataclass(**CH_PAR)
 class ChannelInfo:
     name: str
     color_map: str | np.ndarray | tuple | list | None = None
     contrast_limits: tuple[float, float] | None = None
 
 
-@dataclass(**ch_par)
+@dataclass(**CH_PAR)
 class ChannelInfoFull:
     """Full channel information used in :py:class:`.Image`"""
 
@@ -151,6 +146,7 @@ def positional_to_named(fun):
                     "metadata_dict",
                 ),
                 args[2:],
+                strict=False,
                 # start from 2 because first two arguments are self and data
             )
         )
@@ -280,7 +276,7 @@ class Image:
             ranges = [(np.min(x), np.max(x)) for x in channel_array]
             return [
                 ChannelInfoFull(name=f"channel {i}", color_map=x[0], contrast_limits=x[1])
-                for i, x in enumerate(zip(default_colors, ranges), start=1)
+                for i, x in enumerate(zip(default_colors, ranges, strict=False), start=1)
             ]
 
         channel_info = channel_info[: len(channel_array)]
@@ -419,8 +415,8 @@ class Image:
             index = self.array_axis_order.index(axis)
             data = self._image_data_normalize(
                 [
-                    np.concatenate((y, self.reorder_axes(y, image.array_axis_order)), axis=index)
-                    for x, y in zip(self._channel_arrays, image._channel_arrays)
+                    np.concatenate((x, self.reorder_axes(y, image.array_axis_order)), axis=index)
+                    for x, y in zip(self._channel_arrays, image._channel_arrays, strict=True)
                 ]
             )
             channel_names = self.channel_names
@@ -497,7 +493,9 @@ class Image:
         """
         :return: letters which indicates non trivial dimensions
         """
-        return "".join(key for val, key in zip(self._channel_arrays[0].shape, self.array_axis_order) if val > 1)
+        return "".join(
+            key for val, key in zip(self._channel_arrays[0].shape, self.array_axis_order, strict=True) if val > 1
+        )
 
     def substitute(
         self,
@@ -869,7 +867,7 @@ class Image:
         points = np.nonzero(cut_area)
         lower_bound = np.min(points, axis=1)
         upper_bound = np.max(points, axis=1)
-        return [slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)]
+        return [slice(x, y + 1) for x, y in zip(lower_bound, upper_bound, strict=True)]
 
     def _cut_with_roi(self, cut_area: np.ndarray, replace_mask: bool, frame: int):
         new_mask = None

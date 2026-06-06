@@ -1,5 +1,5 @@
 import os
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -8,7 +8,7 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage.image import DEFAULT_SCALE_FACTOR
 
 
-def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
+def napari_write_labels(path: str, data: Any, meta: dict) -> str | None:
     if not isinstance(data, np.ndarray):
         return None
     ext = os.path.splitext(path)[1]

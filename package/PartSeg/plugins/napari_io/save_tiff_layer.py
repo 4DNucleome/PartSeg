@@ -1,5 +1,5 @@
 import os
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from napari.types import FullLayerData
@@ -8,7 +8,7 @@ from PartSegImage import ChannelInfo, Image, ImageWriter
 from PartSegImage.image import DEFAULT_SCALE_FACTOR
 
 
-def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
+def napari_write_labels(path: str, data: Any, meta: dict) -> str | None:
     ext = os.path.splitext(path)[1]
     if not isinstance(data, np.ndarray) or ext not in {".tiff", ".tif", ".TIFF", ".TIF"}:
         return None

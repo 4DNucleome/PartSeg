@@ -264,7 +264,7 @@ class MaskOperation(Enum):
 
 
 class ProtectedGroupBox(QGroupBox):
-    def __init__(self, text: str, parent: typing.Optional[QWidget] = None):
+    def __init__(self, text: str, parent: QWidget | None = None):
         super().__init__(text, parent)
         self.setStyleSheet(group_sheet)
         self.protect = False
@@ -272,7 +272,7 @@ class ProtectedGroupBox(QGroupBox):
         self._parent_node_type = None
         self._replace = False
 
-    def set_current_node(self, node: typing.Optional[NodeType], parent_node: typing.Optional[NodeType] = None):
+    def set_current_node(self, node: NodeType | None, parent_node: NodeType | None = None):
         self._node_type = node
         self._parent_node_type = parent_node
         self._activate_button()
@@ -294,7 +294,7 @@ class ProtectedGroupBox(QGroupBox):
             self.protect = previous
 
     @classmethod
-    def refresh_profiles(cls, list_widget: typing.Union[QListWidget, SearchableListWidget], new_values: list[str]):
+    def refresh_profiles(cls, list_widget: QListWidget | SearchableListWidget, new_values: list[str]):
         index = cls.get_index(list_widget.currentItem(), new_values)
         list_widget.clear()
         list_widget.addItems(new_values)
@@ -357,7 +357,7 @@ class OtherOperations(ProtectedGroupBox):
         self._activate_button()
 
     @property
-    def expected_node_type(self) -> typing.Optional[NodeType]:
+    def expected_node_type(self) -> NodeType | None:
         save_class = self.save_translate_dict.get(self.choose_save_method.currentText(), None)
         if save_class is None:
             return None
@@ -406,7 +406,7 @@ class ROIExtractionOp(ProtectedGroupBox):
     roi_extraction_profile_add = Signal(object)
     roi_extraction_pipeline_add = Signal(object)
 
-    def __init__(self, settings: PartSettings, parent: typing.Optional[QWidget] = None):
+    def __init__(self, settings: PartSettings, parent: QWidget | None = None):
         super().__init__("ROI extraction", parent)
         self.settings = settings
 
@@ -511,7 +511,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
     set_of_measurement_add = Signal(object)
     set_of_measurement_selected = Signal(object)
 
-    def __init__(self, settings: PartSettings, parent: typing.Optional[QWidget] = None):
+    def __init__(self, settings: PartSettings, parent: QWidget | None = None):
         super().__init__("Set of measurements:", parent)
         self.settings = settings
 
@@ -589,7 +589,7 @@ class SelectMeasurementOp(ProtectedGroupBox):
 
 
 class StretchWrap(QWidget):
-    def __init__(self, widget: QWidget, parent: typing.Optional[QWidget] = None):
+    def __init__(self, widget: QWidget, parent: QWidget | None = None):
         super().__init__(parent)
         self.widget = widget
         lay = QVBoxLayout()
@@ -605,7 +605,7 @@ class StretchWrap(QWidget):
 class SelectMaskOp(ProtectedGroupBox):
     mask_step_add = Signal(object)
 
-    def __init__(self, settings: PartSettings, parent: typing.Optional[QWidget] = None):
+    def __init__(self, settings: PartSettings, parent: QWidget | None = None):
         super().__init__("Use mask from:", parent)
         self.settings = settings
         self.mask_set = {}
@@ -910,7 +910,7 @@ class CreatePlan(QWidget):
             self.settings.batch_plans[text] = plan
             self.settings.dump()
 
-    def show_info(self, item: typing.Union[ROIExtractionOp, SegmentationPipeline, MeasurementProfile]):
+    def show_info(self, item: ROIExtractionOp | SegmentationPipeline | MeasurementProfile):
         if isinstance(item, (ROIExtractionOp, MeasurementProfile)):
             self.information.setText(str(item))
         else:

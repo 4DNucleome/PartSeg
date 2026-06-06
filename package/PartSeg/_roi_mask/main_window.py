@@ -2,7 +2,6 @@ import os
 from collections.abc import Sequence
 from contextlib import suppress
 from functools import partial
-from typing import Union
 
 import numpy as np
 from qtpy.QtCore import QByteArray, Qt, Signal, Slot
@@ -461,7 +460,7 @@ class ChosenComponents(QScrollArea):
     def new_choose(self, num: int, chosen_components: Sequence[int]) -> None:
         self.set_components(range(1, num + 1), chosen_components)
 
-    def set_components(self, components_index, chosen_components: Union[Sequence[int], None] = None):
+    def set_components(self, components_index, chosen_components: Sequence[int] | None = None):
         if chosen_components is None:
             chosen_components = []
         chosen_components = set(chosen_components)
@@ -872,7 +871,7 @@ class ImageInformation(QWidget):
         units_value = self.units.currentEnum()
         if index is not None:
             self._settings.set("units_value", units_value)
-        for el, val in zip(self.spacing, self._settings.image_spacing[::-1]):
+        for el, val in zip(self.spacing, self._settings.image_spacing[::-1], strict=False):
             el.blockSignals(True)
             el.setValue(val * UNIT_SCALE[units_value.value])
             el.blockSignals(False)
@@ -890,7 +889,7 @@ class ImageInformation(QWidget):
 
     def showEvent(self, _a0):
         units_value = self._settings.get("units_value", Units.nm)
-        for el, val in zip(self.spacing, self._settings.image_spacing[::-1]):
+        for el, val in zip(self.spacing, self._settings.image_spacing[::-1], strict=True):
             el.setValue(val * UNIT_SCALE[units_value.value])
         if self._settings.is_image_2d():
             self.spacing[2].setValue(0)

@@ -13,8 +13,8 @@ class SwapTimeStack(TransformBase):
         image: Image,
         roi_info: ROIInfo,
         arguments: dict,
-        callback_function: typing.Optional[typing.Callable[[str, int], None]] = None,
-    ) -> tuple[Image, typing.Optional[ROIInfo]]:
+        callback_function: typing.Callable[[str, int], None] | None = None,
+    ) -> tuple[Image, ROIInfo | None]:
         return image.swap_time_and_stack(), None
 
     @classmethod
@@ -30,5 +30,5 @@ class SwapTimeStack(TransformBase):
         return "Swap time and Z dim"
 
     @classmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         return []

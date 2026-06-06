@@ -7,7 +7,6 @@ from functools import partial
 from io import BytesIO
 from math import ceil
 from pathlib import Path
-from typing import Optional
 
 import local_migrator
 import numpy as np
@@ -101,7 +100,7 @@ class ColormapEdit(QWidget):
         self.image = convert_colormap_to_image(self._colormap())
         self.repaint()
 
-    def _get_color_ind(self, ratio) -> Optional[int]:
+    def _get_color_ind(self, ratio) -> int | None:
         ind = bisect.bisect_left(self.position_list, ratio)
         if len(self.position_list) > ind and abs(self.position_list[ind] - ratio) < 0.01:
             return ind
@@ -488,7 +487,7 @@ class ColormapList(QWidget):
     """Hide or show colormap"""
 
     def __init__(
-        self, colormap_map: dict[str, tuple[Colormap, bool]], selected: Optional[Iterable[str]] = None, parent=None
+        self, colormap_map: dict[str, tuple[Colormap, bool]], selected: Iterable[str] | None = None, parent=None
     ):
         super().__init__(parent=parent)
         self._selected = set() if selected is None else set(selected)
@@ -661,9 +660,9 @@ class ColormapSave(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
-        parameters: Optional[dict] = None,
+        parameters: dict | None = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -685,10 +684,10 @@ class ColormapLoad(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ) -> Colormap:
         with open(load_locations[0]) as f:
             return json.load(f, object_hook=local_migrator.object_hook)

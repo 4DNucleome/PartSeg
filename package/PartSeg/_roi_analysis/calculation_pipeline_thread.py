@@ -1,5 +1,3 @@
-import typing
-
 import numpy as np
 
 from PartSeg.common_backend.progress_thread import ProgressTread
@@ -9,9 +7,16 @@ from PartSegImage import Image
 
 
 class CalculatePipelineThread(ProgressTread):
-    result: typing.Optional[PipelineResult]
+    result: PipelineResult | None
 
-    def __init__(self, image: Image, mask: typing.Union[np.ndarray, None], pipeline: SegmentationPipeline, parent=None):
+    def __init__(self, image: Image, mask: np.ndarray | None, pipeline: SegmentationPipeline, parent=None):
+        """Class for running the segmentation pipeline in a separate thread.
+
+        :param image: Image to process
+        :param mask: Mask to use for segmentation if None whole image is used
+        :param pipeline: Segmentation pipeline to use
+        :param parent: Parent widget
+        """
         super().__init__(parent=parent)
         self.image = image
         self.mask = mask

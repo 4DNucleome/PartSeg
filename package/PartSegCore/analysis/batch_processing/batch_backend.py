@@ -33,7 +33,7 @@ from collections import OrderedDict
 from enum import Enum
 from os import path
 from queue import Queue
-from typing import TYPE_CHECKING, Any, NamedTuple, Union
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -91,8 +91,8 @@ class ResponseData(NamedTuple):
     values: list[MeasurementResult]
 
 
-CalculationResultList = list[Union[ResponseData, ErrorInfo]]
-WrappedResult = tuple[int, list[Union[ErrorInfo, ResponseData]]]
+CalculationResultList = list[ResponseData | ErrorInfo]
+WrappedResult = tuple[int, list[ErrorInfo | ResponseData]]
 
 
 def get_data_loader(
@@ -747,7 +747,7 @@ class FileData:
         main_sheet, component_sheets, _component_information = self.sheet_dict[uuid_id]
         name = data.path_to_file
         data_list = [name]
-        for el, comp_sheet in zip(data.values, component_sheets):
+        for el, comp_sheet in zip(data.values, component_sheets, strict=True):
             data_list.extend(el.get_global_parameters()[1:])
             comp_list = el.get_separated()
             if comp_sheet is not None:
@@ -820,7 +820,7 @@ class FileData:
                 else:
                     new_sheet_names.append(f"{sheet_name[:27]}_{ind}_")
                     ind += 1
-            for sheet_name, (_, data_frame) in zip(new_sheet_names, sheets):
+            for sheet_name, (_, data_frame) in zip(new_sheet_names, sheets, strict=True):
                 data_frame.to_excel(writer, sheet_name=sheet_name)
                 sheet = writer.book.sheetnames[sheet_name]
                 sheet.set_column(1, 1, 10)

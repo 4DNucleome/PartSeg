@@ -9,8 +9,6 @@ Then do not need to manage algorithm parameters in places where it is used.
 Both class from this module are designed for spherical mask, but may be useful also for others.
 """
 
-import typing
-
 import numpy as np
 import SimpleITK
 from pydantic import Field
@@ -46,7 +44,7 @@ class BorderRim(AlgorithmDescribeBase):
         return "Border Rim"
 
     @staticmethod
-    def border_mask(mask: np.ndarray, distance: float, units: Units, voxel_size, **_) -> typing.Optional[np.ndarray]:
+    def border_mask(mask: np.ndarray, distance: float, units: Units, voxel_size, **_) -> np.ndarray | None:
         """
         This is function which implement calculation.
 
@@ -135,7 +133,7 @@ class MaskDistanceSplit(AlgorithmDescribeBase):
             bounds = [0]
             i = 1
             cum_sum = 0
-            for val, begin, end in zip(hist, bins, bins[1:]):
+            for val, begin, end in zip(hist, bins[:-1], bins[1:], strict=True):
                 cum_sum += val
                 if cum_sum > levels[i]:
                     exceed = (cum_sum - levels[i]) / step

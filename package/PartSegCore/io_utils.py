@@ -46,7 +46,7 @@ def check_segmentation_type(tar_file: TarFile) -> SegmentationType:
     raise WrongFileTypeException  # pragma: no cover
 
 
-def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
+def get_tarinfo(name, buffer: BytesIO | StringIO):
     tar_info = TarInfo(name=name)
     buffer.seek(0)
     if isinstance(buffer, BytesIO):
@@ -92,7 +92,7 @@ class SaveBase(_IOBase, ABC):
     @abstractmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
         parameters: dict,
         range_changed=None,
@@ -141,11 +141,11 @@ class LoadBase(_IOBase, ABC):
     @abstractmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
-    ) -> typing.Union[ProjectInfoBase, list[ProjectInfoBase]]:
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
+    ) -> ProjectInfoBase | list[ProjectInfoBase]:
         """
         Function for load data
 
@@ -176,7 +176,7 @@ class LoadBase(_IOBase, ABC):
         return False
 
 
-def load_metadata_base(data: typing.Union[str, Path, typing.TextIO]):
+def load_metadata_base(data: str | Path | typing.TextIO):
     try:
         if isinstance(data, io.TextIOBase):
             decoded_data = json.load(data, object_hook=partseg_object_hook)
@@ -194,7 +194,7 @@ def load_metadata_base(data: typing.Union[str, Path, typing.TextIO]):
     return decoded_data
 
 
-def load_metadata_part(data: typing.Union[str, Path]) -> tuple[typing.Any, list[tuple[str, dict]]]:
+def load_metadata_part(data: str | Path) -> tuple[typing.Any, list[tuple[str, dict]]]:
     """
     Load serialized data. Get valid entries.
 
@@ -270,7 +270,7 @@ def proxy_callback(
 
 
 def open_tar_file(
-    file_data: typing.Union[str, Path, TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase], mode="r"
+    file_data: str | Path | TarFile | TextIOBase | BufferedIOBase | RawIOBase | IOBase, mode="r"
 ) -> tuple[TarFile, str]:
     """Create tar file from path or buffer. If passed :py:class:`TarFile` then return it."""
     if isinstance(file_data, TarFile):
@@ -307,9 +307,9 @@ class SaveMaskAsTiff(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
-        parameters: typing.Optional[dict] = None,
+        parameters: dict | None = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -335,9 +335,9 @@ class SaveScreenshot(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
-        parameters: typing.Optional[dict] = None,
+        parameters: dict | None = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -348,7 +348,7 @@ class SaveScreenshot(SaveBase):
         return "Screenshot (*.png *.jpg *.jpeg)"
 
     @classmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         return []
 
 
@@ -368,7 +368,7 @@ class SaveROIAsTIFF(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
         parameters: dict,
         range_changed=None,
@@ -396,9 +396,9 @@ class SaveROIAsNumpy(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
-        parameters: typing.Optional[dict] = None,
+        parameters: dict | None = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -421,10 +421,10 @@ class LoadPoints(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ) -> PointsInfo:
         df = pd.read_csv(load_locations[0], delimiter=",", index_col=0)
         return PointsInfo(load_locations[0], df.to_numpy())
@@ -434,7 +434,7 @@ class LoadPoints(LoadBase):
         return "Points (*.csv)"
 
     @classmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         return ["text"]
 
     @classmethod
@@ -450,10 +450,10 @@ class LoadPlanJson(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ):
         from PartSegCore.analysis.calculation_plan import CalculationPlan  # noqa: PLC0415
 
@@ -480,10 +480,10 @@ class LoadPlanExcel(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ):
         data_list, error_list = [], []
 

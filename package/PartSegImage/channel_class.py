@@ -44,10 +44,10 @@ class Channel:
             value = value.value
         if not isinstance(value, (str, int)):
             raise TypeError(f"wrong type {value} {type(value)}")  # pragma: no cover
-        self._value: Union[str, int] = value
+        self._value: str | int = value
 
     @property
-    def value(self) -> Union[str, int]:
+    def value(self) -> str | int:
         """Value stored in this class"""
         return self._value
 
@@ -80,6 +80,6 @@ class Channel:
 
     @classmethod
     def __get_pydantic_json_schema__(cls, core_schema: "CoreSchema", handler: "GetJsonSchemaHandler"):
-        json_schema: dict[str, Union[str, dict]] = {}
+        json_schema: dict[str, str | dict] = {}
         cls.__modify_schema__(json_schema)
         return json_schema

@@ -1,16 +1,13 @@
 import warnings
 from collections import OrderedDict
-from collections.abc import Generator, Iterator, MutableMapping, Sequence
+from collections.abc import Callable, Generator, Iterator, MutableMapping, Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import reduce
 from math import pi
 from typing import (
     Any,
-    Callable,
     NamedTuple,
-    Optional,
-    Union,
 )
 
 import numpy as np
@@ -64,9 +61,9 @@ class ProhibitedDivision(Exception):
 class SettingsValue(NamedTuple):
     function: Callable
     help_message: str
-    arguments: Optional[dict]
+    arguments: dict | None
     is_component: bool
-    default_area: Optional[AreaType] = None
+    default_area: AreaType | None = None
 
 
 class ComponentsInfo(NamedTuple):
@@ -91,7 +88,7 @@ def empty_fun(_a0=None, _a1=None):
     """This function is being used as dummy reporting function."""
 
 
-MeasurementValueType = Union[float, list[float], str]
+MeasurementValueType = float | list[float] | str
 MeasurementResultType = tuple[MeasurementValueType, str]
 MeasurementResultInputType = tuple[MeasurementValueType, str, tuple[PerComponent, AreaType]]
 
@@ -141,7 +138,9 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         data = self.get_separated(all_components)
         columns = [
             f"{label} ({units})" if units else label
-            for label, units in zip(self.get_labels(all_components=all_components), self.get_units(all_components))
+            for label, units in zip(
+                self.get_labels(all_components=all_components), self.get_units(all_components), strict=True
+            )
         ]
         df = pd.DataFrame(data, columns=columns, index=self.components_info.roi_components)
         if "Segmentation component" in df.columns:
@@ -284,7 +283,7 @@ class MeasurementProfile(BaseModel):
             return tree.area == AreaType.Mask_without_ROI
         return self._need_mask_without_segmentation(tree.left) or self._need_mask_without_segmentation(tree.right)
 
-    def _get_par_component_and_area_type(self, tree: Union[Node, Leaf]) -> tuple[PerComponent, AreaType]:
+    def _get_par_component_and_area_type(self, tree: Node | Leaf) -> tuple[PerComponent, AreaType]:
         if isinstance(tree, Leaf):
             method = MEASUREMENT_DICT[tree.name]
             area_type = method.area_type(tree.area)
@@ -400,8 +399,8 @@ class MeasurementProfile(BaseModel):
         return kw2
 
     def _calculate_leaf_value(
-        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, kwargs: dict
-    ) -> Union[float, np.ndarray]:
+        self, node: Node | Leaf, segmentation_mask_map: ComponentsInfo, kwargs: dict
+    ) -> float | np.ndarray:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
         kw = self._prepare_leaf_kw(node, kwargs, method, method.area_type(node.area))
 
@@ -423,7 +422,7 @@ class MeasurementProfile(BaseModel):
 
     def _calculate_leaf(
         self, node: Leaf, segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
-    ) -> tuple[Union[float, np.ndarray], symbols, AreaType]:
+    ) -> tuple[float | np.ndarray, symbols, AreaType]:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
 
         hash_str = hash_fun_call_name(
@@ -445,7 +444,7 @@ class MeasurementProfile(BaseModel):
 
     def _calculate_node(
         self, node: Node, segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
-    ) -> tuple[Union[float, np.ndarray], symbols, AreaType]:
+    ) -> tuple[float | np.ndarray, symbols, AreaType]:
         if node.op != "/":
             raise ValueError(f"Wrong measurement: {node}")
         left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
@@ -464,7 +463,7 @@ class MeasurementProfile(BaseModel):
             roi_res, mask_res = right_res, left_res
         else:
             roi_res, mask_res = left_res, right_res
-        for val, num in zip(roi_res, segmentation_mask_map.roi_components):
+        for val, num in zip(roi_res, segmentation_mask_map.roi_components, strict=True):
             mask_components = segmentation_mask_map.components_translation[num]
             if len(mask_components) != 1:  # pragma: no cover
                 raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
@@ -477,8 +476,8 @@ class MeasurementProfile(BaseModel):
         # TODO check this
 
     def calculate_tree(
-        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
-    ) -> tuple[Union[float, np.ndarray], symbols, AreaType]:
+        self, node: Node | Leaf, segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+    ) -> tuple[float | np.ndarray, symbols, AreaType]:
         """
         Main function for calculation tree of measurements. It is executed recursively
 
@@ -495,7 +494,7 @@ class MeasurementProfile(BaseModel):
         raise ValueError(f"Node {node} need to be instance of Leaf or Node")
 
     @staticmethod
-    def get_segmentation_to_mask_component(segmentation: np.ndarray, mask: Optional[np.ndarray]) -> ComponentsInfo:
+    def get_segmentation_to_mask_component(segmentation: np.ndarray, mask: np.ndarray | None) -> ComponentsInfo:
         """
         Calculate map from segmentation component num to mask component num
 
@@ -529,7 +528,7 @@ class MeasurementProfile(BaseModel):
             res.append(self._get_par_component_and_area_type(tree))
         return res
 
-    def get_segmentation_mask_map(self, image: Image, roi: Union[np.ndarray, ROIInfo], time: int = 0) -> ComponentsInfo:
+    def get_segmentation_mask_map(self, image: Image, roi: np.ndarray | ROIInfo, time: int = 0) -> ComponentsInfo:
         def get_time(array: np.ndarray):
             if array is not None and array.ndim == 4:
                 return array.take(time, axis=image.time_pos)
@@ -543,7 +542,7 @@ class MeasurementProfile(BaseModel):
         self,
         image: Image,
         channel_num: int,
-        roi: Union[np.ndarray, ROIInfo],
+        roi: np.ndarray | ROIInfo,
         result_units: Units,
         range_changed: Callable[[int, int], Any] = empty_fun,
         step_changed: Callable[[int], Any] = empty_fun,
@@ -585,7 +584,7 @@ class MeasurementProfile(BaseModel):
         self,
         image: Image,
         channel_num: int,
-        roi: Union[np.ndarray, ROIInfo],
+        roi: np.ndarray | ROIInfo,
         result_units: Units,
         segmentation_mask_map: ComponentsInfo,
         time: int = 0,
@@ -713,7 +712,7 @@ def get_main_axis_length(
 
 
 def hash_fun_call_name(
-    fun: Union[Callable, MeasurementMethodBase],
+    fun: Callable | MeasurementMethodBase,
     arguments: dict,
     area: AreaType,
     per_component: PerComponent,
@@ -1316,7 +1315,7 @@ class DistanceROIROI(DistanceMaskROI):
         image: Image,
         area_array: np.ndarray,
         profile: ROIExtractionProfile,
-        mask: Optional[np.ndarray],
+        mask: np.ndarray | None,
         voxel_size: Sequence[float],
         result_scalar: float,
         distance_from_new_roi: DistancePoint,
@@ -1390,7 +1389,7 @@ class ROINeighbourhoodROI(DistanceMaskROI):
         image: Image,
         area_array: np.ndarray,
         profile: ROIExtractionProfile,
-        mask: Optional[np.ndarray],
+        mask: np.ndarray | None,
         voxel_size,
         distance: float,
         units: Units,

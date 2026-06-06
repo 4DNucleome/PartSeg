@@ -161,6 +161,7 @@ class TestColormapCreator:
                 color_from_qcolor(color5),
                 color_from_qcolor(color5),
             ],
+            strict=True,
         ):
             assert np.allclose(el, col.as_tuple())
 
@@ -176,6 +177,7 @@ class TestColormapCreator:
                 color_from_qcolor(color4),
                 color_from_qcolor(color5),
             ],
+            strict=True,
         ):
             assert np.allclose(el, col.as_tuple())
 

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from magicgui.widgets import create_widget
 from napari import Viewer
@@ -31,7 +31,7 @@ class NapariMeasurementWidget(MeasurementWidgetBase):
         self.napari_viewer = napari_viewer
         self.channels_chose = create_widget(annotation=NapariImage, label="Image", options={})
         self.roi_chose = create_widget(annotation=Labels, label="ROI", options={})
-        self.mask_chose = create_widget(annotation=Optional[Labels], label="ROI", options={})
+        self.mask_chose = create_widget(annotation=Labels | None, label="ROI", options={})
         self.overwrite = QCheckBox("Overwrite")
         self.overwrite.setToolTip("If overwrite properties")
         self.butt_layout.insertWidget(3, self.overwrite)

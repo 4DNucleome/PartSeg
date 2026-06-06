@@ -41,7 +41,7 @@ class BaseThreshold(AlgorithmDescribeBase, ABC):
     def calculate_mask(
         cls,
         data: np.ndarray,
-        mask: typing.Optional[np.ndarray],
+        mask: np.ndarray | None,
         arguments: BaseModel,
         operator: typing.Callable[[object, object], bool],
     ):
@@ -57,9 +57,7 @@ class ManualThreshold(BaseThreshold):
 
     @classmethod
     @update_argument("arguments")
-    def calculate_mask(
-        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SingleThresholdParams, operator
-    ):
+    def calculate_mask(cls, data: np.ndarray, mask: np.ndarray | None, arguments: SingleThresholdParams, operator):
         result = np.array(operator(data, arguments.threshold)).astype(np.uint8)
         if mask is not None:
             result[mask == 0] = 0
@@ -72,7 +70,7 @@ class SitkThreshold(BaseThreshold, ABC):
     @classmethod
     @update_argument("arguments")
     def calculate_mask(
-        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: SimpleITKThresholdParams128, operator
+        cls, data: np.ndarray, mask: np.ndarray | None, arguments: SimpleITKThresholdParams128, operator
     ):
         if mask is not None and mask.dtype != np.uint8 and arguments.apply_mask:
             mask = (mask > 0).astype(np.uint8)
@@ -253,7 +251,7 @@ class MultipleOtsuThreshold(BaseThreshold):
     def calculate_mask(
         cls,
         data: np.ndarray,
-        mask: typing.Optional[np.ndarray],
+        mask: np.ndarray | None,
         arguments: MultipleOtsuThresholdParams,
         operator: typing.Callable[[object, object], bool],
     ):
@@ -309,9 +307,7 @@ class DoubleThreshold(BaseThreshold):
 
     @classmethod
     @update_argument("arguments")
-    def calculate_mask(
-        cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: DoubleThresholdParams, operator
-    ):
+    def calculate_mask(cls, data: np.ndarray, mask: np.ndarray | None, arguments: DoubleThresholdParams, operator):
         thr: BaseThreshold = ThresholdSelection[arguments.core_threshold.name]
         mask1, thr_val1 = thr.calculate_mask(data, mask, arguments.core_threshold.values, operator)
 
@@ -353,7 +349,7 @@ class DoubleOtsu(BaseThreshold):
     def calculate_mask(
         cls,
         data: np.ndarray,
-        mask: typing.Optional[np.ndarray],
+        mask: np.ndarray | None,
         arguments: DoubleOtsuParams,
         operator: typing.Callable[[object, object], bool],
     ):
@@ -386,7 +382,7 @@ class MultipleOtsu(BaseThreshold):
     def calculate_mask(
         cls,
         data: np.ndarray,
-        mask: typing.Optional[np.ndarray],
+        mask: np.ndarray | None,
         arguments: MultipleOtsuDoubleThresholdParams,
         operator: typing.Callable[[object, object], bool],
     ):
@@ -460,7 +456,7 @@ class MaximumDistanceCore(BaseThreshold):
     def calculate_mask(
         cls,
         data: np.ndarray,
-        mask: typing.Optional[np.ndarray],
+        mask: np.ndarray | None,
         arguments: MaximumDistanceWatershedParams,
         operator: typing.Callable[[object, object], bool],
     ):

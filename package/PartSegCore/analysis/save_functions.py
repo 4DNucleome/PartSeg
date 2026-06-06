@@ -1,7 +1,6 @@
 import json
 import os.path
 import tarfile
-import typing
 from io import BytesIO
 from pathlib import Path
 
@@ -34,7 +33,7 @@ def save_project(
     file_path: str,
     image: Image,
     roi_info: ROIInfo,
-    mask: typing.Optional[np.ndarray],
+    mask: np.ndarray | None,
     history: list[HistoryElement],
     algorithm_parameters: dict,
 ):
@@ -104,7 +103,7 @@ def _save_cmap(
     segmentation: np.ndarray,
     reverse_base: float,
     cmap_profile: dict,
-    metadata: typing.Optional[dict] = None,
+    metadata: dict | None = None,
 ):
     if cmap_profile["reverse"]:
         data = reverse_base - data
@@ -136,13 +135,13 @@ def _save_cmap(
 
 
 def save_cmap(
-    file: typing.Union[str, h5py.File, BytesIO],
+    file: str | h5py.File | BytesIO,
     data: np.ndarray,
     spacing,
     segmentation: np.ndarray,
     reverse_base: float,
     cmap_profile: dict,
-    metadata: typing.Optional[dict] = None,
+    metadata: dict | None = None,
 ):
     if segmentation is None or np.max(segmentation) == 0:
         raise ValueError("No segmentation")
@@ -173,9 +172,9 @@ class SaveProject(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: ProjectTuple,
-        parameters: typing.Optional[dict] = None,
+        parameters: dict | None = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -213,7 +212,7 @@ class SaveCmap(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: ProjectTuple,
         parameters: dict,
         range_changed=None,
@@ -230,7 +229,7 @@ class SaveCmap(SaveBase):
             positions = np.transpose(np.nonzero(segmentation))
             clip_down = np.min(positions, 0)
             clip_up = np.max(positions, 0)
-            clip = tuple(slice(x, y + 1) for x, y in zip(clip_down, clip_up))
+            clip = tuple(slice(x, y + 1) for x, y in zip(clip_down, clip_up, strict=True))
             data = data[clip]
             segmentation = segmentation[clip]
 
@@ -277,7 +276,7 @@ class SaveXYZ(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: ProjectTuple,
         parameters: dict,
         range_changed=None,
@@ -332,9 +331,9 @@ class SaveAsTiff(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
-        parameters: typing.Optional[dict] = None,
+        parameters: dict | None = None,
         range_changed=None,
         step_changed=None,
     ):
@@ -364,7 +363,7 @@ class SaveAsNumpy(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
         parameters: dict,
         range_changed=None,
@@ -384,7 +383,7 @@ class SaveProfilesToJSON(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
         parameters: dict,
         range_changed=None,
@@ -398,7 +397,7 @@ class SaveProfilesToJSON(SaveBase):
         return "Segment profile (*.json)"
 
     @classmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         return []
 
 

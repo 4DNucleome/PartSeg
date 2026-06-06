@@ -7,6 +7,7 @@ from abc import ABC, ABCMeta, abstractmethod
 from collections.abc import MutableMapping
 from functools import wraps
 from importlib.metadata import version
+from types import UnionType
 from typing import Annotated
 
 from local_migrator import REGISTER, class_to_str
@@ -60,10 +61,10 @@ class AlgorithmProperty:
         self,
         name: str,
         user_name: str,
-        default_value: typing.Union[str, float, object],
+        default_value: str | float | object,
         options_range=None,
         possible_values=None,
-        value_type=None,
+        value_type: type | UnionType | None = None,
         help_text="",
         per_dimension=False,
         mgi_options=None,
@@ -157,7 +158,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
     For each group of algorithm base abstract class will add additional methods
     """
 
-    __argument_class__: typing.Optional[type[PydanticBaseModel]] = None
+    __argument_class__: type[PydanticBaseModel] | None = None
     __new_style__: bool
 
     @classmethod
@@ -185,7 +186,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
 
     @classmethod
     @_partial_abstractmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         """
         This function return list of parameters needed by algorithm. It is used for generate form in User Interface
 
@@ -226,7 +227,7 @@ class AlgorithmDescribeBase(ABC, metaclass=AlgorithmDescribeBaseMeta):
         }
 
 
-def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> list[typing.Union[AlgorithmProperty, str]]:
+def get_fields_from_algorithm(ald_desc: AlgorithmDescribeBase) -> list[AlgorithmProperty | str]:
     if ald_desc.__new_style__:
         return base_model_to_algorithm_property(ald_desc.__argument_class__)
     return ald_desc.get_fields()
@@ -293,7 +294,7 @@ class Register(dict, typing.Generic[AlgorithmType]):
     def __contains__(self, item):
         return super().__contains__(item) or item in self._old_mapping
 
-    def register(self, value: AlgorithmType, replace: bool = False, old_names: typing.Optional[list[str]] = None):
+    def register(self, value: AlgorithmType, replace: bool = False, old_names: list[str] | None = None):
         """
         Function for registering :class:`.AlgorithmDescribeBase` based algorithms
         :param value: algorithm to register
@@ -400,7 +401,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
     """
 
     name: str
-    values: typing.Union[dict[str, typing.Any], PydanticBaseModel] = Field(..., union_mode="left_to_right")
+    values: dict[str, typing.Any] | PydanticBaseModel = Field(..., union_mode="left_to_right")
     class_path: str = ""
     if typing.TYPE_CHECKING:
         __register__: Register
@@ -442,9 +443,7 @@ class AlgorithmSelection(BaseModel, metaclass=AddRegisterMeta):  # pylint: disab
         return klass.__argument_class__(**dkt_migrated)
 
     @classmethod
-    def register(
-        cls, value: AlgorithmType, replace=False, old_names: typing.Optional[list[str]] = None
-    ) -> AlgorithmType:
+    def register(cls, value: AlgorithmType, replace=False, old_names: list[str] | None = None) -> AlgorithmType:
         """
         Function for registering :class:`.AlgorithmDescribeBase` based algorithms
         :param value: algorithm to register
@@ -475,7 +474,7 @@ class ROIExtractionProfileMeta(ModelMetaclass):
                         FutureWarning,
                         stacklevel=2,
                     )
-                    kwargs.update(dict(zip(self.__fields__, args)))
+                    kwargs.update(dict(zip(self.__fields__, args, strict=True)))
                 return func(self, **kwargs)
 
             return _wraps
@@ -623,9 +622,11 @@ def _field_to_algorithm_property_pydantic_2(name: str, field_info: FieldInfo):
     value_type = field_info.annotation
     default_value = field_info.default
     help_text = field_info.description
+    if value_type is None:
+        raise ValueError(f"Field {name} has no type")
     if user_name is None:
         user_name = name.replace("_", " ").capitalize()
-    if not hasattr(value_type, "__origin__"):
+    if not (hasattr(value_type, "__origin__") or isinstance(value_type, UnionType)):
         if issubclass(value_type, (int, float)):
             value_range = _calc_value_range(field_info)
 
@@ -689,7 +690,7 @@ def _field_to_algorithm_property_pydantic_1(name: str, field: "ModelField"):
 
 def base_model_to_algorithm_property_pydantic_1(
     obj: type[BaseModel],
-) -> list[typing.Union[str, AlgorithmProperty]]:
+) -> list[str | AlgorithmProperty]:
     """
     Convert pydantic model to list of AlgorithmPropert nad strings.
 
@@ -720,7 +721,7 @@ def base_model_to_algorithm_property_pydantic_1(
 
 def base_model_to_algorithm_property_pydantic_2(
     obj: type[BaseModel],
-) -> list[typing.Union[str, AlgorithmProperty]]:
+) -> list[str | AlgorithmProperty]:
     """
     Convert pydantic model to list of AlgorithmPropert nad strings.
 

@@ -251,7 +251,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     else:
         slots = tuple(field_names)
         field_definitions = ""
-    init_sig = [f"self.{f_name} = {v_name}" for f_name, v_name in zip(slots, type_dict.keys())]
+    init_sig = [f"self.{f_name} = {v_name}" for f_name, v_name in zip(slots, type_dict.keys(), strict=True)]
     tuple_list = [f"self.{name_}" for name_ in slots]
     init_content = "\n        ".join(init_sig) + "\n        self.__post_init__()"
     class_definition = _class_template.format(

@@ -64,16 +64,16 @@ class LoadPartSegOld(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[typing.Union[str, BytesIO, Path]],
-        range_changed: typing.Optional[typing.Callable[[int, int], typing.Any]] = None,
-        step_changed: typing.Optional[typing.Callable[[int], typing.Any]] = None,
-        metadata: typing.Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: typing.Callable[[int, int], typing.Any] | None = None,
+        step_changed: typing.Callable[[int], typing.Any] | None = None,
+        metadata: dict | None = None,
     ):
         """Load project from archive old format"""
-        file_ob: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase] = load_locations[0]
+        file_ob: str | tarfile.TarFile | TextIOBase | BufferedIOBase | RawIOBase | IOBase = load_locations[0]
         if isinstance(file_ob, tarfile.TarFile):
             res = cls._load(file_ob, "")
-        elif isinstance(file_ob, str):
+        elif isinstance(file_ob, str | Path):
             with tarfile.open(file_ob) as tar_file:
                 res = cls._load(tar_file, file_ob)
         elif isinstance(file_ob, (BufferedIOBase, RawIOBase, IOBase)):

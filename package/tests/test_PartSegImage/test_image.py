@@ -26,7 +26,7 @@ class TestImageBase:
             new_axes = new_axes.replace(el, "")
             axes = axes.replace(el, "")
         res_shape = [1] * len(new_axes)
-        for size, name in zip(shape, axes):
+        for size, name in zip(shape, axes, strict=False):
             res_shape[new_axes.index(name)] = size
         return tuple(res_shape)
 
@@ -355,7 +355,7 @@ class TestImageBase:
         assert image.voxel_size == (1, 2, 3)
         with pytest.raises(ValueError, match="Correction of spacing fail"):
             image.set_spacing((1, 2, 3, 4))
-        with pytest.raises(TypeError, match="is not iterable"):
+        with pytest.raises(TypeError, match=r"is not.*iterable"):
             # noinspection PyTypeChecker
             image.set_spacing(1)
         image.set_spacing((1, 0, 4))
@@ -399,9 +399,9 @@ class TestImageBase:
         points = np.nonzero(mask == 2)
         lower_bound = np.min(points, axis=1)
         upper_bound = np.max(points, axis=1)
-        cut_list = [slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)]
+        cut_list = [slice(x, y + 1) for x, y in zip(lower_bound, upper_bound, strict=True)]
         res = image.cut_image(cut_list)
-        shape = [y - x + +1 for x, y in zip(lower_bound, upper_bound)]
+        shape = [y - x + +1 for x, y in zip(lower_bound, upper_bound, strict=True)]
         shape[image.x_pos] += 2 * FRAME_THICKNESS
         shape[image.y_pos] += 2 * FRAME_THICKNESS
         shape[image.stack_pos] += 2 * FRAME_THICKNESS

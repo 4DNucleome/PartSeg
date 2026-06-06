@@ -22,7 +22,7 @@ def adjust_color(color: str) -> str: ...
 def adjust_color(color: list[int]) -> list[float]: ...
 
 
-def adjust_color(color: typing.Union[str, list[int]]) -> typing.Union[str, tuple[float]]:
+def adjust_color(color: str | list[int]) -> str | tuple[float]:
     # as napari ignore alpha channel in color, and adding it to
     # color cause that napari fails to detect that such colormap is already present
     # in this function I remove alpha channel if it is present
@@ -95,7 +95,7 @@ def _image_to_layers(project_info, scale, translate):
     return res_layers
 
 
-def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]):
+def project_to_layers(project_info: ProjectTuple | MaskProjectTuple):
     res_layers = []
     if project_info.image is not None and not isinstance(project_info.image, str):
         settings = get_settings()

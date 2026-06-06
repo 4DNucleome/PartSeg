@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from enum import Enum
-from typing import Callable, Optional
 
 import numpy as np
 from pydantic import Field
@@ -38,8 +38,8 @@ class ImageProjection(TransformBase):
         image: Image,
         roi_info: ROIInfo,
         arguments: ImageProjectionParams,  # type: ignore[override]
-        callback_function: Optional[Callable[[str, int], None]] = None,
-    ) -> tuple[Image, Optional[ROIInfo]]:
+        callback_function: Callable[[str, int], None] | None = None,
+    ) -> tuple[Image, ROIInfo | None]:
         project_operator = getattr(np, arguments.projection_type.value)
         axis = image.array_axis_order.index("Z")
         target_shape = _calc_target_shape(image)

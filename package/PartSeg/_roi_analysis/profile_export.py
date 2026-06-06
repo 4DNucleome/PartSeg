@@ -156,8 +156,8 @@ class ImportDialog(QDialog):
         import_dict: dict[str, typing.Any],
         local_dict: dict[str, typing.Any],
         viewer: type[ObjectPreviewProtocol],
-        expected_type: typing.Optional[type] = None,
-        parent: typing.Optional[QWidget] = None,
+        expected_type: type | None = None,
+        parent: QWidget | None = None,
     ):
         """
         :param import_dict: dict with data to import

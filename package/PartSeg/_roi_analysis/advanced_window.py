@@ -2,7 +2,7 @@ import json
 import os
 from contextlib import suppress
 from copy import deepcopy
-from typing import Optional, Union, cast
+from typing import TypeAlias, cast
 
 from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
@@ -49,13 +49,13 @@ from PartSegCore.io_utils import LoadPlanJson
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegData import icons_dir
 
-_DialogType = Union[type[str], type[int], type[float]]
+_DialogType: TypeAlias = type[str] | type[int] | type[float]
 
 
 def h_line():
     toto = QFrame()
-    toto.setFrameShape(QFrame.HLine)
-    toto.setFrameShadow(QFrame.Sunken)
+    toto.setFrameShape(QFrame.Shape.HLine)
+    toto.setFrameShadow(QFrame.Shadow.Sunken)
     return toto
 
 
@@ -114,7 +114,7 @@ class Properties(QWidget):
     def setup_ui(self):
         spacing_layout = QHBoxLayout()
         spacing_layout.addWidget(self.lock_spacing)
-        for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
+        for txt, el in zip(["x", "y", "z"], self.spacing[::-1], strict=False):
             spacing_layout.addWidget(QLabel(f"{txt}:"))
             spacing_layout.addWidget(el)
         spacing_layout.addWidget(self.units)
@@ -200,7 +200,7 @@ class Properties(QWidget):
         value = self.units.currentEnum()
         if index is not None:
             self._settings.set("units_value", value)
-        for el, sp in zip(self.spacing[::-1], self._settings.image_spacing[::-1]):
+        for el, sp in zip(self.spacing[::-1], self._settings.image_spacing[::-1], strict=False):
             el.blockSignals(True)
             current_size = sp * UNIT_SCALE[self.units.currentIndex()]
             voxel_size *= current_size
@@ -353,7 +353,7 @@ class Properties(QWidget):
 
 
 class MeasurementListWidgetItem(QListWidgetItem):
-    def __init__(self, stat: Union[Node, Leaf], *args, **kwargs):
+    def __init__(self, stat: Node | Leaf, *args, **kwargs):
         super().__init__(stat.pretty_print(MEASUREMENT_DICT), *args, **kwargs)
         self.stat = stat
 
@@ -365,8 +365,8 @@ class MeasurementSettings(QWidget):
 
     def __init__(self, settings: PartSettings, parent=None):  # noqa: PLR0915
         super().__init__(parent)
-        self.chosen_element: Optional[MeasurementListWidgetItem] = None
-        self.chosen_element_area: Optional[tuple[AreaType, float]] = None
+        self.chosen_element: MeasurementListWidgetItem | None = None
+        self.chosen_element_area: tuple[AreaType, float] | None = None
         self.settings = settings
         self.profile_list = QListWidget(self)
         self.profile_description = QTextEdit(self)
@@ -640,8 +640,8 @@ class MeasurementSettings(QWidget):
         return FormDialog(arguments, settings=self.settings, parent=self)
 
     def get_parameters(
-        self, node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float
-    ) -> Union[Leaf, Node, None]:
+        self, node: Node | Leaf, area: AreaType, component: PerComponent, power: float
+    ) -> Leaf | Node | None:
         if isinstance(node, Node):
             return node
         node = node.replace_(power=power)
@@ -841,8 +841,8 @@ class MultipleInput(QDialog):
         self,
         text: str,
         help_text: str = "",
-        objects_list: Optional[list[Union[tuple[str, _DialogType], tuple[str, _DialogType, str]]]] = None,
-        parent: Optional[QWidget] = None,
+        objects_list: list[tuple[str, _DialogType] | tuple[str, _DialogType, str]] | None = None,
+        parent: QWidget | None = None,
     ):
         if objects_list is None:  # pragma: no cover
             raise ValueError("objects_list cannot be None")

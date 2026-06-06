@@ -10,9 +10,8 @@ import os
 import pprint
 import re
 import traceback
-import typing
 from contextlib import suppress
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 
 import numpy as np
 import requests
@@ -184,14 +183,11 @@ class ErrorDialog(QDialog):
 
         versions_dkt = {"PartSeg": __version__}
 
-        with suppress(ModuleNotFoundError):
-            from importlib.metadata import PackageNotFoundError, version
-
-            for name in ["napari", "numpy", "SimpleITK", "PartSegData", "PartSegCore_compiled_backend"]:
-                try:
-                    versions_dkt[name] = version(name)
-                except PackageNotFoundError:  # pragma: no cover   # noqa: PERF203
-                    versions_dkt[name] = "not found"
+        for name in ["napari", "numpy", "SimpleITK", "PartSegData", "PartSegCore_compiled_backend"]:
+            try:
+                versions_dkt[name] = version(name)
+            except PackageNotFoundError:  # pragma: no cover   # noqa: PERF203
+                versions_dkt[name] = "not found"
 
         data["body"] += "Packages: \n```\n" + "\n".join(f"{k}=={v}" for k, v in versions_dkt.items()) + "\n```\n"
 
@@ -258,8 +254,8 @@ class ExceptionListItem(QListWidgetItem):
     # TODO Prevent from reporting disc error
     def __init__(
         self,
-        exception: typing.Union[Exception, tuple[Exception, list]],
-        parent: typing.Optional[QListWidget] = None,
+        exception: Exception | tuple[Exception, list],
+        parent: QListWidget | None = None,
     ):
         if isinstance(exception, Exception):
             traceback_summary = None
@@ -299,8 +295,8 @@ class ExceptionList(QListWidget):
 class DataImportErrorDialog(QDialog):
     def __init__(
         self,
-        errors: dict[str, typing.Union[Exception, list[tuple[str, dict]]]],
-        parent: typing.Optional[QWidget] = None,
+        errors: dict[str, Exception | list[tuple[str, dict]]],
+        parent: QWidget | None = None,
         text: str = "During import data part of the entries was filtered out",
     ):
         super().__init__(parent)

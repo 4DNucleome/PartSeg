@@ -1,5 +1,4 @@
 import contextlib
-from typing import Optional
 
 from qtpy.QtCore import QObject, QSignalBlocker, Slot
 from qtpy.QtGui import QResizeEvent
@@ -80,7 +79,7 @@ class ResultImageView(ImageView):
 
     @Slot()
     @Slot(ROIInfo)
-    def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
+    def set_roi(self, roi_info: ROIInfo | None = None, image: Image | None = None) -> None:
         super().set_roi(roi_info, image)
         show = self.any_roi()
         self.label1.setVisible(show)

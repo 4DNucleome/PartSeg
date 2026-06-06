@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from typing import Optional
 
 from napari import Viewer
 from napari.layers import Image
@@ -46,7 +45,7 @@ class NapariColormapList(ColormapList):
         self,
         viewer: Viewer,
         colormap_map: dict[str, tuple[Colormap, bool]],
-        selected: Optional[Iterable[str]] = None,
+        selected: Iterable[str] | None = None,
         parent=None,
     ):
         super().__init__(colormap_map, selected, parent)

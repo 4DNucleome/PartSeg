@@ -17,7 +17,7 @@ from PartSegImage import Channel, ChannelInfo, Image
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
     @classmethod
-    def _get_field_from_value_type(cls, ap: AlgorithmProperty) -> typing.Union[QWidget, Widget]:
+    def _get_field_from_value_type(cls, ap: AlgorithmProperty) -> QWidget | Widget:
         if inspect.isclass(ap.value_type) and issubclass(ap.value_type, Channel):
             return create_widget(annotation=NapariImage, label="Image", options={})
         return super()._get_field_from_value_type(ap)
@@ -37,7 +37,7 @@ class NapariFormWidget(FormWidget):
 class NapariFormWidgetWithMask(NapariFormWidget):
     @classmethod
     def _element_list_map(cls, fields) -> typing.Iterable[QtAlgorithmProperty]:
-        mask = AlgorithmProperty("mask", "Mask", None, value_type=typing.Optional[Labels])
+        mask = AlgorithmProperty("mask", "Mask", None, value_type=Labels | None)
         return super()._element_list_map(itertools.chain([mask], fields))
 
     def get_layers(self):

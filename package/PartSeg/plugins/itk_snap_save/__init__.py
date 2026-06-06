@@ -1,4 +1,3 @@
-import typing
 from io import BytesIO
 from pathlib import Path
 
@@ -24,12 +23,16 @@ class SaveITKSnap(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: ProjectTuple,
         parameters: dict,
         range_changed=None,
         step_changed=None,
     ):
+        if isinstance(save_location, BytesIO):  # pragma: no cover
+            raise NotImplementedError("Cannot save to BytesIO")
+        if project_info.roi_info.roi is None:
+            raise ValueError("ROI is empty, cannot save")
         mask = SimpleITK.GetImageFromArray(project_info.roi_info.roi)
         SimpleITK.WriteImage(mask, save_location)
 

@@ -131,7 +131,7 @@ def profile_hook(dkt):
             del dkt["algorithm_values"]
             dkt["segmentation_parameters"] = {"algorithm_name": name, "values": par}
         if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.ColorMap":
-            positions, colors = list(zip(*dkt["colormap"]))
+            positions, colors = list(zip(*dkt["colormap"], strict=True))
             if any(isinstance(c, Color) for c in colors):
                 colors = [c.as_tuple() if isinstance(c, Color) else (*c, 1) for c in colors]
 

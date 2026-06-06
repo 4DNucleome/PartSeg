@@ -8,6 +8,7 @@ import sys
 import typing
 from enum import Enum
 from functools import partial
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -927,7 +928,7 @@ class TestFormWidget:
                 return "1"
 
             @classmethod
-            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[AlgorithmProperty | str]:
                 return [AlgorithmProperty("field", "Field", 1)]
 
         class SampleClass2(AlgorithmDescribeBase):
@@ -936,7 +937,7 @@ class TestFormWidget:
                 return "2"
 
             @classmethod
-            def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+            def get_fields(cls) -> list[AlgorithmProperty | str]:
                 return [AlgorithmProperty("field_", "Field", 2)]
 
         SampleSelection.register(SampleClass1)
@@ -1991,6 +1992,15 @@ def test_labels_io(tmp_path):
     data = [[128, 0, 130], [0, 180, 120]]
     LabelsSave.save(tmp_path / "labels.json", data)
     data2 = LabelsLoad.load([tmp_path / "labels.json"])
+    assert data == data2
+
+
+def test_labels_io_bytes():
+    buff = BytesIO()
+    data = [[128, 0, 130], [0, 180, 120]]
+    LabelsSave.save(buff, data)
+    buff.seek(0)
+    data2 = LabelsLoad.load([buff])
     assert data == data2
 
 

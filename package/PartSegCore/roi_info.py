@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 import numpy as np
 
@@ -21,7 +21,7 @@ class BoundInfo(NamedTuple):
         return self.upper - self.lower + 1
 
     def get_slices(self, margin=0) -> list[slice]:
-        return [slice(max(x - margin, 0), y + 1 + margin) for x, y in zip(self.lower, self.upper)]
+        return [slice(max(x - margin, 0), y + 1 + margin) for x, y in zip(self.lower, self.upper, strict=True)]
 
     def del_dim(self, axis: int):
         return BoundInfo(np.delete(self.lower, axis), np.delete(self.upper, axis))
@@ -44,9 +44,9 @@ class ROIInfo:
 
     def __init__(
         self,
-        roi: Optional[np.ndarray],
-        annotations: Optional[dict[int, Any]] = None,
-        alternative: Optional[dict[str, np.ndarray]] = None,
+        roi: np.ndarray | None,
+        annotations: dict[int, Any] | None = None,
+        alternative: dict[str, np.ndarray] | None = None,
     ):
         annotations = {} if annotations is None else annotations
         self.annotations = {int(k): v for k, v in annotations.items()}
@@ -107,7 +107,7 @@ class ROIInfo:
             min_bounds, max_bounds = calc_bounds(roi)
             return {
                 num: BoundInfo(lower=lower, upper=upper)
-                for num, (lower, upper) in enumerate(zip(min_bounds, max_bounds))
+                for num, (lower, upper) in enumerate(zip(min_bounds, max_bounds, strict=True))
                 if num != 0 and upper[0] != -1
             }
         except KeyError:
@@ -115,7 +115,7 @@ class ROIInfo:
             points = np.nonzero(roi)
             comp_num = roi[points]
             point_dict = defaultdict(list)
-            for num, point in zip(comp_num, np.transpose(points)):
+            for num, point in zip(comp_num, np.transpose(points), strict=True):
                 point_dict[num].append(point)
             for num, points_for_num in point_dict.items():
                 lower = np.min(points_for_num, 0)

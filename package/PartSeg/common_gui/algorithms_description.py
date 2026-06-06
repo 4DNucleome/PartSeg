@@ -142,7 +142,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return self._widget
 
     @classmethod
-    def from_algorithm_property(cls, ob: typing.Union[str, AlgorithmProperty]):
+    def from_algorithm_property(cls, ob: str | AlgorithmProperty):
         """
         Create class instance base on :py:class:`.AlgorithmProperty` instance
         If ob is string equal to `hline` or that contains only
@@ -234,7 +234,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             raise ValueError(f"Unknown type {ap.value_type}")
         return res
 
-    def _get_field(self) -> typing.Union[QWidget, Widget]:
+    def _get_field(self) -> QWidget | Widget:
         """
         Get proper widget for given field type. Overwrite if would like to support new data types.
         """
@@ -258,7 +258,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return res
 
     @staticmethod
-    def get_change_signal(widget: typing.Union[QWidget, Widget]):  # noqa: PLR0911
+    def get_change_signal(widget: QWidget | Widget):  # noqa: PLR0911
         if isinstance(widget, Widget):
             return widget.changed
         if isinstance(widget, QComboBox):
@@ -281,13 +281,13 @@ class QtAlgorithmProperty(AlgorithmProperty):
 
     @staticmethod
     def get_getter_and_setter_function(  # noqa: PLR0911
-        widget: typing.Union[QWidget, Widget],
+        widget: QWidget | Widget,
     ) -> tuple[
         typing.Callable[
-            [typing.Union[QWidget, Widget]],
+            [QWidget | Widget],
             typing.Any,
         ],
-        typing.Callable[[typing.Union[QWidget, Widget], typing.Any], None],
+        typing.Callable[[QWidget | Widget, typing.Any], None],
     ]:
         """
         For each widget type return proper functions. This functions need instance as first argument
@@ -367,7 +367,7 @@ class ListInput(QWidget):
     def set_value(self, value):
         if not isinstance(value, (list, tuple)):
             value = [value for _ in range(len(self.input_list))]
-        for f, val in zip(self.input_list, value):
+        for f, val in zip(self.input_list, value, strict=True):
             f.set_value(val)
 
 
@@ -378,7 +378,7 @@ def _any_arguments(fun):
     return _any
 
 
-FieldAllowedTypes = typing.Union[list[AlgorithmProperty], type[BaseModel], type[AlgorithmDescribeBase]]
+FieldAllowedTypes: typing.TypeAlias = list[AlgorithmProperty] | type[BaseModel] | type[AlgorithmDescribeBase]
 
 
 class FormWidget(QWidget):
@@ -389,14 +389,14 @@ class FormWidget(QWidget):
         fields: FieldAllowedTypes,
         start_values=None,
         dimension_num=1,
-        settings: typing.Optional[BaseSettings] = None,
+        settings: BaseSettings | None = None,
         parent=None,
     ):
         super().__init__(parent=parent)
         if start_values is None:
             start_values = {}
         self.widgets_dict: dict[str, QtAlgorithmProperty] = {}
-        self.channels_chose: list[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
+        self.channels_chose: list[ChannelComboBox | SubAlgorithmWidget] = []
         layout = QFormLayout()
         layout.setContentsMargins(10, 0, 10, 0)
         self._model_class = None
@@ -476,7 +476,7 @@ class FormWidget(QWidget):
     def recursive_get_values(self):
         return {name: el.recursive_get_values() for name, el in self.widgets_dict.items()}
 
-    def set_values(self, values: typing.Union[dict, BaseModel]):
+    def set_values(self, values: dict | BaseModel):
         if isinstance(values, BaseModel):
             values = dict(values)
         for name, value in values.items():
@@ -682,7 +682,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     def set_mask(self, mask):
         self.algorithm_thread.set_mask(mask)
 
-    def mask(self) -> typing.Optional[np.ndarray]:
+    def mask(self) -> np.ndarray | None:
         return self.algorithm_thread.algorithm.mask
 
     def set_values(self, values_dict):
@@ -821,7 +821,7 @@ class AlgorithmChooseBase(QWidget):
         )
         return result
 
-    def change_algorithm(self, name, values: typing.Optional[dict] = None):
+    def change_algorithm(self, name, values: dict | None = None):
         self.settings.set_algorithm("current_algorithm", name)
         widget = typing.cast("InteractiveAlgorithmSettingsWidget", self.stack_layout.currentWidget())
         blocked = self.blockSignals(True)

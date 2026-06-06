@@ -1,6 +1,6 @@
 import itertools
 from collections.abc import Iterator, MutableMapping
-from typing import Any, ClassVar, Generic, TypeVar, Union
+from typing import Any, ClassVar, Generic, TypeVar
 
 from qtpy.QtCore import QObject, Signal
 
@@ -30,7 +30,7 @@ class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
         }
         self._counter = len(self._order_dict)
 
-    def __setitem__(self, key: str, value: Union[T, RemovableInfo]) -> None:
+    def __setitem__(self, key: str, value: T | RemovableInfo) -> None:
         if key in self.const_item_dict:
             raise ValueError("Cannot write base item")
         self.editable_items[key] = value[0] if isinstance(value, tuple) else value

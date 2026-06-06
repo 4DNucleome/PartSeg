@@ -100,10 +100,10 @@ MaskProperty.__eq__ = mp_eq
 def calculate_mask(
     mask_description: MaskProperty,
     roi: np.ndarray,
-    old_mask: typing.Optional[np.ndarray],
-    spacing: typing.Iterable[typing.Union[float, int]],
-    components: typing.Optional[list[int]] = None,
-    time_axis: typing.Optional[int] = 0,
+    old_mask: np.ndarray | None,
+    spacing: typing.Iterable[float | int],
+    components: list[int] | None = None,
+    time_axis: int | None = 0,
 ) -> np.ndarray:
     """
     Function for calculate mask base on MaskProperty.
@@ -136,7 +136,7 @@ def calculate_mask(
     mask = np.copy(roi) if mask_description.save_components else np.array(roi > 0)
     if time_axis is None:
         return _calculate_mask(mask_description, dilate_radius, mask, old_mask)
-    slices: list[typing.Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]
+    slices: list[slice | int] = [slice(None) for _ in range(mask.ndim)]
     final_shape = list(mask.shape)
     final_shape[time_axis] = 1
     final_shape = tuple(final_shape)
@@ -153,7 +153,7 @@ def _calculate_mask(
     mask_description: MaskProperty,
     dilate_radius: list[int],
     mask: np.ndarray,
-    old_mask: typing.Union[None, np.ndarray],
+    old_mask: None | np.ndarray,
 ) -> np.ndarray:
     if mask_description.dilate != RadiusType.NO and mask_description.dilate_radius != 0:
         if mask_description.dilate_radius > 0:
@@ -180,8 +180,8 @@ def _cut_components(
             points = np.nonzero(mask == i)
             lower_bound = np.min(points, axis=1)
             upper_bound = np.max(points, axis=1)
-            new_cut = tuple(slice(x, y + 1) for x, y in zip(lower_bound, upper_bound))
-            new_size = [y - x + 1 + 2 * borders for x, y in zip(lower_bound, upper_bound)]
+            new_cut = tuple(slice(x, y + 1) for x, y in zip(lower_bound, upper_bound, strict=True))
+            new_size = [y - x + 1 + 2 * borders for x, y in zip(lower_bound, upper_bound, strict=True)]
             if borders > 0:
                 res = np.zeros(new_size, dtype=image.dtype)
                 res_cut = tuple(slice(borders, x - borders) for x in tuple(res.shape))

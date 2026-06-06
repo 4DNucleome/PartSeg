@@ -140,7 +140,7 @@ class StackSettings(BaseSettings):
             points=self.points,
         )
 
-    def set_project_info(self, data: typing.Union[MaskProjectTuple, PointsInfo]):
+    def set_project_info(self, data: MaskProjectTuple | PointsInfo):
         """signals = self.signalsBlocked()
         if data.segmentation is not None:
             self.blockSignals(True)"""
@@ -200,7 +200,7 @@ class StackSettings(BaseSettings):
         cls,
         state: MaskProjectTuple,
         new_roi_info: ROIInfo,
-        new_roi_extraction_parameters: dict[int, typing.Optional[ROIExtractionProfile]],
+        new_roi_extraction_parameters: dict[int, ROIExtractionProfile | None],
         list_of_components: list[int],
         save_chosen: bool = True,
     ) -> MaskProjectTuple:
@@ -285,7 +285,7 @@ class StackSettings(BaseSettings):
             return False
         return not any(
             el2.mask_property != el1.mask_property or el2.roi_extraction_parameters != el1.roi_extraction_parameters
-            for el1, el2 in zip(self.history, history)
+            for el1, el2 in zip(self.history, history, strict=True)
         )
 
     def _set_roi_info(
@@ -319,9 +319,7 @@ class StackSettings(BaseSettings):
                 self.chosen_components_widget.blockSignals(prev)
 
 
-def get_mask(
-    segmentation: typing.Optional[np.ndarray], mask: typing.Optional[np.ndarray], selected: list[int]
-) -> np.ndarray:
+def get_mask(segmentation: np.ndarray | None, mask: np.ndarray | None, selected: list[int]) -> np.ndarray:
     """
     Calculate mask base on segmentation, current mask and list of chosen components.
     Its exclude selected components from mask.

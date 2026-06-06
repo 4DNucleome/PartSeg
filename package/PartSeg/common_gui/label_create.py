@@ -3,12 +3,11 @@ This module contains widgets to create and manage labels scheme
 """
 
 import json
-import typing
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 import numpy as np
 from fonticon_fa6 import FA6S
@@ -330,11 +329,13 @@ class LabelsLoad(LoadBase):
     @classmethod
     def load(
         cls,
-        load_locations: list[Union[str, BytesIO, Path]],
-        range_changed: Optional[Callable[[int, int], Any]] = None,
-        step_changed: Optional[Callable[[int], Any]] = None,
-        metadata: Optional[dict] = None,
+        load_locations: list[str | BytesIO | Path],
+        range_changed: Callable[[int, int], Any] | None = None,
+        step_changed: Callable[[int], Any] | None = None,
+        metadata: dict | None = None,
     ) -> list[list[float]]:
+        if isinstance(byt := load_locations[0], BytesIO):
+            return json.loads(byt.read().decode("utf-8"))
         with open(load_locations[0]) as f_p:
             return json.load(f_p)
 
@@ -353,12 +354,15 @@ class LabelsSave(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
-        parameters: Optional[dict] = None,
+        parameters: dict | None = None,
         range_changed=None,
         step_changed=None,
     ):
+        if isinstance(save_location, BytesIO):
+            save_location.write(json.dumps(project_info).encode("utf-8"))
+            return
         with open(save_location, "w") as f_p:
             json.dump(project_info, f_p)
 

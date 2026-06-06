@@ -1,5 +1,4 @@
 import inspect
-from typing import Optional, Union
 
 from qtpy.QtCore import QThread, Signal
 
@@ -19,7 +18,14 @@ class ProgressTread(QThread):
 class ExecuteFunctionThread(ProgressTread):
     """Generic Thread to execute"""
 
-    def __init__(self, fun, args: Optional[Union[list, tuple]] = None, kwargs: Optional[dict] = None):
+    def __init__(self, fun, args: list | tuple | None = None, kwargs: dict | None = None):
+        """
+        Wrap function to execute in thread.
+
+        param fun: function to execute`
+        param args: arguments for function
+        param kwargs: keyword arguments for function
+        """
         super().__init__()
         self.args = args or []
         self.kwargs = kwargs or {}

@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from contextlib import suppress
 from traceback import StackSummary
-from typing import Union
 
 import numpy as np
 from local_migrator import register_class
@@ -19,7 +18,7 @@ from psygnal import Signal
 from pydantic import BaseModel as PydanticBaseModel
 from sentry_sdk.utils import safe_repr as _safe_repr
 
-ErrorInfo = tuple[Exception, Union[StackSummary, tuple[dict, StackSummary]]]
+ErrorInfo = tuple[Exception, StackSummary | tuple[dict, StackSummary]]
 
 
 __author__ = "Grzegorz Bokota"

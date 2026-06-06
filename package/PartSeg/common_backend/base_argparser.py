@@ -8,7 +8,6 @@ import zlib
 from collections.abc import Sequence
 from contextlib import suppress
 from importlib.metadata import version as package_version
-from typing import Optional
 
 import sentry_sdk
 import sentry_sdk.serializer
@@ -103,7 +102,7 @@ class CustomParser(argparse.ArgumentParser):
         self.add_argument("--develop", action="store_true", help=argparse.SUPPRESS)
         self.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
-    def parse_args(self, args: Optional[Sequence[str]] = None, namespace: Optional[argparse.Namespace] = None):
+    def parse_args(self, args: Sequence[str] | None = None, namespace: argparse.Namespace | None = None):
         """
         overload of :py:meth:`argparse.ArgumentParser.parse_args`. Set flags like described in class documentation.
         """

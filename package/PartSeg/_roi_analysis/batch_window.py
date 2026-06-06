@@ -61,7 +61,7 @@ class SaveExcel(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info,
         parameters: dict,
         range_changed=None,
@@ -74,7 +74,7 @@ class SaveExcel(SaveBase):
         return "Excel (*.xlsx)"
 
     @classmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         return []
 
 
@@ -381,7 +381,7 @@ class CalculationPrepare(QDialog):
         measurement_file_path: os.PathLike,
         settings: PartSettings,
         batch_manager: CalculationManager,
-        parent: typing.Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ):
         """
         :param file_list: list of files to proceed

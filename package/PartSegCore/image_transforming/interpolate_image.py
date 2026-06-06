@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 from scipy.ndimage import zoom
 
@@ -14,7 +14,7 @@ class InterpolateImage(TransformBase):
         return ["It can be very slow.", AlgorithmProperty("scale", "Scale", 1.0)]
 
     @classmethod
-    def get_fields_per_dimension(cls, image: Image) -> list[Union[str, AlgorithmProperty]]:
+    def get_fields_per_dimension(cls, image: Image) -> list[str | AlgorithmProperty]:
         component_list = list(image.get_dimension_letters())
         return [
             "it can be very slow",
@@ -29,10 +29,10 @@ class InterpolateImage(TransformBase):
     def transform(
         cls,
         image: Image,
-        roi_info: Optional[ROIInfo],
+        roi_info: ROIInfo | None,
         arguments: dict,
-        callback_function: Optional[Callable[[str, int], None]] = None,
-    ) -> tuple[Image, Optional[ROIInfo]]:
+        callback_function: Callable[[str, int], None] | None = None,
+    ) -> tuple[Image, ROIInfo | None]:
         keys = [x for x in arguments if x.startswith("scale")]
         keys_order = Image.axis_order.lower()
         scale_factor = [1.0] * len(keys_order)
@@ -46,7 +46,8 @@ class InterpolateImage(TransformBase):
                 letter = key[-1]
                 scale_factor[keys_order.index(letter)] = arguments[key]
             spacing = [
-                x / arguments[f"scale_{y}"] for x, y in zip(image.spacing, image.get_dimension_letters().lower())
+                x / arguments[f"scale_{y}"]
+                for x, y in zip(image.spacing, image.get_dimension_letters().lower(), strict=True)
             ]
         array = zoom(image.get_data(), scale_factor, mode="mirror")
         if image.mask is not None:
@@ -59,5 +60,6 @@ class InterpolateImage(TransformBase):
     def calculate_initial(cls, image: Image):
         min_val = min(image.spacing)
         return {
-            f"scale_{letter}": x / min_val for x, letter in zip(image.spacing, image.get_dimension_letters().lower())
+            f"scale_{letter}": x / min_val
+            for x, letter in zip(image.spacing, image.get_dimension_letters().lower(), strict=True)
         }

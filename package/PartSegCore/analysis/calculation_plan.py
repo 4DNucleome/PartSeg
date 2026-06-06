@@ -235,7 +235,7 @@ class MaskSub(MaskMapper):
 class MaskFile(MaskMapper):
     # TODO Check implementation
     path_to_file: str
-    name_dict: typing.Optional[dict] = None
+    name_dict: dict | None = None
 
     def is_ready(self) -> bool:
         return os.path.exists(self.path_to_file)
@@ -258,6 +258,9 @@ class MaskFile(MaskMapper):
         if not os.path.exists(self.path_to_file):  # pragma: no cover
             logging.error("File does not exists: %s", self.path_to_file)
             raise ValueError(f"File for mapping mask does not exists: {self.path_to_file}")
+        if self.name_dict is None:
+            self.name_dict = {}
+
         with open(self.path_to_file, encoding="utf-8") as map_file:
             dir_name = os.path.dirname(self.path_to_file)
             for i, line in enumerate(map_file):
@@ -297,7 +300,7 @@ class CalculationTree:
 
     def __init__(
         self,
-        operation: typing.Union[PydanticBaseModel, ROIExtractionProfile, MeasurementCalculate, RootType],
+        operation: PydanticBaseModel | ROIExtractionProfile | MeasurementCalculate | RootType,
         children: list["CalculationTree"],
     ):
         if operation == "root":
@@ -502,7 +505,7 @@ class CalculationPlan:
     :type execution_tree: CalculationTree
     """
 
-    correct_name: typing.ClassVar[dict[str, typing.Union[BaseModel, Enum]]] = {
+    correct_name: typing.ClassVar[dict[str, type[BaseModel] | type[Enum]]] = {
         MaskCreate.__name__: MaskCreate,
         MaskUse.__name__: MaskUse,
         Save.__name__: Save,
@@ -517,7 +520,13 @@ class CalculationPlan:
         RootType.__name__: RootType,
     }
 
-    def __init__(self, tree: typing.Optional[CalculationTree] = None, name: str = ""):
+    def __init__(self, tree: CalculationTree | None = None, name: str = ""):
+        """
+        Calculate plan for batch calculation.
+
+        param tree: calculation tree
+        param name: name of calculation plan
+        """
         if tree is None:
             self.execution_tree = CalculationTree(RootType.Image, [])
         else:
@@ -549,7 +558,7 @@ class CalculationPlan:
     def __repr__(self):
         return f"CalculationPlan(name={self.name!r}, execution_tree={self.execution_tree!r})"
 
-    def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> list[MeasurementCalculate]:
+    def get_measurements(self, node: CalculationTree | None = None) -> list[MeasurementCalculate]:
         """
         Get all measurement Calculation below given node
 
@@ -588,7 +597,7 @@ class CalculationPlan:
     def __deepcopy__(self, memo):
         return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
-    def get_node(self, search_pos: typing.Optional[list[int]] = None, parent=False) -> CalculationTree:
+    def get_node(self, search_pos: list[int] | None = None, parent=False) -> CalculationTree:
         """
         :param search_pos:
         :return: CalculationTree

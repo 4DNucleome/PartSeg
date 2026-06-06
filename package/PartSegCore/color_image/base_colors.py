@@ -1,5 +1,3 @@
-import typing
-
 from napari.utils.colormaps.colormap import Colormap
 from napari.utils.colormaps.colormap_utils import AVAILABLE_COLORMAPS
 from pydantic import Field
@@ -7,7 +5,10 @@ from pydantic import Field
 from PartSegCore.color_image.color_data import sitk_labels
 from PartSegCore.utils import BaseModel
 
-Num = typing.Union[int, float]
+Num = int | float
+
+RGBA_Color = tuple[Num, Num, Num, Num]
+RGB_Color = tuple[Num, Num, Num]
 
 
 class Color(BaseModel):
@@ -25,11 +26,11 @@ class Color(BaseModel):
     blue: float = Field(ge=0.0, le=1.0)
     alpha: float = Field(1, ge=0.0, le=1.0)
 
-    def as_tuple(self):
-        return (self.red, self.green, self.blue, self.alpha)
+    def as_tuple(self) -> RGBA_Color:
+        return self.red, self.green, self.blue, self.alpha
 
     @classmethod
-    def from_tuple(cls, tup):
+    def from_tuple(cls, tup: RGBA_Color | RGB_Color):
         """
         create color from tuple
 

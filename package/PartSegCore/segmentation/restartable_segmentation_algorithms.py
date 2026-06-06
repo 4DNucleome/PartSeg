@@ -55,7 +55,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
 
     def __init__(self, **kwargs):
         super().__init__()
-        self.parameters: dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
+        self.parameters: dict[str, typing.Any | None] = defaultdict(lambda: None)
         self.new_parameters = self.__argument_class__() if self.__new_style__ else {}  # pylint: disable=not-callable
 
     def set_image(self, image):
@@ -81,7 +81,7 @@ class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
         return True
 
     @abstractmethod
-    def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> typing.Optional[ROIExtractionResult]:
+    def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> ROIExtractionResult | None:
         """Restartable calculation may return None if there is no need to recalculate"""
         raise NotImplementedError
 
@@ -195,7 +195,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         self.old_threshold_info = None
 
     def get_additional_layers(
-        self, full_segmentation: typing.Optional[np.ndarray] = None
+        self, full_segmentation: np.ndarray | None = None
     ) -> dict[str, AdditionalLayerDescription]:
         """
         Create dict with standard additional layers.
@@ -285,7 +285,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             return True
         return False
 
-    def _filter_by_size(self, restarted: bool) -> typing.Optional[np.ndarray]:
+    def _filter_by_size(self, restarted: bool) -> np.ndarray | None:
         """Filter components by size if size filter is changed"""
         if restarted or self.new_parameters.minimum_size != self.parameters["size_filter"]:
             self.parameters["minimum_size"] = self.new_parameters.minimum_size
@@ -297,9 +297,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             return finally_segment
         return None
 
-    def calculation_run(
-        self, report_fun: typing.Callable[[str, int], typing.Any]
-    ) -> typing.Optional[ROIExtractionResult]:
+    def calculation_run(self, report_fun: typing.Callable[[str, int], typing.Any]) -> ROIExtractionResult | None:
         """
         main calculation function
 
@@ -333,7 +331,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     def clean(self):
         super().clean()
-        self.parameters: dict[str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
+        self.parameters: dict[str, typing.Any | None] = defaultdict(lambda: None)
         self.cleaned_image = None
         self.mask = None
 
@@ -530,7 +528,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
         super().set_image(image)
         self.threshold_info = [None, None]
 
-    def calculation_run(self, report_fun) -> typing.Optional[ROIExtractionResult]:
+    def calculation_run(self, report_fun) -> ROIExtractionResult | None:
         segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
             self.final_sizes = []
@@ -715,7 +713,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
         super().set_image(image)
         self.threshold_info = [float("nan"), float("nan")]
 
-    def calculation_run(self, report_fun) -> typing.Optional[ROIExtractionResult]:
+    def calculation_run(self, report_fun) -> ROIExtractionResult | None:
         if self.new_parameters.side_connection != self.parameters["side_connection"]:
             neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters.side_connection))
             self.mso.set_neighbourhood(neigh, dist)

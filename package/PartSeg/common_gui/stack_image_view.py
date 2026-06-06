@@ -1,5 +1,4 @@
 from math import log
-from typing import Union
 
 import numpy as np
 from napari.utils import Colormap
@@ -19,7 +18,12 @@ max_step = log(1.2, step)
 
 
 class ColorBar(QLabel):
-    def __init__(self, settings: ViewSettings, image_view: Union[list[ImageView], ImageView]):
+    def __init__(self, settings: ViewSettings, image_view: list[ImageView] | ImageView):
+        """Widget for color bar
+
+        param settings: view settings
+        param image_view: image view or list of image views
+        """
         super().__init__()
         self.image_view = image_view
         self._settings = settings
@@ -97,6 +101,7 @@ class ColorBar(QLabel):
         for pos, val in zip(
             np.linspace(10 + end_prop * rect.size().height(), start_prop * rect.size().height(), number_of_marks),
             np.linspace(self.round_range[1], self.round_range[0], number_of_marks, dtype=np.uint32),
+            strict=True,
         ):
             painter.drawText(bar_width + 5, int(pos), f"{val}")
         painter.setFont(old_font)

@@ -1,6 +1,5 @@
 import dataclasses
 import os
-import typing
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -18,7 +17,7 @@ from PartSegImage import Channel
 
 class SaveModeling(SaveBase):
     @classmethod
-    def get_fields(cls) -> list[typing.Union[AlgorithmProperty, str]]:
+    def get_fields(cls) -> list[AlgorithmProperty | str]:
         return [
             AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty("clip", "Clip area", False),
@@ -43,12 +42,14 @@ class SaveModeling(SaveBase):
     @classmethod
     def save(
         cls,
-        save_location: typing.Union[str, BytesIO, Path],
+        save_location: str | BytesIO | Path,
         project_info: ProjectTuple,
         parameters: dict,
         range_changed=None,
         step_changed=None,
     ):
+        if isinstance(save_location, BytesIO):
+            raise NotImplementedError("Cannot save to BytesIO")
         if not os.path.exists(save_location):
             os.makedirs(save_location)
         if not os.path.isdir(save_location):
@@ -60,7 +61,7 @@ class SaveModeling(SaveBase):
             lower_bound = np.max([lower_bound - 3, [0, 0, 0]], axis=0)
             upper_bound = np.max(points, axis=1)
             upper_bound = np.max([upper_bound + 3, np.array(project_info.roi_info.roi) - 1], axis=0)
-            cut_area = tuple(slice(x, y) for x, y in zip(lower_bound, upper_bound))
+            cut_area = tuple(slice(x, y) for x, y in zip(lower_bound, upper_bound, strict=True))
             # WARNING time
             image = project_info.image.cut_image((slice(None), *cut_area))
             roi_info = ROIInfo(project_info.roi_info.roi[cut_area])

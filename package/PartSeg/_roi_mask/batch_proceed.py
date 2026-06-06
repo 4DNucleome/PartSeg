@@ -3,7 +3,7 @@ import re
 from functools import partial
 from pathlib import Path
 from queue import Queue
-from typing import TYPE_CHECKING, NamedTuple, Optional, Union, cast
+from typing import TYPE_CHECKING, NamedTuple, cast
 
 from pydantic import BaseModel
 from qtpy.QtCore import QThread, Signal
@@ -19,9 +19,9 @@ if TYPE_CHECKING:
 
 
 class BatchTask(NamedTuple):
-    data: Union[str, MaskProjectTuple]
+    data: str | MaskProjectTuple
     parameters: ROIExtractionProfile
-    save_prefix: Optional[tuple[Union[str, Path], Union[dict, BaseModel]]]
+    save_prefix: tuple[str | Path, dict | BaseModel] | None
 
 
 class BatchProceed(QThread):
@@ -42,7 +42,7 @@ class BatchProceed(QThread):
         self.result_dir = ""
         self.save_parameters = {}
 
-    def add_task(self, task: Union[BatchTask, list[BatchTask]]):
+    def add_task(self, task: BatchTask | list[BatchTask]):
         if isinstance(task, list):
             for el in task:
                 self.queue.put(el)

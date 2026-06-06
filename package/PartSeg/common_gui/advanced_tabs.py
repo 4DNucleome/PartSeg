@@ -277,6 +277,6 @@ class ImageMetadata(QWidget):
         self._dict_viewer.set_data(self.settings.image.metadata)
         text = ", ".join(
             f"{name}: {color}"
-            for name, color in zip(self.settings.image.channel_names, self.settings.image.get_colors())
+            for name, color in zip(self.settings.image.channel_names, self.settings.image.get_colors(), strict=True)
         )
         self.channel_info.setText(f"Channels with colors: {text}")
