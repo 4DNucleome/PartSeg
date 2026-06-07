@@ -77,17 +77,12 @@ jobs:
           - python_version: "3.12"
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
-          - python_version: "3.10"
-            os: "ubuntu-22.04"
-            qt_backend: "PyQt5"
-            pydantic: "_pydantic_1"
     with:
       test_data: True
       python_version: ${{ matrix.python_version }}
       os: ${{ matrix.os }}
       qt_backend: ${{ matrix.qt_backend }}
       tox_args: ${{ matrix.tox_args }}
-      pydantic: ${{ matrix.pydantic }}
 
   base-test-main:
     name: Base py${{ matrix.python_version }}
