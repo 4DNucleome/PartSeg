@@ -1,5 +1,3 @@
-import json
-
 import pytest
 from pydantic import BaseModel
 
@@ -32,16 +30,17 @@ class Model(BaseModel):
 
 
 MODEL_SCHEMA = {
-    "title": "Model",
-    "type": "object",
     "properties": {
         "channel": {
+            "anyOf": [{"type": "integer"}, {"type": "string"}],
+            "description": "Image channel index or channel name. Accepts an integer or any non-empty string.",
+            "examples": [0, "nucleus"],
             "title": "Channel",
-            "type": "object",
-            "properties": {"value": {"title": "value", "anyOf": [{"type": "string"}, {"type": "integer"}]}},
         }
     },
     "required": ["channel"],
+    "title": "Model",
+    "type": "object",
 }
 
 
@@ -53,4 +52,4 @@ def test_as_pydantic_field(value):
 
 
 def test_json_schema():
-    assert json.loads(Model.schema_json()) == MODEL_SCHEMA
+    assert Model.model_json_schema() == MODEL_SCHEMA

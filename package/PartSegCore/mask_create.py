@@ -200,7 +200,7 @@ def _fill_holes(mask_description: MaskProperty, mask: np.ndarray) -> np.ndarray:
     if mask_description.save_components:
         border = 1
         res_slice = tuple(slice(border, -border) for _ in range(mask.ndim))
-        mask_description_copy = mask_description.copy(update={"save_components": False})
+        mask_description_copy = mask_description.model_copy(update={"save_components": False})
         mask_prohibited = mask > 0
         for component, slice_arr, cmp_num in _cut_components(mask, mask, border):
             mask_prohibited_component = mask_prohibited[slice_arr]

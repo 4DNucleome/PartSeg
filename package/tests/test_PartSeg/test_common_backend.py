@@ -625,8 +625,8 @@ class TestBaseSettings:
             mask_property=MaskProperty.simple_mask(),
             arrays=BytesIO(),
         )
-        hist_elem2 = hist_elem.copy(update={"roi_extraction_parameters": {"a": 2}, "arrays": BytesIO()})
-        hist_elem3 = hist_elem.copy(update={"roi_extraction_parameters": {"a": 3}, "arrays": BytesIO()})
+        hist_elem2 = hist_elem.model_copy(update={"roi_extraction_parameters": {"a": 2}, "arrays": BytesIO()})
+        hist_elem3 = hist_elem.model_copy(update={"roi_extraction_parameters": {"a": 3}, "arrays": BytesIO()})
         settings.add_history_element(hist_elem)
         assert settings.history_size() == 1
         assert settings.history_redo_size() == 0

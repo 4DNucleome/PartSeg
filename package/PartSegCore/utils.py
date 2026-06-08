@@ -449,21 +449,13 @@ class BaseModel(PydanticBaseModel):
             return getattr(self, item)
         raise KeyError(f"{item} not found in {self.__class__.__name__}")
 
-    def model_copy(self: PydanticBaseModel, *, validate: bool = True, **kwargs: typing.Any) -> PydanticBaseModel:
+    def model_copy(self: typing.Self, *, validate: bool = True, **kwargs: typing.Any) -> typing.Self:
         copy_res = super().model_copy(**kwargs)
         if validate:
-            return self.__class__.model_validate(
-                dict(
-                    copy_res.model_dump(  # pylint: disable=protected-access
-                        mode="python",
-                        round_trip=True,
-                        exclude_unset=True,
-                    )
-                )
-            )
+            return self.__class__(**{name: getattr(copy_res, name) for name in copy_res.model_fields_set})
         return copy_res
 
-    def copy(self: PydanticBaseModel, *, validate: bool = True, **kwargs: typing.Any) -> PydanticBaseModel:
+    def copy(self: typing.Self, *, validate: bool = True, **kwargs: typing.Any) -> typing.Self:
         copy_res = super().copy(**kwargs)
         if validate:
             return self.validate(

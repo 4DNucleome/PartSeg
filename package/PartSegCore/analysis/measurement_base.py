@@ -247,7 +247,7 @@ def replace(self, **kwargs) -> Leaf:
         if getattr(self, key) is not None and (key != "parameters" or dict(self.parameters)):
             del kwargs[key]
 
-    return self.copy(update=kwargs)
+    return self.model_copy(update=kwargs)
 
 
 Leaf.replace_ = replace
