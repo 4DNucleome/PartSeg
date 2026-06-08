@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-slim
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip check PR title') }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
