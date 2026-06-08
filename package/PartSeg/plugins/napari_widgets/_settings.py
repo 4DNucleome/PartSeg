@@ -47,7 +47,7 @@ def get_settings() -> PartSegNapariSettings:
         if napari_settings.config_path is not None:
             save_path = os.path.dirname(napari_settings.config_path)
         else:
-            save_path = user_config_dir("napari", False)
+            save_path = user_config_dir("napari", False)  # pragma: no cover
         _SETTINGS = PartSegNapariSettings(os.path.join(save_path, "PartSeg_napari_plugins"))
         _SETTINGS.load()
     return _SETTINGS

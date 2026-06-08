@@ -8,13 +8,9 @@ def check_type(value):  # type: ignore [misc]
         return value
     if value.__class__.__module__.startswith("napari"):
         value = value.name
-    if not isinstance(value, (str, int)):
+    if not isinstance(value, (str, int)):  # pragma: no cover
         raise ValueError(f"Channel need to be int or str, provided {type(value)}")
     return Channel(value)
-
-
-def check_type_(value, _validation_info=None, **_):
-    return check_type(value)
 
 
 class Channel:
