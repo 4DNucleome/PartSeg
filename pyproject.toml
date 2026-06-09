@@ -99,7 +99,7 @@ accelerate = [
 #    "PyOpenGL-accelerate>=3.1.5 ; platform_machine != 'arm64'",
 ]
 all = [
-    "PartSeg[accelerate,pyqt5]"
+    "PartSeg[accelerate,pyqt]"
 ]
 docs = [
     "autodoc-pydantic",
@@ -116,7 +116,7 @@ pyinstaller_base = [
     "pydantic",
 ]
 pyqt = [
-    "PartSeg[pyqt5]",
+    "PartSeg[pyqt6]",
 ]
 pyqt5 = [
     "PyQt5!=5.15.0,>=5.12.3",
@@ -127,7 +127,7 @@ pyqt6 = [
     "napari[pyqt6]>=0.5.0",
 ]
 pyside = [
-    "PartSeg[pyside2]",
+    "PartSeg[pyside6]",
 ]
 pyside2 = [
     "PySide2!=5.15.0,>=5.12.3",
