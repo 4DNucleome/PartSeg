@@ -10,6 +10,8 @@ def check_type(value):  # type: ignore [misc]
         value = value.name
     if not isinstance(value, (str, int)):  # pragma: no cover
         raise ValueError(f"Channel need to be int or str, provided {type(value)}")
+    if isinstance(value, str) and not value:
+        raise ValueError("Channel name can not be empty string")
     return Channel(value)
 
 
@@ -55,7 +57,7 @@ class Channel:
         value_schema = core_schema.union_schema(
             [
                 core_schema.int_schema(),
-                core_schema.str_schema(),
+                core_schema.str_schema(min_length=1),
             ]
         )
 
@@ -73,7 +75,7 @@ class Channel:
             core_schema.union_schema(
                 [
                     core_schema.int_schema(),
-                    core_schema.str_schema(),
+                    core_schema.str_schema(min_length=1),
                 ]
             )
         )
