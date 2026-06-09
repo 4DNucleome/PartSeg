@@ -1,15 +1,6 @@
-from importlib.metadata import PackageNotFoundError, version
-from typing import TYPE_CHECKING, Union
+from typing import Union
 
-try:
-    PYDANTIC_2 = version("pydantic") >= "2.0.0"
-except PackageNotFoundError:  # pragma: no cover
-    PYDANTIC_2 = False
-
-
-if TYPE_CHECKING:
-    from pydantic import GetJsonSchemaHandler
-    from pydantic_core.core_schema import CoreSchema
+from pydantic_core import core_schema
 
 
 def check_type(value):  # type: ignore [misc]
@@ -17,20 +8,11 @@ def check_type(value):  # type: ignore [misc]
         return value
     if value.__class__.__module__.startswith("napari"):
         value = value.name
-    if not isinstance(value, (str, int)):
-        raise TypeError(f"Channel need to be int or str, provided {type(value)}")
+    if not isinstance(value, (str, int)):  # pragma: no cover
+        raise ValueError(f"Channel need to be int or str, provided {type(value)}")
+    if isinstance(value, str) and not value:
+        raise ValueError("Channel name can not be empty string")
     return Channel(value)
-
-
-if PYDANTIC_2:
-
-    def check_type_(value, _validation_info=None, **_):
-        return check_type(value)
-
-else:
-
-    def check_type_(value):  # type: ignore [misc]
-        return check_type(value)
 
 
 class Channel:
@@ -67,19 +49,39 @@ class Channel:
         return {"value": self._value}
 
     @classmethod
-    def __get_validators__(cls):
-        yield check_type_
+    def validate(cls, value: "int | str | Channel") -> "Channel":
+        return cls(check_type(value))
 
     @classmethod
-    def __modify_schema__(cls, field_schema):
-        """Pydantic 1 dataclass schema modification method. It is used to modify schema for this class"""
-        # TODO check if still required
-        field_schema["title"] = "Channel"
-        field_schema["type"] = "object"
-        field_schema["properties"] = {"value": {"title": "value", "anyOf": [{"type": "string"}, {"type": "integer"}]}}
+    def __get_pydantic_core_schema__(cls, source_type, handler):
+        value_schema = core_schema.union_schema(
+            [
+                core_schema.int_schema(),
+                core_schema.str_schema(min_length=1),
+            ]
+        )
+
+        return core_schema.no_info_plain_validator_function(
+            cls.validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda value: value.value,
+                return_schema=value_schema,
+            ),
+        )
 
     @classmethod
-    def __get_pydantic_json_schema__(cls, core_schema: "CoreSchema", handler: "GetJsonSchemaHandler"):
-        json_schema: dict[str, str | dict] = {}
-        cls.__modify_schema__(json_schema)
+    def __get_pydantic_json_schema__(cls, schema, handler):
+        json_schema = handler(
+            core_schema.union_schema(
+                [
+                    core_schema.int_schema(),
+                    core_schema.str_schema(min_length=1),
+                ]
+            )
+        )
+        json_schema.update(
+            title="Channel",
+            description="Image channel index or channel name. Accepts an integer or any non-empty string.",
+            examples=[0, "nucleus"],
+        )
         return json_schema

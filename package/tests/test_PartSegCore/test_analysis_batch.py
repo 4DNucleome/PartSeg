@@ -95,7 +95,7 @@ class DummyExtraction(ROIExtractionAlgorithm):
 
 class DummySpacingCheck(DummyExtraction):
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
-        assert self.image.spacing == (3, 2, 1)
+        assert self.image.spacing == (3, 2, 1), f"Wrong spacing {self.image.spacing}"
         return ROIExtractionResult(np.ones(self.image.shape, dtype=np.uint8), self.get_segmentation_profile())
 
 
@@ -243,9 +243,9 @@ def calculation_plan_long(ltww_segmentation, measurement_list):
     mask_suffix = MaskSuffix(name="", suffix="_mask")
     children = []
     for i in range(20):
-        measurement = measurement_list.copy()
+        measurement = measurement_list.model_copy()
         measurement.name_prefix = f"{i}_"
-        measurement.measurement_profile = measurement.measurement_profile.copy()
+        measurement.measurement_profile = measurement.measurement_profile.model_copy()
         measurement.measurement_profile.name_prefix = f"{i}_"
         children.append(
             CalculationTree(mask_suffix, [CalculationTree(ltww_segmentation, [CalculationTree(measurement, [])])])

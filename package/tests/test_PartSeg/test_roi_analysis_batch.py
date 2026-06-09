@@ -663,7 +663,7 @@ class TestCreatePlan:
         assert len(widget.calculation_plan.execution_tree.children) == 1
         assert len(widget.calculation_plan.execution_tree.children[0].children) == 0
         assert widget.calculation_plan.execution_tree.children[0].operation == roi_extraction_profile
-        roi_extraction_profile2 = roi_extraction_profile.copy(update={"name": "roi_extraction_profile2"})
+        roi_extraction_profile2 = roi_extraction_profile.model_copy(update={"name": "roi_extraction_profile2"})
         widget.update_element_chk.setChecked(True)
         widget.add_roi_extraction(roi_extraction_profile2)
         assert len(widget.calculation_plan.execution_tree.children) == 1
@@ -680,7 +680,7 @@ class TestCreatePlan:
         assert len(widget.calculation_plan.execution_tree.children) == 1
         assert len(widget.calculation_plan.execution_tree.children[0].children) == 0
         assert widget.calculation_plan.execution_tree.children[0].operation == save_step_profile
-        save_step_profile2 = save_step_profile.copy(update={"suffix": "_save"})
+        save_step_profile2 = save_step_profile.model_copy(update={"suffix": "_save"})
         widget.update_element_chk.setChecked(True)
         widget.add_save_operation(save_step_profile2)
         assert len(widget.calculation_plan.execution_tree.children) == 1

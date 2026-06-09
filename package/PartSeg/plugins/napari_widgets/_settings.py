@@ -2,6 +2,7 @@ import os
 
 from magicgui.widgets import Container, create_widget
 from napari.layers import Layer
+from platformdirs import user_config_dir
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg.common_backend import napari_get_settings
@@ -43,10 +44,10 @@ def get_settings() -> PartSegNapariSettings:
     global _SETTINGS  # noqa: PLW0603  # pylint: disable=global-statement
     if _SETTINGS is None:
         napari_settings = napari_get_settings()
-        if hasattr(napari_settings, "path"):
-            save_path = napari_settings.path
-        else:
+        if napari_settings.config_path is not None:
             save_path = os.path.dirname(napari_settings.config_path)
+        else:
+            save_path = user_config_dir("napari", False)  # pragma: no cover
         _SETTINGS = PartSegNapariSettings(os.path.join(save_path, "PartSeg_napari_plugins"))
         _SETTINGS.load()
     return _SETTINGS

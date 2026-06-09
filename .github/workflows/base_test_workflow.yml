@@ -38,10 +38,6 @@ on:
         required: false
         type: number
         default: 60
-      pydantic:
-        required: false
-        type: string
-        default: ""
       artifact_suffix:
         required: false
         type: string
@@ -50,7 +46,7 @@ on:
 
 jobs:
   test:
-    name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }} ${{ inputs.pydantic }}
+    name: ${{ inputs.os }} py ${{ inputs.python_version }} ${{ inputs.napari }} ${{ inputs.qt_backend }}
     runs-on: ${{ inputs.os }}
     env:
       NAPARI: ${{ inputs.napari }}
@@ -92,8 +88,8 @@ jobs:
           # shellcheck disable=SC2086
           python -m tox $TOX_ARGS -- package/tests/test_PartSegImage $PYTEST_ARGS
         env:
-          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
-          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}.txt', inputs.python_version) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}.txt', inputs.python_version) || 'requirements/version_denylist.txt' }}
 
       - name: Test with tox PartSegCore
         if: ${{ inputs.napari == 'latest' }}
@@ -102,8 +98,8 @@ jobs:
           # shellcheck disable=SC2086
           python -m tox $TOX_ARGS --  package/tests/test_PartSegCore $PYTEST_ARGS
         env:
-          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
-          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}.txt', inputs.python_version) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}.txt', inputs.python_version ) || 'requirements/version_denylist.txt' }}
 
       - name: Test with tox PartSeg
         if: ${{ inputs.napari == 'latest' }}
@@ -113,8 +109,8 @@ jobs:
           # shellcheck disable=SC2086
           python -m tox $TOX_ARGS -- package/tests/test_PartSeg $PYTEST_ARGS
         env:
-          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
-          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}.txt', inputs.python_version ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}.txt', inputs.python_version ) || 'requirements/version_denylist.txt' }}
 
       - name: Test with tox all
         if: ${{ inputs.napari != 'latest' }}
@@ -124,8 +120,8 @@ jobs:
           # shellcheck disable=SC2086
           python -m tox $TOX_ARGS ${PYTEST_ARGS:+-- $PYTEST_ARGS}
         env:
-          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
-          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}{1}.txt', inputs.python_version, inputs.pydantic ) || 'requirements/version_denylist.txt' }}
+          PIP_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}.txt', inputs.python_version ) || 'requirements/version_denylist.txt' }}
+          UV_CONSTRAINT: ${{ inputs.napari == 'latest' && format('requirements/constraints_py{0}.txt', inputs.python_version ) || 'requirements/version_denylist.txt' }}
 
 
       - uses: actions/upload-artifact@v7

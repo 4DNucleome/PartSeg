@@ -1,17 +1,13 @@
 from collections.abc import Sequence
-from importlib.metadata import version
 
 from napari import Viewer
 from napari.layers import Labels
 from napari.utils.colormaps import DirectLabelColormap
-from packaging.version import parse as parse_version
 from qtpy.QtWidgets import QHBoxLayout, QPushButton, QTabWidget
 
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.label_create import LabelChoose, LabelEditor, LabelShow
 from PartSeg.plugins.napari_widgets._settings import get_settings
-
-NAPARI_GE_5_0 = parse_version(version("napari")) >= parse_version("0.5.0a1")
 
 
 class NapariLabelShow(LabelShow):

@@ -1,9 +1,7 @@
 import os
 import typing
-from importlib.metadata import version
 
 import numpy as np
-from packaging.version import parse as parse_version
 
 from PartSeg.plugins.napari_widgets._settings import get_settings
 from PartSegCore import UNIT_SCALE
@@ -40,19 +38,10 @@ def adjust_color(color: str | list[int]) -> str | tuple[float]:
     return color
 
 
-if parse_version(version("napari")) >= parse_version("0.4.19a1"):
-
-    def add_color(image: Image, idx: int) -> dict:
-        return {
-            "colormap": adjust_color(image.get_colors()[idx]),
-        }
-
-else:
-
-    def add_color(image: Image, idx: int) -> dict:  # noqa: ARG001
-        # Do nothing, as napari is not able to pass hex color to image
-        # the image and idx are present to keep the same signature
-        return {}
+def add_color(image: Image, idx: int) -> dict:
+    return {
+        "colormap": adjust_color(image.get_colors()[idx]),
+    }
 
 
 def _image_to_layers(project_info, scale, translate):

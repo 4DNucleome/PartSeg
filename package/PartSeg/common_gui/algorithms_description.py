@@ -383,6 +383,7 @@ FieldAllowedTypes: typing.TypeAlias = list[AlgorithmProperty] | type[BaseModel] 
 
 class FormWidget(QWidget):
     value_changed = Signal()
+    _model_class: type[BaseModel] | None = None
 
     def __init__(
         self,
