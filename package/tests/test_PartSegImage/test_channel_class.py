@@ -32,7 +32,7 @@ class Model(BaseModel):
 MODEL_SCHEMA = {
     "properties": {
         "channel": {
-            "anyOf": [{"type": "integer"}, {"type": "string"}],
+            "anyOf": [{"type": "integer"}, {"type": "string", "minLength": 1}],
             "description": "Image channel index or channel name. Accepts an integer or any non-empty string.",
             "examples": [0, "nucleus"],
             "title": "Channel",
