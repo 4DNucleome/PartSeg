@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.17.0 - 2026-06-10
+
+### 🧪 Testing
+
+- [Automatic] Constraints upgrades: `qtconsole`, `requests`, `sentry-sdk` ([#1375](https://github.com/4DNucleome/PartSeg/pull/1375))
+- [Automatic] Constraints upgrades: `ipython`, `numpy`, `pandas`, `pygments`, `requests`, `sentry-sdk` ([#1377](https://github.com/4DNucleome/PartSeg/pull/1377))
+- [Automatic] Constraints upgrades: `ipykernel`, `magicgui`, `napari`, `platformdirs`, `qtawesome` ([#1381](https://github.com/4DNucleome/PartSeg/pull/1381))
+- [Automatic] Constraints upgrades: `packaging`, `pydantic`, `sentry-sdk` ([#1386](https://github.com/4DNucleome/PartSeg/pull/1386))
+
+### ⚙️ Miscellaneous Tasks
+
+- Replace `appdirs`package with `platformdirs` ([#1373](https://github.com/4DNucleome/PartSeg/pull/1373))
+- Limit superqt version below 0.8.0 when installing pyside2 as qt backend ([#1374](https://github.com/4DNucleome/PartSeg/pull/1374))
+- [pre-commit.ci] pre-commit autoupdate ([#1378](https://github.com/4DNucleome/PartSeg/pull/1378))
+- [pre-commit.ci] pre-commit autoupdate ([#1382](https://github.com/4DNucleome/PartSeg/pull/1382))
+- [pre-commit.ci] pre-commit autoupdate ([#1387](https://github.com/4DNucleome/PartSeg/pull/1387))
+- [pre-commit.ci] pre-commit autoupdate ([#1392](https://github.com/4DNucleome/PartSeg/pull/1392))
+- [pre-commit.ci] pre-commit autoupdate ([#1402](https://github.com/4DNucleome/PartSeg/pull/1402))
+- Use ubuntu-slim for check title workflow ([#1403](https://github.com/4DNucleome/PartSeg/pull/1403))
+- Prepare for numpy 2.5.0 by fixing the `find_density_orientation` implementation ([#1405](https://github.com/4DNucleome/PartSeg/pull/1405))
+- Drop Python 3.9 support ([#1404](https://github.com/4DNucleome/PartSeg/pull/1404))
+- Drop `napari<0.6` and `pydantic<2` ([#1406](https://github.com/4DNucleome/PartSeg/pull/1406))
+- [pre-commit.ci] pre-commit autoupdate ([#1410](https://github.com/4DNucleome/PartSeg/pull/1410))
+- Change default Qt versions from 5 to 6 ([#1412](https://github.com/4DNucleome/PartSeg/pull/1412))
+- Remove `pyside2` from extras during constraints generation ([#1411](https://github.com/4DNucleome/PartSeg/pull/1411))
+
+### 🛡️ Security
+
+- *(deps)* Bump codecov/codecov-action from 5 to 6 ([#1379](https://github.com/4DNucleome/PartSeg/pull/1379))
+- *(deps)* Bump github/codeql-action from 4 to 4.35.1 ([#1385](https://github.com/4DNucleome/PartSeg/pull/1385))
+- *(deps)* Bump softprops/action-gh-release from 2 to 3 ([#1383](https://github.com/4DNucleome/PartSeg/pull/1383))
+- *(deps)* Bump github/codeql-action from 4.35.1 to 4.35.2 ([#1390](https://github.com/4DNucleome/PartSeg/pull/1390))
+- *(deps)* Bump conda-incubator/setup-miniconda from 3 to 3.3.0 ([#1388](https://github.com/4DNucleome/PartSeg/pull/1388))
+
+### Build
+
+- *(deps)* Bump astral-sh/setup-uv from 8.0.0 to 8.1.0 ([#1389](https://github.com/4DNucleome/PartSeg/pull/1389))
+- *(deps)* Bump conda-incubator/setup-miniconda from 3.3.0 to 4.0.1 ([#1394](https://github.com/4DNucleome/PartSeg/pull/1394))
+- *(deps)* Bump github/codeql-action from 4.35.2 to 4.36.0 ([#1401](https://github.com/4DNucleome/PartSeg/pull/1401))
+- *(deps)* Bump actions/checkout from 6 to 6.0.2 in the github-actions group across 1 directory ([#1408](https://github.com/4DNucleome/PartSeg/pull/1408))
+
 ## 0.16.5 - 2026-03-24
 
 ### 🚀 Features
