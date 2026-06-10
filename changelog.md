@@ -14,19 +14,19 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Replace `appdirs`package with `platformdirs` ([#1373](https://github.com/4DNucleome/PartSeg/pull/1373))
-- Limit superqt version below 0.8.0 when install pyside2 as qt backend ([#1374](https://github.com/4DNucleome/PartSeg/pull/1374))
+- Limit superqt version below 0.8.0 when installing pyside2 as qt backend ([#1374](https://github.com/4DNucleome/PartSeg/pull/1374))
 - [pre-commit.ci] pre-commit autoupdate ([#1378](https://github.com/4DNucleome/PartSeg/pull/1378))
 - [pre-commit.ci] pre-commit autoupdate ([#1382](https://github.com/4DNucleome/PartSeg/pull/1382))
 - [pre-commit.ci] pre-commit autoupdate ([#1387](https://github.com/4DNucleome/PartSeg/pull/1387))
 - [pre-commit.ci] pre-commit autoupdate ([#1392](https://github.com/4DNucleome/PartSeg/pull/1392))
 - [pre-commit.ci] pre-commit autoupdate ([#1402](https://github.com/4DNucleome/PartSeg/pull/1402))
 - Use ubuntu-slim for check title workflow ([#1403](https://github.com/4DNucleome/PartSeg/pull/1403))
-- Prepare for numpy 2.5.0 by fix `find_density_orientation` implementation ([#1405](https://github.com/4DNucleome/PartSeg/pull/1405))
-- Drop python 3.9 support ([#1404](https://github.com/4DNucleome/PartSeg/pull/1404))
+- Prepare for numpy 2.5.0 by fixing the `find_density_orientation` implementation ([#1405](https://github.com/4DNucleome/PartSeg/pull/1405))
+- Drop Python 3.9 support ([#1404](https://github.com/4DNucleome/PartSeg/pull/1404))
 - Drop `napari<0.6` and `pydantic<2` ([#1406](https://github.com/4DNucleome/PartSeg/pull/1406))
 - [pre-commit.ci] pre-commit autoupdate ([#1410](https://github.com/4DNucleome/PartSeg/pull/1410))
 - Change default Qt versions from 5 to 6 ([#1412](https://github.com/4DNucleome/PartSeg/pull/1412))
-- Remove `pyside2` form extras during constraints generation ([#1411](https://github.com/4DNucleome/PartSeg/pull/1411))
+- Remove `pyside2` from extras during constraints generation ([#1411](https://github.com/4DNucleome/PartSeg/pull/1411))
 
 ### 🛡️ Security
 
