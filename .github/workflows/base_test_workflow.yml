@@ -55,7 +55,7 @@ jobs:
       TOX_ARGS: ${{ inputs.tox_args }}
       PYTEST_ARGS: ${{ inputs.pytest_args }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
       - uses: actions/setup-python@v6
         name: Install Python ${{ inputs.python_version }}
         with:
