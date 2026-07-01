@@ -97,7 +97,6 @@ hiddenimports = (
         "PartSegCore.napari_io",
         "tzdata",
         "scipy._external.array_api_compat.numpy.fft",
-        "mpmath.libmp",
     ]
     + [x.module_name for x in imageio_known_plugins.values()]
     + [x for x in collect_submodules("skimage") if "tests" not in x]
