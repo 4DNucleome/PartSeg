@@ -13,6 +13,15 @@ steps:
   - bash: |
       python -m pip install -U pip wheel setuptools
     displayName: install libs
+  - bash: |
+      # Download the script using curl instead of wget
+      curl -sO https://raw.githubusercontent.com/pyvista/setup-headless-display-action/refs/tags/v4.3/windows/install_opengl.sh
+
+      # Execute it with the variables it expects
+      MESA3D_VERSION=24.3.0 MESA3D_OFFSCREEN=true bash install_opengl.sh
+    displayName: 'Setup headless OpenGL display (Windows)'
+    condition: eq(variables['Agent.OS'], 'Windows_NT')
+
   - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.12.txt
     displayName: install partseg
   - bash: |
