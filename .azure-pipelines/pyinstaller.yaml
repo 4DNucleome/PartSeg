@@ -13,15 +13,9 @@ steps:
   - bash: |
       python -m pip install -U pip wheel setuptools
     displayName: install libs
-  - powershell: |
-      # Download Mesa 3D opengl32.dll for software rendering
-      Invoke-WebRequest -Uri "https://github.com/pyvista/gl-ci-helpers/raw/master/opengl32.dll" -OutFile "opengl32.dll"
-
-      # IMPORTANT: Copy this DLL to wherever your built executable lives.
-      # For example, if your PyInstaller output is in the 'dist' folder:
-      # Copy-Item opengl32.dll -Destination "dist/"
-
-      Write-Host "Mesa OpenGL software rasterizer downloaded."
+  - bash: |
+     wget https://raw.githubusercontent.com/pyvista/setup-headless-display-action/refs/tags/v4.3/windows/install_opengl.sh
+     MESA3D_VERSION=24.3.8 bash install_opengl.sh
     displayName: 'Setup headless OpenGL display (Windows)'
     condition: eq(variables['Agent.OS'], 'Windows_NT')
   - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.12.txt
