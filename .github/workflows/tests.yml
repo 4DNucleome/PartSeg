@@ -25,7 +25,7 @@ jobs:
     name: Action lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7.0.1
       - name: Check workflow files
         run: |
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
@@ -36,7 +36,7 @@ jobs:
     name: Download test data
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7.0.1
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
@@ -144,8 +144,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test_coverage, test_minimal]
     steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.x"
           cache-dependency-path: pyproject.toml
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: download_data
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7.0.1
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v4.0.1
         with:
@@ -245,7 +245,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - uses: hynek/build-and-inspect-python-package@v2

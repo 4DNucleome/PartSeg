@@ -16,7 +16,7 @@ jobs:
     name: Download test data
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7.0.1
       - shell: bash
         run: bash build_utils/download_data.sh
       - name: Upload test data
@@ -37,10 +37,10 @@ jobs:
         python: ['3.11', '3.12', '3.13', '3.14']
         napari_version: ['repo']
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7.0.1
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
 
