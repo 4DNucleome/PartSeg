@@ -233,10 +233,11 @@ class ImageView(QWidget):
         self.settings.connect_to_profile("scale_bar_ticks", self._update_scale_bar_ticks)
 
     def _update_scale_bar_ticks(self):
+        ticks = self.settings.get_from_profile("scale_bar_ticks", True)
         if _napari_gt_8_0:
-            self.viewer.canvas.overlays.scale_bar.ticks = self.settings.get_from_profile("scale_bar_ticks", True)
+            self.viewer.canvas.overlays.scale_bar.ticks = ticks
         else:
-            self.viewer.scale_bar.ticks = self.settings.get_from_profile("scale_bar_ticks", True)
+            self.viewer.scale_bar.ticks = ticks
 
     def toggle_points_visibility(self):
         if self.points_layer is not None:
