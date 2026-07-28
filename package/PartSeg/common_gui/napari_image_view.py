@@ -40,7 +40,6 @@ if TYPE_CHECKING:
     from vispy.scene import BaseCamera
 
 
-_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 _napari_le_7_0 = parse_version(napari.__version__) <= parse_version("0.7.0")
 _napari_gt_8_0 = parse_version(napari.__version__) > parse_version("0.8.0")
 
