@@ -40,8 +40,8 @@ if TYPE_CHECKING:
     from vispy.scene import BaseCamera
 
 
-_napari_ge_5 = parse_version(napari.__version__) >= parse_version("0.5.0a1")
 _napari_le_7_0 = parse_version(napari.__version__) <= parse_version("0.7.0")
+_napari_gt_8_0 = parse_version(napari.__version__) > parse_version("0.8.0")
 
 # if run with numpy<2 on macOS arm64 architecture compiled from pypi wheels
 # then it will crash with bus error if numpy is used in different thread
@@ -232,7 +232,11 @@ class ImageView(QWidget):
         self.settings.connect_to_profile("scale_bar_ticks", self._update_scale_bar_ticks)
 
     def _update_scale_bar_ticks(self):
-        self.viewer.scale_bar.ticks = self.settings.get_from_profile("scale_bar_ticks", True)
+        ticks = self.settings.get_from_profile("scale_bar_ticks", True)
+        if _napari_gt_8_0:
+            self.viewer.canvas.overlays.scale_bar.ticks = ticks
+        else:
+            self.viewer.scale_bar.ticks = ticks
 
     def toggle_points_visibility(self):
         if self.points_layer is not None:
@@ -950,15 +954,11 @@ class NapariQtViewer(QtViewer):
         super().closeEvent(event)
 
     def _render(self):
-        if _napari_ge_5:
-            return self.canvas._scene_canvas.render()
-        return self.canvas.render()
+        return self.canvas._scene_canvas.render()
 
-    if _napari_ge_5:
-
-        @property
-        def view(self):
-            return self.canvas.view
+    @property
+    def view(self):
+        return self.canvas.view
 
 
 class SearchComponentModal(QtPopup):
