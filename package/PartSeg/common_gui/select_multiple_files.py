@@ -234,6 +234,7 @@ class AddFiles(QWidget):
         item: FileListItem
         for item in self.selected_files.selectedItems():
             self.files_to_proceed.remove(item.file_path)
+            self.selected_files.takeItem(self.selected_files.row(item))
         self.file_list_changed.emit(self.files_to_proceed)
         if self.selected_files.count() == 0:
             self.delete_button.setEnabled(False)
