@@ -228,10 +228,12 @@ class AddFiles(QWidget):
             self.paths_input.setText(dial.selectedFiles()[0])
 
     def file_chosen(self):
-        self.delete_button.setEnabled(True)
+        self.delete_button.setEnabled(self.selected_files.currentRow() != -1)
 
     def delete_element(self):
         item = self.selected_files.takeItem(self.selected_files.currentRow())
+        if item is None:
+            return
         self.files_to_proceed.remove(item.file_path)
         self.file_list_changed.emit(self.files_to_proceed)
         if self.selected_files.count() == 0:
@@ -241,6 +243,7 @@ class AddFiles(QWidget):
         self.selected_files.clear()
         self.files_to_proceed.clear()
         self.file_list_changed.emit(self.files_to_proceed)
+        self.delete_button.setDisabled(True)
 
     def get_paths(self):
         return sorted(self.files_to_proceed)
