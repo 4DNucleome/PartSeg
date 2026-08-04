@@ -1,7 +1,7 @@
 name: Check PR title
 
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - reopened
@@ -9,7 +9,6 @@ on:
       - synchronize
       - labeled
       - unlabeled
-  pull_request:
     paths:
       - '.github/workflows/check_pr_title.yml'
 
