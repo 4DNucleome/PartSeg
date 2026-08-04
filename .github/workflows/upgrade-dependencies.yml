@@ -15,7 +15,7 @@ jobs:
       # It doesn't matter if it's deleted when merged, it'll be re-created
       BRANCH_NAME: auto-dependency-upgrades
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 #        with:
 #          # [Optional] Use a separate key to automatically execute checks on the resulting PR
 #          # https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
@@ -23,7 +23,7 @@ jobs:
 
       # START PYTHON DEPENDENCIES
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.12"
           cache: pip
