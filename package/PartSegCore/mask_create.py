@@ -153,7 +153,7 @@ def _calculate_mask(
     mask_description: MaskProperty,
     dilate_radius: list[int],
     mask: np.ndarray,
-    old_mask: None | np.ndarray,
+    old_mask: np.ndarray | None,
 ) -> np.ndarray:
     if mask_description.dilate != RadiusType.NO and mask_description.dilate_radius != 0:
         if mask_description.dilate_radius > 0:
