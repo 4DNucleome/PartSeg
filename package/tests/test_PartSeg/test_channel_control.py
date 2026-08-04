@@ -1,10 +1,12 @@
 # pylint: disable=no-self-use
 
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 from napari.utils.colormaps import make_colorbar
+from pytestqt.qtbot import QtBot
 from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QImage
 
@@ -294,11 +296,20 @@ class TestColorComboBoxGroup:
 
     @pytest.mark.windows_ci_skip
     @pytest.mark.parametrize("filter_value", NoiseFilterType.__members__.values())
-    def test_image_view_integration_filter(self, qtbot, tmp_path, filter_value, ch_property, image_view):
+    def test_image_view_integration_filter(
+        self,
+        qtbot: QtBot,
+        tmp_path: Path,
+        filter_value: NoiseFilterType,
+        ch_property: ChannelProperty,
+        image_view: ImageView,
+    ):
         image_view.channel_control.set_active(1)
 
-        def check_parameters(name, index):
+        def check_parameters(name: str, index: int):
             return name == "test" and index == 1
+
+        image_view.show()
 
         if filter_value is NoiseFilterType.No:
             with (
@@ -315,6 +326,7 @@ class TestColorComboBoxGroup:
         assert (filter_value != NoiseFilterType.No and np.any(image4 != 255)) or (
             filter_value == NoiseFilterType.No and np.any(image4 == 255)
         )
+        image_view.hide()
 
     @pytest.mark.windows_ci_skip
     def test_image_view_integration(self, qtbot, tmp_path, ch_property, image_view):

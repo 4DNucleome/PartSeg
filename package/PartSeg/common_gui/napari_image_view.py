@@ -245,7 +245,10 @@ class ImageView(QWidget):
     def toggle_scale_bar(self):
         if _napari_le_7_0:
             self.viewer.scale_bar.unit = "nm"
-        self.viewer.scale_bar.visible = not self.viewer.scale_bar.visible
+        if _napari_gt_8_0:
+            self.viewer.canvas.overlays.scale_bar.visible = not self.viewer.canvas.overlays.scale_bar.visible
+        else:
+            self.viewer.scale_bar.visible = not self.viewer.scale_bar.visible
 
     def _dim_order_menu(self, point: QPoint):
         menu = QMenu()
