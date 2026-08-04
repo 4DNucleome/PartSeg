@@ -114,6 +114,7 @@ pyinstaller_base = [
     "PartSeg[accelerate]",
     "PyInstaller",
     "pydantic",
+    "nme", # for older plugins that still use nme
 ]
 pyqt = [
     "PartSeg[pyqt6]",
