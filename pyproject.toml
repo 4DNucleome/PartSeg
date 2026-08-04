@@ -321,6 +321,7 @@ select = [
 ignore = ["A003", "SIM108", "ARG002", "ARG003", "ARG004", "PLR2004",
     "PLR0913", # should be re-enabled in a future version
     "PLW1641", # Complain about lack of hash in mutable objects"
+    "PLR0917", # migrate more functions to named only arguments
 ]
 
 [tool.ruff.lint.isort]
@@ -336,7 +337,7 @@ max-complexity = 15
 
 [tool.ruff.lint.per-file-ignores]
 "docs/conf.py" = ["A001"]
-"package/tests/**" = ["ARG", "PLC1901", "S101", "RUF012", "ANN", "FBT"]
+"package/tests/**" = ["ARG", "PLC1901", "S101", "RUF012", "ANN", "FBT", "PLR0917"]
 "package/PartSegCore/sphinx/*" = ["ARG"]
 "package/tests/**.py" = ["PLR2004"]
 "package/PartSegCore/_old_json_hooks.py" = ["PLR0912", "PLR0911", "PLC0415"]

@@ -232,7 +232,7 @@ class Image:
         spacing: Spacing,
         time_increment: float = 1.0,
         file_path=None,
-        mask: None | np.ndarray = None,
+        mask: np.ndarray | None = None,
         channel_info: list[ChannelInfo | ChannelInfoFull] | None = None,
         axes_order: str | None = None,
         shift: Spacing | None = None,
