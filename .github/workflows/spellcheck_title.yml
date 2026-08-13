@@ -1,4 +1,4 @@
-name: spellcheck_title.yml
+name: Spellcheck PR title
 on:
   pull_request:
     types: [opened, reopened, edited, synchronize, labeled, unlabeled]
