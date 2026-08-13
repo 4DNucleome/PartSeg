@@ -9,6 +9,7 @@ on:
       - synchronize
       - labeled
       - unlabeled
+  pull_request:
     paths:
       - '.github/workflows/check_pr_title.yml'
 
