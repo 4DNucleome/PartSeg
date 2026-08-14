@@ -1,4 +1,4 @@
-name: Check PR title
+name: Semantic PR title check
 
 on:
   pull_request_target:
@@ -14,38 +14,12 @@ on:
       - '.github/workflows/check_pr_title.yml'
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  main:
+    name: Semantic check
+    runs-on: ubuntu-slim
     permissions:
-      statuses: write
+      pull-requests: read
     steps:
-      - uses: aslafy-z/conventional-pr-title-action@v3
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50  # v6.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  spellcheck:
-    runs-on: ubuntu-slim
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip check PR title') }}
-    steps:
-      - uses: actions/checkout@v6.0.2
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-
-
-      - name: Install aspell
-        run: sudo apt-get update && sudo apt-get install aspell
-
-      - name: Check PR title spelling
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          echo "$PR_TITLE"
-          if aspell --personal="./.github/project_dict.pws" list <<< "$PR_TITLE" | grep -q .; then
-              echo "Misspelled words found."
-              aspell --personal="./.github/project_dict.pws" list <<< "$PR_TITLE"
-              exit 1
-          else
-              echo "No misspelled words found."
-              exit 0
-          fi
