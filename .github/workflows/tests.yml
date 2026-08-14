@@ -132,7 +132,7 @@ jobs:
     with:
       test_data: True
       python_version: "3.12"
-      tox_args: "-e py312-{qt_backend}-coverage"
+      tox_args: "-e py312-${{ matrix.qt_backend }}-coverage"
       coverage: true
 
   test_minimal:
