@@ -134,6 +134,7 @@ jobs:
       python_version: "3.12"
       tox_args: "-e py312-${{ matrix.qt_backend }}-coverage"
       coverage: true
+      qt_backend: ${{ matrix.qt_backend }}
 
   test_minimal:
     name: Test PartSeg minimal
