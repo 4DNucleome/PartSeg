@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.11", "3.12", "3.13", "3.14"]
+        python_version: ["3.11", "3.13", "3.14"]
         os: ["ubuntu-24.04"]
         qt_backend: ["PyQt6"]
         tox_args: [ "" ]
@@ -112,6 +112,8 @@ jobs:
             qt_backend: "PySide2"
           - os: "macos-15"
             qt_backend: "PySide2"
+          - python_version: "3.12"
+            qt_backend: "PyQt6"
     with:
       test_data: True
       python_version: ${{ matrix.python_version }}
@@ -123,10 +125,14 @@ jobs:
   test_coverage:
     needs: download_data
     uses: ./.github/workflows/base_test_workflow.yml
+    strategy:
+        fail-fast: false
+        matrix:
+          qt_backend: ["PyQt5", "PyQt6"]
     with:
       test_data: True
       python_version: "3.12"
-      tox_args: "-e py312-PyQt5-coverage"
+      tox_args: "-e py312-{qt_backend}-coverage"
       coverage: true
 
   test_minimal:
