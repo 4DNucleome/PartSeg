@@ -20,8 +20,8 @@ from magicgui import register_type
 from magicgui.widgets import Container, Widget, create_widget
 from napari.utils import Colormap
 from pydantic import Field
-from qtpy.QtCore import QPoint, QRect, QSize, Qt
-from qtpy.QtGui import QPaintEvent
+from qtpy.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt
+from qtpy.QtGui import QMouseEvent, QPaintEvent
 from qtpy.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -94,6 +94,7 @@ from PartSeg.common_gui.multiple_file_widget import (
     MultipleLoadDialog,
 )
 from PartSeg.common_gui.qt_modal import QtPopup
+from PartSeg.common_gui.qt_util import get_mouse_x, get_mouse_y
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.common_gui.universal_gui_part import (
@@ -2050,3 +2051,17 @@ class TestSelectDirectoryDialog:
         w.accept()
         assert base_settings.get_path_history()
         assert Path(base_settings.get("s_path")).resolve() == (tmp_path / "sample_dir").resolve()
+
+
+@pytest.mark.usefixtures("qapp")
+def test_get_mouse_position():
+    event = QMouseEvent(
+        QEvent.Type.MouseButtonPress,
+        QPointF(10, 20),
+        QPointF(20, 30),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    assert get_mouse_x(event) == 10
+    assert get_mouse_y(event) == 20
