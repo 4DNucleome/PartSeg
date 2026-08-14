@@ -43,6 +43,8 @@ on:
         type: string
         default: ""
 
+permissions:
+  contents: read
 
 jobs:
   test:

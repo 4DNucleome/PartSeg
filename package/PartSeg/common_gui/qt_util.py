@@ -19,4 +19,4 @@ else:
         return event.position().x()
 
     def get_mouse_y(event: QMouseEvent) -> float:
-        return event.position().x()
+        return event.position().y()
