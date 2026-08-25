@@ -6,10 +6,10 @@ preview = ["pixi-build"]
 
 [package]
 version = "0.17.1" # keep in sync with `pyproject.toml`
-build = {
-  backend.name = "pixi-build-python",
-  config.ignore-pypi-mapping = false,
-}
+
+[package.build]
+backend.name = "pixi-build-python"
+config.ignore-pypi-mapping = false
 
 [dependencies]
 napari = ">=0.7.0"
