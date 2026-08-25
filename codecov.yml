@@ -24,3 +24,5 @@ coverage:
         paths: [ 'package/tests/.*' ]
 comment:
   require_changes: true  # if true: only post the PR comment if coverage changes
+github_checks:
+  annotations: true
