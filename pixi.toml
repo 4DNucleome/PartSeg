@@ -59,7 +59,7 @@ test = "python -m pytest package/tests"
 [environments]
 default = { features = ["py312", "pyside6", "test"] }
 
-# Standard python x backend (pyqt5 across all Pythons for the comprehensive base)
+# Standard python x backend
 test-py311-pyqt6 = ["py311", "pyqt6", "test"]
 test-py312-pyqt6 = ["py312", "pyqt6", "test"]
 test-py313-pyqt6 = ["py313", "pyqt6", "test"]
