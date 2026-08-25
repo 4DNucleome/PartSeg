@@ -288,6 +288,17 @@ class TestAddFiles:
         widget.delete_element()
         assert len(widget.files_to_proceed) == 9
 
+    def test_delete_element_disable_button(self, qtbot, tmp_path, part_settings):
+        widget = select_multiple_files.AddFiles(part_settings)
+        qtbot.addWidget(widget)
+        file_name = tmp_path / "test.txt"
+        file_name.write_text("test")
+        widget.update_files_list([str(file_name)])
+        widget.selected_files.setCurrentRow(0)
+        assert widget.delete_button.isEnabled()
+        widget.delete_element()
+        assert widget.delete_button.isEnabled() is False
+
     def test_load_file(self, qtbot, tmp_path, part_settings):
         for i in range(10):
             with open(tmp_path / f"test_{i}.txt", "w") as f_p:
