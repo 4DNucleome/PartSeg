@@ -2,13 +2,11 @@
 #    uv pip compile --python-version 3.13 --output-file requirements/constraints_py3.13.txt pyproject.toml requirements/version_denylist.txt --extra pyqt6 --extra pyside6 --extra test --extra pyinstaller_base
 altgraph==0.17.5
     # via pyinstaller
-annotated-doc==0.0.4
+annotated-doc==0.0.5
     # via typer
-annotated-types==0.7.0
+annotated-types==0.8.0
     # via pydantic
 app-model==0.5.1
-    # via napari
-appdirs==1.4.4
     # via napari
 asttokens==3.0.2
     # via stack-data
@@ -16,33 +14,31 @@ attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
-build==1.5.1
+build==1.6.0
     # via npe2
 cachey==0.2.1
     # via napari
-certifi==2026.6.17
+certifi==2026.7.22
     # via
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.4.9
+charset-normalizer==3.5.1
     # via requests
-click==8.4.2
+click==8.5.0
     # via dask
 cloudpickle==3.1.2
     # via dask
 comm==0.2.3
     # via ipykernel
-coverage==7.15.1
+coverage==7.16.0
     # via partseg (pyproject.toml)
-czifile==2026.6.12
+czifile==2026.8.16
     # via partseg (pyproject.toml)
-dask==2026.7.0
+dask==2026.8.0
     # via napari
 debugpy==1.8.21
     # via ipykernel
-decorator==5.3.1
-    # via ipython
 defusedxml==0.7.1
     # via partseg (pyproject.toml)
 docstring-parser==0.18.0
@@ -59,7 +55,7 @@ fonticon-fontawesome6==6.4.0
     # via partseg (pyproject.toml)
 freetype-py==2.5.1
     # via vispy
-fsspec==2026.6.0
+fsspec==2026.7.0
     # via dask
 h5py==3.16.0
     # via partseg (pyproject.toml)
@@ -67,13 +63,13 @@ heapdict==1.0.1
     # via cachey
 hsluv==5.0.4
     # via vispy
-idna==3.18
+idna==3.19
     # via requests
-imagecodecs==2026.6.26
+imagecodecs==2026.8.16
     # via
     #   partseg (pyproject.toml)
     #   czifile
-imageio==2.37.3
+imageio==2.37.4
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
@@ -89,7 +85,7 @@ ipykernel==6.31.0
     #   partseg (pyproject.toml)
     #   napari-console
     #   qtconsole
-ipython==9.15.0
+ipython==9.17.1
     # via
     #   partseg (pyproject.toml)
     #   ipykernel
@@ -104,7 +100,7 @@ jsonschema==4.26.0
     # via napari
 jsonschema-specifications==2025.9.1
     # via jsonschema
-jupyter-client==8.9.1
+jupyter-client==8.10.0
     # via
     #   ipykernel
     #   qtconsole
@@ -113,17 +109,19 @@ jupyter-core==5.9.1
     #   ipykernel
     #   jupyter-client
     #   qtconsole
-kiwisolver==1.5.0
+kiwisolver==1.5.1
     # via vispy
 lazy-loader==0.5
     # via
     #   napari
     #   scikit-image
 local-migrator==0.1.10
-    # via partseg (pyproject.toml)
+    # via
+    #   partseg (pyproject.toml)
+    #   nme
 locket==1.0.0
     # via partd
-lxml==6.1.1
+lxml==6.1.3
     # via
     #   partseg (pyproject.toml)
     #   lxml-html-clean
@@ -145,7 +143,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mpmath==1.3.0
     # via sympy
-napari==0.7.0
+napari==0.9.1
     # via partseg (pyproject.toml)
 napari-console==0.1.4
     # via napari
@@ -157,11 +155,13 @@ nest-asyncio==1.6.0
     # via ipykernel
 networkx==3.6.1
     # via scikit-image
-npe2==0.8.3
+nme==0.1.8
+    # via partseg (pyproject.toml)
+npe2==0.9.0
     # via
     #   -r requirements/version_denylist.txt
     #   napari
-numpy==2.5.1
+numpy==2.5.3
     # via
     #   partseg (pyproject.toml)
     #   czifile
@@ -183,7 +183,7 @@ oiffile==2026.2.8
     # via partseg (pyproject.toml)
 openpyxl==3.1.5
     # via partseg (pyproject.toml)
-packaging==26.2
+packaging==26.3
     # via
     #   partseg (pyproject.toml)
     #   build
@@ -199,7 +199,7 @@ packaging==26.2
     #   qtpy
     #   scikit-image
     #   vispy
-pandas==3.0.3
+pandas==3.0.5
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -220,10 +220,11 @@ pillow==12.3.0
     #   scikit-image
 pint==0.25.3
     # via napari
-platformdirs==4.10.0
+platformdirs==4.11.7
     # via
     #   partseg (pyproject.toml)
     #   jupyter-core
+    #   napari
     #   npe2
     #   pint
     #   pooch
@@ -233,7 +234,7 @@ pluggy==1.6.0
     #   pytest-qt
 pooch==1.9.0
     # via scikit-image
-prompt-toolkit==3.0.52
+prompt-toolkit==3.0.53
     # via ipython
 psutil==7.2.2
     # via
@@ -253,7 +254,7 @@ pure-eval==0.2.3
     # via stack-data
 pyconify==0.2.1
     # via superqt
-pydantic==2.13.4
+pydantic==2.13.5
     # via
     #   partseg (pyproject.toml)
     #   app-model
@@ -261,15 +262,15 @@ pydantic==2.13.4
     #   npe2
     #   pydantic-extra-types
     #   pydantic-settings
-pydantic-core==2.46.4
+pydantic-core==2.46.5
     # via pydantic
 pydantic-extra-types==2.11.1
     # via
     #   napari
     #   npe2
-pydantic-settings==2.14.2
+pydantic-settings==2.15.0
     # via napari
-pygments==2.20.0
+pygments==2.21.0
     # via
     #   partseg (pyproject.toml)
     #   ipython
@@ -279,9 +280,9 @@ pygments==2.20.0
     #   qtconsole
     #   rich
     #   superqt
-pyinstaller==6.21.0
+pyinstaller==6.22.2
     # via partseg (pyproject.toml)
-pyinstaller-hooks-contrib==2026.6
+pyinstaller-hooks-contrib==2026.7
     # via pyinstaller
 pyopengl==3.1.10
     # via napari
@@ -291,20 +292,22 @@ pyqt6==6.11.0
     # via
     #   partseg (pyproject.toml)
     #   napari
-pyqt6-qt6==6.11.1
-    # via pyqt6
-pyqt6-sip==13.11.1
+pyqt6-qt6==6.11.2
+    # via
+    #   napari
+    #   pyqt6
+pyqt6-sip==13.12.0
     # via pyqt6
 pyside2==5.15.2.1
     # via -r requirements/version_denylist.txt
-pyside6==6.11.1
+pyside6==6.11.2
     # via
     #   -r requirements/version_denylist.txt
     #   partseg (pyproject.toml)
     #   napari
-pyside6-addons==6.11.1
+pyside6-addons==6.11.2
     # via pyside6
-pyside6-essentials==6.11.1
+pyside6-essentials==6.11.2
     # via
     #   pyside6
     #   pyside6-addons
@@ -323,14 +326,14 @@ python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
     #   pandas
-python-dotenv==1.2.2
+python-dotenv==1.2.3
     # via pydantic-settings
 pyyaml==6.0.3
     # via
     #   dask
     #   napari
     #   npe2
-pyzmq==27.1.0
+pyzmq==27.2.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -370,25 +373,25 @@ scikit-image==0.26.0
     # via
     #   partseg (pyproject.toml)
     #   napari
-scipy==1.18.0
+scipy==1.18.1
     # via
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.64.0
+sentry-sdk==2.68.1
     # via partseg (pyproject.toml)
-setuptools==83.0.0
+setuptools==84.0.0
     # via pyinstaller
 shellingham==1.5.4
     # via typer
 shiboken2==5.15.2.1
     # via pyside2
-shiboken6==6.11.1
+shiboken6==6.11.2
     # via
     #   pyside6
     #   pyside6-addons
     #   pyside6-essentials
-simpleitk==2.5.5
+simpleitk==2.5.6
     # via partseg (pyproject.toml)
 six==1.17.0
     # via
@@ -403,7 +406,7 @@ superqt==0.8.2
     #   napari
 sympy==1.14.0
     # via partseg (pyproject.toml)
-tifffile==2026.6.1
+tifffile==2026.8.23
     # via
     #   partseg (pyproject.toml)
     #   napari
@@ -416,15 +419,15 @@ toolz==1.1.0
     #   dask
     #   napari
     #   partd
-tornado==6.5.7
+tornado==6.5.8
     # via
     #   ipykernel
     #   jupyter-client
-tqdm==4.68.4
+tqdm==4.70.0
     # via napari
 traceback-with-variables==2.2.1
     # via partseg (pyproject.toml)
-traitlets==5.15.1
+traitlets==5.16.1
     # via
     #   ipykernel
     #   ipython
@@ -432,7 +435,7 @@ traitlets==5.15.1
     #   jupyter-core
     #   matplotlib-inline
     #   qtconsole
-typer==0.26.8
+typer==0.27.2
     # via npe2
 typing-extensions==4.16.0
     # via
@@ -448,7 +451,7 @@ typing-extensions==4.16.0
     #   pydantic-extra-types
     #   superqt
     #   typing-inspection
-typing-inspection==0.4.2
+typing-inspection==0.4.4
     # via
     #   pydantic
     #   pydantic-settings
@@ -461,9 +464,9 @@ vispy==0.16.2
     #   partseg (pyproject.toml)
     #   napari
     #   napari-svg
-wcwidth==0.8.2
+wcwidth==0.8.3
     # via prompt-toolkit
-wrapt==2.2.2
+wrapt==2.4.0
     # via napari
 xlrd==2.0.2
     # via partseg (pyproject.toml)
