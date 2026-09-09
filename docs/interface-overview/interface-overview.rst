@@ -404,6 +404,9 @@ that can be used to share results with other users or create supplementary mater
 .. image::  images/export_zenodo_batch.png
    :alt: Dialog variant for exporting whole batch to zenodo.
 
+Export to zenodo
+""""""""""""""""
+
 If the user wants to share the data using zenodo then he/she needs to provide authorization token. The token can be generated
 in settings on `Zenodo page <https://sandbox.zenodo.org/account/settings/applications/>`_.
 To enable export button, next to the token, the title, author, author affiliation, and description need to be provided.
