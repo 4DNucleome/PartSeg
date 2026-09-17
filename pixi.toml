@@ -1,0 +1,70 @@
+[workspace]
+authors = ["Grzegorz Bokota"]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["win-64", "linux-64", "osx-arm64"]  # Mac Intel support is not available
+preview = ["pixi-build"]
+
+[package]
+version = "0.17.1" # keep in sync with `pyproject.toml`
+
+[package.build]
+backend.name = "pixi-build-python"
+config.ignore-pypi-mapping = false
+
+[dependencies]
+napari = ">=0.7.0"
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.py313.dependencies]
+python = "3.13.*"
+
+[feature.py314.dependencies]
+python = "3.14.*"
+
+[feature.pyqt6.dependencies]
+PartSeg = { path = ".", extras = ["pyqt6"] }
+
+[feature.pyside6.dependencies]
+PartSeg = { path = ".", extras = ["pyside6"] }
+
+[feature.test.dependencies]
+pytest = "*"
+pytest-qt = "*"
+pytest-timeout = "*"
+scikit-image = "*"
+lxml = "*"
+
+
+
+# there is no automatic mapping from `optional-dependencies`/`dependency-groups`
+# to `package.extra-dependencies`/`dependencies` yet,
+# ref. https://github.com/prefix-dev/pixi/issues/4764#issuecomment-4781239118
+[package.extra-dependencies.pyqt6]
+pyqt6 = ">=6.10"
+
+[package.extra-dependencies.pyside6]
+pyside6 = ">=6.10"
+
+
+
+
+[feature.test.tasks]
+test = "python -m pytest package/tests"
+
+[environments]
+default = { features = ["py312", "pyside6", "test"] }
+
+# Standard python x backend
+test-py311-pyqt6 = ["py311", "pyqt6", "test"]
+test-py312-pyqt6 = ["py312", "pyqt6", "test"]
+test-py313-pyqt6 = ["py313", "pyqt6", "test"]
+test-py314-pyqt6 = ["py314", "pyqt6", "test"]
+test-py311-pyside6 = ["py311", "pyside6", "test"]
+test-py312-pyside6 = ["py312", "pyside6", "test"]
+test-py313-pyside6 = ["py313", "pyside6", "test"]
+test-py314-pyside6 = ["py314", "pyside6", "test"]
