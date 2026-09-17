@@ -18,7 +18,9 @@ from packaging.version import parse as parse_version
 from PartSegImage.image import ChannelInfo, Image
 
 CZIFILE_ABOVE_2026_3_12 = parse_version(metadata.version("czifile")) >= parse_version("2026.3.12")
-TIFFFILE_GE_2026_5_2 = parse_version(metadata.version("tifffile")) >= parse_version("2026.5.2")
+TIFFFILE_GE_2026_5_2_AND_LT_2026_9_9 = (parse_version(metadata.version("tifffile")) >= parse_version("2026.5.2")) and (
+    parse_version(metadata.version("tifffile")) < parse_version("2026.9.9")
+)
 
 INCOMPATIBLE_IMAGE_MASK = "Incompatible shape of mask and image"
 
@@ -462,9 +464,10 @@ class TiffImageReader(BaseImageReaderBuffer):
 
             image_file.report_func = report_func
             try:
-                image_data = image_file.asarray(squeeze=TIFFFILE_GE_2026_5_2 or None)
-                # Since tifffile version 2026.5.2, the `image_file.series` is returned in squeezed format
-                # So we need squeezed array in such situation
+                image_data = image_file.asarray(squeeze=TIFFFILE_GE_2026_5_2_AND_LT_2026_9_9 or None)
+                # For tifffile versions 2026.5.2 through 2026.9.8, the `image_file.series`
+                # is returned in squeezed format
+                # and we need a squeezed array; from version 2026.9.9 onward, this workaround is no longer used
 
             except ValueError as e:  # pragma: no cover
                 raise TiffFileException(*e.args) from e
