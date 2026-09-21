@@ -202,7 +202,7 @@ jobs:
           environments: "test-py313-pyside6"
 
       - name: Setup headless display
-        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0 # v4.3
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79 # v5.1.0
         with:
           qt: true
           wm: herbstluftwm
