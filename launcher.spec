@@ -1,5 +1,7 @@
 # -*- mode: python -*-
-from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
+from PyInstaller.building.build_main import Analysis
+from PyInstaller.building.api import COLLECT, EXE, PYZ
+from PyInstaller.building.osx import BUNDLE
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
 
 block_cipher = None
@@ -182,6 +184,7 @@ a = Analysis(
     + collect_data_files("napari")
     + collect_data_files("napari_svg")
     + collect_data_files("napari_console")
+    + collect_data_files("napari-resources")
     + collect_data_files("freetype")
     + collect_data_files("skimage")
     + collect_data_files("fonticon_fa6")
