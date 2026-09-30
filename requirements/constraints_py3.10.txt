@@ -29,7 +29,7 @@ certifi==2026.7.22
     #   napari
     #   requests
     #   sentry-sdk
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
     # via requests
 click==8.5.0
     # via dask
@@ -243,7 +243,7 @@ pillow==12.3.0
     #   scikit-image
 pint==0.24.4
     # via napari
-platformdirs==4.12.1
+platformdirs==4.12.2
     # via
     #   partseg (pyproject.toml)
     #   jupyter-core
@@ -400,7 +400,7 @@ scipy==1.15.3
     #   partseg (pyproject.toml)
     #   napari
     #   scikit-image
-sentry-sdk==2.70.0
+sentry-sdk==2.71.0
     # via partseg (pyproject.toml)
 setuptools==84.0.0
     # via pyinstaller

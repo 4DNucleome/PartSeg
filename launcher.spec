@@ -1,5 +1,7 @@
 # -*- mode: python -*-
-from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
+from PyInstaller.building.build_main import Analysis
+from PyInstaller.building.api import COLLECT, EXE, PYZ
+from PyInstaller.building.osx import BUNDLE
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
 
 block_cipher = None
@@ -101,6 +103,7 @@ hiddenimports = (
     + [x.module_name for x in imageio_known_plugins.values()]
     + [x for x in collect_submodules("skimage") if "tests" not in x]
     + collect_submodules("scipy")
+    + collect_submodules("napari_resources")
 )
 
 
@@ -182,6 +185,7 @@ a = Analysis(
     + collect_data_files("napari")
     + collect_data_files("napari_svg")
     + collect_data_files("napari_console")
+    + collect_data_files("napari_resources", include_py_files=True)
     + collect_data_files("freetype")
     + collect_data_files("skimage")
     + collect_data_files("fonticon_fa6")
