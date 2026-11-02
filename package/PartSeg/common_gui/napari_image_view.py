@@ -126,7 +126,6 @@ class SearchType(Enum):
 
 
 class ImageView(QWidget):
-    position_changed = Signal([int, int, int], [int, int])
     component_clicked = Signal(int)
     text_info_change = Signal(str)
     hide_signal = Signal(bool)
