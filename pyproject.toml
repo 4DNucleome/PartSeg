@@ -108,7 +108,7 @@ docs = [
     "sphinx-qt-documentation",
 ]
 pyinstaller = [
-    "PartSeg[pyinstaller_base,pyqt56]",
+    "PartSeg[pyinstaller_base,pyqt6]",
 ]
 pyinstaller_base = [
     "PartSeg[accelerate]",
