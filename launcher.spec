@@ -106,6 +106,10 @@ hiddenimports = (
     + collect_submodules("napari_resources")
 )
 
+skimage2_data = []
+if importlib.util.find_spec("_skimage2") is not None:
+    hiddenimports += [x for x in collect_submodules("_skimage2") if "tests" not in x]
+    skimage2_data = collect_data_files("_skimage2")
 
 # psygnal handle
 for package_path in importlib.metadata.files("psygnal"):
@@ -194,6 +198,7 @@ a = Analysis(
     + collect_data_files("PartSegCore-compiled-backend")
     + pyzmq_data
     + plugins_data
+    + skimage2_data
     + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")]
     + copy_metadata("PartSeg", recursive=True),
     hiddenimports=hiddenimports,
