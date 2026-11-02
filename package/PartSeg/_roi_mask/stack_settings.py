@@ -5,7 +5,7 @@ from copy import copy, deepcopy
 from os import path
 
 import numpy as np
-from qtpy.QtCore import Signal, Slot
+from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QMessageBox
 
 from PartSeg.common_backend.base_settings import BaseSettings
@@ -21,7 +21,6 @@ from PartSegImage.image import minimal_dtype, reduce_array
 
 class StackSettings(BaseSettings):
     load_metadata = staticmethod(load_metadata)
-    components_change_list = Signal([int, list])
     save_locations_keys: typing.ClassVar[list[str]] = [
         "save_batch",
         "save_components_directory",
