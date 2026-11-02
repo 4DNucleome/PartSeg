@@ -108,7 +108,7 @@ docs = [
     "sphinx-qt-documentation",
 ]
 pyinstaller = [
-    "PartSeg[pyinstaller_base,pyqt5]",
+    "PartSeg[pyinstaller_base,pyqt56]",
 ]
 pyinstaller_base = [
     "PartSeg[accelerate]",
@@ -121,7 +121,7 @@ pyqt = [
 ]
 pyqt5 = [
     "PyQt5!=5.15.0,>=5.12.3",
-    "napari[pyqt5]",
+    "napari[pyqt5]<0.10.0",
 ]
 pyqt6 = [
     "PyQt6",
