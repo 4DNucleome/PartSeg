@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [windows-2022, macos-14, ubuntu-24.04]
-        python: [3.12]
+        python: [3.14]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
@@ -126,7 +126,7 @@ jobs:
       uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
       with:
         activate-environment: 'true'
-        python-version: '3.12'
+        python-version: '3.14'
     - name: Setup headless display
       uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79 # v5.1.0
       with:
@@ -134,7 +134,7 @@ jobs:
         wm: herbstluftwm
     - name: Compile PyInstaller requirements
       run: |
-        uv pip compile --prerelease allow --python-version 3.12 --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller
+        uv pip compile --prerelease allow --python-version 3.14 --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller
     - name: Install dependencies
       run: |
         uv pip install -r requirements.txt
@@ -163,7 +163,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PLATFORM: "linux"
-        PYTHON: "3.12"
+        PYTHON: "3.14"
         RUN_ID: ${{ github.run_id }}
         TITLE: '[test-bot] pyinstaller bundle --pre is failing'
       with:

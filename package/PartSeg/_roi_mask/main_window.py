@@ -457,9 +457,6 @@ class ChosenComponents(QScrollArea):
             el.mouse_enter.disconnect()
         self.check_box.clear()
 
-    def new_choose(self, num: int, chosen_components: Sequence[int]) -> None:
-        self.set_components(range(1, num + 1), chosen_components)
-
     def set_components(self, components_index, chosen_components: Sequence[int] | None = None):
         if chosen_components is None:
             chosen_components = []
@@ -626,7 +623,6 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.valueChanged.connect(self._set_border_thick)
         image_view.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
-        settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
         settings.connect_to_profile(f"{self.view_name}.image_state.only_border", self._set_border_mode_from_settings)
         settings.connect_to_profile(f"{self.view_name}.image_state.border_thick", self._set_border_thick_from_settings)
