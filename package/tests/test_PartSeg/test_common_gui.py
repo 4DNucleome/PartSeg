@@ -1,5 +1,5 @@
 # pylint: disable=no-self-use
-import datetime
+import datetime as dt
 import io
 import os
 import platform
@@ -1212,7 +1212,7 @@ class TestQtAlgorithmProperty:
             (EnumQtAl, EnumQtAl.test1, QEnumComboBox, EnumQtAl.test2),
             (str, "a", QLineEdit, "b"),
             (ModelQtAl, ModelQtAl(), FieldsList, ModelQtAl(field1=3, field2=4.5)),
-            (datetime.date, datetime.date(2022, 3, 24), Widget, datetime.date(2022, 3, 25)),
+            (dt.date, dt.date(2022, 3, 24), Widget, dt.date(2022, 3, 25)),
         ],
     )
     def test_types(self, qtbot, data_type, default_value, expected_type, next_value):
