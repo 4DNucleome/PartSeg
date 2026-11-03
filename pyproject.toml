@@ -108,7 +108,7 @@ docs = [
     "sphinx-qt-documentation",
 ]
 pyinstaller = [
-    "PartSeg[pyinstaller_base,pyqt5]",
+    "PartSeg[pyinstaller_base,pyqt6]",
 ]
 pyinstaller_base = [
     "PartSeg[accelerate]",
@@ -121,7 +121,7 @@ pyqt = [
 ]
 pyqt5 = [
     "PyQt5!=5.15.0,>=5.12.3",
-    "napari[pyqt5]",
+    "napari[pyqt5]<0.10.0",
 ]
 pyqt6 = [
     "PyQt6",
@@ -131,9 +131,9 @@ pyside = [
     "PartSeg[pyside6]",
 ]
 pyside2 = [
-    "PySide2!=5.15.0,>=5.12.3",
-    "napari[pyside]<0.7.0",
-    "superqt<0.8.0",  # superqt 0.8+ uses type annotations which are not supported in pyside2, so we need to use older version
+    "PySide2!=5.15.0,>=5.12.3; python_version < '3.14'",
+    "napari[pyside]<0.7.0; python_version < '3.14'",
+    "superqt<0.8.0; python_version < '3.14'",  # superqt 0.8+ uses type annotations which are not supported in pyside2, so we need to use older version
 ]
 pyside6 = [
     "PySide6",
@@ -151,6 +151,12 @@ testing = [
     "pytest",
     "pytest-qt",
     "lxml",
+]
+
+[dependency-groups]
+dev = [
+    'tox',
+    'tox-uv',
 ]
 
 [project.scripts]

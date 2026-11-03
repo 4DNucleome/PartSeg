@@ -450,6 +450,8 @@ class QMessageFromException(QMessageBox):
 def get_user() -> str:
     try:
         return getpass.getuser()
-    except ModuleNotFoundError:  # pragma: no cover
+    except (ModuleNotFoundError, OSError):  # pragma: no cover
         # On windows `pwd` module is not available
+        # till python 3.13 windows will raisne ModuleNotFoundError,
+        # since python 3.14 the OSError will be raised instead
         return os.getlogin()
