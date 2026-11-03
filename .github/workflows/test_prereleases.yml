@@ -134,7 +134,7 @@ jobs:
         wm: herbstluftwm
     - name: Compile PyInstaller requirements
       run: |
-        uv pip compile --prerelease allow --python-version 3.12 --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller
+        uv pip compile --prerelease allow --python-version 3.14 --upgrade -o requirements.txt pyproject.toml requirements/pre_test_problematic_version.txt --extra pyinstaller
     - name: Install dependencies
       run: |
         uv pip install -r requirements.txt
@@ -163,7 +163,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PLATFORM: "linux"
-        PYTHON: "3.12"
+        PYTHON: "3.14"
         RUN_ID: ${{ github.run_id }}
         TITLE: '[test-bot] pyinstaller bundle --pre is failing'
       with:
