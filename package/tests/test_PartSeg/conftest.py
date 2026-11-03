@@ -4,6 +4,7 @@ from importlib import metadata
 
 import pytest
 from packaging.version import parse as parse_version
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QInputDialog, QMessageBox
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
@@ -70,11 +71,22 @@ def _disable_threads_viewer_patch_add_layer(monkeypatch, request):
 
 
 @pytest.fixture(autouse=True)
+def _disable_combo_box_animation(qapp):
+    # Windows popup animations create a temporary top-level QRollEffect window
+    # that can outlive the combo box and fail the window cleanup check.
+    effect = Qt.UIEffect.UI_AnimateCombo
+    enabled = qapp.isEffectEnabled(effect)
+    qapp.setEffectEnabled(effect, False)
+    yield
+    qapp.setEffectEnabled(effect, enabled)
+
+
+@pytest.fixture(autouse=True)
 def _check_opened_windows(qapp):
     yield
     widgets = qapp.topLevelWidgets()
     for widget in widgets:
-        assert not widget.isVisible()
+        assert not widget.isVisible(), f"{widget.metaObject().className()} ({widget.objectName()!r}) is still visible"
 
 
 @pytest.fixture(autouse=True)
