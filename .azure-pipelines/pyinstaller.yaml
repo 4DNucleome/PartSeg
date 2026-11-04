@@ -5,10 +5,10 @@ parameters:
   type: string
 
 steps:
-  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.12', architecture: x64}}
+  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.14', architecture: x64}}
   - template: pip_cache.yaml
     parameters:
-      key: pyinstaller | requirements/constraints_py3.12.txt | "$(Agent.OS)" | "$(PY)"
+      key: pyinstaller | requirements/constraints_py3.14.txt | "$(Agent.OS)" | "$(PY)"
       path:  ${{ parameters.cache_dir }}
   - bash: |
       python -m pip install -U pip wheel setuptools
@@ -21,8 +21,7 @@ steps:
       MESA3D_VERSION=24.3.0 MESA3D_OFFSCREEN=true bash install_opengl.sh
     displayName: 'Setup headless OpenGL display (Windows)'
     condition: eq(variables['Agent.OS'], 'Windows_NT')
-
-  - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.12.txt
+  - bash: python -m pip install .[pyinstaller] -c requirements/constraints_py3.14.txt
     displayName: install partseg
   - bash: |
       python  build_utils/create_and_pack_executable.py --no-simple-zip

@@ -27,7 +27,7 @@ jobs:
           retention-days: 5
 
   test_napari:
-    name: ${{ matrix.napari_version }} py${{ matrix.python }}
+    name: ${{ matrix.napari_version }} ${{ matrix.qt_backend }} py${{ matrix.python }}
     runs-on: ${{ matrix.platform }}
     needs: download_data
     strategy:
@@ -36,6 +36,9 @@ jobs:
         platform: [ ubuntu-24.04 ]
         python: ['3.11', '3.12', '3.13', '3.14']
         napari_version: ['repo']
+        qt_backend: ['PyQt6', 'PySide6']
+    env:
+      FORCE_COLOR: 1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
@@ -68,6 +71,8 @@ jobs:
         env:
           PLATFORM: ${{ matrix.platform }}
           NAPARI: ${{ matrix.napari_version }}
+          BACKEND: ${{ matrix.qt_backend }}
+          TOX_WORK_DIR: /tmp/tox
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           PIP_CONSTRAINT: "requirements/version_denylist.txt"
 
@@ -78,6 +83,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PLATFORM: ${{ matrix.platform }}
           PYTHON: ${{ matrix.python }}
+          BACKEND: ${{ matrix.qt_backend }}
           RUN_ID: ${{ github.run_id }}
           TITLE: '[test-bot] napari repos test fail'
         with:

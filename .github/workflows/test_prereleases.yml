@@ -88,6 +88,7 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: latest
           BACKEND: PyQt6
+          TOX_WORK_DIR: /tmp/tox
           PIP_CONSTRAINT: requirements/pre_test_problematic_version.txt
           PIP_PRE: 1
 
@@ -100,6 +101,7 @@ jobs:
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
           NAPARI: latest
           BACKEND: PyQt6
+          TOX_WORK_DIR: /tmp/tox
           PIP_CONSTRAINT: requirements/pre_test_problematic_version.txt
           PIP_PRE: 1
 
@@ -111,6 +113,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PLATFORM: ${{ matrix.platform }}
           PYTHON: ${{ matrix.python }}
+          BACKEND: PyQt6
           RUN_ID: ${{ github.run_id }}
           TITLE: '[test-bot] pip install --pre is failing'
         with:
@@ -164,6 +167,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PLATFORM: "linux"
         PYTHON: "3.14"
+        BACKEND: PyQt6
         RUN_ID: ${{ github.run_id }}
         TITLE: '[test-bot] pyinstaller bundle --pre is failing'
       with:

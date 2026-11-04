@@ -27,7 +27,7 @@ jobs:
     with:
       python_version: "3.13"
       os: ${{ matrix.os }}
-      napari: "napari70"
+      napari: "napari92"
       qt_backend: ${{ matrix.qt_backend }}
       timeout: 10
 
