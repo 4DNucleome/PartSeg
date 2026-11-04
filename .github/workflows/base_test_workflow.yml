@@ -55,6 +55,7 @@ jobs:
       BACKEND: ${{ inputs.qt_backend }}
       PYVISTA_OFF_SCREEN: True  # required for opengl on windows
       TOX_ARGS: ${{ inputs.tox_args }}
+      TOX_WORK_DIR: /tmp/tox
       PYTEST_ARGS: ${{ inputs.pytest_args }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
