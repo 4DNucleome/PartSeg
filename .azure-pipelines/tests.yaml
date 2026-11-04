@@ -3,10 +3,10 @@ parameters:
   type: string
 
 steps:
-  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.11'}}
+  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.13'}}
   - template: pip_cache.yaml
     parameters:
-      key: test | requirements/constraints_py3.11.txt | "$(Agent.OS)" | "$(PY)"
+      key: test | requirements/constraints_py3.13.txt | "$(Agent.OS)" | "$(PY)"
       path: ${{ parameters.cache_dir }}
   - task: DownloadPipelineArtifact@2
     inputs:
@@ -25,12 +25,12 @@ steps:
       pip install -U pip wheel setuptools virtualenv
       pip install -r requirements/requirements_dev.txt tox-uv
     displayName: "Install deps"
-  - script: tox -e py311-PyQt5-azure
+  - script: tox -e py313-PyQt6-azure
     displayName: "Run Tox"
     env:
       CODECOV_TOKEN: $(codecov_token_secret)
-      PIP_CONSTRAINT: requirements/constraints_py3.11.txt
-      UV_CONSTRAINT: requirements/constraints_py3.11.txt
+      PIP_CONSTRAINT: requirements/constraints_py3.13.txt
+      UV_CONSTRAINT: requirements/constraints_py3.13.txt
 
   - task: CopyFiles@2
     inputs:
