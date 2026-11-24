@@ -24,16 +24,15 @@ env:
   COLUMNS: 120
 
 jobs:
-  actionlint:
+  jactionlint:
     name: Action lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
       - name: Check workflow files
-        run: |
-          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./actionlint -color -ignore SC2129
-        shell: bash
+        uses: jdx/jactionlint@72c00452809bcca05b8bc12acdcf15dd7a9c1c5e  # v2.6.0
 
   download_data:
     name: Download test data
@@ -109,12 +108,6 @@ jobs:
             os: "ubuntu-22.04"
             qt_backend: "PyQt6"
         exclude:
-          - python_version: "3.11"
-            qt_backend: "PySide2"
-          - python_version: "3.12"
-            qt_backend: "PySide2"
-          - os: "macos-15"
-            qt_backend: "PySide2"
           - python_version: "3.12"
             qt_backend: "PyQt6"
     with:
@@ -197,7 +190,7 @@ jobs:
     needs: download_data
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94  # v0.11.2
+      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e  # v0.11.3
         with:
           environments: "test-py313-pyside6"
 
@@ -224,4 +217,4 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
-      - uses: hynek/build-and-inspect-python-package@2abe76da66d0a6a4a227101f9348ee855797cfa5  # v3.0.1
+      - uses: hynek/build-and-inspect-python-package@67230f7b8410ae0052b39c1efc89d89fff43ff10  # v3.0.2
