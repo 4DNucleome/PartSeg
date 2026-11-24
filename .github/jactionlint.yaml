@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jdx/jactionlint/main/schema/jactionlint-config.json
+# Configuration of jactionlint (https://jactionlint.jdx.dev/config).
+# "correctness" runs the checks of actionlint plus the bug detectors of jactionlint.
+profile: correctness
+
+paths:
+  .github/workflows/**/*.yml:
+    # Consider using { cmd1; cmd2; } >> file instead of individual redirects
+    ignore: ['SC2129:']

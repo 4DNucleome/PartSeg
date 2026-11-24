@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
     - id: check-json
     - id: check-yaml
@@ -12,16 +12,16 @@ repos:
     - id: debug-statements
     - id: mixed-line-ending
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.6
+    rev: 9026c9127e153371d7a78dfcb0c45ae2046a3d10  # frozen: v0.17.6
     hooks:
       - id: ruff-check
       - id: ruff-format
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.10.0
+    rev: 3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316  # frozen: v1.10.0
     hooks:
     -   id: rst-backticks
 -   repo: https://github.com/executablebooks/mdformat
-    rev: 1.0.0  # Use the ref you want to point at
+    rev: 82912cdaea4fb830f751504486a7879c70526547  # frozen: 1.0.0
     hooks:
     - id: mdformat
       exclude: TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
@@ -34,18 +34,22 @@ repos:
           - mdformat-toc
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v2.4.1'  # Use the sha / tag you want to point at
+    rev: ad26ebfa797fcb9b8f83275937c1c1d6e126719c  # frozen: v2.4.1
     hooks:
     -   id: mypy
         files: ^package/PartSegImage/.+\.py
 
 -   repo: https://github.com/codespell-project/codespell
-    rev: v2.4.3
+    rev: 57b21406f092110c18776e39b0bda50d37c945c8  # frozen: v2.4.3
     hooks:
     - id: codespell
       additional_dependencies:
       - tomli
 
+-   repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: a76b92851fc9eede9f9bc4073eb55202f34eb0df  # frozen: 0.39.0
+    hooks:
+    - id: check-github-workflows
 
 ci:
     autoupdate_commit_msg: 'ci: [pre-commit.ci] pre-commit autoupdate'
