@@ -64,12 +64,16 @@ jobs:
           - python_version: "3.11"
             os: "macos-15-intel"
             qt_backend: "PyQt5"
+            napari: "napari92"  # napari 0.10 dropped PyQt5
+            pytest_args: "package/tests"
           - python_version: "3.12"
             os: "macos-15"
             qt_backend: "PyQt6"
           - python_version: "3.11"
             os: "windows-latest"
             qt_backend: "PyQt5"
+            napari: "napari92"  # napari 0.10 dropped PyQt5
+            pytest_args: "package/tests"
           - python_version: "3.10"
             os: "ubuntu-22.04"
             qt_backend: "PySide2"
@@ -85,6 +89,8 @@ jobs:
       os: ${{ matrix.os }}
       qt_backend: ${{ matrix.qt_backend }}
       tox_args: ${{ matrix.tox_args }}
+      napari: ${{ matrix.napari || 'latest' }}
+      pytest_args: ${{ matrix.pytest_args }}
 
   base-test-main:
     name: Base py${{ matrix.python_version }}
@@ -101,6 +107,8 @@ jobs:
           - python_version: "3.12"
             qt_backend: "PyQt5"
             os: "ubuntu-22.04"
+            napari: "napari92"  # napari 0.10 dropped PyQt5
+            pytest_args: "package/tests"
           - python_version: "3.10"
             os: "ubuntu-22.04"
             qt_backend: "PySide2"
@@ -116,7 +124,8 @@ jobs:
       os: ${{ matrix.os }}
       qt_backend: ${{ matrix.qt_backend }}
       artifact_suffix: "-main"
-      pytest_args: "-v"
+      napari: ${{ matrix.napari || 'latest' }}
+      pytest_args: ${{ matrix.pytest_args || '-v' }}
 
   test_coverage:
     needs: download_data
@@ -125,9 +134,13 @@ jobs:
         fail-fast: false
         matrix:
           qt_backend: ["PyQt5", "PyQt6"]
+          include:
+            - qt_backend: "PyQt5"
+              napari: "napari92"  # napari 0.10 dropped PyQt5
     with:
       test_data: True
       python_version: "3.12"
+      napari: ${{ matrix.napari || 'latest' }}
       tox_args: "-e py312-${{ matrix.qt_backend }}-coverage"
       coverage: true
       qt_backend: ${{ matrix.qt_backend }}
